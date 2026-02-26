@@ -9,31 +9,33 @@ class Program
         // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder which will be used to construct the document content.
+        // Initialize a DocumentBuilder which will be used to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table. The builder's cursor is now positioned inside the table.
+        // Start a new table. The method returns the Table node that was created.
         Table table = builder.StartTable();
 
-        // ---- First row (header) ----
-        builder.InsertCell();               // First cell of the first row.
-        builder.Write("Header 1");          // Write text into the cell.
-        builder.InsertCell();               // Second cell of the first row.
-        builder.Write("Header 2");          // Write text into the cell.
-        builder.EndRow();                   // Complete the first row.
+        // ---- First row ----
+        // Insert first cell and write text into it.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 1");
 
-        // ---- Second row (data) ----
-        builder.InsertCell();               // First cell of the second row.
-        builder.Write("Cell 1");            // Write text into the cell.
-        builder.InsertCell();               // Second cell of the second row.
-        builder.Write("Cell 2");            // Write text into the cell.
-        builder.EndRow();                   // Complete the second row.
+        // Insert second cell of the first row.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 2");
 
-        // End the table construction.
+        // End the first row.
+        builder.EndRow();
+
+        // ---- Second row ----
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 1");
+
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
+
+        // End the table.
         builder.EndTable();
-
-        // Adjust the table to fit its contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
         // Save the document to a DOCX file.
         doc.Save("TableExample.docx");

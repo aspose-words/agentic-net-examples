@@ -1,34 +1,26 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsDocToHtml
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOC file.
-        string docPath = @"C:\Input\sample.doc";
-
-        // Path where the resulting HTML file will be saved.
-        string htmlPath = @"C:\Output\sample.html";
-
-        // Load the DOC document.
-        Document doc = new Document(docPath);
-
-        // Configure HTML save options.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
+        static void Main(string[] args)
         {
-            // Use HTML5 standard for the output.
-            HtmlVersion = HtmlVersion.Html5,
-            // Produce nicely indented (pretty) HTML.
-            PrettyFormat = true,
-            // Export the document's headers and footers as part of the body.
-            ExportHeadersFootersMode = ExportHeadersFootersMode.PerSection,
-            // Export images as separate files (default behavior).
-            ExportImagesAsBase64 = false
-        };
+            // Input DOC file path – replace with your actual file location.
+            string inputFile = @"C:\Docs\SampleDocument.doc";
 
-        // Save the document as HTML.
-        doc.Save(htmlPath, saveOptions);
+            // Output HTML file path – the result will be saved here.
+            string outputFile = @"C:\Docs\SampleDocument.html";
+
+            // Load the existing DOC document.
+            // The Document constructor automatically detects the format.
+            Document doc = new Document(inputFile);
+
+            // Save the document in HTML format using the Save method that accepts a SaveFormat enum.
+            doc.Save(outputFile, SaveFormat.Html);
+
+            Console.WriteLine("Conversion completed successfully.");
+        }
     }
 }

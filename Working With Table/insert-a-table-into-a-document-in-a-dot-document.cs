@@ -1,41 +1,50 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class InsertTableIntoDot
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Load the DOT template (DOT is a Word template file)
+        Document doc = new Document("Template.dot");
 
-        // Initialize a DocumentBuilder for the document.
+        // Create a DocumentBuilder attached to the loaded document
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Move the cursor to the location where the table should be inserted.
+        // For this example we insert at the end of the first section's body.
+        builder.MoveToDocumentEnd();
+
+        // Start a new table
         Table table = builder.StartTable();
 
-        // First row – header cells.
+        // First row, first cell
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Row 1, Cell 1");
+
+        // First row, second cell
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Row 1, Cell 2");
         builder.EndRow();
 
-        // Second row – data cells.
+        // Second row, first cell
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Row 2, Cell 1");
+
+        // Second row, second cell
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Row 2, Cell 2");
         builder.EndRow();
 
-        // Finish the table.
+        // Finish the table
         builder.EndTable();
 
-        // Apply a built‑in style and auto‑fit the table to its contents.
-        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        // Optional: set table title and description (useful for DOCX compliance)
+        table.Title = "Sample Table";
+        table.Description = "A table inserted into a DOT document.";
 
-        // Save the document as a Word template (.dot).
-        doc.Save("TableTemplate.dot");
+        // Save the modified document (can be saved as DOCX, DOC, or another DOT)
+        doc.Save("Result.docx");
     }
 }

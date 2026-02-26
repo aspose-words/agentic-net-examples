@@ -4,7 +4,7 @@ using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 using System.Drawing;
 
-class ChartExample
+class Program
 {
     static void Main()
     {
@@ -12,48 +12,42 @@ class ChartExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart with a specific size.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        // Insert a column chart shape with the specified size.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+        // Access the Chart object from the shape.
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series.
-        chart.Series.Clear();
-
-        // Define categories for the X axis.
-        string[] categories = new string[] { "Q1", "Q2", "Q3", "Q4" };
-
-        // Add two data series.
-        chart.Series.Add("Revenue", categories, new double[] { 15000, 20000, 18000, 22000 });
-        chart.Series.Add("Profit", categories, new double[] { 4000, 5000, 4500, 6000 });
-
-        // Set chart title.
+        // Configure the chart title.
         ChartTitle title = chart.Title;
-        title.Text = "Annual Financial Summary";
+        title.Text = "Sales Report 2023";
         title.Font.Size = 16;
         title.Font.Color = Color.DarkBlue;
-        title.Show = true;
-        title.Overlay = false;
+        title.Show = true;          // Make sure the title is visible.
+        title.Overlay = false;      // Do not allow other elements to overlap the title.
 
-        // Format the chart background.
+        // Remove the default demo series that Aspose.Words inserts.
+        chart.Series.Clear();
+
+        // Add a first data series with categories and values.
+        chart.Series.Add(
+            "Q1",
+            new[] { "Jan", "Feb", "Mar" },
+            new double[] { 12000, 15000, 13000 });
+
+        // Add a second data series.
+        chart.Series.Add(
+            "Q2",
+            new[] { "Apr", "May", "Jun" },
+            new double[] { 14000, 16000, 15500 });
+
+        // Apply a solid fill to the chart background.
         chart.Format.Fill.Solid(Color.LightYellow);
 
-        // Position the legend at the top right and allow other elements to overlap it.
-        ChartLegend legend = chart.Legend;
-        legend.Position = LegendPosition.TopRight;
-        legend.Overlay = true;
-        legend.Format.Fill.Solid(Color.WhiteSmoke);
+        // Hide tick labels on both axes for a cleaner look.
+        chart.AxisX.TickLabels.Position = AxisTickLabelPosition.None;
+        chart.AxisY.TickLabels.Position = AxisTickLabelPosition.None;
 
-        // Hide major gridlines on the primary Y axis.
-        foreach (ChartAxis axis in chart.Axes)
-        {
-            if (axis.Type == ChartAxisType.Value)
-                axis.HasMajorGridlines = false;
-        }
-
-        // Set the style of the chart to a predefined style.
-        chart.Style = ChartStyle.Shaded;
-
-        // Save the document to disk.
+        // Save the document containing the chart.
         doc.Save("ChartExample.docx");
     }
 }

@@ -6,29 +6,23 @@ class ConvertToDoc
 {
     static void Main()
     {
-        // Path to the source document (any supported format).
-        string sourcePath = @"C:\Docs\source.docx";
+        // Define input and output file paths.
+        string inputPath = @"C:\Docs\SampleDocument.docx";
+        string outputPath = @"C:\Docs\SampleDocumentConverted.doc";
 
-        // Load the document. The format is detected automatically.
-        Document doc = new Document(sourcePath);
+        // Load the source document (any supported format, e.g., DOCX).
+        Document doc = new Document(inputPath);
 
-        // Configure save options for the legacy DOC format.
-        DocSaveOptions saveOptions = new DocSaveOptions
-        {
-            // Explicitly set the target format (optional, DocSaveOptions defaults to DOC).
-            SaveFormat = SaveFormat.Doc,
+        // Option 1: Save directly using the SaveFormat enumeration.
+        doc.Save(outputPath, SaveFormat.Doc);
 
-            // Example option: embed the Aspose.Words generator name.
-            ExportGeneratorName = true,
-
-            // Example option: compress all metafiles.
-            AlwaysCompressMetafiles = true
-        };
-
-        // Path for the output DOC file.
-        string outputPath = @"C:\Docs\output.doc";
-
-        // Save the document in DOC format using the specified options.
+        // Option 2: Use DocSaveOptions for more control (e.g., password protection).
+        // Uncomment the following lines to use DocSaveOptions instead of the direct overload.
+        /*
+        DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
+        // Example: set a password (optional).
+        // saveOptions.Password = "MySecretPassword";
         doc.Save(outputPath, saveOptions);
+        */
     }
 }

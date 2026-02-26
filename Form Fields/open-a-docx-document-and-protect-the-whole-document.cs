@@ -6,19 +6,19 @@ class ProtectDocumentExample
     static void Main()
     {
         // Path to the existing DOCX file.
-        string inputPath = @"C:\Docs\input.docx";
+        string inputPath = "input.docx";
 
         // Load the document from the file system.
         Document doc = new Document(inputPath);
 
-        // Set a write‑protection password (max 15 characters).
-        doc.WriteProtection.SetPassword("MyPassword");
+        // Apply protection to the entire document.
+        // Here we use ReadOnly protection; other types are available in the ProtectionType enum.
+        doc.Protect(ProtectionType.ReadOnly);
 
-        // Recommend that the document be opened as read‑only.
-        doc.WriteProtection.ReadOnlyRecommended = true;
+        // Path where the protected document will be saved.
+        string outputPath = "protected.docx";
 
         // Save the protected document.
-        string outputPath = @"C:\Docs\output_protected.docx";
         doc.Save(outputPath);
     }
 }

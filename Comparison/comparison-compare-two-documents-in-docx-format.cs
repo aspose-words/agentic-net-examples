@@ -2,38 +2,27 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class DocumentComparison
+namespace DocumentComparisonDemo
 {
-    static void Main()
+    class Program
     {
-        // Load the two DOCX files that need to be compared.
-        Document docOriginal = new Document("Original.docx");
-        Document docEdited   = new Document("Edited.docx");
-
-        // Configure comparison options (customize as needed).
-        CompareOptions compareOptions = new CompareOptions
+        static void Main()
         {
-            // Track changes at the word level.
-            Granularity = Granularity.WordLevel,
-            // Do not ignore any element types.
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
-            // Use the original document as the base for comparison.
-            Target = ComparisonTargetType.Current,
-            // Do not compare moved text as separate revisions.
-            CompareMoves = false
-        };
+            // Load the original document from a DOCX file.
+            Document docOriginal = new Document("Original.docx");
 
-        // Perform the comparison. Revisions will be added to docOriginal.
-        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+            // Load the edited document from a DOCX file.
+            Document docEdited = new Document("Edited.docx");
 
-        // Save the result (original document now contains revision marks).
-        docOriginal.Save("ComparisonResult.docx");
+            // Ensure both documents have no revisions before comparison.
+            if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
+            {
+                // Compare the documents. All differences will be added as revisions to docOriginal.
+                docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
+            }
+
+            // Save the comparison result (original document now contains revisions) to a new file.
+            docOriginal.Save("ComparisonResult.docx");
+        }
     }
 }

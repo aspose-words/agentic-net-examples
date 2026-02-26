@@ -2,26 +2,29 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsPdfConversion
 {
-    static void Main()
+    class Program
     {
-        // Load the source document.
-        Document doc = new Document("input.docx");
+        static void Main()
+        {
+            // Path to the source document (any format supported by Aspose.Words)
+            string inputPath = @"C:\Docs\SourceDocument.docx";
 
-        // Create and configure PDF save options.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+            // Path where the PDF will be saved
+            string outputPath = @"C:\Docs\ConvertedDocument.pdf";
 
-        // Example: apply ZIP (Flate) compression to all text content.
-        pdfOptions.TextCompression = PdfTextCompression.Flate;
+            // Load the document using the provided load rule
+            Document doc = new Document(inputPath);
 
-        // Example: export custom document properties as XMP metadata.
-        pdfOptions.CustomPropertiesExport = PdfCustomPropertiesExport.Metadata;
+            // Create a SaveOptions object suitable for PDF using the provided factory method
+            SaveOptions pdfSaveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
 
-        // Example: set PDF compliance level (e.g., PDF/A-1b).
-        pdfOptions.Compliance = PdfCompliance.PdfA1b;
+            // Example configuration: enable memory optimization for large documents
+            pdfSaveOptions.MemoryOptimization = true;
 
-        // Save the document as PDF using the configured options.
-        doc.Save("output.pdf", pdfOptions);
+            // Save the document as PDF with the configured options using the provided save rule
+            doc.Save(outputPath, pdfSaveOptions);
+        }
     }
 }

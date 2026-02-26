@@ -1,58 +1,39 @@
 using System;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Markup;
-using Aspose.Words.Tables;
+using Aspose.Words.Markup; // Added for SdtType enum
+using Aspose.Words.Saving;
 
-class Program
+class InsertDocumentIntoContentControl
 {
     static void Main()
     {
-        // Load the main document that contains a content control (StructuredDocumentTag)
-        Document mainDoc = new Document(@"C:\Docs\MainDocument.docx");
+        // Paths – adjust as needed.
+        string sourcePath = @"C:\Docs\Source.docx";
+        string resultPath = @"C:\Docs\InsertDocIntoContentControl.docx";
 
-        // Load the document that we want to insert into the content control
-        Document subDoc = new Document(@"C:\Docs\SubDocument.docx");
+        // Create a new blank document.
+        Document mainDoc = new Document();
 
-        // Find the content control by its title (or any other property you prefer)
-        StructuredDocumentTag targetSdt = mainDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .Cast<StructuredDocumentTag>()
-            .FirstOrDefault(tag => tag.Title == "InsertHere");
+        // Create a DocumentBuilder attached to the new document.
+        DocumentBuilder builder = new DocumentBuilder(mainDoc);
 
-        // Ensure the content control was found
-        if (targetSdt == null)
-        {
-            Console.WriteLine("Content control with the specified title was not found.");
-            return;
-        }
+        // Insert a rich‑text content control (StructuredDocumentTag) where the other document will be placed.
+        builder.InsertStructuredDocumentTag(SdtType.RichText);
+        // Move the cursor inside the newly created content control.
+        builder.MoveToStructuredDocumentTag(0, 0);
 
-        // Use NodeImporter for efficient import of nodes from the sub‑document
-        NodeImporter importer = new NodeImporter(subDoc, mainDoc, ImportFormatMode.KeepSourceFormatting);
+        // Load the document that we want to insert.
+        Document srcDoc = new Document(sourcePath);
 
-        // Import each node from the sub‑document into the content control.
-        // We can append directly to the StructuredDocumentTag – it will place the nodes inside its SdtContent.
-        foreach (Section srcSection in subDoc.Sections)
-        {
-            foreach (Node srcNode in srcSection.Body)
-            {
-                // Skip the final empty paragraph that Word adds to each section
-                if (srcNode.NodeType == NodeType.Paragraph)
-                {
-                    Paragraph para = (Paragraph)srcNode;
-                    if (para.IsEndOfSection && !para.HasChildNodes)
-                        continue;
-                }
+        // Insert the source document at the current cursor position.
+        // KeepSourceFormatting preserves the original styles of the inserted document.
+        builder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
 
-                // Import the node into the destination document
-                Node importedNode = importer.ImportNode(srcNode, true);
+        // Optionally add some text after the inserted content.
+        builder.Writeln();
+        builder.Writeln("Insertion completed.");
 
-                // Append the imported node to the content control
-                targetSdt.AppendChild(importedNode);
-            }
-        }
-
-        // Save the updated document
-        mainDoc.Save(@"C:\Docs\ResultDocument.docx");
+        // Save the resulting document.
+        mainDoc.Save(resultPath);
     }
 }

@@ -1,27 +1,29 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
+using System.Linq;
 
 class Program
 {
     static void Main()
     {
-        // Load the DOCX file.
-        Document doc = new Document("CommentsSample.docx");
+        // Load the DOCX file that contains comments.
+        Document doc = new Document("Comments.docx");
 
-        // Get all top‑level comments in the document.
+        // Retrieve all comment nodes in the document (including replies).
         NodeCollection commentNodes = doc.GetChildNodes(NodeType.Comment, true);
 
-        foreach (Node node in commentNodes)
+        // Iterate through top‑level comments only (those without an ancestor comment).
+        foreach (Comment comment in commentNodes.OfType<Comment>().Where(c => c.Ancestor == null))
         {
-            Comment comment = (Comment)node;
-            // Print the main comment text.
-            Console.WriteLine($"Comment by {comment.Author}: {comment.GetText().Trim()}");
+            // Print the main comment text and author.
+            Console.WriteLine($"Comment: \"{comment.GetText().Trim()}\" by {comment.Author}");
 
-            // Iterate through any replies to this comment.
+            // Iterate over each reply to the current comment.
             foreach (Comment reply in comment.Replies)
             {
-                // Print the reply text.
-                Console.WriteLine($"\tReply by {reply.Author}: {reply.GetText().Trim()}");
+                // Print the reply text and author.
+                Console.WriteLine($"\tReply: \"{reply.GetText().Trim()}\" by {reply.Author}");
             }
         }
     }

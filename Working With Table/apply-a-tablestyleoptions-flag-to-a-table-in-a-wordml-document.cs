@@ -6,11 +6,18 @@ class ApplyTableStyleOptions
 {
     static void Main()
     {
-        // Load an existing WORDML document.
-        Document doc = new Document("Input.docx"); // Replace with the actual WORDML file path.
+        // Load an existing WORDML (WordprocessingML) document.
+        // Replace "Input.docx" with the path to your source document.
+        Document doc = new Document("Input.docx");
 
-        // Find the first table in the document.
-        Table table = doc.FirstSection.Body.Tables[0];
+        // Retrieve the first table in the document.
+        // The GetChild method searches the document tree for a node of the specified type.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+        {
+            Console.WriteLine("No table found in the document.");
+            return;
+        }
 
         // Apply desired style options to the table.
         // Example: apply first row formatting, row banding, and first column formatting.
@@ -18,10 +25,12 @@ class ApplyTableStyleOptions
                               TableStyleOptions.RowBands |
                               TableStyleOptions.FirstColumn;
 
-        // Optionally, set a built‑in style identifier for the table.
+        // Optionally, set a built‑in style identifier so the style options have a base style to work from.
+        // This step is not required if the table already has a style assigned.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
         // Save the modified document.
-        doc.Save("Output.docx"); // Replace with the desired output path.
+        // The output format can be DOCX, PDF, etc.; here we save as DOCX.
+        doc.Save("Output.docx");
     }
 }

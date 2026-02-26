@@ -3,59 +3,39 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
-class Program
+class AddWatermarkToTableCell
 {
     static void Main()
     {
-        // Create a new document.
-        Document doc = new Document();
+        // Path to the folder that contains the input RTF file.
+        string dataDir = @"C:\Data\";
+
+        // Load the existing RTF document.
+        Document doc = new Document(dataDir + "input.rtf");
+
+        // Create a DocumentBuilder to navigate and edit the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
+        // Move the cursor to the first cell of the first table (row 0, column 0).
+        // Adjust the indices if you need a different cell.
+        builder.MoveToCell(0, 0, 0, 0);
 
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Select the first cell where the watermark will be placed.
-        Cell targetCell = table.Rows[0].Cells[0];
-        builder.MoveTo(targetCell.FirstParagraph);
-
-        // Create a floating shape that will serve as a watermark inside the cell.
+        // Create a shape that will act as a watermark inside the cell.
         Shape watermarkShape = new Shape(doc, ShapeType.TextPlainText);
-        watermarkShape.Width = 200;
-        watermarkShape.Height = 50;
-        watermarkShape.WrapType = WrapType.None;               // No text wrapping.
-        watermarkShape.BehindText = true;                     // Appear behind cell contents.
-        watermarkShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Column;
-        // RelativeVerticalPosition.Row is not available in the current Aspose.Words version; the default (Paragraph) works for a cell.
-        watermarkShape.Left = 0;
-        watermarkShape.Top = 0;
-
-        // Configure the watermark text.
         watermarkShape.TextPath.Text = "CONFIDENTIAL";
         watermarkShape.TextPath.FontFamily = "Arial";
-        // FontSize property is not present in this version; size can be controlled via the shape dimensions.
-        watermarkShape.TextPath.Bold = true;
+        // FontSize property is not available in older Aspose.Words versions; size is controlled by the shape dimensions.
+        watermarkShape.Width = 300;
+        watermarkShape.Height = 70;
+        watermarkShape.Rotation = -40; // Diagonal appearance.
         watermarkShape.FillColor = Color.LightGray;
         watermarkShape.StrokeColor = Color.LightGray;
 
-        // Insert the shape into the document.
+        // Insert the watermark shape into the current cell.
         builder.InsertNode(watermarkShape);
 
-        // Save the document as RTF.
-        RtfSaveOptions saveOptions = new RtfSaveOptions();
-        doc.Save("TableCellWatermark.rtf", saveOptions);
+        // Save the modified document back to RTF format.
+        doc.Save(dataDir + "output.rtf");
     }
 }

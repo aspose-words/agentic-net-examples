@@ -1,32 +1,28 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class GenerateBarcode
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Obtain the first paragraph (or create one) to host the barcode field.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph ?? doc.FirstSection.Body.AppendParagraph(string.Empty);
+        // Insert a BARCODE field that will render a barcode image.
+        FieldBarcode barcodeField = (FieldBarcode)builder.InsertField(FieldType.FieldBarcode, true);
 
-        // Build a MERGEBARCODE field that will display a CODE39 barcode with the value "12345ABCDE".
-        // The field code syntax for MERGEBARCODE uses switches:
-        //   \b – barcode type
-        //   \d – barcode data (value)
-        //   \a – add start/stop characters (optional, true/false)
-        FieldBuilder fieldBuilder = new FieldBuilder(FieldType.FieldMergeBarcode);
-        fieldBuilder.AddSwitch("\\b", "CODE39");          // Set barcode type.
-        fieldBuilder.AddSwitch("\\d", "12345ABCDE");     // Set barcode value.
-        fieldBuilder.AddSwitch("\\a", "true");           // Add start/stop characters (string, not bool).
+        // Set the value to be encoded (e.g., a US ZIP code).
+        barcodeField.PostalAddress = "12345";
 
-        // Insert the field at the end of the paragraph.
-        Field barcodeField = fieldBuilder.BuildAndInsert(para);
+        // Specify that the value is a US postal address so the field knows which barcode symbology to use.
+        barcodeField.IsUSPostalAddress = true;
 
-        // Update the field so that the barcode image is generated.
-        doc.UpdateFields();
+        // Optional: add a Facing Identification Mark (FIM) to the barcode.
+        barcodeField.FacingIdentificationMark = "C";
+
+        // Force the field to calculate its result and generate the barcode image.
+        barcodeField.Update();
 
         // Save the document containing the barcode.
         doc.Save("BarcodeDocument.docx");

@@ -1,50 +1,35 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables; // Added namespace for Table class
 
-class JoinTablesInTxt
+class Program
 {
     static void Main()
     {
-        // Load the source document that already contains two tables.
-        // (Replace with the actual path to your document.)
-        Document doc = new Document("SourceDocument.docx");
+        // Load the document that contains the two tables to be merged.
+        Document doc = new Document("Tables.docx");
 
-        // Get the collection of tables in the first section.
-        TableCollection tables = doc.FirstSection.Body.Tables;
+        // Retrieve the first table from the document's body.
+        Table firstTable = doc.FirstSection.Body.Tables[0];
 
-        // Ensure there are at least two tables to join.
-        if (tables.Count < 2)
-        {
-            Console.WriteLine("The document must contain at least two tables.");
-            return;
-        }
-
-        // Reference to the first and second tables.
-        Table firstTable = tables[0];
-        Table secondTable = tables[1];
+        // Retrieve the second table using the GetChild method.
+        Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
 
         // Move all rows from the second table to the first table.
-        // Import each row into the document to preserve formatting.
-        foreach (Row row in secondTable.Rows)
-        {
-            // Import the row (deep clone) into the current document.
-            Row importedRow = (Row)doc.ImportNode(row, true);
-            firstTable.Rows.Add(importedRow);
-        }
+        while (secondTable.HasChildNodes)
+            firstTable.Rows.Add(secondTable.FirstRow);
 
-        // Remove the now-empty second table from the document.
+        // Remove the now empty second table from the document.
         secondTable.Remove();
 
-        // Save the resulting document as plain text.
-        // The tables will be rendered as plain text tables in the output file.
-        TxtSaveOptions saveOptions = new TxtSaveOptions
+        // Configure TXT save options to preserve the visual layout of tables.
+        TxtSaveOptions txtOptions = new TxtSaveOptions
         {
-            // Export headers/footers as needed; here we keep the default (None).
-            ExportHeadersFootersMode = TxtExportHeadersFootersMode.None
+            PreserveTableLayout = true
         };
 
-        doc.Save("JoinedTables.txt", saveOptions);
+        // Save the resulting document as a plain‑text file.
+        doc.Save("CombinedTable.txt", txtOptions);
     }
 }

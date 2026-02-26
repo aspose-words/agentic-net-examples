@@ -1,33 +1,14 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-namespace AsposeWordsPdfExample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Path to the source document (any format supported by Aspose.Words).
-            string inputPath = @"C:\Docs\input.docx";
+        // Load an existing Word document from the file system.
+        Document doc = new Document("input.docx");
 
-            // Path where the PDF will be saved.
-            string outputPath = @"C:\Docs\output.pdf";
-
-            // Load the document from the file system.
-            Document doc = new Document(inputPath);
-
-            // Create PDF save options (optional – can be omitted if default options are sufficient).
-            PdfSaveOptions pdfOptions = new PdfSaveOptions
-            {
-                // Example: set the PDF to open in full‑screen mode.
-                // PageMode = PdfPageMode.FullScreen
-            };
-
-            // Save the loaded document as PDF using the specified options.
-            doc.Save(outputPath, pdfOptions);
-
-            Console.WriteLine("Document saved as PDF successfully.");
-        }
+        // Save the loaded document as PDF. The format is inferred from the .pdf extension.
+        doc.Save("output.pdf");
     }
 }

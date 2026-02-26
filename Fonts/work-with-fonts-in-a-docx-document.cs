@@ -1,45 +1,58 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Saving;
 
-class Program
+class FontDemo
 {
     static void Main()
     {
-        // Paths to the input document, output document and a folder that contains custom fonts.
-        string dataDir = @"C:\Docs\";
-        string inputFile = Path.Combine(dataDir, "Input.docx");
-        string outputFile = Path.Combine(dataDir, "Output.docx");
-        string fontsFolder = Path.Combine(dataDir, "MyFonts");
+        // ---------- Create a new blank document ----------
+        Document doc = new Document();                     // create
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Load the existing DOCX document.
-        Document doc = new Document(inputFile);
+        // ---------- Set font properties for the first line ----------
+        builder.Font.Name = "Courier New";
+        builder.Font.Size = 24;                           // points
+        builder.Font.Color = Color.Blue;
+        builder.Font.Bold = true;
+        builder.Font.Italic = true;
+        builder.Font.Underline = Underline.Double;
+        builder.Font.HighlightColor = Color.Yellow;
 
-        // Configure font settings so Aspose.Words searches for fonts in the custom folder.
-        FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(fontsFolder, false);
-        doc.FontSettings = fontSettings;
+        builder.Writeln("Formatted text using Font properties.");
 
-        // Enable embedding of all fonts (TrueType and system) used in the document.
-        FontInfoCollection fontInfos = doc.FontInfos;
-        fontInfos.EmbedTrueTypeFonts = true;
-        fontInfos.EmbedSystemFonts = true;
-        fontInfos.SaveSubsetFonts = true; // Save only the characters that are actually used.
+        // ---------- Change font properties for the second line ----------
+        builder.Font.Name = "Arial";
+        builder.Font.Size = 18;
+        builder.Font.Color = Color.DarkGreen;
+        builder.Font.Bold = false;
+        builder.Font.Italic = false;
+        builder.Font.Underline = Underline.None;
+        builder.Font.HighlightColor = Color.Transparent;
 
-        // List all fonts that the document references.
-        Console.WriteLine("Fonts used in the document:");
-        for (int i = 0; i < fontInfos.Count; i++)
+        builder.Writeln("Another line with different font settings.");
+
+        // ---------- Save the document ----------
+        string outPath = Path.Combine(Environment.CurrentDirectory, "FontDemo.docx");
+        doc.Save(outPath);                                 // save
+
+        // ---------- Load the saved document ----------
+        Document loadedDoc = new Document(outPath);        // load
+
+        // ---------- Modify the font of the first run ----------
+        Paragraph firstPara = loadedDoc.FirstSection.Body.FirstParagraph;
+        if (firstPara.Runs.Count > 0)
         {
-            FontInfo info = fontInfos[i];
-            Console.WriteLine($"- Name: {info.Name}");
-            Console.WriteLine($"  TrueType: {info.IsTrueType}");
-            Console.WriteLine($"  Family: {info.Family}");
-            Console.WriteLine($"  Pitch: {info.Pitch}");
+            Font runFont = firstPara.Runs[0].Font;
+            runFont.Name = "Times New Roman";
+            runFont.Size = 28;
+            runFont.Color = Color.Red;
         }
 
-        // Save the document with the embedded fonts.
-        doc.Save(outputFile, SaveFormat.Docx);
+        // ---------- Save the modified document ----------
+        string modifiedPath = Path.Combine(Environment.CurrentDirectory, "FontDemo_Modified.docx");
+        loadedDoc.Save(modifiedPath);                     // save
     }
 }

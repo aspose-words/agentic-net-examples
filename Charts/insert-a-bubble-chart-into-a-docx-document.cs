@@ -1,34 +1,36 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-class InsertBubbleChart
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a bubble chart shape with the desired size.
-        Shape chartShape = builder.InsertChart(ChartType.Bubble, 500, 300);
+        // Insert a bubble chart (width: 500pt, height: 350pt).
+        Shape chartShape = builder.InsertChart(ChartType.Bubble, 500, 350);
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series that Aspose.Words adds.
+        // Remove the automatically generated demo series.
         chart.Series.Clear();
 
-        // Add a bubble series: X values, Y values, and bubble sizes.
+        // Add a custom series with X values, Y values and bubble sizes.
         chart.Series.Add(
-            "Series 1",
+            "Sample Series",
             new double[] { 1.1, 5.0, 9.8 },   // X values
             new double[] { 1.2, 4.9, 9.9 },   // Y values
             new double[] { 2.0, 4.0, 8.0 }    // Bubble sizes
         );
 
-        // Save the document containing the bubble chart.
+        // Enable data labels and display bubble size on each label.
+        ChartSeries series = chart.Series[0];
+        series.HasDataLabels = true;
+        series.DataLabels.ShowBubbleSize = true;
+
+        // Save the document to a DOCX file.
         doc.Save("BubbleChart.docx");
     }
 }

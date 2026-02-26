@@ -1,41 +1,43 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load the two documents to be compared.
-        Document docOriginal = new Document("Original.docx");
-        Document docEdited   = new Document("Edited.docx");
+        // Paths to the source documents and the output folder.
+        string dataDir = @"C:\Data\";
+        string artifactsDir = @"C:\Artifacts\";
 
-        // Set up custom comparison options.
+        // Load the original document.
+        Document docOriginal = new Document(dataDir + "Original.docx");
+
+        // Load the edited document that we want to compare against.
+        Document docEdited = new Document(dataDir + "Edited.docx");
+
+        // Ensure both documents have no revisions before comparison.
+        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
+            throw new InvalidOperationException("Both documents must be revision‑free before comparison.");
+
+        // Configure custom comparison options.
         CompareOptions compareOptions = new CompareOptions
         {
-            CompareMoves               = false,                     // Do not track moved text.
-            IgnoreFormatting           = false,                     // Consider formatting changes.
-            IgnoreCaseChanges          = false,                     // Case changes are significant.
-            IgnoreComments             = false,                     // Compare comments.
-            IgnoreTables               = false,                     // Compare table content.
-            IgnoreFields               = false,                     // Compare fields.
-            IgnoreFootnotes            = false,                     // Compare footnotes/endnotes.
-            IgnoreTextboxes            = false,                     // Compare text inside text boxes.
-            IgnoreHeadersAndFooters    = false,                     // Compare headers/footers.
-            Target                     = ComparisonTargetType.New, // Use the edited document as the base.
-            Granularity                = Granularity.WordLevel    // Track changes at word level.
+            // Example: ignore formatting changes and comments.
+            IgnoreFormatting = true,
+            IgnoreComments = true,
+            // Track changes at the word level.
+            Granularity = Granularity.WordLevel,
+            // Use the edited document as the base for comparison.
+            Target = ComparisonTargetType.New,
+            // Do not compare moved text.
+            CompareMoves = false
         };
 
-        // Perform the comparison. Revisions are added to docOriginal.
-        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+        // Perform the comparison. Revisions will be added to docOriginal.
+        docOriginal.Compare(docEdited, "Reviewer", DateTime.Now, compareOptions);
 
-        // Save the resulting document with a specific OOXML compliance level.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
-        };
-
-        docOriginal.Save("ComparedResult.docx", saveOptions);
+        // Save the resulting document that contains the tracked changes.
+        docOriginal.Save(artifactsDir + "ComparisonResult.docx");
     }
 }

@@ -2,37 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-class CreateVbaProject
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a new VBA project and assign a name.
-        VbaProject project = new VbaProject
-        {
-            Name = "MyVbaProject"
-        };
-
-        // Attach the VBA project to the document.
+        // Create a new VBA project and give it a name.
+        VbaProject project = new VbaProject();
+        project.Name = "MyAsposeProject";
         doc.VbaProject = project;
 
-        // Create a new procedural module that will hold the macro code.
-        VbaModule module = new VbaModule
-        {
-            Name = "MyMacroModule",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"
+        // Create a procedural module that contains a simple macro.
+        VbaModule module = new VbaModule();
+        module.Name = "MyModule";
+        module.Type = VbaModuleType.ProceduralModule;
+        module.SourceCode = @"
 Sub HelloWorld()
     MsgBox ""Hello from VBA!""
-End Sub"
-        };
+End Sub";
 
-        // Add the module to the VBA project's module collection.
+        // Add the module to the VBA project.
         doc.VbaProject.Modules.Add(module);
 
-        // Save the document in a macro-enabled format (DOCM).
-        doc.Save("VbaProjectCreated.docm", SaveFormat.Docm);
+        // Save the document as a macro‑enabled file (.docm).
+        doc.Save("VbaProjectExample.docm");
     }
 }

@@ -3,49 +3,60 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-namespace FindReplaceWithParagraphExample
+class Program
 {
-    // Custom callback that replaces a found match with a new paragraph.
-    class ReplaceWithParagraphHandler : IReplacingCallback
+    static void Main()
     {
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+        // Load the existing DOCX document.
+        Document doc = new Document("Input.docx");
+
+        // Define the text to be replaced (e.g., a placeholder like [PARA]).
+        const string placeholder = "[PARA]";
+
+        // Set up FindReplaceOptions with a custom callback that will replace the placeholder
+        // with an entire new paragraph.
+        FindReplaceOptions options = new FindReplaceOptions
         {
-            // The node that contains the start of the match (usually a Run).
-            // Its parent is the paragraph that we want to replace.
-            Paragraph originalParagraph = (Paragraph)args.MatchNode.ParentNode;
+            ReplacingCallback = new InsertParagraphHandler("This is the inserted paragraph.")
+        };
 
-            // Create a new paragraph in the same document.
-            Paragraph newParagraph = new Paragraph(originalParagraph.Document);
-            // Add the desired text to the new paragraph.
-            newParagraph.AppendChild(new Run(originalParagraph.Document) { Text = "This is the replacement paragraph." });
+        // Perform the find-and-replace operation.
+        doc.Range.Replace(placeholder, string.Empty, options);
 
-            // Insert the new paragraph after the original one.
-            originalParagraph.ParentNode.InsertAfter(newParagraph, originalParagraph);
-            // Remove the original paragraph that contained the match.
-            originalParagraph.Remove();
+        // Save the modified document.
+        doc.Save("Output.docx");
+    }
+}
 
-            // Skip the default replacement because we have already handled it.
-            return ReplaceAction.Skip;
-        }
+// Custom callback that inserts a new paragraph in place of the matched text.
+class InsertParagraphHandler : IReplacingCallback
+{
+    private readonly string _newParagraphText;
+
+    public InsertParagraphHandler(string newParagraphText)
+    {
+        _newParagraphText = newParagraphText;
     }
 
-    class Program
+    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
     {
-        static void Main()
-        {
-            // Load the existing DOCX document.
-            Document doc = new Document("Input.docx");
+        // The node that contains the beginning of the match is a Run.
+        // Its parent is the Paragraph that holds the placeholder.
+        Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
 
-            // Set up find/replace options with the custom callback.
-            FindReplaceOptions options = new FindReplaceOptions();
-            options.ReplacingCallback = new ReplaceWithParagraphHandler();
+        // Create a new paragraph with the desired text.
+        Paragraph newParagraph = new Paragraph(placeholderParagraph.Document);
+        Run run = new Run(placeholderParagraph.Document, _newParagraphText);
+        newParagraph.AppendChild(run);
 
-            // Perform the find/replace. The replacement string is empty because
-            // the callback handles the insertion of the new paragraph.
-            doc.Range.Replace(new Regex(@"\[PLACEHOLDER\]"), string.Empty, options);
+        // Insert the new paragraph after the placeholder paragraph.
+        CompositeNode parent = placeholderParagraph.ParentNode;
+        parent.InsertAfter(newParagraph, placeholderParagraph);
 
-            // Save the modified document.
-            doc.Save("Output.docx");
-        }
+        // Remove the original paragraph that contained the placeholder.
+        placeholderParagraph.Remove();
+
+        // Skip the default replacement because we have already handled it.
+        return ReplaceAction.Skip;
     }
 }

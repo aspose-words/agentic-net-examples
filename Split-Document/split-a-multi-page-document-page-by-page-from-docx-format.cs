@@ -6,27 +6,19 @@ class SplitDocumentByPages
     static void Main()
     {
         // Load the multi‑page DOCX document.
-        string inputFile = @"C:\Docs\MultiPageDocument.docx";
-        Document doc = new Document(inputFile);
+        Document sourceDoc = new Document("InputDocument.docx");
 
-        // Determine the total number of pages in the document.
-        int pageCount = doc.PageCount;
-
-        // Iterate through each page and extract it to a separate document.
-        for (int pageIndex = 0; pageIndex < pageCount; pageIndex++)
+        // Iterate through each page in the source document.
+        for (int pageIndex = 0; pageIndex < sourceDoc.PageCount; pageIndex++)
         {
-            // Extract a single page (zero‑based index) from the source document.
-            Document pageDoc = doc.ExtractPages(pageIndex, 1);
+            // Extract a single page (zero‑based index, count = 1).
+            Document singlePageDoc = sourceDoc.ExtractPages(pageIndex, 1);
 
-            // Optional: customize page extraction behavior.
-            // PageExtractOptions options = new PageExtractOptions();
-            // options.UpdatePageStartingNumber = false;
-            // options.UnlinkPagesNumberFields = false;
-            // pageDoc = doc.ExtractPages(pageIndex, 1, options);
+            // Build an output file name like "Page_1.docx", "Page_2.docx", etc.
+            string outputPath = $"Page_{pageIndex + 1}.docx";
 
-            // Save the extracted page as an individual DOCX file.
-            string outputFile = $@"C:\Docs\Page_{pageIndex + 1}.docx";
-            pageDoc.Save(outputFile);
+            // Save the extracted page as a separate DOCX file.
+            singlePageDoc.Save(outputPath);
         }
     }
 }

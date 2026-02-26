@@ -9,38 +9,36 @@ class InsertTableExample
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
+        // Initialize a DocumentBuilder which will be used to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+        // Start a new table.
+        builder.StartTable();
 
         // First row, first cell.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Row 1, Cell 1");
 
         // First row, second cell.
         builder.InsertCell();
-        builder.Write("Header 2");
-        builder.EndRow(); // End of first row.
+        builder.Write("Row 1, Cell 2");
+
+        // End the first row.
+        builder.EndRow();
 
         // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Row 2, Cell 1");
 
         // Second row, second cell.
         builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow(); // End of second row.
+        builder.Write("Row 2, Cell 2");
 
-        // Finish the table.
+        // End the second row and the table.
+        builder.EndRow();
         builder.EndTable();
 
-        // Optional: Apply a simple style and auto‑fit.
-        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-        // Save the document in DOC format.
-        doc.Save("InsertedTable.doc");
+        // Save the document in the legacy DOC format.
+        doc.Save("Table.doc", SaveFormat.Doc);
     }
 }

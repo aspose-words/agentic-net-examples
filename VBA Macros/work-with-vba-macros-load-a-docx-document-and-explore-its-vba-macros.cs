@@ -2,50 +2,38 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-class ExploreVbaMacros
+class Program
 {
     static void Main()
     {
-        // Load a macro-enabled document (DOCM). The constructor automatically detects the format.
-        Document doc = new Document("VBA project.docm");
+        // Load the DOCX/DOCM file. Replace the path with your actual file location.
+        Document doc = new Document("Macro.docm");
 
-        // Check if the document actually contains VBA macros.
-        if (!doc.HasMacros)
+        // Check whether the document contains any VBA macros.
+        Console.WriteLine($"Has macros: {doc.HasMacros}");
+
+        // If macros are present, explore the VBA project.
+        if (doc.HasMacros && doc.VbaProject != null)
         {
-            Console.WriteLine("The document does not contain any VBA macros.");
-            return;
+            VbaProject vbaProject = doc.VbaProject;
+
+            // Basic information about the VBA project.
+            Console.WriteLine($"VBA Project Name: {vbaProject.Name}");
+            Console.WriteLine($"Is Signed: {vbaProject.IsSigned}");
+            Console.WriteLine($"Modules count: {vbaProject.Modules.Count}");
+
+            // Iterate through each VBA module and display its name and source code.
+            foreach (VbaModule module in vbaProject.Modules)
+            {
+                Console.WriteLine($"Module Name: {module.Name}");
+                Console.WriteLine("Source Code:");
+                Console.WriteLine(module.SourceCode);
+                Console.WriteLine(new string('-', 40));
+            }
         }
-
-        // Access the VBA project associated with the document.
-        VbaProject vbaProject = doc.VbaProject;
-
-        // Output basic information about the VBA project.
-        Console.WriteLine(vbaProject.IsSigned
-            ? $"Project name: {vbaProject.Name} (signed); Code page: {vbaProject.CodePage}"
-            : $"Project name: {vbaProject.Name} (not signed); Code page: {vbaProject.CodePage}");
-
-        // Get the collection of VBA modules.
-        VbaModuleCollection modules = vbaProject.Modules;
-        Console.WriteLine($"Modules count: {modules.Count}");
-
-        // Iterate through each module and display its name and source code.
-        foreach (VbaModule module in modules)
+        else
         {
-            Console.WriteLine($"--- Module: {module.Name} ---");
-            Console.WriteLine(module.SourceCode);
-            Console.WriteLine();
+            Console.WriteLine("No VBA project found in the document.");
         }
-
-        // Example: modify the source code of the first module (if any).
-        if (modules.Count > 0)
-        {
-            VbaModule firstModule = modules[0];
-            firstModule.SourceCode = "' Updated VBA code\r\nSub HelloWorld()\r\n    MsgBox \"Hello from Aspose.Words!\"\r\nEnd Sub";
-            Console.WriteLine($"Updated source code of module '{firstModule.Name}'.");
-        }
-
-        // Save the document with the modified macros to a new file.
-        doc.Save("VBA project - Modified.docm");
-        Console.WriteLine("Document saved with updated VBA macros.");
     }
 }

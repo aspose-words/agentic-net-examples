@@ -1,34 +1,34 @@
 using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
-class Program
+namespace WatermarkPdfExample
 {
-    static void Main()
+    class Program
     {
-        // Create a new document.
-        Document doc = new Document();
-
-        // Add some sample text to the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document that will be saved as PDF with a watermark.");
-
-        // Configure watermark appearance.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+        static void Main()
         {
-            FontFamily = "Arial",
-            FontSize = 48,
-            Color = Color.Gray,
-            Layout = WatermarkLayout.Diagonal,
-            IsSemitrasparent = true
-        };
+            // Create a new empty document.
+            Document doc = new Document();
 
-        // Apply the text watermark to the document.
-        doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
+            // Configure text watermark options.
+            TextWatermarkOptions options = new TextWatermarkOptions
+            {
+                FontFamily = "Arial",
+                FontSize = 48,
+                Color = Color.Gray,
+                Layout = WatermarkLayout.Diagonal,
+                IsSemitrasparent = false
+            };
 
-        // Save the document as a PDF file.
-        doc.Save("DocumentWithWatermark.pdf", SaveFormat.Pdf);
+            // Apply the text watermark to every page of the document.
+            doc.Watermark.SetText("Confidential", options);
+
+            // Save the document as a PDF file.
+            PdfSaveOptions pdfOptions = new PdfSaveOptions();
+            doc.Save("OutputWithWatermark.pdf", pdfOptions);
+        }
     }
 }

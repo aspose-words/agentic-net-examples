@@ -1,52 +1,41 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
-using Aspose.Words.Markup;
 
 class Program
 {
     static void Main()
     {
-        // Load the two documents that will be compared.
-        // These can be .dot template files or any other Word format.
-        Document original = new Document("Original.dot");
-        Document edited   = new Document("Edited.dot");
+        // Load the original DOT (template) document.
+        Document docOriginal = new Document("OriginalTemplate.dot");
 
-        // Set up comparison options.
-        // - Track changes at the word level.
-        // - Ignore formatting, comments, footnotes, and headers/footers.
-        // - Use the edited document as the base (new) document.
-        CompareOptions options = new CompareOptions
+        // Load the edited DOT document that we want to compare against.
+        Document docEdited = new Document("EditedTemplate.dot");
+
+        // Ensure both documents have no pending revisions before comparison.
+        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
         {
-            Granularity = Granularity.WordLevel,
-            IgnoreFormatting = true,
-            IgnoreComments = true,
-            IgnoreFootnotes = true,
-            IgnoreHeadersAndFooters = true,
-            Target = ComparisonTargetType.New
-        };
-
-        // Perform the comparison. Revisions are added to the 'original' document.
-        original.Compare(edited, "Comparer", DateTime.Now, options);
-
-        // Iterate through all revisions and handle those that occur inside
-        // Structured Document Tags (content controls).
-        foreach (Revision rev in original.Revisions)
-        {
-            // Find the nearest ancestor StructuredDocumentTag, if any.
-            StructuredDocumentTag sdt = rev.ParentNode?.GetAncestor(NodeType.StructuredDocumentTag) as StructuredDocumentTag;
-
-            if (sdt != null)
-            {
-                // Example logic: accept revisions only in content controls with a specific tag.
-                if (sdt.Tag == "Important")
-                    rev.Accept();
-                else
-                    rev.Reject();
-            }
+            docOriginal.Revisions.RejectAll();
+            docEdited.Revisions.RejectAll();
         }
 
-        // Save the resulting document with the applied revisions.
-        original.Save("ComparedResult.docx");
+        // Configure comparison options.
+        // Example: ignore formatting changes and track differences at the word level.
+        CompareOptions compareOptions = new CompareOptions
+        {
+            IgnoreFormatting = true,
+            Granularity = Granularity.WordLevel,
+            Target = ComparisonTargetType.New // Use the edited document as the target.
+        };
+
+        // Perform the comparison.
+        // After this call, docOriginal will contain Revision objects for each difference.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+
+        // Accept all revisions so that docOriginal becomes identical to docEdited.
+        docOriginal.Revisions.AcceptAll();
+
+        // Save the resulting document that reflects the comparison outcome.
+        docOriginal.Save("ComparisonResult.docx");
     }
 }

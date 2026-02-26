@@ -3,52 +3,37 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-namespace InsertGroupShapeExample
+class InsertGroupShapeExample
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Initialize a DocumentBuilder for inserting content.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Initialize a DocumentBuilder for inserting content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a GroupShape that will hold other shapes.
-            GroupShape group = new GroupShape(doc);
+        // Insert a rectangle shape.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        rectangle.Left = 20;                     // Position from the left edge of the page.
+        rectangle.Top = 20;                      // Position from the top edge of the page.
+        rectangle.Stroke.Color = Color.Red;      // Outline color.
 
-            // Set the size and position of the group shape (in points).
-            group.Bounds = new RectangleF(0, 0, 200, 200);
+        // Insert an ellipse shape.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        ellipse.Left = 40;
+        ellipse.Top = 50;
+        ellipse.Stroke.Color = Color.Green;
 
-            // Insert the group shape into the current paragraph.
-            builder.CurrentParagraph.AppendChild(group);
+        // Group the two shapes. The InsertGroupShape method automatically calculates
+        // the position and size of the new GroupShape node.
+        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
 
-            // Create a rectangle shape to place inside the group.
-            Shape rect = new Shape(doc, ShapeType.Rectangle);
-            rect.Width = 100;
-            rect.Height = 100;
-            rect.Left = 0;
-            rect.Top = 0;
-            // Optional: set a simple fill colour so the shape is visible.
-            rect.FillColor = Color.LightBlue;
+        // Optional: set additional properties on the group shape.
+        group.WrapType = WrapType.None;          // Make the group floating.
+        group.Title = "My Group Shape";
 
-            // Add the rectangle to the group shape.
-            group.AppendChild(rect);
-
-            // Create a second shape (an ellipse) inside the same group.
-            Shape ellipse = new Shape(doc, ShapeType.Ellipse);
-            ellipse.Width = 80;
-            ellipse.Height = 80;
-            ellipse.Left = 100;
-            ellipse.Top = 100;
-            ellipse.FillColor = Color.LightCoral;
-
-            // Add the ellipse to the group shape.
-            group.AppendChild(ellipse);
-
-            // Save the document containing the group shape.
-            doc.Save("GroupShape.docx");
-        }
+        // Save the document to a DOCX file.
+        doc.Save("GroupShapeExample.docx");
     }
 }

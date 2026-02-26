@@ -3,33 +3,26 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class InsertHorizontalRuleExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a horizontal rule shape at the current cursor position.
-        Shape hrShape = builder.InsertHorizontalRule();
+        Shape horizontalRule = builder.InsertHorizontalRule();
 
-        // Access the HorizontalRuleFormat to customize appearance.
-        HorizontalRuleFormat hrFormat = hrShape.HorizontalRuleFormat;
-
-        // Center the rule, set its width to 70% of the page, height to 3 points,
-        // use a blue color, and disable 3‑D shading.
-        hrFormat.Alignment = HorizontalRuleAlignment.Center;
-        hrFormat.WidthPercent = 70;
-        hrFormat.Height = 3;
-        hrFormat.Color = Color.Blue;
-        hrFormat.NoShade = true;
-
-        // Verify that the inserted shape is indeed a horizontal rule.
-        if (!hrShape.IsHorizontalRule)
-            throw new InvalidOperationException("The inserted shape is not a horizontal rule.");
+        // Optional: customize the appearance of the horizontal rule.
+        HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
+        format.Alignment = HorizontalRuleAlignment.Center; // Center the rule.
+        format.WidthPercent = 70;                           // 70% of the page width.
+        format.Height = 3;                                 // Height in points.
+        format.Color = Color.Blue;                         // Blue color.
+        format.NoShade = true;                             // Solid color, no 3‑D shading.
 
         // Save the document to a file.
         doc.Save("HorizontalRule.docx");

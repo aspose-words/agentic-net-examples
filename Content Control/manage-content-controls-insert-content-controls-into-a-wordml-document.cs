@@ -2,89 +2,49 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
-namespace ContentControlDemo
+class InsertContentControls
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // 1. Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // 2. Create a DocumentBuilder which will be used to insert nodes.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a DocumentBuilder attached to the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // -------------------------------------------------
-            // Insert a plain‑text content control (inline).
-            // -------------------------------------------------
-            StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(
-                doc,
-                SdtType.PlainText,          // The type of the content control.
-                MarkupLevel.Inline);        // Occurs at the inline level.
+        // Insert a plain‑text content control (StructuredDocumentTag) at the current cursor position.
+        // The method returns the newly created StructuredDocumentTag node.
+        StructuredDocumentTag plainTextControl = builder.InsertStructuredDocumentTag(SdtType.PlainText);
 
-            plainTextSdt.Title = "Plain Text Control";
-            plainTextSdt.Tag = "PlainTextTag";
+        // Set optional properties such as Title and Tag for identification.
+        plainTextControl.Title = "CustomerName";
+        plainTextControl.Tag = "CustomerNameTag";
 
-            // Insert the content control into the document.
-            builder.InsertNode(plainTextSdt);
-            // Add some placeholder text inside the control.
-            builder.Writeln("Enter plain text here...");
+        // Write some placeholder text inside the content control.
+        builder.Write("Enter customer name here");
 
-            // -------------------------------------------------
-            // Insert a rich‑text content control (block level).
-            // -------------------------------------------------
-            StructuredDocumentTag richTextSdt = new StructuredDocumentTag(
-                doc,
-                SdtType.RichText,
-                MarkupLevel.Block);
+        // Move the cursor out of the content control to continue normal document editing.
+        builder.Writeln(); // Ends the paragraph inside the control.
+        builder.MoveToDocumentEnd(); // Ensure the cursor is after the control.
 
-            richTextSdt.Title = "Rich Text Control";
-            richTextSdt.Tag = "RichTextTag";
+        // Insert a second content control – a repeating section (useful for tables or lists).
+        StructuredDocumentTag repeatingSection = builder.InsertStructuredDocumentTag(SdtType.RepeatingSection);
+        repeatingSection.Title = "OrderItems";
+        repeatingSection.Tag = "OrderItemsTag";
 
-            // Insert a new paragraph before the block‑level control.
-            builder.Writeln(); // Ensure we are on a new paragraph.
-            builder.InsertNode(richTextSdt);
-            // Add some formatted text inside the rich‑text control.
-            builder.Font.Bold = true;
-            builder.Writeln("Bold text inside rich‑text control.");
-            builder.Font.Bold = false;
+        // Inside the repeating section, insert a table with a single row as a template.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Item");
+        builder.InsertCell();
+        builder.Write("Quantity");
+        builder.EndRow();
+        builder.EndTable();
 
-            // -------------------------------------------------
-            // Insert a checkbox content control.
-            // -------------------------------------------------
-            StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(
-                doc,
-                SdtType.Checkbox,
-                MarkupLevel.Inline);
+        // Finish the document.
+        builder.Writeln();
 
-            checkBoxSdt.Title = "Checkbox Control";
-            checkBoxSdt.Tag = "CheckBoxTag";
-            checkBoxSdt.Checked = false; // Default unchecked.
-
-            builder.Writeln(); // New line before the checkbox.
-            builder.InsertNode(checkBoxSdt);
-            builder.Writeln("Check this box if you agree.");
-
-            // -------------------------------------------------
-            // Insert a date picker content control.
-            // -------------------------------------------------
-            StructuredDocumentTag dateSdt = new StructuredDocumentTag(
-                doc,
-                SdtType.Date,
-                MarkupLevel.Inline);
-
-            dateSdt.Title = "Date Picker Control";
-            dateSdt.Tag = "DateTag";
-            dateSdt.DateDisplayFormat = "MMMM d, yyyy"; // Example display format.
-
-            builder.Writeln(); // New line before the date picker.
-            builder.InsertNode(dateSdt);
-            builder.Writeln("Select a date.");
-
-            // -------------------------------------------------
-            // Save the document to disk.
-            // -------------------------------------------------
-            doc.Save("ContentControls.docx");
-        }
+        // Save the document to a file (WordprocessingML format – .docx).
+        doc.Save("ContentControls.docx");
     }
 }

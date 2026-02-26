@@ -1,61 +1,75 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class Program
+namespace Example
 {
-    static void Main()
+    public static class DocumentSplitter
     {
-        // Load the source DOCX document.
-        Document doc = new Document(@"Input\SourceDocument.docx");
-
-        // Prepare HTML save options and configure splitting by section break.
-        HtmlSaveOptions options = new HtmlSaveOptions
+        /// <summary>
+        /// Splits the specified DOCX document into separate DOCX files, one per page.
+        /// </summary>
+        /// <param name="sourceFilePath">Full path to the source DOCX file.</param>
+        /// <param name="outputDirectory">Folder where the split documents will be saved.</param>
+        public static void SplitByPages(string sourceFilePath, string outputDirectory)
         {
-            DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-            // The callback will control the filenames of the split parts.
-            DocumentPartSavingCallback = new SavedDocumentPartRename("Output\\SplitDocument.html", DocumentSplitCriteria.SectionBreak)
-        };
+            // Ensure the output directory exists.
+            if (!Directory.Exists(outputDirectory))
+                Directory.CreateDirectory(outputDirectory);
 
-        // Save the document; Aspose.Words will create multiple HTML files according to the split criteria.
-        doc.Save(@"Output\SplitDocument.html", options);
+            // Load the source document (lifecycle rule: load).
+            Document sourceDoc = new Document(sourceFilePath);
+
+            // Iterate over each page in the source document.
+            for (int pageIndex = 0; pageIndex < sourceDoc.PageCount; pageIndex++)
+            {
+                // Extract a single page as a new Document (lifecycle rule: create via ExtractPages).
+                // Page numbers are 1‑based, so add 1 to the zero‑based index.
+                Document pageDoc = sourceDoc.ExtractPages(pageIndex + 1, pageIndex + 1);
+
+                // Build the output file name, e.g., "Document_Page_1.docx".
+                string outputFilePath = Path.Combine(
+                    outputDirectory,
+                    $"{Path.GetFileNameWithoutExtension(sourceFilePath)}_Page_{pageIndex + 1}{Path.GetExtension(sourceFilePath)}");
+
+                // Save the extracted page as a separate DOCX file (lifecycle rule: save).
+                pageDoc.Save(outputFilePath);
+            }
+        }
     }
 
-    // Callback that assigns custom filenames to each document part created during the split operation.
-    private class SavedDocumentPartRename : IDocumentPartSavingCallback
+    class Program
     {
-        private readonly string _baseFileName;
-        private readonly DocumentSplitCriteria _criteria;
-        private int _partIndex;
-
-        public SavedDocumentPartRename(string baseFileName, DocumentSplitCriteria criteria)
+        /// <summary>
+        /// Entry point required for console execution.
+        /// </summary>
+        static void Main(string[] args)
         {
-            _baseFileName = baseFileName;
-            _criteria = criteria;
-        }
-
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
-        {
-            // Determine a readable part type name based on the split criteria.
-            string partType = _criteria switch
+            // Simple argument handling: first argument = source file, second argument = output folder.
+            if (args.Length < 2)
             {
-                DocumentSplitCriteria.PageBreak => "Page",
-                DocumentSplitCriteria.ColumnBreak => "Column",
-                DocumentSplitCriteria.SectionBreak => "Section",
-                DocumentSplitCriteria.HeadingParagraph => "Heading",
-                _ => "Part"
-            };
+                Console.WriteLine("Usage: DocumentSplitter <source-docx-path> <output-directory>");
+                return;
+            }
 
-            // Build a unique filename for the current part.
-            string partFileName = $"{Path.GetFileNameWithoutExtension(_baseFileName)}_part{++_partIndex}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+            string sourcePath = args[0];
+            string outputDir = args[1];
 
-            // Set the filename (without path) for the part.
-            args.DocumentPartFileName = partFileName;
+            if (!File.Exists(sourcePath))
+            {
+                Console.WriteLine($"Source file not found: {sourcePath}");
+                return;
+            }
 
-            // Optionally, direct the part to a specific folder via a stream.
-            string fullPath = Path.Combine(Path.GetDirectoryName(_baseFileName) ?? string.Empty, partFileName);
-            args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
+            try
+            {
+                DocumentSplitter.SplitByPages(sourcePath, outputDir);
+                Console.WriteLine($"Document split completed. Files saved to: {outputDir}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during splitting: {ex.Message}");
+            }
         }
     }
 }

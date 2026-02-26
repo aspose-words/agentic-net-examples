@@ -1,47 +1,53 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 
-class Program
+class ExtractAuthorComments
 {
-    static void Main(string[] args)
+    static void Main()
     {
-        // Path to the DOCX file.
-        string filePath = "input.docx";
+        // Path to the source DOCX file.
+        string inputPath = "input.docx";
 
-        // Author whose comments we want to extract.
-        string author = "John Doe";
+        // Path where the extracted comments will be saved.
+        string outputPath = "author_comments.docx";
 
-        // Load the document.
-        Document doc = new Document(filePath);
+        // The author whose comments we want to extract.
+        string targetAuthor = "John Doe";
 
-        // Retrieve all comments made by the specified author.
-        List<string> authorComments = GetCommentsByAuthor(doc, author);
+        // Load the existing document.
+        Document sourceDoc = new Document(inputPath);
 
-        // Output the extracted comment texts.
-        foreach (string commentText in authorComments)
-        {
-            Console.WriteLine(commentText);
-        }
-    }
+        // Retrieve all comment nodes in the document.
+        NodeCollection commentNodes = sourceDoc.GetChildNodes(NodeType.Comment, true);
 
-    // Returns a list of comment texts authored by the given author.
-    static List<string> GetCommentsByAuthor(Document doc, string author)
-    {
-        var comments = new List<string>();
+        // Create a new blank document to store the extracted comments.
+        Document resultDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(resultDoc);
 
-        // Get all comment nodes in the document (including nested comments).
-        NodeCollection commentNodes = doc.GetChildNodes(NodeType.Comment, true);
+        // Header for the extracted comments.
+        builder.Writeln($"Comments authored by \"{targetAuthor}\":");
+        builder.Writeln();
 
+        int extractedCount = 0;
+
+        // Iterate through all comments and copy those matching the target author.
         foreach (Comment comment in commentNodes)
         {
-            if (comment.Author == author)
+            if (comment.Author == targetAuthor)
             {
-                // GetText() returns the full text of the comment, including its replies.
-                comments.Add(comment.GetText());
+                extractedCount++;
+                // Write the comment text to the new document.
+                builder.Writeln($"- {comment.GetText().Trim()}");
             }
         }
 
-        return comments;
+        // If no comments were found, indicate that in the output document.
+        if (extractedCount == 0)
+        {
+            builder.Writeln("No comments found for the specified author.");
+        }
+
+        // Save the document containing the extracted comments.
+        resultDoc.Save(outputPath);
     }
 }

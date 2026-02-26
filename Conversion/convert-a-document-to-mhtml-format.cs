@@ -6,13 +6,17 @@ class Program
 {
     static void Main()
     {
-        // Load the source document (replace with your actual file path).
+        // Load the source document. The format is detected automatically from the file extension.
         Document doc = new Document("input.docx");
 
-        // Configure save options to produce MHTML output.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml);
+        // Save the document as MHTML (Web archive) using the built‑in SaveFormat enumeration.
+        doc.Save("output.mht", SaveFormat.Mhtml);
 
-        // Save the document as an MHTML file.
-        doc.Save("output.mht", saveOptions);
+        // Optional: use HtmlSaveOptions for additional MHTML settings (e.g., CID URLs for resources).
+        // HtmlSaveOptions options = new HtmlSaveOptions(SaveFormat.Mhtml)
+        // {
+        //     ExportCidUrlsForMhtmlResources = true
+        // };
+        // doc.Save("output_with_cid.mht", options);
     }
 }

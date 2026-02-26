@@ -1,7 +1,6 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
 class InsertTableIntoRtf
 {
@@ -10,45 +9,34 @@ class InsertTableIntoRtf
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Use DocumentBuilder to simplify node insertion.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a new table.
         Table table = builder.StartTable();
 
-        // Insert first row (header).
+        // First row – two cells.
         builder.InsertCell();
-        builder.Writeln("Item");
+        builder.Write("Row 1, Cell 1");
         builder.InsertCell();
-        builder.Writeln("Quantity");
+        builder.Write("Row 1, Cell 2");
         builder.EndRow();
 
-        // Insert second row.
+        // Second row – two cells.
         builder.InsertCell();
-        builder.Writeln("Apples");
+        builder.Write("Row 2, Cell 1");
         builder.InsertCell();
-        builder.Writeln("20");
-        builder.EndRow();
-
-        // Insert third row.
-        builder.InsertCell();
-        builder.Writeln("Bananas");
-        builder.InsertCell();
-        builder.Writeln("40");
+        builder.Write("Row 2, Cell 2");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Optional: Auto‑fit the table to its contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        // Optionally set a title/description for accessibility.
+        table.Title = "Sample Table";
+        table.Description = "A simple 2x2 table inserted into an RTF document.";
 
-        // Save the document as RTF using RtfSaveOptions.
-        RtfSaveOptions saveOptions = new RtfSaveOptions
-        {
-            // Example: enable pretty formatting for readability (optional).
-            PrettyFormat = true
-        };
-        doc.Save("TableDocument.rtf", saveOptions);
+        // Save the document as RTF.
+        doc.Save("TableInRtf.rtf");
     }
 }

@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class MergeTableCells
+class MergeTableCellsExample
 {
     static void Main()
     {
@@ -13,43 +13,39 @@ class MergeTableCells
         // Start a new table.
         Table table = builder.StartTable();
 
-        // ---------- First row: horizontal merge ----------
-        // First cell – mark as the first cell in a horizontally merged range.
+        // ---------- First row ----------
+        // Cell (0,0) – start of a horizontally merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Horizontally merged cells");
+        // Also start a vertically merged range in this cell.
+        builder.CellFormat.VerticalMerge = CellMerge.First;
+        builder.Write("Merged horizontally and vertically");
 
-        // Second cell – merge with the previous cell horizontally.
+        // Cell (0,1) – merge with the previous cell horizontally.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text needed for the merged cell.
+        // No vertical merge for this cell.
+        builder.CellFormat.VerticalMerge = CellMerge.None;
+        // No text needed for merged cell.
         builder.EndRow();
 
-        // ---------- Second row: start vertical merge ----------
-        // First cell – mark as the first cell in a vertically merged range.
+        // ---------- Second row ----------
+        // Cell (1,0) – merge with the cell above vertically.
         builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.First;
-        builder.Write("Vertically merged cells");
-
-        // Second cell – normal, not merged.
-        builder.InsertCell();
-        builder.Write("Normal cell");
-        builder.EndRow();
-
-        // ---------- Third row: continue vertical merge ----------
-        // First cell – merge with the cell above vertically.
-        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
         builder.CellFormat.VerticalMerge = CellMerge.Previous;
-        // No text needed for the merged cell.
-        // Second cell – normal, not merged.
-        builder.InsertCell();
-        builder.Write("Another normal cell");
-        builder.EndRow();
+        // No text needed for merged cell.
 
-        // End the table.
+        // Cell (1,1) – independent cell.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.CellFormat.VerticalMerge = CellMerge.None;
+        builder.Write("Regular cell");
+
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document as a plain‑text file.
+        // Save the document as a plain text file.
         doc.Save("MergedTable.txt");
     }
 }

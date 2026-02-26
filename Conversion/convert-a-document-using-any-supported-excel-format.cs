@@ -2,28 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class DocumentToExcelConverter
+class Program
 {
     static void Main()
     {
-        // Path to the source document (any format supported by Aspose.Words)
-        string inputFile = "input.docx";
+        // Input Word document path (can be any supported format).
+        string inputPath = @"C:\Docs\InputDocument.docx";
 
-        // Path where the Excel file will be saved
-        string outputFile = "output.xlsx";
+        // Output Excel file path (XLSX format).
+        string outputPath = @"C:\Docs\ConvertedDocument.xlsx";
 
-        // Load the source document
-        Document doc = new Document(inputFile);
+        // Load the document using the Document constructor (lifecycle rule).
+        Document doc = new Document(inputPath);
 
-        // Configure Excel save options
+        // Configure XlsxSaveOptions (specific to Excel output).
         XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
         {
-            // Example: save all sections on a single worksheet.
-            // Change to XlsxSectionMode.MultipleWorksheets to create a worksheet per section.
-            SectionMode = XlsxSectionMode.SingleWorksheet
+            // Ensure the save format is set to Xlsx (required by the options).
+            SaveFormat = SaveFormat.Xlsx,
+
+            // Example: save each section to a separate worksheet.
+            SectionMode = XlsxSectionMode.MultipleWorksheets
         };
 
-        // Save the document as an Excel file
-        doc.Save(outputFile, xlsxOptions);
+        // Save the document to the Excel format using the Save method (lifecycle rule).
+        doc.Save(outputPath, xlsxOptions);
     }
 }

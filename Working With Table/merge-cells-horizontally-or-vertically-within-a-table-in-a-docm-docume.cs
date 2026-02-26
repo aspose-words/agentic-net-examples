@@ -1,8 +1,7 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class TableCellMergeExample
+class Program
 {
     static void Main()
     {
@@ -12,30 +11,28 @@ class TableCellMergeExample
         // Get the first table in the document.
         Table table = doc.FirstSection.Body.Tables[0];
 
-        // ---------- Horizontal merge ----------
-        // Merge the first two cells of the first row.
-        // The leftmost cell becomes the start of the merged range.
-        Cell firstCell = table.Rows[0].Cells[0];
-        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
+        // Ensure the table has at least 2 rows and 2 columns.
+        table.EnsureMinimum();
 
-        // The cell to the right merges into the previous cell.
-        Cell secondCell = table.Rows[0].Cells[1];
-        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // ---------- Horizontal merge (first row, first two cells) ----------
+        // Mark the leftmost cell as the start of the merged range.
+        Cell leftCell = table.Rows[0].Cells[0];
+        leftCell.CellFormat.HorizontalMerge = CellMerge.First;
 
-        // ---------- Vertical merge ----------
-        // Merge the first cell of the first three rows vertically.
-        // The top cell starts the merged range.
+        // Mark the cell to the right as merged with the previous cell.
+        Cell rightCell = table.Rows[0].Cells[1];
+        rightCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+        // ---------- Vertical merge (first column, first two rows) ----------
+        // Mark the top cell as the start of the vertically merged range.
         Cell topCell = table.Rows[0].Cells[0];
         topCell.CellFormat.VerticalMerge = CellMerge.First;
 
-        // The cells below merge into the previous (top) cell.
-        for (int rowIndex = 1; rowIndex <= 2; rowIndex++)
-        {
-            Cell cell = table.Rows[rowIndex].Cells[0];
-            cell.CellFormat.VerticalMerge = CellMerge.Previous;
-        }
+        // Mark the cell directly below as merged with the previous cell.
+        Cell bottomCell = table.Rows[1].Cells[0];
+        bottomCell.CellFormat.VerticalMerge = CellMerge.Previous;
 
-        // Save the modified document as a DOCM.
+        // Save the modified document as a DOCM file.
         doc.Save("Output.docm");
     }
 }

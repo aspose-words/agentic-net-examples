@@ -9,25 +9,24 @@ class Program
 {
     static void Main()
     {
-        // Create a new document and add some content.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Add some simple content.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, this is a DOCM document created with Aspose.Words.");
+        builder.Writeln("Hello, this is a DOCM document sent via email.");
 
-        // Configure save options for DOCM format.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
-
-        // Save the document to a memory stream.
+        // Save the document to a memory stream in DOCM format.
         using (MemoryStream docStream = new MemoryStream())
         {
-            doc.Save(docStream, saveOptions);
-            docStream.Position = 0; // Reset stream position for reading.
+            doc.Save(docStream, SaveFormat.Docm);
+            docStream.Position = 0; // Reset stream for reading.
 
             // Prepare the email message.
             MailMessage message = new MailMessage();
             message.From = new MailAddress("sender@example.com");
             message.To.Add("recipient@example.com");
-            message.Subject = "DOCM Document Attachment";
+            message.Subject = "DOCM Document";
             message.Body = "Please find the attached DOCM document.";
 
             // Attach the DOCM document from the memory stream.
@@ -37,15 +36,14 @@ class Program
                 "application/vnd.ms-word.document.macroEnabled.12");
             message.Attachments.Add(attachment);
 
-            // Configure the SMTP client.
-            SmtpClient smtpClient = new SmtpClient("smtp.example.com", 587)
+            // Configure the SMTP client (replace with real server details).
+            using (SmtpClient client = new SmtpClient("smtp.example.com", 587))
             {
-                EnableSsl = true,
-                Credentials = new NetworkCredential("smtp_user", "smtp_password")
-            };
+                client.Credentials = new NetworkCredential("username", "password");
+                client.EnableSsl = true;
 
-            // Send the email.
-            smtpClient.Send(message);
+                client.Send(message);
+            }
         }
     }
 }

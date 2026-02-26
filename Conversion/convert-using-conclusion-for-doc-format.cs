@@ -1,29 +1,14 @@
-// Load an existing document (any supported format) and save it as a legacy DOC file.
-using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ConvertToDoc
+class Program
 {
     static void Main()
     {
-        // Path to the source document.
-        string inputPath = @"C:\Docs\SourceDocument.docx";
+        // Load the source document. The format is detected automatically.
+        Document doc = new Document("InputDocument.docx"); // TODO: replace with your source file path
 
-        // Path where the DOC file will be saved.
-        string outputPath = @"C:\Docs\ResultDocument.doc";
-
-        // Load the document from the file system.
-        Document doc = new Document(inputPath);
-
-        // Create save options for the DOC format.
-        DocSaveOptions saveOptions = new DocSaveOptions
-        {
-            // Explicitly set the format to DOC (optional, as DocSaveOptions defaults to DOC).
-            SaveFormat = SaveFormat.Doc
-        };
-
-        // Save the document using the specified options.
-        doc.Save(outputPath, saveOptions);
+        // Save the document in the legacy Microsoft Word 97‑2007 DOC format.
+        doc.Save("ConvertedDocument.doc", SaveFormat.Doc); // TODO: replace with your desired output path
     }
 }

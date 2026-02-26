@@ -2,45 +2,37 @@ using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class InsertGroupShapeIntoJpeg
+class Program
 {
     static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
-
-        // Use DocumentBuilder to work with the document.
+        // Load an existing JPEG image as a Word document.
+        Document doc = new Document("input.jpg");
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape that will contain other shapes.
-        GroupShape group = new GroupShape(doc);
-        // Set the size and position of the group shape (in points).
-        group.Bounds = new RectangleF(0, 0, 200, 200);
-        // Make the group floating and place it at the center of the page.
-        group.WrapType = WrapType.None;
-        group.BehindText = true;
-        group.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        group.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        group.HorizontalAlignment = HorizontalAlignment.Center;
-        group.VerticalAlignment = VerticalAlignment.Center;
+        // Insert a rectangle shape.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rect.Left = 50;               // Position from the left edge of the page.
+        rect.Top = 50;                // Position from the top edge of the page.
+        rect.Stroke.Color = Color.Blue;
+        rect.Fill.ForeColor = Color.LightBlue;
 
-        // Append the group shape to the current paragraph.
-        builder.CurrentParagraph.AppendChild(group);
+        // Insert an ellipse shape.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        ellipse.Left = 300;
+        ellipse.Top = 80;
+        ellipse.Stroke.Color = Color.Green;
+        ellipse.Fill.ForeColor = Color.LightGreen;
 
-        // Create a rectangle shape to be a child of the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 100;
-        rect.Height = 100;
-        rect.Left = 0;
-        rect.Top = 0;
-        rect.FillColor = Color.LightBlue;
-        // Add the rectangle to the group.
-        group.AppendChild(rect);
+        // Group the two shapes. The group shape is inserted at the current cursor position.
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Save the document as a JPEG image.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Jpeg);
-        doc.Save("GroupShapeOutput.jpeg", saveOptions);
+        // Optionally adjust the group's position.
+        group.Left = 0;
+        group.Top = 0;
+
+        // Save the modified document back to a JPEG file.
+        doc.Save("output.jpg");
     }
 }

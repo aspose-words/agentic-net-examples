@@ -2,34 +2,26 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace DocumentToExcelSample
+namespace DocumentToExcelConversion
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            // Path to the source Word document.
-            string inputPath = @"C:\Docs\SampleDocument.docx";
+            // Load the source Word document. The constructor automatically detects the format.
+            Document doc = new Document("SampleDocument.docx");
 
-            // Path where the resulting Excel file will be saved.
-            string outputPath = @"C:\Docs\SampleDocument.xlsx";
-
-            // Load the Word document.
-            Document doc = new Document(inputPath);
-
-            // Configure save options for XLSX format.
+            // Create XlsxSaveOptions to specify Excel-specific saving behavior.
             XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
             {
-                // Save each section of the Word document to a separate worksheet.
+                // Save each Word section as a separate worksheet.
                 SectionMode = XlsxSectionMode.MultipleWorksheets,
-
-                // Optional: keep the default settings for other options.
-                // For example, you could enable pretty formatting:
-                // PrettyFormat = true
+                // Explicitly set the format to Xlsx (required by the options object).
+                SaveFormat = SaveFormat.Xlsx
             };
 
-            // Save the document as an Excel workbook using the configured options.
-            doc.Save(outputPath, xlsxOptions);
+            // Save the document as an Excel file using the configured options.
+            doc.Save("SampleDocument.xlsx", xlsxOptions);
         }
     }
 }

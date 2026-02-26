@@ -5,63 +5,101 @@ using Aspose.Words.Saving;
 
 namespace DocumentSplitExample
 {
-    // Custom callback to control the naming of each split part.
-    public class SavedDocumentPartRename : IDocumentPartSavingCallback
+    public class DocumentSplitter
     {
-        private readonly string _baseFileName;
-        private readonly DocumentSplitCriteria _criteria;
-        private int _partCounter;
-
-        public SavedDocumentPartRename(string baseFileName, DocumentSplitCriteria criteria)
+        // Splits the input DOCX document into separate HTML parts using different split criteria.
+        public void SplitByCriteria(string inputPath, string outputFolder)
         {
-            _baseFileName = baseFileName;
-            _criteria = criteria;
-            _partCounter = 0;
+            // Ensure the output directory exists.
+            Directory.CreateDirectory(outputFolder);
+
+            // Load the source document.
+            Document doc = new Document(inputPath);
+
+            // Split by section breaks.
+            SaveSplit(doc, outputFolder, "Section", DocumentSplitCriteria.SectionBreak);
+
+            // Split by page breaks.
+            SaveSplit(doc, outputFolder, "Page", DocumentSplitCriteria.PageBreak);
+
+            // Split by column breaks.
+            SaveSplit(doc, outputFolder, "Column", DocumentSplitCriteria.ColumnBreak);
+
+            // Split by heading paragraphs (default heading level = 2).
+            SaveSplit(doc, outputFolder, "Heading", DocumentSplitCriteria.HeadingParagraph);
         }
 
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+        // Helper method that configures HtmlSaveOptions and saves the document using a custom callback.
+        private void SaveSplit(Document doc, string outputFolder, string prefix, DocumentSplitCriteria criteria)
         {
-            // Determine a readable description of the split criteria.
-            string partType = _criteria switch
+            HtmlSaveOptions options = new HtmlSaveOptions
             {
-                DocumentSplitCriteria.PageBreak => "Page",
-                DocumentSplitCriteria.ColumnBreak => "Column",
-                DocumentSplitCriteria.SectionBreak => "Section",
-                DocumentSplitCriteria.HeadingParagraph => "Heading",
-                _ => "Part"
+                DocumentSplitCriteria = criteria,
+                // When splitting by headings we can limit the heading level (optional).
+                DocumentSplitHeadingLevel = criteria.HasFlag(DocumentSplitCriteria.HeadingParagraph) ? 2 : 0,
+                // Use a callback to give each part a meaningful file name.
+                DocumentPartSavingCallback = new PartRenamer(prefix, criteria, outputFolder)
             };
 
-            // Build a unique file name for the current part.
-            string partFileName = $"{_baseFileName}_part{++_partCounter}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+            // The main file name is required but will contain only the first part.
+            string mainFile = Path.Combine(outputFolder, $"{prefix}_Full.html");
+            doc.Save(mainFile, options);
+        }
 
-            // Option 1: set the file name directly.
-            args.DocumentPartFileName = partFileName;
+        // Implements IDocumentPartSavingCallback to control the naming of each split part.
+        private class PartRenamer : IDocumentPartSavingCallback
+        {
+            private readonly string _prefix;
+            private readonly DocumentSplitCriteria _criteria;
+            private readonly string _outputFolder;
+            private int _partIndex = 0;
 
-            // Option 2: provide a custom stream (uncomment if you prefer streams).
-            // args.DocumentPartStream = new FileStream(Path.Combine(Path.GetDirectoryName(_baseFileName) ?? "", partFileName), FileMode.Create);
+            public PartRenamer(string prefix, DocumentSplitCriteria criteria, string outputFolder)
+            {
+                _prefix = prefix;
+                _criteria = criteria;
+                _outputFolder = outputFolder;
+            }
+
+            void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+            {
+                // Determine a readable part type based on the split criteria.
+                string partType = _criteria switch
+                {
+                    DocumentSplitCriteria.PageBreak => "Page",
+                    DocumentSplitCriteria.ColumnBreak => "Column",
+                    DocumentSplitCriteria.SectionBreak => "Section",
+                    DocumentSplitCriteria.HeadingParagraph => "Heading",
+                    _ => "Part"
+                };
+
+                // Build a unique file name for the part.
+                string partFileName = $"{_prefix}_Part{++_partIndex}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+
+                // Set the file name.
+                args.DocumentPartFileName = partFileName;
+
+                // Write to a custom stream (demonstrates both approaches).
+                string fullPath = Path.Combine(_outputFolder, partFileName);
+                args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
+                // KeepDocumentPartStreamOpen remains false (default) – Aspose.Words will close the stream after writing.
+            }
         }
     }
 
-    class Program
+    // Entry point required for a console application.
+    public static class Program
     {
-        static void Main()
+        public static void Main(string[] args)
         {
-            // Load the source DOCX document.
-            Document doc = new Document("InputDocument.docx");
+            // Simple argument handling – you can replace these paths with your own.
+            string inputPath = args.Length > 0 ? args[0] : @"C:\Docs\Input.docx";
+            string outputFolder = args.Length > 1 ? args[1] : @"C:\Docs\Output";
 
-            // Prepare HTML save options with the desired split criteria.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions
-            {
-                // Choose one or combine multiple criteria using bitwise OR.
-                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak |
-                                        DocumentSplitCriteria.HeadingParagraph
-            };
+            var splitter = new DocumentSplitter();
+            splitter.SplitByCriteria(inputPath, outputFolder);
 
-            // Assign the custom callback to control part file names.
-            saveOptions.DocumentPartSavingCallback = new SavedDocumentPartRename("SplitDocument", saveOptions.DocumentSplitCriteria);
-
-            // Save the document; Aspose.Words will automatically split it according to the criteria.
-            doc.Save("SplitDocument.html", saveOptions);
+            Console.WriteLine($"Document split completed. Output folder: {outputFolder}");
         }
     }
 }

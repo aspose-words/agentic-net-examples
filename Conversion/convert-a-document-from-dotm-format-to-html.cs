@@ -1,34 +1,24 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class DotmToHtmlConverter
+namespace DotmToHtmlConverter
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOTM file.
-        string inputPath = @"C:\Docs\Template.dotm";
-
-        // Path where the resulting HTML file will be saved.
-        string outputPath = @"C:\Docs\Template.html";
-
-        // Load the DOTM document.
-        Document doc = new Document(inputPath);
-
-        // Configure HTML save options (optional – can be omitted for defaults).
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
+        static void Main(string[] args)
         {
-            // Example: embed images as Base64 to keep a single HTML file.
-            ExportImagesAsBase64 = true,
-            // Example: embed CSS directly into the HTML.
-            CssSavingCallback = null,
-            // Example: use XHTML 1.0 Transitional output.
-            HtmlVersion = HtmlVersion.Xhtml,
-            ExportXhtmlTransitional = true,
-            PrettyFormat = true
-        };
+            // Path to the source DOTM (macro‑enabled template) file.
+            string inputFile = @"C:\Docs\Template.dotm";
 
-        // Save the document as HTML.
-        doc.Save(outputPath, saveOptions);
+            // Path where the resulting HTML file will be saved.
+            string outputFile = @"C:\Docs\Template.html";
+
+            // Load the DOTM document using the Document(string) constructor.
+            Document doc = new Document(inputFile);
+
+            // Save the loaded document in HTML format.
+            // The Save method with (string, SaveFormat) matches the provided rule.
+            doc.Save(outputFile, SaveFormat.Html);
+        }
     }
 }

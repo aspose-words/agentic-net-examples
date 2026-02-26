@@ -1,29 +1,32 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 class WatermarkExample
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Path where the output document will be saved.
+        string outputPath = "Watermarked.docx";
+
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Configure text watermark appearance.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+        // Define options for the text watermark.
+        TextWatermarkOptions options = new TextWatermarkOptions
         {
             FontFamily = "Arial",
-            FontSize = 36,
+            FontSize = 48,
             Color = Color.Gray,
             Layout = WatermarkLayout.Diagonal,
             IsSemitrasparent = true
         };
 
-        // Add the text watermark to the document.
-        doc.Watermark.SetText("Confidential", watermarkOptions);
+        // Add the text watermark with the defined options.
+        doc.Watermark.SetText("Confidential", options);
 
-        // Save the document as a DOCX file.
-        doc.Save("Watermarked.docx", new OoxmlSaveOptions(SaveFormat.Docx));
+        // Save the document with the watermark applied.
+        doc.Save(outputPath);
     }
 }

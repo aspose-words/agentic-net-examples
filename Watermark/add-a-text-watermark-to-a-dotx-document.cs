@@ -1,30 +1,28 @@
-using System;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
+using System.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Load an existing DOTX template.
+        // Load the DOTX template
         Document doc = new Document("Template.dotx");
 
-        // Configure text watermark options.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+        // Optional: define watermark appearance
+        TextWatermarkOptions options = new TextWatermarkOptions
         {
             FontFamily = "Arial",
-            FontSize = 48,
+            FontSize = 36,
             Color = Color.Gray,
             Layout = WatermarkLayout.Diagonal,
-            IsSemitrasparent = false
+            IsSemitrasparent = true
         };
 
-        // Add the text watermark to the document.
-        doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
+        // Add a text watermark to the document
+        doc.Watermark.SetText("Confidential", options);
 
-        // Save the modified document as a DOTX file.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Dotx);
-        doc.Save("WatermarkedTemplate.dotx", saveOptions);
+        // Save the modified document, preserving the DOTX format
+        doc.Save("Template_Watermarked.dotx");
     }
 }

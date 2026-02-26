@@ -1,50 +1,30 @@
 using System;
+using System.Drawing;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using System.Drawing;
 
-namespace FindReplaceHighlightExample
+class FindReplaceWithHighlight
 {
-    // Custom callback that highlights each match found during the replace operation.
-    public class HighlightReplacer : IReplacingCallback
+    static void Main()
     {
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // Apply yellow highlight to the node that contains the match.
-            // The match may be inside a Run; ensure we get the Run node.
-            var run = args.MatchNode as Run;
-            if (run != null)
-                run.Font.HighlightColor = Color.Yellow;
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Keep the original text unchanged.
-            args.Replacement = args.Match.Value;
+        // Use DocumentBuilder to add some sample text.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This document demonstrates Aspose find and replace functionality.");
+        builder.Writeln("Aspose allows developers to work with Word documents programmatically.");
 
-            // Skip the actual replacement because we only wanted to format the existing text.
-            return ReplaceAction.Skip;
-        }
-    }
+        // Configure FindReplaceOptions to apply highlighting to the replacement text.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ApplyFont.HighlightColor = Color.Yellow; // Highlight color for the new text.
 
-    class Program
-    {
-        static void Main()
-        {
-            // Load the DOCX document.
-            Document doc = new Document("Input.docx");
+        // Perform the find-and-replace operation.
+        // Replace the word "Aspose" with "Aspose.Words" and apply the highlighting.
+        doc.Range.Replace("Aspose", "Aspose.Words", options);
 
-            // Set up find/replace options with the custom highlighting callback.
-            FindReplaceOptions options = new FindReplaceOptions();
-            options.ReplacingCallback = new HighlightReplacer();
-
-            // Define the text to find. This example uses a regular expression to find the word "sample".
-            string pattern = @"\bsample\b";
-
-            // Perform the find/replace operation. The replacement string is the same as the match,
-            // because the callback handles the highlighting.
-            doc.Range.Replace(new Regex(pattern, RegexOptions.IgnoreCase), "$0", options);
-
-            // Save the modified document.
-            doc.Save("Output.docx");
-        }
+        // Save the modified document to disk.
+        doc.Save("FindReplaceWithHighlight.docx");
     }
 }

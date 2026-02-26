@@ -1,5 +1,6 @@
+using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
 class Program
 {
@@ -8,12 +9,13 @@ class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Configure save options to use a compliance level that supports non‑primitive shapes
-        // such as group shapes (requires DML). ISO 29500 Transitional is sufficient.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
+        // Use DocumentBuilder to work with the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the document as DOCX, ready for inserting a GroupShape later.
-        doc.Save("GroupShapeReady.docx", saveOptions);
+        // Add a paragraph that will serve as the insertion point for a future group shape.
+        builder.Writeln("Insert group shape here.");
+
+        // Save the document in DOCX format.
+        doc.Save("GroupShapeReady.docx");
     }
 }

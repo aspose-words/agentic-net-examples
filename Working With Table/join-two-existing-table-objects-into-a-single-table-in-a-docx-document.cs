@@ -2,27 +2,27 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class JoinTablesExample
+class TableCombiner
 {
     static void Main()
     {
-        // Load the existing DOCX document.
+        // Load the document that contains the two tables.
         Document doc = new Document("Input.docx");
 
-        // Access the first two tables in the document.
-        // Adjust the indices if the tables are located elsewhere.
+        // Get the first table from the document's body.
         Table firstTable = doc.FirstSection.Body.Tables[0];
-        Table secondTable = doc.FirstSection.Body.Tables[1];
 
-        // Append all rows from the second table to the first table.
-        // Clone each row to keep the original table intact until removal.
-        foreach (Row row in secondTable.Rows)
+        // Get the second table using the GetChild method (index 1 = second table).
+        Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
+
+        // Move all rows from the second table to the first table.
+        while (secondTable.HasChildNodes)
         {
-            Row clonedRow = (Row)row.Clone(true);
-            firstTable.Rows.Add(clonedRow);
+            // Add the first row of the second table to the first table.
+            firstTable.Rows.Add(secondTable.FirstRow);
         }
 
-        // Remove the now redundant second table from the document.
+        // Remove the now empty second table from the document.
         secondTable.Remove();
 
         // Save the modified document.

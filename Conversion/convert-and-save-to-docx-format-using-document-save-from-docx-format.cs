@@ -1,20 +1,16 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load an existing document (any supported format, e.g., PDF, DOC, etc.).
+        // Load an existing document. The source can be any format supported by Aspose.Words.
+        // Replace the path with the actual file you want to convert.
         Document doc = new Document("input.pdf");
 
-        // Save the document as DOCX using the SaveFormat enumeration.
+        // Save the document in DOCX format.
+        // The Save method overload with (string, SaveFormat) is used as defined in the Aspose.Words API.
         doc.Save("output.docx", SaveFormat.Docx);
-
-        // Optionally, use OoxmlSaveOptions for additional control (e.g., compression level).
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        // saveOptions.CompressionLevel = CompressionLevel.Maximum; // Uncomment to set compression.
-        doc.Save("output_with_options.docx", saveOptions);
     }
 }

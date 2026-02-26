@@ -10,55 +10,38 @@ class BarcodeExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a MERGEBARCODE field (the field that supports all barcode options).
-        // The second argument (true) inserts the field result placeholder.
-        builder.InsertField(FieldType.FieldMergeBarcode, true);
+        // Insert a MERGEBARCODE field that will generate a QR code.
+        FieldMergeBarcode mergeBarcode = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+        mergeBarcode.BarcodeType = "QR";
+        mergeBarcode.BarcodeValue = "Sample123";
 
-        // The newly inserted field is the last field in the document.
-        FieldMergeBarcode barcodeField = (FieldMergeBarcode)doc.Range.Fields[doc.Range.Fields.Count - 1];
+        // Optional appearance settings – colors must be supplied as strings (hex values without the 0x prefix).
+        mergeBarcode.BackgroundColor = "F8BD69"; // Light orange background.
+        mergeBarcode.ForegroundColor = "B5413B"; // Dark red bars.
+        mergeBarcode.ErrorCorrectionLevel = "3";
+        mergeBarcode.ScalingFactor = "250";
+        mergeBarcode.SymbolHeight = "1000";
+        mergeBarcode.SymbolRotation = "0";
 
-        // Set barcode options – all properties are strings according to the API.
-        barcodeField.BarcodeType = "QR";                     // QR code.
-        barcodeField.BarcodeValue = "ABC123";               // Data to encode.
-        barcodeField.BackgroundColor = "0xF8BD69";          // Background color (hex RGB as string).
-        barcodeField.ForegroundColor = "0xB5413B";          // Foreground color (hex RGB as string).
-        barcodeField.ErrorCorrectionLevel = "3";           // QR error correction level (0‑3) as string.
-        barcodeField.ScalingFactor = "250";                // Scaling factor (percentage) as string.
-        barcodeField.SymbolHeight = "1000";                // Height in TWIPS as string.
-        barcodeField.SymbolRotation = "0";                 // Rotation (0‑3) as string.
+        // Add a paragraph break after the field.
+        builder.Writeln();
 
-        // Update fields to generate the barcode image.
-        doc.UpdateFields();
-
-        // Save the document with the barcode.
-        doc.Save("BarcodeDocument.docx");
+        // Save the document as DOCX.
+        doc.Save("BarcodeMerge.docx");
 
         // -----------------------------------------------------------------
-        // Load the saved document and add another barcode (CODE39) to it.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document("BarcodeDocument.docx");
-        DocumentBuilder loadedBuilder = new DocumentBuilder(loadedDoc);
+        // Load the saved document and add a DISPLAYBARCODE field that shows a CODE39 barcode.
+        Document loadedDoc = new Document("BarcodeMerge.docx");
+        DocumentBuilder loadBuilder = new DocumentBuilder(loadedDoc);
+        loadBuilder.MoveToDocumentEnd();
 
-        // Move the cursor to the end of the document.
-        loadedBuilder.MoveToDocumentEnd();
+        // Insert a DISPLAYBARCODE field.
+        FieldDisplayBarcode displayBarcode = (FieldDisplayBarcode)loadBuilder.InsertField(FieldType.FieldDisplayBarcode, true);
+        displayBarcode.BarcodeType = "CODE39";
+        displayBarcode.BarcodeValue = "12345ABCDE";
+        displayBarcode.AddStartStopChar = true; // Show start/stop characters.
 
-        // Insert a paragraph break before the new barcode.
-        loadedBuilder.Writeln();
-
-        // Insert a MERGEBARCODE field for CODE39.
-        loadedBuilder.InsertField(FieldType.FieldMergeBarcode, true);
-        FieldMergeBarcode code39Field = (FieldMergeBarcode)loadedDoc.Range.Fields[loadedDoc.Range.Fields.Count - 1];
-
-        // Set CODE39 barcode options.
-        code39Field.BarcodeType = "CODE39";
-        code39Field.BarcodeValue = "12345ABCDE";
-        code39Field.AddStartStopChar = true;   // Add start/stop characters.
-        code39Field.DisplayText = true;       // Show the encoded text below the barcode.
-
-        // Update fields to render the new barcode.
-        loadedDoc.UpdateFields();
-
-        // Save the updated document.
-        loadedDoc.Save("BarcodeDocument_WithSecondBarcode.docx");
+        // Save the modified document.
+        loadedDoc.Save("BarcodeDisplay.docx");
     }
 }

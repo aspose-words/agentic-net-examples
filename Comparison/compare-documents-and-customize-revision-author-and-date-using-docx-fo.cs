@@ -1,47 +1,33 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
-using Aspose.Words.Saving;
 
-class CompareDocuments
+class Program
 {
     static void Main()
     {
-        // Load the original and edited documents.
-        Document docOriginal = new Document("Original.docx");
-        Document docEdited = new Document("Edited.docx");
+        // Create the original document and add some content.
+        Document docOriginal = new Document();
+        DocumentBuilder builder = new DocumentBuilder(docOriginal);
+        builder.Writeln("This is the original document.");
 
-        // Set up comparison options.
-        CompareOptions compareOptions = new CompareOptions
+        // Create the edited document and add modified content.
+        Document docEdited = new Document();
+        builder = new DocumentBuilder(docEdited);
+        builder.Writeln("This is the edited document.");
+
+        // Ensure both documents have no revisions before performing the comparison.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            CompareMoves = false,
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
-            Target = ComparisonTargetType.New
-        };
+            // Define custom author initials and revision date.
+            string author = "JD"; // Author initials.
+            DateTime revisionDate = new DateTime(2023, 12, 31, 15, 30, 0); // Custom date and time.
 
-        // Define custom author and date for the revisions.
-        string customAuthor = "Alice Smith";
-        DateTime customDate = new DateTime(2023, 12, 31, 10, 30, 0);
-
-        // Perform the comparison; revisions will be created with the specified author and date.
-        docOriginal.Compare(docEdited, customAuthor, customDate, compareOptions);
-
-        // Ensure all revisions have the desired author and date (in case defaults were used).
-        foreach (Revision rev in docOriginal.Revisions)
-        {
-            rev.Author = customAuthor;
-            rev.DateTime = customDate;
+            // Compare the documents. The resulting revisions will carry the specified author and date.
+            docOriginal.Compare(docEdited, author, revisionDate);
         }
 
-        // Save the resulting document as DOCX using OoxmlSaveOptions.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        docOriginal.Save("ComparedResult.docx", saveOptions);
+        // Save the document that now contains the revisions.
+        docOriginal.Save("ComparedResult.docx");
     }
 }

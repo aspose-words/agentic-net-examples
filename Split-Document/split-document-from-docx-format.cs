@@ -2,12 +2,12 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class SplitDocumentExample
+class Program
 {
     static void Main()
     {
-        // Load the source DOCX file.
-        Document doc = new Document("InputDocument.docx");
+        // Load the source DOCX document.
+        Document doc = new Document("input.docx");
 
         // Configure HTML save options to split the document at each section break.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions
@@ -15,7 +15,8 @@ class SplitDocumentExample
             DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak
         };
 
-        // Save the document; each section will be written to a separate HTML file.
-        doc.Save("OutputDocument.html", saveOptions);
+        // Save the document. The split criteria causes Aspose.Words to generate
+        // separate HTML files for each section (e.g., output.html, output-01.html, etc.).
+        doc.Save("output.html", saveOptions);
     }
 }

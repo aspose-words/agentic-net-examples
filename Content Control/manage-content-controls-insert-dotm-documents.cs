@@ -1,62 +1,42 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsDemo
 {
-    static void Main()
+    class Program
     {
-        // Load the source DOTM template that we want to insert.
-        Document sourceTemplate = new Document(@"C:\Templates\MyTemplate.dotm");
-
-        // Create a new blank document that will receive the content.
-        Document destination = new Document();
-
-        // Initialize a DocumentBuilder for the destination document.
-        DocumentBuilder builder = new DocumentBuilder(destination);
-
-        // ------------------------------------------------------------
-        // Create a rich‑text content control (structured document tag).
-        // The DocumentBuilder class does not expose an InsertContentControl
-        // method in older/standard Aspose.Words versions, so we instantiate
-        // the StructuredDocumentTag directly and insert it into the document.
-        // ------------------------------------------------------------
-        StructuredDocumentTag sdt = new StructuredDocumentTag(
-            destination,               // the owner document
-            SdtType.RichText,          // type of the content control
-            MarkupLevel.Block);        // block‑level control (behaves like a paragraph)
-
-        // Insert the content control at the current cursor position.
-        builder.InsertNode(sdt);
-        // Move the builder inside the newly created control so that any further
-        // inserted nodes become children of the control.
-        builder.MoveTo(sdt);
-
-        sdt.Title = "InsertedTemplate";
-        sdt.Tag = "TemplateTag";
-
-        // Prepare a NodeImporter to copy nodes from the source template to the destination document.
-        NodeImporter importer = new NodeImporter(sourceTemplate, destination, ImportFormatMode.KeepSourceFormatting);
-
-        // Import all nodes from the body of the first section of the source template
-        // and add them as children of the content control.
-        foreach (Node node in sourceTemplate.FirstSection.Body)
+        static void Main()
         {
-            // Skip the final empty paragraph that Word adds to each section.
-            if (node.NodeType == NodeType.Paragraph)
-            {
-                Paragraph para = (Paragraph)node;
-                if (para.IsEndOfSection && !para.HasChildNodes)
-                    continue;
-            }
+            // Load the DOTM template that we want to insert.
+            // The file must exist at the specified path.
+            Document dotmTemplate = new Document(@"C:\Templates\MyTemplate.dotm");
 
-            Node importedNode = importer.ImportNode(node, true);
-            sdt.AppendChild(importedNode);
+            // Create a new blank document that will receive the content.
+            Document destination = new Document();
+
+            // Initialize a DocumentBuilder for the destination document.
+            DocumentBuilder builder = new DocumentBuilder(destination);
+
+            // Write some text before the content control.
+            builder.Writeln("Document start.");
+
+            // Insert a plain‑text content control (StructuredDocumentTag) into the document.
+            // This will act as the placeholder where the DOTM content will be placed.
+            StructuredDocumentTag contentControl = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+
+            // Write some text after the content control (optional, just for demonstration).
+            builder.Writeln("Document end.");
+
+            // Move the builder's cursor to the start of the content control.
+            builder.MoveTo(contentControl);
+
+            // Insert the DOTM document at the current cursor position.
+            // KeepSourceFormatting preserves the original formatting of the template.
+            builder.InsertDocument(dotmTemplate, ImportFormatMode.KeepSourceFormatting);
+
+            // Save the resulting document.
+            destination.Save(@"C:\Output\Result.docx");
         }
-
-        // Save the resulting document. Use OoxmlSaveOptions to specify the format explicitly.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        destination.Save(@"C:\Output\DocumentWithInsertedTemplate.docx", saveOptions);
     }
 }

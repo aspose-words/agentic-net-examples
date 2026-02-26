@@ -1,43 +1,44 @@
 using System;
 using System.Text;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-class ExtractBetweenNodes
+namespace AsposeWordsExtractBetweenNodes
 {
-    static void Main()
+    class Program
     {
-        // Load the DOCX file.
-        Document doc = new Document("Input.docx");
-
-        // Identify the start and end nodes.
-        // For example, get the 3rd paragraph as the start node and the 6th paragraph as the end node.
-        // Adjust the logic as needed (e.g., use bookmarks, headings, etc.).
-        Node startNode = doc.GetChild(NodeType.Paragraph, 2, true); // zero‑based index
-        Node endNode   = doc.GetChild(NodeType.Paragraph, 5, true);
-
-        if (startNode == null || endNode == null)
+        static void Main()
         {
-            Console.WriteLine("Start or end node not found.");
-            return;
+            // Load the source DOCX file.
+            Document srcDoc = new Document("input.docx");
+
+            // Example: extract all content that lies between the 2nd and 5th paragraphs (inclusive start, exclusive end).
+            // Adjust the indices as needed for your specific scenario.
+            Paragraph startParagraph = (Paragraph)srcDoc.GetChild(NodeType.Paragraph, 1, true); // 0‑based index
+            Paragraph endParagraph   = (Paragraph)srcDoc.GetChild(NodeType.Paragraph, 4, true);
+
+            // Collect the text of every node that appears after the start node and before the end node.
+            StringBuilder extractedText = new StringBuilder();
+            Node curNode = startParagraph.NextSibling;
+
+            while (curNode != null && curNode != endParagraph)
+            {
+                // GetText() returns the text of the node and its children.
+                extractedText.Append(curNode.GetText());
+                curNode = curNode.NextSibling;
+            }
+
+            // Output the extracted text to the console.
+            Console.WriteLine("Extracted content between the specified nodes:");
+            Console.WriteLine(extractedText.ToString());
+
+            // Optionally, create a new document that contains only the extracted content.
+            Document resultDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(resultDoc);
+            builder.Writeln(extractedText.ToString());
+
+            // Save the new document.
+            resultDoc.Save("extracted_content.docx");
         }
-
-        // Collect text from the start node up to and including the end node.
-        StringBuilder extractedText = new StringBuilder();
-
-        for (Node cur = startNode; cur != null; cur = cur.NextSibling)
-        {
-            extractedText.Append(cur.GetText());
-
-            // Stop after processing the end node.
-            if (cur == endNode)
-                break;
-        }
-
-        // Output the extracted content.
-        Console.WriteLine("Extracted text between nodes:");
-        Console.WriteLine(extractedText.ToString());
-
-        // Optionally, save the extracted text to a file.
-        System.IO.File.WriteAllText("ExtractedContent.txt", extractedText.ToString());
     }
 }

@@ -3,35 +3,39 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class FindAndReplaceExample
+class FindAndReplaceDemo
 {
     static void Main()
     {
-        // Load the existing DOCX document.
+        // Load the existing DOCX file.
         Document doc = new Document("Input.docx");
 
-        // Simple text replace: replace all occurrences of "oldText" with "newText".
-        doc.Range.Replace("oldText", "newText");
+        // Simple string replace (case‑insensitive, whole document).
+        // Replaces all occurrences of the placeholder "_FullName_" with "John Doe".
+        int count = doc.Range.Replace("_FullName_", "John Doe");
+        Console.WriteLine($"Simple replace made {count} replacements.");
 
-        // Regex replace: replace any word "Sample" followed by digits with "Example".
-        FindReplaceOptions options = new FindReplaceOptions();
-        // Example of using a callback to log each replacement.
-        options.ReplacingCallback = new LogReplacementCallback();
+        // Example of using FindReplaceOptions to control the replace operation.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            // Perform a case‑sensitive replace.
+            MatchCase = true,
+            // Replace only whole words.
+            FindWholeWordsOnly = true,
+            // Apply a paragraph format to paragraphs that contain a match.
+            ApplyParagraphFormat = { Alignment = ParagraphAlignment.Right }
+        };
 
-        doc.Range.Replace(new Regex(@"Sample\d+"), "Example", options);
+        // Replace every occurrence of "Important" with "Critical" using the options above.
+        int advancedCount = doc.Range.Replace("Important", "Critical", options);
+        Console.WriteLine($"Advanced replace made {advancedCount} replacements.");
+
+        // Example of a regular‑expression replace.
+        // Replace any sequence of digits with a paragraph break.
+        int regexCount = doc.Range.Replace(new Regex(@"\d+"), "&p", options);
+        Console.WriteLine($"Regex replace made {regexCount} replacements.");
 
         // Save the modified document.
         doc.Save("Output.docx");
-    }
-
-    // Callback that logs each replacement and demonstrates returning ReplaceAction.Replace.
-    private class LogReplacementCallback : IReplacingCallback
-    {
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
-        {
-            Console.WriteLine($"Replacing \"{args.Match.Value}\" with \"{args.Replacement}\" at offset {args.MatchOffset}.");
-            // The replacement text is already set in args.Replacement, so just proceed.
-            return ReplaceAction.Replace;
-        }
     }
 }

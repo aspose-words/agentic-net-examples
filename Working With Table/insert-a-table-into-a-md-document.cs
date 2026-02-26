@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Tables;
@@ -9,42 +10,37 @@ class Program
         // Create a new empty document.
         Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document for building content.
+        // Associate a DocumentBuilder with the document for easy content insertion.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a heading before the table.
-        builder.Writeln("Sample table:");
-
-        // Start a new table.
+        // Start a new table. The builder's cursor is now inside the table.
         Table table = builder.StartTable();
 
-        // ---- First row ----
-        builder.InsertCell();                                   // First cell.
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Right;
-        builder.Write("Cell1");                                 // Write content.
-        builder.InsertCell();                                   // Second cell.
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.Write("Cell2");
-        builder.EndRow();                                       // End first row.
+        // ---------- First row (header) ----------
+        builder.InsertCell();               // First cell of the row.
+        builder.Write("Header 1");          // Insert text into the cell.
+        builder.InsertCell();               // Second cell of the row.
+        builder.Write("Header 2");
+        builder.EndRow();                   // Complete the first row.
 
-        // ---- Second row ----
+        // ---------- Second row ----------
         builder.InsertCell();
-        builder.Write("Data1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Data2");
-        builder.EndRow();                                       // End second row.
+        builder.Write("Cell 2");
+        builder.EndRow();                   // Complete the second row.
 
         // Finish the table.
         builder.EndTable();
 
-        // Prepare Markdown save options.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
+        // Configure Markdown save options (optional: set alignment, etc.).
+        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+        {
+            // Example: align all table contents to the left when exporting.
+            // TableContentAlignment = TableContentAlignment.Left
+        };
 
-        // Optionally export tables as raw HTML within the Markdown.
-        // Uncomment the following line if raw HTML tables are desired:
-        // saveOptions.ExportAsHtml = MarkdownExportAsHtml.Tables;
-
-        // Save the document as a Markdown file.
+        // Save the document as a Markdown file. The table will be exported in Markdown format.
         doc.Save("TableDocument.md", saveOptions);
     }
 }

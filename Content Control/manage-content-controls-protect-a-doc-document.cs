@@ -1,25 +1,21 @@
+using System;
 using Aspose.Words;
-using Aspose.Words.Settings;
+using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Load an existing Word document.
+        Document doc = new Document("input.docx");
 
-        // Insert some sample text.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document is protected. Only comments can be edited.");
+        // Apply read‑only protection with a password.
+        // This prevents editing in Microsoft Word unless the password is supplied.
+        doc.Protect(ProtectionType.ReadOnly, "MyPassword");
 
-        // Apply document protection that allows only comments, with a password.
-        doc.Protect(ProtectionType.AllowOnlyComments, "SecretPwd");
-
-        // Set write‑protection settings (optional).
-        doc.WriteProtection.SetPassword("WritePwd");
-        doc.WriteProtection.ReadOnlyRecommended = true;
-
-        // Save the protected document.
-        doc.Save("ProtectedDocument.docx");
+        // Save the protected document in the legacy DOC format.
+        // DocSaveOptions allows us to specify the target format explicitly.
+        DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
+        doc.Save("output.doc", saveOptions);
     }
 }

@@ -6,40 +6,28 @@ class Program
 {
     static void Main()
     {
-        // Load the existing DOCX document.
+        // Load the DOCX document.
         Document doc = new Document("Input.docx");
 
         // Text to find and its replacement.
-        string oldText = "OldCompany";
-        string newText = "NewCompany";
+        const string pattern = "_Company_";
+        const string replacement = "Contoso Ltd.";
 
-        // Replace the text in built‑in document properties.
+        // Replace occurrences in built‑in document properties.
         foreach (DocumentProperty prop in doc.BuiltInDocumentProperties)
         {
-            // Only string‑type properties can be processed with Replace.
-            if (prop.Type == PropertyType.String && prop.Value != null)
-            {
-                string value = prop.Value.ToString();
-                if (value.Contains(oldText))
-                    prop.Value = value.Replace(oldText, newText);
-            }
+            if (prop.Value is string str && str.Contains(pattern))
+                prop.Value = str.Replace(pattern, replacement);
         }
 
-        // Replace the text in custom document properties.
+        // Replace occurrences in custom document properties.
         foreach (DocumentProperty prop in doc.CustomDocumentProperties)
         {
-            if (prop.Type == PropertyType.String && prop.Value != null)
-            {
-                string value = prop.Value.ToString();
-                if (value.Contains(oldText))
-                    prop.Value = value.Replace(oldText, newText);
-            }
+            if (prop.Value is string str && str.Contains(pattern))
+                prop.Value = str.Replace(pattern, replacement);
         }
 
-        // Refresh any DOCPROPERTY fields that display the changed values.
-        doc.UpdateFields();
-
-        // Save the modified document.
+        // Save the updated document.
         doc.Save("Output.docx");
     }
 }

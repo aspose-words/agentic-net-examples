@@ -3,28 +3,28 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class AddWatermarkToRtf
+class Program
 {
     static void Main()
     {
-        // Load an existing RTF document.
-        Document doc = new Document("input.rtf");
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Configure text watermark options.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+        // Configure watermark appearance.
+        TextWatermarkOptions options = new TextWatermarkOptions
         {
             FontFamily = "Arial",
-            FontSize = 36,
+            FontSize = 48,
             Color = Color.Gray,
             Layout = WatermarkLayout.Diagonal,
             IsSemitrasparent = false
         };
 
-        // Add the text watermark to the document.
-        doc.Watermark.SetText("Confidential", watermarkOptions);
+        // Add a text watermark to the document.
+        doc.Watermark.SetText("CONFIDENTIAL", options);
 
         // Save the document as RTF using RtfSaveOptions.
-        RtfSaveOptions saveOptions = new RtfSaveOptions();
-        doc.Save("output.rtf", saveOptions);
+        RtfSaveOptions rtfOptions = new RtfSaveOptions();
+        doc.Save("WatermarkedDocument.rtf", rtfOptions);
     }
 }

@@ -1,59 +1,71 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Vba;
+using Aspose.Words.Saving;
 
-class VbaDocumentProcessor
+class VbaMacroDemo
 {
     static void Main()
     {
-        // Load the original DOCX (macro‑enabled) document.
-        Document originalDoc = new Document("Original.docx");
+        // Path to the original document that may contain VBA macros.
+        string sourcePath = @"C:\Docs\SourceWithMacros.docx";
 
-        // Clone the whole document, including its VBA project.
-        Document clonedDoc = (Document)originalDoc.Clone();
-        if (originalDoc.HasMacros)
-        {
-            // Clone the VBA project and assign it to the cloned document.
-            VbaProject clonedVba = originalDoc.VbaProject.Clone();
-            clonedDoc.VbaProject = clonedVba;
-        }
+        // Load the source document.
+        Document sourceDoc = new Document(sourcePath);
 
-        // Load documents that will be inserted and appended.
-        Document docToInsert = new Document("Insert.docx");
-        Document docToAppend = new Document("Append.docx");
+        // Check if the document has macros.
+        bool hasMacros = sourceDoc.HasMacros;
+        Console.WriteLine($"Source document has macros: {hasMacros}");
 
-        // Insert the document at the beginning of the cloned document.
+        // Clone the loaded document (deep copy).
+        Document clonedDoc = (Document)sourceDoc.Clone(true);
+
+        // -----------------------------------------------------------------
+        // Insert another document into the cloned document at the current cursor.
+        // -----------------------------------------------------------------
+        string insertPath = @"C:\Docs\InsertDoc.docx";
+        Document insertDoc = new Document(insertPath);
+
+        // Use DocumentBuilder to position the cursor and insert the document.
         DocumentBuilder builder = new DocumentBuilder(clonedDoc);
-        builder.MoveToDocumentStart();
-        builder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
+        builder.MoveToDocumentEnd(); // Move cursor to the end of the cloned document.
+        builder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Append the document at the end of the cloned document.
-        clonedDoc.AppendDocument(docToAppend, ImportFormatMode.KeepSourceFormatting);
+        // -----------------------------------------------------------------
+        // Append a third document to the end of the cloned document.
+        // -----------------------------------------------------------------
+        string appendPath = @"C:\Docs\AppendDoc.docx";
+        Document appendDoc = new Document(appendPath);
+        clonedDoc.AppendDocument(appendDoc, ImportFormatMode.UseDestinationStyles);
 
-        // Split the resulting document into separate files, one per section.
-        for (int i = 0; i < clonedDoc.Sections.Count; i++)
+        // -----------------------------------------------------------------
+        // Save the combined document.
+        // -----------------------------------------------------------------
+        string combinedPath = @"C:\Docs\CombinedResult.docx";
+        clonedDoc.Save(combinedPath);
+
+        // -----------------------------------------------------------------
+        // Split the combined document into individual pages.
+        // Each page is saved as a separate DOCX file.
+        // -----------------------------------------------------------------
+        int totalPages = clonedDoc.PageCount;
+        for (int pageIndex = 1; pageIndex <= totalPages; pageIndex++)
         {
-            // Create a new empty document.
-            Document splitDoc = new Document();
-
-            // Import the current section into the new document.
-            NodeImporter importer = new NodeImporter(clonedDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
-            Section importedSection = (Section)importer.ImportNode(clonedDoc.Sections[i], true);
-            splitDoc.Sections.Clear(); // Remove the default empty section.
-            splitDoc.Sections.Add(importedSection);
-
-            // Preserve the VBA project in each split document if needed.
-            if (clonedDoc.HasMacros)
-            {
-                splitDoc.VbaProject = clonedDoc.VbaProject.Clone();
-            }
-
-            // Save the split document.
-            string outFileName = $"Split_Part_{i + 1}.docx";
-            splitDoc.Save(outFileName);
+            // ExtractPages uses 1‑based page numbers.
+            Document pageDoc = clonedDoc.ExtractPages(pageIndex, pageIndex);
+            string pagePath = $@"C:\Docs\Page_{pageIndex}.docx";
+            pageDoc.Save(pagePath);
         }
 
-        // Finally, save the combined cloned document.
-        clonedDoc.Save("CombinedResult.docx");
+        // -----------------------------------------------------------------
+        // Optional: Remove macros from the combined document and save.
+        // -----------------------------------------------------------------
+        if (clonedDoc.HasMacros)
+        {
+            clonedDoc.RemoveMacros();
+            string noMacroPath = @"C:\Docs\Combined_NoMacros.docx";
+            clonedDoc.Save(noMacroPath);
+        }
+
+        Console.WriteLine("Processing completed.");
     }
 }

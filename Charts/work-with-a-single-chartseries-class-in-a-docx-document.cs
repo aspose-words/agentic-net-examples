@@ -1,53 +1,46 @@
 using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;          // <-- added
+using Aspose.Words.Drawing; // Added for Shape
 using Aspose.Words.Drawing.Charts;
 
-class ChartSeriesExample
+class Program
 {
     static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the document.
+        // Insert a column chart with a width of 500 points and a height of 300 points.
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series so we can start with a clean chart.
+        // Remove the default demo series that Aspose.Words adds to a new chart.
         chart.Series.Clear();
 
-        // Define categories (X axis) and corresponding Y values for a single series.
-        string[] categories = new string[] { "Q1", "Q2", "Q3", "Q4" };
-        double[] values = new double[] { 1200, 1500, 1100, 1700 };
+        // Define the categories (X‑axis) and the corresponding values (Y‑axis) for a single series.
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        double[] values = { 120.5, 150.0, 130.2, 170.8 };
 
-        // Add one series to the chart.
+        // Add a single series to the chart.
+        // This uses the overload: Add(string seriesName, string[] categories, double[] values)
         ChartSeries series = chart.Series.Add("Revenue", categories, values);
 
-        // Apply formatting to the whole series (line weight and fill color).
-        series.Format.Stroke.Weight = 2.5;
-        series.Format.Fill.Solid(Color.LightBlue);
+        // Set the fill color of the series to green.
+        series.Format.Fill.ForeColor = Color.Green;
 
-        // Find the index of the maximum value to highlight it.
-        int maxIndex = 0;
-        double maxValue = values[0];
-        for (int i = 1; i < values.Length; i++)
+        // Enable data labels for the series and configure them to show the value.
+        series.HasDataLabels = true;
+        // Apply the same label settings to all data points in the series.
+        for (int i = 0; i < series.DataLabels.Count; i++)
         {
-            if (values[i] > maxValue)
-            {
-                maxValue = values[i];
-                maxIndex = i;
-            }
+            series.DataLabels[i].ShowValue = true;
+            series.DataLabels[i].ShowCategoryName = false;
+            series.DataLabels[i].ShowSeriesName = false;
         }
 
-        // Highlight the maximum data point with a red diamond marker.
-        series.DataPoints[maxIndex].Marker.Symbol = MarkerSymbol.Diamond;
-        series.DataPoints[maxIndex].Marker.Size = 12;
-        series.DataPoints[maxIndex].Format.Fill.Color = Color.Red;
-
-        // Save the document containing the chart.
-        doc.Save("ChartSeriesSingle.docx");
+        // Save the document to a DOCX file.
+        doc.Save("ChartSeriesExample.docx");
     }
 }

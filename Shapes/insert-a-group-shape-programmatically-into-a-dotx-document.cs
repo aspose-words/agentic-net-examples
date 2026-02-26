@@ -1,46 +1,41 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class InsertGroupShapeExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Load an existing DOTX template (lifecycle rule: load)
+        Document doc = new Document("Template.dotx");
 
-        // Use DocumentBuilder to work with the document's content.
+        // Create a DocumentBuilder to work with the document
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Ensure there is a paragraph to host the group shape.
-        builder.Writeln("Paragraph before the group shape.");
+        // Insert a rectangle shape
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rect.Left = 50;               // position within the page
+        rect.Top = 50;
+        rect.Stroke.Color = Color.Blue;
 
-        // Create a new group shape associated with the document.
-        GroupShape group = new GroupShape(doc);
+        // Insert an ellipse shape
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        ellipse.Left = 120;
+        ellipse.Top = 80;
+        ellipse.Stroke.Color = Color.Green;
 
-        // Define the size and position of the group shape (in points).
-        // Bounds: X, Y, Width, Height.
-        group.Bounds = new RectangleF(0, 0, 200, 200);
+        // Group the two shapes; the group size and position are calculated automatically
+        // (feature rule: InsertGroupShape(params ShapeBase[]))
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Example: add a rectangle shape as a child of the group.
-        Shape childRect = new Shape(doc, ShapeType.Rectangle);
-        childRect.Width = 100;   // width in points
-        childRect.Height = 50;   // height in points
-        childRect.Left = 20;     // position relative to the group's top‑left corner
-        childRect.Top = 30;
-        childRect.WrapType = WrapType.None; // floating shape inside the group
+        // Optional: adjust group properties (e.g., make it floating and positioned at the page origin)
+        group.WrapType = WrapType.None;
+        group.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        group.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        group.Left = 0;
+        group.Top = 0;
 
-        // Append the child shape to the group.
-        group.AppendChild(childRect);
-
-        // Insert the group shape into the current paragraph.
-        builder.CurrentParagraph.AppendChild(group);
-
-        // Add another paragraph after the group shape.
-        builder.Writeln("Paragraph after the group shape.");
-
-        // Save the document as a DOTX template.
-        doc.Save("GroupShape.dotx", SaveFormat.Dotx);
+        // Save the modified document as a DOTX file (lifecycle rule: save)
+        doc.Save("Result.dotx");
     }
 }

@@ -1,73 +1,62 @@
 using System;
 using System.IO;
 using System.Net.Mail;
-using System.Net.Mime;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class MhtmlEmailHelper
+class Program
 {
-    // Converts a Word document to MHTML and returns it as a Mail attachment.
-    public static Attachment ConvertToMhtmlAttachment(string sourceDocPath, string attachmentName)
+    static void Main()
     {
-        // Load the source document.
+        // Path to the source Word document.
+        string sourceDocPath = @"C:\Docs\SourceDocument.docx";
+
+        // Path where the MHTML file will be saved.
+        string mhtmlPath = @"C:\Docs\ConvertedDocument.mht";
+
+        // Load the Word document using the Document constructor (lifecycle rule).
         Document doc = new Document(sourceDocPath);
 
-        // Configure MHTML save options.
+        // Create HtmlSaveOptions for MHTML format.
+        // The constructor with SaveFormat argument follows the provided rule.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
-            // Embed resources (images, fonts, CSS) using CID URLs so the MHTML is self‑contained.
+            // Use CID URLs for resources to improve compatibility with email clients.
             ExportCidUrlsForMhtmlResources = true,
-            // Optional: set the encoding to UTF‑8 without BOM.
-            Encoding = new System.Text.UTF8Encoding(false)
+            // Optional: make the output more readable.
+            PrettyFormat = true
         };
 
-        // Save the document to a memory stream using the configured options.
-        MemoryStream mhtmlStream = new MemoryStream();
-        doc.Save(mhtmlStream, saveOptions);
-        mhtmlStream.Position = 0; // Reset stream position for reading.
+        // Save the document as MHTML using the Save method that accepts SaveOptions.
+        doc.Save(mhtmlPath, saveOptions);
 
-        // Create the email attachment from the MHTML stream.
-        // The content type for MHTML is "multipart/related".
-        Attachment attachment = new Attachment(mhtmlStream, attachmentName, "multipart/related");
-        // Ensure the stream stays at the beginning when the attachment is read.
-        attachment.ContentStream.Position = 0;
-        return attachment;
-    }
-
-    // Example usage.
-    public static void Main()
-    {
-        // Path to the source .docx file.
-        string docPath = @"C:\Docs\Sample.docx";
-
-        // Desired name for the attachment (including extension).
-        string attachmentFileName = "Sample.mhtml";
-
-        // Convert and obtain the attachment.
-        Attachment mhtmlAttachment = ConvertToMhtmlAttachment(docPath, attachmentFileName);
-
-        // Create a simple email message.
-        MailMessage message = new MailMessage
+        // Prepare an email with the MHTML file as an attachment.
+        using (MailMessage mail = new MailMessage())
         {
-            From = new MailAddress("sender@example.com"),
-            Subject = "Document as MHTML",
-            Body = "Please find the document attached."
-        };
-        message.To.Add("recipient@example.com");
-        message.Attachments.Add(mhtmlAttachment);
+            mail.From = new MailAddress("sender@example.com");
+            mail.To.Add("recipient@example.com");
+            mail.Subject = "Converted Document";
+            mail.Body = "Please find the converted MHTML document attached.";
 
-        // Configure SMTP client (replace with real credentials and host).
-        using (SmtpClient smtp = new SmtpClient("smtp.example.com"))
-        {
-            smtp.Port = 587;
-            smtp.EnableSsl = true;
-            // smtp.Credentials = new System.Net.NetworkCredential("user", "password");
-            // smtp.Send(message);
+            // Attach the MHTML file.
+            Attachment attachment = new Attachment(mhtmlPath, "application/octet-stream");
+            mail.Attachments.Add(attachment);
+
+            // Configure the SMTP client (adjust host, port, and credentials as needed).
+            using (SmtpClient smtp = new SmtpClient("smtp.example.com", 587))
+            {
+                smtp.EnableSsl = true;
+                smtp.Credentials = new System.Net.NetworkCredential("smtp_user", "smtp_password");
+
+                // Send the email.
+                smtp.Send(mail);
+            }
         }
 
-        // Dispose resources.
-        mhtmlAttachment.Dispose();
-        message.Dispose();
+        // Clean up the temporary MHTML file if it is no longer needed.
+        if (File.Exists(mhtmlPath))
+        {
+            File.Delete(mhtmlPath);
+        }
     }
 }

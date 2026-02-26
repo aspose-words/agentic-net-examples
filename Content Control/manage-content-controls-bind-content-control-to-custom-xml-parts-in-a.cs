@@ -2,34 +2,44 @@ using System;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Saving;
 
 class ContentControlBindingExample
 {
     static void Main()
     {
-        // Create a new blank document (DOCM will be set on save).
+        // 1. Create a new blank document (DOCM will be set on save).
         Document doc = new Document();
 
-        // Define a custom XML part with a unique identifier and some sample XML content.
+        // 2. Add a custom XML part that will hold the data to bind.
+        //    Use a GUID as the part identifier.
         string xmlPartId = Guid.NewGuid().ToString("B");
-        string xmlContent = "<root><title>Sample Title</title><value>12345</value></root>";
+        string xmlContent =
+            "<root>" +
+                "<person>" +
+                    "<name>John Doe</name>" +
+                    "<email>john.doe@example.com</email>" +
+                "</person>" +
+            "</root>";
 
-        // Add the custom XML part to the document's collection.
         CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, xmlContent);
 
-        // Create a plain‑text content control (structured document tag) at block level.
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Block);
+        // 3. Create a content control (structured document tag) that will display the name.
+        //    Use a plain‑text content control placed at block level.
+        StructuredDocumentTag nameControl = new StructuredDocumentTag(
+            doc, SdtType.PlainText, MarkupLevel.Block);
 
-        // Map the content control to the <value> element of the custom XML part using XPath.
-        // The third parameter is for namespace prefix mappings; empty string means none.
-        sdt.XmlMapping.SetMapping(xmlPart, "/root[1]/value[1]", string.Empty);
+        // 4. Bind the content control to the <name> element of the custom XML part.
+        //    The XPath points to the first <name> element under the first <person>.
+        nameControl.XmlMapping.SetMapping(xmlPart, "/root[1]/person[1]/name[1]", string.Empty);
 
-        // Insert the content control into the first section's body.
-        doc.FirstSection.Body.AppendChild(sdt);
+        // 5. Insert the content control into the document body.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Employee Name:");
+        builder.InsertNode(nameControl);
+        builder.Writeln(); // optional line break after the control
 
-        // Save the document as a macro‑enabled DOCM file.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
-        doc.Save("ContentControlBinding.docm", saveOptions);
+        // 6. Save the document as a macro‑enabled Word file (.docm).
+        //    The SaveFormat ensures the correct file type regardless of extension.
+        doc.Save("ContentControlBound.docm", SaveFormat.Docm);
     }
 }

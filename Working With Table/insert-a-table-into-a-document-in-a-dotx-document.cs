@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,42 +6,43 @@ class InsertTableIntoDotx
 {
     static void Main()
     {
-        // Path to the folder that contains the DOTX template.
-        string dataDir = @"C:\Docs\";
+        // Load the DOTX template document.
+        Document doc = new Document("Template.dotx");
 
-        // Load the DOTX template.
-        string templatePath = Path.Combine(dataDir, "Template.dotx");
-        Document doc = new Document(templatePath);
-
-        // Create a DocumentBuilder attached to the loaded document.
+        // Create a DocumentBuilder associated with the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table at the current cursor position.
+        // Start a new table.
         Table table = builder.StartTable();
 
-        // First row – header cells.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Row 1, Cell 1");
+
+        // First row, second cell.
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Row 1, Cell 2");
+
+        // End the first row.
         builder.EndRow();
 
-        // Second row – data cells.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Value 1");
-        builder.InsertCell();
-        builder.Write("Value 2");
-        builder.EndRow();
+        builder.Write("Row 2, Cell 1");
 
-        // Finish the table.
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
+
+        // End the second row and the table.
+        builder.EndRow();
         builder.EndTable();
 
-        // Apply a built‑in style and auto‑fit the table to its contents.
-        table.StyleIdentifier = StyleIdentifier.LightListAccent1;
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        // Optionally set a title and description for the table (useful for DOCX compliance).
+        table.Title = "Sample Table";
+        table.Description = "A table inserted into a DOTX document.";
 
-        // Save the modified document.
-        string outputPath = Path.Combine(dataDir, "Result.docx");
-        doc.Save(outputPath);
+        // Save the modified document. The format can be DOCX, DOTX, etc.
+        doc.Save("Result.docx");
     }
 }

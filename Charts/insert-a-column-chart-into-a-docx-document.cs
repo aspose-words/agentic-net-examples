@@ -1,10 +1,9 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;            // <-- added
+using Aspose.Words.Drawing;          // <-- added
 using Aspose.Words.Drawing.Charts;
 
-class InsertColumnChart
+class Program
 {
     static void Main()
     {
@@ -12,28 +11,21 @@ class InsertColumnChart
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart shape with the desired size.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        // Insert a column chart. Width and height are specified in points.
+        double width = 400;   // chart width
+        double height = 300;  // chart height
+        Shape chartShape = builder.InsertChart(ChartType.Column, width, height);
         Chart chart = chartShape.Chart;
 
-        // Remove the automatically generated demo series.
+        // Remove the default demo series that Aspose.Words inserts.
         chart.Series.Clear();
 
-        // Define categories for the X‑axis.
-        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        // Define categories (X‑axis) and corresponding values (Y‑axis).
+        string[] categories = { "Category 1", "Category 2", "Category 3" };
+        double[] values = { 76.6, 82.1, 91.6 };
 
-        // Add two data series to the chart.
-        chart.Series.Add("Revenue", categories, new double[] { 12000, 15000, 13000, 17000 });
-        chart.Series.Add("Profit",  categories, new double[] { 3000, 4000, 3500, 5000 });
-
-        // Set a visible title for the chart.
-        chart.Title.Text = "Quarterly Financials";
-        chart.Title.Show = true;
-        chart.Title.Font.Size = 14;
-        chart.Title.Font.Color = Color.DarkBlue;
-
-        // Apply a predefined chart style (optional).
-        chart.Style = ChartStyle.Shaded;
+        // Add a series with the defined data.
+        chart.Series.Add("Series 1", categories, values);
 
         // Save the document containing the column chart.
         doc.Save("ColumnChart.docx");

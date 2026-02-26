@@ -1,29 +1,28 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Settings;
 
-class WriteProtectionExample
+class ProtectDocumentExample
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add some content.
+        // Add some content using DocumentBuilder.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world! This document is write‑protected.");
+        builder.Writeln("This document will be protected.");
 
-        // Set a write‑protection password (max 15 characters) and recommend read‑only.
-        doc.WriteProtection.SetPassword("MyPassword");
+        // Protect the document for read‑only editing and set a password.
+        // The password is required only when the document is opened in Microsoft Word.
+        doc.Protect(ProtectionType.ReadOnly, "MySecretPwd");
+
+        // Additionally, set write‑protection (read‑only recommendation) with a password.
+        // This does not encrypt the file; it only prevents accidental edits.
+        doc.WriteProtection.SetPassword("WritePwd");
         doc.WriteProtection.ReadOnlyRecommended = true;
 
-        // Save the protected document as DOCX.
-        // The path can be changed as needed.
-        string outputPath = "WriteProtectedDocument.docx";
-        doc.Save(outputPath, SaveFormat.Docx);
-
-        // Optional: Verify that the document is write‑protected.
-        Console.WriteLine($"IsWriteProtected: {doc.WriteProtection.IsWriteProtected}");
-        Console.WriteLine($"Password valid: {doc.WriteProtection.ValidatePassword("MyPassword")}");
+        // Save the protected document to a DOCX file.
+        doc.Save("ProtectedDocument.docx");
     }
 }

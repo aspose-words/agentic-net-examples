@@ -1,17 +1,29 @@
-// Load an existing MHTML document
-string inputPath = @"C:\Docs\input.mhtml";
-Aspose.Words.Document doc = new Aspose.Words.Document(inputPath);
+using System;
+using Aspose.Words;
+using Aspose.Words.Tables;
 
-// Get the first table in the document (adjust index as needed)
-Aspose.Words.Tables.Table table = doc.FirstSection.Body.Tables[0];
+class ApplyTableStyleOptionsToMhtml
+{
+    static void Main()
+    {
+        // Load the MHTML document.
+        // The constructor of Document loads the file based on its format.
+        Document doc = new Document("InputDocument.mht");
 
-// Optionally set a built‑in table style
-table.StyleIdentifier = Aspose.Words.StyleIdentifier.TableGrid;
+        // Find the first table in the document.
+        // GetChild searches the document tree for a node of the specified type.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+        {
+            Console.WriteLine("No table found in the document.");
+            return;
+        }
 
-// Apply desired style options (e.g., first row and row banding)
-table.StyleOptions = Aspose.Words.Tables.TableStyleOptions.FirstRow |
-                     Aspose.Words.Tables.TableStyleOptions.RowBands;
+        // Apply desired style options to the table.
+        // Here we combine FirstRow and RowBands as an example.
+        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
-// Save the document back to MHTML format
-Aspose.Words.Saving.HtmlSaveOptions saveOptions = new Aspose.Words.Saving.HtmlSaveOptions(Aspose.Words.SaveFormat.Mhtml);
-doc.Save(@"C:\Docs\output.mhtml", saveOptions);
+        // Save the modified document back to MHTML format.
+        doc.Save("OutputDocument.mht", SaveFormat.Mhtml);
+    }
+}

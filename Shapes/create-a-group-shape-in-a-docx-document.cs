@@ -7,39 +7,43 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape that will contain other shapes.
+        // Create two individual shapes that will be placed inside the group.
+        Shape rectangle = new Shape(doc, ShapeType.Rectangle)
+        {
+            Width = 100,
+            Height = 100,
+            FillColor = Color.LightBlue,
+            Stroke = { Color = Color.Black }
+        };
+
+        Shape ellipse = new Shape(doc, ShapeType.Ellipse)
+        {
+            Width = 80,
+            Height = 80,
+            FillColor = Color.LightCoral,
+            Stroke = { Color = Color.DarkRed }
+        };
+
+        // Create a GroupShape and add the shapes as its children.
         GroupShape group = new GroupShape(doc);
-        // Set the size and position of the group shape.
-        group.Width = 300;   // Width in points.
-        group.Height = 200;  // Height in points.
-        group.Left = 100;    // Distance from the left edge of the page.
-        group.Top = 100;     // Distance from the top edge of the page.
-        // Set wrapping to none so the group behaves like a floating shape.
-        group.WrapType = WrapType.None;
+        group.AppendChild(rectangle);
+        group.AppendChild(ellipse);
 
-        // Create a rectangle shape to be placed inside the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 150;
-        rect.Height = 100;
-        rect.Left = 0;   // Position relative to the group's coordinate space.
-        rect.Top = 0;
-        rect.Fill.ForeColor = Color.LightBlue;
-        rect.Stroke.Color = Color.DarkBlue;
-        rect.Stroke.Weight = 2;
+        // Define the outer bounds of the group shape (position and size in points).
+        group.Bounds = new RectangleF(0, 0, 200, 200);
 
-        // Add the rectangle to the group shape.
-        group.AppendChild(rect);
+        // Optionally configure the internal coordinate system of the group.
+        group.CoordSize = new Size(500, 500);      // Size of the coordinate space.
+        group.CoordOrigin = new Point(-250, -250); // Move the origin to the centre.
 
-        // Insert the group shape into the document.
+        // Insert the group shape into the document at the current cursor position.
         builder.InsertNode(group);
 
-        // Save the document to a DOCX file.
-        doc.Save("GroupShapeExample.docx");
+        // Save the resulting document.
+        doc.Save("GroupShape.docx");
     }
 }

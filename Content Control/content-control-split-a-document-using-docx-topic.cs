@@ -1,41 +1,40 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
-class Program
+class SplitByContentControl
 {
     static void Main()
     {
-        // Load the source DOCX document that contains content controls (StructuredDocumentTag nodes).
-        Document sourceDoc = new Document("SourceDocument.docx");
+        // Load the source DOCX document.
+        Document sourceDoc = new Document("Input.docx");
 
-        // Get all content controls in the document.
+        // Get all content controls (StructuredDocumentTag nodes) in the document.
         NodeCollection contentControls = sourceDoc.GetChildNodes(NodeType.StructuredDocumentTag, true);
 
-        // Iterate through each content control and save its contents as a separate DOCX file.
-        for (int i = 0; i < contentControls.Count; i++)
-        {
-            // Cast the node to StructuredDocumentTag.
-            StructuredDocumentTag sdt = (StructuredDocumentTag)contentControls[i];
+        int partNumber = 1;
 
-            // Create a new empty document to hold the extracted part.
+        // Iterate through each content control and save its contents as a separate document.
+        foreach (StructuredDocumentTag sdt in contentControls)
+        {
+            // Create a new empty document that will hold the extracted part.
             Document partDoc = new Document();
 
-            // Ensure the new document has a section (required for a valid DOCX).
-            partDoc.RemoveAllChildren();
-            partDoc.AppendChild(new Section(partDoc));
+            // Ensure the new document has at least one section/body.
+            partDoc.EnsureMinimum();
 
             // Import the content control node (including its children) into the new document.
-            Node importedNode = partDoc.ImportNode(sdt, true);
+            NodeImporter importer = new NodeImporter(sourceDoc, partDoc, ImportFormatMode.KeepSourceFormatting);
+            Node importedNode = importer.ImportNode(sdt, true);
+
+            // Append the imported node to the body of the first section.
             partDoc.FirstSection.Body.AppendChild(importedNode);
 
-            // Build a filename based on the content control's title or index.
-            string title = string.IsNullOrEmpty(sdt.Title) ? $"Part_{i + 1}" : sdt.Title.Replace(" ", "_");
-            string outFileName = $"{title}.docx";
+            // Save the extracted part to a separate DOCX file.
+            string outputPath = $"Part_{partNumber}.docx";
+            partDoc.Save(outputPath);
 
-            // Save the extracted part as a separate DOCX file.
-            partDoc.Save(outFileName);
+            partNumber++;
         }
     }
 }

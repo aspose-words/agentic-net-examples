@@ -1,48 +1,23 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
-class ApplyTableStyleOptionsToMarkdown
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Load the Markdown document that contains a table.
+        Document doc = new Document("input.md");
 
-        // Start building a table.
-        Table table = builder.StartTable();
+        // Retrieve the first table in the document (if any).
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table != null)
+        {
+            // Apply the desired TableStyleOptions flags.
+            // Example: apply formatting to the first row and enable row banding.
+            table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+        }
 
-        // Insert the first row (header).
-        builder.InsertCell();
-        builder.Writeln("Header 1");
-        builder.InsertCell();
-        builder.Writeln("Header 2");
-        builder.EndRow();
-
-        // Insert a data row.
-        builder.InsertCell();
-        builder.Writeln("Data 1");
-        builder.InsertCell();
-        builder.Writeln("Data 2");
-        builder.EndRow();
-
-        // End the table construction.
-        builder.EndTable();
-
-        // Apply a built‑in table style.
-        table.StyleIdentifier = StyleIdentifier.LightGrid;
-
-        // Apply specific style options using the TableStyleOptions flags.
-        // Here we enable formatting for the first row and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-
-        // Optional: let the table auto‑fit its contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-        // Save the document as a Markdown file.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
-        doc.Save("TableWithStyle.md", saveOptions);
+        // Save the modified document. The output format can be any supported type (e.g., DOCX).
+        doc.Save("output.docx");
     }
 }

@@ -6,23 +6,26 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some explanatory text.
-        builder.Writeln("Please tick the box below:");
+        // Write some introductory text.
+        builder.Write("Please tick the box: ");
 
-        // Insert a check box form field.
-        // Parameters: field name, initial checked state, size in points.
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 50);
+        // Insert a checkbox form field at the current cursor position.
+        // Parameters: name (empty string), checkedValue (false = unchecked), size (0 = auto‑size).
+        FormField checkBox = builder.InsertCheckBox(string.Empty, false, 0);
 
-        // Optional: configure additional properties.
-        checkBox.IsCheckBoxExactSize = true;   // Use the exact size specified.
-        checkBox.HelpText = "Click to toggle the checkbox";
-        checkBox.OwnHelp = true;               // Use the custom help text.
+        // Optional: configure additional properties of the checkbox.
+        checkBox.IsCheckBoxExactSize = false;          // Use automatic sizing.
+        checkBox.HelpText = "Click to toggle the box"; // Tooltip shown on F1.
+        checkBox.OwnHelp = true;                       // Use the custom help text.
 
-        // Save the document.
-        doc.Save("CheckBoxFormField.docx");
+        // Insert a paragraph break after the checkbox.
+        builder.InsertParagraph();
+
+        // Save the document to disk.
+        doc.Save("CheckboxDocument.docx");
     }
 }

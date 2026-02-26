@@ -2,38 +2,43 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-class Program
+class CloneVbaModuleExample
 {
     static void Main()
     {
-        // Load the source document (DOCX). It may not contain macros, so we create a VBA project if needed.
-        Document doc = new Document("Input.docx");
+        // Path to the source document that already contains VBA macros (e.g., a .docm file).
+        const string sourcePath = @"C:\Docs\Source.docm";
 
-        // Ensure the document has a VBA project to hold modules.
-        if (doc.VbaProject == null)
-            doc.VbaProject = new VbaProject();
+        // Path to the destination document (a .docx file without macros).
+        const string destinationPath = @"C:\Docs\Destination.docx";
 
-        // Create an original VBA module.
-        VbaModule original = new VbaModule
+        // Path where the resulting document (with the cloned VBA module) will be saved.
+        const string outputPath = @"C:\Docs\Result.docm";
+
+        // Load the source document.
+        Document srcDoc = new Document(sourcePath);
+
+        // Retrieve the VBA module you want to clone.
+        // Here we clone the first module in the collection; adjust the index or name as needed.
+        VbaModule originalModule = srcDoc.VbaProject.Modules[0];
+
+        // Perform a deep clone of the module.
+        VbaModule clonedModule = originalModule.Clone();
+
+        // Load the destination document.
+        Document destDoc = new Document(destinationPath);
+
+        // Ensure the destination document has a VBA project; create one if it does not.
+        if (destDoc.VbaProject == null)
         {
-            Name = "OriginalModule",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = "Sub Hello()\n    MsgBox \"Hello\"\nEnd Sub"
-        };
+            destDoc.VbaProject = new VbaProject();
+            destDoc.VbaProject.Name = "ClonedProject";
+        }
 
-        // Add the original module to the project's module collection.
-        doc.VbaProject.Modules.Add(original);
+        // Add the cloned module to the destination document's VBA project.
+        destDoc.VbaProject.Modules.Add(clonedModule);
 
-        // Clone the original module.
-        VbaModule cloned = original.Clone();
-
-        // Give the cloned module a distinct name.
-        cloned.Name = "ClonedModule";
-
-        // Add the cloned module to the same VBA project.
-        doc.VbaProject.Modules.Add(cloned);
-
-        // Save the document as a macro‑enabled file so the VBA project is preserved.
-        doc.Save("Output.docm");
+        // Save the result as a macro-enabled document (.docm) so the VBA code is retained.
+        destDoc.Save(outputPath);
     }
 }

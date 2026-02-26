@@ -1,24 +1,29 @@
+using System;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class ConvertToEpub
 {
     static void Main()
     {
-        // Load the source document (any supported format).
-        Document doc = new Document("input.docx");
+        // Input DOCX file path.
+        string inputPath = @"C:\Docs\Input.docx";
 
-        // Create save options for EPUB using the HtmlSaveOptions constructor that accepts a SaveFormat.
-        HtmlSaveOptions epubOptions = new HtmlSaveOptions(SaveFormat.Epub);
+        // Output EPUB file path.
+        string outputPath = @"C:\Docs\Output.epub";
 
-        // Optional: customize EPUB output.
-        epubOptions.ExportDocumentProperties = true;          // Include built‑in and custom properties.
-        epubOptions.ExportImagesAsBase64 = true;             // Embed images directly in the EPUB.
-        epubOptions.ExportFontsAsBase64 = true;              // Embed fonts directly in the EPUB.
-        epubOptions.ExportGeneratorName = true;              // Add Aspose.Words generator info.
-        epubOptions.ExportHeadersFootersMode = ExportHeadersFootersMode.None; // Omit headers/footers.
+        // Load the source document.
+        Document doc = new Document(inputPath);
 
-        // Save the document as an EPUB file using the configured options.
-        doc.Save("output.epub", epubOptions);
+        // Create save options for EPUB conversion.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
+        saveOptions.SaveFormat = SaveFormat.Epub;          // Set target format to EPUB.
+        saveOptions.Encoding = Encoding.UTF8;             // Use UTF‑8 encoding (optional).
+        saveOptions.DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph; // Split by headings (optional).
+        saveOptions.ExportDocumentProperties = true;      // Export document properties (optional).
+
+        // Save the document as EPUB using the configured options.
+        doc.Save(outputPath, saveOptions);
     }
 }

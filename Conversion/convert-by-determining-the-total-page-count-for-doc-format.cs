@@ -1,21 +1,17 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Layout;
 
 class Program
 {
     static void Main()
     {
-        // Load the DOC document.
-        Document doc = new Document("Input.doc");
+        // Load the DOC document from file.
+        Document doc = new Document("input.doc");
 
-        // Force layout calculation and retrieve the total number of pages.
+        // Retrieve the total number of pages after layout.
         int totalPages = doc.PageCount;
 
-        // Display the result.
+        // Display the page count.
         Console.WriteLine($"Total pages: {totalPages}");
-
-        // Example of saving the document (demonstrates the required lifecycle usage).
-        doc.Save("Copy.doc");
     }
 }

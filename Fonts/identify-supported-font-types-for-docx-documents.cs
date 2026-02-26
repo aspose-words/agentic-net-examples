@@ -6,31 +6,25 @@ class Program
 {
     static void Main()
     {
-        // Load a DOCX document.
+        // Load the DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Get the collection of fonts used in the document.
-        FontInfoCollection fonts = doc.FontInfos;
+        // Access the collection of fonts defined in the document.
+        FontInfoCollection fontInfos = doc.FontInfos;
 
-        // Iterate through each FontInfo and display its supported type information.
-        foreach (FontInfo font in fonts)
+        Console.WriteLine($"Document contains {fontInfos.Count} font definition(s).");
+
+        // Iterate through each FontInfo and display its supported properties.
+        for (int i = 0; i < fontInfos.Count; i++)
         {
-            // Font name.
-            Console.WriteLine($"Font name: {font.Name}");
+            FontInfo font = fontInfos[i];
 
-            // TrueType/OpenType flag – true if the font is a TrueType or OpenType font.
-            Console.WriteLine($"Is TrueType/OpenType: {font.IsTrueType}");
-
-            // Font family (Roman, Swiss, Modern, etc.).
-            Console.WriteLine($"Family: {font.Family}");
-
-            // Font pitch (Fixed, Variable, Default).
-            Console.WriteLine($"Pitch: {font.Pitch}");
-
-            // Character set (e.g., 0 = ANSI).
-            Console.WriteLine($"Charset: {font.Charset}");
-
-            Console.WriteLine(new string('-', 40));
+            Console.WriteLine($"Font #{i + 1}:");
+            Console.WriteLine($"  Name       : {font.Name}");
+            Console.WriteLine($"  IsTrueType : {font.IsTrueType}");
+            Console.WriteLine($"  Family     : {font.Family}");
+            Console.WriteLine($"  Pitch      : {font.Pitch}");
+            Console.WriteLine($"  Charset    : {font.Charset}");
         }
     }
 }

@@ -2,33 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class InsertComboBoxFormField
+class Program
 {
     static void Main()
     {
-        // Path to the existing DOCX file.
-        string inputPath = @"C:\Docs\input.docx";
+        // Load an existing DOCX document.
+        // Replace "input.docx" with the path to your source file.
+        Document doc = new Document("input.docx");
 
-        // Load the document from the file system.
-        Document doc = new Document(inputPath);
-
-        // Create a DocumentBuilder attached to the loaded document.
+        // Create a DocumentBuilder for the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Write some prompt text before the combo box (optional).
+        builder.Write("Please select a fruit: ");
+
         // Define the items that will appear in the combo box.
-        string[] comboItems = { "Option A", "Option B", "Option C" };
+        string[] items = { "Apple", "Banana", "Cherry" };
 
-        // Insert a combo box form field at the current cursor position.
-        // Parameters: field name, array of items, index of the default selected item.
-        FormField comboBox = builder.InsertComboBox("MyComboBox", comboItems, 0);
+        // Insert the combo box form field at the current cursor position.
+        // Parameters: field name, items array, selected index (0‑based).
+        FormField comboBox = builder.InsertComboBox("FruitComboBox", items, 0);
 
-        // (Optional) Set additional properties, e.g., calculate the field on exit.
-        comboBox.CalculateOnExit = true;
+        // Optionally, you can verify properties of the inserted field.
+        // Console.WriteLine($"ComboBox Name: {comboBox.Name}");
+        // Console.WriteLine($"Default Selected Item: {comboBox.Result}");
 
-        // Path where the modified document will be saved.
-        string outputPath = @"C:\Docs\output.docx";
-
-        // Save the document with the newly inserted combo box.
-        doc.Save(outputPath);
+        // Save the modified document.
+        // Replace "output.docx" with the desired output path.
+        doc.Save("output.docx");
     }
 }

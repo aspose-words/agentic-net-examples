@@ -2,40 +2,99 @@ using System;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Aspose.Words.Tables;
 
-class Program
+class ContentControlBindingExample
 {
     static void Main()
     {
-        // Create a new blank document.
+        // 1. Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define XML content and a unique identifier for the custom XML part.
-        string xmlPartId = Guid.NewGuid().ToString("B");
-        string xmlContent = "<root><author>John Doe</author><title>Sample Document</title></root>";
+        // -----------------------------------------------------------------
+        // 1. Add a custom XML part that will hold the data to bind.
+        // -----------------------------------------------------------------
+        string xmlContent = @"
+            <books>
+                <book>
+                    <title>Everyday Italian</title>
+                    <author>Giada De Laurentiis</author>
+                </book>
+                <book>
+                    <title>The C Programming Language</title>
+                    <author>Brian W. Kernighan, Dennis M. Ritchie</author>
+                </book>
+                <book>
+                    <title>Learning XML</title>
+                    <author>Erik T. Ray</author>
+                </book>
+            </books>";
 
-        // Add the custom XML part to the document's collection.
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, xmlContent);
+        // The part ID must be a GUID string.
+        string partId = Guid.NewGuid().ToString("B");
+        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(partId, xmlContent);
 
-        // Create a plain‑text content control (structured document tag) for the author.
-        StructuredDocumentTag authorTag = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Block);
-        // Bind the content control to the <author> element in the custom XML part.
-        authorTag.XmlMapping.SetMapping(xmlPart, "/root[1]/author[1]", string.Empty);
-        authorTag.Title = "Author";
+        // -----------------------------------------------------------------
+        // 2. Insert a plain‑text content control (structured document tag).
+        // -----------------------------------------------------------------
+        StructuredDocumentTag titleTag = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "Book Title"
+        };
+        // Bind to the first <title> element.
+        titleTag.XmlMapping.SetMapping(xmlPart, "/books[1]/book[1]/title[1]", string.Empty);
 
-        // Insert the author content control into the document body.
-        doc.FirstSection.Body.AppendChild(authorTag);
+        builder.Write("First book title: ");
+        builder.InsertNode(titleTag);
+        builder.Writeln();
 
-        // Create another content control for the title.
-        StructuredDocumentTag titleTag = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Block);
-        titleTag.XmlMapping.SetMapping(xmlPart, "/root[1]/title[1]", string.Empty);
-        titleTag.Title = "Title";
+        // -----------------------------------------------------------------
+        // 3. Insert a repeating section to list all books.
+        // -----------------------------------------------------------------
+        // Create a table with a header row.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Title");
+        builder.InsertCell();
+        builder.Write("Author");
+        builder.EndRow();
+        // Do NOT call EndTable yet – we need to add the repeating section row first.
 
-        // Insert the title content control into the document body.
-        doc.FirstSection.Body.AppendChild(titleTag);
+        // Row that will contain the repeating section.
+        Row repeatRow = new Row(doc);
+        table.Rows.Add(repeatRow);
 
-        // Save the document as a DOCX file.
-        string outputPath = "ContentControlBinding.docx";
-        doc.Save(outputPath);
+        // Repeating section content control at the row level.
+        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Row);
+        // Bind the repeating section to the collection of <book> elements.
+        repeatingSection.XmlMapping.SetMapping(xmlPart, "/books[1]/book", string.Empty);
+        repeatRow.AppendChild(repeatingSection);
+
+        // Inside the repeating section, add a repeating section item.
+        StructuredDocumentTag repeatingItem = new StructuredDocumentTag(doc, SdtType.RepeatingSectionItem, MarkupLevel.Row);
+        repeatingSection.AppendChild(repeatingItem);
+
+        // Row that will be repeated for each <book>.
+        Row dataRow = new Row(doc);
+        repeatingItem.AppendChild(dataRow);
+
+        // Title cell bound to the current <book>'s <title>.
+        StructuredDocumentTag cellTitle = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Cell);
+        cellTitle.XmlMapping.SetMapping(xmlPart, "./title[1]", string.Empty);
+        dataRow.AppendChild(cellTitle);
+
+        // Author cell bound to the current <book>'s <author>.
+        StructuredDocumentTag cellAuthor = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Cell);
+        cellAuthor.XmlMapping.SetMapping(xmlPart, "./author[1]", string.Empty);
+        dataRow.AppendChild(cellAuthor);
+
+        // Finish the table.
+        builder.EndTable();
+
+        // -----------------------------------------------------------------
+        // 4. Save the document.
+        // -----------------------------------------------------------------
+        doc.Save("ContentControlBinding.docx");
     }
 }

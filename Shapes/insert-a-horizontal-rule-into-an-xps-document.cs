@@ -1,7 +1,6 @@
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
+using System.Drawing;
 
 class Program
 {
@@ -13,19 +12,18 @@ class Program
         // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a horizontal rule shape at the current cursor position.
+        // Insert a horizontal rule shape.
         Shape horizontalRule = builder.InsertHorizontalRule();
 
-        // Customize the formatting of the horizontal rule.
+        // Optional: customize the horizontal rule's appearance.
         HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
-        format.Alignment = HorizontalRuleAlignment.Center; // Center alignment.
+        format.Alignment = HorizontalRuleAlignment.Center; // Center the rule.
         format.WidthPercent = 70;                           // 70% of the page width.
-        format.Height = 3;                                 // Height of 3 points.
-        format.Color = Color.Blue;                         // Blue color.
-        format.NoShade = true;                             // No 3‑D shading.
+        format.Height = 3;                                  // Height in points.
+        format.Color = Color.Blue;                          // Blue color.
+        format.NoShade = true;                              // Solid color, no 3‑D shading.
 
-        // Save the document as an XPS file using default XpsSaveOptions.
-        XpsSaveOptions saveOptions = new XpsSaveOptions();
-        doc.Save("HorizontalRule.xps", saveOptions);
+        // Save the document as an XPS file.
+        doc.Save("HorizontalRule.xps", SaveFormat.Xps);
     }
 }

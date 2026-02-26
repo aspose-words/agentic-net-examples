@@ -1,25 +1,29 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using System.Text.RegularExpressions;
 
 class Program
 {
     static void Main()
     {
-        // Load the DOCX document.
+        // Load the existing DOCX file.
         Document doc = new Document("Input.docx");
 
-        // Configure find/replace to process text inside shapes.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.IgnoreShapes = false; // include shape text in the search.
+        // Set up find/replace options.
+        // By default IgnoreShapes = false, which means the operation will also search inside shapes.
+        // Explicitly set it for clarity.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            IgnoreShapes = false   // Do NOT ignore shapes – replace text inside them.
+        };
 
-        // Example: replace a literal string inside the document and its shapes.
-        doc.Range.Replace("PLACEHOLDER", "Actual Value", options);
+        // Perform the replacement across the whole document range.
+        // Example: replace the placeholder "[NAME]" with "John Doe".
+        int replacementsMade = doc.Range.Replace("[NAME]", "John Doe", options);
 
-        // Example: replace using a regular expression inside the document and its shapes.
-        // doc.Range.Replace(new Regex(@"\bOldWord\b"), "NewWord", options);
+        Console.WriteLine($"Replacements performed: {replacementsMade}");
 
-        // Save the updated document.
+        // Save the modified document.
         doc.Save("Output.docx");
     }
 }

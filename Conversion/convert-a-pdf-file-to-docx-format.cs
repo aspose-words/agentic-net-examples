@@ -1,54 +1,34 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 
-namespace PdfToDocxExample
+namespace PdfToDocxConverter
 {
-    public class PdfToDocxConverter
+    public static class Converter
     {
         /// <summary>
-        /// Converts a PDF file to DOCX format.
+        /// Converts a PDF file to DOCX format using Aspose.Words.
         /// </summary>
         /// <param name="pdfPath">Full path to the source PDF file.</param>
         /// <param name="docxPath">Full path where the resulting DOCX file will be saved.</param>
-        public static void Convert(string pdfPath, string docxPath)
+        public static void ConvertPdfToDocx(string pdfPath, string docxPath)
         {
-            // Load the PDF document using default PDF load options.
-            var loadOptions = new PdfLoadOptions();
-            var document = new Document(pdfPath, loadOptions);
+            // Load the PDF document. The Document constructor automatically detects the format.
+            Document pdfDocument = new Document(pdfPath);
 
-            // Prepare save options for DOCX format.
-            var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-
-            // Save the loaded document as DOCX.
-            document.Save(docxPath, saveOptions);
+            // Save the loaded document as DOCX. The Save method determines the format from the file extension.
+            pdfDocument.Save(docxPath);
         }
-    }
 
-    class Program
-    {
-        static void Main(string[] args)
+        // Example usage
+        public static void Main()
         {
-            // Simple argument handling: first argument = input PDF, second argument = output DOCX.
-            if (args.Length < 2)
-            {
-                Console.WriteLine("Usage: PdfToDocxExample <input.pdf> <output.docx>");
-                return;
-            }
+            // Adjust these paths as needed.
+            string sourcePdf = @"C:\Input\sample.pdf";
+            string targetDocx = @"C:\Output\sample.docx";
 
-            string pdfPath = args[0];
-            string docxPath = args[1];
+            ConvertPdfToDocx(sourcePdf, targetDocx);
 
-            try
-            {
-                PdfToDocxConverter.Convert(pdfPath, docxPath);
-                Console.WriteLine($"Successfully converted '{pdfPath}' to '{docxPath}'.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error during conversion: {ex.Message}");
-            }
+            Console.WriteLine("Conversion completed.");
         }
     }
 }

@@ -6,36 +6,28 @@ class JoinTablesInMhtml
 {
     static void Main()
     {
-        // Load the MHTML document that contains the tables.
-        Document doc = new Document("input.mht");
+        // Load the source MHTML document that already contains two tables.
+        string inputFile = "input.mhtml";
+        Document doc = new Document(inputFile);
 
-        // Get the collection of tables in the first section's body.
-        TableCollection tables = doc.FirstSection.Body.Tables;
+        // Get the first table from the document (index 0 in the Tables collection).
+        Table firstTable = doc.FirstSection.Body.Tables[0];
 
-        // Ensure there are at least two tables to join.
-        if (tables.Count < 2)
+        // Get the second table using the GetChild method (the second table has index 1).
+        Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
+
+        // Move all rows from the second table to the first table.
+        while (secondTable.HasChildNodes)
         {
-            Console.WriteLine("The document must contain at least two tables.");
-            return;
+            // Append the first row of the second table to the first table.
+            firstTable.Rows.Add(secondTable.FirstRow);
         }
 
-        // Reference to the first and second tables.
-        Table firstTable = tables[0];
-        Table secondTable = tables[1];
-
-        // Append each row from the second table to the first table.
-        // Clone the rows to preserve all cell contents and formatting.
-        foreach (Row row in secondTable.Rows)
-        {
-            // Deep clone the row (including all child nodes).
-            Row clonedRow = (Row)row.Clone(true);
-            firstTable.Rows.Add(clonedRow);
-        }
-
-        // Remove the now-empty second table from the document.
+        // Remove the now‑empty second table container.
         secondTable.Remove();
 
         // Save the modified document back to MHTML format.
-        doc.Save("output.mht");
+        string outputFile = "output.mhtml";
+        doc.Save(outputFile, SaveFormat.Mhtml);
     }
 }

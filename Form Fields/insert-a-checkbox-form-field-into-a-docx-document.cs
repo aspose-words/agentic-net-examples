@@ -2,29 +2,29 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class InsertCheckBoxFormField
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content and the checkbox form field.
+        // Create a DocumentBuilder which will be used to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Write some explanatory text before the checkbox.
         builder.Write("Please tick the box: ");
 
         // Insert a checkbox form field.
-        // Parameters: name, default checked state, size (points).
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 50);
+        // Parameters: name, checkedValue (false = unchecked), size (0 = auto size).
+        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
 
-        // Optional: make the size exact, set help/status text, etc.
-        checkBox.IsCheckBoxExactSize = true;
-        checkBox.HelpText = "Right‑click to toggle";
-        checkBox.OwnHelp = true;
-        checkBox.StatusText = "Checkbox status";
-        checkBox.OwnStatus = true;
+        // Optional: make the size exact if you want to specify it.
+        // checkBox.IsCheckBoxExactSize = true;
+        // checkBox.CheckBoxSize = 20; // size in points
+
+        // Insert a paragraph break after the checkbox.
+        builder.InsertParagraph();
 
         // Save the document to a DOCX file.
         doc.Save("CheckboxFormField.docx");

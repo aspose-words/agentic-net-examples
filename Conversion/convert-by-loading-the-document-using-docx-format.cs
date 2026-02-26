@@ -6,22 +6,17 @@ class Program
 {
     static void Main()
     {
-        // Path to the DOCX file to be loaded.
-        string inputPath = @"C:\Docs\Sample.docx";
+        // Path to the source DOCX file.
+        string sourcePath = "input.docx";
 
-        // Configure load options to explicitly specify the DOCX format.
-        LoadOptions loadOptions = new LoadOptions
-        {
-            LoadFormat = LoadFormat.Docx // Ensure the document is interpreted as DOCX.
-        };
+        // LoadOptions specifying that the document format is DOCX.
+        LoadOptions loadOptions = new LoadOptions(LoadFormat.Docx, "", "");
 
-        // Load the document using the specified load options.
-        Document doc = new Document(inputPath, loadOptions);
+        // Load the document using the specified LoadOptions.
+        Document doc = new Document(sourcePath, loadOptions);
 
-        // Example operation: output the number of pages in the loaded document.
-        Console.WriteLine($"Document loaded successfully. Page count: {doc.PageCount}");
-
-        // (Optional) Save the document to another format, e.g., PDF.
-        // doc.Save(@"C:\Docs\Sample.pdf");
+        // Example conversion: save the loaded document as PDF.
+        string outputPath = "output.pdf";
+        doc.Save(outputPath, SaveFormat.Pdf);
     }
 }

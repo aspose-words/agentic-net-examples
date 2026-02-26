@@ -1,30 +1,33 @@
 using System;
+using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace ConvertMultiPageDocxToImages
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
+        // Load the multi‑page DOCX document.
+        Document doc = new Document("Input.docx");
+
+        // Create image save options (PNG format in this example).
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
+        // Optional: set desired resolution and image size.
+        options.Resolution = 300;                     // 300 DPI
+        options.ImageSize = new Size(1240, 1754);     // Approx. A4 at 300 DPI
+
+        // Iterate through all pages and save each one as a separate image file.
+        for (int i = 0; i < doc.PageCount; i++)
         {
-            // Load the DOCX document from disk.
-            Document doc = new Document("input.docx");
+            // Render the current page (zero‑based index) only.
+            options.PageSet = new PageSet(i);
 
-            // Configure image save options to render each page as a separate PNG image.
-            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
-            {
-                // Render all pages (this is the default, but set explicitly for clarity).
-                PageSet = PageSet.All,
-                // Optional: set the resolution (dpi) for higher quality images.
-                // Resolution = 300,
-                // Optional: specify a custom file name pattern.
-                // OutputFileName = "output.png"
-            };
+            // Build the output file name.
+            string outputFile = $"Page_{i + 1}.png";
 
-            // Save the document. Aspose.Words will create one PNG file per page,
-            // naming them like "output.png", "output_1.png", "output_2.png", etc.
-            doc.Save("output.png", saveOptions);
+            // Save the rendered page to an image file.
+            doc.Save(outputFile, options);
         }
     }
 }

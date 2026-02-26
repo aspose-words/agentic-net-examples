@@ -1,17 +1,22 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
-class Program
+class WatermarkHtmlExample
 {
     static void Main()
     {
-        // Load the existing HTML document.
-        Document doc = new Document("input.html");
+        // Path to the source HTML document.
+        string inputPath = "input.html";
 
-        // Configure text watermark appearance.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+        // Path where the watermarked HTML will be saved.
+        string outputPath = "output.html";
+
+        // Load the HTML document.
+        Document doc = new Document(inputPath);
+
+        // Configure watermark appearance.
+        TextWatermarkOptions options = new TextWatermarkOptions
         {
             FontFamily = "Arial",
             FontSize = 36,
@@ -20,11 +25,10 @@ class Program
             IsSemitrasparent = true
         };
 
-        // Add the text watermark to the document.
-        doc.Watermark.SetText("Confidential", watermarkOptions);
+        // Add a text watermark to the document.
+        doc.Watermark.SetText("CONFIDENTIAL", options);
 
         // Save the document back to HTML format.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
-        doc.Save("output.html", saveOptions);
+        doc.Save(outputPath, SaveFormat.Html);
     }
 }

@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -6,18 +6,26 @@ class Program
 {
     static void Main()
     {
-        // Load the DOCX document.
+        // Load the source DOCX file.
         Document doc = new Document("Input.docx");
 
-        // Configure find/replace options to process footnotes and endnotes.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.IgnoreFootnotes = false; // false (default) means footnotes/endnotes are included.
+        // Configure find/replace options.
+        // Setting IgnoreFootnotes to false (default) ensures that footnotes and endnotes are included in the search.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            IgnoreFootnotes = false
+        };
 
-        // Perform the find and replace across the main story, footnotes, and endnotes.
-        // Example: replace every occurrence of "oldText" with "newText".
-        doc.Range.Replace(new Regex("oldText"), "newText", options);
+        // Replace the target text throughout the entire document, including footnotes and endnotes.
+        int replacementsMade = doc.Range.Replace("old text", "new text", options);
 
-        // Save the updated document.
+        // Optional: If you need to replace only inside footnotes/endnotes, iterate their ranges.
+        // foreach (Footnote footnote in doc.GetChildNodes(NodeType.Footnote, true))
+        // {
+        //     footnote.Range.Replace("old text", "new text");
+        // }
+
+        // Save the modified document.
         doc.Save("Output.docx");
     }
 }

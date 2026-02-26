@@ -2,34 +2,37 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class AddRowExample
+class Program
 {
     static void Main()
     {
-        // Load an existing DOCX document.
-        Document doc = new Document("Input.docx");
+        // Create a new empty document.
+        Document doc = new Document();
 
-        // Get the first table in the document (adjust index as needed).
-        Table table = doc.FirstSection.Body.Tables[0];
+        // Create a table and add it to the document body.
+        Table table = new Table(doc);
+        doc.FirstSection.Body.AppendChild(table);
 
-        // Create a new row for the document.
+        // Ensure the table has at least one row and one cell.
+        table.EnsureMinimum();
+
+        // Create a new row that belongs to the same document.
         Row newRow = new Row(doc);
 
-        // Add cells to the new row. Here we add two cells with sample text.
-        Cell cell1 = new Cell(doc);
-        cell1.AppendChild(new Paragraph(doc));
-        cell1.FirstParagraph.AppendChild(new Run(doc, "New cell 1"));
-        newRow.Cells.Add(cell1);
-
-        Cell cell2 = new Cell(doc);
-        cell2.AppendChild(new Paragraph(doc));
-        cell2.FirstParagraph.AppendChild(new Run(doc, "New cell 2"));
-        newRow.Cells.Add(cell2);
+        // Ensure the new row has at least one cell (required for a valid row).
+        newRow.EnsureMinimum();
 
         // Append the new row to the end of the table.
-        table.Rows.Add(newRow);
+        table.AppendChild(newRow);
 
-        // Save the modified document.
-        doc.Save("Output.docx");
+        // Add a paragraph with some text to the first cell of the new row.
+        Cell firstCell = newRow.FirstCell;
+        Paragraph paragraph = new Paragraph(doc);
+        firstCell.AppendChild(paragraph);
+        Run run = new Run(doc, "This is a newly added row.");
+        paragraph.AppendChild(run);
+
+        // Save the document to a DOCX file.
+        doc.Save("AddedRow.docx");
     }
 }

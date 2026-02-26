@@ -1,62 +1,58 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
-
-class ImageExtractor : IImageSavingCallback
-{
-    private readonly string _outputFolder;
-    private int _imageIndex = 0;
-
-    public ImageExtractor(string outputFolder)
-    {
-        _outputFolder = outputFolder;
-        Directory.CreateDirectory(_outputFolder);
-    }
-
-    void IImageSavingCallback.ImageSaving(ImageSavingArgs args)
-    {
-        // Only process images that are actually available.
-        if (!args.IsImageAvailable)
-            return;
-
-        // Determine a unique file name for each extracted image.
-        string extension = Path.GetExtension(args.ImageFileName);
-        if (string.IsNullOrEmpty(extension))
-            extension = ".png"; // fallback
-
-        string fileName = $"image_{++_imageIndex}{extension}";
-        string fullPath = Path.Combine(_outputFolder, fileName);
-
-        // Direct Aspose.Words to write the image to the specified file.
-        args.ImageStream = new FileStream(fullPath, FileMode.Create);
-        args.KeepImageStreamOpen = false; // let Aspose close the stream after saving.
-    }
-}
+using Aspose.Words.Loading;
 
 class Program
 {
     static void Main()
     {
-        // Path to the source HTML file.
-        string htmlPath = @"C:\Input\sample.html";
+        // Path to the HTML file that contains the shapes with images.
+        string htmlFilePath = @"C:\Input\Document.html";
+
+        // Base folder for relative image URIs referenced inside the HTML.
+        string baseImageFolder = @"C:\Input\Images";
 
         // Folder where extracted images will be saved.
-        string imagesFolder = @"C:\Output\ExtractedImages";
+        string outputFolder = @"C:\Output\ExtractedImages";
 
-        // Load the HTML document with default options.
-        HtmlLoadOptions loadOptions = new HtmlLoadOptions();
-        Document doc = new Document(htmlPath, loadOptions);
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputFolder);
 
-        // Configure save options with the custom image‑saving callback.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
-        saveOptions.ImageSavingCallback = new ImageExtractor(imagesFolder);
+        // Load the HTML document. HtmlLoadOptions.BaseUri allows Aspose.Words to resolve
+        // relative image paths that are referenced in the HTML file.
+        HtmlLoadOptions loadOptions = new HtmlLoadOptions
+        {
+            BaseUri = baseImageFolder
+        };
+        Document doc = new Document(htmlFilePath, loadOptions);
 
-        // Save the document back to HTML (the content itself is irrelevant;
-        // the callback will be invoked for each image and write them to disk).
-        string dummyOutput = Path.Combine(imagesFolder, "dummy.html");
-        doc.Save(dummyOutput, saveOptions);
+        // Get all Shape nodes in the document (including those inside headers/footers).
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+        int imageIndex = 0;
+        foreach (Shape shape in shapes.OfType<Shape>())
+        {
+            // Process only shapes that actually contain an image.
+            if (shape.HasImage)
+            {
+                // Determine a suitable file extension based on the image type.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+
+                // Build the output file name.
+                string imageFileName = $"ExtractedImage_{imageIndex}{extension}";
+                string imagePath = Path.Combine(outputFolder, imageFileName);
+
+                // Save the image data to the file system.
+                shape.ImageData.Save(imagePath);
+
+                Console.WriteLine($"Saved image {imageIndex}: {imagePath}");
+                imageIndex++;
+            }
+        }
+
+        Console.WriteLine($"Extraction complete. {imageIndex} image(s) saved to \"{outputFolder}\".");
     }
 }

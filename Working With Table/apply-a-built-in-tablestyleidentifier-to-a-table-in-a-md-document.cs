@@ -1,47 +1,31 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
-class ApplyTableStyleToMarkdown
+class ApplyTableStyle
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Load a Markdown document that contains at least one table.
+        Document doc = new Document("input.md");
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+        // Find the first table in the document.
+        Table table = doc.GetChild(NodeType.Table, 0, true) as Table;
+        if (table != null)
+        {
+            // Apply a built‑in table style using its identifier.
+            table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // First row – header cells.
-        builder.InsertCell();
-        builder.Writeln("Header 1");
-        builder.InsertCell();
-        builder.Writeln("Header 2");
-        builder.EndRow();
+            // Optionally, specify which parts of the style to apply.
+            table.StyleOptions = TableStyleOptions.FirstRow |
+                                 TableStyleOptions.FirstColumn |
+                                 TableStyleOptions.RowBands;
 
-        // Second row – data cells.
-        builder.InsertCell();
-        builder.Writeln("Data 1");
-        builder.InsertCell();
-        builder.Writeln("Data 2");
-        builder.EndRow();
+            // Adjust column widths to fit the content.
+            table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        }
 
-        // End the table construction.
-        builder.EndTable();
-
-        // Apply a built‑in table style (e.g., TableGrid) to the table.
-        table.StyleIdentifier = StyleIdentifier.TableGrid;
-
-        // Specify which parts of the style should be applied.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-
-        // Adjust column widths to fit the content.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-        // Save the document as a Markdown file.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
-        doc.Save("TableWithStyle.md", saveOptions);
+        // Save the modified document to a Word format (DOCX).
+        doc.Save("output.docx");
     }
 }

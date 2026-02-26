@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class DocToMarkdownConverter
+class Program
 {
     static void Main()
     {
@@ -12,13 +12,11 @@ class DocToMarkdownConverter
         // Path where the Markdown file will be saved.
         string outputPath = "output.md";
 
-        // Load the DOC document. The constructor automatically detects the format.
+        // Load the DOC document from the file system.
         Document doc = new Document(inputPath);
 
-        // Create save options for Markdown. Default options are sufficient for a basic conversion.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
-
-        // Save the document as Markdown using the specified options.
-        doc.Save(outputPath, saveOptions);
+        // Save the document in Markdown format.
+        // The SaveFormat enumeration value for Markdown is SaveFormat.Markdown.
+        doc.Save(outputPath, SaveFormat.Markdown);
     }
 }

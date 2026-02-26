@@ -1,48 +1,64 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Markup; // Required for StructuredDocumentTag
 using Aspose.Words.Saving;
-using Aspose.Words.Markup;
 
-namespace AsposeWordsDotxConversion
+namespace DocumentConversionDemo
 {
-    class Program
+    public class DotxConverter
     {
-        static void Main(string[] args)
+        /// <summary>
+        /// Loads a DOTX template, replaces all content controls (StructuredDocumentTag) with a placeholder text,
+        /// and saves the result as a DOCX file.
+        /// </summary>
+        /// <param name="inputDotxPath">Full path to the source .dotx file.</param>
+        /// <param name="outputDocxPath">Full path where the converted .docx will be saved.</param>
+        public static void ConvertDotxToDocx(string inputDotxPath, string outputDocxPath)
         {
-            // Path to the source DOTX template.
-            string dotxPath = @"C:\Templates\SampleTemplate.dotx";
+            // Load the DOTX document from the file system.
+            Document templateDoc = new Document(inputDotxPath);
 
-            // Load the DOTX document. The constructor automatically detects the format.
-            Document doc = new Document(dotxPath);
-
-            // Iterate through all content controls (StructuredDocumentTag nodes) in the document.
-            NodeCollection contentControls = doc.GetChildNodes(NodeType.StructuredDocumentTag, true);
-            foreach (StructuredDocumentTag sdt in contentControls)
+            // Iterate over all content controls (StructuredDocumentTag nodes) in the document.
+            // Replace each control's content with a simple placeholder text.
+            foreach (StructuredDocumentTag sdt in templateDoc.GetChildNodes(NodeType.StructuredDocumentTag, true))
             {
-                // Clear any existing content inside the content control.
+                // Clear any existing child nodes inside the content control.
                 sdt.RemoveAllChildren();
 
-                // Insert the placeholder text as a new Run node.
-                Run placeholder = new Run(doc, $"[Placeholder for {sdt.Title}]");
-                sdt.AppendChild(placeholder);
+                // Insert a new Run node with the replacement text.
+                sdt.AppendChild(new Run(templateDoc, "Placeholder"));
             }
 
-            // Prepare save options to convert the document to DOCX format.
-            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+            // Save the modified document as a DOCX file.
+            // The Save method automatically determines the format from the file extension,
+            // but we explicitly specify SaveFormat.Docx for clarity.
+            templateDoc.Save(outputDocxPath, SaveFormat.Docx);
+        }
+
+        // Example usage.
+        public static void Main()
+        {
+            // Paths can be adjusted as needed.
+            string inputPath = @"C:\Docs\Template.dotx";
+            string outputPath = @"C:\Docs\Result.docx";
+
+            // Ensure the input file exists before attempting conversion.
+            if (!File.Exists(inputPath))
             {
-                // Ensure that the generator name is not embedded (optional).
-                ExportGeneratorName = false,
-                // Keep the original formatting without pretty formatting (optional).
-                PrettyFormat = false
-            };
+                Console.WriteLine($"Input file not found: {inputPath}");
+                return;
+            }
 
-            // Path for the output DOCX file.
-            string outputPath = @"C:\Output\ConvertedDocument.docx";
-
-            // Save the modified document using the specified options.
-            doc.Save(outputPath, saveOptions);
-
-            Console.WriteLine("DOTX document has been converted and saved as DOCX.");
+            try
+            {
+                ConvertDotxToDocx(inputPath, outputPath);
+                Console.WriteLine($"Conversion successful. Output saved to: {outputPath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred during conversion: {ex.Message}");
+            }
         }
     }
 }

@@ -2,13 +2,12 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class TableInspector
+class InspectTableDimensions
 {
     static void Main()
     {
-        // Load the existing DOCM document.
-        string inputPath = "input.docm";
-        Document doc = new Document(inputPath);
+        // Load the DOCM document.
+        Document doc = new Document("InputDocument.docm");
 
         // Get the collection of tables in the first section's body.
         TableCollection tables = doc.FirstSection.Body.Tables;
@@ -18,17 +17,17 @@ class TableInspector
         {
             Table table = tables[i];
 
-            // Number of rows in the table.
+            // Row count is the number of Row objects in the table.
             int rowCount = table.Rows.Count;
 
-            // Number of columns is taken from the first row (assuming a regular table).
-            int columnCount = rowCount > 0 ? table.Rows[0].Cells.Count : 0;
+            // Column count is taken from the first row's cell count.
+            // If the table has no rows, column count is zero.
+            int columnCount = table.FirstRow != null ? table.FirstRow.Cells.Count : 0;
 
             Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
         }
 
-        // Optionally save the document (e.g., after inspection or modifications).
-        string outputPath = "output.docm";
-        doc.Save(outputPath);
+        // Optionally, save the document (unchanged) to verify load/save works.
+        doc.Save("OutputDocument.docm");
     }
 }

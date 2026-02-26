@@ -1,31 +1,31 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class PdfExtractor
+class PdfExtractAndConvert
 {
     static void Main()
     {
-        // Paths to the source PDF and the destination PDF.
-        string inputPath = "input.pdf";
-        string outputPath = "output.pdf";
+        // Path to the source PDF file.
+        string inputPdfPath = "input.pdf";
 
-        // Load the PDF document with default load options.
-        PdfLoadOptions loadOptions = new PdfLoadOptions();
-        Document sourceDoc = new Document(inputPath, loadOptions);
+        // Path to the resulting PDF file.
+        string outputPdfPath = "output.pdf";
 
-        // Extract the first page (page index is zero‑based, count is the number of pages to extract).
-        Document extractedDoc = sourceDoc.ExtractPages(0, 1);
+        // Load the source PDF into an Aspose.Words Document.
+        Document sourceDoc = new Document(inputPdfPath);
 
-        // Configure PDF save options as needed.
-        PdfSaveOptions saveOptions = new PdfSaveOptions
-        {
-            // Example: set PDF compliance level.
-            Compliance = PdfCompliance.Pdf17
-        };
+        // Extract plain text from the PDF.
+        PlainTextDocument plainTextDoc = new PlainTextDocument(inputPdfPath);
+        string extractedText = plainTextDoc.Text;
 
-        // Save the extracted content as a new PDF file.
-        extractedDoc.Save(outputPath, saveOptions);
+        // Create a new blank document and insert the extracted text.
+        Document newDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(newDoc);
+        builder.Writeln(extractedText);
+
+        // Save the new document as PDF using PdfSaveOptions.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        newDoc.Save(outputPdfPath, pdfOptions);
     }
 }

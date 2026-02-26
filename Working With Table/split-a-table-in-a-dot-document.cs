@@ -6,46 +6,43 @@ class SplitTableExample
 {
     static void Main()
     {
-        // Load the DOT (Word template) document.
-        Document doc = new Document("Template.dot");
+        // Load the source document that contains the table to be split.
+        Document doc = new Document("Input.docx");
 
-        // Assume we want to split the first table in the document.
-        Table originalTable = doc.FirstSection.Body.Tables[0];
+        // Locate the first table in the document.
+        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (originalTable == null)
+            throw new InvalidOperationException("No table found in the document.");
 
-        // Define the row index at which to split the table.
-        // Rows with index < splitIndex stay in the original table,
-        // rows with index >= splitIndex move to the new table.
-        int splitIndex = 2; // example: split after the second row
+        // Define the row index after which the table will be split.
+        // Rows are zero‑based; this example splits after the second row (index 1).
+        int splitAfterRowIndex = 1;
 
-        // Guard against invalid split index.
-        if (splitIndex <= 0 || splitIndex >= originalTable.Rows.Count)
-        {
-            Console.WriteLine("Invalid split index.");
-            return;
-        }
+        // Validate the split index.
+        if (splitAfterRowIndex < 0 || splitAfterRowIndex >= originalTable.Rows.Count - 1)
+            throw new ArgumentOutOfRangeException(nameof(splitAfterRowIndex), "Invalid split row index.");
 
-        // Create a new empty table that copies the formatting of the original table.
+        // Clone the original table structure without its child rows.
         Table newTable = (Table)originalTable.Clone(false);
+        // Remove any rows that were cloned by default (should be none, but ensure a clean table).
+        newTable.RemoveAllChildren();
 
-        // Move rows from the original table to the new table.
-        // Iterate from the end to avoid index shifting when removing rows.
-        for (int i = originalTable.Rows.Count - 1; i >= splitIndex; i--)
+        // Move rows that belong to the second part into the new table.
+        // The rows to move start at splitAfterRowIndex + 1.
+        while (originalTable.Rows.Count > splitAfterRowIndex + 1)
         {
-            Row row = originalTable.Rows[i];
             // Remove the row from the original table.
-            originalTable.Rows.RemoveAt(i);
-            // Insert the row at the beginning of the new table to preserve order.
-            newTable.Rows.Insert(0, row);
+            Row movingRow = originalTable.Rows[splitAfterRowIndex + 1];
+            movingRow.Remove();
+
+            // Append the removed row to the new table.
+            newTable.Rows.Add(movingRow);
         }
 
-        // Insert the new table into the document immediately after the original table.
-        Node nextNode = originalTable.NextSibling;
-        if (nextNode != null)
-            originalTable.ParentNode.InsertAfter(newTable, originalTable);
-        else
-            originalTable.ParentNode.AppendChild(newTable);
+        // Insert the new table immediately after the original table in the document tree.
+        originalTable.ParentNode.InsertAfter(newTable, originalTable);
 
         // Save the modified document.
-        doc.Save("Template_SplitTable.dot");
+        doc.Save("Output.docx");
     }
 }

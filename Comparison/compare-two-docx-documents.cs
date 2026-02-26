@@ -2,34 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class DocumentComparison
+class Program
 {
     static void Main()
     {
         // Load the two documents to be compared.
-        Document original = new Document("Original.docx");
-        Document revised = new Document("Revised.docx");
+        Document docOriginal = new Document("Original.docx");
+        Document docEdited   = new Document("Edited.docx");
 
-        // Configure comparison options (customize as needed).
-        CompareOptions options = new CompareOptions
+        // Comparison can only be performed when both documents have no existing revisions.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            // Track changes at the word level.
-            Granularity = Granularity.WordLevel,
-            // Do not ignore formatting differences.
-            IgnoreFormatting = false,
-            // Include comments, tables, footnotes, etc. in the comparison.
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            // Use the original document as the base for comparison.
-            Target = ComparisonTargetType.Current
-        };
+            // Optional: configure comparison options.
+            CompareOptions options = new CompareOptions
+            {
+                // Track changes at the word level.
+                Granularity = Granularity.WordLevel,
+                // Ignore case differences.
+                IgnoreCaseChanges = true,
+                // Use the edited document as the base for comparison.
+                Target = ComparisonTargetType.New
+            };
 
-        // Perform the comparison. The revisions will be added to the original document.
-        original.Compare(revised, "Comparer", DateTime.Now, options);
+            // Perform the comparison. Revisions are added to docOriginal.
+            docOriginal.Compare(docEdited, "JD", DateTime.Now, options);
+        }
 
-        // Save the document that now contains the revision marks.
-        original.Save("ComparisonResult.docx");
+        // Save the result which now contains the revision markup.
+        docOriginal.Save("ComparedResult.docx");
     }
 }

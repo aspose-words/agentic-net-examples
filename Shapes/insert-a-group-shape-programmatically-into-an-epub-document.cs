@@ -2,57 +2,36 @@ using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
-class InsertGroupShapeIntoEpub
+class Program
 {
     static void Main()
     {
         // Create a new empty document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an empty paragraph – the group shape will be added to this paragraph.
-        builder.Writeln();
+        // Insert a rectangle shape.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rectangle.Left = 50;   // Position from the left edge of the page.
+        rectangle.Top = 50;    // Position from the top edge of the page.
+        rectangle.Stroke.Color = Color.Blue;
 
-        // Create a group shape that will contain other shapes.
-        GroupShape group = new GroupShape(doc);
+        // Insert an ellipse shape.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        ellipse.Left = 120;
+        ellipse.Top = 80;
+        ellipse.Stroke.Color = Color.Green;
 
-        // Define the size and position of the group shape (in points).
-        // RectangleF(left, top, width, height)
-        group.Bounds = new RectangleF(0, 0, 200, 200);
+        // Group the two shapes. The group’s position and size are calculated automatically.
+        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
 
-        // Example child shape: a rectangle.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 100;
-        rect.Height = 50;
-        rect.Left = 10;   // Position inside the group.
-        rect.Top = 10;
-        rect.Fill.Color = Color.LightBlue;
-        rect.StrokeColor = Color.DarkBlue;
-        rect.StrokeWeight = 1.0;
-
-        // Add the rectangle to the group.
-        group.AppendChild(rect);
-
-        // Example child shape: an ellipse.
-        Shape ellipse = new Shape(doc, ShapeType.Ellipse);
-        ellipse.Width = 80;
-        ellipse.Height = 80;
-        ellipse.Left = 110;
-        ellipse.Top = 60;
-        ellipse.Fill.Color = Color.LightCoral;
-        ellipse.StrokeColor = Color.Maroon;
-        ellipse.StrokeWeight = 1.0;
-
-        // Add the ellipse to the group.
-        group.AppendChild(ellipse);
-
-        // Append the group shape to the current paragraph.
-        builder.CurrentParagraph.AppendChild(group);
+        // Optional: adjust group properties (e.g., make it float behind text).
+        group.WrapType = WrapType.None;
+        group.BehindText = true;
 
         // Save the document as an EPUB file.
-        doc.Save("GroupShape.epub");
+        doc.Save("GroupShape.epub", SaveFormat.Epub);
     }
 }

@@ -7,19 +7,17 @@ class Program
     static void Main()
     {
         // Path to the source document (DOC format)
-        string sourcePath = "source.doc";
+        string sourcePath = @"C:\Docs\SourceDocument.doc";
 
-        // Specify load options and explicitly set the format to DOC
-        LoadOptions loadOptions = new LoadOptions
-        {
-            LoadFormat = LoadFormat.Doc
-        };
+        // Create LoadOptions and explicitly set the LoadFormat to DOC.
+        // This forces Aspose.Words to treat the input as a legacy Word document.
+        LoadOptions loadOptions = new LoadOptions(LoadFormat.Doc, "", "");
 
-        // Load the document using the specified options
+        // Load the document using the constructor that accepts a filename and LoadOptions.
         Document doc = new Document(sourcePath, loadOptions);
 
-        // Example: save the loaded document to another format (e.g., DOCX)
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
+        // At this point the document is loaded and can be processed.
+        // Example: output the first paragraph's text to the console.
+        Console.WriteLine(doc.FirstSection.Body.FirstParagraph.GetText().Trim());
     }
 }

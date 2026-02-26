@@ -7,17 +7,13 @@ class ExtractBetweenNodes
 {
     static void Main()
     {
-        // Load the HTML file into an Aspose.Words Document.
+        // Load the HTML file into an Aspose.Words document.
         Document doc = new Document("input.html");
 
-        // Define XPath expressions for the start and end nodes.
-        // Adjust these expressions to match the actual nodes you want to use.
-        string startXPath = "//Paragraph[@StyleIdentifier='Heading 1'][1]";
-        string endXPath   = "//Paragraph[@StyleIdentifier='Heading 2'][1]";
-
-        // Locate the start and end nodes.
-        Node startNode = doc.SelectSingleNode(startXPath);
-        Node endNode   = doc.SelectSingleNode(endXPath);
+        // Locate the start and end nodes using XPath.
+        // Adjust the XPath expressions to match the actual markers in your HTML.
+        Node startNode = doc.SelectSingleNode("//p[@id='start']");
+        Node endNode   = doc.SelectSingleNode("//p[@id='end']");
 
         if (startNode == null || endNode == null)
         {
@@ -25,34 +21,25 @@ class ExtractBetweenNodes
             return;
         }
 
-        // Ensure both nodes share the same parent; otherwise, extraction logic would need to be more complex.
-        if (startNode.ParentNode != endNode.ParentNode)
-        {
-            Console.WriteLine("Start and end nodes do not share the same parent.");
-            return;
-        }
+        // Collect the content of all nodes that appear between the start and end nodes (exclusive).
+        StringBuilder extracted = new StringBuilder();
 
-        // Extract the text that lies between the start and end nodes (exclusive).
-        StringBuilder extractedText = new StringBuilder();
         for (Node cur = startNode.NextSibling; cur != null && cur != endNode; cur = cur.NextSibling)
         {
-            extractedText.Append(cur.GetText());
+            // Export each node to its HTML representation.
+            extracted.Append(cur.ToString(SaveFormat.Html));
         }
 
-        // Output the extracted content.
-        Console.WriteLine("Extracted content between the specified nodes:");
-        Console.WriteLine(extractedText.ToString());
+        string extractedHtml = extracted.ToString();
 
-        // Optionally, save the extracted content to a new document.
-        Document extractedDoc = new Document();
-        extractedDoc.RemoveAllChildren(); // Ensure the document is empty.
-        // Create a new paragraph and add the extracted text.
-        Paragraph para = new Paragraph(extractedDoc);
-        Run run = new Run(extractedDoc, extractedText.ToString());
-        para.AppendChild(run);
-        extractedDoc.FirstSection.Body.AppendChild(para);
+        // Output the extracted HTML to the console.
+        Console.WriteLine("Extracted HTML content:");
+        Console.WriteLine(extractedHtml);
 
-        // Save the new document (e.g., as a plain text file).
-        extractedDoc.Save("extracted.txt", SaveFormat.Text);
+        // Save the extracted content as a separate HTML file.
+        Document tempDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(tempDoc);
+        builder.InsertHtml(extractedHtml);
+        tempDoc.Save("extracted.html", SaveFormat.Html);
     }
 }

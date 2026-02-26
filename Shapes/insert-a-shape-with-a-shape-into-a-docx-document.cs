@@ -1,42 +1,33 @@
-using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class InsertGroupShapeExample
+class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape that will contain other shapes.
-        GroupShape group = new GroupShape(doc);
-        // Set the size and position of the group shape (in points).
-        group.Width = 200;
-        group.Height = 150;
-        group.Left = 100;
+        // Insert the first shape (a rectangle) and set its appearance.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 120, 60);
+        shape1.Stroke.Color = Color.Blue;
+        shape1.Fill.Color = Color.LightBlue;
+
+        // Insert the second shape (an ellipse) and set its appearance.
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 80, 80);
+        shape2.Stroke.Color = Color.Green;
+        shape2.Fill.Color = Color.LightGreen;
+
+        // Group the two shapes together. The group shape is inserted at the current cursor position.
+        GroupShape group = builder.InsertGroupShape(shape1, shape2);
+
+        // Position the group shape on the page (optional).
+        group.Left = 50;
         group.Top = 100;
-        // Make the group floating so it can be positioned absolutely.
-        group.WrapType = WrapType.None;
 
-        // Create an inner rectangle shape.
-        Shape innerShape = new Shape(doc, ShapeType.Rectangle);
-        // Set size and position relative to the group shape.
-        innerShape.Width = 180;
-        innerShape.Height = 130;
-        innerShape.Left = 10;   // Position inside the group.
-        innerShape.Top = 10;
-        // Optional: give the shape a fill color.
-        innerShape.FillColor = System.Drawing.Color.LightBlue;
-        // Add the inner shape to the group.
-        group.AppendChild(innerShape);
-
-        // Insert the group shape into the document.
-        // The builder's current paragraph is the insertion point.
-        builder.CurrentParagraph.AppendChild(group);
-
-        // Save the document to a DOCX file.
-        doc.Save("GroupShapeWithInnerShape.docx");
+        // Save the document as a DOCX file.
+        doc.Save("ShapeWithShape.docx");
     }
 }

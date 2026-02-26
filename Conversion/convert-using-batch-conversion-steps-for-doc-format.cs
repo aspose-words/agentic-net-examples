@@ -7,33 +7,31 @@ class BatchDocConverter
 {
     static void Main()
     {
-        // Folder containing source documents (any supported format)
+        // Folder containing source documents of various formats.
         string inputFolder = @"C:\Input";
 
-        // Folder where converted DOC files will be saved
+        // Folder where the converted DOC files will be saved.
         string outputFolder = @"C:\Output";
 
-        // Ensure the output directory exists
+        // Ensure the output directory exists.
         Directory.CreateDirectory(outputFolder);
 
-        // Process each file in the input folder
-        foreach (string inputFilePath in Directory.GetFiles(inputFolder))
+        // Iterate over each file in the input folder.
+        foreach (string sourcePath in Directory.GetFiles(inputFolder))
         {
-            // Load the document; format is detected automatically
-            Document document = new Document(inputFilePath);
+            // Load the source document (auto-detects format).
+            Document doc = new Document(sourcePath);
 
-            // Configure save options for the legacy DOC format
-            DocSaveOptions saveOptions = new DocSaveOptions
-            {
-                SaveFormat = SaveFormat.Doc
-            };
+            // Create save options for the legacy DOC format.
+            DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
 
-            // Construct the output file name with .doc extension
-            string outputFileName = Path.GetFileNameWithoutExtension(inputFilePath) + ".doc";
-            string outputFilePath = Path.Combine(outputFolder, outputFileName);
+            // Construct the output file name with a .doc extension.
+            string targetPath = Path.Combine(
+                outputFolder,
+                Path.GetFileNameWithoutExtension(sourcePath) + ".doc");
 
-            // Save the document as DOC
-            document.Save(outputFilePath, saveOptions);
+            // Save the document as DOC using the specified options.
+            doc.Save(targetPath, saveOptions);
         }
     }
 }

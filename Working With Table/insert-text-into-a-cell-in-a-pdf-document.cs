@@ -1,40 +1,31 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Saving;
+using Aspose.Words.Tables; // Added for Cell class
 
 class InsertTextIntoPdfCell
 {
     static void Main()
     {
-        // Path where the PDF will be saved.
-        string outputPath = @"C:\Temp\CellInPdf.pdf";
-
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to construct a simple 1x1 table.
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        Table table = builder.StartTable();
-        builder.InsertCell();                     // First (and only) cell.
-        builder.Write("Initial placeholder text"); // Optional placeholder.
-        builder.EndRow();
-        builder.EndTable();
 
-        // Retrieve the cell we just created.
-        Cell cell = table.Rows[0].Cells[0];
+        // Start a table and add a single cell.
+        builder.StartTable();
+        Cell cell = builder.InsertCell();   // Insert a new cell.
+        builder.Write("Hello, PDF cell!"); // Write text into the current cell.
+        builder.EndRow();                  // End the row.
+        builder.EndTable();                // End the table.
 
-        // Remove any existing content from the cell.
-        cell.RemoveAllChildren();
-
-        // Create a new paragraph that will hold the desired text.
-        Paragraph paragraph = new Paragraph(doc);
-        Run run = new Run(doc, "Hello, this text is inside a PDF table cell!");
-        paragraph.AppendChild(run);
-
-        // Add the paragraph to the cell.
-        cell.AppendChild(paragraph);
-
-        // Save the document as a PDF file.
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Save the document as PDF.
+        PdfSaveOptions saveOptions = new PdfSaveOptions
+        {
+            // Optional: set text compression to Flate for smaller file size.
+            TextCompression = PdfTextCompression.Flate
+        };
+        doc.Save("Output.pdf", saveOptions);
     }
 }

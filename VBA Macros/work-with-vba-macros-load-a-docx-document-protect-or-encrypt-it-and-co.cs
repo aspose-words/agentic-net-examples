@@ -1,81 +1,58 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Loading;
-using Aspose.Words.Vba;
-using Aspose.Words.Properties;
+using Aspose.Words.Saving;
 
-class VbaDocumentProtectionDemo
+class Program
 {
     static void Main()
     {
         // Paths to the source documents.
-        string sourcePath1 = @"C:\Docs\Document1.docx";
-        string sourcePath2 = @"C:\Docs\Document2.docx";
+        const string docPath1 = @"C:\Docs\Original.docx";
+        const string docPath2 = @"C:\Docs\Modified.docx";
 
         // -----------------------------------------------------------------
-        // Load the first document (may contain VBA macros).
+        // 1. Load the first document (no password required).
         // -----------------------------------------------------------------
-        Document doc1 = new Document(sourcePath1);
+        Document doc1 = new Document(docPath1);
 
         // -----------------------------------------------------------------
-        // Check if the document contains VBA macros.
+        // 2. Protect the document (read‑only) and then encrypt it with a password.
+        //    Protection limits editing in Word, while encryption prevents opening
+        //    without the password.
         // -----------------------------------------------------------------
-        if (doc1.HasMacros)
-        {
-            Console.WriteLine("Document1 contains VBA macros.");
-            // Example: list macro module names.
-            foreach (VbaModule module in doc1.VbaProject.Modules)
-                Console.WriteLine($" - Module: {module.Name}");
-        }
+        doc1.Protect(ProtectionType.ReadOnly, "protectPwd");
 
-        // -----------------------------------------------------------------
-        // Protect the document for editing (read‑only) and set a write‑protection password.
-        // -----------------------------------------------------------------
-        doc1.Protect(ProtectionType.ReadOnly, "EditPassword");
-        doc1.WriteProtection.SetPassword("WritePassword");
-        doc1.WriteProtection.ReadOnlyRecommended = true;
-
-        // -----------------------------------------------------------------
-        // Encrypt the document with a password when saving.
-        // -----------------------------------------------------------------
+        // Use OoxmlSaveOptions to set an encryption password.
         OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
         {
-            Password = "EncryptionPassword"
+            Password = "encryptPwd"
         };
-
-        string protectedPath = @"C:\Docs\Document1_Protected.docx";
-        doc1.Save(protectedPath, saveOptions);
-
-        // -----------------------------------------------------------------
-        // Verify that the saved file is encrypted.
-        // -----------------------------------------------------------------
-        FileFormatInfo formatInfo = FileFormatUtil.DetectFileFormat(protectedPath);
-        Console.WriteLine($"IsEncrypted: {formatInfo.IsEncrypted}");
-        Console.WriteLine($"LoadFormat: {formatInfo.LoadFormat}");
+        const string encryptedPath = @"C:\Docs\Original_Protected_Encrypted.docx";
+        doc1.Save(encryptedPath, saveOptions);
 
         // -----------------------------------------------------------------
-        // Load the encrypted document using the correct password.
+        // 3. Load the encrypted document using the correct password.
         // -----------------------------------------------------------------
-        LoadOptions loadOptions = new LoadOptions("EncryptionPassword");
-        Document loadedProtectedDoc = new Document(protectedPath, loadOptions);
+        LoadOptions loadOptions = new LoadOptions("encryptPwd");
+        Document protectedDoc = new Document(encryptedPath, loadOptions);
 
         // -----------------------------------------------------------------
-        // Load the second document for comparison.
+        // 4. Load the second document that we want to compare against.
         // -----------------------------------------------------------------
-        Document doc2 = new Document(sourcePath2);
+        Document doc2 = new Document(docPath2);
 
         // -----------------------------------------------------------------
-        // Simple comparison: compare the plain text of both documents.
+        // 5. Compare the two documents.
+        //    The result is stored in the 'protectedDoc' as revision changes.
         // -----------------------------------------------------------------
-        bool textsAreEqual = string.Equals(loadedProtectedDoc.GetText(), doc2.GetText(), StringComparison.Ordinal);
-        Console.WriteLine($"Documents have identical text: {textsAreEqual}");
+        // The author name and the comparison date are optional.
+        protectedDoc.Compare(doc2, "Comparer", DateTime.Now);
 
         // -----------------------------------------------------------------
-        // Additional comparison: compare the number of sections.
+        // 6. Save the comparison result (includes revisions) to a new file.
         // -----------------------------------------------------------------
-        bool sectionsAreEqual = loadedProtectedDoc.Sections.Count == doc2.Sections.Count;
-        Console.WriteLine($"Documents have the same number of sections: {sectionsAreEqual}");
+        const string comparisonResultPath = @"C:\Docs\ComparisonResult.docx";
+        protectedDoc.Save(comparisonResultPath);
     }
 }

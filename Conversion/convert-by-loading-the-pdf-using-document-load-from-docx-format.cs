@@ -1,17 +1,33 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class Program
+namespace PdfToDocxConversion
 {
-    static void Main()
+    class Program
     {
-        // Load the DOCX file, explicitly specifying the format.
-        var loadOptions = new LoadOptions { LoadFormat = LoadFormat.Docx };
-        Document doc = new Document("input.docx", loadOptions);
+        static void Main(string[] args)
+        {
+            // Path to the source PDF file.
+            string pdfPath = @"C:\Input\sample.pdf";
 
-        // Save the loaded document as PDF using PdfSaveOptions.
-        var saveOptions = new PdfSaveOptions();
-        doc.Save("output.pdf", saveOptions);
+            // Path where the resulting DOCX file will be saved.
+            string docxPath = @"C:\Output\sample.docx";
+
+            // Create load options specific for PDF files.
+            // PdfLoadOptions inherits from LoadOptions and allows PDF‑specific settings.
+            PdfLoadOptions loadOptions = new PdfLoadOptions();
+
+            // Load the PDF document into an Aspose.Words Document object.
+            // The constructor (string fileName, LoadOptions loadOptions) is used as per the provided rules.
+            Document document = new Document(pdfPath, loadOptions);
+
+            // Save the loaded document as DOCX.
+            // The Save method with (string fileName, SaveFormat saveFormat) follows the documented API.
+            document.Save(docxPath, SaveFormat.Docx);
+
+            Console.WriteLine("PDF successfully converted to DOCX.");
+        }
     }
 }

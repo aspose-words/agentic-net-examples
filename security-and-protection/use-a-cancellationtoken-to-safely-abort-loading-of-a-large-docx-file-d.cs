@@ -4,80 +4,62 @@ using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
-public class LoadingProgressCallback : IDocumentLoadingCallback
+class Program
 {
-    private readonly CancellationToken _cancellationToken;
-    private readonly DateTime _loadingStartedAt;
-
-    public LoadingProgressCallback(CancellationToken cancellationToken)
+    static void Main()
     {
-        _cancellationToken = cancellationToken;
-        _loadingStartedAt = DateTime.Now;
-    }
+        // Path to the large DOCX file.
+        string filePath = "BigDocument.docx";
 
-    // Called periodically during document loading.
-    public void Notify(DocumentLoadingArgs args)
-    {
-        // Abort if the external token requests cancellation.
-        if (_cancellationToken.IsCancellationRequested)
-            throw new OperationCanceledException($"Loading canceled by token. EstimatedProgress = {args.EstimatedProgress}");
+        // Create a cancellation token source that will request cancellation after a timeout.
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(500)); // Adjust as needed.
 
-        // Optional: also cancel after a time limit.
-        double elapsedSeconds = (DateTime.Now - _loadingStartedAt).TotalSeconds;
-        const double maxDuration = 5.0; // seconds
-        if (elapsedSeconds > maxDuration)
-            throw new OperationCanceledException($"Loading exceeded max duration ({maxDuration}s). EstimatedProgress = {args.EstimatedProgress}");
-    }
-}
-
-public class DocumentProcessor
-{
-    public void LoadDocumentWithCancellation(string filePath, CancellationToken cancellationToken)
-    {
-        // Configure load options to use the progress callback.
-        LoadOptions loadOptions = new LoadOptions
+        // Configure load options to use a custom progress callback that checks the token.
+        var loadOptions = new LoadOptions
         {
-            ProgressCallback = new LoadingProgressCallback(cancellationToken)
+            ProgressCallback = new LoadingProgressCallback(cts.Token)
         };
 
         try
         {
-            // Load the document; the callback will monitor progress and abort if needed.
+            // Load the document with the specified load options.
             Document doc = new Document(filePath, loadOptions);
 
-            // Document loaded successfully – proceed with processing.
-            Console.WriteLine($"Document loaded. Page count: {doc.PageCount}");
+            // Document loaded successfully – continue processing.
+            Console.WriteLine("Document loaded successfully.");
         }
         catch (OperationCanceledException ex)
         {
-            // Handle cancellation (e.g., log, clean up, inform user).
-            Console.WriteLine($"Document loading was canceled: {ex.Message}");
-        }
-        catch (FileCorruptedException ex)
-        {
-            // Handle corrupted file scenario.
-            Console.WriteLine($"File is corrupted: {ex.Message}");
-        }
-        catch (UnsupportedFileFormatException ex)
-        {
-            // Handle unsupported format scenario.
-            Console.WriteLine($"Unsupported format: {ex.Message}");
+            // Loading was aborted via the cancellation token.
+            Console.WriteLine($"Loading canceled: {ex.Message}");
         }
     }
-}
 
-// Example usage.
-public class Program
-{
-    public static void Main()
+    // Implements IDocumentLoadingCallback to monitor loading progress.
+    // Throws OperationCanceledException when the supplied token signals cancellation.
+    private class LoadingProgressCallback : IDocumentLoadingCallback
     {
-        string docPath = @"C:\Docs\LargeDocument.docx";
+        private readonly CancellationToken _token;
+        private readonly DateTime _startTime;
 
-        // Create a cancellation token source that cancels after 3 seconds.
-        using (CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(3)))
+        public LoadingProgressCallback(CancellationToken token)
         {
-            DocumentProcessor processor = new DocumentProcessor();
-            processor.LoadDocumentWithCancellation(docPath, cts.Token);
+            _token = token;
+            _startTime = DateTime.Now;
+        }
+
+        public void Notify(DocumentLoadingArgs args)
+        {
+            // Abort loading if cancellation was requested.
+            if (_token.IsCancellationRequested)
+                throw new OperationCanceledException(
+                    $"Loading aborted at {DateTime.Now}, progress {args.EstimatedProgress}%.");
+
+            // Optional: additional time‑based abort logic can be added here.
+            // double elapsedSeconds = (DateTime.Now - _startTime).TotalSeconds;
+            // if (elapsedSeconds > 10)
+            //     throw new OperationCanceledException($"Loading timed out after {elapsedSeconds}s.");
         }
     }
 }

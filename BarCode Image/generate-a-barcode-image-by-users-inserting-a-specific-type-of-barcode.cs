@@ -2,27 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class GenerateBarcodeWithBarField
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a DISPLAYBARCODE field. This field type allows setting barcode parameters directly.
-        FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, false);
+        // Insert a BARCODE field. This field is intended for U.S. postal barcodes.
+        // The field will display the ZIP code 96801 as a barcode.
+        FieldBarcode barcodeField = (FieldBarcode)builder.InsertField(FieldType.FieldBarcode, true);
 
-        // Configure the barcode type and value.
-        barcodeField.BarcodeType = "QR";          // QR code
-        barcodeField.BarcodeValue = "ABC123";    // Data to encode
+        // Set the ZIP code value.
+        barcodeField.PostalAddress = "96801";
 
-        // Optionally, display the encoded text below the barcode.
-        barcodeField.DisplayText = true;
+        // Indicate that the value is a U.S. postal address.
+        barcodeField.IsUSPostalAddress = true;
 
-        // Save the document as DOCX.
-        doc.Save("BarcodeDocument.docx");
+        // Optional: add a Facing Identification Mark (FIM) to the barcode.
+        barcodeField.FacingIdentificationMark = "C";
+
+        // Save the document as a DOCX file.
+        doc.Save("BarcodeBarField.docx");
     }
 }

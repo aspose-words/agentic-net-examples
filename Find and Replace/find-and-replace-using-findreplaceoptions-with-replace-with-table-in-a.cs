@@ -4,53 +4,59 @@ using Aspose.Words;
 using Aspose.Words.Replacing;
 using Aspose.Words.Tables;
 
-class InsertTableAtReplaceHandler : IReplacingCallback
-{
-    // Called for each match found during the replace operation.
-    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
-    {
-        // The node that contains the start of the match is a Run inside a Paragraph.
-        // Its parent is the Paragraph that we want to replace.
-        Paragraph paragraph = (Paragraph)args.MatchNode.ParentNode;
-
-        // Create a DocumentBuilder attached to the same document.
-        // Cast to Document because the overload that accepts DocumentBase was removed in newer versions.
-        DocumentBuilder builder = new DocumentBuilder((Document)paragraph.Document);
-        // Move the cursor to the paragraph that contains the match.
-        builder.MoveTo(paragraph);
-
-        // Build a simple 2‑cell table.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-        builder.EndTable();
-
-        // Remove the original paragraph that held the placeholder text.
-        paragraph.Remove();
-
-        // Skip the default replacement because we have already handled it.
-        return ReplaceAction.Skip;
-    }
-}
-
 class Program
 {
     static void Main()
     {
-        // Load the source DOCX document.
+        // Load the source document.
         Document doc = new Document("Input.docx");
 
-        // Set up find/replace options with our custom callback.
+        // Set up find‑replace options with a custom callback that will insert a table.
         FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new InsertTableAtReplaceHandler();
+        options.ReplacingCallback = new InsertTableHandler();
 
-        // Replace the placeholder "[TABLE]" with the table created in the callback.
+        // Replace the placeholder "[TABLE]" with an empty string; the callback will insert the table.
         doc.Range.Replace(new Regex(@"\[TABLE\]"), string.Empty, options);
 
         // Save the modified document.
         doc.Save("Output.docx");
+    }
+
+    // Callback that inserts a table at the location of the matched placeholder.
+    private class InsertTableHandler : IReplacingCallback
+    {
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Create a simple 2x2 table.
+            Table table = new Table(args.MatchNode.Document);
+            // Ensure the table has at least one row and cell.
+            table.EnsureMinimum();
+
+            // Populate the table with sample data.
+            for (int rowIdx = 0; rowIdx < 2; rowIdx++)
+            {
+                Row row = new Row(args.MatchNode.Document);
+                table.AppendChild(row);
+                for (int colIdx = 0; colIdx < 2; colIdx++)
+                {
+                    Cell cell = new Cell(args.MatchNode.Document);
+                    cell.AppendChild(new Paragraph(args.MatchNode.Document));
+                    cell.FirstParagraph.AppendChild(new Run(args.MatchNode.Document,
+                        $"R{rowIdx + 1}C{colIdx + 1}"));
+                    row.AppendChild(cell);
+                }
+            }
+
+            // Insert the table after the paragraph that contains the placeholder.
+            Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
+            CompositeNode parent = placeholderParagraph.ParentNode;
+            parent.InsertAfter(table, placeholderParagraph);
+
+            // Remove the placeholder paragraph.
+            placeholderParagraph.Remove();
+
+            // Skip the default replacement since we have already handled it.
+            return ReplaceAction.Skip;
+        }
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
 class Program
 {
@@ -10,48 +9,30 @@ class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document for building content.
+        // Use DocumentBuilder to construct the table.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
-        Table table = builder.StartTable();
+        // Start the table.
+        builder.StartTable();
 
-        // First row – header cells.
-        builder.InsertCell();
-        builder.Writeln("Item");
-        builder.InsertCell();
-        builder.Writeln("Quantity (kg)");
-        builder.EndRow();
+        // ---- First row ----
+        builder.InsertCell();                 // First cell of the first row.
+        builder.Write("Cell 1, Row 1");       // Add text to the cell.
+        builder.InsertCell();                 // Second cell of the first row.
+        builder.Write("Cell 2, Row 1");
+        builder.EndRow();                     // End the first row.
 
-        // Second row – data.
-        builder.InsertCell();
-        builder.Writeln("Apples");
-        builder.InsertCell();
-        builder.Writeln("20");
-        builder.EndRow();
+        // ---- Second row ----
+        builder.InsertCell();                 // First cell of the second row.
+        builder.Write("Cell 1, Row 2");
+        builder.InsertCell();                 // Second cell of the second row.
+        builder.Write("Cell 2, Row 2");
+        builder.EndRow();                     // End the second row.
 
-        // Third row – data.
-        builder.InsertCell();
-        builder.Writeln("Bananas");
-        builder.InsertCell();
-        builder.Writeln("40");
-        builder.EndRow();
-
-        // Fourth row – data.
-        builder.InsertCell();
-        builder.Writeln("Carrots");
-        builder.InsertCell();
-        builder.Writeln("50");
-        builder.EndRow();
-
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Optionally apply AutoFit to adjust column widths.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-        // Save the document as RTF using RtfSaveOptions.
-        RtfSaveOptions saveOptions = new RtfSaveOptions();
-        doc.Save("TableInRtfDocument.rtf", saveOptions);
+        // Save the document in RTF format.
+        doc.Save("TableInRtf.rtf");
     }
 }

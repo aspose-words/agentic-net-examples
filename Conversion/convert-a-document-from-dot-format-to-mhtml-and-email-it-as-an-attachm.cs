@@ -2,57 +2,77 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Mail;
-using System.Net.Mime;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
+// Entry point for the console application.
 class Program
 {
     static void Main()
     {
-        // Path to the source DOT template.
-        string dotPath = "Template.dot";
+        var emailer = new DotToMhtmlEmailer();
+        emailer.ConvertAndSend(
+            dotFilePath: @"C:\Docs\Template.dot",
+            mhtmlFilePath: @"C:\Docs\Output.mhtml",
+            smtpHost: "smtp.example.com",
+            smtpPort: 587,
+            fromAddress: "sender@example.com",
+            toAddress: "recipient@example.com",
+            subject: "Converted Document",
+            body: "Please find the converted MHTML document attached.",
+            smtpUser: "smtp_user",
+            smtpPassword: "smtp_password");
+    }
+}
 
-        // Load the DOT document using LoadOptions.
-        LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Dot };
-        Document doc = new Document(dotPath, loadOptions);
+public class DotToMhtmlEmailer
+{
+    /// <summary>
+    /// Converts a .dot template to .mhtml and sends it as an email attachment.
+    /// </summary>
+    public void ConvertAndSend(string dotFilePath, string mhtmlFilePath,
+                               string smtpHost, int smtpPort,
+                               string fromAddress, string toAddress,
+                               string subject, string body,
+                               string? smtpUser = null, string? smtpPassword = null)
+    {
+        // Load the DOT document.
+        Document doc = new Document(dotFilePath);
 
-        // Set up save options for MHTML.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        // Save the document as MHTML.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml);
+        doc.Save(mhtmlFilePath, saveOptions);
+
+        // Prepare and send the email.
+        using (MailMessage message = new MailMessage())
         {
-            HtmlVersion = HtmlVersion.Xhtml
-        };
+            message.From = new MailAddress(fromAddress);
+            message.To.Add(new MailAddress(toAddress));
+            message.Subject = subject;
+            message.Body = body;
+            message.IsBodyHtml = false;
 
-        // Save the document to a memory stream in MHTML format.
-        using (MemoryStream mhtmlStream = new MemoryStream())
-        {
-            doc.Save(mhtmlStream, saveOptions);
-            mhtmlStream.Position = 0; // Reset stream position for reading.
+            // Attach the generated MHTML file.
+            message.Attachments.Add(new Attachment(mhtmlFilePath));
 
-            // Create the email message.
-            using (MailMessage message = new MailMessage())
+            using (SmtpClient smtpClient = new SmtpClient(smtpHost, smtpPort))
             {
-                message.From = new MailAddress("sender@example.com");
-                message.To.Add("recipient@example.com");
-                message.Subject = "Converted MHTML Document";
-                message.Body = "Please find the converted document attached.";
+                smtpClient.EnableSsl = true;
 
-                // Attach the MHTML stream.
-                using (Attachment attachment = new Attachment(mhtmlStream, "Document.mht", MediaTypeNames.Application.Octet))
+                if (!string.IsNullOrEmpty(smtpUser) && !string.IsNullOrEmpty(smtpPassword))
                 {
-                    attachment.ContentDisposition.DispositionType = DispositionTypeNames.Attachment;
-                    message.Attachments.Add(attachment);
-
-                    // Configure and send via SMTP.
-                    using (SmtpClient client = new SmtpClient("smtp.example.com", 587))
-                    {
-                        client.Credentials = new NetworkCredential("username", "password");
-                        client.EnableSsl = true;
-                        client.Send(message);
-                    }
+                    smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPassword);
                 }
+                else
+                {
+                    smtpClient.UseDefaultCredentials = true;
+                }
+
+                smtpClient.Send(message);
             }
         }
+
+        // Optional: delete the temporary MHTML file if you no longer need it.
+        // File.Delete(mhtmlFilePath);
     }
 }

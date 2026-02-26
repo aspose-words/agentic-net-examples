@@ -1,33 +1,46 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
-class Program
+class InsertTextIntoCell
 {
     static void Main()
     {
-        // Load an existing Markdown document that already contains a table.
-        Document doc = new Document("Input.md");
+        // Create a new empty document.
+        Document doc = new Document();
 
-        // Assume the document has at least one table.
-        Table table = doc.FirstSection.Body.Tables[0];
+        // Attach a DocumentBuilder to the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Choose the cell where the text should be inserted.
-        // For example, insert into the second row, second column (index is zero‑based).
-        Cell targetCell = table.Rows[1].Cells[1];
+        // Build a 2x2 table.
+        builder.StartTable();
 
-        // Remove any existing content from the cell.
-        targetCell.RemoveAllChildren();
+        // First row.
+        builder.InsertCell();
+        builder.Write("Cell 0,0");
+        builder.InsertCell();
+        builder.Write("Cell 0,1");
+        builder.EndRow();
 
-        // Create a new paragraph that contains the desired text.
-        Paragraph paragraph = new Paragraph(doc);
-        Run run = new Run(doc, "Inserted text");
-        paragraph.AppendChild(run);
-        targetCell.AppendChild(paragraph);
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Cell 1,0");
+        builder.InsertCell();
+        builder.Write("Cell 1,1");
+        builder.EndRow();
 
-        // Save the modified document back to Markdown format.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
-        doc.Save("Output.md", saveOptions);
+        // Finish the table.
+        builder.EndTable();
+
+        // Move the cursor to the cell at row 1, column 1 (second row, second column).
+        // Table index is 0 because we have only one table in the document.
+        // characterIndex = -1 moves to the end of the cell.
+        builder.MoveToCell(0, 1, 1, -1);
+
+        // Insert additional text into the selected cell.
+        builder.Write(" – Inserted Text");
+
+        // Save the document (you can change the format by using a different file extension).
+        doc.Save("Output.docx");
     }
 }

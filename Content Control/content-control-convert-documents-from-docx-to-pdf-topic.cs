@@ -2,17 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsDemo
 {
-    static void Main()
+    class Program
     {
-        // Load the DOCX file from disk.
-        Document doc = new Document("input.docx");
+        static void Main()
+        {
+            // Path to the source DOCX file.
+            string inputPath = @"C:\Docs\SampleDocument.docx";
 
-        // Create PDF save options (optional – can customize PDF output here).
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+            // Path where the resulting PDF will be saved.
+            string outputPath = @"C:\Docs\SampleDocument.pdf";
 
-        // Save the document as a PDF file.
-        doc.Save("output.pdf", pdfOptions);
+            // Load the existing DOCX document.
+            Document doc = new Document(inputPath);
+
+            // Optionally configure PDF save options (e.g., compliance level).
+            PdfSaveOptions pdfOptions = new PdfSaveOptions
+            {
+                // Example: set PDF/A-1b compliance.
+                // Compliance = PdfCompliance.PdfA1b
+            };
+
+            // Save the document as PDF. The overload with SaveOptions is used
+            // to demonstrate the lifecycle rule for saving with options.
+            doc.Save(outputPath, pdfOptions);
+
+            Console.WriteLine("Conversion completed successfully.");
+        }
     }
 }

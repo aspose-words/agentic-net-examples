@@ -1,33 +1,25 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class ConvertToDoc
+namespace AsposeWordsConversionSample
 {
-    static void Main()
+    class Program
     {
-        // Input document path (any supported format, e.g., DOCX)
-        string inputPath = @"C:\Input\sample.docx";
-
-        // Output document path (DOC format)
-        string outputPath = @"C:\Output\sample_converted.doc";
-
-        // Load the source document using the default constructor (auto-detect format)
-        Document doc = new Document(inputPath);
-
-        // Create save options for the DOC format
-        DocSaveOptions saveOptions = new DocSaveOptions
+        static void Main(string[] args)
         {
-            // Example: embed generator name (default true)
-            ExportGeneratorName = true,
-            // Example: compress all metafiles
-            AlwaysCompressMetafiles = true
-        };
+            // Input file path (any format supported by Aspose.Words, e.g., DOCX)
+            string inputFile = @"C:\Docs\SampleDocument.docx";
 
-        // Save the document as DOC using the specified options
-        doc.Save(outputPath, saveOptions);
+            // Output file path – we want to convert to the legacy DOC format
+            string outputFile = @"C:\Docs\SampleDocumentConverted.doc";
 
-        Console.WriteLine("Conversion completed successfully.");
+            // Load the source document using the Document constructor that accepts a file name
+            Document doc = new Document(inputFile);
+
+            // Save the document in the DOC format using the Save method that takes a file name and a SaveFormat enum
+            doc.Save(outputFile, SaveFormat.Doc);
+
+            Console.WriteLine("Document has been successfully converted to DOC format.");
+        }
     }
 }

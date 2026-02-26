@@ -3,42 +3,41 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class FindReplaceDemo
+class FindReplaceWithRegex
 {
     static void Main()
     {
-        // Load the DOCX document.
+        // Load an existing DOCX document.
         Document doc = new Document("Input.docx");
 
-        // --------------------------------------------------------------------
-        // Example 1: Case‑insensitive replace.
-        // --------------------------------------------------------------------
-        // Regex pattern to find the word "example" (any case).
-        Regex patternInsensitive = new Regex(@"example", RegexOptions.None);
+        // Define the regular expression pattern to search for.
+        // Example: find all occurrences of the word "color" with any case.
+        Regex regexPattern = new Regex(@"\bcolor\b", RegexOptions.Compiled);
 
-        // Configure find/replace options: case‑insensitive (MatchCase = false).
-        FindReplaceOptions optionsInsensitive = new FindReplaceOptions
+        // Replacement text.
+        string replacement = "colour";
+
+        // ---------- Case‑sensitive replace ----------
+        FindReplaceOptions caseSensitiveOptions = new FindReplaceOptions
         {
-            MatchCase = false   // false = ignore case.
+            // Enable case‑sensitive matching.
+            MatchCase = true
         };
 
-        // Replace all matches with the word "sample".
-        doc.Range.Replace(patternInsensitive, "sample", optionsInsensitive);
+        // Perform the replace operation with case sensitivity.
+        int replacedCaseSensitive = doc.Range.Replace(regexPattern, replacement, caseSensitiveOptions);
+        Console.WriteLine($"Case‑sensitive replacements made: {replacedCaseSensitive}");
 
-        // --------------------------------------------------------------------
-        // Example 2: Case‑sensitive replace.
-        // --------------------------------------------------------------------
-        // Regex pattern to find the exact case "Test".
-        Regex patternSensitive = new Regex(@"Test", RegexOptions.None);
-
-        // Configure find/replace options: case‑sensitive (MatchCase = true).
-        FindReplaceOptions optionsSensitive = new FindReplaceOptions
+        // ---------- Case‑insensitive replace ----------
+        FindReplaceOptions caseInsensitiveOptions = new FindReplaceOptions
         {
-            MatchCase = true    // true = respect case.
+            // Disable case‑sensitive matching (default is false, but set explicitly for clarity).
+            MatchCase = false
         };
 
-        // Replace all matches with the word "Exam".
-        doc.Range.Replace(patternSensitive, "Exam", optionsSensitive);
+        // Perform the replace operation without case sensitivity.
+        int replacedCaseInsensitive = doc.Range.Replace(regexPattern, replacement, caseInsensitiveOptions);
+        Console.WriteLine($"Case‑insensitive replacements made: {replacedCaseInsensitive}");
 
         // Save the modified document.
         doc.Save("Output.docx");

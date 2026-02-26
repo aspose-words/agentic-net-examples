@@ -10,70 +10,39 @@ class ExtractImagesFromPdf
     static void Main()
     {
         // Path to the source PDF file.
-        string pdfPath = @"C:\Input\sample.pdf";
+        string pdfPath = @"C:\Docs\sample.pdf";
 
-        // Folder where extracted images will be saved.
-        string outputFolder = @"C:\Output\ExtractedImages";
+        // Directory where extracted images will be saved.
+        string outputDir = @"C:\Docs\ExtractedImages\";
 
         // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
+        Directory.CreateDirectory(outputDir);
 
-        // Load the PDF document. PdfLoadOptions allows us to control loading behavior.
-        var loadOptions = new PdfLoadOptions();
+        // Load the PDF document. Set SkipPdfImages to false to load images.
+        PdfLoadOptions loadOptions = new PdfLoadOptions
+        {
+            SkipPdfImages = false
+        };
         Document doc = new Document(pdfPath, loadOptions);
 
-        // Iterate through all shapes in the document.
-        var shapes = doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>();
+        // Retrieve all shape nodes (which may contain images).
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+
         int imageIndex = 0;
-
-        foreach (Shape shape in shapes)
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Check that the shape actually contains an image.
-            if (shape.HasImage && shape.ImageData.HasImage)
+            if (shape.HasImage)
             {
-                // Retrieve the raw image bytes.
-                byte[] imageBytes = shape.ImageData.ImageBytes;
+                // Determine the appropriate file extension for the image type.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string fileName = Path.Combine(outputDir, $"Image_{imageIndex}{extension}");
 
-                // Determine a suitable file extension based on the image type.
-                string extension = GetExtension(shape.ImageData.ImageType);
-
-                // Build the output file name.
-                string fileName = $"Image_{imageIndex}{extension}";
-                string outputPath = Path.Combine(outputFolder, fileName);
-
-                // Write the image to disk.
-                File.WriteAllBytes(outputPath, imageBytes);
-
+                // Save the image to the file system.
+                shape.ImageData.Save(fileName);
                 imageIndex++;
             }
         }
-    }
 
-    // Maps Aspose.Words.ImageType values to common file extensions.
-    private static string GetExtension(ImageType imageType)
-    {
-        switch (imageType)
-        {
-            case ImageType.Jpeg:
-                return ".jpg";
-            case ImageType.Png:
-                return ".png";
-            case ImageType.Bmp:
-                return ".bmp";
-            case ImageType.Gif:
-                return ".gif";
-            case ImageType.WebP:
-                return ".webp";
-            case ImageType.Emf:
-                return ".emf";
-            case ImageType.Wmf:
-                return ".wmf";
-            case ImageType.Pict:
-                return ".pict";
-            case ImageType.Eps:
-                return ".eps";
-            default:
-                return ".bin"; // Fallback for unknown or unsupported types.
-        }
+        Console.WriteLine($"Extracted {imageIndex} image(s) to \"{outputDir}\".");
     }
 }

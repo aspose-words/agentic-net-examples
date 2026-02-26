@@ -1,69 +1,57 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-namespace FindReplaceWithDocumentExample
+namespace FindReplaceWithDocument
 {
     class Program
     {
         static void Main()
         {
-            // Paths to the source documents and the output file.
-            string dataDir = @"C:\Data\";
-            string mainDocPath = Path.Combine(dataDir, "Document insertion destination.docx");
-            string subDocPath = Path.Combine(dataDir, "Document.docx");
-            string outputPath = Path.Combine(dataDir, "InsertDocumentAtReplaceResult.docx");
+            // Load the document that contains the placeholder.
+            Document mainDoc = new Document("Input.docx");
 
-            // Load the main document (the one that contains the placeholder).
-            Document mainDoc = new Document(mainDocPath);
-
-            // Configure find/replace options with a custom callback.
+            // Set up FindReplaceOptions with a custom callback.
             FindReplaceOptions options = new FindReplaceOptions
             {
-                ReplacingCallback = new InsertDocumentAtReplaceHandler(subDocPath)
+                ReplacingCallback = new InsertDocumentAtReplaceHandler()
             };
 
-            // Replace the placeholder "[MY_DOCUMENT]" with the contents of the sub‑document.
+            // Replace the placeholder "[MY_DOCUMENT]" with the contents of another document.
             mainDoc.Range.Replace(new Regex(@"\[MY_DOCUMENT\]"), string.Empty, options);
 
             // Save the modified document.
-            mainDoc.Save(outputPath);
+            mainDoc.Save("Output.docx");
         }
     }
 
-    // Custom callback that inserts another document at the location of each match.
+    // Callback that inserts another document at the location of the match.
     class InsertDocumentAtReplaceHandler : IReplacingCallback
     {
-        private readonly string _subDocumentPath;
-
-        public InsertDocumentAtReplaceHandler(string subDocumentPath)
+        public ReplaceAction Replacing(ReplacingArgs args)
         {
-            _subDocumentPath = subDocumentPath;
-        }
+            // Load the document to be inserted.
+            Document subDoc = new Document("Insert.docx");
 
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
-        {
-            // Load the document that will be inserted.
-            Document subDoc = new Document(_subDocumentPath);
-
-            // The match is inside a paragraph; insert the sub‑document after that paragraph.
+            // The match is inside a Run; its parent is a Paragraph.
             Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
+
+            // Insert the sub‑document after the placeholder paragraph.
             InsertDocument(placeholderParagraph, subDoc);
 
-            // Remove the paragraph that contained the placeholder text.
+            // Remove the placeholder paragraph.
             placeholderParagraph.Remove();
 
-            // Skip further processing for this match because we have already handled it.
+            // Skip the default replacement because we have already handled it.
             return ReplaceAction.Skip;
         }
 
-        // Inserts all nodes of another document after a given paragraph or table.
+        // Inserts all nodes of docToInsert after insertionDestination (Paragraph or Table).
         private static void InsertDocument(Node insertionDestination, Document docToInsert)
         {
             if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
-                throw new ArgumentException("The destination node must be either a paragraph or a table.");
+                throw new ArgumentException("Insertion destination must be a paragraph or a table.");
 
             CompositeNode dstStory = insertionDestination.ParentNode;
 

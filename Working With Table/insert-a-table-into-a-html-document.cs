@@ -1,41 +1,33 @@
-using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using System;
 
-class InsertTableIntoHtml
+class Program
 {
     static void Main()
     {
-        // Load the existing HTML document.
-        Document doc = new Document("input.html");
+        // Create a new empty document.
+        Document doc = new Document();
 
-        // Create a DocumentBuilder attached to the loaded document.
+        // Associate a DocumentBuilder with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the end of the document (or any desired location).
-        builder.MoveToDocumentEnd();
+        // HTML fragment that defines a simple 2x2 table.
+        string htmlTable = @"
+            <table border='1' style='border-collapse:collapse;'>
+                <tr>
+                    <td>Row 1, Cell 1</td>
+                    <td>Row 1, Cell 2</td>
+                </tr>
+                <tr>
+                    <td>Row 2, Cell 1</td>
+                    <td>Row 2, Cell 2</td>
+                </tr>
+            </table>";
 
-        // Start a new table.
-        Table table = builder.StartTable();
+        // Insert the HTML table into the document.
+        builder.InsertHtml(htmlTable);
 
-        // First row, first cell.
-        builder.InsertCell();
-        builder.Write("Cell 1");
-
-        // First row, second cell.
-        builder.InsertCell();
-        builder.Write("Cell 2");
-
-        // End the first row.
-        builder.EndRow();
-
-        // End the table.
-        builder.EndTable();
-
-        // Optionally, apply AutoFit to adjust column widths.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-        // Save the modified document back to HTML format.
-        doc.Save("output.html", SaveFormat.Html);
+        // Save the resulting document.
+        doc.Save("TableInHtml.docx");
     }
 }

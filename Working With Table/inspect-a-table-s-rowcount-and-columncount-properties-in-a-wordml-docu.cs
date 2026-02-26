@@ -2,12 +2,13 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class InspectTableDimensions
 {
     static void Main()
     {
-        // Load an existing WORDML (or any supported) document.
-        Document doc = new Document("Input.docx"); // replace with actual path
+        // Load the WORDML (or any supported) document.
+        // Replace the path with the actual location of your document.
+        Document doc = new Document(@"C:\Docs\Input.docx");
 
         // Get the collection of tables in the first section's body.
         TableCollection tables = doc.FirstSection.Body.Tables;
@@ -17,17 +18,19 @@ class Program
         {
             Table table = tables[i];
 
-            // Row count is the number of Row objects in the table.
+            // Row count is the number of Row nodes in the table.
             int rowCount = table.Rows.Count;
 
-            // Column count is taken from the first row's cell count.
-            // If the table has no rows, column count is zero.
-            int columnCount = rowCount > 0 ? table.FirstRow.Cells.Count : 0;
+            // Column count is the number of cells in the first row.
+            // Guard against an empty table (should not happen for a valid table).
+            int columnCount = 0;
+            if (rowCount > 0 && table.FirstRow != null)
+                columnCount = table.FirstRow.Cells.Count;
 
             Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
         }
 
-        // Save the document (unchanged) to demonstrate the required save lifecycle step.
-        doc.Save("Output.docx"); // replace with desired output path
+        // Optionally, save the document if any modifications were made.
+        // doc.Save(@"C:\Docs\Output.docx");
     }
 }

@@ -1,0 +1,24 @@
+using System;
+using Aspose.Words;
+using Aspose.Words.Notes;
+
+class RemoveFootnotesAndEndnotes
+{
+    static void Main()
+    {
+        // Load the source DOC document.
+        Document doc = new Document("Input.doc");
+
+        // Collect all footnote and endnote nodes in the document.
+        NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
+
+        // Remove each footnote/endnote from its parent.
+        foreach (Footnote note in notes)
+        {
+            note.Remove();
+        }
+
+        // Save the modified document as WORDML (XML) format.
+        doc.Save("Output.xml", SaveFormat.WordML);
+    }
+}

@@ -2,55 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class DocumentComparer
+class DocumentComparison
 {
-    /// <summary>
-    /// Determines whether two DOCX documents are identical after a comparison operation.
-    /// Returns true if no revisions (differences) are detected.
-    /// </summary>
-    /// <param name="originalPath">Path to the first document (base document).</param>
-    /// <param name="modifiedPath">Path to the second document (document to compare against).</param>
-    /// <returns>True if documents are identical; otherwise false.</returns>
-    public static bool AreDocumentsIdentical(string originalPath, string modifiedPath)
+    static void Main()
     {
-        // Load the two documents.
-        Document docOriginal = new Document(originalPath);
-        Document docModified = new Document(modifiedPath);
+        // Paths to the two DOCX files to compare.
+        string pathOriginal = "Original.docx";
+        string pathEdited   = "Edited.docx";
 
-        // Set up comparison options (default options are sufficient for a strict comparison).
-        CompareOptions compareOptions = new CompareOptions
-        {
-            // Use the current document as the base for comparison.
-            Target = ComparisonTargetType.Current,
+        // Load the documents from disk.
+        Document docOriginal = new Document(pathOriginal);
+        Document docEdited   = new Document(pathEdited);
 
-            // Ensure all types of changes are considered.
-            CompareMoves = true,
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false
-        };
+        // Ensure both documents are revision‑free before comparison (required by Aspose.Words).
+        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
+            throw new InvalidOperationException("Both documents must not contain revisions before comparison.");
 
-        // Perform the comparison. Revisions are added to docOriginal.
-        docOriginal.Compare(docModified, "Comparer", DateTime.Now, compareOptions);
+        // Perform the comparison. The original document will receive revisions for any differences.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
 
-        // If there are no revisions, the documents are identical.
-        return docOriginal.Revisions.Count == 0;
-    }
+        // If no revisions were added, the documents are identical.
+        bool areIdentical = docOriginal.Revisions.Count == 0;
 
-    // Example usage.
-    public static void Main()
-    {
-        string pathA = @"C:\Docs\DocumentA.docx";
-        string pathB = @"C:\Docs\DocumentB.docx";
-
-        bool identical = AreDocumentsIdentical(pathA, pathB);
-        Console.WriteLine(identical
+        Console.WriteLine(areIdentical
             ? "The documents are identical."
             : "The documents differ.");
+
+        // Optional: save the original document with revision markup for visual inspection.
+        docOriginal.Save("ComparisonResult.docx");
     }
 }

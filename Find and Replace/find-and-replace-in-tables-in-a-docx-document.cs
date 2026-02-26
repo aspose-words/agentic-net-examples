@@ -1,38 +1,32 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Tables; // <-- added namespace for Table
 using Aspose.Words.Replacing;
-using System.Text.RegularExpressions;
 
-class Program
+class TableFindReplaceDemo
 {
     static void Main()
     {
-        // Load the DOCX document.
+        // Load the existing DOCX file.
         Document doc = new Document("Input.docx");
 
-        // Text to find and its replacement.
-        string findText = "OldValue";
-        string replaceText = "NewValue";
-
-        // Optional find/replace options.
+        // Define find/replace options (case‑sensitive, whole‑word only).
         FindReplaceOptions options = new FindReplaceOptions
         {
-            MatchCase = false,
-            FindWholeWordsOnly = false
+            MatchCase = true,
+            FindWholeWordsOnly = true
         };
 
-        // Iterate over all tables in the document.
+        // Iterate through all tables in the document.
         foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
-            // Iterate over all cells of the current table.
-            foreach (Cell cell in table.GetChildNodes(NodeType.Cell, true))
-            {
-                // Perform a simple string replace inside the cell's range.
-                cell.Range.Replace(findText, replaceText, options);
+            // Replace text in the whole table.
+            table.Range.Replace("OldValue", "NewValue", options);
 
-                // If a regular expression is required, use the overload below:
-                // cell.Range.Replace(new Regex(findText), replaceText, options);
+            // Example: replace text only in the last cell of the last row.
+            if (table.LastRow != null && table.LastRow.LastCell != null)
+            {
+                table.LastRow.LastCell.Range.Replace("50", "20", options);
             }
         }
 

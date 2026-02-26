@@ -2,47 +2,80 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+namespace AsposeWordsCellMergeDemo
 {
-    static void Main()
+    class Program
     {
-        // Load the DOTX template that already contains a table.
-        Document doc = new Document("Template.dotx");
+        static void Main(string[] args)
+        {
+            // Paths to the source DOTX template and the resulting DOCX file.
+            string inputDotxPath = @"C:\Docs\Template.dotx";
+            string outputDocxPath = @"C:\Docs\MergedCells.docx";
 
-        // Get the first table in the document.
-        Table table = doc.FirstSection.Body.Tables[0];
+            MergeCellsInTable(inputDotxPath, outputDocxPath);
+        }
 
-        // -------------------------------------------------
-        // Horizontal merge: merge the first two cells of the first row.
-        // -------------------------------------------------
-        // Set the first cell as the start of the merged range.
-        Cell firstCell = table.Rows[0].Cells[0];
-        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
-        firstCell.CellFormat.VerticalMerge = CellMerge.None; // Ensure vertical merge is not set.
-        firstCell.Paragraphs[0].AppendChild(new Run(doc, "Merged horizontally"));
+        /// <summary>
+        /// Loads a DOTX document, merges cells horizontally and vertically in its first table,
+        /// and saves the result as a DOCX file.
+        /// </summary>
+        /// <param name="inputPath">Full path to the source DOTX file.</param>
+        /// <param name="outputPath">Full path where the modified document will be saved.</param>
+        static void MergeCellsInTable(string inputPath, string outputPath)
+        {
+            // Load the DOTX template.
+            Document doc = new Document(inputPath);
 
-        // Set the second cell to merge with the previous cell.
-        Cell secondCell = table.Rows[0].Cells[1];
-        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
-        secondCell.CellFormat.VerticalMerge = CellMerge.None;
+            // Ensure the document contains at least one table.
+            Table table = doc.FirstSection?.Body?.Tables?.Count > 0
+                ? doc.FirstSection.Body.Tables[0]
+                : null;
 
-        // -------------------------------------------------
-        // Vertical merge: merge the first cell of the first two rows.
-        // -------------------------------------------------
-        // Set the top cell as the start of the vertical merge.
-        Cell topCell = table.Rows[0].Cells[2];
-        topCell.CellFormat.VerticalMerge = CellMerge.First;
-        topCell.CellFormat.HorizontalMerge = CellMerge.None;
-        topCell.Paragraphs[0].AppendChild(new Run(doc, "Merged vertically"));
+            if (table == null)
+                throw new InvalidOperationException("The document does not contain any tables.");
 
-        // Set the cell directly below to merge with the previous (top) cell.
-        Cell bottomCell = table.Rows[1].Cells[2];
-        bottomCell.CellFormat.VerticalMerge = CellMerge.Previous;
-        bottomCell.CellFormat.HorizontalMerge = CellMerge.None;
+            // -------------------------------------------------
+            // Example 1: Horizontal merge (first row, first two cells)
+            // -------------------------------------------------
+            // Set the first cell as the start of a horizontal merge range.
+            Cell firstCell = table.Rows[0].Cells[0];
+            firstCell.CellFormat.HorizontalMerge = CellMerge.First;
+            firstCell.FirstParagraph?.AppendChild(new Run(doc, "Horizontally merged cells"));
 
-        // -------------------------------------------------
-        // Save the modified document.
-        // -------------------------------------------------
-        doc.Save("MergedTable.dotx");
+            // Set the second cell to merge with the previous cell.
+            Cell secondCell = table.Rows[0].Cells[1];
+            secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+            // No text needed in the merged cell; it will be hidden.
+
+            // -------------------------------------------------
+            // Example 2: Vertical merge (first column, first two rows)
+            // -------------------------------------------------
+            // Set the cell in the first row, first column as the start of a vertical merge.
+            Cell topCell = table.Rows[0].Cells[0];
+            topCell.CellFormat.VerticalMerge = CellMerge.First;
+            // The text is already added above.
+
+            // Set the cell directly below to merge vertically with the cell above.
+            Cell bottomCell = table.Rows[1].Cells[0];
+            bottomCell.CellFormat.VerticalMerge = CellMerge.Previous;
+            // No text needed in the merged cell.
+
+            // -------------------------------------------------
+            // Example 3: Additional merges (optional)
+            // -------------------------------------------------
+            // Horizontal merge across three cells in the second row.
+            if (table.Rows.Count > 1 && table.Rows[1].Cells.Count >= 3)
+            {
+                Cell startCell = table.Rows[1].Cells[0];
+                startCell.CellFormat.HorizontalMerge = CellMerge.First;
+                startCell.FirstParagraph?.AppendChild(new Run(doc, "Three‑cell horizontal merge"));
+
+                table.Rows[1].Cells[1].CellFormat.HorizontalMerge = CellMerge.Previous;
+                table.Rows[1].Cells[2].CellFormat.HorizontalMerge = CellMerge.Previous;
+            }
+
+            // Save the modified document.
+            doc.Save(outputPath);
+        }
     }
 }

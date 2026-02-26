@@ -1,29 +1,27 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class ApplyTableStyleOptions
 {
     static void Main()
     {
-        // Load the existing DOTM document.
+        // Load the existing DOTM template.
         Document doc = new Document("Input.dotm");
 
-        // Check that the document contains at least one table.
-        if (doc.FirstSection.Body.Tables.Count > 0)
-        {
-            // Get the first table in the document.
-            Table table = doc.FirstSection.Body.Tables[0];
+        // Find the first table in the document.
+        Table table = doc.FirstSection.Body.Tables[0];
 
-            // (Optional) Assign a built‑in style to the table.
-            table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+        // Apply a built‑in table style (optional, can be omitted if the table already has a style).
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-            // Apply the desired TableStyleOptions flags.
-            table.StyleOptions = TableStyleOptions.FirstRow |
-                                 TableStyleOptions.RowBands |
-                                 TableStyleOptions.FirstColumn;
-        }
+        // Set the desired style options using the TableStyleOptions flags.
+        // Example: apply formatting to the first row, first column, and row banding.
+        table.StyleOptions = TableStyleOptions.FirstRow |
+                              TableStyleOptions.FirstColumn |
+                              TableStyleOptions.RowBands;
 
-        // Save the modified document back to DOTM format.
+        // Save the modified document as a DOTM file.
         doc.Save("Output.dotm");
     }
 }

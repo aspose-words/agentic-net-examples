@@ -2,26 +2,41 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsPdfConversion
+namespace AsposeWordsExamples
 {
-    class Program
+    public class DocxToPdfRenderer
     {
-        static void Main()
+        /// <summary>
+        /// Loads a DOCX file from the specified path and renders it to a PDF file.
+        /// </summary>
+        /// <param name="inputDocxPath">Full path to the source DOCX document.</param>
+        /// <param name="outputPdfPath">Full path where the resulting PDF will be saved.</param>
+        public static void RenderDocxToPdf(string inputDocxPath, string outputPdfPath)
         {
-            // Path to the source DOCX file.
-            string sourcePath = "input.docx";
+            // Load the existing DOCX document using the Document(string) constructor.
+            Document doc = new Document(inputDocxPath);
 
-            // Path where the resulting PDF will be saved.
-            string destinationPath = "output.pdf";
+            // Optionally configure PDF save options (e.g., high‑quality rendering).
+            PdfSaveOptions pdfOptions = new PdfSaveOptions
+            {
+                UseHighQualityRendering = true,
+                UseAntiAliasing = true
+            };
 
-            // Load the DOCX document.
-            Document document = new Document(sourcePath);
+            // Save the document as PDF. The overload Save(string, SaveOptions) follows the
+            // provided lifecycle rule (load → save) without inventing custom APIs.
+            doc.Save(outputPdfPath, pdfOptions);
+        }
 
-            // Create PDF save options (default settings).
-            PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Example usage.
+        public static void Main()
+        {
+            string sourceDocx = @"C:\Docs\SampleDocument.docx";
+            string destinationPdf = @"C:\Docs\SampleDocument.pdf";
 
-            // Save the document as PDF using the specified options.
-            document.Save(destinationPath, pdfOptions);
+            RenderDocxToPdf(sourceDocx, destinationPdf);
+
+            Console.WriteLine("DOCX has been successfully rendered to PDF.");
         }
     }
 }

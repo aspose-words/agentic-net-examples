@@ -1,47 +1,35 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class InsertGroupShapeExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a GroupShape that will hold other shapes.
-        GroupShape group = new GroupShape(doc);
+        // Insert the first shape (a rectangle) and set its position and stroke color.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        shape1.Left = 20;
+        shape1.Top = 20;
+        shape1.Stroke.Color = Color.Red;
 
-        // Define the size and position of the group shape (in points).
-        // Here we set a 200x200 points rectangle at the top‑left corner of the page.
-        group.Bounds = new RectangleF(0, 0, 200, 200);
+        // Insert the second shape (an ellipse) and set its position and stroke color.
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        shape2.Left = 40;
+        shape2.Top = 50;
+        shape2.Stroke.Color = Color.Green;
 
-        // Set the group shape to be a floating shape (no text wrapping).
+        // Group the two shapes. The InsertGroupShape method creates a GroupShape node,
+        // automatically calculates its position and size, and inserts it at the current cursor location.
+        GroupShape group = builder.InsertGroupShape(shape1, shape2);
+
+        // Example: set the group's wrap type to None so it behaves as a floating object.
         group.WrapType = WrapType.None;
-        group.BehindText = true;
-        group.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        group.RelativeVerticalPosition = RelativeVerticalPosition.Page;
 
-        // Insert the group shape into the document at the current cursor position.
-        builder.InsertNode(group);
-
-        // Create a child shape (a simple rectangle) to place inside the group.
-        Shape childShape = new Shape(doc, ShapeType.Rectangle);
-        childShape.Width = 100;   // width in points
-        childShape.Height = 50;   // height in points
-        childShape.Left = 20;     // position relative to the group's coordinate space
-        childShape.Top = 20;
-        childShape.WrapType = WrapType.None;
-        childShape.Fill.Color = Color.LightBlue;
-
-        // Add the child shape to the group.
-        group.AppendChild(childShape);
-
-        // Save the document as DOCX.
+        // Save the document in DOCX format.
         doc.Save("GroupShapeLayout.docx");
     }
 }

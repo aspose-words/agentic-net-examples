@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
@@ -10,27 +11,31 @@ class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Attach a DocumentBuilder to the document for easy content insertion.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a floating rectangle shape positioned 100 points from the left and top of the page.
-        // The shape is 200 points wide and 100 points high, with no text wrapping.
-        builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.Page, 100,
-            RelativeVerticalPosition.Page, 100,
+        // Insert an inline rectangle shape (width: 100 points, height: 50 points).
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        // Set a light blue fill color for the rectangle.
+        rectangle.FillColor = Color.LightBlue;
+
+        // Insert a floating text box shape.
+        // Position: 150 points from the left of the page, 200 points from the top of the page.
+        // Size: 200 points wide, 100 points high. No text wrapping.
+        Shape textBox = builder.InsertShape(
+            ShapeType.TextBox,
+            RelativeHorizontalPosition.Page, 150,
+            RelativeVerticalPosition.Page, 200,
             200, 100,
             WrapType.None);
 
-        // Insert an inline ellipse shape with a width and height of 100 points.
-        builder.InsertShape(ShapeType.Ellipse, 100, 100);
+        // Add a paragraph with a run of text inside the text box.
+        Paragraph tbParagraph = new Paragraph(doc);
+        Run tbRun = new Run(doc, "Hello Aspose!");
+        tbParagraph.AppendChild(tbRun);
+        textBox.AppendChild(tbParagraph);
 
-        // Configure save options to use a newer OOXML compliance level.
-        // This ensures that non‑primitive shapes are saved using DrawingML (DML).
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
-
-        // Save the document to a DOCX file.
-        doc.Save("Shapes.docx", saveOptions);
+        // Save the document as a DOCX file.
+        doc.Save("Shapes.docx");
     }
 }

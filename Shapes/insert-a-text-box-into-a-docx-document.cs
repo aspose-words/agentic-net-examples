@@ -6,25 +6,19 @@ class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a textbox shape with specified width and height.
-        Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 300, 150);
+        // Insert a floating text box shape with a width of 200 points and a height of 100 points.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        // Prevent the text box from affecting surrounding text layout.
+        textBox.WrapType = WrapType.None;
 
-        // Access the TextBox object to configure its properties.
-        TextBox textBox = textBoxShape.TextBox;
-        textBox.TextBoxWrapMode = TextBoxWrapMode.Square; // Wrap text inside the box.
-        textBox.VerticalAnchor = TextBoxAnchor.Middle;   // Vertically center the text.
-
-        // Move the builder cursor inside the textbox and add some text.
-        builder.MoveTo(textBoxShape.FirstParagraph);
-        builder.Font.Size = 24;
-        builder.Font.Bold = true;
-        builder.Write("Hello Aspose.Words TextBox!");
+        // Move the builder's cursor inside the text box so we can add content.
+        builder.MoveTo(textBox.LastParagraph);
+        builder.Writeln("Hello world!");
+        builder.Write("This is a text box.");
 
         // Save the document to a DOCX file.
         doc.Save("TextBoxExample.docx");

@@ -1,9 +1,8 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
-using Aspose.Words.Saving;
 
-class CompareAdvanced
+class Program
 {
     static void Main()
     {
@@ -11,36 +10,23 @@ class CompareAdvanced
         Document docOriginal = new Document("Original.docx");
         Document docRevised = new Document("Revised.docx");
 
-        // Set up comparison options with advanced settings.
-        CompareOptions compareOptions = new CompareOptions
-        {
-            // Track changes at the word level (instead of character level).
-            Granularity = Granularity.WordLevel,
-            // Ignore formatting differences.
-            IgnoreFormatting = true,
-            // Treat case changes as insignificant.
-            IgnoreCaseChanges = true,
-            // Include move tracking.
-            CompareMoves = true,
-            // Use the revised document as the base for comparison.
-            Target = ComparisonTargetType.New
-        };
+        // Configure comparison options.
+        CompareOptions compareOptions = new CompareOptions();
 
-        // Advanced options that have no equivalent in Microsoft Word.
-        compareOptions.AdvancedOptions.IgnoreDmlUniqueId = true;   // Ignore DrawingML unique IDs.
-        compareOptions.AdvancedOptions.IgnoreStoreItemId = true;   // Ignore StructuredDocumentTag store item IDs.
+        // Advanced options: ignore differences that are not meaningful for most scenarios.
+        // - Ignore DrawingML unique IDs (e.g., shape IDs that change on each save).
+        // - Ignore StructuredDocumentTag (SDT) store item IDs.
+        compareOptions.AdvancedOptions.IgnoreDmlUniqueId = true;
+        compareOptions.AdvancedOptions.IgnoreStoreItemId = true;
 
-        // Perform the comparison. Revisions are added to docOriginal.
+        // Set which document is treated as the base during comparison.
+        // This mimics Word's "Show changes in" option.
+        compareOptions.Target = ComparisonTargetType.New;
+
+        // Perform the comparison. Revisions will be added to docOriginal.
         docOriginal.Compare(docRevised, "Comparer", DateTime.Now, compareOptions);
 
-        // Save the result as a DOCX file with strict OOXML compliance.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            Compliance = OoxmlCompliance.Iso29500_2008_Strict,
-            // Ensure fields are updated before saving (optional, but keeps the document consistent).
-            UpdateFields = true
-        };
-
-        docOriginal.Save("ComparisonResult.docx", saveOptions);
+        // Save the resulting document (with revisions) in DOCX format.
+        docOriginal.Save("ComparisonResult.docx");
     }
 }

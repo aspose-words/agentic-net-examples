@@ -2,48 +2,50 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace InsertTableIntoDocm
+namespace AsposeWordsTableExample
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            // Create a new Word document (DOCM format)
-            Document doc = new Document();
+            // Load an existing DOCM document.
+            Document doc = new Document("InputDocument.docm");
+
+            // Create a DocumentBuilder attached to the loaded document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a new table
+            // Start a new table.
             Table table = builder.StartTable();
 
-            // Insert first row with two cells (header row)
-            builder.InsertCell();
-            builder.Write("Header 1");
-            builder.InsertCell();
-            builder.Write("Header 2");
-            builder.EndRow();
-
-            // Insert second row
+            // First row, first cell.
             builder.InsertCell();
             builder.Write("Row 1, Cell 1");
+
+            // First row, second cell.
             builder.InsertCell();
             builder.Write("Row 1, Cell 2");
+
+            // End the first row.
             builder.EndRow();
 
-            // Insert third row
+            // Second row, first cell.
             builder.InsertCell();
             builder.Write("Row 2, Cell 1");
+
+            // Second row, second cell.
             builder.InsertCell();
             builder.Write("Row 2, Cell 2");
-            builder.EndRow();
 
-            // Finish the table
+            // End the second row and the table.
+            builder.EndRow();
             builder.EndTable();
 
-            // Optionally apply auto‑fit to contents
-            table.AutoFit(AutoFitBehavior.AutoFitToContents);
+            // Optional: set table title and description for accessibility.
+            table.Title = "Sample Table";
+            table.Description = "A simple 2x2 table inserted into a DOCM file.";
 
-            // Save the document as a macro‑enabled file (DOCM)
-            doc.Save("OutputDocument.docm", SaveFormat.Docm);
+            // Save the modified document as a DOCM file.
+            doc.Save("OutputDocument.docm");
         }
     }
 }

@@ -1,55 +1,42 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Layout;
+using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsPageIteration
 {
-    static void Main()
+    class Program
     {
-        // Load the DOCX document.
-        Document doc = new Document("Input.docx");
-
-        // Force layout to be calculated so that page numbers are available.
-        // This is required before we can query page information.
-        doc.UpdatePageLayout();
-
-        // Attach a LayoutCollector to the document.
-        // The collector maps document nodes to their page numbers.
-        LayoutCollector collector = new LayoutCollector(doc);
-
-        // Iterate through each page in the document.
-        // The Document class does not expose a direct PageCollection,
-        // but we can use the PageCount property to enumerate pages.
-        for (int pageIndex = 1; pageIndex <= doc.PageCount; pageIndex++)
+        static void Main()
         {
-            // Example: retrieve the first node that starts on the current page.
-            // We walk through the document nodes and find one whose start page matches the loop index.
-            Node nodeOnPage = FindFirstNodeOnPage(doc, collector, pageIndex);
+            // Path to the source DOCX document.
+            string inputPath = @"C:\Docs\SourceDocument.docx";
 
-            // Output basic information about the page.
-            Console.WriteLine($"--- Page {pageIndex} ---");
-            if (nodeOnPage != null)
-            {
-                Console.WriteLine($"First node on page: {nodeOnPage.GetType().Name}");
-                Console.WriteLine($"Text snippet: {nodeOnPage.GetText().Trim().Substring(0, Math.Min(30, nodeOnPage.GetText().Trim().Length))}");
-            }
-            else
-            {
-                Console.WriteLine("No node found on this page.");
-            }
-        }
-    }
+            // Directory where each extracted page will be saved as a separate DOCX file.
+            string outputDir = @"C:\Docs\ExtractedPages";
 
-    // Helper method that scans the document's child nodes and returns the first node whose
-    // start page index matches the supplied page number.
-    private static Node FindFirstNodeOnPage(Document doc, LayoutCollector collector, int pageNumber)
-    {
-        foreach (Node node in doc.GetChildNodes(NodeType.Any, true))
-        {
-            int startPage = collector.GetStartPageIndex(node);
-            if (startPage == pageNumber)
-                return node;
+            // Ensure the output directory exists.
+            Directory.CreateDirectory(outputDir);
+
+            // Load the document using the provided Document constructor (load rule).
+            Document doc = new Document(inputPath);
+
+            // Iterate through each page using the document's page count.
+            // Aspose.Words does not expose a DocumentPageCollection directly,
+            // but the page count can be used to access pages one by one.
+            for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
+            {
+                // Extract a single page (zero‑based index, count = 1) using the provided ExtractPages method.
+                Document singlePageDoc = doc.ExtractPages(pageIndex, 1);
+
+                // Build the output file name for the current page.
+                string outputPath = Path.Combine(outputDir, $"Page_{pageIndex + 1}.docx");
+
+                // Save the extracted page using the provided Save method (file name determines format).
+                singlePageDoc.Save(outputPath);
+            }
+
+            Console.WriteLine("Pages extracted successfully.");
         }
-        return null;
     }
 }

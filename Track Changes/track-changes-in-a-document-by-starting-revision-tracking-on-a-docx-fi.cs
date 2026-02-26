@@ -1,24 +1,24 @@
 using System;
 using Aspose.Words;
 
-namespace RevisionTrackingExample
+class RevisionTrackingExample
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Load an existing DOCX file.
-            Document doc = new Document("Input.docx");
+        // Load an existing DOCX file.
+        Document doc = new Document("Input.docx");
 
-            // Start tracking revisions. All subsequent edits will be recorded as revisions.
-            doc.StartTrackRevisions("John Doe", DateTime.Now);
+        // Begin tracking revisions. Provide author name and timestamp.
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-            // Perform some edits that will be captured as revisions.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("This paragraph is added while revision tracking is enabled.");
+        // Perform some edits that will be recorded as revisions.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This paragraph was added while tracking revisions.");
 
-            // Save the document with the tracked changes.
-            doc.Save("Output.docx");
-        }
+        // Stop tracking further changes.
+        doc.StopTrackRevisions();
+
+        // Save the document; the inserted text will appear as a revision in Word.
+        doc.Save("OutputWithRevisions.docx");
     }
 }

@@ -1,28 +1,20 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class Program
+class ConvertDocxToPdf
 {
     static void Main()
     {
-        // Input DOCX file path
+        // Path to the source DOCX file.
         string inputPath = "input.docx";
 
-        // Output PDF file path
+        // Path where the PDF will be saved.
         string outputPath = "output.pdf";
 
-        // Load the DOCX document
+        // Load the DOCX document using the Document(string) constructor.
         Document doc = new Document(inputPath);
 
-        // Configure PDF save options (customize as needed)
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        // Example: embed all fonts in the PDF
-        pdfOptions.EmbedFullFonts = true;
-        // Example: set PDF/A compliance (uncomment if required)
-        // pdfOptions.Compliance = PdfCompliance.PdfA2b;
-
-        // Save the document as PDF using the specified options
-        doc.Save(outputPath, pdfOptions);
+        // Save the document as PDF. The format is inferred from the .pdf extension.
+        doc.Save(outputPath);
     }
 }

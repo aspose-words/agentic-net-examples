@@ -1,40 +1,53 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
-using Aspose.Words.Saving;
 
-class ComparisonExample
+class CompareDocumentsExample
 {
     static void Main()
     {
-        // Create the original document and add some content.
+        // Folder where the resulting document will be saved.
+        string artifactsDir = "Artifacts/";
+        // Ensure the folder exists.
+        System.IO.Directory.CreateDirectory(artifactsDir);
+
+        // ---------- Create the original document ----------
         Document docOriginal = new Document();
         DocumentBuilder builder = new DocumentBuilder(docOriginal);
-        builder.Writeln("The quick brown fox jumps over the lazy dog.");
+        builder.Writeln("Alpha Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+        builder.Writeln("Second paragraph with some text.");
 
-        // Clone the original document to simulate an edited version.
-        Document docEdited = (Document)docOriginal.Clone(true);
-        // Make a simple edit in the cloned document.
-        Paragraph firstParagraph = docEdited.FirstSection.Body.FirstParagraph;
-        firstParagraph.Runs[0].Text = "The quick brown cat jumps over the lazy dog.";
+        // ---------- Create the edited document ----------
+        Document docEdited = new Document();
+        DocumentBuilder builderEdited = new DocumentBuilder(docEdited);
+        // Slightly modify the first line to demonstrate character‑level differences.
+        builderEdited.Writeln("AlphA Lorem ipsum dolor sit amet, consectetur adipiscing elit!");
+        builderEdited.Writeln("Second paragraph with some changed text.");
 
-        // Configure comparison options:
-        // - Track changes at the character level.
-        // - Use the edited document as the target (i.e., compare against the new version).
+        // ---------- Configure comparison options ----------
         CompareOptions compareOptions = new CompareOptions
         {
+            // Track changes at the character level.
             Granularity = Granularity.CharLevel,
-            Target = ComparisonTargetType.New
+            // Use the edited document as the target (equivalent to Word's "Show changes in New").
+            Target = ComparisonTargetType.New,
+            // Keep other options at their defaults (no ignoring).
+            CompareMoves = false,
+            IgnoreFormatting = false,
+            IgnoreCaseChanges = false,
+            IgnoreComments = false,
+            IgnoreTables = false,
+            IgnoreFields = false,
+            IgnoreFootnotes = false,
+            IgnoreTextboxes = false,
+            IgnoreHeadersAndFooters = false
         };
 
-        // Perform the comparison. Revisions will be added to docOriginal.
-        docOriginal.Compare(docEdited, "Reviewer", DateTime.Now, compareOptions);
+        // ---------- Perform the comparison ----------
+        // The revisions will be added to docOriginal.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
 
-        // Save the result as a DOCX file using OoxmlSaveOptions.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        // (Optional) Set compliance level if needed; default is Ecma376_2006.
-        // saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
-
-        docOriginal.Save("ComparisonResult.docx", saveOptions);
+        // ---------- Save the result ----------
+        docOriginal.Save(artifactsDir + "ComparisonResult.docx");
     }
 }

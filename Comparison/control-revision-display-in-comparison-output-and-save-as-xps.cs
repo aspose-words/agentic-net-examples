@@ -1,34 +1,30 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Comparing;
-using Aspose.Words.Layout;
 using Aspose.Words.Saving;
+using Aspose.Words.Layout;
+using Aspose.Words.Drawing;
 
-class RevisionComparisonToXps
+// Load the original and edited documents.
+string docsPath = @"C:\Docs\";
+Document docOriginal = new Document(docsPath + "Original.docx");
+Document docEdited   = new Document(docsPath + "Edited.docx");
+
+// Ensure both documents have no revisions before comparison.
+if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
 {
-    static void Main()
-    {
-        // Load the original and edited documents.
-        Document original = new Document("Original.docx");
-        Document edited = new Document("Edited.docx");
-
-        // Set up comparison options – use the edited document as the target.
-        CompareOptions compareOptions = new CompareOptions
-        {
-            Target = ComparisonTargetType.New
-        };
-
-        // Perform the comparison; revisions are added to the original document.
-        original.Compare(edited, "Reviewer", DateTime.Now, compareOptions);
-
-        // Configure how revisions are displayed in the layout.
-        RevisionOptions revOptions = original.LayoutOptions.RevisionOptions;
-        revOptions.ShowInBalloons = ShowInBalloons.Format;   // Show format revisions in balloons.
-        revOptions.ShowOriginalRevision = true;              // Show original text alongside revisions.
-        revOptions.ShowRevisionMarks = true;                // Render revision marks (e.g., underline, strike‑through).
-
-        // Save the resulting document as XPS using XpsSaveOptions.
-        XpsSaveOptions xpsOptions = new XpsSaveOptions();
-        original.Save("ComparisonResult.xps", xpsOptions);
-    }
+    // Compare the documents – revisions will be added to docOriginal.
+    docOriginal.Compare(docEdited, "Author", DateTime.Now);
 }
+
+// Show the revised version (with tracked changes) in the layout.
+docOriginal.RevisionsView = RevisionsView.Final;
+
+// Optional: customize how revisions are rendered.
+docOriginal.LayoutOptions.RevisionOptions.ShowRevisionBars = true;
+docOriginal.LayoutOptions.RevisionOptions.RevisionBarsPosition = HorizontalAlignment.Outside;
+docOriginal.LayoutOptions.RevisionOptions.InsertedTextColor = RevisionColor.BrightGreen;
+
+// Save the comparison result as XPS.
+XpsSaveOptions xpsOptions = new XpsSaveOptions();
+xpsOptions.OptimizeOutput = false; // keep original layout fidelity
+docOriginal.Save(docsPath + "ComparisonResult.xps", xpsOptions);

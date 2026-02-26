@@ -1,9 +1,8 @@
 using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class HeaderFooterFindReplace
+class HeaderFooterReplace
 {
     static void Main()
     {
@@ -11,25 +10,42 @@ class HeaderFooterFindReplace
         Document doc = new Document("Input.docx");
 
         // Text to find and its replacement.
-        string findText = "PLACEHOLDER";
-        string replaceText = "Actual Value";
+        string findText = "_FullName_";
+        string replaceText = "John Doe";
 
-        // Prepare find/replace options (default settings are sufficient for this case).
-        FindReplaceOptions options = new FindReplaceOptions();
+        // Configure find/replace options (case‑insensitive, replace whole words).
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            MatchCase = false,
+            FindWholeWordsOnly = false
+        };
 
-        // Iterate through all sections in the document.
+        // Iterate through every section in the document.
         foreach (Section section in doc.Sections)
         {
-            // Iterate through each header/footer in the current section.
-            foreach (HeaderFooter headerFooter in section.HeadersFooters)
-            {
-                // Perform a simple string replace in the header/footer's range.
-                // You can also use a regular expression overload if needed.
-                headerFooter.Range.Replace(findText, replaceText, options);
-            }
+            // Process all header types.
+            ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.HeaderPrimary], findText, replaceText, options);
+            ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.HeaderFirst],   findText, replaceText, options);
+            ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.HeaderEven],   findText, replaceText, options);
+
+            // Process all footer types.
+            ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.FooterPrimary], findText, replaceText, options);
+            ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.FooterFirst],   findText, replaceText, options);
+            ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.FooterEven],   findText, replaceText, options);
         }
 
         // Save the modified document.
         doc.Save("Output.docx");
+    }
+
+    // Helper method that performs the replace operation on a single HeaderFooter object.
+    private static void ReplaceInHeaderFooter(HeaderFooter headerFooter, string pattern, string replacement, FindReplaceOptions options)
+    {
+        // HeaderFooter may be null if the particular type is not present in the section.
+        if (headerFooter == null)
+            return;
+
+        // Perform the find‑and‑replace on the header/footer's range.
+        headerFooter.Range.Replace(pattern, replacement, options);
     }
 }

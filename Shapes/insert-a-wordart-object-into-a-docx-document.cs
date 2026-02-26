@@ -1,57 +1,34 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
+using System.Drawing;
 
-class Program
+class WordArtExample
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Insert a WordArt shape with custom text, font, size, and colors.
-        Shape wordArt = AppendWordArt(
-            doc,
-            "Hello WordArt!",          // Text to display
-            "Arial",                   // Font family
-            400,                       // Shape width (points)
-            50,                        // Shape height (points)
-            Color.Yellow,              // Fill color of the shape
-            Color.Blue,                // Outline (stroke) color
-            ShapeType.TextPlainText);  // WordArt shape type
+        // Create a DocumentBuilder to insert content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply additional formatting to the WordArt text.
+        // Insert an inline WordArt shape. The ShapeType must start with "Text" to be a WordArt object.
+        Shape wordArt = builder.InsertShape(ShapeType.TextPlainText, 480, 24);
+
+        // Set WordArt text and formatting.
+        wordArt.TextPath.Text = "Hello World! This text is bold and italic.";
+        wordArt.TextPath.FontFamily = "Arial";
         wordArt.TextPath.Bold = true;
         wordArt.TextPath.Italic = true;
-        wordArt.TextPath.Size = 36.0; // Font size in points
+        wordArt.TextPath.Size = 36; // Font size in points.
+
+        // Optional: set fill and outline colors.
+        wordArt.FillColor = Color.White;
+        wordArt.StrokeColor = Color.Black;
 
         // Save the document to a DOCX file.
-        doc.Save("WordArt.docx");
-    }
-
-    // Helper method that creates a WordArt shape and appends it to the document.
-    private static Shape AppendWordArt(Document doc, string text, string fontFamily,
-        double shapeWidth, double shapeHeight, Color fillColor, Color strokeColor, ShapeType shapeType)
-    {
-        // Create an inline shape of the specified WordArt type.
-        Shape shape = new Shape(doc, shapeType)
-        {
-            WrapType = WrapType.Inline,
-            Width = shapeWidth,
-            Height = shapeHeight,
-            FillColor = fillColor,
-            StrokeColor = strokeColor
-        };
-
-        // Set the text and font for the WordArt.
-        shape.TextPath.Text = text;
-        shape.TextPath.FontFamily = fontFamily;
-
-        // Append the shape inside a new paragraph at the end of the document body.
-        Paragraph paragraph = (Paragraph)doc.FirstSection.Body.AppendChild(new Paragraph(doc));
-        paragraph.AppendChild(shape);
-
-        return shape;
+        doc.Save("WordArt.docx", SaveFormat.Docx);
     }
 }

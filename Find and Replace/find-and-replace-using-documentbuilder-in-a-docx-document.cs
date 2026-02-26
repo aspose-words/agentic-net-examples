@@ -3,22 +3,37 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class FindAndReplaceExample
 {
     static void Main()
     {
-        // Load the DOCX document from disk.
-        Document doc = new Document("Input.docx");
+        // Define input and output file paths.
+        string inputPath = @"C:\Data\Input.docx";
+        string outputPath = @"C:\Data\Output.docx";
 
-        // Attach a DocumentBuilder to the loaded document (optional, useful for further edits).
+        // Load the existing DOCX document.
+        Document doc = new Document(inputPath);
+
+        // Create a DocumentBuilder for possible additional editing (not required for replace itself).
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Perform a find-and-replace operation.
-        // This replaces every occurrence of the placeholder text "[PLACEHOLDER]" with "Hello World".
-        FindReplaceOptions options = new FindReplaceOptions(); // default options
-        doc.Range.Replace("[PLACEHOLDER]", "Hello World", options);
+        // Example: replace a placeholder token with actual text.
+        string placeholder = "_FullName_";
+        string replacement = "John Doe";
 
-        // Save the modified document to a new file.
-        doc.Save("Output.docx");
+        // Perform a simple case‑insensitive find‑and‑replace across the whole document.
+        int replacedCount = doc.Range.Replace(placeholder, replacement);
+
+        // Optionally, use FindReplaceOptions for more control (e.g., case‑sensitive, whole word only).
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            MatchCase = false,               // ignore case
+            FindWholeWordsOnly = true        // replace only whole word matches
+        };
+        // Replace another token using the options.
+        doc.Range.Replace("[Date]", DateTime.Today.ToString("MMMM d, yyyy"), options);
+
+        // Save the modified document.
+        doc.Save(outputPath);
     }
 }

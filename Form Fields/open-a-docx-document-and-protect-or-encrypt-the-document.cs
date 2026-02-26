@@ -1,48 +1,48 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 
 class ProtectOrEncryptDocument
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\input.docx";
+        // Paths to the source and output files.
+        string inputPath = @"C:\Docs\Sample.docx";
+        string protectedPath = @"C:\Docs\Sample.Protected.docx";
+        string encryptedPath = @"C:\Docs\Sample.Encrypted.docx";
 
-        // Path where the protected/encrypted file will be saved.
-        string outputPath = @"C:\Docs\output.docx";
-
-        // Load the existing document.
+        // Load the existing DOCX document.
         Document doc = new Document(inputPath);
 
         // -------------------------------------------------
-        // 1. Write‑protect the document (requires a password to modify).
+        // 1. Protect the document (read‑only) with a password.
         // -------------------------------------------------
-        doc.WriteProtection.SetPassword("WriteProtectPwd");
-        doc.WriteProtection.ReadOnlyRecommended = true; // Suggest opening as read‑only.
+        // This adds document protection that limits editing in Microsoft Word.
+        // The password is required only when the user tries to modify the document.
+        doc.Protect(ProtectionType.ReadOnly, "ProtectPassword123");
+        // Save the protected document.
+        doc.Save(protectedPath);
 
         // -------------------------------------------------
-        // 2. Encrypt the document when saving (requires a password to open).
+        // 2. Encrypt the document with a password.
         // -------------------------------------------------
-        // OoxmlSaveOptions is used for DOCX/DOCM/DOTX/DOTM/FlatOpc formats.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        saveOptions.Password = "OpenEncryptPwd"; // Password required to open the file.
-
-        // Save the document with both write‑protection and encryption.
-        doc.Save(outputPath, saveOptions);
+        // Encryption is applied when saving using OoxmlSaveOptions.
+        // The document can be opened only after providing the correct password.
+        OoxmlSaveOptions encryptOptions = new OoxmlSaveOptions
+        {
+            Password = "EncryptPassword456"
+        };
+        doc.Save(encryptedPath, encryptOptions);
 
         // -------------------------------------------------
-        // 3. Demonstrate loading the encrypted document.
+        // 3. Load the encrypted document (demonstration).
         // -------------------------------------------------
-        LoadOptions loadOptions = new LoadOptions("OpenEncryptPwd");
-        Document loadedDoc = new Document(outputPath, loadOptions);
+        // When opening an encrypted file, supply the password via LoadOptions.
+        LoadOptions loadOpts = new LoadOptions("EncryptPassword456");
+        Document encryptedDoc = new Document(encryptedPath, loadOpts);
 
-        // Verify that the write‑protection password is still valid.
-        bool isProtected = loadedDoc.WriteProtection.IsWriteProtected;
-        bool passwordValid = loadedDoc.WriteProtection.ValidatePassword("WriteProtectPwd");
-
-        Console.WriteLine($"Write protected: {isProtected}");
-        Console.WriteLine($"Write‑protection password valid: {passwordValid}");
+        // Verify that the document was loaded successfully.
+        Console.WriteLine("Encrypted document text: " + encryptedDoc.GetText().Trim());
     }
 }

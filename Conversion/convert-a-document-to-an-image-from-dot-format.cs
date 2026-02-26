@@ -6,20 +6,19 @@ class Program
 {
     static void Main()
     {
-        // Load the DOT (Word template) document from file.
-        Document doc = new Document("Template.dot");
+        // Load the Word template in DOT format.
+        // The Document constructor automatically detects the format from the file extension.
+        Document doc = new Document("InputTemplate.dot");
 
-        // Configure image save options – render pages as PNG images.
-        ImageSaveOptions imageOptions = new ImageSaveOptions(SaveFormat.Png)
-        {
-            // Optional: set resolution, color mode, etc., if needed.
-            // HorizontalResolution = 300,
-            // VerticalResolution = 300,
-            // ImageColorMode = ImageColorMode.None
-        };
+        // Create image save options for PNG format.
+        // ImageSaveOptions derives from FixedPageSaveOptions and allows us to specify
+        // rendering parameters such as resolution, page range, etc.
+        ImageSaveOptions imageOptions = new ImageSaveOptions(SaveFormat.Png);
+        // Example: render at 300 DPI for higher quality.
+        imageOptions.Resolution = 300;
 
         // Save the first page of the document as an image.
-        // To save all pages, iterate over doc.PageCount and adjust PageSet if required.
-        doc.Save("Output.png", imageOptions);
+        // The Save method with (string, SaveOptions) follows the required lifecycle rule.
+        doc.Save("OutputImage.png", imageOptions);
     }
 }

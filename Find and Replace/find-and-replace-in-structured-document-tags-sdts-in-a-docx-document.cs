@@ -1,29 +1,42 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Markup;
+using Aspose.Words.Replacing;
 
-class ReplaceInStructuredDocumentTags
+class Program
 {
     static void Main()
     {
-        // Load the DOCX document.
-        Document doc = new Document("Input.docx");
+        // Load the DOCX document that contains Structured Document Tags (SDTs).
+        Document doc = new Document("StructuredDocumentTags.docx");
 
-        // Text to find and its replacement.
-        string oldText = "PLACEHOLDER";
-        string newText = "Actual Value";
+        // Text to search for inside the document.
+        string findText = "Placeholder";
+        // Replacement text.
+        string replaceText = "Replaced";
 
-        // Get the collection of structured document tags (SDTs) in the document.
-        StructuredDocumentTagCollection sdtCollection = doc.Range.StructuredDocumentTags;
-
-        // Iterate through each SDT. Use the concrete StructuredDocumentTag class – it exposes the Range property.
-        foreach (StructuredDocumentTag sdt in sdtCollection)
+        // -----------------------------------------------------------------
+        // 1. Replace text while treating each SDT as a separate story.
+        //    The replacement will NOT cross SDT boundaries.
+        // -----------------------------------------------------------------
+        FindReplaceOptions options = new FindReplaceOptions
         {
-            // Perform a simple string replace inside the SDT's range.
-            sdt.Range.Replace(oldText, newText);
-        }
+            // Do NOT ignore the content of SDTs.
+            IgnoreStructuredDocumentTags = false
+        };
+        doc.Range.Replace(findText, replaceText, options);
+
+        // -----------------------------------------------------------------
+        // 2. Replace text while ignoring SDT boundaries.
+        //    The content of each SDT is treated as simple text.
+        // -----------------------------------------------------------------
+        FindReplaceOptions optionsIgnore = new FindReplaceOptions
+        {
+            // Ignore the content of SDTs.
+            IgnoreStructuredDocumentTags = true
+        };
+        doc.Range.Replace(findText, replaceText + "_Ignore", optionsIgnore);
 
         // Save the modified document.
-        doc.Save("Output.docx");
+        doc.Save("StructuredDocumentTags_Updated.docx");
     }
 }

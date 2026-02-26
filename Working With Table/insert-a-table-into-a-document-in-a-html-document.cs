@@ -1,46 +1,47 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class InsertTableIntoHtmlDocument
+class Program
 {
     static void Main()
     {
         // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert some initial HTML content to demonstrate that the document is HTML based.
-        const string initialHtml = "<p>This is a paragraph before the table.</p>";
-        builder.InsertHtml(initialHtml, HtmlInsertOptions.PreserveBlocks);
+        // Insert an HTML fragment that contains a table.
+        string htmlTable = @"
+<table border='1' style='border-collapse:collapse;'>
+    <tr><th>Header 1</th><th>Header 2</th></tr>
+    <tr><td>Cell 1</td><td>Cell 2</td></tr>
+    <tr><td>Cell 3</td><td>Cell 4</td></tr>
+</table>";
 
-        // Start building a table.
+        builder.InsertHtml(htmlTable);
+
+        // Add a line break after the HTML table.
+        builder.Writeln();
+
+        // Insert an additional table using the DocumentBuilder API.
         Table table = builder.StartTable();
-
-        // First row – header cells.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Row 1, Cell 1");
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Row 1, Cell 2");
         builder.EndRow();
 
-        // Second row – data cells.
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Row 2, Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Row 2, Cell 2");
         builder.EndRow();
 
-        // Finish the table.
         builder.EndTable();
 
-        // Optionally set table formatting (e.g., auto‑fit to contents).
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-        table.Alignment = TableAlignment.Center;
-
-        // Save the document as an HTML file.
-        doc.Save("Output.html", SaveFormat.Html);
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
+        doc.Save(outputPath);
     }
 }

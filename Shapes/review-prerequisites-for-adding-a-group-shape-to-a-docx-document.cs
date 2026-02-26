@@ -4,73 +4,48 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
-class AddGroupShapeExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document – the first prerequisite.
         Document doc = new Document();
-
-        // Use DocumentBuilder to insert a paragraph where the group shape will be placed.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Below is a group shape containing two rectangles:");
 
-        // Create a GroupShape. The constructor requires a DocumentBase (the document).
-        GroupShape group = new GroupShape(doc);
-
-        // Set the size of the group shape (in points). This defines the outer bounding box.
-        group.Width = 300;   // 300 points wide
-        group.Height = 200;  // 200 points high
-
-        // Set the coordinate space inside the group. This is similar to a canvas.
-        // CoordOrigin is the top‑left corner of the canvas (usually 0,0).
-        group.CoordOrigin = new Point(0, 0);
-        // CoordSize defines the width and height of the canvas in points.
-        // Here we use the same size as the outer bounds for simplicity.
-        group.CoordSize = new Size(300, 200);
-
-        // -----------------------------------------------------------------
-        // Add child shapes to the group.
-        // -----------------------------------------------------------------
-
-        // First rectangle.
-        Shape rect1 = new Shape(doc, ShapeType.Rectangle);
-        rect1.Width = 100;
-        rect1.Height = 80;
-        rect1.Left = 20;   // Position within the group canvas.
-        rect1.Top = 20;
-        rect1.FillColor = Color.LightBlue;
-        rect1.StrokeColor = Color.DarkBlue;
-        group.AppendChild(rect1);
-
-        // Second rectangle.
-        Shape rect2 = new Shape(doc, ShapeType.Rectangle);
-        rect2.Width = 120;
-        rect2.Height = 60;
-        rect2.Left = 150;
-        rect2.Top = 100;
-        rect2.FillColor = Color.LightCoral;
-        rect2.StrokeColor = Color.DarkRed;
-        group.AppendChild(rect2);
-
-        // -----------------------------------------------------------------
-        // Insert the group shape into the document.
-        // -----------------------------------------------------------------
-        // The group shape must be added to a paragraph (as a child node).
-        Paragraph para = builder.CurrentParagraph;
-        para.AppendChild(group);
-
-        // -----------------------------------------------------------------
-        // Save the document.
-        // -----------------------------------------------------------------
-        // To ensure the group shape is saved using DrawingML (required for
-        // non‑primitive shapes), set the OOXML compliance to a version that
-        // supports DrawingML.
+        // Configure OOXML compliance to allow DML shapes (required for non‑primitive shapes).
         OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
         {
             Compliance = OoxmlCompliance.Iso29500_2008_Transitional
         };
 
-        doc.Save("GroupShapeExample.docx", saveOptions);
+        // Insert two floating shapes that can be grouped.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        shape1.Left = 20;
+        shape1.Top = 20;
+        shape1.Stroke.Color = Color.Red;
+
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        shape2.Left = 40;
+        shape2.Top = 50;
+        shape2.Stroke.Color = Color.Green;
+
+        // Ensure both shapes are top‑level (not already inside another group).
+        if (!shape1.IsTopLevel || !shape2.IsTopLevel)
+            throw new InvalidOperationException("Shapes must be top‑level before grouping.");
+
+        // Group the shapes using the built‑in InsertGroupShape method.
+        GroupShape group = builder.InsertGroupShape(shape1, shape2);
+
+        // Verify that the created node is indeed a group shape.
+        if (!group.IsGroup)
+            throw new InvalidOperationException("Failed to create a group shape.");
+
+        // Optional: adjust group bounds and coordinate system if specific sizing is needed.
+        group.Bounds = new RectangleF(10, 10, 300, 300);
+        group.CoordSize = new Size(500, 500);
+        group.CoordOrigin = new Point(-250, -250);
+
+        // Save the document using the configured compliance options.
+        doc.Save("GroupShapePrerequisites.docx", saveOptions);
     }
 }

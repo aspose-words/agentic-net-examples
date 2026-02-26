@@ -1,22 +1,20 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class RemoveWatermarkExample
+class Program
 {
     static void Main()
     {
-        // Load the DOCM document.
-        Document doc = new Document("InputDocument.docm");
+        // Load the DOCM document from disk.
+        Document doc = new Document("Input.docm");
 
-        // If a watermark is present (text or image), remove it.
+        // Remove the watermark if one is present (text or image).
         if (doc.Watermark.Type != WatermarkType.None)
         {
             doc.Watermark.Remove();
         }
 
-        // Save the document back to DOCM format.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
-        doc.Save("OutputDocument.docm", saveOptions);
+        // Save the modified document back to disk.
+        doc.Save("Output.docm");
     }
 }

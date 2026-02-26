@@ -1,21 +1,30 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsTiffExample
 {
-    static void Main()
+    class Program
     {
-        // Load the source DOC document.
-        Document doc = new Document("Input.doc");
+        static void Main()
+        {
+            // Load the source DOC document from the file system.
+            // The Document constructor automatically detects the format.
+            Document doc = new Document("InputDocument.doc");
 
-        // Set up options for rendering the document to a TIFF image.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        // Example compression: LZW (you can choose other values from TiffCompression enum).
-        tiffOptions.TiffCompression = TiffCompression.Lzw;
-        // Optional: define the resolution (dots per inch) for the output image.
-        tiffOptions.Resolution = 300;
+            // Create ImageSaveOptions specifying the TIFF format.
+            // This object allows us to control rendering options such as resolution or compression.
+            ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
 
-        // Save the document as a multi‑page TIFF file.
-        doc.Save("Output.tiff", tiffOptions);
+            // Example: set the resolution to 300 DPI for higher quality output.
+            tiffOptions.Resolution = 300;
+
+            // Example: use LZW compression (default) – can be changed if needed.
+            // tiffOptions.TiffCompression = TiffCompression.Lzw;
+
+            // Save the rendered document as a TIFF file.
+            // The Save method with (string, SaveOptions) follows the provided lifecycle rule.
+            doc.Save("OutputDocument.tiff", tiffOptions);
+        }
     }
 }

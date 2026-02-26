@@ -9,25 +9,33 @@ class Program
         // Create a new empty document.
         Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document for building content.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table. The builder returns the Table object for further configuration if needed.
+        // Start a new table. The builder returns the created Table object.
         Table table = builder.StartTable();
 
         // ---- First row ----
-        builder.InsertCell();               // First cell of the first row.
-        builder.Write("Header 1");          // Write text into the first cell.
-        builder.InsertCell();               // Second cell of the first row.
-        builder.Write("Header 2");          // Write text into the second cell.
-        builder.EndRow();                   // End the first row.
+        // Insert first cell and add text.
+        builder.InsertCell();
+        builder.Write("Cell 1, Row 1");
+
+        // Insert second cell in the same row and add text.
+        builder.InsertCell();
+        builder.Write("Cell 2, Row 1");
+
+        // End the first row.
+        builder.EndRow();
 
         // ---- Second row ----
-        builder.InsertCell();               // First cell of the second row.
-        builder.Write("Cell 1");            // Write text into the first cell.
-        builder.InsertCell();               // Second cell of the second row.
-        builder.Write("Cell 2");            // Write text into the second cell.
-        builder.EndRow();                   // End the second row.
+        builder.InsertCell();
+        builder.Write("Cell 1, Row 2");
+
+        builder.InsertCell();
+        builder.Write("Cell 2, Row 2");
+
+        // End the second row.
+        builder.EndRow();
 
         // Finish the table.
         builder.EndTable();

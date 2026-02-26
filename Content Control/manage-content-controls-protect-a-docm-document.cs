@@ -1,29 +1,24 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
-using Aspose.Words.Settings;
 
-class Program
+class ProtectDocmExample
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Path to the source DOCM file (must exist on disk).
+        string inputPath = @"C:\Docs\Sample.docm";
 
-        // Use DocumentBuilder to add some content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a DOCM document that will be protected.");
+        // Path where the protected DOCM will be saved.
+        string outputPath = @"C:\Docs\Sample.Protected.docm";
 
-        // Set write‑protection password and recommend read‑only opening.
-        doc.WriteProtection.SetPassword("Secret123");
-        doc.WriteProtection.ReadOnlyRecommended = true;
+        // Load the existing DOCM document.
+        Document doc = new Document(inputPath);
 
-        // Apply document protection (read‑only) with the same password.
-        // This prevents editing unless the correct password is supplied.
-        doc.Protect(ProtectionType.ReadOnly, "Secret123");
+        // Apply protection that allows only form field editing.
+        // A password is optional; an empty string means no password.
+        doc.Protect(ProtectionType.AllowOnlyFormFields, "MySecretPassword");
 
-        // Save the document as a macro‑enabled DOCM file.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
-        doc.Save("ProtectedDocument.docm", saveOptions);
+        // Save the protected document back to DOCM format.
+        doc.Save(outputPath);
     }
 }

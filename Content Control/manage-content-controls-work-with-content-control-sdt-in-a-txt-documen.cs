@@ -1,52 +1,48 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 
-class ContentControlExample
+class ContentControlDemo
 {
     static void Main()
     {
-        // Paths to the input TXT file and the output document.
-        string inputPath = "input.txt";
-        string outputPath = "output.docx";
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Load the TXT file using TxtLoadOptions (default options are sufficient here).
-        TxtLoadOptions loadOptions = new TxtLoadOptions();
-        Document doc = new Document(inputPath, loadOptions);
-
-        // Create a DocumentBuilder to modify the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the end of the document where we will insert the content control.
-        builder.MoveToDocumentEnd();
-
-        // Create a plain‑text structured document tag (content control).
+        // Insert a plain‑text content control (SDT) at the current cursor position.
         StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+
+        // Set some useful properties of the content control.
+        sdt.Title = "CustomerName";                     // Friendly name.
+        sdt.Tag = "CustomerNameTag";                    // Tag identifier.
+        sdt.LockContents = true;                         // Prevent editing of the content.
+        sdt.IsShowingPlaceholderText = true;             // Show placeholder when empty.
 
         // Insert the content control into the document.
         builder.InsertNode(sdt);
 
-        // Position the builder inside the newly created content control.
+        // Move the cursor inside the content control to add placeholder text.
+        // StructuredDocumentTag does not expose a FirstParagraph property; use MoveTo(sdt) instead.
         builder.MoveTo(sdt);
+        builder.Write("Enter name here...");
 
-        // Add placeholder text inside the content control.
-        builder.Writeln("Enter text here...");
+        // Save the document to a file (format inferred from extension).
+        doc.Save("ContentControlDemo.docx");
 
-        // Set some useful properties of the content control.
-        sdt.Title = "MyPlainTextControl";
-        sdt.Tag = "PlainTextTag";
-        sdt.LockContents = false;          // Allow editing of the contents.
-        sdt.LockContentControl = false;    // Allow deletion of the control.
+        // -----------------------------------------------------------------
+        // Load the saved document and demonstrate how to read the content control.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document("ContentControlDemo.docx");
+        StructuredDocumentTag loadedSdt = (StructuredDocumentTag)loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)[0];
 
-        // Example: retrieve all content controls in the document and print their titles.
-        foreach (IStructuredDocumentTag tag in doc.Range.StructuredDocumentTags)
-        {
-            Console.WriteLine($"SDT Id={tag.Id}, Title={tag.Title}, Tag={tag.Tag}, Type={tag.SdtType}");
-        }
-
-        // Save the modified document. The format is inferred from the file extension (DOCX).
-        doc.Save(outputPath, SaveFormat.Docx);
+        // Output some properties to the console.
+        Console.WriteLine("Title: " + loadedSdt.Title);
+        Console.WriteLine("Tag: " + loadedSdt.Tag);
+        Console.WriteLine("Locked: " + loadedSdt.LockContents);
+        Console.WriteLine("Placeholder shown: " + loadedSdt.IsShowingPlaceholderText);
+        Console.WriteLine("Current text: " + loadedSdt.GetText().Trim());
     }
 }

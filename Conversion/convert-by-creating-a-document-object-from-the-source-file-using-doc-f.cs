@@ -1,24 +1,20 @@
-using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
+using System;
 
 class Program
 {
     static void Main()
     {
-        // Path to the source file (any supported format, will be loaded as DOC)
-        string sourceFilePath = @"C:\Docs\sourceFile.doc";
+        // Path to the source document (any supported format)
+        string sourcePath = "input.docx";
 
-        // Specify load options to force DOC format detection
-        LoadOptions loadOptions = new LoadOptions
-        {
-            LoadFormat = LoadFormat.Doc
-        };
+        // Path where the DOC format file will be saved
+        string outputPath = "output.doc";
 
-        // Create a Document object from the source file using the specified load options
-        Document doc = new Document(sourceFilePath, loadOptions);
+        // Load the source document; format is detected automatically
+        Document doc = new Document(sourcePath);
 
-        // The document is now loaded and can be used for further processing
-        Console.WriteLine($"Document loaded. Page count: {doc.PageCount}");
+        // Save the loaded document in Microsoft Word 97‑2007 DOC format
+        doc.Save(outputPath, SaveFormat.Doc);
     }
 }

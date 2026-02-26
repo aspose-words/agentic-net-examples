@@ -2,83 +2,66 @@ using System;
 using System.IO;
 using System.Threading;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsCancellationDemo
 {
-    static void Main()
+    // Implements the saving progress callback.
+    // Throws OperationCanceledException when the supplied CancellationToken is cancelled.
+    public class SavingProgressCallback : IDocumentSavingCallback
     {
-        // Path to the input DOCX file.
-        string inputPath = @"C:\Docs\LargeDocument.docx";
+        private readonly CancellationToken _cancellationToken;
 
-        // Create a CancellationTokenSource that will request cancellation after 500 ms.
-        using var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromMilliseconds(500));
-
-        // Configure load options with a custom progress callback that checks the token.
-        LoadOptions loadOptions = new LoadOptions
+        public SavingProgressCallback(CancellationToken cancellationToken)
         {
-            ProgressCallback = new LoadingProgressCallback(cts.Token)
-        };
-
-        try
-        {
-            // Load the document; the callback may throw OperationCanceledException.
-            Document doc = new Document(inputPath, loadOptions);
-
-            // Perform any additional processing here (omitted for brevity).
-
-            // Example of saving with a similar cancellation check.
-            string outputPath = @"C:\Docs\Processed.docx";
-            // Use generic SaveOptions for DOCX format; set the progress callback.
-            SaveOptions saveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Docx);
-            saveOptions.ProgressCallback = new SavingProgressCallback(cts.Token);
-            doc.Save(outputPath, saveOptions);
-        }
-        catch (OperationCanceledException ex)
-        {
-            Console.WriteLine($"Operation was cancelled: {ex.Message}");
-        }
-    }
-
-    // Loading callback that aborts when the cancellation token is signaled.
-    private class LoadingProgressCallback : IDocumentLoadingCallback
-    {
-        private readonly CancellationToken _token;
-        private readonly DateTime _startedAt;
-
-        public LoadingProgressCallback(CancellationToken token)
-        {
-            _token = token;
-            _startedAt = DateTime.Now;
-        }
-
-        public void Notify(DocumentLoadingArgs args)
-        {
-            if (_token.IsCancellationRequested)
-                throw new OperationCanceledException(
-                    $"Loading cancelled at {DateTime.Now}, elapsed {(DateTime.Now - _startedAt).TotalSeconds:F2}s.");
-        }
-    }
-
-    // Saving callback that aborts when the cancellation token is signaled.
-    private class SavingProgressCallback : IDocumentSavingCallback
-    {
-        private readonly CancellationToken _token;
-        private readonly DateTime _startedAt;
-
-        public SavingProgressCallback(CancellationToken token)
-        {
-            _token = token;
-            _startedAt = DateTime.Now;
+            _cancellationToken = cancellationToken;
         }
 
         public void Notify(DocumentSavingArgs args)
         {
-            if (_token.IsCancellationRequested)
+            // If cancellation has been requested, abort the save operation.
+            if (_cancellationToken.IsCancellationRequested)
                 throw new OperationCanceledException(
-                    $"Saving cancelled at {DateTime.Now}, elapsed {(DateTime.Now - _startedAt).TotalSeconds:F2}s.");
+                    $"Saving cancelled at estimated progress {args.EstimatedProgress}%.");
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            // Path to the source DOCX file.
+            string sourcePath = @"C:\Docs\BigDocument.docx";
+
+            // Path where the (partial) output would be written if not cancelled.
+            string outputPath = @"C:\Docs\BigDocument_Cancelled.docx";
+
+            // Create a CancellationTokenSource that will cancel after a short delay.
+            using var cts = new CancellationTokenSource();
+
+            // For demonstration, cancel after 100 milliseconds.
+            cts.CancelAfter(TimeSpan.FromMilliseconds(100));
+
+            // Load the document (no custom loading callback needed for this demo).
+            Document doc = new Document(sourcePath);
+
+            // Configure save options and attach the progress callback.
+            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+            {
+                ProgressCallback = new SavingProgressCallback(cts.Token)
+            };
+
+            try
+            {
+                // Attempt to save the document. The callback will abort if cancellation occurs.
+                doc.Save(outputPath, saveOptions);
+                Console.WriteLine("Document saved successfully (no cancellation).");
+            }
+            catch (OperationCanceledException ex)
+            {
+                // Handle the cancellation.
+                Console.WriteLine($"Save operation was cancelled: {ex.Message}");
+            }
         }
     }
 }

@@ -1,42 +1,38 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+namespace AddRowExample
 {
-    static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main(string[] args)
+        {
+            // Create a new blank document
+            Document doc = new Document();
 
-        // Build a simple 2‑column table with one initial row.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1, Row 1");
-        builder.InsertCell();
-        builder.Write("Cell 2, Row 1");
-        builder.EndRow();
-        builder.EndTable();
+            // Create a table and add it to the document body
+            Table table = new Table(doc);
+            doc.FirstSection.Body.AppendChild(table);
 
-        // Create a new row.
-        Row newRow = new Row(doc);
+            // Ensure the table has at least one row and one cell so we can work with it
+            table.EnsureMinimum();
 
-        // First cell of the new row.
-        Cell cell1 = new Cell(doc);
-        cell1.AppendChild(new Paragraph(doc));
-        cell1.FirstParagraph.AppendChild(new Run(doc, "Cell 1, Row 2"));
-        newRow.Cells.Add(cell1);
+            // Add a new row to the existing table
+            Row newRow = new Row(doc);
+            table.AppendChild(newRow);
 
-        // Second cell of the new row.
-        Cell cell2 = new Cell(doc);
-        cell2.AppendChild(new Paragraph(doc));
-        cell2.FirstParagraph.AppendChild(new Run(doc, "Cell 2, Row 2"));
-        newRow.Cells.Add(cell2);
+            // Add a single cell to the new row
+            Cell newCell = new Cell(doc);
+            newRow.AppendChild(newCell);
 
-        // Add the new row to the table.
-        table.Rows.Add(newRow);
+            // Add a paragraph with some text inside the new cell
+            Paragraph para = new Paragraph(doc);
+            newCell.AppendChild(para);
+            para.AppendChild(new Run(doc, "This is a newly added row."));
 
-        // Save the document.
-        doc.Save("AddedRow.docx");
+            // Save the document
+            doc.Save("AddedRow.docx");
+        }
     }
 }

@@ -1,61 +1,40 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class ExtractImagesFromWordMl
+class Program
 {
     static void Main()
     {
-        // Path to the WORDML (XML) document.
-        string inputPath = @"C:\Docs\input.xml";
-
-        // Folder where extracted images will be saved.
-        string outputFolder = @"C:\Docs\ExtractedImages";
-
-        // Ensure the output folder exists.
-        Directory.CreateDirectory(outputFolder);
+        // Path to the folder that contains the WORDML file.
+        string dataDir = @"C:\Data\";
 
         // Load the WORDML document.
-        Document doc = new Document(inputPath);
+        Document doc = new Document(Path.Combine(dataDir, "WordMLFile.xml"));
 
         // Get all shape nodes in the document (including those inside groups).
         NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
 
-        foreach (Shape shape in shapes)
+        // Iterate through each shape and extract the image if it has one.
+        foreach (Shape shape in shapes.OfType<Shape>())
         {
-            // Process only shapes that actually contain an image.
             if (shape.HasImage)
             {
-                // Determine a suitable file extension based on the image type.
-                string extension = shape.ImageData.ImageType switch
-                {
-                    ImageType.Jpeg => ".jpg",
-                    ImageType.Png => ".png",
-                    ImageType.Bmp => ".bmp",
-                    ImageType.Gif => ".gif",
-                    ImageType.WebP => ".webp",
-                    ImageType.Emf => ".emf",
-                    ImageType.Wmf => ".wmf",
-                    ImageType.Pict => ".pict",
-                    ImageType.Eps => ".eps",
-                    _ => ".bin"
-                };
+                // Determine the appropriate file extension for the image format.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
 
-                // Build a unique file name for each extracted image.
-                string fileName = $"Image_{imageIndex}{extension}";
-                string filePath = Path.Combine(outputFolder, fileName);
+                // Build the output file name.
+                string outputPath = Path.Combine(dataDir, $"ExtractedImage_{imageIndex}{extension}");
 
-                // Write the raw image bytes to the file.
-                File.WriteAllBytes(filePath, shape.ImageData.ImageBytes);
+                // Save the image data to the file system.
+                shape.ImageData.Save(outputPath);
 
-                Console.WriteLine($"Extracted image saved to: {filePath}");
                 imageIndex++;
             }
         }
-
-        Console.WriteLine("Image extraction completed.");
     }
 }

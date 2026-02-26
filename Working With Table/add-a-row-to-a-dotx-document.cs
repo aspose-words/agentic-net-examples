@@ -2,48 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class AddRowToDotx
 {
     static void Main()
     {
-        // Load the DOTX template.
+        // Load the existing DOTX template.
         Document doc = new Document("Template.dotx");
 
-        // Get the first table in the document, or create a new one if none exist.
-        Table table;
-        if (doc.FirstSection.Body.Tables.Count > 0)
-        {
-            table = doc.FirstSection.Body.Tables[0];
-        }
-        else
-        {
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Header");
-            builder.EndRow();
-            builder.EndTable();
-        }
+        // Find the first table in the document (adjust as needed for your scenario).
+        Table table = doc.FirstSection.Body.Tables[0];
 
         // Create a new row that belongs to the same document.
         Row newRow = new Row(doc);
 
-        // First cell of the new row.
-        Cell cell1 = new Cell(doc);
-        cell1.AppendChild(new Paragraph(doc));
-        cell1.FirstParagraph.AppendChild(new Run(doc, "New Cell 1"));
-        newRow.Cells.Add(cell1);
+        // Ensure the row has at least one cell.
+        newRow.EnsureMinimum();
 
-        // Second cell of the new row.
-        Cell cell2 = new Cell(doc);
-        cell2.AppendChild(new Paragraph(doc));
-        cell2.FirstParagraph.AppendChild(new Run(doc, "New Cell 2"));
-        newRow.Cells.Add(cell2);
+        // Add content to the first cell of the new row.
+        Cell firstCell = newRow.FirstCell;
+        Paragraph para = new Paragraph(doc);
+        firstCell.AppendChild(para);
+        Run run = new Run(doc, "New row added programmatically.");
+        para.AppendChild(run);
 
         // Append the new row to the end of the table.
-        table.Rows.Add(newRow);
+        table.AppendChild(newRow);
 
-        // Save the modified document.
-        doc.Save("Result.docx");
+        // Save the modified document back as a DOTX (or any other format you need).
+        doc.Save("ModifiedTemplate.dotx");
     }
 }

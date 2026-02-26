@@ -1,58 +1,53 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Vba;
 
-class VbaDocumentProcessing
+class VbaMacroDocumentProcessor
 {
     static void Main()
     {
-        // Path to the original DOCX file that contains VBA macros.
-        string originalPath = @"C:\Docs\Original.docx";
+        // Path to the folder that contains the source documents.
+        string dataDir = @"C:\Docs\"; // <-- adjust to your environment
 
-        // Load the original document.
-        Document originalDoc = new Document(originalPath);
+        // 1. Load the original DOCX (or DOCM) file.
+        Document originalDoc = new Document(dataDir + "Source.docx");
 
-        // Clone the entire document, including its VBA project.
-        Document clonedDoc = (Document)originalDoc.Clone(true);
+        // Optional: check whether the document contains VBA macros.
         if (originalDoc.HasMacros)
         {
-            // Clone the VBA project and assign it to the cloned document.
-            clonedDoc.VbaProject = (VbaProject)originalDoc.VbaProject.Clone();
+            Console.WriteLine("The source document contains VBA macros.");
+        }
+        else
+        {
+            Console.WriteLine("The source document does not contain VBA macros.");
         }
 
-        // Load additional documents that will be inserted/appended.
-        Document docToInsert = new Document(@"C:\Docs\Insert.docx");
-        Document docToAppend = new Document(@"C:\Docs\Append.docx");
+        // 2. Clone the original document (deep copy, including all nodes).
+        Document clonedDoc = (Document)originalDoc.Clone(true);
 
-        // Insert the document at the beginning of the cloned document.
-        // Use DocumentBuilder to position the cursor at the start.
+        // 3. Insert an additional document into the cloned document at the end.
+        Document docToInsert = new Document(dataDir + "Insert.docx");
         DocumentBuilder builder = new DocumentBuilder(clonedDoc);
-        builder.MoveToDocumentStart();
+        builder.MoveToDocumentEnd(); // Position the cursor at the end of the cloned document.
         builder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
 
-        // Append another document to the end of the cloned document.
+        // 4. Append another document to the cloned document.
+        Document docToAppend = new Document(dataDir + "Append.docx");
         clonedDoc.AppendDocument(docToAppend, ImportFormatMode.KeepSourceFormatting);
 
-        // Save the modified cloned document.
-        string clonedPath = @"C:\Docs\ClonedModified.docx";
-        clonedDoc.Save(clonedPath);
+        // 5. Split the original document into two parts:
+        //    - Part 1: pages 1 to 2
+        //    - Part 2: remaining pages
+        int totalPages = originalDoc.PageCount;
+        Document part1 = originalDoc.ExtractPages(1, Math.Min(2, totalPages));
+        Document part2 = originalDoc.ExtractPages(3, totalPages - 2);
 
-        // ------------------------------------------------------------
-        // Split the original document into separate HTML files, one per section.
-        // ------------------------------------------------------------
-        HtmlSaveOptions splitOptions = new HtmlSaveOptions
-        {
-            // Split at each section break.
-            DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-            // Optional: keep the original file name as a base for split parts.
-            ExportHeadersFootersMode = ExportHeadersFootersMode.PerSection
-        };
+        // 6. Save all resulting documents.
+        originalDoc.Save(dataDir + "Original_Saved.docx");
+        clonedDoc.Save(dataDir + "Cloned_Modified.docx");
+        part1.Save(dataDir + "Original_Part1.docx");
+        part2.Save(dataDir + "Original_Part2.docx");
 
-        // Save the split parts. The base file name is used; Aspose.Words will
-        // generate files like Original.docx.part1.html, Original.docx.part2.html, etc.
-        string splitBasePath = @"C:\Docs\Original_Split.html";
-        originalDoc.Save(splitBasePath, splitOptions);
+        Console.WriteLine("Processing completed.");
     }
 }

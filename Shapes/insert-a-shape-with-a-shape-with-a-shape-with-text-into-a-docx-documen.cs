@@ -1,9 +1,8 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class Program
+class InsertNestedShapes
 {
     static void Main()
     {
@@ -11,62 +10,38 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create the outermost group shape that will contain all nested shapes.
-        GroupShape outerGroup = new GroupShape(doc)
+        // Insert the outermost shape (a rectangle) as an inline shape.
+        Shape outerShape = builder.InsertShape(ShapeType.Rectangle, 300, 200);
+        outerShape.WrapType = WrapType.Inline;
+
+        // Create the middle shape (an ellipse) and set its size.
+        Shape middleShape = new Shape(doc, ShapeType.Ellipse)
         {
-            // Position the group shape on the page.
-            Left = 100,
-            Top = 100,
-            Width = 400,
-            Height = 300,
-            // Set the coordinate system for child shapes (0,0) to (100,100).
-            CoordOrigin = new System.Drawing.Point(0, 0),
-            CoordSize = new System.Drawing.Size(100, 100)
+            Width = 150,
+            Height = 100,
+            WrapType = WrapType.Inline
         };
 
-        // Insert the outer group shape into the document.
-        builder.CurrentParagraph.AppendChild(outerGroup);
+        // Append the middle shape as a child of the outer shape.
+        outerShape.AppendChild(middleShape);
 
-        // Create a second group shape that will be placed inside the outer group.
-        GroupShape innerGroup = new GroupShape(doc)
+        // Create the innermost shape (a text box) and set its size.
+        Shape innerShape = new Shape(doc, ShapeType.TextBox)
         {
-            // Position relative to the outer group's coordinate system.
-            Left = 10,
-            Top = 10,
-            Width = 80,
+            Width = 120,
             Height = 60,
-            CoordOrigin = new System.Drawing.Point(0, 0),
-            CoordSize = new System.Drawing.Size(100, 100)
+            WrapType = WrapType.Inline
         };
 
-        // Add the inner group to the outer group.
-        outerGroup.AppendChild(innerGroup);
+        // Append the inner shape as a child of the middle shape.
+        middleShape.AppendChild(innerShape);
 
-        // Create a textbox shape that will hold the actual text.
-        Shape textBox = new Shape(doc, ShapeType.TextBox)
-        {
-            // Position relative to the inner group's coordinate system.
-            Left = 5,
-            Top = 5,
-            Width = 90,
-            Height = 50,
-            // Ensure the shape is displayed in front of text.
-            BehindText = false,
-            // Optional: give the shape a visible border.
-            StrokeColor = System.Drawing.Color.Black,
-            StrokeWeight = 0.5
-        };
-
-        // Add the textbox to the inner group.
-        innerGroup.AppendChild(textBox);
-
-        // Insert a paragraph into the textbox and write some text.
-        Paragraph para = new Paragraph(doc);
-        textBox.AppendChild(para);
-        Run run = new Run(doc, "Nested shape with text");
+        // Add a paragraph and a run of text inside the innermost shape.
+        Paragraph para = innerShape.FirstParagraph;
+        Run run = new Run(doc) { Text = "Nested shape text" };
         para.AppendChild(run);
 
         // Save the document to a DOCX file.
-        doc.Save("NestedShapes.docx", SaveFormat.Docx);
+        doc.Save("NestedShapes.docx");
     }
 }

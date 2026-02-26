@@ -1,4 +1,3 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -11,22 +10,22 @@ class Program
 
         // Create a new VBA project and assign it to the document.
         VbaProject project = new VbaProject();
-        project.Name = "MyVbaProject";
+        project.Name = "MyProject";
         doc.VbaProject = project;
 
-        // Create a new VBA module with macro source code.
+        // Create a new procedural module with VBA source code.
         VbaModule module = new VbaModule();
-        module.Name = "MyMacroModule";
+        module.Name = "MyModule";
         module.Type = VbaModuleType.ProceduralModule;
         module.SourceCode = @"
 Sub HelloWorld()
-    MsgBox ""Hello, World!""
+    MsgBox ""Hello from VBA!""
 End Sub";
 
         // Add the module to the VBA project.
         doc.VbaProject.Modules.Add(module);
 
-        // Save the document as a macro-enabled DOCM file.
+        // Save the document as a macro‑enabled file.
         doc.Save("Output.docm");
     }
 }

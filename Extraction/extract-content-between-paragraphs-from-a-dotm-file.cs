@@ -1,42 +1,62 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 
-class Program
+namespace AsposeWordsExample
 {
-    static void Main()
+    class Program
     {
-        // Load the DOTM file.
-        Document doc = new Document("Template.dotm");
-
-        // Access the main story (body) of the first section.
-        Body body = doc.FirstSection.Body;
-
-        // Define the range of paragraphs you want to extract (inclusive start, exclusive end).
-        // Adjust these indices as needed.
-        int startParagraphIndex = 2; // third paragraph (0‑based index)
-        int endParagraphIndex   = 5; // up to but not including the sixth paragraph
-
-        // Ensure the indices are within the collection bounds.
-        if (startParagraphIndex < 0) startParagraphIndex = 0;
-        if (endParagraphIndex > body.Paragraphs.Count) endParagraphIndex = body.Paragraphs.Count;
-
-        // Collect the text of the selected paragraphs.
-        StringBuilder extracted = new StringBuilder();
-
-        for (int i = startParagraphIndex; i < endParagraphIndex; i++)
+        /// <summary>
+        /// Extracts the combined text of paragraphs between the specified start and end indices
+        /// (inclusive) from a DOTM (macro‑enabled template) file.
+        /// </summary>
+        /// <param name="dotmPath">Full path to the .dotm file.</param>
+        /// <param name="startParagraphIndex">Zero‑based index of the first paragraph to include.</param>
+        /// <param name="endParagraphIndex">Zero‑based index of the last paragraph to include.</param>
+        /// <returns>Plain text containing the concatenated paragraph texts.</returns>
+        static string ExtractBetweenParagraphs(string dotmPath, int startParagraphIndex, int endParagraphIndex)
         {
-            Paragraph para = body.Paragraphs[i];
-            // GetText returns the paragraph text including the paragraph break.
-            // Trim the trailing paragraph break characters for cleaner output.
-            string text = para.GetText().TrimEnd('\r', '\a');
-            extracted.AppendLine(text);
+            // Load the DOTM file. The Document constructor automatically detects the format.
+            Document doc = new Document(dotmPath);
+
+            // Ensure the document has at least one section and body.
+            if (doc.FirstSection == null || doc.FirstSection.Body == null)
+                throw new InvalidOperationException("The document does not contain any body paragraphs.");
+
+            // Get the collection of all paragraphs in the main story.
+            ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
+
+            // Validate indices.
+            if (startParagraphIndex < 0 || endParagraphIndex < 0 ||
+                startParagraphIndex >= paragraphs.Count || endParagraphIndex >= paragraphs.Count ||
+                startParagraphIndex > endParagraphIndex)
+                throw new ArgumentOutOfRangeException("Invalid paragraph index range.");
+
+            // Accumulate the text of the selected paragraphs.
+            StringWriter writer = new StringWriter();
+            for (int i = startParagraphIndex; i <= endParagraphIndex; i++)
+            {
+                // GetText() returns the paragraph text including the trailing paragraph break.
+                writer.Write(paragraphs[i].GetText());
+            }
+
+            return writer.ToString();
         }
 
-        // Save the extracted content to a plain‑text file.
-        File.WriteAllText("ExtractedContent.txt", extracted.ToString());
+        static void Main(string[] args)
+        {
+            // Example usage:
+            string dotmFile = @"C:\Docs\Template.dotm";
 
-        Console.WriteLine("Extraction complete. Content saved to ExtractedContent.txt");
+            // Extract paragraphs 2 through 5 (zero‑based indices 1 to 4).
+            string extractedText = ExtractBetweenParagraphs(dotmFile, 1, 4);
+
+            // Output the result to console or save to a file.
+            Console.WriteLine("Extracted Text:");
+            Console.WriteLine(extractedText);
+
+            // Optionally, save the extracted text to a plain‑text file.
+            File.WriteAllText(@"C:\Docs\ExtractedContent.txt", extractedText);
+        }
     }
 }

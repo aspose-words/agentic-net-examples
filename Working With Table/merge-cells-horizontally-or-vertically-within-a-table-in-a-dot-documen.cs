@@ -1,56 +1,79 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class TableCellMerging
+class Program
 {
-    public void MergeCells()
+    static void Main()
     {
-        // Create a new document (the actual creation is handled by the provided create rule)
-        Document doc = new Document();               // <-- create rule
+        // -------------------------------------------------
+        // Create a new document and build a table with merged cells.
+        // -------------------------------------------------
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a 2x2 table
-        Table table = builder.StartTable();
+        // Start the table.
+        builder.StartTable();
 
-        // ---------- First Row ----------
-        // First cell – start of a horizontal merge range and also the start of a vertical merge range
+        // ---------- First row (horizontal merge) ----------
+        // First cell – marks the start of a horizontally merged range.
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;   // Horizontal merge start
-        builder.CellFormat.VerticalMerge   = CellMerge.First;   // Vertical merge start
-        builder.Write("Merged Cell (H+V)");
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.Write("Horizontally merged cells");
 
-        // Second cell – merge horizontally with the first cell
+        // Second cell – merged with the cell to its left.
         builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Merge to previous cell horizontally
-        builder.CellFormat.VerticalMerge   = CellMerge.None;     // No vertical merge for this cell
-        // No text needed for merged cell
-        builder.EndRow();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // ---------- Second Row ----------
-        // First cell – merge vertically with the cell above
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.None;     // No horizontal merge
-        builder.CellFormat.VerticalMerge   = CellMerge.Previous; // Merge to previous cell vertically
-        // No text needed for merged cell
-
-        // Second cell – regular unmerged cell
+        // Third cell – normal, not merged.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.CellFormat.VerticalMerge   = CellMerge.None;
-        builder.Write("Regular Cell");
+        builder.Write("Normal cell");
+
         builder.EndRow();
 
+        // ---------- Second row (vertical merge) ----------
+        // First cell – marks the start of a vertically merged range.
+        builder.InsertCell();
+        builder.CellFormat.VerticalMerge = CellMerge.First;
+        builder.Write("Vertically merged cells");
+
+        // Second cell – merged with the cell above it.
+        builder.InsertCell();
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;
+
+        // Third cell – normal, not merged.
+        builder.InsertCell();
+        builder.CellFormat.VerticalMerge = CellMerge.None;
+        builder.Write("Normal cell");
+
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document (the actual saving is handled by the provided save rule)
-        doc.Save("MergedCells.docx");               // <-- save rule
-    }
-}
+        // Save the newly created document.
+        doc.Save("MergedCells.docx");
 
-public static class Program
-{
-    public static void Main()
-    {
-        new TableCellMerging().MergeCells();
+        // -------------------------------------------------
+        // Load the saved document and apply additional merges.
+        // -------------------------------------------------
+        Document loadedDoc = new Document("MergedCells.docx");
+        Table table = loadedDoc.FirstSection.Body.Tables[0];
+
+        // Merge the first two cells of the first row horizontally.
+        Cell firstCell = table.Rows[0].Cells[0];
+        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
+        Cell secondCell = table.Rows[0].Cells[1];
+        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+        // Merge the first cell of the first column vertically across two rows.
+        Cell topCell = table.Rows[0].Cells[0];
+        topCell.CellFormat.VerticalMerge = CellMerge.First;
+        Cell bottomCell = table.Rows[1].Cells[0];
+        bottomCell.CellFormat.VerticalMerge = CellMerge.Previous;
+
+        // Save the modified document.
+        loadedDoc.Save("MergedCells_Modified.docx");
     }
 }

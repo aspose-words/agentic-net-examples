@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -6,19 +7,24 @@ class Program
     static void Main()
     {
         // Load an existing DOCX file.
-        Document doc = new Document("input.docx");
+        Document doc = new Document("InputDocument.docx");
 
-        // Create a DocumentBuilder attached to the loaded document.
+        // Create a DocumentBuilder for the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the end of the document (or any desired location).
+        // Move the cursor to the end of the document (or any desired position).
         builder.MoveToDocumentEnd();
 
         // Insert a text input form field.
-        // Parameters: field name, field type, text format (empty for default), default text, maximum length.
-        builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "Enter your name", 30);
+        // Parameters: name, type, format, default text, max length (0 = unlimited).
+        builder.InsertTextInput(
+            name: "MyTextInput",
+            type: TextFormFieldType.Regular,
+            format: "",
+            fieldValue: "Enter your text here",
+            maxLength: 0);
 
         // Save the modified document.
-        doc.Save("output.docx");
+        doc.Save("OutputDocument.docx");
     }
 }

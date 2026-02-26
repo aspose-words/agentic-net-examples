@@ -10,40 +10,42 @@ class InsertTableIntoTxt
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Create a DocumentBuilder associated with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start a table.
         Table table = builder.StartTable();
 
         // First row, first cell.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Row 1, cell 1.");
 
         // First row, second cell.
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Row 1, cell 2.");
+
+        // End the first row.
         builder.EndRow();
 
         // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        builder.Write("Row 2, cell 1.");
 
         // Second row, second cell.
         builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
+        builder.Write("Row 2, cell 2.");
 
-        // Finish the table.
+        // End the second row and the table.
+        builder.EndRow();
         builder.EndTable();
 
-        // Optional: preserve the visual layout of the table when exporting to plain text.
-        TxtSaveOptions saveOptions = new TxtSaveOptions
+        // Configure TXT save options to preserve table layout.
+        TxtSaveOptions txtOptions = new TxtSaveOptions
         {
             PreserveTableLayout = true
         };
 
-        // Save the document as a TXT file.
-        doc.Save("TableInTxtDocument.txt", saveOptions);
+        // Save the document as a plain‑text file.
+        doc.Save("TableInTxt.txt", txtOptions);
     }
 }

@@ -3,39 +3,42 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class ReplaceWithNodeExample
 {
     static void Main()
     {
-        // Load the DOCX document.
+        // Load the source document.
         Document doc = new Document("Input.docx");
 
-        // Configure find/replace options with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new ReplaceWithNodeHandler();
+        // Define the pattern to search for (e.g., a placeholder like {INSERT_HERE}).
+        Regex placeholderPattern = new Regex(@"\{INSERT_HERE\}");
 
-        // Find the placeholder text and replace it with a node.
-        doc.Range.Replace(new Regex(@"\[PLACEHOLDER\]"), "", options);
+        // Create FindReplaceOptions with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions(new InsertNodeCallback());
+
+        // Perform the find-and-replace operation.
+        // The replacement string is empty because the callback will handle the insertion.
+        doc.Range.Replace(placeholderPattern, string.Empty, options);
 
         // Save the modified document.
         doc.Save("Output.docx");
     }
 
-    // Callback that replaces each match with a new paragraph node.
-    private class ReplaceWithNodeHandler : IReplacingCallback
+    // Callback that inserts a new node (e.g., a paragraph) in place of the matched text.
+    private class InsertNodeCallback : IReplacingCallback
     {
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+        public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Create a new paragraph containing the replacement text.
+            // Create the node to insert. Here we insert a new paragraph with some text.
             Paragraph newParagraph = new Paragraph(args.MatchNode.Document);
-            Run run = new Run(args.MatchNode.Document, "Inserted paragraph");
+            Run run = new Run(args.MatchNode.Document, "This is the inserted paragraph.");
             newParagraph.AppendChild(run);
 
-            // Locate the paragraph that contains the matched text.
-            Paragraph matchParagraph = (Paragraph)args.MatchNode.GetAncestor(NodeType.Paragraph);
+            // The match is inside a Run node; its parent is a Paragraph.
+            Paragraph matchParagraph = (Paragraph)args.MatchNode.ParentNode;
 
-            // Insert the new paragraph after the matched paragraph.
-            CompositeNode parentStory = matchParagraph.ParentNode as CompositeNode;
+            // Insert the new paragraph after the paragraph that contains the match.
+            CompositeNode parentStory = matchParagraph.ParentNode;
             parentStory.InsertAfter(newParagraph, matchParagraph);
 
             // Remove the original paragraph that held the placeholder (optional).

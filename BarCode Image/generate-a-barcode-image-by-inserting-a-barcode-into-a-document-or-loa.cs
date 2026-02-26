@@ -2,40 +2,48 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-namespace BarcodeExample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // -------------------------------------------------
+        // 1. Create a new DOCX and insert a MERGEBARCODE field (QR code)
+        // -------------------------------------------------
+        Document doc = new Document();                     // create a blank document
+        DocumentBuilder builder = new DocumentBuilder(doc); // helper to add content
 
-            // Use DocumentBuilder to work with the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert a MERGEBARCODE field that will generate a QR code.
+        FieldMergeBarcode mergeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+        mergeField.BarcodeType = "QR";                     // type of barcode
+        mergeField.BarcodeValue = "ABC123";                // data to encode
 
-            // Build a MERGEBARCODE field with the desired barcode type and value.
-            // The first argument is the barcode type (e.g., "CODE39").
-            // The second argument is the data to encode.
-            FieldBuilder fieldBuilder = new FieldBuilder(FieldType.FieldMergeBarcode);
-            fieldBuilder.AddArgument("CODE39");
-            fieldBuilder.AddArgument("12345ABCDE");
+        // Optional visual customizations
+        mergeField.BackgroundColor = "0xF8BD69";           // background colour
+        mergeField.ForegroundColor = "0xB5413B";           // foreground colour
+        mergeField.ErrorCorrectionLevel = "3";             // QR error correction
+        mergeField.ScalingFactor = "250";                  // scaling factor (percent)
+        mergeField.SymbolHeight = "1000";                  // height in TWIPS
+        mergeField.SymbolRotation = "0";                   // rotation
 
-            // Insert the field at the current position in the paragraph.
-            Field field = fieldBuilder.BuildAndInsert(builder.CurrentParagraph);
+        builder.Writeln(); // add a paragraph break after the field
 
-            // Cast to FieldMergeBarcode to set additional properties, such as displaying the text.
-            if (field is FieldMergeBarcode mergeBarcode)
-            {
-                mergeBarcode.DisplayText = true;          // Show the barcode data below the image.
-                mergeBarcode.AddStartStopChar = true;     // Add start/stop characters for CODE39.
-            }
+        // Save the document containing the MERGEBARCODE field.
+        doc.Save("BarcodeMerge.docx");
 
-            // Update all fields so the barcode image is generated.
-            doc.UpdateFields();
+        // -------------------------------------------------
+        // 2. Load the saved document and insert a BARCODE field (US ZIP code)
+        // -------------------------------------------------
+        Document loadedDoc = new Document("BarcodeMerge.docx"); // load existing DOCX
+        DocumentBuilder loadBuilder = new DocumentBuilder(loadedDoc);
+        loadBuilder.MoveToDocumentEnd(); // position cursor at the end
 
-            // Save the document containing the barcode.
-            doc.Save("Barcode.docx");
-        }
+        // Insert a BARCODE field that displays a US postal barcode.
+        FieldBarcode barcodeField = (FieldBarcode)loadBuilder.InsertField(FieldType.FieldBarcode, true);
+        barcodeField.PostalAddress = "12345"; // ZIP code to encode
+        barcodeField.IsUSPostalAddress = true; // indicate US postal address
+        barcodeField.FacingIdentificationMark = "C"; // optional FIM marker
+
+        // Save the updated document.
+        loadedDoc.Save("BarcodeLoaded.docx");
     }
 }

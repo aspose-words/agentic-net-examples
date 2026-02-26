@@ -1,39 +1,41 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class SplitDocumentByRanges
+class Program
 {
     static void Main()
     {
-        // Load the source DOCX document.
-        Document sourceDoc = new Document("Input.docx");
+        // Path to the source multi‑page DOCX document.
+        string sourcePath = @"C:\Docs\SourceDocument.docx";
+
+        // Load the document using the constructor that accepts a file name.
+        Document sourceDoc = new Document(sourcePath);
 
         // Define the page ranges to split the document into.
         // Each tuple contains the zero‑based start page index and the number of pages to extract.
-        var pageRanges = new (int startIndex, int pageCount)[]
+        // Example: (0, 2) extracts pages 1‑2, (2, 3) extracts pages 3‑5, etc.
+        List<(int startIndex, int pageCount)> ranges = new List<(int, int)>
         {
-            (0, 2), // Pages 1‑2
-            (2, 3), // Pages 3‑5
-            (5, 1)  // Page 6
+            (0, 2),   // Pages 1‑2
+            (2, 3),   // Pages 3‑5
+            (5, 1)    // Page 6
         };
 
-        // Iterate over the defined ranges, extract each part, and save it as a separate DOCX file.
-        for (int i = 0; i < pageRanges.Length; i++)
+        // Iterate over the defined ranges, extract each part, and save it as a separate file.
+        for (int i = 0; i < ranges.Count; i++)
         {
-            var (start, count) = pageRanges[i];
+            var (startIndex, pageCount) = ranges[i];
 
-            // Extract the specified pages into a new Document instance.
-            Document extractedPart = sourceDoc.ExtractPages(start, count);
+            // Extract the specified range of pages.
+            // The ExtractPages method returns a new Document containing only those pages.
+            Document partDoc = sourceDoc.ExtractPages(startIndex, pageCount);
 
-            // Optionally, customize page numbering or field handling using PageExtractOptions.
-            // Example (uncomment if needed):
-            // var extractOptions = new PageExtractOptions { UpdatePageStartingNumber = true, UnlinkPagesNumberFields = true };
-            // extractedPart = sourceDoc.ExtractPages(start, count, extractOptions);
+            // Build the output file name (e.g., Part_1.docx, Part_2.docx, ...).
+            string outputPath = $@"C:\Docs\Part_{i + 1}.docx";
 
-            // Save the extracted part to a new DOCX file.
-            string outputPath = $"Output_Part{i + 1}.docx";
-            extractedPart.Save(outputPath);
+            // Save the extracted part using the Save method that determines format from the extension.
+            partDoc.Save(outputPath);
         }
     }
 }

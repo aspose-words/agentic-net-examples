@@ -1,42 +1,32 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Markup;
 
 class RemoveCommentExample
 {
     static void Main()
     {
-        // Load the existing DOCX document.
+        // Load the DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Collect all CommentRangeStart nodes first (so we can modify the document while iterating).
-        NodeCollection rangeStartNodes = doc.GetChildNodes(NodeType.CommentRangeStart, true);
-        List<CommentRangeStart> rangeStarts = rangeStartNodes
-            .Cast<CommentRangeStart>()
-            .ToList();
+        // Get all top‑level comments in the document.
+        NodeCollection comments = doc.GetChildNodes(NodeType.Comment, true);
 
-        foreach (CommentRangeStart rangeStart in rangeStarts)
+        // Iterate over a copy of the collection because we will modify the document while iterating.
+        foreach (Comment comment in comments.ToArray())
         {
-            int commentId = rangeStart.Id;
+            // The comment range start node is three siblings before the comment node:
+            // CommentRangeStart -> Run (commented text) -> CommentRangeEnd -> Comment
+            Node commentRangeEnd = comment.PreviousSibling;
+            Node commentRangeStart = commentRangeEnd?.PreviousSibling?.PreviousSibling;
 
-            // Find the Comment node with the same Id.
-            Comment commentNode = doc.GetChildNodes(NodeType.Comment, true)
-                .Cast<Comment>()
-                .FirstOrDefault(c => c.Id == commentId);
+            // Remove the comment range start node if it exists.
+            commentRangeStart?.Remove();
 
-            // Remove the comment node if it exists.
-            commentNode?.Remove();
+            // Remove the comment range end node if it exists.
+            commentRangeEnd?.Remove();
 
-            // Remove the CommentRangeStart node.
-            rangeStart.Remove();
-
-            // Find and remove the matching CommentRangeEnd node.
-            CommentRangeEnd rangeEnd = doc.GetChildNodes(NodeType.CommentRangeEnd, true)
-                .Cast<CommentRangeEnd>()
-                .FirstOrDefault(e => e.Id == commentId);
-            rangeEnd?.Remove();
+            // Finally remove the comment itself.
+            comment.Remove();
         }
 
         // Save the modified document.

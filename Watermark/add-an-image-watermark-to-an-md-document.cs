@@ -1,38 +1,46 @@
-using System.Drawing;                     // For Image class
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Loading;
 
-class AddImageWatermarkToMarkdown
+class Program
 {
     static void Main()
     {
-        // Path to the source markdown file.
-        const string inputPath = @"C:\Docs\source.md";
-
         // Path to the image that will be used as a watermark.
-        const string imagePath = @"C:\Images\Logo.jpg";
+        string imagePath = @"C:\Images\Logo.jpg";
 
-        // Path where the watermarked markdown will be saved.
-        const string outputPath = @"C:\Docs\watermarked.md";
+        // Folder where the Markdown file will be saved.
+        string outputFolder = @"C:\Output";
 
-        // Load the markdown document.
-        var loadOptions = new MarkdownLoadOptions();               // Load options for markdown
-        Document doc = new Document(inputPath, loadOptions);
+        // Ensure the output folder exists.
+        System.IO.Directory.CreateDirectory(outputFolder);
 
-        // Configure the appearance of the image watermark.
-        var imageWatermarkOptions = new ImageWatermarkOptions
+        // Create a new empty document.
+        Document doc = new Document();
+
+        // Optional: add some sample text so the Markdown file is not empty.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document with an image watermark.");
+
+        // Configure image watermark options.
+        ImageWatermarkOptions watermarkOptions = new ImageWatermarkOptions
         {
-            Scale = 5,          // Scale factor (5 times the original size)
-            IsWashout = false  // Disable washout effect for a solid image
+            Scale = 5,          // Scale factor for the watermark image.
+            IsWashout = false   // Disable washout effect.
         };
 
         // Add the image watermark to the document.
-        // The overload that accepts a file path and options is used.
-        doc.Watermark.SetImage(imagePath, imageWatermarkOptions);
+        doc.Watermark.SetImage(imagePath, watermarkOptions);
 
-        // Save the document back to markdown format.
-        var saveOptions = new MarkdownSaveOptions();               // Default markdown save options
-        doc.Save(outputPath, saveOptions);
+        // Set up Markdown save options.
+        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+        {
+            // Specify a folder where images extracted from the document will be saved.
+            ImagesFolder = System.IO.Path.Combine(outputFolder, "Images")
+        };
+
+        // Save the document as a Markdown file.
+        string markdownPath = System.IO.Path.Combine(outputFolder, "DocumentWithWatermark.md");
+        doc.Save(markdownPath, saveOptions);
     }
 }

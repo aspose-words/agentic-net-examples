@@ -1,6 +1,5 @@
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables;
 
 class Program
 {
@@ -10,22 +9,18 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a single cell.
-        Table table = builder.StartTable();
-        builder.InsertCell();
+        // Build a simple 1x1 table.
+        builder.StartTable();          // Begin the table.
+        builder.InsertCell();          // Insert the first (and only) cell.
+        builder.Write("Text inside the cell."); // Insert the desired text into the cell.
+        builder.EndRow();              // End the row.
+        builder.EndTable();            // End the table.
 
-        // Insert the desired text into the current cell.
-        builder.Write("Hello from cell");
-
-        // Finish the row and the table.
-        builder.EndRow();
-        builder.EndTable();
-
-        // Set save options to preserve the table layout when exporting to plain text.
-        TxtSaveOptions saveOptions = new TxtSaveOptions();
-        saveOptions.PreserveTableLayout = true;
-
-        // Save the document as a TXT file.
-        doc.Save("CellInTxt.txt", saveOptions);
+        // Save the document as plain‑text, preserving the table layout.
+        TxtSaveOptions txtOptions = new TxtSaveOptions
+        {
+            PreserveTableLayout = true
+        };
+        doc.Save("CellInTxt.txt", txtOptions);
     }
 }

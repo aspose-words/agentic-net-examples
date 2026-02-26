@@ -2,29 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
-class EmbedFontsExample
+class Program
 {
     static void Main()
     {
-        // Path to the folder that contains the source document.
-        string dataDir = @"C:\Data\";
+        // Load the source DOCX document.
+        Document doc = new Document("Input.docx");
 
-        // Load an existing DOCX document.
-        Document doc = new Document(dataDir + "input.docx");
-
-        // Get the collection that controls font embedding for the document.
+        // Get the collection that holds information about the fonts used in the document.
         FontInfoCollection fontInfos = doc.FontInfos;
 
-        // Enable embedding of all TrueType fonts.
+        // Enable embedding of all TrueType fonts when the document is saved.
         fontInfos.EmbedTrueTypeFonts = true;
 
-        // Enable embedding of system fonts (e.g., Arial, Times New Roman).
+        // Enable embedding of system fonts (useful for East Asian fonts).
+        // This property only takes effect when EmbedTrueTypeFonts is true.
         fontInfos.EmbedSystemFonts = true;
 
-        // Save a subset of each font rather than the whole font file (optional).
-        fontInfos.SaveSubsetFonts = true;
+        // Optionally, save the full fonts instead of subsets.
+        // Set to false to embed only the glyphs used in the document.
+        fontInfos.SaveSubsetFonts = false;
 
-        // Save the document with the embedded fonts.
-        doc.Save(dataDir + "output.docx");
+        // Save the document; the fonts will be embedded according to the settings above.
+        doc.Save("Output_EmbeddedFonts.docx");
     }
 }

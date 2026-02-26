@@ -2,21 +2,26 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class ApplyTableStyleOptions
 {
     static void Main()
     {
-        // Load the existing DOCM document.
-        Document doc = new Document("Input.docm");
+        // Load an existing DOCM document.
+        Document doc = new Document("InputDocument.docm");
 
-        // Retrieve the first table in the document (adjust the index if needed).
+        // Retrieve the first table in the document (if any).
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+        {
+            Console.WriteLine("No table found in the document.");
+            return;
+        }
 
-        // Apply desired TableStyleOptions flags to the table.
-        // Example: apply formatting to the first row and enable row banding.
+        // Apply desired style options to the table.
+        // Example: apply first row formatting and row banding.
         table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
-        // Save the modified document back to DOCM format.
-        doc.Save("Output.docm");
+        // Save the modified document as DOCM.
+        doc.Save("OutputDocument.docm");
     }
 }

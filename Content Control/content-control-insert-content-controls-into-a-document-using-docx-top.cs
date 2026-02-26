@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
@@ -7,28 +8,30 @@ class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ----- Plain Text Content Control (block level) -----
-        StructuredDocumentTag plainTextControl = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Block);
-        plainTextControl.Title = "PlainTextCC";
-        plainTextControl.Tag = "PlainTextTag";
-        // Insert the content control into the document.
-        builder.InsertNode(plainTextControl);
-        // Move the cursor inside the newly created content control.
-        builder.MoveTo(plainTextControl);
-        // Add text that will be inside the plain‑text content control.
-        builder.Writeln("This text is inside a plain text content control.");
+        // Insert a Rich Text content control (StructuredDocumentTag).
+        StructuredDocumentTag richTag = builder.InsertStructuredDocumentTag(SdtType.RichText);
+        richTag.Title = "CustomerName";
+        richTag.Tag = "CustomerNameTag";
 
-        // ----- Rich Text Content Control (block level) -----
-        StructuredDocumentTag richTextControl = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
-        richTextControl.Title = "RichTextCC";
-        richTextControl.Tag = "RichTextTag";
-        builder.InsertNode(richTextControl);
-        builder.MoveTo(richTextControl);
-        builder.Writeln("This text is inside a rich text content control.");
+        // Add placeholder text inside the rich text content control.
+        builder.Writeln("John Doe");
 
-        // Save the document in DOCX format.
-        doc.Save("ContentControls.docx", SaveFormat.Docx);
+        // Move the cursor out of the current content control.
+        builder.MoveToDocumentEnd();
+
+        // Insert a Plain Text content control.
+        StructuredDocumentTag plainTag = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+        plainTag.Title = "OrderNumber";
+        plainTag.Tag = "OrderNumberTag";
+
+        // Add placeholder text inside the plain text content control.
+        builder.Writeln("12345");
+
+        // Save the document to a DOCX file.
+        doc.Save("ContentControl.docx");
     }
 }

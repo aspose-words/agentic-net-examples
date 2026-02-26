@@ -2,33 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class InsertShapeWithPicture
 {
     static void Main()
     {
-        // Path to the image file to be inserted.
-        string imagePath = @"C:\Images\Sample.jpg";
+        // Path to the image file that will be placed inside the shape.
+        string imagePath = @"C:\Images\picture.jpg";
 
-        // Path where the resulting DOCX will be saved.
-        string outputPath = @"C:\Output\DocumentWithImage.docx";
+        // Path where the resulting DOCX document will be saved.
+        string outputPath = @"C:\Output\ShapeWithImage.docx";
 
         // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Create a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the image; InsertImage returns a Shape representing the picture.
-        Shape pictureShape = builder.InsertImage(imagePath);
+        // Insert an inline shape of type Image with desired size (in points).
+        // Width and height are set to 150 points each (approximately 2 inches).
+        Shape shape = builder.InsertShape(ShapeType.Image, 150, 150);
 
-        // Configure the shape as a floating picture.
-        pictureShape.WrapType = WrapType.Square;          // Text wraps around the picture.
-        pictureShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        pictureShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        pictureShape.HorizontalAlignment = HorizontalAlignment.Right;
-        pictureShape.VerticalAlignment = VerticalAlignment.Top;
-        pictureShape.Left = 100;   // Position from the left edge of the page (in points).
-        pictureShape.Top = 100;    // Position from the top edge of the page (in points).
+        // Load the image from the file system into the shape.
+        shape.ImageData.SetImage(imagePath);
+
+        // Optionally, set the shape's wrap type or positioning here.
+        // shape.WrapType = WrapType.Inline; // default for InsertShape
 
         // Save the document in DOCX format.
         doc.Save(outputPath);

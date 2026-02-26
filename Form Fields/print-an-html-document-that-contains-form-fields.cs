@@ -1,8 +1,8 @@
 using System;
-using System.Text;
-using System.Collections;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.Saving;
+using Aspose.Words.Fields; // Added for TextFormFieldType
 
 class Program
 {
@@ -12,85 +12,35 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a combo box form field.
-        builder.Write("Choose a value from this combo box: ");
-        FormField comboBox = builder.InsertComboBox("MyComboBox", new[] { "One", "Two", "Three" }, 0);
-        comboBox.CalculateOnExit = true;
-
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
-        // Insert a check box form field.
-        builder.Write("Click this check box to tick/untick it: ");
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 50);
-        checkBox.IsCheckBoxExactSize = true;
-        checkBox.HelpText = "Right click to check this box";
-        checkBox.OwnHelp = true;
-        checkBox.StatusText = "Checkbox status text";
-        checkBox.OwnStatus = true;
-
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        // Insert a checkbox form field.
+        builder.Write("Check this box: ");
+        builder.InsertCheckBox("MyCheckBox", false, 15);
+        builder.Writeln();
 
         // Insert a text input form field.
-        builder.Write("Enter text here: ");
-        FormField textInput = builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "Placeholder text", 50);
-        textInput.EntryMacro = "EntryMacro";
-        textInput.ExitMacro = "ExitMacro";
-        textInput.TextInputDefault = "Regular";
-        textInput.TextInputFormat = "FIRST CAPITAL";
-        textInput.SetTextInputValue("New placeholder text");
+        builder.Write("Enter name: ");
+        builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "John Doe", 50);
+        builder.Writeln();
 
-        // Use a visitor to collect information about all form fields.
-        FormFieldVisitor visitor = new FormFieldVisitor();
-        FormFieldCollection formFields = doc.Range.FormFields;
-        using (IEnumerator<FormField> enumerator = formFields.GetEnumerator())
+        // Insert a combo box (drop‑down) form field.
+        builder.Write("Choose fruit: ");
+        builder.InsertComboBox("MyComboBox", new[] { "Apple", "Banana", "Cherry" }, 0);
+        builder.Writeln();
+
+        // Set HTML save options to export form fields as interactive HTML elements.
+        HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
         {
-            while (enumerator.MoveNext())
-                enumerator.Current.Accept(visitor);
-        }
+            ExportFormFields = true
+        };
 
-        // Print the collected information to the console.
-        Console.WriteLine(visitor.GetText());
+        // Define the output HTML file path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "FormFields.html");
 
-        // Update fields and save the document as HTML.
-        doc.UpdateFields();
-        doc.Save("FormFields.html");
-    }
-}
+        // Save the document as HTML using the configured options.
+        doc.Save(outputPath, htmlOptions);
 
-// Visitor that builds a plain‑text description of each form field.
-class FormFieldVisitor : DocumentVisitor
-{
-    private readonly StringBuilder _builder = new StringBuilder();
-
-    public override VisitorAction VisitFormField(FormField formField)
-    {
-        _builder.AppendLine($"{formField.Type}: \"{formField.Name}\"");
-        _builder.AppendLine($"\tStatus: {(formField.Enabled ? "Enabled" : "Disabled")}");
-        _builder.AppendLine($"\tHelp Text: {formField.HelpText}");
-        _builder.AppendLine($"\tEntry macro name: {formField.EntryMacro}");
-        _builder.AppendLine($"\tExit macro name: {formField.ExitMacro}");
-
-        switch (formField.Type)
-        {
-            case FieldType.FieldFormDropDown:
-                _builder.AppendLine($"\tDrop-down items count: {formField.DropDownItems.Count}, default selected index: {formField.DropDownSelectedIndex}");
-                _builder.AppendLine($"\tDrop-down items: {string.Join(", ", formField.DropDownItems)}");
-                break;
-            case FieldType.FieldFormCheckBox:
-                _builder.AppendLine($"\tCheckbox size: {formField.CheckBoxSize}");
-                _builder.AppendLine($"\tCheckbox is currently: {(formField.Checked ? "checked" : "unchecked")}, by default: {(formField.Default ? "checked" : "unchecked")}");
-                break;
-            case FieldType.FieldFormTextInput:
-                _builder.AppendLine($"\tInput format: {formField.TextInputFormat}");
-                _builder.AppendLine($"\tCurrent contents: {formField.Result}");
-                break;
-        }
-
-        return VisitorAction.Continue;
-    }
-
-    public string GetText()
-    {
-        return _builder.ToString();
+        // Read the generated HTML and output it to the console.
+        string htmlContent = File.ReadAllText(outputPath);
+        Console.WriteLine(htmlContent);
     }
 }

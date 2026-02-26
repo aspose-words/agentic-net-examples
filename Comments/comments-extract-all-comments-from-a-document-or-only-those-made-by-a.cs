@@ -1,44 +1,60 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
-class ExtractComments
+public class CommentExtractor
 {
-    static void Main(string[] args)
+    /// <summary>
+    /// Extracts comments from a DOCX file.
+    /// If <paramref name="author"/> is null, all comments are extracted;
+    /// otherwise only comments authored by the specified person are extracted.
+    /// The extracted comments are written to a new document saved at <paramref name="outputPath"/>.
+    /// </summary>
+    public static void ExtractComments(string inputPath, string outputPath, string author = null)
     {
-        // Path to the input DOCX file.
-        string inputPath = "InputDocument.docx";
+        // Load the source document (lifecycle rule: load from file)
+        Document sourceDoc = new Document(inputPath);
 
-        // Load the document from the file system.
-        Document doc = new Document(inputPath);
+        // Retrieve all comment nodes in the document (including those in headers/footers)
+        NodeCollection commentNodes = sourceDoc.GetChildNodes(NodeType.Comment, true);
 
-        // Retrieve all comment nodes in the document.
-        // The Document.GetChildNodes method returns a NodeCollection; we filter it to Comment objects.
-        List<Comment> allComments = doc.GetChildNodes(NodeType.Comment, true)
-                                         .OfType<Comment>()
-                                         .ToList();
+        // Create a new blank document to store the extracted comments (lifecycle rule: create)
+        Document resultDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(resultDoc);
 
-        // Example: Extract all comments.
-        Console.WriteLine("All comments in the document:");
-        foreach (Comment comment in allComments)
+        // Iterate through each comment node
+        foreach (Comment comment in commentNodes)
         {
-            Console.WriteLine($"Author: {comment.Author}");
-            Console.WriteLine($"Date: {comment.DateTime}");
-            Console.WriteLine($"Text: {comment.GetText().Trim()}");
-            Console.WriteLine(new string('-', 40));
+            // If an author filter is supplied, skip comments that don't match
+            if (author != null && !string.Equals(comment.Author, author, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            // Write comment details to the result document
+            builder.Writeln($"Author: {comment.Author}");
+            builder.Writeln($"Date  : {comment.DateTime}");
+            builder.Writeln("Text  :");
+            builder.Writeln(comment.GetText().Trim());
+            builder.Writeln(new string('-', 40));
         }
 
-        // Example: Extract only comments made by a specific author.
-        string targetAuthor = "John Doe"; // Change to the desired author name.
-        IEnumerable<Comment> authorComments = allComments.Where(c => c.Author == targetAuthor);
+        // Save the result document (lifecycle rule: save to file)
+        resultDoc.Save(outputPath);
+    }
 
-        Console.WriteLine($"\nComments by author \"{targetAuthor}\":");
-        foreach (Comment comment in authorComments)
-        {
-            Console.WriteLine($"Date: {comment.DateTime}");
-            Console.WriteLine($"Text: {comment.GetText().Trim()}");
-            Console.WriteLine(new string('-', 40));
-        }
+    // Example usage
+    public static void Main()
+    {
+        // Path to the source DOCX file
+        string sourceFile = @"C:\Docs\Sample.docx";
+
+        // Path where the extracted comments will be saved
+        string resultFileAll = @"C:\Docs\AllComments.docx";
+        string resultFileAuthor = @"C:\Docs\JohnDoeComments.docx";
+
+        // Extract all comments
+        ExtractComments(sourceFile, resultFileAll);
+
+        // Extract only comments made by "John Doe"
+        ExtractComments(sourceFile, resultFileAuthor, "John Doe");
     }
 }

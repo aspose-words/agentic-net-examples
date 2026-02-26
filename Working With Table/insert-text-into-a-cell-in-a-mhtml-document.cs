@@ -2,29 +2,25 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class InsertTextIntoMhtmlCell
 {
     static void Main()
     {
-        // Load the MHTML document.
-        Document doc = new Document("Input.mht");
+        // Load the existing MHTML document.
+        Document doc = new Document("InputDocument.mhtml");
 
-        // Locate the first table in the document.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-
-        // Choose the cell you want to edit (e.g., first row, first column).
-        Cell targetCell = table.Rows[0].Cells[0];
-
-        // Create a DocumentBuilder attached to the loaded document.
+        // Create a DocumentBuilder for editing.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder's cursor to the first paragraph of the target cell.
-        builder.MoveTo(targetCell.FirstParagraph);
+        // Move the cursor to the desired cell.
+        // Parameters: row index, column index, row span, column span (zero‑based indexes).
+        // Adjust the indices to point to the target cell in your table.
+        builder.MoveToCell(0, 0, 0, 0);
 
         // Insert the desired text into the cell.
-        builder.Write("Inserted text into the cell.");
+        builder.Write("Hello, Aspose.Words!");
 
         // Save the modified document back to MHTML format.
-        doc.Save("Output.mht");
+        doc.Save("OutputDocument.mhtml");
     }
 }

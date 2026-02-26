@@ -6,32 +6,34 @@ class Program
 {
     static void Main()
     {
-        // Load the DOT (Word template) file.
+        // Load the DOT (template) file.
         Document doc = new Document("Template.dot");
 
         // Access the collection of paragraphs in the main body of the first section.
         ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
 
-        // List to hold the text found between each paragraph.
-        List<string> extractedTexts = new List<string>();
-
-        // Iterate through all paragraphs.
-        for (int i = 0; i < paragraphs.Count; i++)
+        // Store the plain text of each paragraph (without the trailing break characters).
+        List<string> paragraphTexts = new List<string>();
+        foreach (Paragraph para in paragraphs)
         {
-            // Get the full text of the paragraph (includes the paragraph break).
-            string paragraphText = paragraphs[i].GetText();
-
-            // Remove trailing paragraph break characters for cleaner output.
-            extractedTexts.Add(paragraphText.TrimEnd('\r', '\n'));
+            string text = para.GetText();
+            // Trim paragraph, cell and section break characters.
+            text = text.TrimEnd('\r', '\a', '\f');
+            paragraphTexts.Add(text);
         }
 
-        // Output the extracted texts to the console.
-        foreach (string text in extractedTexts)
+        // Example: extract and display the content that lies between the first and last paragraph.
+        if (paragraphTexts.Count > 2)
         {
-            Console.WriteLine(text);
+            Console.WriteLine("Content between first and last paragraph:");
+            for (int i = 1; i < paragraphTexts.Count - 1; i++)
+            {
+                Console.WriteLine(paragraphTexts[i]);
+            }
         }
-
-        // Save the extracted content to a plain‑text file (optional).
-        System.IO.File.WriteAllLines("Extracted.txt", extractedTexts);
+        else
+        {
+            Console.WriteLine("The document does not contain enough paragraphs to extract intermediate content.");
+        }
     }
 }

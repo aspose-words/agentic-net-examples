@@ -6,25 +6,26 @@ class ApplyTableStyleToMhtml
 {
     static void Main()
     {
-        // Load the MHTML document.
-        string inputPath = "input.mhtml";
-        Document doc = new Document(inputPath);
+        // Load the existing MHTML document.
+        Document doc = new Document("InputDocument.mhtml");
 
         // Find the first table in the document.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table != null)
+        if (table == null)
         {
-            // Apply a built‑in table style by its identifier.
-            table.StyleIdentifier = StyleIdentifier.LightGrid;
-
-            // Optionally specify which parts of the style are applied.
-            table.StyleOptions = TableStyleOptions.FirstRow |
-                                 TableStyleOptions.RowBands |
-                                 TableStyleOptions.FirstColumn;
+            Console.WriteLine("No table found in the document.");
+            return;
         }
 
-        // Save the modified document back to MHTML.
-        string outputPath = "output.mhtml";
-        doc.Save(outputPath);
+        // Apply a built‑in table style using its identifier.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Optionally, specify which parts of the style should be applied.
+        table.StyleOptions = TableStyleOptions.FirstRow |
+                              TableStyleOptions.FirstColumn |
+                              TableStyleOptions.RowBands;
+
+        // Save the modified document back to MHTML format.
+        doc.Save("OutputDocument.mhtml");
     }
 }

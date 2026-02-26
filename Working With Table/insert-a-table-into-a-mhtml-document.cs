@@ -1,46 +1,50 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Saving;
 
-class InsertTableIntoMhtml
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Load the existing MHTML document.
+        Document doc = new Document("input.mhtml");
 
-        // Initialize a DocumentBuilder for the document.
+        // Create a DocumentBuilder to edit the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Position the builder where the table should be inserted.
+        builder.MoveToDocumentEnd();
 
         // Start a new table.
         Table table = builder.StartTable();
 
-        // First row, first cell.
+        // First row.
         builder.InsertCell();
         builder.Write("Header 1");
-        // First row, second cell.
         builder.InsertCell();
         builder.Write("Header 2");
-        // End the first row.
         builder.EndRow();
 
-        // Second row, first cell.
+        // Second row.
         builder.InsertCell();
-        builder.Write("Value 1");
-        // Second row, second cell.
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Value 2");
-        // End the second row.
+        builder.Write("Cell 2");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Optionally apply auto‑fit to contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        // Optional: set title and description for accessibility.
+        table.Title = "Sample Table";
+        table.Description = "Demonstrates inserting a table into an MHTML document";
 
-        // Save the document as MHTML.
-        doc.Save("TableDocument.mhtml", SaveFormat.Mhtml);
+        // Save the modified document back to MHTML.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        {
+            // Export table widths as relative values to keep the layout flexible.
+            TableWidthOutputMode = HtmlElementSizeOutputMode.RelativeOnly
+        };
+        doc.Save("output.mhtml", saveOptions);
     }
 }

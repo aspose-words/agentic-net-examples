@@ -1,27 +1,24 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class InsertTextIntoCell
+class Program
 {
     static void Main()
     {
-        // Load the existing DOCM document.
-        Document doc = new Document("InputDocument.docm");
+        // Load the existing DOCM file.
+        Document doc = new Document("Input.docm");
 
-        // Locate the target cell.
-        // For example, get the first cell in the first table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Cell targetCell = table.Rows[0].Cells[0];
-
-        // Move the builder cursor to the beginning of the cell's first paragraph.
+        // Attach a DocumentBuilder to the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(targetCell.FirstParagraph);
 
-        // Insert the desired text.
-        builder.Write("Inserted text into the cell.");
+        // Move the builder's cursor to the target cell.
+        // Parameters: row index, column index, row span, column span (all zero‑based).
+        builder.MoveToCell(0, 0, 0, 0);
+
+        // Insert the desired text into the cell.
+        builder.Write("Hello from Aspose.Words!");
 
         // Save the modified document.
-        doc.Save("OutputDocument.docm");
+        doc.Save("Output.docm");
     }
 }

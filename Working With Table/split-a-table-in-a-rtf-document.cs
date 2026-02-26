@@ -1,53 +1,52 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
 class SplitTableInRtf
 {
     static void Main()
     {
-        // Load the source RTF document.
+        // Load the RTF document.
         Document doc = new Document("InputDocument.rtf");
 
-        // Assume we want to split the first table in the document.
+        // Assume we want to split the first table at a specific row index.
+        // For example, split after the third row (zero‑based index = 2).
+        int splitAfterRowIndex = 2;
+
+        // Get the first table in the document.
         Table originalTable = doc.FirstSection.Body.Tables[0];
 
-        // Define the row index at which to split the table.
-        // Rows with index < splitIndex will stay in the original table,
-        // rows with index >= splitIndex will be moved to a new table.
-        int splitIndex = 2; // example: split after the second row (zero‑based)
+        // Validate the split index.
+        if (splitAfterRowIndex < 0 || splitAfterRowIndex >= originalTable.Rows.Count - 1)
+        {
+            Console.WriteLine("Invalid split index.");
+            return;
+        }
 
-        // Guard against invalid split positions.
-        if (splitIndex <= 0 || splitIndex >= originalTable.Rows.Count)
-            throw new ArgumentOutOfRangeException(nameof(splitIndex), "Split index must be within the table rows range.");
-
-        // Create a new empty table that copies the formatting of the original table.
-        Table newTable = (Table)originalTable.Clone(false); // shallow clone – copies properties but no rows.
+        // Create a new table that will hold the rows after the split point.
+        Table newTable = new Table(doc);
+        // Copy basic formatting from the original table to keep appearance consistent.
+        newTable.PreferredWidth = originalTable.PreferredWidth;
+        newTable.Alignment = originalTable.Alignment;
+        newTable.Style = originalTable.Style;
+        newTable.StyleIdentifier = originalTable.StyleIdentifier;
+        newTable.StyleName = originalTable.StyleName;
 
         // Move rows from the original table to the new table.
-        // We iterate while the original table still has rows at the split position.
-        while (originalTable.Rows.Count > splitIndex)
+        // Start moving from the row after the split index.
+        // While moving, the collection size changes, so always remove the row at splitAfterRowIndex + 1.
+        while (originalTable.Rows.Count > splitAfterRowIndex + 1)
         {
-            // Remove the row from the original table.
-            Row movingRow = originalTable.Rows[splitIndex];
-            movingRow.Remove();
-
-            // Add the removed row to the new table.
-            newTable.Rows.Add(movingRow);
+            // Remove the row from the original table and add it to the new table.
+            Row rowToMove = originalTable.Rows[splitAfterRowIndex + 1];
+            originalTable.Rows.RemoveAt(splitAfterRowIndex + 1);
+            newTable.Rows.Add(rowToMove);
         }
 
         // Insert the new table into the document immediately after the original table.
-        // ParentNode of a Table is a CompositeNode (Body, Section, etc.).
-        CompositeNode parent = (CompositeNode)originalTable.ParentNode;
-        parent.InsertAfter(newTable, originalTable);
+        originalTable.ParentNode.InsertAfter(newTable, originalTable);
 
-        // Save the modified document as RTF using RtfSaveOptions (optional customisation).
-        RtfSaveOptions saveOptions = new RtfSaveOptions
-        {
-            // Example option: embed generator name.
-            ExportGeneratorName = true
-        };
-        doc.Save("OutputDocument.rtf", saveOptions);
+        // Save the modified document back to RTF (or any other format you need).
+        doc.Save("OutputDocument.rtf");
     }
 }

@@ -1,42 +1,27 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class InsertShapeExample
+class Program
 {
     static void Main()
     {
         // Create a new empty document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to work with the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a rectangle shape.
-        Shape shape = new Shape(doc, ShapeType.Rectangle);
+        // Insert an inline rectangle shape with a width of 100 points and a height of 50 points.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
 
-        // Set shape size (in points).
-        shape.Width = 150;   // 150 points wide
-        shape.Height = 80;   // 80 points high
+        // Set visual properties of the shape (optional).
+        shape.FillColor = Color.LightBlue;          // Fill the shape with a light blue color.
+        shape.Stroke.Color = Color.DarkBlue;        // Outline color.
+        shape.StrokeWeight = 1.5;                   // Outline thickness in points.
 
-        // Position the shape on the page (floating shape).
-        shape.Left = 100;    // 100 points from the left margin
-        shape.Top = 100;     // 100 points from the top margin
-
-        // Make the shape float (not inline) and set wrapping.
-        shape.WrapType = WrapType.None;          // No text wrapping
-        shape.BehindText = true;                 // Place behind text
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-
-        // Optionally set a fill color.
-        shape.Fill.ForeColor = System.Drawing.Color.LightBlue;
-        shape.Fill.Visible = true;
-
-        // Insert the shape into the document.
-        builder.InsertNode(shape);
-
-        // Save the document to a DOCX file.
+        // Save the document in DOCX format.
         doc.Save("ShapeInsertion.docx");
     }
 }

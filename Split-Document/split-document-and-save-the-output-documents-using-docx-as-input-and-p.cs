@@ -1,40 +1,35 @@
-using System.IO;
+using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class SplitDocToPdf
+namespace DocumentSplitter
 {
-    static void Main()
+    class Program
     {
-        // Load the source DOCX document.
-        Document doc = new Document("Input.docx");
-
-        // Configure PDF save options to split the document by pages.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        static void Main()
         {
-            // Assign a callback that will be invoked for each page.
-            PageSavingCallback = new PdfPageSplitter()
-        };
+            // Input DOCX file path.
+            string inputPath = @"C:\Docs\InputDocument.docx";
 
-        // Save the document. The callback will create separate PDF files for each page.
-        doc.Save("Output.pdf", pdfOptions);
-    }
+            // Load the source document (DOCX).
+            Document sourceDoc = new Document(inputPath);
 
-    // Callback implementation that defines how each page is saved.
-    private class PdfPageSplitter : IPageSavingCallback
-    {
-        public void PageSaving(PageSavingArgs args)
-        {
-            // Build a distinct file name for the current page.
-            // PageIndex is zero‑based, so add 1 for a more natural numbering.
-            string fileName = $"Output_Page_{args.PageIndex + 1}.pdf";
+            // Iterate through each section of the source document.
+            for (int i = 0; i < sourceDoc.Sections.Count; i++)
+            {
+                // Create a new empty document.
+                Document partDoc = new Document();
 
-            // Tell Aspose.Words to save this page to the specified file.
-            args.PageFileName = fileName;
+                // Clone the current section (deep clone) and add it to the new document.
+                // The cloned section already contains its body, paragraphs, etc.
+                Section clonedSection = (Section)sourceDoc.Sections[i].Clone(true);
+                partDoc.AppendChild(clonedSection);
 
-            // Alternatively you could provide a stream:
-            // args.PageStream = new FileStream(fileName, FileMode.Create);
-            // args.KeepPageStreamOpen = false;
+                // Build an output file name for the PDF part.
+                string outputPath = $@"C:\Docs\Output_Part_{i + 1}.pdf";
+
+                // Save the part as PDF. The format is inferred from the file extension.
+                partDoc.Save(outputPath);
+            }
         }
     }
 }

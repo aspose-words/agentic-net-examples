@@ -1,36 +1,35 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class ApplyTableStyle
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Load an existing Word document (WORDML or DOCX) that contains at least one table.
+        Document doc = new Document("input.docx");
 
-        // Begin a new table.
-        Table table = builder.StartTable();
+        // Retrieve the first table in the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+        {
+            Console.WriteLine("No table found in the document.");
+            return;
+        }
 
-        // Insert at least one cell before applying any table formatting.
-        builder.InsertCell();
-        builder.Writeln("Sample cell");
+        // Apply a built‑in table style using its style identifier.
+        // Here we use the built‑in style "Medium Shading 1 Accent 1".
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Apply a built‑in table style (e.g., TableGrid).
-        table.StyleIdentifier = StyleIdentifier.TableGrid;
-
-        // Optionally specify which parts of the style are applied.
+        // Optionally specify which parts of the style should be applied.
         table.StyleOptions = TableStyleOptions.FirstRow |
                              TableStyleOptions.FirstColumn |
                              TableStyleOptions.RowBands;
 
-        // Resize the table to fit its contents.
+        // Adjust the table width to fit its contents after applying the style.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document to a file.
-        doc.Save("TableWithStyle.docx");
+        // Save the modified document.
+        doc.Save("output.docx");
     }
 }

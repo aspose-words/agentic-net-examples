@@ -1,20 +1,19 @@
-using System.IO;
+using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
-using Aspose.Words;
 
-// Load any supported document (PDF in this example) using default LoadOptions.
-string inputFile = @"C:\Docs\input.pdf";
-LoadOptions loadOptions = new LoadOptions();               // default options
-Document document = new Document(inputFile, loadOptions);
+class Program
+{
+    static void Main()
+    {
+        // Load an existing document. Aspose.Words automatically detects the format.
+        Document doc = new Document("Input.docx");
 
-// (Optional) Detect the original format – useful for validation or logging.
-FileFormatInfo formatInfo = FileFormatUtil.DetectFileFormat(inputFile);
-// Example: Console.WriteLine($"Original format: {formatInfo.LoadFormat}");
+        // Convert and save the document to the legacy DOC format using the SaveFormat enum.
+        doc.Save("Output.doc", SaveFormat.Doc);
 
-// Save the loaded document in the legacy DOC format.
-// DocSaveOptions allows additional DOC‑specific settings; here we use the constructor that sets SaveFormat.
-string outputFile = @"C:\Docs\output.doc";
-DocSaveOptions docSaveOptions = new DocSaveOptions(SaveFormat.Doc);
-document.Save(outputFile, docSaveOptions);
+        // The same conversion can be performed with explicit save options.
+        DocSaveOptions options = new DocSaveOptions(SaveFormat.Doc);
+        doc.Save("OutputWithOptions.doc", options);
+    }
+}

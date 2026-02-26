@@ -1,34 +1,27 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class InsertComboBoxFormField
+class Program
 {
     static void Main()
     {
-        // Create a new, empty document.
+        // Create a new document (or load an existing DOCM with new Document("input.docm"))
         Document doc = new Document();
-
-        // Attach a DocumentBuilder to the document for editing.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Optional: add a paragraph before the form field.
-        builder.InsertParagraph();
+        // Add some introductory text
+        builder.Write("Pick a fruit: ");
 
-        // Define the items that will appear in the combo box.
-        string[] comboItems = new[]
-        {
-            "-- Select an option --",
-            "Option A",
-            "Option B",
-            "Option C"
-        };
+        // Items for the combo box
+        string[] items = { "Apple", "Banana", "Cherry" };
 
-        // Insert the combo box form field.
-        // Parameters: field name, array of items, index of the default selected item.
-        builder.InsertComboBox("MyComboBox", comboItems, 0);
+        // Insert the combo box form field; the first item (index 0) is selected by default
+        FormField comboBox = builder.InsertComboBox("FruitCombo", items, 0);
 
-        // Save the document as a macro‑enabled DOCM file.
-        doc.Save("ComboBoxFormField.docm", SaveFormat.Docm);
+        // Example of setting an additional property
+        comboBox.CalculateOnExit = true;
+
+        // Save the document as a DOCM file
+        doc.Save("ComboBoxFormField.docm");
     }
 }

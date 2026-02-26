@@ -1,20 +1,31 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class DocToMultiPageTiff
 {
     static void Main()
     {
-        // Load the source DOC document.
-        Document doc = new Document("Input.doc");
+        // Path to the source DOC file.
+        string inputPath = @"C:\Docs\SourceDocument.doc";
 
-        // Set up options to save each page as a separate frame in a multi‑page TIFF.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.PageLayout = MultiPageLayout.TiffFrames();   // multi‑page TIFF layout
-        options.TiffCompression = TiffCompression.Lzw;      // optional compression
-        options.Resolution = 300;                           // optional DPI setting
+        // Path where the multi‑page TIFF will be saved.
+        string outputPath = @"C:\Docs\ResultDocument.tiff";
 
-        // Save the document as a multi‑page TIFF file.
-        doc.Save("Output.tiff", options);
+        // Load the DOC document.
+        Document doc = new Document(inputPath);
+
+        // Configure image save options for TIFF output.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            // Render all pages into a single multi‑frame TIFF.
+            PageLayout = MultiPageLayout.TiffFrames(),
+
+            // Optional: set resolution (dpi) for the rendered images.
+            Resolution = 300
+        };
+
+        // Save the document as a multi‑page TIFF.
+        doc.Save(outputPath, saveOptions);
     }
 }

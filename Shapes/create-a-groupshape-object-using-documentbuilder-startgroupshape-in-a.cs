@@ -1,41 +1,65 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+namespace GroupShapeExample
 {
-    static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        static void Main(string[] args)
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Initialize a DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a GroupShape directly (StartGroupShape/EndGroupShape are not available in this version).
-        GroupShape group = new GroupShape(doc);
-        // Set the size and position of the group shape (optional).
-        group.Width = 200;   // Width in points.
-        group.Height = 100;  // Height in points.
-        group.Left = 100;    // Distance from the left edge of the page.
-        group.Top = 100;     // Distance from the top edge of the page.
+            // ---------------------------------------------------------------------
+            // NOTE: The DocumentBuilder.StartGroupShape / EndGroupShape methods are
+            // available only in recent versions of Aspose.Words (v23.5+). If you are
+            // using an older version, create the GroupShape manually as shown
+            // below.
+            // ---------------------------------------------------------------------
 
-        // Create a rectangle shape to place inside the group.
-        Shape rectangle = new Shape(doc, ShapeType.Rectangle);
-        rectangle.Width = 100;
-        rectangle.Height = 50;
-        rectangle.Left = 0;   // Position relative to the group's coordinate space.
-        rectangle.Top = 0;
+            // Create a GroupShape and insert it at the builder's current position.
+            GroupShape group = new GroupShape(doc);
+            builder.InsertNode(group);
 
-        // Add the rectangle to the group shape.
-        group.AppendChild(rectangle);
+            // Move the builder's cursor inside the newly created group so that any
+            // subsequent nodes are added as children of the group.
+            builder.MoveTo(group);
 
-        // Insert the group shape into the document.
-        // You can either insert it at the current builder position or append it to a paragraph.
-        builder.InsertNode(group);
-        // Alternatively: builder.CurrentParagraph.AppendChild(group);
+            // -----------------------------------------------------------------
+            // Add a rectangle shape to the group.
+            // -----------------------------------------------------------------
+            Shape rect = new Shape(doc, ShapeType.Rectangle)
+            {
+                Width = 150,
+                Height = 100,
+                FillColor = Color.LightBlue,
+                Stroke = { Color = Color.DarkBlue }
+            };
+            group.AppendChild(rect);
 
-        // Save the document as a DOCX file.
-        doc.Save("GroupShape.docx");
+            // -----------------------------------------------------------------
+            // Add a star shape to the group.
+            // -----------------------------------------------------------------
+            Shape star = new Shape(doc, ShapeType.Star)
+            {
+                Width = 80,
+                Height = 80,
+                FillColor = Color.Yellow,
+                Stroke = { Color = Color.Orange }
+            };
+            group.AppendChild(star);
+
+            // (Optional) Move the builder back to the document body if you need to
+            // continue adding content outside the group.
+            builder.MoveToDocumentEnd();
+
+            // Save the document as DOCX.
+            doc.Save("GroupShape_StartGroupShape.docx");
+        }
     }
 }

@@ -1,37 +1,31 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsDocmConversion
+class ConvertToDocmWithOptions
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Paths to the source and destination files.
+        string dataDir = @"C:\Data\";
+        string inputPath = Path.Combine(dataDir, "input.docx");
+        string outputPath = Path.Combine(dataDir, "output.docm");
+
+        // Load the source document.
+        Document doc = new Document(inputPath);
+
+        // Create OoxmlSaveOptions for the DOCM format.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm)
         {
-            // Load the source document (any supported format, e.g., DOCX).
-            Document doc = new Document("input.docx");
+            // Example advanced settings:
+            UpdateFields = true,                     // Update fields before saving.
+            Password = "Secret",                     // Encrypt the saved document.
+            Compliance = OoxmlCompliance.Iso29500_2008_Strict, // Enforce strict OOXML compliance.
+            UseHighQualityRendering = true           // Use high‑quality rendering algorithms.
+        };
 
-            // Create save options for DOCM format with advanced settings.
-            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm)
-            {
-                // Example: use maximum compression for the OOXML package.
-                CompressionLevel = CompressionLevel.Maximum,
-
-                // Example: set a password to protect the output DOCM file.
-                Password = "myPassword",
-
-                // Example: update fields before saving.
-                UpdateFields = true,
-
-                // Example: embed the Aspose.Words generator name.
-                ExportGeneratorName = true,
-
-                // Example: enable pretty formatting of the XML parts.
-                PrettyFormat = true
-            };
-
-            // Save the document as a macro‑enabled DOCM file using the specified options.
-            doc.Save("output.docm", saveOptions);
-        }
+        // Save the document as a macro‑enabled DOCM file using the specified options.
+        doc.Save(outputPath, saveOptions);
     }
 }

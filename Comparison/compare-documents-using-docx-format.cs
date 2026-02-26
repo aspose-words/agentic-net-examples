@@ -2,41 +2,39 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class DocumentComparison
+class CompareDocs
 {
     static void Main()
     {
-        // Load the two DOCX documents to be compared.
-        Document docOriginal = new Document(@"C:\Docs\Original.docx");
-        Document docEdited   = new Document(@"C:\Docs\Edited.docx");
+        // Load the original document.
+        Document docOriginal = new Document("Original.docx");
 
-        // Configure comparison options.
-        CompareOptions compareOptions = new CompareOptions
+        // Load the edited document to compare against.
+        Document docEdited = new Document("Edited.docx");
+
+        // Ensure both documents have no existing revisions; otherwise Compare will throw.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            // Track changes at the word level (use CharLevel for character granularity).
-            Granularity = Granularity.WordLevel,
+            // Configure comparison options (optional – all false means track all changes).
+            CompareOptions compareOptions = new CompareOptions
+            {
+                CompareMoves = false,
+                IgnoreFormatting = false,
+                IgnoreCaseChanges = false,
+                IgnoreComments = false,
+                IgnoreTables = false,
+                IgnoreFields = false,
+                IgnoreFootnotes = false,
+                IgnoreTextboxes = false,
+                IgnoreHeadersAndFooters = false,
+                Target = ComparisonTargetType.New
+            };
 
-            // Do not ignore formatting, case changes, comments, tables, fields, footnotes, textboxes, or headers/footers.
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
+            // Perform the comparison. Revisions are added to docOriginal.
+            docOriginal.Compare(docEdited, "Reviewer", DateTime.Now, compareOptions);
+        }
 
-            // Do not compare moves (optional, set to true to include move tracking).
-            CompareMoves = false,
-
-            // Use the current document as the base for comparison.
-            Target = ComparisonTargetType.Current
-        };
-
-        // Perform the comparison. Revisions (tracked changes) will be added to docOriginal.
-        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
-
-        // Save the resulting document with revisions to a new file.
-        docOriginal.Save(@"C:\Docs\ComparisonResult.docx");
+        // Save the document that now contains the tracked changes (revisions).
+        docOriginal.Save("ComparisonResult.docx");
     }
 }

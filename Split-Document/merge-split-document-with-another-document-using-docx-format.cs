@@ -1,23 +1,20 @@
-using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class DocumentMerger
+class Program
 {
     static void Main()
     {
-        // Load the first (split) document.
-        Document splitDoc = new Document("SplitPart.docx");
+        // Load the first split document.
+        Document part1 = new Document("Part1.docx");
 
-        // Load the second document that we want to merge with the split document.
-        Document otherDoc = new Document("AdditionalContent.docx");
+        // Load the second document that should be merged.
+        Document part2 = new Document("Part2.docx");
 
-        // Append the second document to the first one.
-        // ImportFormatMode.KeepSourceFormatting preserves the original formatting of the appended document.
-        splitDoc.AppendDocument(otherDoc, ImportFormatMode.KeepSourceFormatting);
+        // Append the second document to the end of the first one.
+        // KeepSourceFormatting preserves the original styles of part2.
+        part1.AppendDocument(part2, ImportFormatMode.KeepSourceFormatting);
 
-        // Save the merged result as a new DOCX file.
-        splitDoc.Save("MergedResult.docx", SaveFormat.Docx);
+        // Save the combined document in DOCX format.
+        part1.Save("MergedDocument.docx");
     }
 }

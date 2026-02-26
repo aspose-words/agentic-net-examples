@@ -1,32 +1,40 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
+using Aspose.Words.Tables;
 using Aspose.Words.Saving;
 
-class AddRowToTxt
+class AddRowToTxtDocument
 {
     static void Main()
     {
-        // Path to the source TXT file (if you want to modify an existing document).
-        // If the file does not exist, Aspose.Words will create a new empty document.
-        string inputPath = "input.txt";
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Load the TXT document with default load options.
-        // TxtLoadOptions can be customized if needed (e.g., encoding, whitespace handling).
-        Document doc = new Document(inputPath, new TxtLoadOptions());
-
-        // Create a DocumentBuilder attached to the loaded document.
+        // Use DocumentBuilder to construct a table.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the end of the document and add a new line (row).
-        // Writeln inserts the text followed by a paragraph break, which corresponds to a new row in plain‑text.
-        builder.Writeln("This is the added row.");
+        // Start the table.
+        builder.StartTable();
 
-        // Prepare save options for plain‑text output.
-        TxtSaveOptions saveOptions = new TxtSaveOptions();
+        // ----- First row -----
+        builder.InsertCell();                     // First cell of the first row.
+        builder.Write("Cell 1");                  // Add text to the cell.
+        builder.InsertCell();                     // Second cell of the first row.
+        builder.Write("Cell 2");
+        builder.EndRow();                         // End the first row.
 
-        // Save the modified document back to TXT format.
-        string outputPath = "output.txt";
-        doc.Save(outputPath, saveOptions);
+        // ----- New row (the row we want to add) -----
+        builder.InsertCell();                     // First cell of the new row.
+        builder.Write("Cell 3");
+        builder.InsertCell();                     // Second cell of the new row.
+        builder.Write("Cell 4");
+        builder.EndRow();                         // End the new row.
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Save the document as plain text.
+        TxtSaveOptions txtOptions = new TxtSaveOptions(); // Default options (paragraph break = CrLf).
+        doc.Save("AddedRow.txt", txtOptions);
     }
 }

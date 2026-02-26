@@ -7,36 +7,28 @@ class Program
 {
     static void Main()
     {
-        // Path to the DOCX file to be loaded.
-        string docPath = @"C:\Docs\Sample.docx";
+        // Path to the source DOCX file.
+        string inputPath = @"C:\Docs\InputDocument.docx";
 
-        // Create a FontSettings instance that will use the system font sources.
+        // Create LoadOptions and assign a FontSettings instance.
+        // The FontSettings will use the default system font source,
+        // which automatically searches the operating system's font folders.
+        LoadOptions loadOptions = new LoadOptions();
         FontSettings fontSettings = new FontSettings();
-        // Reset the font sources to the default, which includes all TrueType fonts installed on the OS.
+
+        // Ensure the font sources are reset to the system defaults.
+        // This guarantees that Aspose.Words will look for fonts in the
+        // system font folders (e.g., C:\Windows\Fonts on Windows).
         fontSettings.ResetFontSources();
 
-        // Optional: attach a warning callback to capture any font‑substitution warnings.
-        var warningCollector = new WarningInfoCollection();
+        // Attach the FontSettings to the LoadOptions.
+        loadOptions.FontSettings = fontSettings;
 
-        // Create LoadOptions, assign the FontSettings and the warning callback to it.
-        LoadOptions loadOptions = new LoadOptions
-        {
-            FontSettings = fontSettings,
-            WarningCallback = warningCollector // <-- correct property
-        };
+        // Load the document using the constructor that accepts a file name and LoadOptions.
+        Document doc = new Document(inputPath, loadOptions);
 
-        // Load the document using the configured LoadOptions.
-        Document doc = new Document(docPath, loadOptions);
-
-        // Example: output any font substitution warnings that occurred during loading.
-        foreach (WarningInfo warning in warningCollector)
-        {
-            if (warning.WarningType == WarningType.FontSubstitution)
-                Console.WriteLine($"Font substitution warning: {warning.Description}");
-        }
-
-        // (Optional) Save the document to verify that it renders correctly.
-        string outputPath = @"C:\Docs\Sample_Processed.pdf";
+        // (Optional) Save the document to verify that it was loaded correctly.
+        string outputPath = @"C:\Docs\OutputDocument.docx";
         doc.Save(outputPath);
     }
 }

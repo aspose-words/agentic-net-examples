@@ -1,42 +1,47 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class SplitDocumentByPages
+class SplitDocumentByPageRanges
 {
     static void Main()
     {
-        // Load the source DOCX document.
-        Document sourceDoc = new Document("Input.docx");
+        // Path to the source DOCX file.
+        string sourcePath = @"C:\Docs\SourceDocument.docx";
 
-        // Define the page ranges you want to split the document into.
-        // Each tuple contains the start page (1‑based) and the end page (inclusive).
-        (int start, int end)[] pageRanges = new (int, int)[]
+        // Directory where the split documents will be saved.
+        string outputFolder = @"C:\Docs\SplitParts";
+
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputFolder);
+
+        // Load the source document.
+        Document sourceDoc = new Document(sourcePath);
+
+        // Define page ranges to extract.
+        // Each entry: [zero‑based start page index, number of pages to extract].
+        // Example: first two pages, then next two pages.
+        int[][] pageRanges = new int[][]
         {
-            (1, 2),   // First part: pages 1‑2
-            (3, 4),   // Second part: pages 3‑4
+            new int[] { 0, 2 }, // Pages 1‑2
+            new int[] { 2, 2 }  // Pages 3‑4
             // Add more ranges as needed.
         };
 
-        // Optional: configure how page numbers and NUMPAGES fields are handled
-        // in the extracted documents.
-        PageExtractOptions extractOptions = new PageExtractOptions
-        {
-            UpdatePageStartingNumber = true,   // Reset page numbering for each part.
-            UnlinkPagesNumberFields = true     // Replace NUMPAGES fields with actual values.
-        };
-
-        // Extract each range and save it as a separate DOCX file.
+        // Iterate over the defined ranges, extract each part, and save it.
         for (int i = 0; i < pageRanges.Length; i++)
         {
-            var (startPage, endPage) = pageRanges[i];
+            int startIndex = pageRanges[i][0];
+            int pageCount = pageRanges[i][1];
 
-            // Extract the specified page range.
-            Document partDoc = sourceDoc.ExtractPages(startPage, endPage, extractOptions);
+            // Extract the specified range of pages.
+            Document partDoc = sourceDoc.ExtractPages(startIndex, pageCount);
+
+            // Build the output file name.
+            string partPath = Path.Combine(outputFolder, $"Part_{i + 1}.docx");
 
             // Save the extracted part.
-            string outputPath = $"Output_Part_{i + 1}.docx";
-            partDoc.Save(outputPath);
+            partDoc.Save(partPath);
         }
     }
 }

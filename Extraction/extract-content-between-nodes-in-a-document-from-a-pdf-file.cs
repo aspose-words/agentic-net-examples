@@ -1,52 +1,35 @@
-using System;
-using Aspose.Words;
+// Load a PDF file as an Aspose.Words document
+string pdfPath = @"C:\Input\sample.pdf";
+Aspose.Words.Document sourceDoc = new Aspose.Words.Document(pdfPath);
 
-class ExtractBetweenNodes
+// Assume the PDF (now a Word document) contains two bookmarks named "Start" and "End"
+// that mark the beginning and the end of the region we want to extract.
+Aspose.Words.Bookmark startBookmark = sourceDoc.Range.Bookmarks["Start"];
+Aspose.Words.Bookmark endBookmark = sourceDoc.Range.Bookmarks["End"];
+
+// Validate that both bookmarks exist
+if (startBookmark == null || endBookmark == null)
+    throw new InvalidOperationException("Required bookmarks 'Start' and/or 'End' were not found.");
+
+// The content between the two bookmarks can be obtained by iterating the nodes
+// that lie after the start bookmark and before the end bookmark.
+Aspose.Words.Node startNode = startBookmark.BookmarkStart;
+Aspose.Words.Node endNode = endBookmark.BookmarkEnd;
+
+// Create a new empty document that will hold the extracted content.
+Aspose.Words.Document extractedDoc = new Aspose.Words.Document();
+Aspose.Words.DocumentBuilder builder = new Aspose.Words.DocumentBuilder(extractedDoc);
+
+// Move through the sibling nodes starting after the start bookmark.
+Aspose.Words.Node current = startNode.NextSibling;
+while (current != null && current != endNode)
 {
-    static void Main()
-    {
-        // Load the source PDF file into an Aspose.Words Document.
-        Document sourceDoc = new Document("input.pdf");
-
-        // Assume the PDF contains two bookmarks named "Start" and "End"
-        // that mark the beginning and the end of the region we want to extract.
-        Bookmark startBookmark = sourceDoc.Range.Bookmarks["Start"];
-        Bookmark endBookmark = sourceDoc.Range.Bookmarks["End"];
-
-        if (startBookmark == null || endBookmark == null)
-        {
-            Console.WriteLine("Required bookmarks not found.");
-            return;
-        }
-
-        // Create a new empty document that will hold the extracted content.
-        Document extractedDoc = new Document();
-
-        // NodeImporter efficiently copies nodes from the source document to the target document.
-        NodeImporter importer = new NodeImporter(sourceDoc, extractedDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // Get the actual nodes that delimit the range.
-        Node startNode = startBookmark.BookmarkStart;
-        Node endNode = endBookmark.BookmarkEnd;
-
-        // Walk through the sibling chain from the start node up to (and including) the end node.
-        Node curNode = startNode;
-        while (curNode != null)
-        {
-            // Import the current node into the target document.
-            Node importedNode = importer.ImportNode(curNode, true);
-            // Append the imported node to the body of the first section of the target document.
-            extractedDoc.FirstSection.Body.AppendChild(importedNode);
-
-            // Stop after processing the end node.
-            if (curNode == endNode)
-                break;
-
-            curNode = curNode.NextSibling;
-        }
-
-        // Save the extracted fragment to a new file (DOCX format in this example).
-        extractedDoc.Save("extracted.docx");
-        Console.WriteLine("Extraction completed successfully.");
-    }
+    // Import the node into the new document to preserve formatting.
+    Aspose.Words.Node imported = extractedDoc.ImportNode(current, true);
+    builder.InsertNode(imported);
+    current = current.NextSibling;
 }
+
+// Save the extracted portion as a separate DOCX file.
+string outputPath = @"C:\Output\extracted_content.docx";
+extractedDoc.Save(outputPath);

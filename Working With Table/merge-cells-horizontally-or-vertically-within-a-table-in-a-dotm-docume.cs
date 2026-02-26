@@ -2,37 +2,48 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class MergeTableCells
+namespace AsposeWordsTableMerge
 {
-    static void Main()
+    class Program
     {
-        // Load the DOTM template.
-        Document doc = new Document("Template.dotm");
+        static void Main()
+        {
+            // Load the existing DOTM template.
+            // Replace with the actual path to your .dotm file.
+            string inputPath = @"C:\Docs\Template.dotm";
+            Document doc = new Document(inputPath);
 
-        // Assume the document contains at least one table.
-        Table table = doc.FirstSection.Body.Tables[0];
+            // Assume the document contains at least one table.
+            Table table = doc.FirstSection.Body.Tables[0];
 
-        // ---------- Horizontal merge ----------
-        // Merge the first two cells of the first row.
-        Cell firstCell = table.Rows[0].Cells[0];
-        Cell secondCell = table.Rows[0].Cells[1];
+            // -------------------------------------------------
+            // Horizontal merge: merge the first two cells of the first row.
+            // -------------------------------------------------
+            // The leftmost cell becomes the start of the merged range.
+            Cell firstCell = table.Rows[0].Cells[0];
+            firstCell.CellFormat.HorizontalMerge = CellMerge.First;
 
-        // Mark the first cell as the start of a horizontal merge range.
-        firstCell.CellFormat.HorizontalMerge = CellMerge.First;
-        // Mark the second cell as merged to the previous cell.
-        secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+            // The cell to the right is merged into the previous cell.
+            Cell secondCell = table.Rows[0].Cells[1];
+            secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // ---------- Vertical merge ----------
-        // Merge the first two cells of the first column (rows 0 and 1).
-        Cell topCell = table.Rows[0].Cells[0];
-        Cell bottomCell = table.Rows[1].Cells[0];
+            // -------------------------------------------------
+            // Vertical merge: merge the first two cells of the first column.
+            // -------------------------------------------------
+            // The top cell becomes the start of the merged range.
+            Cell topCell = table.Rows[0].Cells[0];
+            topCell.CellFormat.VerticalMerge = CellMerge.First;
 
-        // Mark the top cell as the start of a vertical merge range.
-        topCell.CellFormat.VerticalMerge = CellMerge.First;
-        // Mark the bottom cell as merged to the previous cell vertically.
-        bottomCell.CellFormat.VerticalMerge = CellMerge.Previous;
+            // The cell directly below is merged into the previous (top) cell.
+            Cell bottomCell = table.Rows[1].Cells[0];
+            bottomCell.CellFormat.VerticalMerge = CellMerge.Previous;
 
-        // Save the modified document.
-        doc.Save("MergedCells.dotm");
+            // -------------------------------------------------
+            // Save the modified document.
+            // Replace with the desired output path.
+            // -------------------------------------------------
+            string outputPath = @"C:\Docs\Result.docx";
+            doc.Save(outputPath);
+        }
     }
 }

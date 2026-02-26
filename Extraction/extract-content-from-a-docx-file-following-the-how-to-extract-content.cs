@@ -1,21 +1,25 @@
 using System;
 using Aspose.Words;
 
-class ExtractPlainText
+class Program
 {
     static void Main()
     {
-        // Path to the DOCX file to extract text from.
-        string docPath = @"C:\Docs\input.docx";
+        // Path to the DOCX file to be processed.
+        string sourcePath = "input.docx";
 
-        // Load the document as a plain‑text representation.
-        // The constructor automatically detects the file format.
-        PlainTextDocument plainTextDoc = new PlainTextDocument(docPath);
+        // Load the document using the Aspose.Words Document constructor (load rule).
+        Document doc = new Document(sourcePath);
 
-        // Retrieve the concatenated textual content.
-        string extractedText = plainTextDoc.Text;
+        // Extract the plain‑text representation of the document.
+        // PlainTextDocument automatically detects the format and provides the concatenated text.
+        PlainTextDocument plain = new PlainTextDocument(sourcePath);
+        string extractedText = plain.Text;
 
-        // Output the extracted text.
+        // Output the extracted text to the console.
         Console.WriteLine(extractedText);
+
+        // Optionally, write the extracted text to a separate .txt file.
+        System.IO.File.WriteAllText("extracted.txt", extractedText);
     }
 }

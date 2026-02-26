@@ -2,17 +2,20 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ConvertDotmToMhtml
+class Program
 {
     static void Main()
     {
-        // Load the DOTM (macro-enabled template) document.
-        Document doc = new Document("input.dotm");
+        // Path to the source DOTM file.
+        string inputPath = "input.dotm";
 
-        // Configure save options for MHTML output.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml);
+        // Path where the MHTML file will be saved.
+        string outputPath = "output.mht";
 
-        // Save the document as MHTML.
-        doc.Save("output.mhtml", saveOptions);
+        // Load the DOTM document.
+        Document doc = new Document(inputPath);
+
+        // Save the document in MHTML format.
+        doc.Save(outputPath, SaveFormat.Mhtml);
     }
 }

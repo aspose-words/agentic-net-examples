@@ -1,73 +1,68 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Vba;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Load an existing DOCX file.
+        // Load the existing DOCX file.
         Document doc = new Document("Input.docx");
 
-        // -----------------------------------------------------------------
-        // 1. Enable tracking of changes so that any modifications are recorded.
-        // -----------------------------------------------------------------
-        doc.TrackRevisions = true;
+        // Start tracking all subsequent changes as revisions.
+        doc.StartTrackRevisions("Automated");
 
-        // -----------------------------------------------------------------
-        // 2. Apply Asian typography settings via CompatibilityOptions.
-        //    Example: enable East Asian line‑break rules and keep other
-        //    Asian‑specific behaviours.
-        // -----------------------------------------------------------------
+        // ---------- Asian typography settings ----------
+        // Ensure East Asian line‑break rules are applied.
         doc.CompatibilityOptions.DoNotUseEastAsianBreakRules = false;
-        // Additional Asian typography flags can be set here as needed, e.g.:
-        // doc.CompatibilityOptions.DoNotVertAlignInTxbx = false;
+        // Allow vertical alignment inside text boxes (relevant for Asian layout).
+        doc.CompatibilityOptions.DoNotVertAlignInTxbx = false;
 
-        // -----------------------------------------------------------------
-        // 3. Add a comment to the first paragraph of the document.
-        //    (InsertComment is not part of the provided API, so this is a
-        //    placeholder demonstrating where such code would go.)
-        // -----------------------------------------------------------------
-        Paragraph firstParagraph = (Paragraph)doc.FirstSection.Body.FirstChild;
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(firstParagraph);
-        // builder.InsertComment("Author", DateTime.Now, "This is a comment."); // Placeholder
+        // ---------- Text box manipulation ----------
+        // Find the first text box in the document; if none exists, create one.
+        Shape textBox = FindFirstTextBox(doc);
+        if (textBox == null)
+        {
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
+            builder.MoveTo(textBox.FirstParagraph);
+            builder.Write("Initial textbox content");
+        }
 
-        // -----------------------------------------------------------------
-        // 4. Manipulate text boxes (shapes). The specific Shape API is not
-        //    listed in the provided chunks, so this section is left as a
-        //    placeholder for where shape handling would be performed.
-        // -----------------------------------------------------------------
-        // foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
-        // {
-        //     if (shape.ShapeType == ShapeType.TextBox)
-        //         shape.FillColor = System.Drawing.Color.LightYellow;
-        // }
+        // Replace the contents of the text box.
+        textBox.FirstParagraph.Runs.Clear();
+        textBox.FirstParagraph.AppendChild(new Run(doc, "Updated textbox content"));
 
-        // -----------------------------------------------------------------
-        // 5. Create a VBA project with a simple macro and attach it to the
-        //    document. This uses the VbaProject, VbaModule and
-        //    VbaModuleType classes from the Aspose.Words.Vba namespace.
-        // -----------------------------------------------------------------
-        VbaProject vbaProject = new VbaProject();
-        vbaProject.Name = "AsposeProject";
+        // ---------- Comment manipulation ----------
+        // Add a new comment to the first paragraph.
+        Paragraph firstPara = doc.FirstSection.Body.FirstParagraph;
+        Comment newComment = new Comment(doc, "John Doe", "JD", DateTime.Now);
+        newComment.SetText("This is a new comment.");
+        firstPara.AppendChild(newComment);
 
-        VbaModule vbaModule = new VbaModule();
-        vbaModule.Name = "Module1";
-        vbaModule.Type = VbaModuleType.ProceduralModule;
-        vbaModule.SourceCode = @"
-Sub HelloWorld()
-    MsgBox ""Hello from VBA!""
-End Sub";
+        // If a comment already exists, edit its text.
+        Comment existingComment = (Comment)doc.GetChild(NodeType.Comment, 0, true);
+        if (existingComment != null)
+        {
+            existingComment.SetText("Edited comment text.");
+        }
 
-        vbaProject.Modules.Add(vbaModule);
-        doc.VbaProject = vbaProject;
+        // Stop tracking revisions.
+        doc.StopTrackRevisions();
 
-        // -----------------------------------------------------------------
-        // 6. Save the document as a macro‑enabled DOCM file to preserve the
-        //    VBA project.
-        // -----------------------------------------------------------------
-        doc.Save("Output.docm");
+        // Save the modified document.
+        doc.Save("Output.docx");
+    }
+
+    // Helper: returns the first textbox shape found in the document, or null.
+    private static Shape FindFirstTextBox(Document doc)
+    {
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
+        {
+            if (shape.ShapeType == ShapeType.TextBox)
+                return shape;
+        }
+        return null;
     }
 }

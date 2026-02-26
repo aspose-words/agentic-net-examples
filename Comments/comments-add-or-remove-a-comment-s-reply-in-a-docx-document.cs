@@ -1,39 +1,62 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-class CommentReplyExample
+namespace AsposeWordsCommentDemo
 {
-    static void Main()
+    class Program
     {
-        // Load an existing DOCX document.
-        Document doc = new Document("Input.docx");
-
-        // Find the first top‑level comment in the document.
-        Comment topComment = doc.GetChildNodes(NodeType.Comment, true)[0] as Comment;
-        if (topComment == null)
+        static void Main()
         {
-            Console.WriteLine("No comments found in the document.");
-            return;
+            // Path where the demo files will be saved.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // -------------------------------------------------
+            // 1. Create a new document and add a comment with a reply.
+            // -------------------------------------------------
+            Document doc = new Document();                     // Create a blank document.
+            DocumentBuilder builder = new DocumentBuilder(doc); // Helper to add content.
+
+            // Add some text to comment.
+            builder.Writeln("This is a paragraph that will have a comment.");
+
+            // Create a top‑level comment.
+            Comment topComment = new Comment(doc, "Alice", "A", DateTime.Now);
+            topComment.SetText("Initial comment text.");
+            // Append the comment to the current paragraph.
+            builder.CurrentParagraph.AppendChild(topComment);
+
+            // Add a reply to the comment.
+            topComment.AddReply("Bob", "B", DateTime.Now, "This is a reply to the comment.");
+
+            // Save the document that now contains a comment with a reply.
+            string addReplyPath = Path.Combine(outputDir, "AddReply.docx");
+            doc.Save(addReplyPath); // Save using the overload that determines format from extension.
+
+            // -------------------------------------------------
+            // 2. Load the document, remove the reply, and save again.
+            // -------------------------------------------------
+            Document loadedDoc = new Document(addReplyPath); // Load the previously saved document.
+
+            // Retrieve the first comment in the document.
+            Comment comment = loadedDoc.GetChildNodes(NodeType.Comment, true)
+                                       .Cast<Comment>()
+                                       .FirstOrDefault();
+
+            if (comment != null && comment.Replies.Count > 0)
+            {
+                // Remove the first reply.
+                comment.RemoveReply(comment.Replies[0]);
+                // Alternatively, to remove all replies at once:
+                // comment.RemoveAllReplies();
+            }
+
+            // Save the document after the reply has been removed.
+            string removeReplyPath = Path.Combine(outputDir, "RemoveReply.docx");
+            loadedDoc.Save(removeReplyPath);
         }
-
-        // -------------------- Add a reply --------------------
-        // Create a new comment that will act as a reply.
-        Comment reply = new Comment(doc, "Jane Doe", "J.D.", DateTime.Now);
-        // Set the reply text.
-        reply.SetText("This is a reply to the original comment.");
-        // Link the reply to its parent comment.
-        reply.ParentId = topComment.Id;
-        // Add the reply to the parent comment's Replies collection.
-        topComment.Replies.Add(reply);
-
-        // Save the document with the added reply.
-        doc.Save("Output_WithReply.docx");
-
-        // -------------------- Remove the reply --------------------
-        // Remove the reply comment from the parent comment's Replies collection.
-        topComment.Replies.Remove(reply);
-
-        // Save the document after removing the reply.
-        doc.Save("Output_ReplyRemoved.docx");
     }
 }

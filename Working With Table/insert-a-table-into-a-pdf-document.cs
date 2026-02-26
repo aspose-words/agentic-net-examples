@@ -7,44 +7,42 @@ class InsertTableIntoPdf
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder which will be used to insert content.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Start a new table.
         Table table = builder.StartTable();
 
-        // First row - header cells.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Write("Product");
+        builder.Write("Row 1, Cell 1");
+
+        // First row, second cell.
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Write("Row 1, Cell 2");
+
+        // End the first row.
         builder.EndRow();
 
-        // Second row - data.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Apples");
-        builder.InsertCell();
-        builder.Write("20");
-        builder.EndRow();
+        builder.Write("Row 2, Cell 1");
 
-        // Third row - data.
+        // Second row, second cell.
         builder.InsertCell();
-        builder.Write("Bananas");
-        builder.InsertCell();
-        builder.Write("40");
-        builder.EndRow();
+        builder.Write("Row 2, Cell 2");
 
-        // Finish the table.
+        // End the second row and the table.
+        builder.EndRow();
         builder.EndTable();
 
-        // Optionally adjust table layout (auto‑fit to contents).
+        // Optional: Auto‑fit the table to its contents.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
         // Save the document as a PDF file.
-        string outputPath = "TableInPdf.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        doc.Save("TableInPdf.pdf", SaveFormat.Pdf);
     }
 }

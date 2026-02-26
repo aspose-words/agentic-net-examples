@@ -6,19 +6,19 @@ class Program
 {
     static void Main()
     {
-        // Load an existing DOCX document from disk.
+        // Load the DOCX document from the file system using the Document(string) constructor.
         Document doc = new Document("input.docx");
 
-        // Retrieve the collection that contains all form fields in the document.
+        // Retrieve the collection of all form fields in the document's range.
         FormFieldCollection formFields = doc.Range.FormFields;
 
-        // Iterate through each form field and output basic information.
+        // Display the total number of form fields found.
+        Console.WriteLine($"Form fields count: {formFields.Count}");
+
+        // Iterate through each form field and output its name and type.
         foreach (FormField field in formFields)
         {
-            Console.WriteLine($"Name: {field.Name}");
-            Console.WriteLine($"Type: {field.Type}");
-            Console.WriteLine($"Result: {field.Result}");
-            Console.WriteLine(new string('-', 30));
+            Console.WriteLine($"Name: {field.Name}, Type: {field.Type}");
         }
     }
 }

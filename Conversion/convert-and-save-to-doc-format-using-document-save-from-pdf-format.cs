@@ -1,22 +1,20 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load the source PDF document.
-        Document pdfDocument = new Document("input.pdf");
+        // Input PDF file path
+        string pdfPath = "InputDocument.pdf";
 
-        // Create save options for the DOC format.
-        DocSaveOptions docSaveOptions = new DocSaveOptions
-        {
-            // Explicitly set the format to DOC (optional, DocSaveOptions defaults to DOC).
-            SaveFormat = SaveFormat.Doc
-        };
+        // Output DOC file path
+        string docPath = "ConvertedDocument.doc";
 
-        // Save the loaded document as a DOC file using the specified options.
-        pdfDocument.Save("output.doc", docSaveOptions);
+        // Load the PDF document using the Document constructor that accepts a file name
+        Document pdfDoc = new Document(pdfPath);
+
+        // Save the loaded document as a DOC file using the Save method with SaveFormat.Doc
+        pdfDoc.Save(docPath, SaveFormat.Doc);
     }
 }

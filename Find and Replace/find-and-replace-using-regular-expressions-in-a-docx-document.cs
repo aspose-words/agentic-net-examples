@@ -3,26 +3,32 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-namespace AsposeWordsRegexReplace
+class RegexFindReplaceExample
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Load an existing DOCX document.
-            Document doc = new Document("Input.docx");
+        // Load an existing DOCX document.
+        Document doc = new Document("Input.docx");
 
-            // Define a regular expression to find email addresses.
-            Regex emailRegex = new Regex(@"\b[\w\.-]+@[\w\.-]+\.\w{2,4}\b", RegexOptions.IgnoreCase);
+        // Define a regular expression pattern.
+        // This example finds all occurrences of one or more digits.
+        Regex regexPattern = new Regex(@"\d+");
 
-            // Set up replace options (optional – here we keep defaults).
-            FindReplaceOptions options = new FindReplaceOptions();
+        // Define the replacement string.
+        // "&p" inserts a paragraph break for each match.
+        string replacement = "&p";
 
-            // Replace each email address with the placeholder "[email removed]".
-            doc.Range.Replace(emailRegex, "[email removed]", options);
+        // Optional: configure find/replace options.
+        FindReplaceOptions options = new FindReplaceOptions();
+        // Example: make the operation case‑insensitive (default for regex).
+        options.MatchCase = false;
 
-            // Save the modified document.
-            doc.Save("Output.docx");
-        }
+        // Perform the find‑and‑replace operation on the whole document range.
+        int replacementsMade = doc.Range.Replace(regexPattern, replacement, options);
+
+        Console.WriteLine($"Number of replacements performed: {replacementsMade}");
+
+        // Save the modified document.
+        doc.Save("Output.docx");
     }
 }

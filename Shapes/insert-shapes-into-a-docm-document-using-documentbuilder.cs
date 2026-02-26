@@ -2,8 +2,9 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using System.Drawing;
 
-class InsertShapesIntoDocm
+class InsertShapesExample
 {
     static void Main()
     {
@@ -13,39 +14,35 @@ class InsertShapesIntoDocm
         // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // Insert a floating shape (rounded rectangle) with no text wrapping.
-        // -----------------------------------------------------------------
-        // Parameters: shape type, horizontal position, left offset,
-        // vertical position, top offset, width, height, wrap type.
-        Shape floatingShape = builder.InsertShape(
-            ShapeType.TopCornersRounded,
-            RelativeHorizontalPosition.Page, 100,   // 100 points from the left of the page
-            RelativeVerticalPosition.Page, 100,     // 100 points from the top of the page
-            100, 50,                                // width = 100 points, height = 50 points
-            WrapType.None);                         // shape floats behind text
+        // Insert an inline rectangle shape (width: 150 points, height: 100 points).
+        Shape inlineRect = builder.InsertShape(ShapeType.Rectangle, 150, 100);
+        // Set a red border for the inline shape.
+        inlineRect.Stroke.Color = Color.Red;
 
-        // Optional: give the shape a name and a fill colour.
-        floatingShape.Name = "FloatingRoundedRect";
-        floatingShape.Fill.ForeColor = System.Drawing.Color.LightBlue;
+        // Insert a floating ellipse shape.
+        // Position: 100 points from the left and top of the page.
+        // Size: 200x150 points. No text wrapping.
+        Shape floatingEllipse = builder.InsertShape(
+            ShapeType.Ellipse,
+            RelativeHorizontalPosition.Page, 100,
+            RelativeVerticalPosition.Page, 100,
+            200, 150,
+            WrapType.None);
+        // Set a blue fill for the floating shape.
+        floatingEllipse.Fill.ForeColor = Color.LightBlue;
 
-        // -----------------------------------------------------------------
-        // Insert an inline shape (diagonal rounded rectangle) that behaves like a character.
-        // -----------------------------------------------------------------
-        Shape inlineShape = builder.InsertShape(ShapeType.DiagonalCornersRounded, 50, 50);
-        inlineShape.Name = "InlineDiagonalRounded";
-        inlineShape.Fill.ForeColor = System.Drawing.Color.LightGreen;
+        // Insert a text box shape.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 250, 80);
+        textBox.WrapType = WrapType.Square;
+        textBox.Fill.ForeColor = Color.LightYellow;
+        // Add a paragraph with text inside the text box.
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Hello Aspose.Words!");
+        para.AppendChild(run);
+        textBox.AppendChild(para);
 
-        // -----------------------------------------------------------------
-        // Save the document as a DOCM file.
-        // Use ISO/IEC 29500:2008 Transitional compliance so that non‑primitive shapes
-        // are stored using DrawingML (required for the rounded rectangle shape).
-        // -----------------------------------------------------------------
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm)
-        {
-            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
-        };
-
-        doc.Save("ShapeInsertion.docm", saveOptions);
+        // Save the document as a DOCM file (macro-enabled Word document).
+        // No special compliance options are required for these primitive shapes.
+        doc.Save("ShapesInserted.docm", SaveFormat.Docm);
     }
 }

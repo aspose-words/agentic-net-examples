@@ -1,75 +1,38 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-namespace RevisionDemo
+class Program
 {
-    // Implements IRevisionCriteria to filter revisions by author and type.
-    public class RevisionCriteria : IRevisionCriteria
+    static void Main()
     {
-        private readonly string _author;
-        private readonly RevisionType _type;
+        // Create a new blank document.
+        Document doc = new Document();
 
-        public RevisionCriteria(string author, RevisionType type)
-        {
-            _author = author;
-            _type = type;
-        }
+        // Use DocumentBuilder to add initial content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Write("Original content. ");
 
-        public bool IsMatch(Revision revision)
-        {
-            return revision.Author == _author && revision.RevisionType == _type;
-        }
-    }
+        // Start tracking revisions with a specific author and timestamp.
+        doc.StartTrackRevisions("Alice", DateTime.Now);
 
-    class Program
-    {
-        static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert new text – this will be recorded as an insertion revision.
+        builder.Write("Inserted revision text. ");
 
-            // Write some initial text – this is not a revision.
-            builder.Writeln("Paragraph before tracking changes.");
+        // Delete a run – this will be recorded as a deletion revision.
+        // The first run contains "Original content. ".
+        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
 
-            // Start tracking revisions with author "Alice".
-            doc.StartTrackRevisions("Alice", DateTime.Now);
-            builder.Writeln("This line is an insertion revision.");
-            // Stop tracking for now.
-            doc.StopTrackRevisions();
+        // Stop tracking further changes.
+        doc.StopTrackRevisions();
 
-            // Start a second tracking session with a different author.
-            doc.StartTrackRevisions("Bob", DateTime.Now);
-            // Delete the first paragraph to create a deletion revision.
-            Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
-            firstParagraph.Remove();
-            // Insert another paragraph.
-            builder.Writeln("Another inserted line by Bob.");
-            doc.StopTrackRevisions();
+        // Add more text that will NOT be tracked.
+        builder.Write("Non‑tracked text. ");
 
-            // At this point the document has several revisions.
-            Console.WriteLine($"Total revisions: {doc.Revisions.Count}");
+        // Accept all revisions – the document will contain only the final state.
+        doc.AcceptAllRevisions();
 
-            // Accept only Alice's insertion revisions.
-            doc.Revisions.Accept(new RevisionCriteria("Alice", RevisionType.Insertion));
-            // Reject all remaining deletions (regardless of author).
-            doc.Revisions.Reject(new RevisionCriteria("", RevisionType.Deletion));
-
-            // Display remaining revisions after accept/reject.
-            Console.WriteLine($"Revisions after processing: {doc.Revisions.Count}");
-            foreach (Revision rev in doc.Revisions)
-            {
-                Console.WriteLine($"Author: {rev.Author}, Type: {rev.RevisionType}, Text: {rev.ParentNode?.GetText().Trim()}");
-            }
-
-            // Save the document with revisions preserved.
-            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-            {
-                // Ensure that revisions are kept in the saved file.
-                UpdateFields = false
-            };
-            doc.Save("TrackedChangesDemo.docx", saveOptions);
-        }
+        // Save the document to a DOCX file.
+        string outputPath = "TrackedRevisions.docx";
+        doc.Save(outputPath);
     }
 }

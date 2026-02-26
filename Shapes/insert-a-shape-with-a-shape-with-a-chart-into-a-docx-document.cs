@@ -4,34 +4,34 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-class Program
+class InsertShapeWithChart
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Bar chart shape with a width of 400 points and a height of 300 points.
-        Shape chartShape = builder.InsertChart(ChartType.Bar, 400, 300);
+        // Insert a chart shape (the shape itself contains a chart).
+        // This uses the InsertChart method which returns a Shape object.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+
+        // Access the Chart object to customize it (optional).
         Chart chart = chartShape.Chart;
+        chart.Title.Text = "Sample Column Chart";
+        chart.Title.Show = true;
+        chart.Title.Font.Size = 14;
+        chart.Title.Font.Color = Color.Blue;
 
-        // Set the chart title and make it visible.
-        ChartTitle title = chart.Title;
-        title.Text = "Sales Overview";
-        title.Font.Size = 14;
-        title.Font.Color = Color.Blue;
-        title.Show = true;
-
-        // Define categories for the X axis.
-        string[] categories = new string[] { "Q1", "Q2", "Q3", "Q4" };
-
-        // Clear any default series and add custom data series.
+        // Add a data series to the chart.
         chart.Series.Clear();
-        chart.Series.Add("2019", categories, new double[] { 120, 150, 170, 200 });
-        chart.Series.Add("2020", categories, new double[] { 130, 160, 180, 210 });
+        chart.Series.Add("Series 1",
+            new[] { "Q1", "Q2", "Q3", "Q4" },
+            new[] { 10.0, 20.0, 30.0, 40.0 });
 
-        // Save the document to a DOCX file.
-        doc.Save("ChartInShape.docx");
+        // Save the document as a DOCX file.
+        doc.Save("ShapeWithChart.docx");
     }
 }

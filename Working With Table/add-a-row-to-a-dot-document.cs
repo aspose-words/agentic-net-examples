@@ -1,47 +1,31 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class AddRowExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to start a table with one initial row.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        Table table = builder.StartTable();
+        // Ensure the document has a body to work with.
+        doc.FirstSection.Body.EnsureMinimum();
 
-        // First row – add two cells with sample text.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
+        // Create a table and add it to the document.
+        Table table = new Table(doc);
+        doc.FirstSection.Body.AppendChild(table);
 
-        // End the table construction for now.
-        builder.EndTable();
-
-        // Create a new row instance associated with the same document.
+        // Create a new row and append it to the table.
         Row newRow = new Row(doc);
+        table.AppendChild(newRow);
 
-        // Add the required number of cells to the new row.
-        // Each cell must be added to the row's Cells collection.
-        Cell cell1 = new Cell(doc);
-        cell1.AppendChild(new Paragraph(doc));
-        cell1.FirstParagraph.AppendChild(new Run(doc, "Row 2, Cell 1"));
-        newRow.Cells.Add(cell1);
+        // Ensure the row contains at least one cell.
+        newRow.EnsureMinimum();
 
-        Cell cell2 = new Cell(doc);
-        cell2.AppendChild(new Paragraph(doc));
-        cell2.FirstParagraph.AppendChild(new Run(doc, "Row 2, Cell 2"));
-        newRow.Cells.Add(cell2);
+        // Add some text to the first cell of the new row.
+        newRow.FirstCell.FirstParagraph.AppendChild(new Run(doc, "New row added"));
 
-        // Insert the new row at the end of the table.
-        table.Rows.Add(newRow);
-
-        // Save the document to disk.
+        // Save the document.
         doc.Save("AddedRow.docx");
     }
 }

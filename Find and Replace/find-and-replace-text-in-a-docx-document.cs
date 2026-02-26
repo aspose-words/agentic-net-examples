@@ -1,54 +1,34 @@
 using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using System.Text.RegularExpressions;
 
-class FindAndReplaceExample
+class Program
 {
     static void Main()
     {
-        // Load an existing DOCX document.
-        // The Document constructor automatically detects the file format.
-        Document doc = new Document("InputDocument.docx");
+        // Load the existing DOCX document.
+        Document doc = new Document("Input.docx");
 
-        // Define the text to find and the replacement text.
-        string findText = "OldValue";
-        string replaceText = "NewValue";
+        // Simple string replacement (case‑insensitive, whole document).
+        // Replaces all occurrences of the placeholder "_FullName_" with "John Doe".
+        int count = doc.Range.Replace("_FullName_", "John Doe");
+        Console.WriteLine($"Replacements made: {count}");
 
-        // Simple literal replace (case‑insensitive, whole word not required).
-        doc.Range.Replace(findText, replaceText, new FindReplaceOptions
-        {
-            MatchCase = false,
-            FindWholeWordsOnly = false
-        });
+        // Example of using FindReplaceOptions for more control:
+        // Replace every period that is immediately before a paragraph break with an exclamation point,
+        // and right‑align the paragraphs that contain the match.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ApplyParagraphFormat.Alignment = ParagraphAlignment.Right;
+        int countWithOptions = doc.Range.Replace(".&p", "!&p", options);
+        Console.WriteLine($"Replacements with options made: {countWithOptions}");
 
-        // Alternatively, use a regular expression with custom options.
-        // Example: replace any occurrence of "Item[0-9]+" with "Product".
-        Regex regex = new Regex(@"Item\d+", RegexOptions.IgnoreCase);
-        FindReplaceOptions regexOptions = new FindReplaceOptions
-        {
-            // Example of a callback that could modify each replacement.
-            ReplacingCallback = new CustomReplacingCallback()
-        };
-        doc.Range.Replace(regex, "Product", regexOptions);
+        // Example of a regular‑expression replacement:
+        // Replace all numbers with a paragraph break.
+        int regexCount = doc.Range.Replace(new Regex(@"\d+"), "&p");
+        Console.WriteLine($"Regex replacements made: {regexCount}");
 
         // Save the modified document.
-        doc.Save("OutputDocument.docx");
-    }
-
-    // Optional callback to demonstrate how to intervene during replacement.
-    private class CustomReplacingCallback : IReplacingCallback
-    {
-        public ReplaceAction Replacing(ReplacingArgs args)
-        {
-            // Log the original match (could be written to console, file, etc.).
-            Console.WriteLine($"Replacing \"{args.Match.Value}\" at offset {args.MatchOffset}.");
-
-            // Optionally modify the replacement text.
-            // args.Replacement = $"[Replaced:{args.Match.Value}]";
-
-            // Proceed with the replacement.
-            return ReplaceAction.Replace;
-        }
+        doc.Save("Output.docx");
     }
 }

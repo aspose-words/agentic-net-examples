@@ -1,47 +1,40 @@
-using Aspose.Words;
-using Aspose.Words.Drawing;
 using System;
 using System.IO;
+using Aspose.Words;
+using Aspose.Words.Drawing;
 
-class Program
+class BarcodeImageExtractor
 {
     static void Main()
     {
-        // Path to the DOCX that contains barcode fields.
-        string inputPath = @"C:\Docs\Barcodes.docx";
+        // Path to the input DOCX that contains barcode fields.
+        string dataDir = @"C:\Data\";
+        string inputPath = Path.Combine(dataDir, "Barcodes.docx");
 
-        // Folder where extracted barcode images will be saved.
-        string outputFolder = @"C:\Docs\ExtractedImages";
-
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
-
-        // Load the document.
+        // Load the document (creation and loading follow the provided lifecycle rules).
         Document doc = new Document(inputPath);
 
         // Update all fields so that barcode fields are rendered as images.
         doc.UpdateFields();
 
-        // Get all Shape nodes (they hold images) from the document.
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-
+        // Iterate through all shapes in the document and extract those that are images.
         int imageIndex = 0;
-        foreach (Shape shape in shapeNodes)
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
-            // Only process shapes that actually contain an image.
-            if (shape.HasImage)
+            if (shape.IsImage)
             {
-                // Create a unique file name for each extracted image.
-                string imagePath = Path.Combine(outputFolder, $"BarcodeImage_{imageIndex}.png");
+                // Build a unique file name for each extracted barcode image.
+                string outputPath = Path.Combine(dataDir, $"BarcodeImage_{imageIndex}.png");
 
                 // Save the image data to the file system.
-                shape.ImageData.Save(imagePath);
+                shape.ImageData.Save(outputPath);
 
                 imageIndex++;
             }
         }
 
-        // Save the updated document (optional, shows that fields were updated).
-        doc.Save(Path.Combine(outputFolder, "Barcodes_Updated.docx"));
+        // Optionally save the updated document (still using the provided save rule).
+        string updatedDocPath = Path.Combine(dataDir, "Barcodes_Updated.docx");
+        doc.Save(updatedDocPath);
     }
 }

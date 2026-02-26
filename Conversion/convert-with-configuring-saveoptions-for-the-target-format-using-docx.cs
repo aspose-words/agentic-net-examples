@@ -2,27 +2,27 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class ConvertWithDocxSaveOptions
 {
     static void Main()
     {
-        // Load an existing document (replace with your source file path)
-        Document doc = new Document("input.docx");
+        // Path to the source document.
+        string inputPath = @"MyDir\SourceDocument.docx";
 
-        // Configure save options for DOCX format
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions
-        {
-            // Explicitly set the target format (optional, default is Docx)
-            SaveFormat = SaveFormat.Docx,
+        // Load the document.
+        Document doc = new Document(inputPath);
 
-            // Example of additional option: enable pretty formatting for readability
-            PrettyFormat = true,
+        // Create a save options object suitable for DOCX format.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions();
 
-            // Example: embed the generator name (default is true)
-            ExportGeneratorName = true
-        };
+        // Configure the save options – for example, enforce strict OOXML compliance.
+        saveOptions.SaveFormat = SaveFormat.Docx;
+        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Strict;
 
-        // Save the document using the configured options
-        doc.Save("output.docx", saveOptions);
+        // Path to the output document.
+        string outputPath = @"ArtifactsDir\ConvertedDocument.docx";
+
+        // Save the document using the configured options.
+        doc.Save(outputPath, saveOptions);
     }
 }

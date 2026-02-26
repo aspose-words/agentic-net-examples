@@ -1,18 +1,20 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class Program
+class DocToPdfConverter
 {
     static void Main()
     {
-        // Load the source DOC file. The constructor automatically detects the format.
-        Document document = new Document("input.doc");
+        // Path to the source DOC file.
+        string inputPath = @"C:\Docs\SourceDocument.doc";
 
-        // Create PDF save options (optional – can be customized here).
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Path where the PDF will be saved. The .pdf extension tells Aspose.Words to save in PDF format.
+        string outputPath = @"C:\Docs\ConvertedDocument.pdf";
 
-        // Save the document as PDF using the specified options.
-        document.Save("output.pdf", pdfOptions);
+        // Load the existing DOC document.
+        Document doc = new Document(inputPath);
+
+        // Save the document as PDF. The format is inferred from the file extension.
+        doc.Save(outputPath);
     }
 }

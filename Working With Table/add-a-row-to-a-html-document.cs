@@ -1,9 +1,8 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
-class Program
+class AddRowToHtml
 {
     static void Main()
     {
@@ -16,32 +15,28 @@ class Program
             // Get the first table in the document.
             Table table = doc.FirstSection.Body.Tables[0];
 
-            // Create a new row associated with the document.
+            // Create a new row that belongs to the same document.
             Row newRow = new Row(doc);
 
-            // For each existing column, add a new cell to the row.
-            // Here we assume the table has at least one row to determine column count.
-            int columnCount = table.FirstRow?.Cells?.Count ?? 1;
-            for (int i = 0; i < columnCount; i++)
-            {
-                // Create a new cell.
-                Cell cell = new Cell(doc);
+            // Append the new row to the end of the table.
+            table.AppendChild(newRow);
 
-                // Add a paragraph with some text to the cell.
-                Paragraph para = new Paragraph(doc);
-                Run run = new Run(doc, $"New cell {i + 1}");
-                para.AppendChild(run);
-                cell.AppendChild(para);
+            // Ensure the row has at least one cell.
+            newRow.EnsureMinimum();
 
-                // Add the cell to the new row.
-                newRow.Cells.Add(cell);
-            }
+            // Add a second cell to the row (optional, for a 2‑column table).
+            Cell secondCell = new Cell(doc);
+            secondCell.AppendChild(new Paragraph(doc));
+            newRow.AppendChild(secondCell);
 
-            // Append the new row to the table.
-            table.Rows.Add(newRow);
+            // Populate the first cell with text.
+            newRow.FirstCell.FirstParagraph.AppendChild(new Run(doc, "New cell 1"));
+
+            // Populate the second cell with text.
+            secondCell.FirstParagraph.AppendChild(new Run(doc, "New cell 2"));
         }
 
         // Save the modified document back to HTML.
-        doc.Save("output.html", SaveFormat.Html);
+        doc.Save("output.html");
     }
 }

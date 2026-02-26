@@ -6,50 +6,63 @@ class InsertFormFieldsExample
 {
     static void Main()
     {
-        // Path to the existing DOCX file.
-        string inputPath = @"C:\Docs\Template.docx";
+        // Load an existing DOCX document.
+        // The Document constructor handles opening the file.
+        Document doc = new Document("InputDocument.docx");
 
-        // Load the document from file.
-        Document doc = new Document(inputPath);
-
-        // Create a DocumentBuilder attached to the loaded document.
+        // Create a DocumentBuilder to modify the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Move the cursor to the end of the document so that new content is appended.
         builder.MoveToDocumentEnd();
 
-        // -------------------------------------------------
-        // 1. Insert a regular text input form field.
-        // -------------------------------------------------
-        builder.Writeln("Enter your name:");
-        // Parameters: name, type, format, default text, max length.
-        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "Enter name here", 50);
+        // Insert a paragraph break before adding form fields for readability.
         builder.InsertParagraph();
 
         // -------------------------------------------------
-        // 2. Insert a combo box (drop‑down) form field.
-        // -------------------------------------------------
-        builder.Writeln("Select your favorite color:");
-        string[] colors = { "Red", "Green", "Blue", "Other" };
-        // Parameters: name, items, selected index.
-        builder.InsertComboBox("ColorField", colors, 0);
+        // Insert a CheckBox form field.
+        // Parameters: name, defaultChecked, size (points).
+        // The field will be placed at the current cursor position.
+        builder.Write("Accept terms: ");
+        FormField checkBox = builder.InsertCheckBox("AcceptTerms", false, 50);
+        // Optional: configure additional properties.
+        checkBox.HelpText = "Check to accept the terms.";
+        checkBox.OwnHelp = true;
+
+        // Insert a line break between fields.
         builder.InsertParagraph();
 
         // -------------------------------------------------
-        // 3. Insert a check box form field.
-        // -------------------------------------------------
-        builder.Writeln("Agree to the terms:");
-        // Parameters: name, isCheckedByDefault, size (points).
-        builder.InsertCheckBox("AgreeField", false, 50);
+        // Insert a ComboBox (drop‑down) form field.
+        // Parameters: name, list of items, selected index.
+        string[] colors = { "Red", "Green", "Blue", "Yellow" };
+        builder.Write("Select a color: ");
+        FormField comboBox = builder.InsertComboBox("ColorChoice", colors, 0);
+        comboBox.CalculateOnExit = true; // Recalculate dependent fields when selection changes.
+
+        // Insert a line break between fields.
         builder.InsertParagraph();
 
         // -------------------------------------------------
-        // Optional: protect the document so that only form fields can be edited.
-        // -------------------------------------------------
-        doc.Protect(ProtectionType.AllowOnlyFormFields);
+        // Insert a TextInput form field.
+        // Parameters: name, type (regular text), default text, placeholder, max length.
+        builder.Write("Enter your name: ");
+        FormField textInput = builder.InsertTextInput(
+            "UserName",
+            TextFormFieldType.Regular,
+            "",               // No default text.
+            "John Doe",       // Placeholder shown until the user types.
+            50);              // Maximum length of the input.
 
-        // Save the modified document.
-        string outputPath = @"C:\Docs\TemplateWithFormFields.docx";
-        doc.Save(outputPath);
+        // Optional: set macros or formatting if needed.
+        textInput.EntryMacro = "OnEnterName";
+        textInput.ExitMacro = "OnExitName";
+
+        // -------------------------------------------------
+        // Update all fields so that any calculated results are reflected.
+        doc.UpdateFields();
+
+        // Save the modified document to a new file.
+        doc.Save("OutputDocumentWithFormFields.docx");
     }
 }

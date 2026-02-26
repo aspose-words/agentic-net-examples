@@ -1,48 +1,37 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Loading;   // LoadOptions resides in this namespace
-using Aspose.Words;           // For IncorrectPasswordException
+using Aspose.Words.Loading;
 
 class EncryptDocxExample
 {
     static void Main()
     {
-        // Path where the document will be saved.
-        string filePath = @"C:\Temp\EncryptedDocument.docx";
+        // Path where the encrypted document will be saved.
+        string outputPath = "EncryptedDocument.docx";
 
-        // Create a new blank document and add some content.
+        // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello encrypted world!");
 
-        // Configure save options to encrypt the DOCX with a password.
+        // Add some content to the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, this document is encrypted with a password.");
+
+        // Configure save options to encrypt the DOCX using the ECMA376 algorithm.
         OoxmlSaveOptions saveOptions = new OoxmlSaveOptions();
         saveOptions.Password = "MySecretPassword";
 
-        // Save the document using the encryption options.
-        doc.Save(filePath, saveOptions);
+        // Save the document with encryption.
+        doc.Save(outputPath, saveOptions);
 
         // -----------------------------------------------------------------
-        // Load the encrypted document with the correct password.
+        // Demonstrate loading the encrypted document using the correct password.
         // -----------------------------------------------------------------
-        LoadOptions loadOptions = new LoadOptions("MySecretPassword");
-        Document loadedDoc = new Document(filePath, loadOptions);
+        LoadOptions loadOptions = new LoadOptions();
+        loadOptions.Password = "MySecretPassword";
+        Document loadedDoc = new Document(outputPath, loadOptions);
 
-        // Verify that the document was loaded correctly.
+        // Verify that the document was loaded successfully.
         Console.WriteLine("Loaded text: " + loadedDoc.GetText().Trim());
-
-        // -----------------------------------------------------------------
-        // Demonstrate handling of an incorrect password.
-        // -----------------------------------------------------------------
-        try
-        {
-            // Attempt to load without providing the password (or with a wrong one).
-            Document wrongLoad = new Document(filePath);
-        }
-        catch (IncorrectPasswordException)
-        {
-            Console.WriteLine("Failed to load document: incorrect or missing password.");
-        }
     }
 }

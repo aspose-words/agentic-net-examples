@@ -1,17 +1,17 @@
 using System;
 using Aspose.Words;
 
-class Program
+class StopRevisionTrackingExample
 {
     static void Main()
     {
-        // Load an existing DOCX file.
-        Document doc = new Document("Input.docx");
+        // Load an existing DOCX document.
+        Document doc = new Document("InputDocument.docx");
 
-        // Stop tracking revisions (track changes) in the document.
+        // Stop automatic tracking of revisions. Any further edits will not be recorded as revisions.
         doc.StopTrackRevisions();
 
-        // Save the document with revisions tracking disabled.
-        doc.Save("Output.docx");
+        // Save the document after stopping revision tracking.
+        doc.Save("OutputDocument.docx");
     }
 }

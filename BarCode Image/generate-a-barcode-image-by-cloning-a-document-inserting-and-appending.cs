@@ -2,63 +2,53 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class BarcodeDocumentProcessor
+class BarcodeDemo
 {
-    static void Main()
+    // Entry point required for a console application.
+    public static void Main(string[] args)
     {
-        // Load the original document.
-        Document sourceDoc = new Document("Source.docx");
+        Run();
+    }
 
-        // Clone the document (deep clone, including its content).
-        Document clonedDoc = (Document)sourceDoc.Clone(true);
+    public static void Run()
+    {
+        // Load the base DOCX document.
+        Document original = new Document("Template.docx");
 
-        // Prepare documents to be inserted and appended.
-        Document insertDoc = new Document("Insert.docx");
-        Document appendDoc = new Document("Append.docx");
+        // Clone the loaded document to work on a separate copy.
+        Document cloned = original.Clone();
 
-        // Use DocumentBuilder to manipulate the cloned document.
-        DocumentBuilder builder = new DocumentBuilder(clonedDoc);
-
-        // Insert the insertDoc at the beginning of the cloned document.
-        builder.MoveToDocumentStart();
-        builder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // Append the appendDoc at the end of the cloned document.
+        // Use DocumentBuilder to insert a MERGEBARCODE field at the end of the cloned document.
+        DocumentBuilder builder = new DocumentBuilder(cloned);
         builder.MoveToDocumentEnd();
-        builder.InsertDocument(appendDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Insert a DISPLAYBARCODE field (QR code) at the end of the document.
-        // The field will generate the barcode image when fields are updated.
-        builder.MoveToDocumentEnd();
-        FieldBuilder barcodeBuilder = new FieldBuilder(FieldType.FieldDisplayBarcode);
-        barcodeBuilder.AddArgument("QR");               // Barcode type.
-        barcodeBuilder.AddArgument("ABC123");           // Barcode value.
-        // Build and insert the field before a new empty paragraph.
-        builder.Writeln(); // Ensure there is a paragraph to host the field.
-        barcodeBuilder.BuildAndInsert(builder.CurrentParagraph);
+        // Insert the MERGEBARCODE field and configure its properties.
+        FieldMergeBarcode barcodeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+        barcodeField.BarcodeType = "QR";                     // QR code type.
+        barcodeField.BarcodeValue = "MyQRCode";              // Data to encode.
+        barcodeField.BackgroundColor = "0xF8BD69";           // Background colour.
+        barcodeField.ForegroundColor = "0xB5413B";           // Foreground colour.
+        barcodeField.ErrorCorrectionLevel = "3";             // QR error correction.
+        barcodeField.ScalingFactor = "250";                  // Scale the symbol.
+        barcodeField.SymbolHeight = "1000";                  // Height in TWIPS.
+        barcodeField.SymbolRotation = "0";                   // No rotation.
 
-        // Update all fields so that the barcode image is generated.
-        clonedDoc.UpdateFields();
+        // Force field update so the barcode image is generated.
+        cloned.UpdateFields();
 
-        // Save the modified cloned document.
-        clonedDoc.Save("ClonedWithBarcode.docx");
+        // Load another document that will be appended to the cloned document.
+        Document toAppend = new Document("Appendix.docx");
+        cloned.AppendDocument(toAppend, ImportFormatMode.KeepSourceFormatting);
 
-        // Split the cloned document into separate documents, one per section.
-        for (int sectionIndex = 0; sectionIndex < clonedDoc.Sections.Count; sectionIndex++)
-        {
-            // Clone the whole document to work on a copy.
-            Document partDoc = (Document)clonedDoc.Clone(true);
+        // Split the combined document into two parts:
+        // Part 1 – pages 1 and 2 (zero‑based page indices).
+        Document part1 = cloned.ExtractPages(0, 1);
+        // Part 2 – remaining pages.
+        Document part2 = cloned.ExtractPages(2, cloned.PageCount - 1);
 
-            // Remove all sections except the current one.
-            for (int i = partDoc.Sections.Count - 1; i >= 0; i--)
-            {
-                if (i != sectionIndex)
-                    partDoc.Sections[i].Remove();
-            }
-
-            // Save the split part.
-            string partFileName = $"ClonedPart_{sectionIndex + 1}.docx";
-            partDoc.Save(partFileName);
-        }
+        // Save the resulting documents.
+        cloned.Save("Combined.docx");
+        part1.Save("Part1.docx");
+        part2.Save("Part2.docx");
     }
 }

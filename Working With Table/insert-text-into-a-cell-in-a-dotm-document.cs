@@ -1,40 +1,16 @@
-using System;
-using Aspose.Words;
-using Aspose.Words.Tables;
+// Load an existing DOTM template
+var doc = new Aspose.Words.Document("Template.dotm");
 
-class InsertTextIntoCell
-{
-    static void Main()
-    {
-        // Path to the DOTM template.
-        string inputPath = @"C:\Docs\Template.dotm";
+// Create a DocumentBuilder attached to the loaded document
+var builder = new Aspose.Words.DocumentBuilder(doc);
 
-        // Load the DOTM document.
-        Document doc = new Document(inputPath);
+// Move the cursor to the desired cell.
+// Parameters: table index, row index, cell index, column index (for merged cells).
+// Here we target the first table, first row, first cell.
+builder.MoveToCell(0, 0, 0, 0);
 
-        // Create a DocumentBuilder attached to the loaded document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+// Insert the desired text into the cell
+builder.Write("Inserted text into the cell");
 
-        // Locate the first table in the document.
-        Table table = doc.GetChild(NodeType.Table, 0, true) as Table;
-        if (table == null)
-        {
-            Console.WriteLine("No table found in the document.");
-            return;
-        }
-
-        // Choose the cell where the text will be inserted.
-        // Example: first cell of the first row.
-        Cell targetCell = table.Rows[0].Cells[0];
-
-        // Move the builder's cursor to the beginning of the cell's first paragraph.
-        builder.MoveTo(targetCell.FirstParagraph);
-
-        // Insert the desired text.
-        builder.Write("Inserted text");
-
-        // Save the modified document as a macro‑enabled Word file.
-        string outputPath = @"C:\Docs\Result.docm";
-        doc.Save(outputPath);
-    }
-}
+// Save the modified document (can be saved as DOTM or another format)
+doc.Save("Result.dotm");

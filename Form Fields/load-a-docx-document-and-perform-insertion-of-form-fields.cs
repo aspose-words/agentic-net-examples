@@ -8,29 +8,26 @@ class Program
     {
         // Load an existing DOCX document.
         Document doc = new Document("Input.docx");
-
-        // Create a DocumentBuilder attached to the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a regular text input form field.
-        builder.Writeln("Enter your name:");
-        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 50);
+        // Insert a checkbox form field.
+        builder.Write("Accept terms: ");
+        builder.InsertCheckBox("CheckBox1", false, 50);
+        builder.InsertParagraph();
 
-        // Insert a numeric text input form field.
-        builder.Writeln("Enter your age:");
-        builder.InsertTextInput("AgeField", TextFormFieldType.Number, "", "30", 3);
+        // Insert a combo box form field.
+        builder.Write("Select option: ");
+        string[] items = { "Option A", "Option B", "Option C" };
+        builder.InsertComboBox("ComboBox1", items, 0);
+        builder.InsertParagraph();
 
-        // Insert a date text input form field.
-        builder.Writeln("Enter today's date:");
-        builder.InsertTextInput("DateField", TextFormFieldType.Date, "", DateTime.Today.ToShortDateString(), 10);
+        // Insert a text input form field.
+        builder.Write("Enter name: ");
+        builder.InsertTextInput("TextInput1", TextFormFieldType.Regular, "", "Your name", 30);
+        builder.InsertParagraph();
 
-        // Insert a combo box with a list of options.
-        builder.Writeln("Select your country:");
-        string[] countries = { "USA", "Canada", "UK", "Australia" };
-        builder.InsertComboBox("CountryField", countries, 0);
-
-        // Protect the document so that only form fields can be edited.
-        doc.Protect(ProtectionType.AllowOnlyFormFields);
+        // Ensure field results are up‑to‑date.
+        doc.UpdateFields();
 
         // Save the modified document.
         doc.Save("Output.docx");

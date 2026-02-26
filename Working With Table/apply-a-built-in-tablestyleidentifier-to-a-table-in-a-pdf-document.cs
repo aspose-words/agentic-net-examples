@@ -2,45 +2,40 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class ApplyTableStyleToPdf
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start building a table.
         Table table = builder.StartTable();
 
-        // Insert the first row (required before setting any table formatting).
+        // Insert the first row (required before applying any table formatting).
         builder.InsertCell();
-        builder.Writeln("Header 1");
-        builder.InsertCell();
-        builder.Writeln("Header 2");
+        builder.Writeln("Header");
         builder.EndRow();
 
-        // Insert a second row.
+        // Insert a second row with sample data.
         builder.InsertCell();
-        builder.Writeln("Value 1");
-        builder.InsertCell();
-        builder.Writeln("Value 2");
+        builder.Writeln("Data");
         builder.EndRow();
 
-        // End the table.
+        // Apply a built‑in table style using the StyleIdentifier property.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Optionally specify which parts of the style are applied.
+        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+
+        // Adjust column widths to fit the content.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+        // Finish the table.
         builder.EndTable();
 
-        // Apply a built‑in table style by its identifier.
-        // For example, use the LightGrid style.
-        table.StyleIdentifier = StyleIdentifier.LightGrid;
-
-        // Optionally, specify which parts of the style are applied.
-        table.StyleOptions = TableStyleOptions.FirstRow |
-                             TableStyleOptions.FirstColumn |
-                             TableStyleOptions.RowBands;
-
-        // Save the document as PDF.
-        string outputPath = "TableWithStyle.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Save the document as a PDF file.
+        doc.Save("TableWithStyle.pdf", SaveFormat.Pdf);
     }
 }

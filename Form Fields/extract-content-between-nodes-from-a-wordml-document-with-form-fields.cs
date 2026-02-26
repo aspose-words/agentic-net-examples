@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -6,37 +7,51 @@ class ExtractFormFieldContent
 {
     static void Main()
     {
-        // Load the WORDML (or any supported) document.
-        Document doc = new Document("input.docx");
+        // Load the WORDML (DOCX) document.
+        Document doc = new Document("Input.docx");
 
-        // Iterate through all fields in the document.
-        foreach (Field field in doc.Range.Fields)
+        // Update all fields so that the latest values are available.
+        doc.Range.UpdateFields();
+
+        // Store extracted values: key = form field name, value = displayed content.
+        var fieldValues = new Dictionary<string, string>();
+
+        // Iterate through every form field in the document.
+        foreach (FormField formField in doc.Range.FormFields)
         {
-            // We are interested only in FORMTEXT fields (form fields that contain user‑editable text).
-            if (field is FieldFormText formTextField)
-            {
-                // The text entered by the user is stored in the Result property.
-                // DisplayResult returns the same text as it appears in the document.
-                string fieldResult = formTextField.Result;
-                Console.WriteLine($"Form field result: {fieldResult}");
+            string value = GetFormFieldValue(formField);
+            fieldValues[formField.Name] = value;
+        }
 
-                // If you need the exact range of nodes that belong to this field,
-                // you can obtain the start and end nodes and create a sub‑range.
-                Node startNode = formTextField.Start;
-                Node endNode = formTextField.End;
+        // Output the extracted values.
+        foreach (var kvp in fieldValues)
+        {
+            Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+        }
+    }
 
-                // Build a range that spans from the start node (inclusive) to the end node (exclusive).
-                // The Range constructor is not public, so we use the Document's Range and then
-                // extract the needed text via GetText on the nodes between start and end.
-                Node current = startNode;
-                while (current != null && current != endNode)
-                {
-                    // Process each node inside the field if needed.
-                    // For demonstration we just output its text.
-                    Console.WriteLine($"  Node text: {current.GetText()}");
-                    current = current.NextSibling;
-                }
-            }
+    // Returns the displayed content of a given form field.
+    private static string GetFormFieldValue(FormField field)
+    {
+        switch (field.Type)
+        {
+            case FieldType.FieldFormTextInput:
+                // Text input field – the current text entered by the user.
+                return field.Result;
+
+            case FieldType.FieldFormCheckBox:
+                // Checkbox – indicate whether it is checked.
+                return field.Checked ? "Checked" : "Unchecked";
+
+            case FieldType.FieldFormDropDown:
+                // Drop‑down list – return the selected item text.
+                int index = field.DropDownSelectedIndex;
+                if (index >= 0 && index < field.DropDownItems.Count)
+                    return field.DropDownItems[index];
+                return string.Empty;
+
+            default:
+                return string.Empty;
         }
     }
 }

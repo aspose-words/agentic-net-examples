@@ -1,44 +1,56 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class SplitDocumentByPageRanges
+public class DocumentSplitter
 {
-    static void Main()
+    /// <summary>
+    /// Splits the source DOCX into separate documents based on the supplied page ranges.
+    /// </summary>
+    /// <param name="sourcePath">Full path to the source DOCX file.</param>
+    /// <param name="outputFolder">Folder where the split documents will be saved.</param>
+    /// <param name="ranges">List of tuples where Item1 is the zero‑based start page index and Item2 is the number of pages to extract.</param>
+    public static void SplitByPageRanges(string sourcePath, string outputFolder, List<(int start, int count)> ranges)
     {
-        // Load the source DOCX document.
-        Document sourceDoc = new Document("Input.docx");
+        // Load the source document (lifecycle rule: load)
+        Document sourceDoc = new Document(sourcePath);
 
-        // Define the page ranges you want to split the document into.
-        // Each inner array contains two integers: start page (1‑based) and end page (1‑based).
-        int[][] pageRanges = new int[][]
+        // Ensure the output folder ends with a directory separator
+        if (!outputFolder.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
+            outputFolder += System.IO.Path.DirectorySeparatorChar;
+
+        // Iterate over each range and extract the corresponding pages
+        for (int i = 0; i < ranges.Count; i++)
         {
-            new int[] { 1, 2 },   // Pages 1‑2
-            new int[] { 3, 4 },   // Pages 3‑4
-            // Add more ranges as needed.
-        };
+            var (start, count) = ranges[i];
 
-        // Options that control how the extracted pages are handled.
-        PageExtractOptions extractOptions = new PageExtractOptions
-        {
-            // Keep the original page numbering in the extracted part.
-            UpdatePageStartingNumber = true,
-            // Replace NUMPAGES fields with their actual values.
-            UnlinkPagesNumberFields = true
-        };
+            // ExtractPages uses zero‑based page index (feature rule)
+            Document part = sourceDoc.ExtractPages(start, count);
 
-        // Iterate over each defined range, extract the pages, and save them as separate documents.
-        for (int i = 0; i < pageRanges.Length; i++)
-        {
-            int startPage = pageRanges[i][0]; // 1‑based page number.
-            int endPage   = pageRanges[i][1]; // 1‑based page number.
+            // Build a file name like "Part_1.docx", "Part_2.docx", etc.
+            string partPath = System.IO.Path.Combine(outputFolder, $"Part_{i + 1}.docx");
 
-            // ExtractPages uses zero‑based indices, so subtract 1 from each.
-            Document partDoc = sourceDoc.ExtractPages(startPage - 1, endPage - 1, extractOptions);
-
-            // Save the extracted part to a new DOCX file.
-            string outputPath = $"Output_Part_{i + 1}.docx";
-            partDoc.Save(outputPath);
+            // Save the extracted part (lifecycle rule: save)
+            part.Save(partPath);
         }
+    }
+
+    // Example usage
+    public static void Main()
+    {
+        string source = @"C:\Docs\SourceDocument.docx";
+        string output = @"C:\Docs\SplitParts";
+
+        // Define page ranges: pages 1‑2, pages 3‑4, and page 5 alone.
+        // Note: page indices are zero‑based, so page 1 is index 0.
+        var ranges = new List<(int start, int count)>
+        {
+            (0, 2), // pages 1‑2
+            (2, 2), // pages 3‑4
+            (4, 1)  // page 5
+        };
+
+        SplitByPageRanges(source, output, ranges);
     }
 }

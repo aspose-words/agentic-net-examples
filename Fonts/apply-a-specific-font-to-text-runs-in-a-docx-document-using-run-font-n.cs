@@ -1,28 +1,32 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
 class ApplyFontToRuns
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = "input.docx";
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Path where the modified DOCX will be saved.
-        string outputPath = "output.docx";
+        // Ensure the document has at least one paragraph to work with.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Load the existing document.
-        Document doc = new Document(inputPath);
+        // Create a run of text.
+        Run run = new Run(doc, "Hello world! This text will use a custom font.");
 
-        // Iterate over all Run nodes in the document.
-        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
-        {
-            // Apply the desired font name to each run.
-            run.Font.Name = "Arial";
-        }
+        // Apply a specific font to the run via the Font.Name property.
+        run.Font.Name = "Courier New";
 
-        // Save the modified document.
-        doc.Save(outputPath);
+        // Optionally, set additional font properties (size, color, etc.).
+        run.Font.Size = 24;
+        run.Font.Color = Color.Blue;
+
+        // Append the run to the paragraph.
+        paragraph.AppendChild(run);
+
+        // Save the document to a DOCX file.
+        doc.Save("AppliedFont.docx");
     }
 }

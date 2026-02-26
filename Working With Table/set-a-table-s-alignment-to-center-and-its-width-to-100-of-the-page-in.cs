@@ -2,23 +2,23 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class TableAlignmentExample
+class Program
 {
     static void Main()
     {
-        // Load an existing WORDML document.
-        Document doc = new Document("InputDocument.xml");
+        // Load the existing WORDML (or DOCX) document.
+        Document doc = new Document("Input.docx");
 
-        // Get the first table in the document (adjust index as needed).
+        // Retrieve the first table in the document.
         Table table = doc.FirstSection.Body.Tables[0];
 
-        // Center the table on the page.
+        // Align the table to the center of the page.
         table.Alignment = TableAlignment.Center;
 
-        // Set the table width to 100% of the page width.
+        // Set the table width to 100 % of the page width.
         table.PreferredWidth = PreferredWidth.FromPercent(100);
 
         // Save the modified document back to WORDML format.
-        doc.Save("OutputDocument.xml");
+        doc.Save("Output.xml", SaveFormat.WordML);
     }
 }

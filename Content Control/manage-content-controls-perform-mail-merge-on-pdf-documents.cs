@@ -2,37 +2,44 @@ using System;
 using System.Data;
 using Aspose.Words;
 using Aspose.Words.Loading;
-using Aspose.Words.MailMerging; // Added for MailMergeCleanupOptions
+using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsPdfMailMerge
 {
-    static void Main()
+    class Program
     {
-        // Path to the PDF template that contains MERGEFIELD fields.
-        string templatePath = "Template.pdf";
+        static void Main()
+        {
+            // Path to the source PDF that contains MERGEFIELD tags.
+            const string inputPdfPath = @"C:\Docs\Template.pdf";
 
-        // Path where the merged PDF will be saved.
-        string outputPath = "MergedResult.pdf";
+            // Load the PDF as a Word document. Aspose.Words can read PDF files when the LoadFormat is set to Pdf.
+            var loadOptions = new LoadOptions { LoadFormat = LoadFormat.Pdf };
+            Document doc = new Document(inputPdfPath, loadOptions);
 
-        // Load the PDF as a Word document. Aspose.Words can open PDF files for reading.
-        LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Pdf };
-        Document doc = new Document(templatePath, loadOptions);
+            // Prepare a DataTable that matches the merge fields present in the PDF.
+            // Example merge fields: FirstName, LastName, Address
+            DataTable data = new DataTable("MailMergeData");
+            data.Columns.Add("FirstName");
+            data.Columns.Add("LastName");
+            data.Columns.Add("Address");
 
-        // Create a data source for the mail merge.
-        DataTable data = new DataTable("Customer");
-        data.Columns.Add("FirstName");
-        data.Columns.Add("LastName");
-        data.Columns.Add("Address");
-        data.Rows.Add("John", "Doe", "120 Hanover Sq., London");
-        data.Rows.Add("Jane", "Smith", "123 Main St., New York");
+            // Add rows of data – each row will produce a separate merged document page.
+            data.Rows.Add("John", "Doe", "123 Main St, Anytown");
+            data.Rows.Add("Jane", "Smith", "456 Oak Ave, Othertown");
 
-        // Optional: clean up empty paragraphs after the merge.
-        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveEmptyParagraphs;
+            // Perform the mail merge. This replaces the MERGEFIELD tags with the values from the DataTable.
+            doc.MailMerge.Execute(data);
 
-        // Perform the mail merge using the DataTable.
-        doc.MailMerge.Execute(data);
+            // Save the merged result back to PDF. PdfSaveOptions can be used to control PDF output if needed.
+            var pdfSaveOptions = new PdfSaveOptions
+            {
+                // Example: keep the original document title in the PDF viewer window.
+                DisplayDocTitle = true
+            };
 
-        // Save the result back to PDF.
-        doc.Save(outputPath, SaveFormat.Pdf);
+            const string outputPdfPath = @"C:\Docs\MergedResult.pdf";
+            doc.Save(outputPdfPath, pdfSaveOptions);
+        }
     }
 }

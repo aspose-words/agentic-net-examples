@@ -1,20 +1,21 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-class DocConverter
+class Program
 {
     static void Main()
     {
         // Path to the source DOC file.
-        string inputPath = @"C:\Docs\source.doc";
+        string sourcePath = @"C:\Docs\Sample.doc";
 
-        // Path where the converted file will be saved (e.g., PDF).
-        string outputPath = @"C:\Docs\converted.pdf";
+        // Path to the target file (converted to PDF in this example).
+        string targetPath = @"C:\Docs\Sample.pdf";
 
-        // Load the DOC document. The constructor automatically detects the format.
-        Document document = new Document(inputPath);
+        // Load the existing DOC document. The constructor automatically detects the format.
+        Document doc = new Document(sourcePath);
 
-        // Save the document in the desired format (PDF in this example).
-        document.Save(outputPath, SaveFormat.Pdf);
+        // Save the document in the desired format. Here we convert to PDF.
+        doc.Save(targetPath, SaveFormat.Pdf);
     }
 }

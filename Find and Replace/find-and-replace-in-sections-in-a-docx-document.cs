@@ -1,32 +1,31 @@
-using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class FindReplaceInSections
+class Program
 {
     static void Main()
     {
-        // Load the existing DOCX document.
+        // Load the source DOCX file.
         Document doc = new Document("Input.docx");
 
-        // Define the text to find and its replacement.
-        string findText = @"\[\[PLACEHOLDER\]\]"; // Regex pattern for [[PLACEHOLDER]]
-        string replaceText = "New Text";
+        // Text to find and its replacement.
+        string pattern = "_FullName_";
+        string replacement = "John Doe";
 
-        // Set up find/replace options (optional, can customize behavior here).
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.MatchCase = false;               // Case‑insensitive search.
-        options.FindWholeWordsOnly = false;      // Allow matches inside larger words.
+        // Configure find/replace options (case‑insensitive, whole‑word match).
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            MatchCase = false,
+            FindWholeWordsOnly = true
+        };
 
-        // Iterate through each section and perform the replacement within that section's range.
+        // Perform the replacement in each section's body.
         foreach (Section section in doc.Sections)
         {
-            // Replace all occurrences of the pattern in the current section.
-            section.Range.Replace(new Regex(findText), replaceText, options);
+            section.Body.Range.Replace(pattern, replacement, options);
         }
 
-        // Save the modified document.
+        // Save the updated document.
         doc.Save("Output.docx");
     }
 }

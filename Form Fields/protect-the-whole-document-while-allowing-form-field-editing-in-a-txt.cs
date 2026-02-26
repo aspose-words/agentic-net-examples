@@ -1,26 +1,20 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
-using Aspose.Words.Fields;
 
-class ProtectTxtWithFormFields
+class ProtectTxtDocument
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Use DocumentBuilder to add content and a form field.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Please fill in the following information:");
-        // Insert a regular text input form field.
-        builder.InsertTextInput("UserName", TextFormFieldType.Regular, "", "Enter name here", 30);
+        // Load the plain‑text file into an Aspose.Words Document.
+        // Aspose.Words automatically creates a single paragraph containing the text.
+        Document doc = new Document("input.txt");
 
         // Protect the entire document but allow editing of form fields only.
+        // This sets the protection type to AllowOnlyFormFields.
         doc.Protect(ProtectionType.AllowOnlyFormFields);
 
-        // Save the protected document as a plain‑text file.
-        TxtSaveOptions saveOptions = new TxtSaveOptions();
-        doc.Save("ProtectedFormFields.txt", saveOptions);
+        // Save the protected document. The output format can be any supported format,
+        // for example DOCX which preserves the protection settings.
+        doc.Save("output.docx");
     }
 }

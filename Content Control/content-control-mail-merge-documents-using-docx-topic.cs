@@ -1,39 +1,61 @@
 using System;
-using System.Data;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
+using Aspose.Words.BuildingBlocks;
+using Aspose.Words.Markup;
 
-class ContentControlMailMerge
+namespace AsposeWordsContentControlMailMerge
 {
-    static void Main()
+    class Program
     {
-        // Load a DOCX template that contains content controls (SDTs).
-        // The tags of the content controls should match the field names used in the mail merge.
-        Document doc = new Document("TemplateWithContentControls.docx");
+        static void Main()
+        {
+            // -----------------------------------------------------------------
+            // 1. Create a new blank document.
+            // -----------------------------------------------------------------
+            Document doc = new Document();                     // create
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable merging into non‑MERGEFIELD elements such as content controls.
-        // When this flag is true, the mail merge engine will treat content controls
-        // whose Tag property matches a field name as merge targets.
-        doc.MailMerge.UseNonMergeFields = true;
+            // -----------------------------------------------------------------
+            // 2. Insert a Structured Document Tag (Content Control) that will
+            //    hold the merge field placeholder.
+            // -----------------------------------------------------------------
+            // The tag type can be PlainText; inside we place a placeholder that
+            // Aspose.Words will replace when UseNonMergeFields is enabled.
+            StructuredDocumentTag sdt = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+            sdt.Title = "FullName";
+            sdt.Tag = "FullName";
+            // Placeholder text using the mustache syntax.
+            sdt.AppendChild(new Run(doc, "{{FullName}}"));
 
-        // Create a data source. A DataTable is used here for simplicity,
-        // but any supported source (arrays, custom IMailMergeDataSource, etc.) works.
-        DataTable data = new DataTable("Employee");
-        data.Columns.Add("FirstName");
-        data.Columns.Add("LastName");
-        data.Columns.Add("Title");
+            // Add a paragraph break after the content control.
+            builder.Writeln();
 
-        data.Rows.Add("John", "Doe", "Software Engineer");
-        data.Rows.Add("Jane", "Smith", "Project Manager");
+            // Insert another content control for the address.
+            StructuredDocumentTag addressSdt = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+            addressSdt.Title = "Address";
+            addressSdt.Tag = "Address";
+            addressSdt.AppendChild(new Run(doc, "{{Address}}"));
+            builder.Writeln();
 
-        // Perform the mail merge. Field names must correspond to the Tag values
-        // of the content controls in the template.
-        doc.MailMerge.Execute(data);
+            // -----------------------------------------------------------------
+            // 3. Configure the MailMerge engine to treat the mustache tags as
+            //    merge fields.
+            // -----------------------------------------------------------------
+            doc.MailMerge.UseNonMergeFields = true;   // enable non‑merge field processing
 
-        // Remove any empty paragraphs that may have been left after merging.
-        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveEmptyParagraphs;
+            // -----------------------------------------------------------------
+            // 4. Perform the mail merge using an array of field names and values.
+            // -----------------------------------------------------------------
+            string[] fieldNames = { "FullName", "Address" };
+            object[] fieldValues = { "John Doe", "123 Main St, Anytown" };
+            doc.MailMerge.Execute(fieldNames, fieldValues);
 
-        // Save the merged document.
-        doc.Save("MergedResult.docx");
+            // -----------------------------------------------------------------
+            // 5. Save the merged document to a DOCX file.
+            // -----------------------------------------------------------------
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "MergedDocument.docx");
+            doc.Save(outputPath);                     // save
+        }
     }
 }

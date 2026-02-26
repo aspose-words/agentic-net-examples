@@ -1,35 +1,36 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 using Aspose.Words.Fields;
 
-class Program
+class TrackChangesInPdfWithFormFields
 {
     static void Main()
     {
-        // Load the PDF document that contains form fields.
-        Document doc = new Document("FormFields.pdf");
+        // Load a Word document that already contains form fields.
+        Document doc = new Document("FormFields.docx");
 
-        // Turn on change tracking so that all subsequent edits are recorded as revisions.
-        doc.TrackRevisions = true;
+        // Begin tracking revisions programmatically.
+        doc.StartTrackRevisions("Reviewer");
 
-        // Iterate through all form fields in the document.
-        foreach (FormField field in doc.Range.FormFields)
+        // Example modification: change the result of the first form field.
+        // This change will be recorded as an insertion revision.
+        FormField firstField = doc.Range.FormFields[0];
+        firstField.Result = "Updated value";
+
+        // Stop tracking further changes.
+        doc.StopTrackRevisions();
+
+        // Prepare PDF save options to preserve the form fields as interactive PDF fields.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // If the field is a text input, change its displayed value.
-            if (field.Type == FieldType.FieldFormTextInput)
-            {
-                // The Result property holds the current contents of the form field.
-                field.Result = "New value";
-            }
-            // If the field is a check box, toggle its checked state.
-            else if (field.Type == FieldType.FieldFormCheckBox)
-            {
-                field.Checked = !field.Checked;
-            }
-            // Add additional handling for other field types as needed.
-        }
+            PreserveFormFields = true,
+            // Optional: keep the original author name on the PDF revision annotations.
+            // The PDF format does not store revision authors directly, but the
+            // appearance of tracked changes will reflect the revisions made above.
+        };
 
-        // Save the document back to PDF. The saved file will contain the tracked changes (revisions).
-        doc.Save("FormFields_Tracked.pdf");
+        // Save the document as PDF. The tracked changes will be visible in the PDF.
+        doc.Save("TrackedFormFields.pdf", pdfOptions);
     }
 }

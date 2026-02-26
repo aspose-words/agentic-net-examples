@@ -6,12 +6,16 @@ class Program
     static void Main()
     {
         // Path to the DOCX file to be opened.
-        string docPath = "MyDir\\Sample.docx";
+        const string inputPath = @"C:\Docs\SampleDocument.docx";
 
-        // Open the Word document. The constructor automatically detects the file format.
-        Document doc = new Document(docPath);
+        // Load the existing Word document using the Document(string) constructor.
+        Document doc = new Document(inputPath);
 
-        // Example usage: write the document's plain text to the console.
+        // Example operation: output the document's text to the console.
         Console.WriteLine(doc.GetText());
+
+        // (Optional) Save the document to verify that loading succeeded.
+        // const string outputPath = @"C:\Docs\SampleDocument_Copy.docx";
+        // doc.Save(outputPath);
     }
 }

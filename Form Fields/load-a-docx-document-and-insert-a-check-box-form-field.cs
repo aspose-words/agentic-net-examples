@@ -6,25 +6,21 @@ class Program
 {
     static void Main()
     {
-        // Load an existing DOCX document from disk.
-        Document doc = new Document("Input.docx");
+        // Load an existing DOCX document from the file system.
+        Document doc = new Document("input.docx");
 
-        // Create a DocumentBuilder attached to the loaded document.
+        // Create a DocumentBuilder to modify the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Optional: add some explanatory text before the check box.
-        builder.Writeln("Please check the box below:");
+        // Insert a checkbox form field at the current cursor position.
+        // Parameters: name of the field, default checked status, size in points (0 = auto size).
+        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
 
-        // Insert a check box form field.
-        // Parameters: name of the field, default checked state (false), size in points (50).
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 50);
-
-        // Configure additional properties of the check box.
-        checkBox.IsCheckBoxExactSize = true;   // Use the exact size specified above.
-        checkBox.HelpText = "Click to toggle the box";
-        checkBox.OwnHelp = true;               // Use the custom help text.
+        // Optional: set the exact size of the checkbox and enable exact sizing.
+        checkBox.IsCheckBoxExactSize = true;
+        checkBox.CheckBoxSize = 12; // size in points
 
         // Save the modified document to a new file.
-        doc.Save("Output.docx");
+        doc.Save("output.docx");
     }
 }

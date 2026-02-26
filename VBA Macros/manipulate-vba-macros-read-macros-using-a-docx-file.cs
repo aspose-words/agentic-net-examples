@@ -6,34 +6,31 @@ class Program
 {
     static void Main()
     {
-        // Load the DOCM (macro-enabled) document.
-        // Replace the path with the actual location of your file.
-        Document doc = new Document("InputDocument.docm");
+        // Path to the DOCM (macro‑enabled) file.
+        string filePath = "Macro.docm";
 
-        // Verify that the document contains a VBA project (macros).
-        if (!doc.HasMacros)
+        // Detect macro presence without fully loading the document.
+        FileFormatInfo formatInfo = FileFormatUtil.DetectFileFormat(filePath);
+        Console.WriteLine($"Has macros (detect): {formatInfo.HasMacros}");
+
+        // Load the document.
+        Document doc = new Document(filePath);
+        Console.WriteLine($"Has macros (document): {doc.HasMacros}");
+
+        // If macros exist, enumerate each VBA module and output its source code.
+        if (doc.HasMacros && doc.VbaProject != null)
         {
-            Console.WriteLine("The document does not contain any VBA macros.");
-            return;
+            foreach (VbaModule module in doc.VbaProject.Modules)
+            {
+                Console.WriteLine($"Module name: {module.Name}");
+                Console.WriteLine("Source code:");
+                Console.WriteLine(module.SourceCode);
+                Console.WriteLine(new string('-', 40));
+            }
         }
-
-        // Access the VBA project.
-        VbaProject vbaProject = doc.VbaProject;
-
-        // Output basic information about the VBA project.
-        Console.WriteLine($"Project Name: {vbaProject.Name}");
-        Console.WriteLine($"Signed: {vbaProject.IsSigned}");
-        Console.WriteLine($"Code Page: {vbaProject.CodePage}");
-        Console.WriteLine($"Modules Count: {vbaProject.Modules.Count()}");
-        Console.WriteLine();
-
-        // Iterate through each VBA module and display its name and source code.
-        foreach (VbaModule module in vbaProject.Modules)
+        else
         {
-            Console.WriteLine($"Module Name: {module.Name}");
-            Console.WriteLine("Source Code:");
-            Console.WriteLine(module.SourceCode);
-            Console.WriteLine(new string('-', 40));
+            Console.WriteLine("No macros found in the document.");
         }
     }
 }

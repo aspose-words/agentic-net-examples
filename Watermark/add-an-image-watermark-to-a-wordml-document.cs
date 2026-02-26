@@ -1,28 +1,35 @@
+using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
 class AddImageWatermark
 {
     static void Main()
     {
-        // Load the existing document (any format supported by Aspose.Words)
-        Document doc = new Document("Input.docx");
+        // Path to the source WORDML document.
+        string inputPath = @"C:\Docs\SourceDocument.xml";
 
-        // Configure image watermark appearance
-        ImageWatermarkOptions watermarkOptions = new ImageWatermarkOptions
+        // Path where the watermarked document will be saved.
+        string outputPath = @"C:\Docs\WatermarkedDocument.docx";
+
+        // Path to the image that will be used as a watermark.
+        string imagePath = @"C:\Images\WatermarkLogo.png";
+
+        // Load the WORDML document.
+        Document doc = new Document(inputPath);
+
+        // Configure image watermark options (optional).
+        ImageWatermarkOptions imageWatermarkOptions = new ImageWatermarkOptions
         {
-            // Disable washout to make the watermark fully opaque
-            IsWashout = false,
-            // Scale factor (optional, 0 = auto). Adjust as needed.
-            Scale = 5
+            Scale = 5,          // Scale factor of the watermark image.
+            IsWashout = false   // Disable washout effect if desired.
         };
 
-        // Add the image watermark from a file.
-        // Use the overload that accepts a file path to avoid the System.Drawing dependency.
-        doc.Watermark.SetImage("Watermark.png", watermarkOptions);
+        // Add the image watermark to the document.
+        doc.Watermark.SetImage(imagePath, imageWatermarkOptions);
 
-        // Save the document in WordML (XML) format
-        WordML2003SaveOptions saveOptions = new WordML2003SaveOptions();
-        doc.Save("Output.xml", saveOptions);
+        // Save the document with the watermark applied.
+        doc.Save(outputPath);
     }
 }

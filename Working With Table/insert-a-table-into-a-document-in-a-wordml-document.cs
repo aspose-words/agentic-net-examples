@@ -1,47 +1,43 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
-class InsertTableIntoWordMl
+class Program
 {
     static void Main()
     {
-        // Load an existing WORDML (WordprocessingML) document.
-        // Replace the path with the actual location of your .xml file.
-        Document doc = new Document("InputDocument.xml");
+        // Create a new empty document.
+        Document doc = new Document();
 
-        // Create a DocumentBuilder attached to the loaded document.
+        // Initialize a DocumentBuilder which provides a convenient way to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the end of the document (or any desired location).
-        builder.MoveToDocumentEnd();
-
-        // Start a new table.
+        // Start a new table. The builder returns the Table node that was created.
         Table table = builder.StartTable();
 
-        // ---- First row (header) ----
-        builder.InsertCell();                     // First cell of the header row.
-        builder.Write("Header 1");                // Write header text.
-        builder.InsertCell();                     // Second cell of the header row.
-        builder.Write("Header 2");
-        builder.EndRow();                         // End the header row.
+        // ---- First row ----
+        builder.InsertCell();                     // First cell of the first row.
+        builder.Write("Row 1, Cell 1");           // Insert text into the cell.
+        builder.InsertCell();                     // Second cell of the first row.
+        builder.Write("Row 1, Cell 2");
+        builder.EndRow();                         // Finish the first row.
 
-        // ---- Second row (data) ----
-        builder.InsertCell();                     // First cell of the data row.
-        builder.Write("Data 1");
-        builder.InsertCell();                     // Second cell of the data row.
-        builder.Write("Data 2");
-        builder.EndRow();                         // End the data row.
+        // ---- Second row ----
+        builder.InsertCell();                     // First cell of the second row.
+        builder.Write("Row 2, Cell 1");
+        builder.InsertCell();                     // Second cell of the second row.
+        builder.Write("Row 2, Cell 2");
+        builder.EndRow();                         // Finish the second row.
 
-        // Finish the table.
+        // End the table construction.
         builder.EndTable();
 
-        // Optional: Apply a simple style and auto‑fit the table to its contents.
-        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        // Optional: set table metadata.
+        table.Title = "Sample Table";
+        table.Description = "Demonstrates inserting a table into a WORDML document.";
 
-        // Save the modified document back to WORDML format.
-        // The output file will be a .xml WordprocessingML document.
-        doc.Save("OutputDocument.xml");
+        // Save the document in WORDML format (XML representation of a Word document).
+        doc.Save("TableInsert.doc", SaveFormat.WordML);
     }
 }

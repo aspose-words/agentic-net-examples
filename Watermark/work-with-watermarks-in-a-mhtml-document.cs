@@ -1,4 +1,3 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
@@ -7,33 +6,29 @@ class WatermarkMhtmlExample
 {
     static void Main()
     {
-        // Load an existing MHTML document.
-        // The Document constructor automatically detects the format.
-        Document doc = new Document("InputDocument.mhtml");
+        // Path to the source MHTML document.
+        string inputPath = @"C:\Docs\source.mhtml";
 
-        // Create text watermark options.
-        TextWatermarkOptions textOptions = new TextWatermarkOptions
+        // Path where the watermarked MHTML document will be saved.
+        string outputPath = @"C:\Docs\watermarked.mhtml";
+
+        // Load the MHTML document.
+        Document doc = new Document(inputPath);
+
+        // Configure text watermark options.
+        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
         {
             FontFamily = "Arial",
-            FontSize = 48,
-            Color = Color.LightGray,
+            FontSize = 36,
+            Color = Color.Black,
             Layout = WatermarkLayout.Diagonal,
-            IsSemitrasparent = true
+            IsSemitrasparent = false
         };
 
         // Add a text watermark to every page of the document.
-        doc.Watermark.SetText("CONFIDENTIAL", textOptions);
+        doc.Watermark.SetText("Confidential", watermarkOptions);
 
-        // Prepare save options for MHTML output.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
-        {
-            // Ensure resources (images, CSS) are embedded using CID URLs.
-            ExportCidUrlsForMhtmlResources = true,
-            // Keep the original document properties.
-            ExportDocumentProperties = true
-        };
-
-        // Save the modified document back to MHTML.
-        doc.Save("OutputDocument.mhtml", saveOptions);
+        // Save the document back to MHTML format.
+        doc.Save(outputPath, SaveFormat.Mhtml);
     }
 }

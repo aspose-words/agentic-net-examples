@@ -2,58 +2,59 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class ApplyTableStyleOptions
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Start building a table. At least one row must exist before applying formatting.
         Table table = builder.StartTable();
+        builder.InsertCell(); // first cell
 
-        // Insert the first cell (required before setting any table formatting).
-        builder.InsertCell();
-
-        // Apply a built‑in table style.
+        // Optionally set a built‑in style identifier for the table.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Apply specific style options using the TableStyleOptions flags.
-        // Here we enable formatting for the first row, the last row, and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow |
-                             TableStyleOptions.LastRow |
-                             TableStyleOptions.RowBands;
+        // Apply the desired TableStyleOptions flags.
+        // Here we enable first column formatting, row banding, and first row formatting.
+        table.StyleOptions = TableStyleOptions.FirstColumn |
+                              TableStyleOptions.RowBands |
+                              TableStyleOptions.FirstRow;
 
-        // Optional: let the table auto‑fit to its contents.
+        // Auto‑fit the table to its contents (optional but common).
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Populate the first row.
-        builder.Writeln("Header 1");
+        // Populate the table with sample data.
+        builder.Writeln("Item");
+        builder.CellFormat.RightPadding = 40;
         builder.InsertCell();
-        builder.Writeln("Header 2");
+        builder.Writeln("Quantity (kg)");
         builder.EndRow();
 
-        // Populate a data row.
         builder.InsertCell();
-        builder.Writeln("Item A");
+        builder.Writeln("Apples");
         builder.InsertCell();
-        builder.Writeln("Value A");
+        builder.Writeln("20");
         builder.EndRow();
 
-        // Populate another data row.
         builder.InsertCell();
-        builder.Writeln("Item B");
+        builder.Writeln("Bananas");
         builder.InsertCell();
-        builder.Writeln("Value B");
+        builder.Writeln("40");
         builder.EndRow();
 
-        // Finish the table.
+        builder.InsertCell();
+        builder.Writeln("Carrots");
+        builder.InsertCell();
+        builder.Writeln("50");
+        builder.EndRow();
+
+        // End the table construction.
         builder.EndTable();
 
         // Save the document in DOC format.
-        doc.Save("TableStyleOptions.doc");
+        doc.Save("TableWithStyleOptions.doc");
     }
 }

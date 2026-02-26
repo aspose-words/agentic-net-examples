@@ -2,23 +2,22 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class DocmToHtmlConverter
 {
     static void Main()
     {
-        // Input DOCM file path
-        string inputPath = "input.docm";
+        // Path to the source DOCM file.
+        string inputPath = @"C:\Docs\SourceDocument.docm";
 
-        // Output HTML file path (extension .html indicates HTML format)
-        string outputPath = "output.html";
+        // Path to the output HTML file. The .html extension tells Aspose.Words the desired format.
+        string outputPath = @"C:\Docs\ConvertedDocument.html";
 
-        // Load the DOCM document
+        // Load the DOCM document. The constructor automatically detects the format (DOCM).
         Document doc = new Document(inputPath);
 
-        // Create HtmlSaveOptions specifying the HTML save format
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
+        // Save the document as HTML. Explicitly specify SaveFormat.Html for clarity.
+        doc.Save(outputPath, SaveFormat.Html);
 
-        // Save the document as HTML
-        doc.Save(outputPath, saveOptions);
+        Console.WriteLine("Conversion completed successfully.");
     }
 }

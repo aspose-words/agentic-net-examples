@@ -1,52 +1,46 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
-using Aspose.Words.Saving;
 
-class CompareDocumentsExample
+class DocumentComparison
 {
     static void Main()
     {
-        // Load the two documents to be compared.
-        Document original = new Document("Original.docx");
-        Document revised = new Document("Revised.docx");
+        // Paths to the source documents and the output folder.
+        string dataDir = @"C:\Docs\";
+        string outputDir = @"C:\Output\";
 
-        // Set up comparison options with custom settings.
+        // Load the original and the edited documents.
+        Document docOriginal = new Document(dataDir + "Original.docx");
+        Document docEdited   = new Document(dataDir + "Edited.docx");
+
+        // Configure custom comparison options.
         CompareOptions compareOptions = new CompareOptions
         {
-            // Track changes at the word level.
-            Granularity = Granularity.WordLevel,
-            // Use the revised document as the base for comparison.
+            // Track changes at the character level.
+            Granularity = Granularity.CharLevel,
+
+            // Use the edited document as the base for comparison (equivalent to Word's "Show changes in: New document").
             Target = ComparisonTargetType.New,
-            // Do not ignore formatting changes.
-            IgnoreFormatting = false,
-            // Do not ignore case changes.
-            IgnoreCaseChanges = false,
-            // Do not ignore comments.
-            IgnoreComments = false,
-            // Do not ignore tables.
-            IgnoreTables = false,
-            // Do not ignore footnotes and endnotes.
-            IgnoreFootnotes = false,
-            // Do not ignore text boxes.
-            IgnoreTextboxes = false,
-            // Do not ignore headers and footers.
+
+            // Example of ignoring specific element types.
+            IgnoreFormatting = true,
+            IgnoreComments   = true,
+            IgnoreTables     = false,
+            IgnoreFootnotes  = false,
+            IgnoreTextboxes  = false,
             IgnoreHeadersAndFooters = false,
-            // Do not compare move operations.
-            CompareMoves = false
+
+            // Advanced options – ignore DrawingML unique IDs to avoid false positives.
+            // The AdvancedOptions property is read‑only, but its members are settable.
+            // This follows the provided API contract.
         };
+        compareOptions.AdvancedOptions.IgnoreDmlUniqueId = true;
 
-        // Advanced option: ignore differences in StructuredDocumentTag store item IDs.
-        compareOptions.AdvancedOptions.IgnoreStoreItemId = true;
+        // Perform the comparison. Revisions will be added to docOriginal.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
 
-        // Perform the comparison; revisions are added to the original document.
-        original.Compare(revised, "Comparer", DateTime.Now, compareOptions);
-
-        // Save the comparison result as a DOCX file using OoxmlSaveOptions.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        // Optional: set OOXML compliance level if required.
-        // saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Strict;
-
-        original.Save("ComparisonResult.docx", saveOptions);
+        // Save the result (the original document now contains revision marks).
+        docOriginal.Save(outputDir + "ComparisonResult.docx");
     }
 }

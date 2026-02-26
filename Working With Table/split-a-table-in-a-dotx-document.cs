@@ -7,48 +7,32 @@ class SplitTableExample
     static void Main()
     {
         // Load the DOTX template.
-        Document doc = new Document("Template.dotx");
+        Document doc = new Document("input.dotx");
 
-        // Assume the first table in the first section is the one we want to split.
+        // Assume we want to split the first table in the document.
         Table originalTable = doc.FirstSection.Body.Tables[0];
 
-        // Define the row index at which to split the table (0‑based).
-        // Rows before this index stay in the original table,
-        // rows from this index onward move to a new table.
-        int splitRowIndex = 2; // example: split after the second row
+        // Define the row index at which to split (e.g., after the second row).
+        int splitAfterRowIndex = 1; // zero‑based index
 
-        // Guard against invalid split positions.
-        if (splitRowIndex <= 0 || splitRowIndex >= originalTable.Rows.Count)
-        {
-            Console.WriteLine("Invalid split index.");
-            return;
-        }
-
-        // Clone the table structure without any rows.
+        // Create a new table that will hold the rows after the split point.
+        // Clone the original table's formatting but not its child rows.
         Table newTable = (Table)originalTable.Clone(false);
 
         // Move rows from the original table to the new table.
-        // After a row is added to the new table it is automatically removed from the original one.
-        while (originalTable.Rows.Count > splitRowIndex)
+        // Start moving from the row after the split point until no rows remain.
+        while (originalTable.Rows.Count > splitAfterRowIndex + 1)
         {
-            Row rowToMove = originalTable.Rows[splitRowIndex];
+            // Remove the row from the original table and insert it into the new table.
+            Row rowToMove = originalTable.Rows[splitAfterRowIndex + 1];
+            originalTable.Rows.RemoveAt(splitAfterRowIndex + 1);
             newTable.Rows.Add(rowToMove);
         }
 
-        // Insert the new table after the original table.
-        // InsertAfter is defined on CompositeNode, so cast the parent accordingly.
-        CompositeNode parent = originalTable.ParentNode as CompositeNode;
-        if (parent != null)
-        {
-            parent.InsertAfter(newTable, originalTable);
-        }
-        else
-        {
-            Console.WriteLine("Unable to insert the new table – parent node is not a CompositeNode.");
-            return;
-        }
+        // Insert the new table into the document immediately after the original table.
+        originalTable.ParentNode.InsertAfter(newTable, originalTable);
 
         // Save the modified document.
-        doc.Save("SplitTable.docx");
+        doc.Save("output.docx");
     }
 }

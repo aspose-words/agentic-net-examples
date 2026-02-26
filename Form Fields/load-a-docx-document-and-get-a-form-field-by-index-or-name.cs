@@ -9,31 +9,34 @@ class Program
         // Load an existing DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Access the collection of form fields in the document.
-        FormFieldCollection formFields = doc.Range.FormFields;
-
-        // Get a form field by its zero‑based index.
-        // Ensure the index is within the collection bounds.
-        if (formFields.Count > 0)
+        // ----- Access a form field by index -----
+        // The indexer is zero‑based; negative values count from the end.
+        FormField fieldByIndex = doc.Range.FormFields[0]; // first field
+        if (fieldByIndex != null)
         {
-            FormField firstField = formFields[0];
-            Console.WriteLine($"First field name: {firstField.Name}");
+            Console.WriteLine($"Field at index 0: Name = \"{fieldByIndex.Name}\", Type = {fieldByIndex.Type}");
         }
 
-        // Get a form field by its name.
-        // Replace "MyFieldName" with the actual name of the field you want.
-        string fieldName = "MyFieldName";
-        FormField namedField = formFields[fieldName];
-        if (namedField != null)
+        // Example of using a negative index to get the last field.
+        FormField lastField = doc.Range.FormFields[-1];
+        if (lastField != null)
         {
-            Console.WriteLine($"Field \"{fieldName}\" found. Type: {namedField.Type}");
+            Console.WriteLine($"Last field (index -1): Name = \"{lastField.Name}\", Type = {lastField.Type}");
+        }
+
+        // ----- Access a form field by name -----
+        // The name lookup is case‑insensitive.
+        FormField fieldByName = doc.Range.FormFields["MyCheckBox"];
+        if (fieldByName != null)
+        {
+            Console.WriteLine($"Field named \"MyCheckBox\": Index = (unknown), Type = {fieldByName.Type}");
         }
         else
         {
-            Console.WriteLine($"Field \"{fieldName}\" not found.");
+            Console.WriteLine("Form field \"MyCheckBox\" not found.");
         }
 
-        // (Optional) Save the document after any modifications.
-        // doc.Save("Output.docx");
+        // Save the document if any changes were made (optional).
+        doc.Save("Output.docx");
     }
 }

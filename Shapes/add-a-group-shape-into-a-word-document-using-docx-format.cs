@@ -1,44 +1,43 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
+using System.Drawing;
 
-class AddGroupShapeExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank document
         Document doc = new Document();
 
-        // Use DocumentBuilder to work with the document.
+        // Initialize a DocumentBuilder for the document
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a GroupShape instance attached to the document.
-        GroupShape group = new GroupShape(doc);
-        // Set the size and position of the group shape (in points).
-        group.Bounds = new RectangleF(0, 0, 200, 200);
-        // Make the group shape floating (not inline) and disable text wrapping.
-        group.WrapType = WrapType.None;
+        // Insert two floating shapes that will later be grouped
+        Shape shape1 = builder.InsertShape(
+            ShapeType.Rectangle,
+            RelativeHorizontalPosition.Page, 100,
+            RelativeVerticalPosition.Page, 100,
+            150, 100,
+            WrapType.None);
+        shape1.Stroke.Color = Color.Blue;
 
-        // Create a rectangle shape that will be a child of the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 100;          // Width in points.
-        rect.Height = 50;          // Height in points.
-        rect.Left = 10;            // Position relative to the group's top‑left corner.
-        rect.Top = 10;
-        rect.FillColor = Color.LightBlue; // Simple fill for visibility.
+        Shape shape2 = builder.InsertShape(
+            ShapeType.Ellipse,
+            RelativeHorizontalPosition.Page, 200,
+            RelativeVerticalPosition.Page, 200,
+            150, 100,
+            WrapType.None);
+        shape2.Stroke.Color = Color.Green;
 
-        // Add the rectangle shape to the group.
-        group.AppendChild(rect);
+        // Group the two shapes into a new GroupShape node and insert it at the current cursor position
+        GroupShape group = builder.InsertGroupShape(new Shape[] { shape1, shape2 });
 
-        // Insert the group shape into the document.
-        // Here we add it to the current paragraph of the builder.
-        builder.CurrentParagraph.AppendChild(group);
+        // Optionally adjust the group's properties (size, position, etc.)
+        group.Bounds = new RectangleF(80, 80, 300, 300);
+        group.CoordSize = new Size(1000, 1000);
 
-        // Save the document as DOCX with a specific OOXML compliance level.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
-        doc.Save("GroupShape.docx", saveOptions);
+        // Save the document in DOCX format
+        doc.Save("GroupShapeExample.docx");
     }
 }

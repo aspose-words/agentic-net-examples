@@ -2,29 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class InsertTextInputFormField
 {
     static void Main()
     {
-        // Load an existing DOCX file.
-        Document doc = new Document("Input.docx");
+        // Path to the existing DOCX document.
+        string inputPath = "input.docx";
 
-        // Create a DocumentBuilder attached to the loaded document.
+        // Load the document from the file system.
+        Document doc = new Document(inputPath);
+
+        // Create a DocumentBuilder for the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a prompt before the form field.
-        builder.Writeln("Please enter your name:");
+        // Insert a text input form field at the current cursor position.
+        // Parameters: name, type, format, default text, max length (0 = unlimited).
+        builder.InsertTextInput(
+            name: "MyTextInput",
+            type: TextFormFieldType.Regular,
+            format: "",
+            fieldValue: "Enter your text here",
+            maxLength: 0);
 
-        // Insert a text input form field.
-        // Parameters:
-        //   name          – field name,
-        //   type          – TextFormFieldType (Regular allows any text),
-        //   format        – custom format string (empty for none),
-        //   defaultText   – placeholder text shown to the user,
-        //   maxLength     – maximum number of characters (0 = unlimited, here 50).
-        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "Enter name", 50);
-
-        // Save the document with the new form field.
-        doc.Save("Output.docx");
+        // Save the modified document.
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

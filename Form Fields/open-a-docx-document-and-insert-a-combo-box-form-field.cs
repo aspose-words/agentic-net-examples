@@ -2,26 +2,27 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class InsertComboBoxFormField
+class InsertComboBoxExample
 {
     static void Main()
     {
         // Load an existing DOCX document.
-        // Replace "input.docx" with the path to your source file.
-        Document doc = new Document("input.docx");
+        Document doc = new Document("InputDocument.docx");
 
-        // Create a DocumentBuilder attached to the loaded document.
+        // Create a DocumentBuilder to modify the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the items that will appear in the combo box.
-        string[] comboItems = { "Option 1", "Option 2", "Option 3" };
+        // Write some prompt text before the combo box.
+        builder.Write("Please select a fruit: ");
 
-        // Insert a combo box form field at the current cursor position.
-        // Parameters: field name, array of items, index of the default selected item.
-        builder.InsertComboBox("MyComboBox", comboItems, 0);
+        // Define the items that will appear in the combo box.
+        string[] items = { "Apple", "Banana", "Cherry" };
+
+        // Insert the combo box form field at the current cursor position.
+        // Parameters: name of the field, array of items, index of the initially selected item.
+        builder.InsertComboBox("FruitComboBox", items, 0);
 
         // Save the modified document.
-        // Replace "output.docx" with the desired output path.
-        doc.Save("output.docx");
+        doc.Save("OutputDocument.docx");
     }
 }

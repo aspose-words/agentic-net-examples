@@ -1,21 +1,49 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
-class Program
+public class DocxContentExtractor
 {
-    static void Main()
+    /// <summary>
+    /// Loads a DOCX file and returns its plain‑text content.
+    /// </summary>
+    /// <param name="docxPath">Full path to the DOCX file.</param>
+    /// <returns>All textual content of the document as a single string.</returns>
+    public static string ExtractText(string docxPath)
     {
-        // Path to the DOCX file to be processed.
-        string docxPath = "input.docx";
+        // Validate input.
+        if (string.IsNullOrEmpty(docxPath))
+            throw new ArgumentException("File path cannot be null or empty.", nameof(docxPath));
 
-        // Load the DOCX file as a plain‑text document.
-        // The constructor automatically detects the format.
-        PlainTextDocument plainText = new PlainTextDocument(docxPath);
+        if (!File.Exists(docxPath))
+            throw new FileNotFoundException($"The file '{docxPath}' does not exist.", docxPath);
 
-        // Extract the concatenated textual content.
-        string extractedText = plainText.Text;
+        // Load the DOCX document using Aspose.Words.Document.
+        Document doc = new Document(docxPath);
 
-        // Display the extracted text.
-        Console.WriteLine(extractedText);
+        // Document.GetText() returns the concatenated text of the whole document,
+        // including paragraph marks (\r\n). Trim the result if you do not need trailing whitespace.
+        return doc.GetText();
+    }
+
+    // Example usage.
+    public static void Main()
+    {
+        // Path to the source DOCX file.
+        string sourcePath = @"C:\Docs\SampleDocument.docx";
+
+        try
+        {
+            // Extract the text.
+            string content = ExtractText(sourcePath);
+
+            // Output the extracted text to the console.
+            Console.WriteLine("Extracted Text:");
+            Console.WriteLine(content);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error: {ex.Message}");
+        }
     }
 }

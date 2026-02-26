@@ -1,6 +1,5 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 
 class Program
 {
@@ -9,33 +8,14 @@ class Program
         // Path to the source DOCX file.
         string sourcePath = @"C:\Docs\SourceDocument.docx";
 
-        // Create LoadOptions and explicitly set the format to DOCX.
-        LoadOptions loadOptions = new LoadOptions
-        {
-            LoadFormat = LoadFormat.Docx,
-            // Optional: specify recovery mode to attempt to load corrupted files.
-            RecoveryMode = DocumentRecoveryMode.TryRecover
-        };
+        // Load the DOCX document using the Document constructor that accepts a file name.
+        Document doc = new Document(sourcePath);
 
-        try
-        {
-            // Load the document using the Document constructor that accepts a file name and LoadOptions.
-            Document doc = new Document(sourcePath, loadOptions);
+        // Example: output the total number of characters in the document.
+        Console.WriteLine($"Document loaded. Character count: {doc.GetText().Length}");
 
-            // The document is now loaded and can be processed further.
-            Console.WriteLine("Document loaded successfully. Page count: " + doc.PageCount);
-        }
-        catch (UnsupportedFileFormatException ex)
-        {
-            Console.WriteLine("The file format is not supported: " + ex.Message);
-        }
-        catch (FileCorruptedException ex)
-        {
-            Console.WriteLine("The file appears to be corrupted: " + ex.Message);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("An unexpected error occurred: " + ex.Message);
-        }
+        // Optional: save the loaded document to a new location.
+        string outputPath = @"C:\Docs\CopyDocument.docx";
+        doc.Save(outputPath);
     }
 }

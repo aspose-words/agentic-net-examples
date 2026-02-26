@@ -1,56 +1,75 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsTableMergeExample
 {
-    static void Main()
+    class Program
     {
-        // Create a new document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+            // Start building a table.
+            Table table = builder.StartTable();
 
-        // ---------- First row: horizontal merge ----------
-        // First cell – mark as the first cell in a horizontal merge range.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Horizontally merged cells");
+            // ---------- First Row ----------
+            // Insert first cell – this will be the start of a vertical merge.
+            builder.InsertCell();
+            builder.CellFormat.VerticalMerge = CellMerge.First;   // Mark as first cell in vertical merge.
+            builder.CellFormat.HorizontalMerge = CellMerge.First; // Also start a horizontal merge.
+            builder.Write("Vertically & Horizontally Merged");
 
-        // Second cell – merge with the previous cell.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No content needed for the merged cell.
-        builder.EndRow();
+            // Insert second cell – merge horizontally with the previous cell.
+            builder.InsertCell();
+            builder.CellFormat.VerticalMerge = CellMerge.None;   // No vertical merge for this cell.
+            builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Merge horizontally.
+            // No text needed for merged cell.
 
-        // ---------- Second row: vertical merge ----------
-        // First cell – mark as the first cell in a vertical merge range.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.First;
-        builder.Write("Vertically merged cells");
+            // Insert third cell – normal, unmerged.
+            builder.CellFormat.VerticalMerge = CellMerge.None;
+            builder.CellFormat.HorizontalMerge = CellMerge.None;
+            builder.InsertCell();
+            builder.Write("Normal Cell");
 
-        // Second cell – merge with the cell above.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.Previous;
-        builder.EndRow();
+            // End the first row.
+            builder.EndRow();
 
-        // ---------- Third row: regular cells ----------
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Normal cell 1");
+            // ---------- Second Row ----------
+            // Insert first cell – merge vertically with the cell above.
+            builder.InsertCell();
+            builder.CellFormat.VerticalMerge = CellMerge.Previous; // Continue vertical merge.
+            builder.CellFormat.HorizontalMerge = CellMerge.None;   // No horizontal merge here.
+            // No text needed for merged cell.
 
-        builder.InsertCell();
-        builder.Write("Normal cell 2");
-        builder.EndRow();
+            // Insert second cell – normal cell.
+            builder.CellFormat.VerticalMerge = CellMerge.None;
+            builder.CellFormat.HorizontalMerge = CellMerge.None;
+            builder.InsertCell();
+            builder.Write("Second Row, Cell 2");
 
-        // Finish the table.
-        builder.EndTable();
+            // Insert third cell – normal cell.
+            builder.CellFormat.VerticalMerge = CellMerge.None;
+            builder.CellFormat.HorizontalMerge = CellMerge.None;
+            builder.InsertCell();
+            builder.Write("Second Row, Cell 3");
 
-        // Save the document as Markdown.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
-        doc.Save("MergedTable.md", saveOptions);
+            // End the second row and the table.
+            builder.EndRow();
+            builder.EndTable();
+
+            // Save the document as a Markdown file.
+            // The table will be exported as Markdown because it does not contain complex structures.
+            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+            {
+                // Export tables as Markdown (default). No need to set ExportAsHtml.
+                TableContentAlignment = TableContentAlignment.Auto
+            };
+
+            doc.Save("MergedTable.md", saveOptions);
+        }
     }
 }

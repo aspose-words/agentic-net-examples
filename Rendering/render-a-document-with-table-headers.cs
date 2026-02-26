@@ -2,51 +2,54 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class RenderTableWithHeaders
+class TableWithHeadersExample
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to construct the document content.
+        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a new table.
         Table table = builder.StartTable();
 
-        // ---------- Header row ----------
-        // Insert first cell of the header row.
+        // -----------------------------------------------------------------
+        // Create the header row. Set HeadingFormat = true so the row repeats
+        // at the top of each page when the table spans multiple pages.
+        // -----------------------------------------------------------------
+        builder.RowFormat.HeadingFormat = true;
+
+        // First header cell.
         builder.InsertCell();
-        // Apply header formatting (bold) and set the cell text.
-        builder.Font.Bold = true;
-        builder.Writeln("Product");
-        // Insert second cell of the header row.
+        builder.Write("Product");
+
+        // Second header cell.
         builder.InsertCell();
-        builder.Writeln("Quantity");
+        builder.Write("Price");
+
         // End the header row.
         builder.EndRow();
 
-        // Mark the first row as a repeating header.
-        // In Aspose.Words the HeadingFormat flag is sufficient – the row will repeat on each page.
-        table.FirstRow.RowFormat.HeadingFormat = true;
-        // Removed the non‑existent RepeatHeader property which caused the compile error.
+        // -----------------------------------------------------------------
+        // Add regular data rows. Disable the heading format for subsequent rows.
+        // -----------------------------------------------------------------
+        builder.RowFormat.HeadingFormat = false;
 
-        // Reset font style for data rows.
-        builder.Font.Bold = false;
-
-        // ---------- Data rows ----------
-        // Add a few sample data rows.
-        for (int i = 1; i <= 10; i++)
+        // Example data rows.
+        for (int i = 1; i <= 30; i++)
         {
             builder.InsertCell();
-            builder.Writeln($"Item {i}");
+            builder.Write($"Item {i}");
+
             builder.InsertCell();
-            builder.Writeln((i * 5).ToString());
+            builder.Write($"${i * 1.99:F2}");
+
             builder.EndRow();
         }
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
         // Save the document to disk.

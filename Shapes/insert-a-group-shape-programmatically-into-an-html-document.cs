@@ -1,54 +1,43 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load the existing HTML document.
-        Document doc = new Document("input.html");
+        // Create a new empty document.
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a new group shape.
-        GroupShape group = new GroupShape(doc);
-        // Set the size of the group.
-        group.Width = 300;
-        group.Height = 200;
-        // Position the group on the page.
+        // Insert initial HTML content.
+        string htmlBefore = "<p>This is an HTML paragraph before the group shape.</p>";
+        builder.InsertHtml(htmlBefore);
+
+        // Insert two individual shapes that will be grouped.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rectangle.Left = 20;
+        rectangle.Top = 20;
+        rectangle.Stroke.Color = Color.Blue;
+
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        ellipse.Left = 250;
+        ellipse.Top = 30;
+        ellipse.Stroke.Color = Color.Green;
+
+        // Group the shapes. Position and size are calculated automatically.
+        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
+
+        // Optional: adjust group properties.
         group.WrapType = WrapType.None;
-        group.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        group.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        group.Left = 100;
-        group.Top = 100;
+        group.BehindText = true;
 
-        // Create a rectangle shape to be a child of the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 150;
-        rect.Height = 100;
-        rect.Left = 0;
-        rect.Top = 0;
-        rect.Fill.ForeColor = Color.LightBlue;
-        rect.Stroke.Color = Color.Blue;
+        // Insert additional HTML after the group shape.
+        string htmlAfter = "<p>HTML after the group shape.</p>";
+        builder.InsertHtml(htmlAfter);
 
-        // Create an ellipse shape to be a child of the group.
-        Shape ellipse = new Shape(doc, ShapeType.Ellipse);
-        ellipse.Width = 100;
-        ellipse.Height = 100;
-        ellipse.Left = 150;
-        ellipse.Top = 50;
-        ellipse.Fill.ForeColor = Color.LightCoral;
-        ellipse.Stroke.Color = Color.Red;
-
-        // Add the child shapes to the group.
-        group.AppendChild(rect);
-        group.AppendChild(ellipse);
-
-        // Insert the group shape into the document at the current cursor position.
-        builder.InsertNode(group);
-
-        // Save the modified document back to HTML (or any other format you need).
-        doc.Save("output.html");
+        // Save the document as an HTML file.
+        doc.Save("GroupShape.html", SaveFormat.Html);
     }
 }

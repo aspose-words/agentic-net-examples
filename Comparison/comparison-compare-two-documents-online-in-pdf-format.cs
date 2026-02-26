@@ -1,39 +1,47 @@
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 using Aspose.Words.Saving;
 
-class Program
+class DocumentComparison
 {
-    static async Task Main()
+    static void Main()
     {
-        // URLs of the source documents (any format supported by Aspose.Words)
-        string urlFirst = "https://example.com/document1.docx";
-        string urlSecond = "https://example.com/document2.docx";
+        // URLs of the two source documents (DOCX format recommended for comparison)
+        const string urlOriginal = "https://filesamples.com/samples/document/docx/sample1.docx";
+        const string urlEdited   = "https://filesamples.com/samples/document/docx/sample2.docx";
 
-        // Download the documents into memory streams
-        using var httpClient = new HttpClient();
-        using var streamFirst = new MemoryStream(await httpClient.GetByteArrayAsync(urlFirst));
-        using var streamSecond = new MemoryStream(await httpClient.GetByteArrayAsync(urlSecond));
+        // Download the first document into a MemoryStream and load it into an Aspose.Words Document.
+        Document docOriginal = LoadDocumentFromUrl(urlOriginal);
 
-        // Load the documents (lifecycle rule)
-        Document docFirst = new Document(streamFirst);
-        Document docSecond = new Document(streamSecond);
+        // Download the second document into a MemoryStream and load it into an Aspose.Words Document.
+        Document docEdited = LoadDocumentFromUrl(urlEdited);
 
-        // Optional: configure comparison options
-        CompareOptions compareOptions = new CompareOptions
+        // Ensure both documents have no revisions before comparison (required by Aspose.Words).
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            Granularity = Granularity.WordLevel,
-            Target = ComparisonTargetType.New
-        };
+            // Compare the documents. Revisions will be added to docOriginal.
+            docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
+        }
 
-        // Compare the documents – revisions are added to docFirst
-        docFirst.Compare(docSecond, "Comparer", DateTime.Now, compareOptions);
+        // Save the comparison result as a PDF file.
+        docOriginal.Save("ComparisonResult.pdf", SaveFormat.Pdf);
+    }
 
-        // Save the comparison result as PDF
-        docFirst.Save("ComparisonResult.pdf", SaveFormat.Pdf);
+    // Helper method that downloads a document from a URL and returns an Aspose.Words Document.
+    private static Document LoadDocumentFromUrl(string url)
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            // Synchronously get the byte array of the file.
+            byte[] data = client.GetByteArrayAsync(url).Result;
+
+            // Load the document from the byte array using a MemoryStream.
+            using (MemoryStream stream = new MemoryStream(data))
+            {
+                return new Document(stream);
+            }
+        }
     }
 }

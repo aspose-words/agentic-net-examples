@@ -1,46 +1,37 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
-class Program
+class InsertGroupShapeExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize DocumentBuilder for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape that will contain other shapes.
-        GroupShape group = new GroupShape(doc);
-        // Position and size of the group shape on the page (points).
-        group.Left = 100;
-        group.Top = 100;
-        group.Width = 200;
-        group.Height = 100;
+        // Insert the first shape (rectangle) and set its position and stroke color.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        shape1.Left = 20;
+        shape1.Top = 20;
+        shape1.Stroke.Color = Color.Red;
 
-        // Define the internal coordinate system for child shapes.
-        // CoordOrigin is the top‑left corner of the group’s coordinate space.
-        // CoordSize defines the width and height of that space.
-        group.CoordOrigin = new Point(0, 0);
-        group.CoordSize = new Size(2000, 1000); // 1 point = 20 units in this space.
+        // Insert the second shape (ellipse) and set its position and stroke color.
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        shape2.Left = 40;
+        shape2.Top = 50;
+        shape2.Stroke.Color = Color.Green;
 
-        // Create a rectangle shape to place inside the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 100;   // Width in points.
-        rect.Height = 50;   // Height in points.
-        rect.Left = 50;     // Position relative to the group's coordinate space.
-        rect.Top = 25;
-        rect.Fill.ForeColor = Color.LightBlue;
-        rect.Stroke.Color = Color.DarkBlue;
+        // Group the two shapes into a new GroupShape node.
+        GroupShape group = builder.InsertGroupShape(shape1, shape2);
 
-        // Add the rectangle as a child of the group shape.
-        group.AppendChild(rect);
+        // Optionally adjust the group’s position or size.
+        // group.Bounds = new RectangleF(10, 10, 300, 300);
 
-        // Insert the group shape into the document flow.
-        builder.InsertNode(group);
-
-        // Save the document to a file.
+        // Save the document containing the group shape.
         doc.Save("GroupShape.docx");
     }
 }

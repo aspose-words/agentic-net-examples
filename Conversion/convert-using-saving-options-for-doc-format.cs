@@ -2,23 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class ConvertToDocWithOptions
 {
     static void Main()
     {
-        // Load an existing document (any supported format).
-        Document doc = new Document("input.docx");
+        // Path to the source document (any format supported by Aspose.Words).
+        string inputPath = @"C:\Docs\SourceDocument.docx";
 
-        // Create save options for the legacy DOC format.
-        DocSaveOptions saveOptions = new DocSaveOptions();
+        // Path where the DOC file will be saved.
+        string outputPath = @"C:\Docs\ConvertedDocument.doc";
 
-        // Example option: include Aspose.Words generator name in the output.
-        saveOptions.ExportGeneratorName = true;
+        // Load the source document.
+        Document doc = new Document(inputPath);
 
-        // Example option: set a password for the DOC file (optional).
-        // saveOptions.Password = "myPassword";
+        // Create save options for the older DOC format.
+        // The constructor that accepts a SaveFormat ensures the correct format is set.
+        DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
 
-        // Save the document as DOC using the specified options.
-        doc.Save("output.doc", saveOptions);
+        // Optional: set a password that will protect the saved DOC file.
+        saveOptions.Password = "MyPassword";
+
+        // Optional: preserve routing slip information if present.
+        saveOptions.SaveRoutingSlip = true;
+
+        // Save the document using the specified options.
+        doc.Save(outputPath, saveOptions);
     }
 }

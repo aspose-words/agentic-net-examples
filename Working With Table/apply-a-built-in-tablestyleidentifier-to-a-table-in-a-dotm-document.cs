@@ -1,31 +1,51 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace ApplyTableStyleToDotm
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Load an existing DOTM template.
-            // If the template contains macros, you may need to provide LoadOptions with LoadFormat.Dotm.
-            Document doc = new Document("Template.dotm");
+        // Load an existing DOTM template
+        string dataDir = @"C:\Data\";
+        string inputPath = Path.Combine(dataDir, "Template.dotm");
+        Document doc = new Document(inputPath);
 
-            // Find the first table in the document (adjust the index if needed).
-            Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        // Use DocumentBuilder to insert a new table
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        Table table = builder.StartTable();
 
-            // Apply a built‑in table style by its identifier.
-            // Example: LightGrid style – you can replace with any other StyleIdentifier value.
-            table.StyleIdentifier = StyleIdentifier.LightGrid;
+        // Insert header row
+        builder.InsertCell();
+        builder.Writeln("Header 1");
+        builder.InsertCell();
+        builder.Writeln("Header 2");
+        builder.EndRow();
 
-            // Optionally specify which parts of the style should be applied.
-            table.StyleOptions = TableStyleOptions.FirstRow |
-                                 TableStyleOptions.FirstColumn |
-                                 TableStyleOptions.RowBands;
+        // Insert data row
+        builder.InsertCell();
+        builder.Writeln("Value 1");
+        builder.InsertCell();
+        builder.Writeln("Value 2");
+        builder.EndRow();
 
-            // Save the modified document.
-            doc.Save("StyledDocument.docx");
-        }
+        // Finish table construction
+        builder.EndTable();
+
+        // Apply a built‑in table style by its identifier
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Enable specific style features (first row, first column, row banding)
+        table.StyleOptions = TableStyleOptions.FirstRow |
+                             TableStyleOptions.FirstColumn |
+                             TableStyleOptions.RowBands;
+
+        // Adjust column widths to fit the content
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+        // Save the modified document as a DOTM file
+        string outputPath = Path.Combine(dataDir, "StyledTable.dotm");
+        doc.Save(outputPath);
     }
 }

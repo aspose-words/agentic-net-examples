@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class Program
+class CompareDocs
 {
     static void Main()
     {
@@ -10,16 +10,21 @@ class Program
         Document docOriginal = new Document("Original.docx");
         Document docEdited   = new Document("Edited.docx");
 
-        // Configure comparison options to ignore all formatting changes.
-        CompareOptions compareOptions = new CompareOptions
+        // The Compare method requires both documents to be revision‑free.
+        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
+            throw new InvalidOperationException("Both documents must not contain revisions before comparison.");
+
+        // Configure comparison to ignore all formatting changes.
+        CompareOptions options = new CompareOptions
         {
-            IgnoreFormatting = true   // Do not track formatting differences.
+            IgnoreFormatting = true   // Formatting differences will not generate revisions.
+            // All other options retain their default values (false).
         };
 
-        // Perform the comparison. The revisions will be added to docOriginal.
-        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+        // Perform the comparison. Revisions are added to docOriginal.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, options);
 
-        // Save the result document which now contains revision marks.
+        // Save the result which now contains revision marks.
         docOriginal.Save("ComparisonResult.docx");
     }
 }

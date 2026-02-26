@@ -1,43 +1,41 @@
 using System;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Markup;
+using Aspose.Words.Loading;
 
-class Program
+class ExtractBetweenNodes
 {
     static void Main()
     {
-        // Load the RTF document.
-        Document doc = new Document("input.rtf");
+        // Load the RTF document using RtfLoadOptions.
+        string rtfPath = "input.rtf";
+        RtfLoadOptions loadOptions = new RtfLoadOptions();
+        Document doc = new Document(rtfPath, loadOptions);
 
-        // Identify the start and end nodes.
-        // In this example we use bookmarks named "Start" and "End".
-        // Adjust the bookmark names as needed for your document.
+        // The document is expected to contain two bookmarks named "Start" and "End".
+        // These bookmarks define the region whose content we want to extract.
         Bookmark startBookmark = doc.Range.Bookmarks["Start"];
         Bookmark endBookmark = doc.Range.Bookmarks["End"];
 
-        if (startBookmark == null || endBookmark == null)
-        {
-            Console.WriteLine("Required bookmarks not found.");
-            return;
-        }
-
-        // The actual nodes that mark the boundaries.
+        // Retrieve the underlying nodes for the bookmark start and end.
         Node startNode = startBookmark.BookmarkStart;
         Node endNode = endBookmark.BookmarkEnd;
 
-        // Collect text between the two nodes (excluding the bookmark markers themselves).
-        StringBuilder extractedText = new StringBuilder();
-        Node current = startNode.NextSibling;
+        // Collect the text that lies between the two bookmark nodes.
+        StringBuilder extracted = new StringBuilder();
 
-        while (current != null && current != endNode)
+        // Walk the document in pre‑order traversal, beginning after the start node,
+        // and stop when the end node is reached.
+        Node current = startNode;
+        while ((current = current.NextPreOrder(doc)) != null && current != endNode)
         {
-            // Append the text of the current node and its children.
-            extractedText.Append(current.GetText());
-            current = current.NextSibling;
+            // Append the textual representation of each node.
+            extracted.Append(current.GetText());
         }
 
-        // Output the extracted content.
-        Console.WriteLine(extractedText.ToString());
+        string result = extracted.ToString().Trim();
+
+        Console.WriteLine("Extracted text between bookmarks:");
+        Console.WriteLine(result);
     }
 }

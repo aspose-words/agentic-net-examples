@@ -2,69 +2,51 @@ using System;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Comparing;
+using Aspose.Words.AI;
 
-class CompareAndSummarize
+class Program
 {
     static void Main()
     {
-        // Paths to the documents to compare.
-        string originalPath = @"C:\Docs\Original.docx";
-        string revisedPath = @"C:\Docs\Revised.docx";
+        // Load the two documents to be compared.
+        Document original = new Document("Original.docx");
+        Document edited = new Document("Edited.docx");
 
-        // Load the documents.
-        Document originalDoc = new Document(originalPath);
-        Document revisedDoc = new Document(revisedPath);
+        // Documents must not contain revisions before comparison.
+        if (original.Revisions.Count != 0 || edited.Revisions.Count != 0)
+            throw new InvalidOperationException("Both documents must be revision‑free before comparison.");
 
-        // Set up comparison options (customize as needed).
-        CompareOptions compareOptions = new CompareOptions
+        // Perform the comparison. Revisions are added to the original document.
+        original.Compare(edited, "Comparer", DateTime.Now);
+
+        // Collect revision details into plain text.
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("Comparison Summary:");
+        foreach (Revision rev in original.Revisions)
         {
-            // Example: track changes at the word level and compare all element types.
-            Granularity = Granularity.WordLevel,
-            CompareMoves = true,
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
-            Target = ComparisonTargetType.Current
-        };
-
-        // Perform the comparison. The revisions are added to the original document.
-        originalDoc.Compare(revisedDoc, "Comparer", DateTime.Now, compareOptions);
-
-        // Build a textual summary of the comparison results.
-        StringBuilder summary = new StringBuilder();
-
-        // Total number of revisions.
-        summary.AppendLine($"Total revisions: {originalDoc.Revisions.Count}");
-
-        // Number of revision groups (each group represents a contiguous change block).
-        summary.AppendLine($"Revision groups: {originalDoc.Revisions.Groups.Count}");
-
-        // Detailed list of each revision.
-        foreach (Revision rev in originalDoc.Revisions)
-        {
-            // Get a short description of the changed text (if any).
-            string changedText = rev.ParentNode?.GetText()?.Trim() ?? string.Empty;
-
-            // Append revision type and affected text.
-            summary.AppendLine($"{rev.RevisionType}: \"{changedText}\"");
+            sb.AppendLine($"- Revision Type: {rev.RevisionType}, Node Type: {rev.ParentNode.NodeType}");
+            sb.AppendLine($"  Text: \"{rev.ParentNode.GetText().Trim()}\"");
         }
 
-        // Create a new document to hold the summary.
-        Document summaryDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(summaryDoc);
+        // Create a temporary document that holds the raw revision text.
+        Document rawSummaryDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(rawSummaryDoc);
+        builder.Writeln(sb.ToString());
 
-        // Write the summary into the document.
-        builder.Writeln("Comparison Summary");
-        builder.Writeln("-------------------");
-        builder.Writeln(summary.ToString());
+        // Prepare the AI model for summarization.
+        string apiKey = Environment.GetEnvironmentVariable("API_KEY");
+        AiModel model = AiModel.Create(AiModelType.Gpt4OMini).WithApiKey(apiKey);
 
-        // Save the summary document.
-        string summaryPath = @"C:\Docs\ComparisonSummary.docx";
-        summaryDoc.Save(summaryPath);
+        // Configure summarization options (short summary).
+        SummarizeOptions summarizeOptions = new SummarizeOptions
+        {
+            SummaryLength = SummaryLength.Short
+        };
+
+        // Generate a concise summary using the AI model.
+        Document conciseSummary = model.Summarize(rawSummaryDoc, summarizeOptions);
+
+        // Save the final summary document.
+        conciseSummary.Save("ComparisonResultSummary.docx");
     }
 }

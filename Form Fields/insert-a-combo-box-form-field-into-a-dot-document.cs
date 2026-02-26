@@ -1,4 +1,3 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -6,23 +5,21 @@ class Program
 {
     static void Main()
     {
-        // Load an existing DOT template.
-        Document doc = new Document("Template.dot");
-
-        // Create a DocumentBuilder for the loaded document.
+        // Create a new blank document (DOT template)
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the items that will appear in the combo box.
-        string[] items = { "One", "Two", "Three" };
+        // Add some introductory text
+        builder.Write("Select a fruit: ");
 
-        // Insert a combo box form field.
-        // Parameters: field name, array of items, index of the default selected item.
-        FormField comboBox = builder.InsertComboBox("MyComboBox", items, 0);
+        // Define the items that will appear in the combo box
+        string[] items = { "Apple", "Banana", "Cherry" };
 
-        // Optional: make the field recalculate dependent fields when the user exits it.
-        comboBox.CalculateOnExit = true;
+        // Insert the combo box form field at the current cursor position.
+        // The first item ("Apple") will be selected by default (index 0).
+        builder.InsertComboBox("FruitCombo", items, 0);
 
-        // Save the modified document back to DOT format.
-        doc.Save("Result.dot");
+        // Save the document as a Word template (.dot)
+        doc.Save("ComboBoxTemplate.dot");
     }
 }

@@ -3,36 +3,39 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class WatermarkDemo
+class WatermarkExample
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Configure text watermark options.
+        // Configure options for a text watermark.
         TextWatermarkOptions options = new TextWatermarkOptions
         {
             FontFamily = "Arial",
-            FontSize = 48,
-            Color = Color.Gray,
+            FontSize = 36,
+            Color = Color.Black,
             Layout = WatermarkLayout.Diagonal,
             IsSemitrasparent = false
         };
 
         // Add a text watermark to the document.
-        doc.Watermark.SetText("CONFIDENTIAL", options);
+        doc.Watermark.SetText("Confidential", options);
 
-        // Save the document with the watermark.
+        // Save the document that now contains the watermark.
         doc.Save("Watermarked.docx");
 
-        // If a text watermark exists, remove it.
-        if (doc.Watermark.Type == WatermarkType.Text)
-        {
-            doc.Watermark.Remove();
+        // Load the previously saved document.
+        Document loadedDoc = new Document("Watermarked.docx");
 
-            // Save the document after removing the watermark.
-            doc.Save("WatermarkRemoved.docx");
+        // If a text watermark exists, remove it.
+        if (loadedDoc.Watermark.Type == WatermarkType.Text)
+        {
+            loadedDoc.Watermark.Remove();
         }
+
+        // Save the document after the watermark has been removed.
+        loadedDoc.Save("WatermarkedRemoved.docx");
     }
 }

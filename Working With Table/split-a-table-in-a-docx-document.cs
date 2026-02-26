@@ -1,45 +1,43 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words;
 
-class SplitTableExample
+class TableSplitExample
 {
     static void Main()
     {
-        // Load the existing DOCX document.
-        Document doc = new Document("input.docx");
+        // Load the source document.
+        Document doc = new Document("Input.docx");
 
         // Get the first table in the document.
-        Table originalTable = doc.FirstSection.Body.Tables[0];
+        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (originalTable == null)
+            throw new InvalidOperationException("No table found in the document.");
 
-        // Index of the row after which the table will be split (zero‑based).
-        // For example, split after the second row (index 2 means rows 0,1,2 stay in the original table).
-        int splitRowIndex = 2;
+        // Define the row index at which to split the table.
+        // Rows with index < splitIndex stay in the original table,
+        // rows with index >= splitIndex move to the new table.
+        int splitIndex = 2; // example: split after the second row (zero‑based)
 
-        // Clone the original table without its rows to keep the formatting.
+        if (splitIndex < 0 || splitIndex >= originalTable.Rows.Count)
+            throw new ArgumentOutOfRangeException(nameof(splitIndex), "Split index is out of range.");
+
+        // Clone the original table structure without its rows.
         Table newTable = (Table)originalTable.Clone(false);
 
-        // Move rows from the original table to the new table.
-        RowCollection originalRows = originalTable.Rows;
-        while (originalRows.Count > splitRowIndex)
+        // Move rows from the split point to the new table.
+        // Rows are removed from the original table as they are added to the new one.
+        while (originalTable.Rows.Count > splitIndex)
         {
-            // Take the row at the split index.
-            Row rowToMove = originalRows[splitRowIndex];
-
-            // Remove it from the original table.
-            rowToMove.Remove();
-
-            // Add it to the new table, preserving order.
-            newTable.Rows.Add(rowToMove);
+            Row movingRow = originalTable.Rows[splitIndex];
+            movingRow.Remove();               // Detach from original table.
+            newTable.Rows.Add(movingRow);      // Append to the new table.
         }
 
-        // Insert the new table into the document immediately after the original table.
-        // The parent of a Table is a CompositeNode (Body, Section, etc.).
-        CompositeNode parent = (CompositeNode)originalTable.ParentNode;
-        parent.InsertAfter(newTable, originalTable);
+        // Insert the new table immediately after the original table.
+        originalTable.ParentNode.InsertAfter(newTable, originalTable);
 
         // Save the modified document.
-        doc.Save("output.docx");
+        doc.Save("Output.docx");
     }
 }

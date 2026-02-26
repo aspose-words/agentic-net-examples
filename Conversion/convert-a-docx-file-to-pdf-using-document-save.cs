@@ -1,22 +1,21 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load the source DOCX file.
-        Document doc = new Document("input.docx");
+        // Path to the source DOCX file.
+        string sourcePath = @"C:\Docs\SampleDocument.docx";
 
-        // Optionally configure PDF save options (e.g., high quality rendering).
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            UseHighQualityRendering = true,
-            // Additional options can be set here if needed.
-        };
+        // Path where the resulting PDF will be saved.
+        string pdfPath = @"C:\Docs\SampleDocument.pdf";
 
-        // Save the document as a PDF file using the specified options.
-        doc.Save("output.pdf", pdfOptions);
+        // Load the DOCX document from the file system.
+        Document doc = new Document(sourcePath);
+
+        // Save the loaded document as PDF.
+        // The Save method automatically determines the format from the file extension.
+        doc.Save(pdfPath);
     }
 }

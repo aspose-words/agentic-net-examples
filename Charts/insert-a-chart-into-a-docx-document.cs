@@ -1,33 +1,34 @@
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Drawing;            // <-- added
 using Aspose.Words.Drawing.Charts;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a bar chart with a width of 400 points and a height of 300 points.
-        Shape chartShape = builder.InsertChart(ChartType.Bar, 400, 300);
+        // Insert a pie chart sized 300x300 pixels (converted to points).
+        Shape chartShape = builder.InsertChart(
+            ChartType.Pie,
+            ConvertUtil.PixelToPoint(300),
+            ConvertUtil.PixelToPoint(300));
+
+        // Get the Chart object from the inserted shape.
         Chart chart = chartShape.Chart;
 
-        // Set the chart title.
-        ChartTitle title = chart.Title;
-        title.Text = "Sales Overview";
-        title.Font.Size = 14;
-        title.Font.Color = Color.DarkBlue;
-        title.Show = true;
+        // Remove the default demo series.
+        chart.Series.Clear();
 
-        // Move the legend to the right side of the chart.
-        chart.Legend.Position = LegendPosition.Right;
+        // Add a series with categories and corresponding values.
+        chart.Series.Add(
+            "My fruit",
+            new[] { "Apples", "Bananas", "Cherries" },
+            new[] { 1.3, 2.2, 1.5 });
 
-        // Save the document as a DOCX file.
+        // Save the document to a DOCX file.
         doc.Save("ChartDocument.docx");
     }
 }

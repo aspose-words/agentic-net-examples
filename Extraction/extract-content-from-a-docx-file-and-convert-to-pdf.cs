@@ -2,28 +2,20 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace DocxToPdfConverter
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Input DOCX file path
-            string inputPath = @"C:\Docs\input.docx";
+        // Path to the source DOCX file
+        string sourcePath = "input.docx";
 
-            // Output PDF file path
-            string outputPath = @"C:\Docs\output.pdf";
+        // Path where the PDF will be saved
+        string destinationPath = "output.pdf";
 
-            // Load the DOCX document using the Document constructor (creates a Document from a file)
-            Document doc = new Document(inputPath);
+        // Load the DOCX document from the file system
+        Document doc = new Document(sourcePath);
 
-            // Create PDF save options (inherits from FixedPageSaveOptions)
-            PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-            // Save the document as PDF using the provided save method
-            doc.Save(outputPath, pdfOptions);
-
-            Console.WriteLine("Conversion completed successfully.");
-        }
+        // Convert and save the document as PDF
+        doc.Save(destinationPath, SaveFormat.Pdf);
     }
 }

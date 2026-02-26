@@ -6,29 +6,32 @@ class Program
 {
     static void Main()
     {
-        // Load a macro‑enabled Word document (DOCM). Adjust the path as needed.
-        Document doc = new Document("Input.docm");
+        // Path to the DOCX file that may contain VBA macros.
+        string filePath = "Input.docx";
 
-        // Verify that the document actually contains VBA macros.
+        // Quick detection of macros without loading the full document.
+        FileFormatInfo formatInfo = FileFormatUtil.DetectFileFormat(filePath);
+        Console.WriteLine($"Has macros (quick check): {formatInfo.HasMacros}");
+
+        // Load the document.
+        Document doc = new Document(filePath);
+
+        // Verify that the document actually contains macros.
         if (!doc.HasMacros)
         {
-            Console.WriteLine("The document does not contain any VBA macros.");
+            Console.WriteLine("Document does not contain any VBA macros.");
             return;
         }
 
-        // Access the VBA project associated with the document.
+        // Access the VBA project.
         VbaProject vbaProject = doc.VbaProject;
-
-        // Output basic information about the VBA project.
-        Console.WriteLine($"Project name: {vbaProject.Name}");
-        Console.WriteLine($"Signed: {vbaProject.IsSigned}");
-        Console.WriteLine($"Code page: {vbaProject.CodePage}");
+        Console.WriteLine($"VBA Project Name: {vbaProject.Name}");
         Console.WriteLine($"Modules count: {vbaProject.Modules.Count}");
 
         // Iterate through each VBA module and display its source code.
         foreach (VbaModule module in vbaProject.Modules)
         {
-            Console.WriteLine($"--- Module: {module.Name} (Type: {module.Type}) ---");
+            Console.WriteLine($"--- Module: {module.Name} ---");
             Console.WriteLine(module.SourceCode);
             Console.WriteLine();
         }

@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -7,24 +8,20 @@ class Program
     {
         // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for editing the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text before the checkbox.
-        builder.Writeln("Please tick the box if you agree:");
+        // Add some explanatory text.
+        builder.Writeln("Please check the box below:");
 
-        // Insert a checkbox form field.
-        // Parameters: field name, default checked state, size in points.
-        FormField checkBox = builder.InsertCheckBox("AgreementCheckBox", false, 50);
-        // Make the size exact as specified.
+        // Insert a checkbox form field at the current cursor position.
+        // Parameters: name, defaultValue, checkedValue, size (0 = automatic size).
+        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, false, 0);
+
+        // Set the checkbox to have an explicit size (optional).
         checkBox.IsCheckBoxExactSize = true;
-
-        // Optional: set help text displayed when the user presses F1.
-        checkBox.HelpText = "Check to indicate agreement.";
-        checkBox.OwnHelp = true;
+        checkBox.CheckBoxSize = 12; // size in points
 
         // Save the document in RTF format.
-        doc.Save("CheckboxFormField.rtf");
+        doc.Save("CheckboxDocument.rtf", SaveFormat.Rtf);
     }
 }

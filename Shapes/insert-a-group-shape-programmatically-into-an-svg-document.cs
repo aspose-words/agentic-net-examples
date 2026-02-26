@@ -1,61 +1,42 @@
-using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
-class InsertGroupShapeIntoSvg
+class Program
 {
     static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
-
-        // Use DocumentBuilder to work with the document.
+        // Load an existing SVG document. No explicit LoadFormat is required for SVG.
+        Document doc = new Document("input.svg");
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape that will contain other shapes.
-        GroupShape group = new GroupShape(doc);
-        // Set the size and position of the group shape.
-        group.Width = 300;   // points
-        group.Height = 200;  // points
-        group.Left = 50;     // points from the left margin
-        group.Top = 50;      // points from the top margin
+        // Insert two floating shapes that will be grouped.
+        Shape rect = builder.InsertShape(
+            ShapeType.Rectangle,
+            RelativeHorizontalPosition.Page, 100,   // left
+            RelativeVerticalPosition.Page, 100,     // top
+            200,                                     // width
+            150,                                     // height
+            WrapType.None);
+        rect.Stroke.Color = Color.Blue;
 
-        // Create a rectangle shape to add to the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 100;
-        rect.Height = 80;
-        rect.Left = 10;   // position relative to the group
-        rect.Top = 10;
-        rect.Fill.ForeColor = System.Drawing.Color.LightBlue;
-        rect.Stroke.Color = System.Drawing.Color.DarkBlue;
+        Shape ellipse = builder.InsertShape(
+            ShapeType.Ellipse,
+            RelativeHorizontalPosition.Page, 150,
+            RelativeVerticalPosition.Page, 200,
+            150,
+            150,
+            WrapType.None);
+        ellipse.Stroke.Color = Color.Green;
 
-        // Create an ellipse shape to add to the group.
-        Shape ellipse = new Shape(doc, ShapeType.Ellipse);
-        ellipse.Width = 80;
-        ellipse.Height = 80;
-        ellipse.Left = 150;
-        ellipse.Top = 50;
-        ellipse.Fill.ForeColor = System.Drawing.Color.LightCoral;
-        ellipse.Stroke.Color = System.Drawing.Color.Maroon;
+        // Group the shapes; the group’s position and size are calculated automatically.
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Add the child shapes to the group.
-        group.AppendChild(rect);
-        group.AppendChild(ellipse);
+        // Optionally set explicit bounds for the group shape.
+        group.Bounds = new RectangleF(80, 80, 300, 300);
 
-        // Insert the group shape into the document.
-        builder.InsertNode(group);
-
-        // Configure SVG save options (optional: render text as placed glyphs).
-        SvgSaveOptions svgOptions = new SvgSaveOptions
-        {
-            TextOutputMode = SvgTextOutputMode.UsePlacedGlyphs,
-            // Ensure the SVG fills the viewport.
-            FitToViewPort = true,
-            ShowPageBorder = false
-        };
-
-        // Save the document as an SVG file.
-        doc.Save("GroupShapeOutput.svg", svgOptions);
+        // Save the modified document back to SVG format.
+        doc.Save("output.svg", SaveFormat.Svg);
     }
 }

@@ -1,40 +1,38 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
+using System.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank Word document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // The default document already contains a Section, Body, and a Paragraph.
+        // Create a floating text box shape.
+        Shape textBox = new Shape(doc, ShapeType.TextBox);
+        textBox.WrapType = WrapType.None;          // No text wrapping.
+        textBox.Width = 200;                       // Width in points.
+        textBox.Height = 50;                       // Height in points.
+        textBox.HorizontalAlignment = HorizontalAlignment.Center;
+        textBox.VerticalAlignment = VerticalAlignment.Top;
 
-        // Create a rectangle shape.
-        Shape shape = new Shape(doc, ShapeType.Rectangle);
-        shape.Width = 100;               // Width in points.
-        shape.Height = 50;               // Height in points.
-        shape.Left = 100;                // Position from the left edge.
-        shape.Top = 100;                 // Position from the top edge.
-        shape.WrapType = WrapType.None;  // No text wrapping.
-        shape.FillColor = Color.LightBlue;
-        shape.StrokeColor = Color.DarkBlue;
-        shape.StrokeWeight = 2;          // Stroke thickness in points.
+        // Add a paragraph inside the text box to hold text.
+        textBox.AppendChild(new Paragraph(doc));
+        Paragraph innerParagraph = textBox.FirstParagraph;
+        innerParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
-        // Insert the shape into the document.
-        builder.InsertNode(shape);
+        // Add a run of text to the inner paragraph.
+        Run run = new Run(doc);
+        run.Text = "Hello world!";
+        innerParagraph.AppendChild(run);
 
-        // Add a paragraph with text inside the shape.
-        shape.AppendChild(new Paragraph(doc));
-        shape.FirstParagraph.AppendChild(new Run(doc, "Hello Shape"));
+        // Insert the shape into the document's first paragraph.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(textBox);
 
-        // Save the document with OOXML compliance that supports DML shapes.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
-        doc.Save("ShapeManipulation.docx", saveOptions);
+        // Save the document to a .docx file.
+        doc.Save("ShapeManipulation.docx");
     }
 }

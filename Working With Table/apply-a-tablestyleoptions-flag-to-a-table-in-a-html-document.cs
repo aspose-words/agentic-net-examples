@@ -2,38 +2,29 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class ApplyTableStyleOptions
 {
     static void Main()
     {
-        // HTML containing a simple table.
-        const string html = @"
-            <html>
-                <body>
-                    <table>
-                        <tr><td>Cell 1</td><td>Cell 2</td></tr>
-                        <tr><td>Cell 3</td><td>Cell 4</td></tr>
-                    </table>
-                </body>
-            </html>";
-
-        // Load the HTML into a new document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertHtml(html);
+        // Load an existing HTML document that contains at least one table.
+        Document doc = new Document("input.html");
 
         // Retrieve the first table in the document.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+        {
+            Console.WriteLine("No table found in the document.");
+            return;
+        }
 
-        // Apply a built‑in table style (optional, helps see the effect).
-        table.StyleIdentifier = StyleIdentifier.LightGrid;
+        // Apply desired style options to the table.
+        // Example: apply first row formatting and row banding.
+        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
-        // Apply TableStyleOptions flags: first row, first column, and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow |
-                             TableStyleOptions.FirstColumn |
-                             TableStyleOptions.RowBands;
+        // Optionally, set a built‑in style identifier to see the effect of the options.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Save the resulting document.
-        doc.Save("StyledTable.docx");
+        // Save the modified document.
+        doc.Save("output.docx");
     }
 }

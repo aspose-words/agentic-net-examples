@@ -2,27 +2,29 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsMarkdownExample
 {
-    static void Main()
+    class Program
     {
-        // Path to the source document (any format supported by Aspose.Words)
-        string inputPath = "input.docx";
+        static void Main()
+        {
+            // Path to the source document (any format supported by Aspose.Words).
+            const string inputFile = @"C:\Docs\SampleDocument.docx";
 
-        // Path where the Markdown file will be saved
-        string outputPath = "output.md";
+            // Path where the Markdown file will be saved.
+            const string outputFile = @"C:\Docs\SampleDocument.md";
 
-        // Load the document from the file system
-        Document doc = new Document(inputPath);
+            // Load the document using the standard Document constructor.
+            Document doc = new Document(inputFile);
 
-        // Create save options for Markdown format
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
+            // Create MarkdownSaveOptions and specify that the output format is Markdown.
+            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+            {
+                SaveFormat = SaveFormat.Markdown
+            };
 
-        // Optional: customize options, e.g. export images as Base64
-        // saveOptions.ExportImagesAsBase64 = true;
-        // saveOptions.ListExportMode = MarkdownListExportMode.MarkdownSyntax;
-
-        // Save the document as a Markdown file using the specified options
-        doc.Save(outputPath, saveOptions);
+            // Save the document to Markdown using the Save method that accepts SaveOptions.
+            doc.Save(outputFile, saveOptions);
+        }
     }
 }

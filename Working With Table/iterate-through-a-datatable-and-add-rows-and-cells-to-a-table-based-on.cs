@@ -3,51 +3,60 @@ using System.Data;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class TableFromDataTable
 {
     static void Main()
     {
-        // Prepare a sample DataTable.
-        DataTable dataTable = new DataTable("Products");
-        dataTable.Columns.Add("Item");
-        dataTable.Columns.Add("Quantity", typeof(int));
-        dataTable.Rows.Add("Apples", 20);
-        dataTable.Rows.Add("Bananas", 40);
-        dataTable.Rows.Add("Carrots", 50);
+        // Create a sample DataTable with some data.
+        DataTable data = new DataTable("Sample");
+        data.Columns.Add("Product");
+        data.Columns.Add("Quantity");
+        data.Columns.Add("Price");
 
-        // Create a new Word document and a DocumentBuilder.
+        data.Rows.Add("Apples", 10, 0.5);
+        data.Rows.Add("Bananas", 5, 0.3);
+        data.Rows.Add("Cherries", 20, 1.2);
+
+        // Initialize a new blank Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Start a new table.
         Table table = builder.StartTable();
 
-        // Add a header row.
-        builder.InsertCell();
-        builder.Write("Item");
-        builder.InsertCell();
-        builder.Write("Quantity");
-        builder.EndRow();
-
-        // Iterate through the DataTable rows and add them to the Word table.
-        foreach (DataRow dr in dataTable.Rows)
+        // ---- Header Row -------------------------------------------------
+        // Insert a cell for each column name and write the header text.
+        foreach (DataColumn col in data.Columns)
         {
             builder.InsertCell();
-            builder.Write(dr["Item"].ToString());
+            builder.Write(col.ColumnName);
+        }
+        // End the header row.
+        builder.EndRow();
 
-            builder.InsertCell();
-            builder.Write(dr["Quantity"].ToString());
-
+        // ---- Data Rows --------------------------------------------------
+        // Iterate through each DataRow in the DataTable.
+        foreach (DataRow row in data.Rows)
+        {
+            // For each column in the current row, insert a cell and write its value.
+            foreach (DataColumn col in data.Columns)
+            {
+                builder.InsertCell();
+                // Convert the cell value to string, handling nulls safely.
+                string cellText = row[col] != DBNull.Value ? row[col].ToString() : string.Empty;
+                builder.Write(cellText);
+            }
+            // End the current row before moving to the next one.
             builder.EndRow();
         }
 
         // Finish the table.
         builder.EndTable();
 
-        // Adjust table layout to fit its contents.
+        // Optional: Auto‑fit the table to its contents for a cleaner layout.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Save the document.
+        // Save the document to disk.
         doc.Save("TableFromDataTable.docx");
     }
 }

@@ -1,67 +1,60 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Comparing;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class Program
+class DocumentComparisonAndFormatListing
 {
     static void Main()
     {
-        // Paths to the two documents to compare.
-        string sourcePath = @"C:\Docs\Source.docx";
-        string targetPath = @"C:\Docs\Target.docx";
+        // Paths to the documents to compare.
+        string docPath1 = @"C:\Docs\Original.docx";
+        string docPath2 = @"C:\Docs\Edited.docx";
 
-        // Load the documents (format is detected automatically).
-        Document sourceDoc = new Document(sourcePath);
-        Document targetDoc = new Document(targetPath);
+        // Load the two documents (lifecycle: load).
+        Document originalDoc = new Document(docPath1);
+        Document editedDoc = new Document(docPath2);
 
-        // Compare the documents. The result (revisions) will be stored in sourceDoc.
-        CompareOptions compareOptions = new CompareOptions();
-        sourceDoc.Compare(targetDoc, "Comparer", DateTime.Now, compareOptions);
+        // Compare the documents (produces revisions in the original document).
+        originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
 
-        // Output the number of revisions found.
-        Console.WriteLine($"Revisions count after comparison: {sourceDoc.Revisions.Count}");
+        // Save the comparison result (lifecycle: save).
+        string comparisonResultPath = @"C:\Docs\ComparisonResult.docx";
+        originalDoc.Save(comparisonResultPath, SaveFormat.Docx);
 
         // --------------------------------------------------------------------
-        // List all load formats that can be saved as DOCX.
-        // --------------------------------------------------------------------
-        List<string> loadToDocx = new List<string>();
+        // List all load formats supported by Aspose.Words.
+        Console.WriteLine("Supported Load Formats:");
         foreach (LoadFormat loadFormat in Enum.GetValues(typeof(LoadFormat)))
         {
-            // Convert the load format to a save format, if possible.
-            SaveFormat saveFormat = FileFormatUtil.LoadFormatToSaveFormat(loadFormat);
-            if (saveFormat == SaveFormat.Docx)
-            {
-                // Get a friendly file extension for the load format.
-                string extension = FileFormatUtil.LoadFormatToExtension(loadFormat);
-                loadToDocx.Add($"{loadFormat} ({extension})");
-            }
+            // Skip the Unknown value – it represents an unsupported format.
+            if (loadFormat == LoadFormat.Unknown) continue;
+
+            // Display the enum name and its integer value.
+            Console.WriteLine($"  {loadFormat} = {(int)loadFormat}");
         }
 
-        Console.WriteLine("\nLoad formats that can be saved as DOCX:");
-        foreach (string entry in loadToDocx)
-            Console.WriteLine($"- {entry}");
-
-        // --------------------------------------------------------------------
-        // List all save formats that can be loaded from DOCX.
-        // --------------------------------------------------------------------
-        List<string> saveFromDocx = new List<string>();
+        // List all save formats supported by Aspose.Words.
+        Console.WriteLine("\nSupported Save Formats:");
         foreach (SaveFormat saveFormat in Enum.GetValues(typeof(SaveFormat)))
         {
-            // Convert the save format to a load format, if possible.
-            LoadFormat loadFormat = FileFormatUtil.SaveFormatToLoadFormat(saveFormat);
-            if (loadFormat == LoadFormat.Docx)
-            {
-                // Get a friendly file extension for the save format.
-                string extension = FileFormatUtil.SaveFormatToExtension(saveFormat);
-                saveFromDocx.Add($"{saveFormat} ({extension})");
-            }
+            // Skip the Unknown value – it represents an invalid format.
+            if (saveFormat == SaveFormat.Unknown) continue;
+
+            // Display the enum name and its integer value.
+            Console.WriteLine($"  {saveFormat} = {(int)saveFormat}");
         }
 
-        Console.WriteLine("\nSave formats that can be loaded from DOCX:");
-        foreach (string entry in saveFromDocx)
-            Console.WriteLine($"- {entry}");
+        // --------------------------------------------------------------------
+        // Demonstrate detection of a file's format using FileFormatUtil.
+        // This shows how to discover the load format of a DOCX file.
+        FileFormatInfo formatInfo = FileFormatUtil.DetectFileFormat(comparisonResultPath);
+        Console.WriteLine($"\nDetected format of '{Path.GetFileName(comparisonResultPath)}': {formatInfo.LoadFormat}");
+
+        // Example: Convert the detected load format to a save format and save as that format.
+        SaveFormat detectedSaveFormat = FileFormatUtil.LoadFormatToSaveFormat(formatInfo.LoadFormat);
+        string convertedPath = Path.ChangeExtension(comparisonResultPath, FileFormatUtil.SaveFormatToExtension(detectedSaveFormat));
+        originalDoc.Save(convertedPath, detectedSaveFormat);
+        Console.WriteLine($"Document also saved as: {convertedPath}");
     }
 }

@@ -1,54 +1,37 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 
 class InsertGroupShapeIntoTxt
 {
     static void Main()
     {
-        // Load an existing TXT document.
-        // TxtLoadOptions are used to specify any loading preferences for plain text files.
-        TxtLoadOptions loadOptions = new TxtLoadOptions();
-        Document doc = new Document("input.txt", loadOptions);
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Create a new group shape that will hold other shapes.
-        // The constructor requires a DocumentBase (the document we are working with).
-        GroupShape group = new GroupShape(doc);
+        // Initialize a DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the size and position of the group shape.
-        group.Width = 200;   // Width in points.
-        group.Height = 100;  // Height in points.
-        group.Left = 50;     // Distance from the left margin.
-        group.Top = 50;      // Distance from the top margin.
+        // Insert two floating shapes that will be grouped.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        shape1.Left = 50;   // Position from the left edge of the page.
+        shape1.Top = 50;    // Position from the top edge of the page.
+        shape1.Stroke.Color = Color.Blue;
 
-        // Define the coordinate space for child shapes inside the group.
-        // CoordOrigin is the top‑left corner of the group’s internal coordinate system.
-        // CoordSize defines the width and height of that internal coordinate system.
-        group.CoordOrigin = new System.Drawing.Point(0, 0);
-        group.CoordSize = new System.Drawing.Size(200, 100);
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        shape2.Left = 300;
+        shape2.Top = 100;
+        shape2.Stroke.Color = Color.Green;
 
-        // Create a rectangle shape to place inside the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 100;
-        rect.Height = 50;
-        rect.Left = 20;   // Position relative to the group's coordinate space.
-        rect.Top = 20;
-        rect.FillColor = System.Drawing.Color.LightBlue;
-        rect.StrokeColor = System.Drawing.Color.DarkBlue;
+        // Group the two shapes. The group shape is inserted at the current cursor position.
+        GroupShape group = builder.InsertGroupShape(shape1, shape2);
 
-        // Add the rectangle to the group.
-        group.AppendChild(rect);
+        // Optionally set properties on the group shape (e.g., make it non‑overlapping).
+        group.AllowOverlap = false;
 
-        // Insert the group shape into the document.
-        // Here we add it after the first paragraph of the first section.
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        firstParagraph.ParentNode.InsertAfter(group, firstParagraph);
-
-        // Save the modified document back to TXT format.
-        // TxtSaveOptions can be used to control how the document is exported as plain text.
-        TxtSaveOptions saveOptions = new TxtSaveOptions();
-        doc.Save("output.txt", saveOptions);
+        // Save the document as a plain‑text file. The group shape will not be visible in the TXT output,
+        // but the operation demonstrates that the group shape exists in the document structure.
+        doc.Save("GroupShapeDocument.txt", SaveFormat.Text);
     }
 }

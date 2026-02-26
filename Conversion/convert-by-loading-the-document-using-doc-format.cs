@@ -1,20 +1,29 @@
+// Load a Microsoft Word 97‑2003 document (.doc) using Aspose.Words
 using System;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
-class Program
+class LoadDocExample
 {
     static void Main()
     {
-        // Specify load options with the DOC format explicitly.
-        LoadOptions loadOptions = new LoadOptions();
-        loadOptions.LoadFormat = LoadFormat.Doc; // Microsoft Word 95/97-2003 document
+        // Path to the source .doc file
+        string sourceFile = @"C:\Docs\Sample.doc";
 
-        // Load the document from a file using the specified options.
-        Document doc = new Document("InputDocument.doc", loadOptions);
+        // Create LoadOptions and explicitly set the format to DOC.
+        // This ensures the loader treats the file as a legacy Word document.
+        LoadOptions loadOptions = new LoadOptions(LoadFormat.Doc, "", "");
 
-        // The document is now loaded and can be processed further.
-        // Example: output the document text to the console.
-        Console.WriteLine(doc.GetText());
+        // Load the document using the constructor that accepts a filename and LoadOptions.
+        Document doc = new Document(sourceFile, loadOptions);
+
+        // At this point the document is loaded and can be manipulated.
+        // Example: output the first paragraph's text to the console.
+        Console.WriteLine(doc.FirstSection.Body.FirstParagraph.GetText().Trim());
+
+        // Optionally, save the document to another format (e.g., DOCX).
+        // The Save method follows the standard Aspose.Words lifecycle rules.
+        string outputFile = @"C:\Docs\SampleConverted.docx";
+        doc.Save(outputFile, SaveFormat.Docx);
     }
 }

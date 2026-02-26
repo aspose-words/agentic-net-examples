@@ -1,36 +1,25 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class DocmToMarkdownConverter
+class Program
 {
     static void Main()
     {
         // Path to the source DOCM file.
-        string inputPath = @"C:\Docs\source.docm";
+        string inputPath = "Input.docm";
 
-        // Path where the resulting Markdown file will be saved.
-        string outputPath = @"C:\Docs\converted.md";
+        // Path where the Markdown file will be saved.
+        string outputPath = "Output.md";
 
-        // Load the DOCM document. The LoadFormat is automatically detected,
-        // but we can explicitly set it to Docm for clarity.
-        LoadOptions loadOptions = new LoadOptions
-        {
-            LoadFormat = LoadFormat.Docm
-        };
-        Document doc = new Document(inputPath, loadOptions);
+        // Load the DOCM document.
+        Document doc = new Document(inputPath);
 
-        // Configure Markdown save options if needed (defaults are sufficient for a basic conversion).
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
-        {
-            // Example: preserve empty lines as empty lines in the output.
-            EmptyParagraphExportMode = MarkdownEmptyParagraphExportMode.EmptyLine,
-            // Example: export lists using Markdown syntax.
-            ListExportMode = MarkdownListExportMode.MarkdownSyntax
-        };
+        // Set up Markdown save options.
+        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
+        saveOptions.SaveFormat = SaveFormat.Markdown; // Explicitly specify Markdown format.
 
-        // Save the document as Markdown.
+        // Save the document as a Markdown file.
         doc.Save(outputPath, saveOptions);
     }
 }

@@ -7,18 +7,17 @@ class Program
     static void Main()
     {
         // Path to the source DOCX file.
-        string sourcePath = @"C:\Docs\SourceDocument.docx";
+        string sourcePath = "input.docx";
 
-        // Create LoadOptions and explicitly set the format to DOCX.
-        LoadOptions loadOptions = new LoadOptions
-        {
-            LoadFormat = LoadFormat.Docx
-        };
+        // Create LoadOptions that explicitly specify the DOCX format.
+        // The constructor (LoadFormat, string, string) allows setting the format,
+        // password (empty here), and base URI (empty here).
+        LoadOptions loadOptions = new LoadOptions(LoadFormat.Docx, "", "");
 
-        // Open the document using the specified load options.
+        // Open the document using the specified LoadOptions.
         Document doc = new Document(sourcePath, loadOptions);
 
-        // The document is now loaded and can be processed further.
-        Console.WriteLine("Document loaded successfully. Page count: " + doc.PageCount);
+        // Example conversion: save the opened document as PDF.
+        doc.Save("output.pdf", SaveFormat.Pdf);
     }
 }

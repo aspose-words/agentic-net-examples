@@ -1,74 +1,37 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
-class InsertGroupShapeIntoRtf
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Ensure there is a paragraph to host the group shape.
-        builder.Writeln("Paragraph before the group shape.");
+        // Insert two floating shapes that will be grouped.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rectangle.Left = 50;               // Position from the left edge of the page.
+        rectangle.Top = 50;                // Position from the top edge of the page.
+        rectangle.Stroke.Color = Color.Blue;
 
-        // Create a group shape. The constructor requires a DocumentBase (Document).
-        GroupShape group = new GroupShape(doc);
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        ellipse.Left = 120;
+        ellipse.Top = 80;
+        ellipse.Stroke.Color = Color.Green;
 
-        // Set the size and position of the group shape (in points).
-        group.Width = 200;
-        group.Height = 100;
-        group.Left = 50;
-        group.Top = 50;
+        // Group the shapes. The InsertGroupShape method automatically calculates the
+        // position and size of the new GroupShape and inserts it at the current cursor location.
+        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
 
-        // Set wrapping to none so the group behaves as a floating object.
-        group.WrapType = WrapType.None;
-        group.BehindText = true;
-        group.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        group.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        // Example of setting additional properties on the group shape.
+        group.WrapType = WrapType.None;    // Make the group floating.
+        group.BehindText = true;           // Place it behind the document text.
 
-        // Create a rectangle shape to add to the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 80;
-        rect.Height = 60;
-        rect.Left = 0;   // Position relative to the group's coordinate space.
-        rect.Top = 0;
-        rect.Fill.Color = System.Drawing.Color.LightBlue;
-        rect.StrokeColor = System.Drawing.Color.DarkBlue;
-        rect.StrokeWeight = 0.5;
-
-        // Add the rectangle as a child of the group shape.
-        group.AppendChild(rect);
-
-        // Create a second shape (e.g., an ellipse) inside the same group.
-        Shape ellipse = new Shape(doc, ShapeType.Ellipse);
-        ellipse.Width = 80;
-        ellipse.Height = 60;
-        ellipse.Left = 100; // Position next to the rectangle within the group.
-        ellipse.Top = 0;
-        ellipse.Fill.Color = System.Drawing.Color.LightCoral;
-        ellipse.StrokeColor = System.Drawing.Color.DarkRed;
-        ellipse.StrokeWeight = 0.5;
-
-        group.AppendChild(ellipse);
-
-        // Insert the group shape into the document after the current paragraph.
-        // The group shape must be added to the document's node collection.
-        builder.CurrentParagraph.AppendChild(group);
-
-        // Add another paragraph after the group shape for clarity.
-        builder.Writeln("\nParagraph after the group shape.");
-
-        // Save the document as RTF using RtfSaveOptions.
-        RtfSaveOptions saveOptions = new RtfSaveOptions
-        {
-            // Ensure the document is saved in RTF format.
-            SaveFormat = SaveFormat.Rtf
-        };
-        doc.Save("GroupShapeOutput.rtf", saveOptions);
+        // Save the document as an RTF file.
+        doc.Save("GroupShape.rtf", SaveFormat.Rtf);
     }
 }

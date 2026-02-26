@@ -1,14 +1,14 @@
 using System;
-using Aspose.Words;
-using Aspose.Words.Drawing.Charts;
-using Aspose.Words.Drawing;
 using System.Drawing;
+using Aspose.Words;
+using Aspose.Words.Drawing;
+using Aspose.Words.Drawing.Charts;
 
-class ChartAxisDemo
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -16,55 +16,43 @@ class ChartAxisDemo
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo series that Aspose adds by default.
+        // Remove the default demo series so we can start with a clean chart.
         chart.Series.Clear();
 
-        // Add a custom series with categories (X‑axis) and values (Y‑axis).
+        // Add a custom series with four categories and corresponding values.
         chart.Series.Add("Sample Series",
-            new[] { "A", "B", "C", "D", "E" },
-            new double[] { 120, 80, 150, 200, 90 });
+            new[] { "A", "B", "C", "D" },
+            new double[] { 120, 80, 150, 60 });
 
-        // ----- Configure X axis -----
+        // ---------- Configure the X axis ----------
         ChartAxis xAxis = chart.AxisX;
-        xAxis.CategoryType = AxisCategoryType.Category;   // ordinary categories
-        xAxis.Crosses = AxisCrosses.Minimum;              // cross at the minimum of Y axis
-        xAxis.ReverseOrder = false;                       // normal order
-        xAxis.MajorTickMark = AxisTickMark.Inside;        // major ticks inside plot area
-        xAxis.MinorTickMark = AxisTickMark.Cross;         // minor ticks cross the axis
-        xAxis.MajorUnit = 1;                              // one major tick per category
-        xAxis.MinorUnit = 0.5;                            // half‑category minor ticks
-        xAxis.TickLabels.Offset = 30;                     // distance from axis
+        xAxis.CategoryType = AxisCategoryType.Category;      // Use explicit categories.
+        xAxis.Crosses = AxisCrosses.Minimum;                // Cross at the minimum of the Y axis.
+        xAxis.ReverseOrder = false;                         // Normal order.
+        xAxis.MajorTickMark = AxisTickMark.Inside;          // Inside major tick marks.
+        xAxis.MinorTickMark = AxisTickMark.Cross;           // Cross minor tick marks.
+        xAxis.MajorUnit = 10.0;                             // Distance between major ticks.
+        xAxis.MinorUnit = 5.0;                              // Distance between minor ticks.
+        xAxis.TickLabels.Offset = 30;                       // Distance of labels from the axis.
         xAxis.TickLabels.Position = AxisTickLabelPosition.Low;
-        xAxis.TickLabels.IsAutoSpacing = false;
-        xAxis.TickMarkSpacing = 1;                        // draw a label for each category
+        xAxis.TickLabels.IsAutoSpacing = false;             // Manual spacing.
+        xAxis.TickMarkSpacing = 1;                          // One tick per category.
 
-        // ----- Configure Y axis -----
+        // ---------- Configure the Y axis ----------
         ChartAxis yAxis = chart.AxisY;
-        yAxis.CategoryType = AxisCategoryType.Automatic; // value axis
-        yAxis.Crosses = AxisCrosses.Maximum;             // cross at the maximum of X axis
-        yAxis.ReverseOrder = true;                       // display values from max to min
+        yAxis.CategoryType = AxisCategoryType.Automatic;    // Let Word decide the type.
+        yAxis.Crosses = AxisCrosses.Maximum;                // Cross at the maximum of the X axis.
+        yAxis.ReverseOrder = true;                          // Display values from max to min.
         yAxis.MajorTickMark = AxisTickMark.Inside;
         yAxis.MinorTickMark = AxisTickMark.Cross;
-        yAxis.MajorUnit = 50;                             // major tick every 50 units
-        yAxis.MinorUnit = 10;                             // minor tick every 10 units
+        yAxis.MajorUnit = 50.0;
+        yAxis.MinorUnit = 10.0;
         yAxis.TickLabels.Position = AxisTickLabelPosition.NextToAxis;
         yAxis.TickLabels.Alignment = ParagraphAlignment.Center;
-        yAxis.TickLabels.Font.Color = Color.Red;
-        yAxis.TickLabels.Spacing = 1;
+        yAxis.TickLabels.Font.Color = Color.Red;            // Red label font.
+        yAxis.TickLabels.Spacing = 1;                       // One label per tick.
 
-        // ----- Add axis titles -----
-        ChartAxisTitle xTitle = chart.AxisX.Title;
-        xTitle.Text = "Categories";
-        xTitle.Show = true;
-
-        ChartAxisTitle yTitle = chart.AxisY.Title;
-        yTitle.Text = "Values";
-        yTitle.Show = true;
-        yTitle.Overlay = true;            // allow other elements to overlap the title
-        yTitle.Font.Size = 12;
-        yTitle.Font.Color = Color.Blue;
-
-        // Save the document.
+        // Save the document with the configured chart.
         doc.Save("ChartAxisProperties.docx");
     }
 }

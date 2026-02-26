@@ -8,51 +8,53 @@ class RevisionComparisonToHtml
 {
     static void Main()
     {
-        // Load the two documents that will be compared.
-        Document originalDoc = new Document("Original.docx");
-        Document editedDoc = new Document("Edited.docx");
+        // Paths to the original and edited documents.
+        string originalPath = @"C:\Docs\Original.docx";
+        string editedPath   = @"C:\Docs\Edited.docx";
 
-        // Configure comparison options (default values are sufficient for this example).
+        // Load the documents.
+        Document originalDoc = new Document(originalPath);
+        Document editedDoc   = new Document(editedPath);
+
+        // Ensure both documents have no revisions before comparison.
+        if (originalDoc.Revisions.Count != 0 || editedDoc.Revisions.Count != 0)
+            throw new InvalidOperationException("Documents must not contain revisions before comparison.");
+
+        // Set up comparison options (optional – here we compare all elements).
         CompareOptions compareOptions = new CompareOptions
         {
-            // Use the edited document as the target so that revisions are created in the original.
-            Target = ComparisonTargetType.New
+            CompareMoves = true,
+            IgnoreFormatting = false,
+            IgnoreCaseChanges = false,
+            IgnoreComments = false,
+            IgnoreTables = false,
+            IgnoreFields = false,
+            IgnoreFootnotes = false,
+            IgnoreTextboxes = false,
+            IgnoreHeadersAndFooters = false,
+            Target = ComparisonTargetType.Current
         };
 
-        // Perform the comparison. Revisions will be added to originalDoc.
-        originalDoc.Compare(editedDoc, "Comparer", DateTime.Now, compareOptions);
+        // Perform the comparison. The revisions will be added to the original document.
+        originalDoc.Compare(editedDoc, "Reviewer", DateTime.Now, compareOptions);
 
-        // Access the RevisionOptions that control how revisions are rendered.
+        // Configure how revisions are displayed in the rendered output.
         RevisionOptions revOptions = originalDoc.LayoutOptions.RevisionOptions;
+        revOptions.ShowOriginalRevision = true;   // Show original text instead of revised text.
+        revOptions.ShowRevisionMarks = true;     // Keep revision markup visible.
+        revOptions.ShowRevisionBars = false;     // Hide side revision bars.
+        revOptions.ShowInBalloons = ShowInBalloons.None; // Render revisions inline.
 
-        // Show the original text alongside the revised text.
-        revOptions.ShowOriginalRevision = true;
-
-        // Keep the revision markup (e.g., underlines, strike‑through) visible.
-        revOptions.ShowRevisionMarks = true;
-
-        // Render format revisions in balloons on the right side of the page.
-        revOptions.ShowInBalloons = ShowInBalloons.Format;
-
-        // Optionally change colors/effects for inserted and deleted text.
-        revOptions.InsertedTextColor = RevisionColor.Green;
-        revOptions.InsertedTextEffect = RevisionTextEffect.Italic;
-        revOptions.DeletedTextColor = RevisionColor.Red;
-        revOptions.DeletedTextEffect = RevisionTextEffect.Bold;
-
-        // Save the resulting document (with revisions) as HTML.
+        // Prepare HTML save options.
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
-            // Use HTML5 for modern browsers.
-            HtmlVersion = HtmlVersion.Html5,
-
-            // Export revision balloons as part of the HTML.
-            ExportXhtmlTransitional = false,
-
-            // Optional: pretty‑format the output for readability.
-            PrettyFormat = true
+            HtmlVersion = HtmlVersion.Html5, // Use HTML5 standard.
+            PrettyFormat = true            // Make the output human‑readable.
+            // Headers and footers are exported by default; no explicit property needed.
         };
 
-        originalDoc.Save("ComparisonResult.html", htmlOptions);
+        // Save the comparison result as an HTML file.
+        string outputPath = @"C:\Docs\ComparisonResult.html";
+        originalDoc.Save(outputPath, htmlOptions);
     }
 }

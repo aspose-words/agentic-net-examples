@@ -1,30 +1,28 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class ConvertToDoc
+class Program
 {
     static void Main()
     {
-        // Path to the source document (any supported format).
-        string inputPath = @"C:\Docs\source.pdf";
+        // Path to the source document (any format supported by Aspose.Words).
+        string inputPath = @"C:\Docs\SampleDocument.docx";
 
-        // Path where the DOC file will be saved.
-        string outputPath = @"C:\Docs\converted.doc";
+        // Path for the converted DOC file.
+        string outputPath = @"C:\Docs\ConvertedDocument.doc";
 
-        // Load the document with default load options (auto-detect format).
-        LoadOptions loadOptions = new LoadOptions();
-        Document doc = new Document(inputPath, loadOptions);
+        // Load the source document.
+        Document doc = new Document(inputPath);
 
-        // Prepare save options for the DOC format.
-        DocSaveOptions saveOptions = new DocSaveOptions
-        {
-            // Explicitly set the target format (optional, but clarifies intent).
-            SaveFormat = SaveFormat.Doc
-        };
+        // Create save options for the legacy DOC format.
+        // The constructor that accepts a SaveFormat ensures the correct format is set.
+        DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
 
-        // Save the document as a DOC file.
+        // Optional: set a password for the saved DOC file.
+        // saveOptions.Password = "MyPassword";
+
+        // Save the document as DOC using the specified options.
         doc.Save(outputPath, saveOptions);
     }
 }

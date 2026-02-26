@@ -1,46 +1,25 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-public class Program
+namespace AsposeWordsConversion
 {
-    public static void Main(string[] args)
+    class Program
     {
-        // Expect exactly two arguments: input file and output file.
-        if (args.Length != 2)
+        static void Main(string[] args)
         {
-            Console.WriteLine("Usage: PdfConverter <inputPath> <outputPath>");
-            return;
+            // Path to the source document (any supported format, e.g., DOCX).
+            string inputFile = @"C:\Docs\SourceDocument.docx";
+
+            // Path where the PDF will be saved. The .pdf extension tells Aspose.Words to save in PDF format.
+            string outputFile = @"C:\Docs\ConvertedDocument.pdf";
+
+            // Load the existing document from the file system.
+            Document doc = new Document(inputFile);
+
+            // Save the document as PDF. The format is inferred from the file extension.
+            doc.Save(outputFile);
+
+            Console.WriteLine("Document successfully converted to PDF.");
         }
-
-        string inputPath = args[0];
-        string outputPath = args[1];
-
-        try
-        {
-            ConvertToPdf(inputPath, outputPath);
-            Console.WriteLine($"Document converted successfully to '{outputPath}'.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error converting document: {ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// Converts a document from any supported format to PDF.
-    /// </summary>
-    /// <param name="inputPath">Full path to the source document.</param>
-    /// <param name="outputPath">Full path where the PDF will be saved.</param>
-    public static void ConvertToPdf(string inputPath, string outputPath)
-    {
-        // Load the source document using Aspose.Words' built‑in loading mechanism.
-        Document document = new Document(inputPath);
-
-        // Create PDF save options – can be customized if needed.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-        // Save the document as PDF using the options defined above.
-        document.Save(outputPath, pdfOptions);
     }
 }

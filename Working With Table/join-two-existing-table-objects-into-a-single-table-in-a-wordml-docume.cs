@@ -1,4 +1,3 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -6,32 +5,27 @@ class Program
 {
     static void Main()
     {
-        // Load the existing WordML document.
+        // Load the document that contains the two tables to be merged.
         Document doc = new Document("Input.docx");
 
-        // Access the collection of tables in the first section's body.
-        TableCollection tables = doc.FirstSection.Body.Tables;
+        // Retrieve the first table from the document's body.
+        Table firstTable = doc.FirstSection.Body.Tables[0];
 
-        // Ensure there are at least two tables to join.
-        if (tables.Count >= 2)
+        // Retrieve the second table using the generic GetChild method.
+        Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
+
+        // Transfer all rows from the second table to the first table.
+        while (secondTable.HasChildNodes)
         {
-            // Get references to the first and second tables.
-            Table firstTable = tables[0];
-            Table secondTable = tables[1];
-
-            // Append each row from the second table to the first table.
-            // Use Document.ImportNode (not Table.ImportNode) to clone the row into the same document.
-            foreach (Row row in secondTable.Rows)
-            {
-                Row importedRow = (Row)doc.ImportNode(row, true);
-                firstTable.Rows.Add(importedRow);
-            }
-
-            // Remove the now redundant second table from the document.
-            secondTable.Remove();
+            // Add the first row of the second table to the first table.
+            // This also removes the row from the second table.
+            firstTable.Rows.Add(secondTable.FirstRow);
         }
 
-        // Save the modified document.
+        // Remove the now empty second table container from the document.
+        secondTable.Remove();
+
+        // Save the resulting document with the combined table.
         doc.Save("Output.docx");
     }
 }

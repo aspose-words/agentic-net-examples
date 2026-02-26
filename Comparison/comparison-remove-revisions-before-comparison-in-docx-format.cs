@@ -2,28 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class RemoveRevisionsBeforeComparison
+class CompareDocuments
 {
     static void Main()
     {
-        // Path to the folder that contains the documents.
-        string dataDir = @"C:\Data\";
+        // Paths to the source documents and the output file.
+        string originalPath = @"Original.docx";
+        string editedPath   = @"Edited.docx";
+        string resultPath   = @"Result.docx";
 
-        // Load the original and the edited documents.
-        Document docOriginal = new Document(dataDir + "Original.docx");
-        Document docEdited = new Document(dataDir + "Edited.docx");
+        // Load the original and edited documents.
+        Document docOriginal = new Document(originalPath);
+        Document docEdited   = new Document(editedPath);
 
-        // Accept (remove) all revisions in both documents so that the comparison works on clean content.
-        docOriginal.Revisions.AcceptAll();
-        docEdited.Revisions.AcceptAll();
+        // Ensure both documents have no pending revisions before comparison.
+        // Accepting all revisions clears the revision collection.
+        if (docOriginal.Revisions.Count > 0)
+            docOriginal.Revisions.AcceptAll();
 
-        // Set up comparison options (default options are sufficient for a basic comparison).
-        CompareOptions compareOptions = new CompareOptions();
+        if (docEdited.Revisions.Count > 0)
+            docEdited.Revisions.AcceptAll();
 
-        // Perform the comparison. The result (revisions that represent differences) will be stored in docOriginal.
-        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+        // Perform the comparison. The author name and timestamp are required.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
 
-        // Save the comparison result to a new DOCX file.
-        docOriginal.Save(dataDir + "ComparisonResult.docx");
+        // Save the document that now contains the revision markup.
+        docOriginal.Save(resultPath);
     }
 }

@@ -1,25 +1,27 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class InsertComboBoxIntoDotx
+class Program
 {
     static void Main()
     {
-        // Load an existing DOTX template.
-        Document doc = new Document("Template.dotx");
+        // Create a new blank document which will be saved as a DOTX template.
+        Document doc = new Document();
 
-        // Create a DocumentBuilder for the loaded document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Write some introductory text before the combo box.
+        builder.Write("Select a fruit: ");
+
         // Define the items that will appear in the combo box.
-        string[] comboItems = { "Option 1", "Option 2", "Option 3" };
+        string[] items = { "Apple", "Banana", "Cherry" };
 
         // Insert the combo box form field.
-        // Parameters: field name, items array, index of the default selected item.
-        builder.InsertComboBox("MyComboBox", comboItems, 0);
+        // Parameters: field name, array of items, index of the initially selected item.
+        builder.InsertComboBox("FruitCombo", items, 0);
 
-        // Save the document back as a DOTX file.
-        doc.Save("Result.dotx");
+        // Save the document as a DOTX template.
+        doc.Save("ComboBoxTemplate.dotx", SaveFormat.Dotx);
     }
 }

@@ -1,60 +1,57 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 
-class Program
+namespace DocumentConversionExample
 {
-    static void Main(string[] args)
+    public class Converter
     {
-        if (args.Length < 2)
+        /// <summary>
+        /// Converts a document from one format to another.
+        /// The input and output formats are inferred from the file extensions.
+        /// </summary>
+        /// <param name="inputPath">Full path to the source document.</param>
+        /// <param name="outputPath">Full path where the converted document will be saved.</param>
+        public void Convert(string inputPath, string outputPath)
         {
-            Console.WriteLine("Usage: DocumentConverter <inputPath> <outputPath>");
-            return;
+            // Load the source document. The constructor automatically detects the format.
+            Document doc = new Document(inputPath);
+
+            // Determine the target save format from the output file extension.
+            SaveFormat targetFormat = GetSaveFormatFromExtension(Path.GetExtension(outputPath));
+
+            // Save the document in the desired format.
+            doc.Save(outputPath, targetFormat);
         }
 
-        using var input = File.OpenRead(args[0]);
-        using var output = File.Create(args[1]);
+        /// <summary>
+        /// Maps a file extension to the corresponding Aspose.Words SaveFormat value.
+        /// </summary>
+        private SaveFormat GetSaveFormatFromExtension(string extension)
+        {
+            // Ensure the extension starts with a dot and is in lower case.
+            string ext = extension.StartsWith(".") ? extension.ToLowerInvariant() : "." + extension.ToLowerInvariant();
 
-        var converter = new DocumentConverter();
-        converter.Convert(input, output);
-        Console.WriteLine("Conversion completed.");
+            // Use Aspose.Words utility to convert the extension to a SaveFormat.
+            // This method throws if the extension is not supported.
+            return FileFormatUtil.ExtensionToSaveFormat(ext);
+        }
     }
-}
 
-public class DocumentConverter
-{
-    /// <summary>
-    /// Converts a document from the input stream to the output stream using the most appropriate format.
-    /// The output format is derived from the detected input format; if conversion is not possible,
-    /// the document is saved as DOCX.
-    /// </summary>
-    /// <param name="inputStream">Stream containing the source document. Must be readable and seekable.</param>
-    /// <param name="outputStream">Stream where the converted document will be written.</param>
-    public void Convert(Stream inputStream, Stream outputStream)
+    // Example usage
+    class Program
     {
-        // Ensure the input stream supports seeking so we can reset its position after detection.
-        if (!inputStream.CanSeek)
-            throw new ArgumentException("Input stream must support seeking.", nameof(inputStream));
+        static void Main()
+        {
+            var converter = new Converter();
 
-        // Detect the format of the input document.
-        var formatInfo = FileFormatUtil.DetectFileFormat(inputStream);
+            // Example: convert a DOCX file to PDF.
+            string inputFile = @"C:\Docs\SampleDocument.docx";
+            string outputFile = @"C:\Docs\SampleDocument.pdf";
 
-        // Reset the stream position to the beginning for actual loading.
-        inputStream.Position = 0;
+            converter.Convert(inputFile, outputFile);
 
-        // Load the document using default load options.
-        var loadOptions = new LoadOptions();
-        var document = new Document(inputStream, loadOptions);
-
-        // Determine the appropriate save format based on the detected load format.
-        // If conversion is not supported, fall back to DOCX.
-        var saveFormat = FileFormatUtil.LoadFormatToSaveFormat(formatInfo.LoadFormat);
-        if (saveFormat == SaveFormat.Unknown)
-            saveFormat = SaveFormat.Docx;
-
-        // Save the document to the output stream using the chosen format.
-        document.Save(outputStream, saveFormat);
+            Console.WriteLine("Conversion completed.");
+        }
     }
 }

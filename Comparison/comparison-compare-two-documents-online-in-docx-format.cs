@@ -1,52 +1,45 @@
 using System;
 using System.IO;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class Program
+class DocumentComparison
 {
-    // Entry point.
-    static async Task Main()
+    static void Main()
     {
-        // URLs of the two DOCX documents to compare.
-        const string urlDocA = "https://example.com/documentA.docx";
-        const string urlDocB = "https://example.com/documentB.docx";
+        // URLs of the two DOCX files to compare.
+        string urlOriginal = "https://example.com/documents/original.docx";
+        string urlEdited   = "https://example.com/documents/edited.docx";
 
-        // Download the documents into memory streams.
-        using var httpClient = new HttpClient();
+        // Load both documents from the web into Aspose.Words Document objects.
+        Document docOriginal = LoadDocumentFromUrl(urlOriginal);
+        Document docEdited   = LoadDocumentFromUrl(urlEdited);
 
-        using var streamA = new MemoryStream(await httpClient.GetByteArrayAsync(urlDocA));
-        using var streamB = new MemoryStream(await httpClient.GetByteArrayAsync(urlDocB));
-
-        // Load the documents from the streams.
-        Document docA = new Document(streamA);
-        Document docB = new Document(streamB);
-
-        // Configure comparison options.
-        CompareOptions compareOptions = new CompareOptions
+        // Ensure both documents have no existing revisions before comparison.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            // Example: track changes at the word level and compare moves.
-            Granularity = Granularity.WordLevel,
-            CompareMoves = true,
-            // Adjust other flags as needed.
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
-            Target = ComparisonTargetType.New
-        };
+            // Compare the documents. Revisions are added to docOriginal.
+            docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
+        }
 
-        // Perform the comparison. The revisions will be added to docA.
-        docA.Compare(docB, "Comparer", DateTime.Now, compareOptions);
+        // Save the result (original document with revisions) to a local file.
+        docOriginal.Save("ComparisonResult.docx");
+    }
 
-        // Save the resulting document with revisions.
-        const string outputPath = "ComparedResult.docx";
-        docA.Save(outputPath);
+    // Downloads a DOCX file from the specified URL and loads it into a Document.
+    private static Document LoadDocumentFromUrl(string url)
+    {
+        using (HttpClient client = new HttpClient())
+        {
+            // Retrieve the file bytes.
+            byte[] data = client.GetByteArrayAsync(url).Result;
+
+            // Load the document from a memory stream.
+            using (MemoryStream stream = new MemoryStream(data))
+            {
+                return new Document(stream);
+            }
+        }
     }
 }

@@ -1,10 +1,9 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
-class InsertGroupShapeIntoPng
+class Program
 {
     static void Main()
     {
@@ -12,42 +11,25 @@ class InsertGroupShapeIntoPng
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape that will contain other shapes.
-        GroupShape group = new GroupShape(doc);
-        // Define the size and position of the group on the page (in points).
-        group.Bounds = new RectangleF(100, 100, 300, 200);
-        // Define the internal coordinate system for child shapes.
-        // CoordOrigin and CoordSize expect System.Drawing.Point and System.Drawing.Size (integer values).
-        group.CoordOrigin = new Point(0, 0);
-        group.CoordSize   = new Size(1000, 1000);
+        // Insert a rectangle shape.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rect.Left = 50;               // Position from the left edge of the page.
+        rect.Top = 50;                // Position from the top edge of the page.
+        rect.Stroke.Color = Color.Blue;
 
-        // ----- Add a rectangle shape to the group -----
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 400;   // Width in points within the group's coordinate space.
-        rect.Height = 200;  // Height in points within the group's coordinate space.
-        rect.Left = 100;    // Position relative to the group's top‑left corner.
-        rect.Top = 100;
-        rect.Fill.ForeColor = Color.LightBlue;
-        rect.Stroke.Color = Color.DarkBlue;
-        group.AppendChild(rect);
+        // Insert an ellipse shape.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        ellipse.Left = 100;
+        ellipse.Top = 100;
+        ellipse.Stroke.Color = Color.Green;
 
-        // ----- Add a line shape to the group -----
-        Shape line = new Shape(doc, ShapeType.Line);
-        line.Width = 600;
-        line.Height = 0; // Height is not used for a line.
-        line.Left = 200;
-        line.Top = 300;
-        line.Stroke.Color = Color.Red;
-        line.Stroke.Weight = 2.0;
-        line.Stroke.StartArrowType = ArrowType.Arrow;
-        line.Stroke.EndArrowType = ArrowType.Arrow;
-        group.AppendChild(line);
+        // Group the two shapes into a single GroupShape node.
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Insert the group shape into the document.
-        builder.InsertNode(group);
+        // Optionally adjust the group's bounding box.
+        group.Bounds = new RectangleF(0, 0, 300, 300);
 
-        // Save the document as a PNG image.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png);
-        doc.Save("GroupShapeOutput.png", saveOptions);
+        // Save the document as a PNG image (each page becomes a separate PNG file).
+        doc.Save("GroupShape.png", SaveFormat.Png);
     }
 }

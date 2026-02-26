@@ -1,47 +1,40 @@
 using System;
-using System.IO;
+using System.Data;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace MailMergeToPdfExample
+namespace AsposeWordsMailMergeExample
 {
     class Program
     {
         static void Main()
         {
-            // Path to the template DOCX that contains MERGEFIELD tags.
-            string templatePath = @"C:\Docs\Template.docx";
-
-            // Load the DOCX document.
-            Document doc = new Document(templatePath);
-
-            // Define the merge field names that exist in the template.
-            string[] fieldNames = { "FirstName", "LastName", "Message" };
-
-            // Provide the corresponding values for a single record.
-            object[] fieldValues = { "John", "Doe", "Hello! This message was created with Aspose.Words mail merge." };
-
-            // Execute the mail merge. This populates the MERGEFIELD tags with the supplied data.
-            doc.MailMerge.Execute(fieldNames, fieldValues);
-
-            // Configure PDF save options.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions
-            {
-                // Render DrawingML shapes directly (instead of using fallback shapes).
-                DmlRenderingMode = DmlRenderingMode.DrawingML,
-
-                // Optional: improve rendering quality.
-                UseHighQualityRendering = true,
-                UseAntiAliasing = true
-            };
+            // Path to the source DOCX/DOCM file that contains MERGEFIELD tags.
+            const string sourcePath = @"C:\Docs\TemplateWithMacros.docx";
 
             // Path where the resulting PDF will be saved.
-            string pdfPath = @"C:\Docs\Report.pdf";
+            const string pdfOutputPath = @"C:\Docs\ResultReport.pdf";
 
-            // Save the merged document as PDF using the configured options.
-            doc.Save(pdfPath, pdfOptions);
+            // Load the existing document (lifecycle rule: load).
+            Document doc = new Document(sourcePath);
 
-            Console.WriteLine("Mail merge completed and PDF saved to: " + pdfPath);
+            // Prepare a simple data source for the mail merge.
+            // The column names must match the MERGEFIELD names in the template.
+            DataTable mergeData = new DataTable("MergeData");
+            mergeData.Columns.Add("FullName");
+            mergeData.Columns.Add("Company");
+            mergeData.Columns.Add("Address");
+            mergeData.Columns.Add("City");
+
+            // Add a single record – you can add more rows if you need multiple documents.
+            mergeData.Rows.Add("James Bond", "MI5 Headquarters", "Milbank", "London");
+
+            // Execute the mail merge (feature rule: MailMerge.Execute(string[], object[])).
+            // Here we use the overload that accepts a DataTable for convenience.
+            doc.MailMerge.Execute(mergeData);
+
+            // Convert the merged document to PDF (lifecycle rule: save with format).
+            doc.Save(pdfOutputPath, SaveFormat.Pdf);
         }
     }
 }

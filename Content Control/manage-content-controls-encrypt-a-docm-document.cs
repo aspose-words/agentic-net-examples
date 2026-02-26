@@ -1,36 +1,46 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Loading;
+using Aspose.Words.Loading; // Added namespace for LoadOptions
 
 class EncryptDocmExample
 {
     static void Main()
     {
-        // Folder where the document will be saved.
-        string artifactsDir = @"C:\Temp\";
+        // Folder for input and output files.
+        string dataDir = @"C:\Temp\"; // <-- adjust as needed
 
-        // Create a new blank document.
-        Document doc = new Document();
+        // Paths for the original and encrypted DOCM files.
+        string originalPath = Path.Combine(dataDir, "Original.docm");
+        string encryptedPath = Path.Combine(dataDir, "Encrypted.docm");
 
-        // Add some content to the document.
+        // -------------------------------------------------
+        // 1. Create a new DOCM document and add some text.
+        // -------------------------------------------------
+        Document doc = new Document();                     // create
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, this DOCM file is encrypted with a password.");
+        builder.Writeln("Hello, encrypted DOCM!");
 
-        // Configure save options for DOCM format and set the encryption password.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
-        saveOptions.Password = "MyPassword";
+        // Save the document as DOCM (no encryption yet).
+        doc.Save(originalPath, SaveFormat.Docm);           // save
 
-        // Save the encrypted DOCM file.
-        string encryptedPath = artifactsDir + "EncryptedDocument.docm";
-        doc.Save(encryptedPath, saveOptions);
+        // -------------------------------------------------
+        // 2. Encrypt the document while saving.
+        // -------------------------------------------------
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(); // create save options
+        saveOptions.Password = "MySecretPassword";               // set encryption password
 
-        // Load the encrypted document using the correct password.
-        LoadOptions loadOptions = new LoadOptions("MyPassword");
-        Document loadedDoc = new Document(encryptedPath, loadOptions);
+        // Save the same document with encryption applied.
+        doc.Save(encryptedPath, saveOptions);               // save with options
 
-        // Verify that the document was loaded successfully.
-        Console.WriteLine("Document text after loading:");
-        Console.WriteLine(loadedDoc.GetText().Trim());
+        // -------------------------------------------------
+        // 3. Load the encrypted document using the password.
+        // -------------------------------------------------
+        LoadOptions loadOptions = new LoadOptions("MySecretPassword"); // create load options with password
+        Document encryptedDoc = new Document(encryptedPath, loadOptions); // load
+
+        // Verify that the content is accessible after decryption.
+        Console.WriteLine(encryptedDoc.GetText().Trim());
     }
 }

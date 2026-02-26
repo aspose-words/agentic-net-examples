@@ -8,35 +8,36 @@ class Program
 {
     static void Main()
     {
-        // Load the MHTML file into an Aspose.Words Document.
-        // The load operation follows the provided load rule.
-        Document mhtmlDoc = new Document("input.mhtml");
+        // Path to the source MHTML file.
+        string mhtmlPath = @"C:\Temp\source.mht";
 
-        // Prepare a memory stream to hold the MHTML content when saved.
+        // Load the MHTML document using Aspose.Words.
+        Document doc = new Document(mhtmlPath); // load
+
+        // Save the document to a memory stream in MHTML format.
         using (MemoryStream mhtmlStream = new MemoryStream())
         {
-            // Save the document back to MHTML format into the stream.
-            // The save operation follows the provided save rule.
-            mhtmlDoc.Save(mhtmlStream, SaveFormat.Mhtml);
-            mhtmlStream.Position = 0; // Reset stream position for reading.
+            doc.Save(mhtmlStream, SaveFormat.Mhtml); // save
+            mhtmlStream.Position = 0; // reset for reading
 
-            // Create the mail message.
+            // Create a mail message.
             MailMessage mail = new MailMessage
             {
                 From = new MailAddress("sender@example.com"),
-                Subject = "Here is the MHTML document",
-                Body = "Please find the attached MHTML file."
+                Subject = "Attached MHTML Document",
+                Body = "Please find the MHTML document attached."
             };
             mail.To.Add("recipient@example.com");
 
-            // Attach the MHTML content as a file attachment.
-            // The attachment uses the stream containing the saved MHTML.
-            Attachment attachment = new Attachment(mhtmlStream, "document.mhtml", "message/rfc822");
+            // Attach the MHTML content. Use the appropriate MIME type.
+            Attachment attachment = new Attachment(mhtmlStream, "document.mht", "message/rfc822");
             mail.Attachments.Add(attachment);
 
-            // At this point the mail message is ready to be sent.
-            // For demonstration purposes we will just output a confirmation.
-            Console.WriteLine("Mail message created with MHTML attachment.");
+            // Send the e‑mail (SMTP settings must be configured for your environment).
+            using (SmtpClient client = new SmtpClient("smtp.example.com"))
+            {
+                client.Send(mail);
+            }
         }
     }
 }

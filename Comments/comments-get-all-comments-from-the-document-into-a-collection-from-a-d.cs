@@ -6,23 +6,23 @@ class Program
 {
     static void Main()
     {
-        // Load the DOCX document.
+        // Load the DOCX document from file (lifecycle rule: load)
         Document doc = new Document("Input.docx");
 
-        // Retrieve all comment nodes from the document.
+        // Get all comment nodes in the document (including those in sub‑nodes)
         NodeCollection commentNodes = doc.GetChildNodes(NodeType.Comment, true);
 
-        // Store the comments in a strongly‑typed collection.
+        // Convert the NodeCollection to a strongly‑typed List<Comment>
         List<Comment> comments = new List<Comment>();
         foreach (Comment comment in commentNodes)
         {
             comments.Add(comment);
         }
 
-        // Example usage: print each comment's author and text.
-        foreach (Comment c in comments)
+        // Example usage: print each comment's author and text
+        foreach (Comment comment in comments)
         {
-            Console.WriteLine($"Author: {c.Author}, Text: {c.GetText()}");
+            Console.WriteLine($"Author: {comment.Author}, Text: {comment.GetText().Trim()}");
         }
     }
 }

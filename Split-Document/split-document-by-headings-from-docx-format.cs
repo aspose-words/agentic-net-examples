@@ -3,58 +3,42 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class SplitDocumentByHeadings
 {
     static void Main()
     {
-        // Load the source DOCX document.
-        Document doc = new Document("Input.docx");
+        // Path to the source DOCX file.
+        string sourcePath = @"C:\Docs\SourceDocument.docx";
+
+        // Directory where the split HTML files will be written.
+        string outputDir = @"C:\Docs\SplitOutput";
+
+        // Ensure the output directory exists.
+        if (!Directory.Exists(outputDir))
+            Directory.CreateDirectory(outputDir);
+
+        // The base name for the first HTML file. Additional parts will be named
+        // automatically as <base>-01.html, <base>-02.html, etc.
+        string outputFile = Path.Combine(outputDir, "Split.html");
+
+        // Load the DOCX document.
+        Document doc = new Document(sourcePath);
 
         // Configure HTML save options to split the document at heading paragraphs.
-        HtmlSaveOptions options = new HtmlSaveOptions
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            // Split at headings (Heading 1, Heading 2, etc.).
+            // Split at paragraphs that use heading styles.
             DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-            // Define up to which heading level the split should occur.
-            DocumentSplitHeadingLevel = 2,
-            // Provide a callback to control the filenames of the generated parts.
-            DocumentPartSavingCallback = new SavedDocumentPartRename("Output.html", DocumentSplitCriteria.HeadingParagraph)
+
+            // Split at heading levels 1 and 2 (set to 0 to disable heading splits).
+            DocumentSplitHeadingLevel = 2
         };
 
-        // Save the document; Aspose.Words will create separate HTML files for each heading part.
-        doc.Save("Output.html", options);
-    }
+        // Save the document. Aspose.Words will create multiple HTML files according
+        // to the heading split criteria.
+        doc.Save(outputFile, saveOptions);
 
-    // Callback that customizes the filenames of each split document part.
-    private class SavedDocumentPartRename : IDocumentPartSavingCallback
-    {
-        private readonly string _baseFileName;
-        private readonly DocumentSplitCriteria _criteria;
-        private int _partCounter;
-
-        public SavedDocumentPartRename(string baseFileName, DocumentSplitCriteria criteria)
-        {
-            _baseFileName = baseFileName;
-            _criteria = criteria;
-        }
-
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
-        {
-            // Determine a readable part type name.
-            string partType = _criteria switch
-            {
-                DocumentSplitCriteria.PageBreak => "Page",
-                DocumentSplitCriteria.ColumnBreak => "Column",
-                DocumentSplitCriteria.SectionBreak => "Section",
-                DocumentSplitCriteria.HeadingParagraph => "Heading",
-                _ => "Part"
-            };
-
-            // Build a unique filename for the part.
-            string partFileName = $"{Path.GetFileNameWithoutExtension(_baseFileName)}_part{++_partCounter}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
-
-            // Set the filename (or you could set a custom stream instead).
-            args.DocumentPartFileName = partFileName;
-        }
+        Console.WriteLine("Document split completed. Files are located in:");
+        Console.WriteLine(outputDir);
     }
 }

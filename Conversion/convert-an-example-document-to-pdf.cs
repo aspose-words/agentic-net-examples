@@ -1,18 +1,20 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load the source document (replace with your actual file path).
-        Document doc = new Document("Example.docx");
+        // Path to the source DOCX file.
+        string inputPath = @"MyDir\Document.docx";
 
-        // Create PDF save options – default settings are sufficient for a basic conversion.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Path where the resulting PDF will be saved.
+        string outputPath = @"ArtifactsDir\Document.ConvertToPdf.pdf";
 
-        // Save the document as a PDF file.
-        doc.Save("Example.pdf", pdfOptions);
+        // Load the existing Word document.
+        Document doc = new Document(inputPath);
+
+        // Save the document as PDF. The format is inferred from the .pdf extension.
+        doc.Save(outputPath);
     }
 }

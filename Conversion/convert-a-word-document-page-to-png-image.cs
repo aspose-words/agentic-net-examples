@@ -2,21 +2,32 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class WordToPngConverter
 {
     static void Main()
     {
-        // Load the source Word document.
-        Document doc = new Document("InputDocument.docx");
+        // Path to the source Word document.
+        string inputPath = @"C:\Docs\Sample.docx";
 
-        // Create image save options for PNG format.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png);
+        // Path to the output PNG image.
+        // This will contain the rendered page.
+        string outputPath = @"C:\Docs\Sample_Page1.png";
 
-        // Render only a specific page (zero‑based index). 
-        // For example, to render the second page set the index to 1.
-        saveOptions.PageSet = new PageSet(1);
+        // Load the Word document from the file system.
+        Document doc = new Document(inputPath);
+
+        // Create ImageSaveOptions for PNG format.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
+
+        // Specify which page to render.
+        // PageSet uses zero‑based page index, so 0 = first page.
+        options.PageSet = new PageSet(0);
+
+        // Optional: set resolution or background color if needed.
+        // options.Resolution = 300;               // 300 DPI
+        // options.PaperColor = System.Drawing.Color.Transparent;
 
         // Save the selected page as a PNG image.
-        doc.Save("Page2.png", saveOptions);
+        doc.Save(outputPath, options);
     }
 }

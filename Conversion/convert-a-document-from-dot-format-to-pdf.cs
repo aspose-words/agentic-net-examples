@@ -1,25 +1,24 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsConversion
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOT file
-        string inputPath = "Template.dot";
+        static void Main()
+        {
+            // Path to the source DOT template file.
+            string dotFilePath = @"C:\Input\Template.dot";
 
-        // Path to the output PDF file
-        string outputPath = "Result.pdf";
+            // Path where the resulting PDF will be saved.
+            string pdfFilePath = @"C:\Output\Converted.pdf";
 
-        // Load the DOT template into a Document object
-        Document doc = new Document(inputPath);
+            // Load the DOT document. The Document constructor automatically detects the format.
+            Document doc = new Document(dotFilePath);
 
-        // Create PDF save options (customize as needed)
-        PdfSaveOptions saveOptions = new PdfSaveOptions();
-        // Example: enable high‑quality rendering for better visual fidelity
-        saveOptions.UseHighQualityRendering = true;
-
-        // Save the document as PDF
-        doc.Save(outputPath, saveOptions);
+            // Save the document as PDF. The file extension determines the save format.
+            doc.Save(pdfFilePath);
+        }
     }
 }

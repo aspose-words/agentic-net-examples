@@ -1,36 +1,43 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Saving;
 
-class Program
+class ContentControlExample
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for inserting nodes.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a plain‑text content control (Structured Document Tag).
-        // The third argument is the markup level (Inline or Block). Use Inline for a plain‑text Sdt.
-        StructuredDocumentTag plainTextControl = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        builder.InsertNode(plainTextControl);
-        // Move the builder inside the control to add its content.
-        builder.MoveTo(plainTextControl);
+        // Insert a plain‑text content control (StructuredDocumentTag) at the current cursor position.
+        // The builder is automatically positioned inside the newly created content control.
+        StructuredDocumentTag sdt = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+
+        // Optionally set properties of the content control.
+        sdt.Title = "SamplePlainTextControl";
+        sdt.Tag = "PlainTextTag";
+
+        // Write some placeholder text inside the content control.
         builder.Writeln("This text is inside a plain‑text content control.");
 
-        // Insert a rich‑text content control.
-        builder.Writeln(); // start a new paragraph.
-        // Use Inline markup level for the rich‑text Sdt as well.
-        StructuredDocumentTag richTextControl = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Inline);
-        builder.InsertNode(richTextControl);
-        builder.MoveTo(richTextControl);
-        builder.Writeln("This text is inside a rich‑text content control.");
+        // Move the cursor out of the content control to continue normal document editing.
+        builder.MoveToDocumentEnd();
 
-        // Save the document as DOCX using OoxmlSaveOptions.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        doc.Save("ContentControls.docx", saveOptions);
+        // Insert a rich‑text content control as another example.
+        StructuredDocumentTag richSdt = builder.InsertStructuredDocumentTag(SdtType.RichText);
+        richSdt.Title = "SampleRichTextControl";
+        richSdt.Tag = "RichTextTag";
+
+        // Add formatted content inside the rich‑text control.
+        builder.Font.Bold = true;
+        builder.Writeln("Bold text inside a rich‑text content control.");
+        builder.Font.Bold = false;
+        builder.Writeln("Normal text inside the same control.");
+
+        // Save the document in DOCX format.
+        doc.Save("ContentControl.docx");
     }
 }

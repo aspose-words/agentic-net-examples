@@ -1,28 +1,23 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsConversion
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOC file.
-        string inputPath = "input.doc";
-
-        // Path to the destination HTML file.
-        string outputPath = "output.html";
-
-        // Load the DOC file. The format is auto‑detected from the file extension, so an explicit LoadOptions object is not required.
-        Document doc = new Document(inputPath);
-
-        // Set up HTML save options. Use HTML5 and enable pretty formatting.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        static void Main()
         {
-            HtmlVersion = HtmlVersion.Html5,
-            PrettyFormat = true
-        };
+            // Path to the source DOC file.
+            string inputFile = @"C:\Docs\SourceDocument.doc";
 
-        // Save the document as HTML.
-        doc.Save(outputPath, saveOptions);
+            // Path where the HTML output will be saved.
+            string outputFile = @"C:\Docs\ConvertedDocument.html";
+
+            // Load the existing DOC file.
+            Document doc = new Document(inputFile);
+
+            // Save the document in HTML format.
+            doc.Save(outputFile, SaveFormat.Html);
+        }
     }
 }

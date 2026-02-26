@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -8,26 +9,24 @@ class Program
         // Load an existing DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Create a DocumentBuilder attached to the loaded document.
+        // Create a DocumentBuilder to edit the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a regular text input form field.
-        builder.Writeln("Enter your name:");
-        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "Enter name", 50);
+        // Insert a checkbox form field.
+        // Parameters: name, default checked state, size (points).
+        builder.InsertCheckBox("AcceptTerms", false, 50);
+        builder.Writeln(); // Move to next line.
 
         // Insert a combo box form field.
+        // Parameters: name, list of items, selected index.
+        string[] colors = { "Red", "Green", "Blue", "Yellow" };
+        builder.InsertComboBox("FavoriteColor", colors, 0);
         builder.Writeln();
-        string[] footwearOptions = { "-- Select footwear --", "Sneakers", "Oxfords", "Flip-flops", "Other" };
-        builder.Writeln("Choose footwear:");
-        builder.InsertComboBox("FootwearCombo", footwearOptions, 0);
 
-        // Insert a check box form field.
+        // Insert a text input form field.
+        // Parameters: name, type, default text, placeholder, max length.
+        builder.InsertTextInput("UserName", TextFormFieldType.Regular, "", "Enter your name", 30);
         builder.Writeln();
-        builder.Writeln("Accept terms:");
-        builder.InsertCheckBox("AcceptTerms", false, 50);
-
-        // Protect the document so that only form fields can be edited.
-        doc.Protect(ProtectionType.AllowOnlyFormFields);
 
         // Save the modified document.
         doc.Save("Output.docx");

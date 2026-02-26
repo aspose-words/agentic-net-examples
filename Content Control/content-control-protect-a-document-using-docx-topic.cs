@@ -1,44 +1,36 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Markup;
 
-class ProtectDocumentExample
+class Program
 {
     static void Main()
     {
-        // Define the folder where the output files will be saved.
-        // Adjust this path as needed for your environment.
-        string artifactsDir = @"C:\Temp\Aspose\Docs\";
-
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add some content.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world! This document is write‑protected.");
 
-        // Set a write‑protection password (max 15 characters) and recommend read‑only.
-        doc.WriteProtection.SetPassword("MyPassword");
-        doc.WriteProtection.ReadOnlyRecommended = true;
+        // Add introductory text.
+        builder.Writeln("Please fill in the following form:");
 
-        // Save the protected document as DOCX.
-        doc.Save(artifactsDir + "WriteProtected.docx");
+        // Create a plain‑text content control (StructuredDocumentTag).
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Block);
+        sdt.Title = "Name";
+        sdt.Tag = "NameTag";
+        sdt.PlaceholderName = "Enter your name";
 
-        // Load the saved document to verify the protection settings.
-        Document loadedDoc = new Document(artifactsDir + "WriteProtected.docx");
+        // Insert the content control at the current cursor position.
+        builder.InsertNode(sdt);
 
-        // The document can still be edited programmatically.
-        DocumentBuilder loadedBuilder = new DocumentBuilder(loadedDoc);
-        loadedBuilder.MoveToDocumentEnd();
-        loadedBuilder.Writeln("Additional text added programmatically.");
+        // Add a default run inside the content control.
+        sdt.AppendChild(new Run(doc, "John Doe"));
 
-        // Output verification results.
-        Console.WriteLine("Is write protected: " + loadedDoc.WriteProtection.IsWriteProtected);
-        Console.WriteLine("Password valid: " + loadedDoc.WriteProtection.ValidatePassword("MyPassword"));
-        Console.WriteLine("Document text:");
-        Console.WriteLine(loadedDoc.GetText());
+        // Protect the document so that only form fields (content controls) can be edited.
+        doc.Protect(ProtectionType.AllowOnlyFormFields);
 
-        // Optionally, save the document again after programmatic changes.
-        loadedDoc.Save(artifactsDir + "WriteProtected_Modified.docx");
+        // Save the protected document as a DOCX file.
+        doc.Save("ProtectedDocument.docx");
     }
 }

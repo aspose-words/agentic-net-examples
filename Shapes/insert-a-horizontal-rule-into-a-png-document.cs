@@ -1,32 +1,37 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
-class Program
+class HorizontalRuleToPng
 {
     static void Main()
     {
-        // Create a new blank document
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a horizontal rule shape at the current cursor position
-        Shape hrShape = builder.InsertHorizontalRule();
+        // Insert a horizontal rule shape at the current cursor position.
+        Shape horizontalRule = builder.InsertHorizontalRule();
 
-        // Optional: customize the horizontal rule appearance
-        HorizontalRuleFormat hrFormat = hrShape.HorizontalRuleFormat;
-        hrFormat.Alignment = HorizontalRuleAlignment.Center;   // center the rule
-        hrFormat.WidthPercent = 80;                           // 80% of page width
-        hrFormat.Height = 2;                                  // 2 points thick
-        hrFormat.Color = Color.DarkGray;                      // gray color
-        hrFormat.NoShade = true;                              // solid color, no 3D shading
+        // Customize the appearance of the horizontal rule.
+        HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
+        format.Alignment = HorizontalRuleAlignment.Center; // Centered on the page.
+        format.WidthPercent = 70;                         // 70% of the page width.
+        format.Height = 3;                                // Height of 3 points.
+        format.Color = Color.Blue;                        // Blue color.
+        format.NoShade = true;                            // Solid color, no 3‑D shading.
 
-        // Save the document as a PNG image (each page will be rendered to a separate PNG file)
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png);
-        doc.Save("HorizontalRule.png", saveOptions);
+        // Prepare image save options for PNG output.
+        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
+        {
+            HorizontalResolution = 96f, // Default horizontal DPI.
+            VerticalResolution = 96f    // Default vertical DPI.
+        };
+
+        // Save the document as a PNG image.
+        doc.Save("HorizontalRule.png", pngOptions);
     }
 }

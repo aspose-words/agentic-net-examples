@@ -2,42 +2,53 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Saving;
 
 class FontSettingsExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Define output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize FontSettings and assign it to the document.
+        // Access the document builder to insert text.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // -----------------------------------------------------------------
+        // 1. Set default font for the whole document (applies to new styles).
+        // -----------------------------------------------------------------
+        doc.Styles.DefaultFont.Name = "Arial";
+        doc.Styles.DefaultFont.Size = 12;
+
+        // -----------------------------------------------------------------
+        // 2. Configure font substitution rules.
+        //    If a font is missing, substitute it with the listed alternatives.
+        // -----------------------------------------------------------------
         FontSettings fontSettings = new FontSettings();
+
+        // Example: substitute the unavailable font "Amethysta" with "Arvo" then "Courier New".
+        fontSettings.SubstitutionSettings.TableSubstitution.SetSubstitutes(
+            "Amethysta", new[] { "Arvo", "Courier New" });
+
+        // Assign the configured FontSettings to the document.
         doc.FontSettings = fontSettings;
 
-        // Specify a folder that contains TrueType fonts.
-        // The folder path can be adjusted to point to any directory with .ttf files.
-        string fontsFolder = Path.Combine(Environment.CurrentDirectory, "MyFonts");
-        FolderFontSource folderSource = new FolderFontSource(fontsFolder, false);
-        fontSettings.SetFontsSources(new FontSourceBase[] { folderSource });
+        // -----------------------------------------------------------------
+        // 3. Write text using both available and unavailable fonts.
+        // -----------------------------------------------------------------
+        builder.Font.Name = "Arial";
+        builder.Writeln("This line uses the default Arial font.");
 
-        // Build automatic fallback settings based on the fonts available in the folder.
-        FontFallbackSettings fallback = fontSettings.FallbackSettings;
-        fallback.BuildAutomatic();
+        builder.Font.Name = "Amethysta"; // This font is likely missing.
+        builder.Writeln("This line uses Amethysta, which will be substituted.");
 
-        // Configure a simple substitution rule: if "Times New Roman" is missing, use "Arial".
-        // This uses the table substitution mechanism.
-        fontSettings.SubstitutionSettings.TableSubstitution.AddSubstitutes("Times New Roman", new[] { "Arial" });
-
-        // Use DocumentBuilder to write some text with a font that does not exist in the folder.
-        // The fallback/substitution scheme will be applied when rendering this text.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "MissingFont";
-        builder.Writeln("This paragraph uses a missing font and will trigger fallback/substitution.");
-
-        // Save the document as DOCX using OoxmlSaveOptions.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
-        saveOptions.UpdateLastSavedTimeProperty = true;
-        doc.Save("FontSettingsExample.docx", saveOptions);
+        // -----------------------------------------------------------------
+        // 4. Save the document as DOCX.
+        // -----------------------------------------------------------------
+        string outputPath = Path.Combine(artifactsDir, "FontSettingsExample.docx");
+        doc.Save(outputPath);
     }
 }

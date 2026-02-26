@@ -1,25 +1,30 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class InsertHtmlIntoCell
 {
     static void Main()
     {
-        // Load the HTML document.
-        Document doc = new Document("input.html");
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Locate the first table and the first cell within it.
-        Table table = doc.FirstSection.Body.Tables[0];
-        Cell cell = table.Rows[0].Cells[0];
-
-        // Position the DocumentBuilder at the start of the cell's first paragraph.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(cell.FirstParagraph);
 
-        // Insert the desired text into the cell.
-        builder.Write("Inserted text");
+        // Start a table and insert the first cell.
+        builder.StartTable();
+        builder.InsertCell();
 
-        // Save the updated document.
-        doc.Save("output.docx");
+        // Insert HTML content into the current cell.
+        // The HTML fragment will be parsed and converted to Word formatting.
+        builder.InsertHtml("<p align='center'><b>Hello, <span style='color:red;'>World</span>!</b></p>");
+
+        // End the row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // Save the document to disk.
+        doc.Save("CellWithHtml.docx");
     }
 }

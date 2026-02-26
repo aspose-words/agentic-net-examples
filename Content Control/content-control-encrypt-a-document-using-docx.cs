@@ -7,38 +7,27 @@ class EncryptDocxExample
 {
     static void Main()
     {
-        // Folder where the files will be saved.
-        string artifactsDir = @"C:\Temp\";
-
         // Create a new blank document.
         Document doc = new Document();
+
+        // Add some content to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world! This document will be encrypted.");
+        builder.Writeln("Hello world! This document is encrypted.");
 
         // Configure save options to encrypt the DOCX with a password.
         OoxmlSaveOptions saveOptions = new OoxmlSaveOptions();
-        saveOptions.Password = "MyPassword"; // ECMA376 Standard encryption.
+        saveOptions.Password = "MySecretPassword";
 
         // Save the encrypted document.
-        string encryptedPath = artifactsDir + "EncryptedDocument.docx";
+        string encryptedPath = "EncryptedDocument.docx";
         doc.Save(encryptedPath, saveOptions);
 
-        // Attempt to load the document without a password – will throw IncorrectPasswordException.
-        try
-        {
-            Document loadFail = new Document(encryptedPath);
-        }
-        catch (IncorrectPasswordException)
-        {
-            Console.WriteLine("Failed to open without password (as expected).");
-        }
-
-        // Load the encrypted document using the correct password.
-        LoadOptions loadOptions = new LoadOptions("MyPassword");
+        // -----------------------------------------------------------------
+        // Demonstrate loading the encrypted document using the correct password.
+        LoadOptions loadOptions = new LoadOptions("MySecretPassword");
         Document loadedDoc = new Document(encryptedPath, loadOptions);
 
-        // Verify that the content was loaded correctly.
-        Console.WriteLine("Document text after loading with password:");
+        // Verify that the document was loaded successfully.
         Console.WriteLine(loadedDoc.GetText().Trim());
     }
 }

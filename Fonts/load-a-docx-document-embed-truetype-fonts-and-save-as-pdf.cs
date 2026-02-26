@@ -10,14 +10,16 @@ class Program
         // Load the DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Configure PDF save options to embed all TrueType fonts.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            // Embed every font used in the document.
-            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll,
-            // Ensure that the full font data (all glyphs) is embedded.
-            EmbedFullFonts = true
-        };
+        // Enable embedding of TrueType fonts in the document.
+        FontInfoCollection fontInfos = doc.FontInfos;
+        fontInfos.EmbedTrueTypeFonts = true;
+        fontInfos.EmbedSystemFonts = true;
+        fontInfos.SaveSubsetFonts = true;
+
+        // Configure PDF save options to embed full fonts.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        pdfOptions.EmbedFullFonts = true;                     // embed complete fonts (no subsetting)
+        pdfOptions.FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll; // embed all fonts
 
         // Save the document as PDF with the specified options.
         doc.Save("Output.pdf", pdfOptions);

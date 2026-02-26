@@ -3,52 +3,41 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class ConvertDocxPagesToPng
 {
     static void Main()
     {
-        // Path to the source DOCX document.
-        string inputPath = @"C:\Docs\SourceDocument.docx";
+        // Path to the source DOCX file.
+        string docxPath = @"C:\Input\Document.docx";
 
-        // Directory where the PNG images will be saved.
-        string outputDir = @"C:\Docs\PagesAsPng\";
-        Directory.CreateDirectory(outputDir);
+        // Folder where the PNG images will be saved.
+        string outputFolder = @"C:\Output\Pages";
+
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputFolder);
 
         // Load the DOCX document.
-        Document doc = new Document(inputPath);
+        Document doc = new Document(docxPath);
 
-        // Configure image save options for PNG format.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
+        // Create ImageSaveOptions for PNG format.
+        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
+
+        // Optional: set resolution (dpi) if needed.
+        // pngOptions.Resolution = 300;
+
+        // Loop through each page in the document.
+        for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
         {
-            // Render all pages (default). No need to set PageSet.
-            // Use a callback to control how each page is saved.
-            PageSavingCallback = new PageSavingCallback(outputDir)
-        };
+            // Set the PageSet to render only the current page.
+            pngOptions.PageSet = new PageSet(pageIndex);
 
-        // Save the document; the callback will create one PNG per page.
-        doc.Save(Path.Combine(outputDir, "placeholder.png"), saveOptions);
-    }
+            // Build the output file name (e.g., Page_1.png, Page_2.png, ...).
+            string outFile = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
 
-    // Callback that saves each rendered page to a separate PNG file.
-    private class PageSavingCallback : IPageSavingCallback
-    {
-        private readonly string _outputFolder;
-
-        public PageSavingCallback(string outputFolder)
-        {
-            _outputFolder = outputFolder;
+            // Save the current page as a PNG image.
+            doc.Save(outFile, pngOptions);
         }
 
-        public void PageSaving(PageSavingArgs args)
-        {
-            // Build a file name like "Page_0.png", "Page_1.png", etc.
-            string fileName = $"Page_{args.PageIndex}.png";
-
-            // Set the full path for the page image.
-            args.PageFileName = Path.Combine(_outputFolder, fileName);
-
-            // Ensure the stream is closed after saving.
-            args.KeepPageStreamOpen = false;
-        }
+        Console.WriteLine("Conversion completed. PNG files are saved in: " + outputFolder);
     }
 }

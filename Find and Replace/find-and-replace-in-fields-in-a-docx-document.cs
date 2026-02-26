@@ -1,31 +1,34 @@
 using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class FindReplaceInFields
+class Program
 {
     static void Main()
     {
-        // Load the DOCX document.
+        // Load the DOCX file.
         Document doc = new Document("Input.docx");
 
-        // Configure find/replace options to include fields in the search.
-        FindReplaceOptions options = new FindReplaceOptions();
-        // By default fields are included, but we set it explicitly for clarity.
-        options.IgnoreFields = false;          // Search inside field codes and results.
-        options.IgnoreFieldCodes = false;      // Include the field code text itself.
-        options.MatchCase = false;            // Case‑insensitive search (adjust as needed).
+        // -----------------------------------------------------------------
+        // 1. Replace text that appears inside fields.
+        //    The default FindReplaceOptions does NOT ignore fields,
+        //    so a simple call to Range.Replace will affect field contents.
+        // -----------------------------------------------------------------
+        // Example: replace the placeholder _FullName_ with an actual name.
+        int replacedInFields = doc.Range.Replace("_FullName_", "John Doe");
+        Console.WriteLine($"Replacements inside fields: {replacedInFields}");
 
-        // Define the text to find and its replacement.
-        string oldText = "PLACEHOLDER";
-        string newText = "ActualValue";
-
-        // Perform the replace operation across the whole document range.
-        doc.Range.Replace(oldText, newText, options);
-
-        // Optionally update all fields so that any calculated results reflect the new data.
-        doc.UpdateFields();
+        // -----------------------------------------------------------------
+        // 2. Replace text while ignoring everything that is inside fields.
+        //    Set FindReplaceOptions.IgnoreFields = true to skip field text.
+        // -----------------------------------------------------------------
+        FindReplaceOptions ignoreFieldsOptions = new FindReplaceOptions
+        {
+            IgnoreFields = true
+        };
+        // Example: replace the word "Hello" only in normal document text.
+        int replacedOutsideFields = doc.Range.Replace("Hello", "Greetings", ignoreFieldsOptions);
+        Console.WriteLine($"Replacements outside fields: {replacedOutsideFields}");
 
         // Save the modified document.
         doc.Save("Output.docx");

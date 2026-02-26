@@ -1,40 +1,29 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Comparing;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class Program
+class PdfComparisonExample
 {
     static void Main()
     {
-        // Load the first PDF document.
-        var loadOptions = new PdfLoadOptions(); // Use default load options.
-        Document docOriginal = new Document(@"C:\Docs\Original.pdf", loadOptions);
+        // Paths to the original and edited PDF documents.
+        string originalPdfPath = "Original.pdf";
+        string editedPdfPath = "Edited.pdf";
 
-        // Load the second PDF document to compare with.
-        Document docEdited = new Document(@"C:\Docs\Edited.pdf", loadOptions);
+        // Load the two PDF files as Aspose.Words Document objects.
+        Document originalDoc = new Document(originalPdfPath);
+        Document editedDoc = new Document(editedPdfPath);
 
-        // Set up comparison options (customize as needed).
-        var compareOptions = new CompareOptions
+        // Ensure both documents have no existing revisions before comparison.
+        if (originalDoc.Revisions.Count == 0 && editedDoc.Revisions.Count == 0)
         {
-            // Example: ignore formatting changes.
-            IgnoreFormatting = true,
-            // Track changes at the word level.
-            Granularity = Granularity.WordLevel,
-            // Use the edited document as the base for comparison.
-            Target = ComparisonTargetType.New
-        };
+            // Compare the documents. The revisions will be added to the original document.
+            originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
+        }
 
-        // Perform the comparison. Revisions will be added to docOriginal.
-        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
-
-        // Save the comparison result as a PDF.
-        var saveOptions = new PdfSaveOptions
-        {
-            // Ensure the output is a standard PDF (not PDF/A).
-            Compliance = PdfCompliance.Pdf17
-        };
-        docOriginal.Save(@"C:\Docs\ComparisonResult.pdf", saveOptions);
+        // Save the comparison result (original document with revisions) as a PDF.
+        // PdfSaveOptions can be used to control PDF output; default options are sufficient here.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        originalDoc.Save("ComparisonResult.pdf", pdfOptions);
     }
 }

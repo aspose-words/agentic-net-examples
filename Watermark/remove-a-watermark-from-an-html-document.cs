@@ -1,32 +1,28 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Loading;
 
 class RemoveWatermarkFromHtml
 {
     static void Main()
     {
-        // Path to the source HTML file.
-        string inputPath = @"C:\Docs\input.html";
+        // Path to the source HTML document.
+        string inputPath = @"C:\Docs\SourceDocument.html";
+
+        // Path where the resulting HTML document will be saved.
+        string outputPath = @"C:\Docs\ResultDocument.html";
 
         // Load the HTML document.
-        // HtmlLoadOptions can be customized if needed; using defaults here.
-        Document doc = new Document(inputPath, new HtmlLoadOptions());
+        Document doc = new Document(inputPath);
 
-        // If a watermark is present (text or image), remove it.
+        // If a watermark is present, remove it.
         if (doc.Watermark.Type != WatermarkType.None)
         {
             doc.Watermark.Remove();
         }
 
-        // Path to the output HTML file.
-        string outputPath = @"C:\Docs\output.html";
-
         // Save the document back to HTML format.
-        // HtmlSaveOptions can be customized; using defaults here.
-        doc.Save(outputPath, new HtmlSaveOptions());
-
-        Console.WriteLine("Watermark removal completed.");
+        // The SaveFormat is inferred from the file extension, but can be specified explicitly.
+        doc.Save(outputPath, SaveFormat.Html);
     }
 }

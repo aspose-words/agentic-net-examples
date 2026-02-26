@@ -6,32 +6,21 @@ class InsertShapeWithText
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a textbox shape with specific dimensions (300x100 points).
-        Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 300, 100);
+        // Insert an inline text box shape (200 pt wide, 50 pt high) at the current cursor position.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
 
-        // Access the TextBox object to configure its properties if needed.
-        TextBox textBox = textBoxShape.TextBox;
-        // Example: make the shape grow to fit the text.
-        textBox.FitShapeToText = true;
-        // Example: set internal margins (optional).
-        textBox.InternalMarginTop = 5;
-        textBox.InternalMarginBottom = 5;
-        textBox.InternalMarginLeft = 5;
-        textBox.InternalMarginRight = 5;
+        // The shape is already placed in the document, now add a paragraph and a run of text inside it.
+        Paragraph shapeParagraph = textBox.FirstParagraph;               // Gets the first (and only) paragraph of the shape.
+        Run run = new Run(doc) { Text = "Hello Aspose!" };               // Create a run with the desired text.
+        shapeParagraph.AppendChild(run);                                 // Append the run to the shape's paragraph.
 
-        // Move the builder cursor to the last paragraph inside the textbox shape.
-        builder.MoveTo(textBoxShape.LastParagraph);
-
-        // Write the desired text into the textbox.
-        builder.Font.Size = 14;
-        builder.Font.Name = "Arial";
-        builder.Write("This is a textbox shape with text inserted using Aspose.Words.");
+        // Optionally adjust alignment or other formatting of the shape here.
+        // textBox.HorizontalAlignment = HorizontalAlignment.Center;
+        // textBox.VerticalAlignment = VerticalAlignment.Top;
 
         // Save the document to a DOCX file.
         doc.Save("ShapeWithText.docx");

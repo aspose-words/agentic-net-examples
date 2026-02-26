@@ -1,62 +1,48 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables; // <-- added namespace for Table, Row, etc.
 
-class Program
+class SplitTableToTxt
 {
     static void Main()
     {
-        // Create a new document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Load the source document (must contain at least one table).
+        Document srcDoc = new Document("TableSource.docx");
 
-        // Build a sample table with 4 rows and 2 columns.
-        Table table = builder.StartTable();
-        for (int i = 1; i <= 4; i++)
+        // Create a new empty document that will hold the split tables.
+        Document dstDoc = new Document();
+        // Ensure the document has a section and a body.
+        dstDoc.EnsureMinimum();
+
+        // Iterate over all tables in the source document.
+        foreach (Table srcTable in srcDoc.GetChildNodes(NodeType.Table, true))
         {
-            builder.InsertCell();
-            builder.Write($"Row {i}, Cell 1");
-            builder.InsertCell();
-            builder.Write($"Row {i}, Cell 2");
-            builder.EndRow();
+            // For each row in the source table create a new table that contains only that row.
+            foreach (Row srcRow in srcTable.Rows)
+            {
+                // Clone the row (deep copy) so that it can be moved to a new table.
+                Row clonedRow = (Row)srcRow.Clone(true);
+
+                // Create a new table and add the cloned row.
+                Table newTable = new Table(dstDoc);
+                newTable.AppendChild(clonedRow);
+
+                // Append the new table to the destination document body.
+                dstDoc.FirstSection.Body.AppendChild(newTable);
+
+                // Add an empty paragraph after each table to separate them in the text output.
+                dstDoc.FirstSection.Body.AppendChild(new Paragraph(dstDoc));
+            }
         }
-        builder.EndTable();
 
-        // Split the table after the second row.
-        SplitTableAfterRow(table, 2);
-
-        // Save the document as plain text while preserving table layout.
-        TxtSaveOptions saveOptions = new TxtSaveOptions
+        // Configure TXT save options to preserve the visual layout of tables.
+        TxtSaveOptions txtOptions = new TxtSaveOptions
         {
-            PreserveTableLayout = true
+            PreserveTableLayout = true // Apply whitespace padding so the table shape is kept.
         };
-        doc.Save("SplitTable.txt", saveOptions);
-    }
 
-    // Moves rows after splitIndex into a new table inserted after the original table.
-    static void SplitTableAfterRow(Table original, int splitIndex)
-    {
-        // Validate split index.
-        if (splitIndex < 1 || splitIndex >= original.Rows.Count)
-            return;
-
-        // Clone the original table's formatting without its rows.
-        Table newTable = (Table)original.Clone(false);
-
-        // Insert the new table immediately after the original table.
-        original.ParentNode.InsertAfter(newTable, original);
-
-        // Number of rows to move to the new table.
-        int rowsToMove = original.Rows.Count - splitIndex;
-
-        // Transfer rows one by one.
-        for (int i = 0; i < rowsToMove; i++)
-        {
-            // Always remove the row at the split index (rows shift up after removal).
-            Row row = original.Rows[splitIndex];
-            original.RemoveChild(row);
-            newTable.AppendChild(row);
-        }
+        // Save the resulting document as plain‑text.
+        dstDoc.Save("SplitTables.txt", txtOptions);
     }
 }

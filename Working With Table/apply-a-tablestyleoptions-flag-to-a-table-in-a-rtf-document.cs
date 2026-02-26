@@ -2,41 +2,39 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class ApplyTableStyleOptions
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Use DocumentBuilder to construct a simple 2x2 table.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         Table table = builder.StartTable();
 
-        // Insert at least one cell so that the table can accept formatting.
+        // First row (header).
         builder.InsertCell();
-        builder.Write("Header");
-
-        // End the first row.
+        builder.Writeln("Header 1");
+        builder.InsertCell();
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Add a second row with some data.
+        // Second row (data).
         builder.InsertCell();
-        builder.Write("Data 1");
+        builder.Writeln("Data 1");
+        builder.InsertCell();
+        builder.Writeln("Data 2");
         builder.EndRow();
-
-        // Set a built‑in table style (any style that supports conditional formatting).
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
-
-        // Apply specific style options to the table.
-        // For example, enable first row formatting and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-
-        // Optionally adjust the table to fit its contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
         // End the table construction.
         builder.EndTable();
+
+        // Optionally assign a built‑in style to the table.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Apply specific TableStyleOptions flags (e.g., first row and row banding).
+        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
         // Save the document as an RTF file.
         doc.Save("TableWithStyleOptions.rtf");

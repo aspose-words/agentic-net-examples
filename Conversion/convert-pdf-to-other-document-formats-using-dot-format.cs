@@ -1,20 +1,32 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 
-class PdfToDotConverter
+class PdfToOtherFormats
 {
     static void Main()
     {
-        // Load the PDF document using PdfLoadOptions.
-        var loadOptions = new PdfLoadOptions();
-        Document doc = new Document("input.pdf", loadOptions);
+        // Path to the source PDF file.
+        string pdfPath = "input.pdf";
 
-        // Prepare save options for the DOT (Word template) format.
-        var saveOptions = new DocSaveOptions(SaveFormat.Dot);
+        // Load the PDF document.
+        Document doc = new Document(pdfPath);
 
-        // Save the document as a DOT file.
-        doc.Save("output.dot", saveOptions);
+        // Save the document as a Word template (DOT) format.
+        string dotPath = "output.dot";
+        doc.Save(dotPath, SaveFormat.Dot);
+
+        // Convert the same document to additional formats.
+
+        // Save as DOCX (Office Open XML WordprocessingML).
+        doc.Save("output.docx", SaveFormat.Docx);
+
+        // Save as RTF (Rich Text Format).
+        doc.Save("output.rtf", SaveFormat.Rtf);
+
+        // Save as HTML.
+        doc.Save("output.html", SaveFormat.Html);
+
+        // Save as plain text.
+        doc.Save("output.txt", SaveFormat.Text);
     }
 }

@@ -2,35 +2,44 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class Program
+class CompareContentControl
 {
     static void Main()
     {
-        // Load the two DOCX documents that contain content controls.
-        Document original = new Document("OriginalWithContentControls.docx");
-        Document revised = new Document("RevisedWithContentControls.docx");
+        // Load the original and the edited documents that contain content controls.
+        Document docOriginal = new Document("Original.docx");
+        Document docEdited   = new Document("Edited.docx");
 
-        // Configure comparison options.
-        CompareOptions compareOptions = new CompareOptions
+        // Ensure both documents have no existing revisions before comparison.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            // Track changes at the word level.
-            Granularity = Granularity.WordLevel,
-            // Do not ignore formatting – we want to see formatting changes inside content controls.
-            IgnoreFormatting = false,
-            // Compare moves (e.g., moved content controls) as separate revisions.
-            CompareMoves = true,
-            // Use the revised document as the base for comparison (similar to Word's "Show changes in: New document").
-            Target = ComparisonTargetType.New
-        };
+            // Configure comparison options.
+            CompareOptions options = new CompareOptions
+            {
+                // Track changes at the word level.
+                Granularity = Granularity.WordLevel,
+                // Use the edited document as the target (equivalent to Word's "Show changes in New document").
+                Target = ComparisonTargetType.New,
+                // Do not ignore any element types; content controls are compared as regular nodes.
+                IgnoreFormatting = false,
+                IgnoreComments = false,
+                IgnoreTables = false,
+                IgnoreFields = false,
+                IgnoreFootnotes = false,
+                IgnoreTextboxes = false,
+                IgnoreHeadersAndFooters = false,
+                CompareMoves = false
+            };
 
-        // Advanced option: treat content controls with different store item IDs as the same.
-        // This is useful when the only difference is the internal ID of a content control.
-        compareOptions.AdvancedOptions.IgnoreStoreItemId = true;
+            // Perform the comparison. Revisions are added to docOriginal.
+            docOriginal.Compare(docEdited, "Reviewer", DateTime.Now, options);
+        }
 
-        // Perform the comparison. Revisions will be added to the 'original' document.
-        original.Compare(revised, "ComparerUser", DateTime.Now, compareOptions);
+        // Save the document that now contains revision marks.
+        docOriginal.Save("ComparisonResult.docx");
 
-        // Save the result showing revisions.
-        original.Save("ComparisonResult.docx");
+        // Optionally accept all revisions to turn the original into the edited version.
+        docOriginal.Revisions.AcceptAll();
+        docOriginal.Save("ComparisonResult_Accepted.docx");
     }
 }

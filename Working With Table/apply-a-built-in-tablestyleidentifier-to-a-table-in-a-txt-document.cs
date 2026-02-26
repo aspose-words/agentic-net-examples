@@ -1,46 +1,32 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class ApplyTableStyleToTxt
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Begin a table. At least one cell must be inserted before any table formatting.
         Table table = builder.StartTable();
-
-        // Insert the first row with two cells.
         builder.InsertCell();
-        builder.Writeln("Header 1");
+        builder.Writeln("Item");
         builder.InsertCell();
-        builder.Writeln("Header 2");
+        builder.Writeln("Quantity");
         builder.EndRow();
 
-        // Insert a second row with two cells.
-        builder.InsertCell();
-        builder.Writeln("Value 1");
-        builder.InsertCell();
-        builder.Writeln("Value 2");
-        builder.EndRow();
-
-        // End the table construction.
-        builder.EndTable();
-
-        // Apply a built‑in table style using its StyleIdentifier.
-        // For example, use the "Light Grid" style.
+        // Apply a built‑in table style by its identifier.
         table.StyleIdentifier = StyleIdentifier.LightGrid;
 
-        // Optionally, enable additional style options (first row, banding, etc.).
+        // Optionally specify which parts of the style are applied.
         table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
-        // Save the document as a plain‑text file.
-        // The table will be rendered as plain text, but the style is applied in the document model.
+        // End the table.
+        builder.EndTable();
+
+        // Save the document as plain text. The table will be rendered as tab‑delimited text.
         doc.Save("TableWithStyle.txt");
     }
 }

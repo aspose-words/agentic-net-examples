@@ -2,43 +2,42 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class Program
+class DocumentComparisonDemo
 {
     static void Main()
     {
-        // Load the original document.
-        Document docOriginal = new Document("Original.docx");
+        // Path to the folder that contains the source documents.
+        // Adjust this path to point to your actual files.
+        string docsPath = @"C:\Docs\";
 
-        // Load the edited document that we want to compare against.
-        Document docEdited = new Document("Edited.docx");
+        // Load the original and the edited documents.
+        Document original = new Document(docsPath + "Original.docx");
+        Document edited   = new Document(docsPath + "Edited.docx");
 
-        // Configure comparison options.
-        CompareOptions compareOptions = new CompareOptions
+        // The Compare method requires that both documents have no existing revisions.
+        if (original.Revisions.Count == 0 && edited.Revisions.Count == 0)
         {
-            // Track changes at the word level.
-            Granularity = Granularity.WordLevel,
+            // Optional: configure comparison options (e.g., ignore formatting, case changes, etc.).
+            CompareOptions compareOptions = new CompareOptions
+            {
+                // Example: ignore formatting changes.
+                // IgnoreFormatting = true,
+                // Example: track changes at the word level (default is WordLevel).
+                // Granularity = Granularity.WordLevel
+            };
 
-            // Do not ignore any element types – track all differences.
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
+            // Perform the comparison. The revisions are added to the 'original' document.
+            original.Compare(edited, "Comparer", DateTime.Now, compareOptions);
+        }
 
-            // Use the original document as the base for comparison.
-            Target = ComparisonTargetType.Current,
+        // Output details of each revision that was created.
+        foreach (Revision rev in original.Revisions)
+        {
+            Console.WriteLine($"Revision type: {rev.RevisionType}, Node type: {rev.ParentNode.NodeType}");
+            Console.WriteLine($"\tChanged text: \"{rev.ParentNode.GetText().Trim()}\"");
+        }
 
-            // Do not treat moved text as a separate change.
-            CompareMoves = false
-        };
-
-        // Perform the comparison. Revisions (tracked changes) will be added to docOriginal.
-        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
-
-        // Save the document that now contains revision marks.
-        docOriginal.Save("ComparisonResult.docx");
+        // Save the document that now contains the tracked changes.
+        original.Save(docsPath + "ComparedResult.docx");
     }
 }

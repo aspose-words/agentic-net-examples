@@ -2,54 +2,40 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
-class ContentControlDemo
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph to host the content control.
-        builder.Writeln("Below is a plain‑text content control:");
+        // Write a line before the content control.
+        builder.Writeln("Below is a checkbox content control:");
 
-        // Create a plain‑text Structured Document Tag (content control) at the inline level.
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-        {
-            Title = "CustomerName",          // Friendly name shown in the UI.
-            Tag = "CustomerNameTag",         // Tag used for identification.
-            PlaceholderName = "Enter name", // Placeholder text displayed when empty.
-            LockContents = false,           // Allow editing of the content.
-            LockContentControl = false      // Allow deletion of the control.
-        };
-
-        // Insert the content control into the document.
-        builder.InsertNode(sdt);
-
-        // Insert some default text inside the content control.
-        builder.MoveTo(sdt);
-        builder.Write("John Doe");
-
-        // Add another paragraph after the content control.
-        builder.Writeln();
-        builder.Writeln("Another content control (checkbox):");
-
-        // Create a checkbox content control.
+        // Create an inline checkbox StructuredDocumentTag (content control).
         StructuredDocumentTag checkBox = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
         {
-            Title = "AgreeTerms",
-            Tag = "AgreeTermsTag",
-            Checked = false,
-            LockContentControl = false,
-            LockContents = false
+            Title = "AcceptTerms",          // Friendly name shown in the UI.
+            Tag = "AcceptTermsTag",         // Tag used for identification in code.
+            Checked = false,                // Initial state of the checkbox.
+            IsShowingPlaceholderText = true // Show placeholder when the control is empty.
         };
 
-        // Insert the checkbox control.
+        // Define custom symbols for the checked and unchecked states.
+        // 0x2611 = ☑, 0x2610 = ☐ (Unicode characters).
+        checkBox.SetCheckedSymbol(0x2611, "Arial");
+        checkBox.SetUncheckedSymbol(0x2610, "Arial");
+
+        // Insert the content control at the current cursor position.
         builder.InsertNode(checkBox);
 
-        // Save the document to disk.
-        doc.Save("ContentControlDemo.docx");
+        // Add placeholder text inside the content control.
+        builder.Writeln("Please accept the terms and conditions.");
+
+        // Save the document to a file. The format is inferred from the extension.
+        doc.Save("ContentControlExample.docx");
     }
 }

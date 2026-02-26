@@ -4,51 +4,49 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class ReplaceWithRunHandler : IReplacingCallback
+{
+    // This method is called for each match found by the Find/Replace engine.
+    public ReplaceAction Replacing(ReplacingArgs args)
+    {
+        // Create a new Run node that will replace the matched text.
+        Run newRun = new Run(args.MatchNode.Document, "Replacement Text");
+
+        // Example: apply custom formatting to the new run.
+        newRun.Font.Bold = true;
+        newRun.Font.Color = Color.Blue;
+
+        // Insert the new run immediately after the node that contained the match.
+        // InsertAfter is defined on CompositeNode, so cast the parent accordingly.
+        CompositeNode parent = (CompositeNode)args.MatchNode.ParentNode;
+        parent.InsertAfter(newRun, args.MatchNode);
+
+        // Remove the original node that held the matched text.
+        args.MatchNode.Remove();
+
+        // Skip the default replacement because we have already performed the custom one.
+        return ReplaceAction.Skip;
+    }
+}
+
+class FindReplaceWithRunExample
 {
     static void Main()
     {
-        // Load the DOCX document.
+        // Load the source DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Define the text to find (regular expression pattern).
-        string pattern = @"PLACEHOLDER";
-
-        // Create FindReplaceOptions and assign a custom replacing callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new RunReplacingCallback();
+        // Configure FindReplaceOptions with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new ReplaceWithRunHandler()
+        };
 
         // Perform the find-and-replace operation.
-        doc.Range.Replace(new Regex(pattern), string.Empty, options);
+        // The pattern "PLACEHOLDER" will be replaced by a new Run node.
+        doc.Range.Replace(new Regex("PLACEHOLDER"), string.Empty, options);
 
         // Save the modified document.
         doc.Save("Output.docx");
-    }
-
-    // Custom callback that replaces each match with a new Run node.
-    private class RunReplacingCallback : IReplacingCallback
-    {
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs e)
-        {
-            // Create a new Run with the desired replacement text.
-            Run newRun = new Run(e.MatchNode.Document, "NewRunText");
-
-            // Apply formatting to the new Run (example: bold and blue).
-            newRun.Font.Bold = true;
-            newRun.Font.Color = Color.Blue;
-
-            // The match node is usually a Run inside a Paragraph (CompositeNode).
-            // Insert the new Run after the matched node.
-            CompositeNode parent = e.MatchNode.ParentNode as CompositeNode;
-            if (parent != null)
-            {
-                parent.InsertAfter(newRun, e.MatchNode);
-                // Remove the original node that contained the placeholder.
-                e.MatchNode.Remove();
-            }
-
-            // Skip the default replacement to avoid inserting the original replacement string.
-            return ReplaceAction.Skip;
-        }
     }
 }

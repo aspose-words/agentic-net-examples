@@ -1,64 +1,36 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using TextBox = Aspose.Words.Drawing.TextBox; // Alias to avoid conflict with System.Windows.Forms
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape that will contain other shapes.
-        GroupShape group = new GroupShape(doc);
-        // Set the size and position of the group shape.
-        group.Width = 300;   // Width in points.
-        group.Height = 150;  // Height in points.
-        group.Left = 100;    // Distance from the left edge of the page.
-        group.Top = 100;     // Distance from the top edge of the page.
-        group.WrapType = WrapType.None; // No text wrapping.
-        group.BehindText = true;        // Place behind the document text.
+        // Insert a rectangle shape.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        shape1.Left = 20;               // Position relative to the page.
+        shape1.Top = 20;
+        shape1.Stroke.Color = Color.Red; // Outline color.
 
-        // -------------------------------------------------
-        // Add a rectangle shape inside the group.
-        // -------------------------------------------------
-        Shape rectangle = new Shape(doc, ShapeType.Rectangle);
-        rectangle.Width = 120;
-        rectangle.Height = 80;
-        rectangle.Left = 0;   // Position relative to the group's coordinate space.
-        rectangle.Top = 0;
-        rectangle.Fill.Color = System.Drawing.Color.LightBlue;
-        rectangle.Stroked = true;
-        rectangle.StrokeColor = System.Drawing.Color.DarkBlue;
-        rectangle.StrokeWeight = 1.0;
-        group.AppendChild(rectangle);
+        // Insert an ellipse shape.
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        shape2.Left = 40;
+        shape2.Top = 50;
+        shape2.Stroke.Color = Color.Green;
 
-        // -------------------------------------------------
-        // Add a text box shape inside the group.
-        // -------------------------------------------------
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.Width = 150;
-        textBox.Height = 60;
-        textBox.Left = 130; // Position next to the rectangle.
-        textBox.Top = 0;
-        // Configure internal margins for the text box.
-        textBox.TextBox.InternalMarginTop = 5;
-        textBox.TextBox.InternalMarginBottom = 5;
-        textBox.TextBox.InternalMarginLeft = 5;
-        textBox.TextBox.InternalMarginRight = 5;
-        // Add a paragraph with some text to the text box.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Grouped Text");
-        para.AppendChild(run);
-        textBox.AppendChild(para);
-        group.AppendChild(textBox);
+        // Group the two shapes. The group’s position and size are calculated automatically.
+        GroupShape group = builder.InsertGroupShape(shape1, shape2);
 
-        // Insert the group shape into the document at the current builder position.
-        builder.InsertNode(group);
+        // Demonstrate nesting: clone the first shape and group it with the previous group.
+        Shape shape3 = (Shape)shape1.Clone(true);
+        GroupShape nestedGroup = builder.InsertGroupShape(group, shape3);
 
-        // Save the document to a file.
+        // Save the document containing the group shape.
         doc.Save("GroupShape.docx");
     }
 }

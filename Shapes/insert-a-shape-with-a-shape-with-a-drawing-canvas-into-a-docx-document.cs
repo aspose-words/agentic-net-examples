@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -6,38 +7,29 @@ class Program
 {
     static void Main()
     {
-        // Create a new document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape that will serve as the drawing canvas.
-        GroupShape canvas = new GroupShape(doc);
-        canvas.Width = 300;   // Width in points.
-        canvas.Height = 200;  // Height in points.
-        canvas.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        canvas.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        canvas.WrapType = WrapType.None;
-        canvas.BehindText = true;
-        canvas.HorizontalAlignment = HorizontalAlignment.Center;
-        canvas.VerticalAlignment = VerticalAlignment.Center;
+        // Insert a drawing canvas shape (inline) with the desired size.
+        // In recent versions of Aspose.Words the drawing canvas is represented by ShapeType.Group.
+        Shape canvas = builder.InsertShape(ShapeType.Group, 300, 200);
+        canvas.WrapType = WrapType.None;          // Make it floating (no text wrap).
+        canvas.BehindText = true;                // Place it behind the document text.
 
-        // Insert the canvas into the document.
-        builder.InsertNode(canvas);
+        // Create a rectangle shape that will be placed inside the canvas.
+        Shape innerRectangle = new Shape(doc, ShapeType.Rectangle);
+        innerRectangle.Width = 100;
+        innerRectangle.Height = 50;
+        innerRectangle.Left = 20;                // Position relative to the canvas origin.
+        innerRectangle.Top = 20;
+        innerRectangle.FillColor = Color.LightBlue;
+        innerRectangle.Stroke.Color = Color.DarkBlue;
 
-        // Create a rectangle shape to place inside the canvas.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 100;
-        rect.Height = 50;
-        rect.Left = 50;   // Position relative to the canvas.
-        rect.Top = 30;
-        rect.Fill.ForeColor = Color.LightBlue;
-        rect.Stroke.Color = Color.DarkBlue;
-        rect.StrokeWeight = 1.5;
+        // Append the inner shape to the canvas so it becomes a child of the drawing canvas.
+        canvas.AppendChild(innerRectangle);
 
-        // Add the rectangle to the canvas.
-        canvas.AppendChild(rect);
-
-        // Save the document.
-        doc.Save("ShapeWithCanvas.docx");
+        // Save the document to a DOCX file.
+        doc.Save("DrawingCanvasShape.docx");
     }
 }

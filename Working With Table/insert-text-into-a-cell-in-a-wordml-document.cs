@@ -2,28 +2,38 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class InsertTextIntoCell
+class Program
 {
     static void Main()
     {
-        // Load an existing WORDML (or DOCX) document.
-        Document doc = new Document("Input.docx");
+        // Load an existing WordML (or DOCX) document.
+        Document doc = new Document("Input.docx");   // replace with the actual WORDML file path
 
-        // Assume the document contains at least one table.
-        Table table = doc.FirstSection.Body.Tables[0];
-
-        // Choose the cell you want to modify.
-        // For example, first row, second column (index is zero‑based).
-        Cell targetCell = table.Rows[0].Cells[1];
-
-        // Move the builder's cursor to the beginning of the cell's first paragraph.
+        // Create a DocumentBuilder for editing the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(targetCell.FirstParagraph);
 
-        // Insert the desired text into the cell.
-        builder.Write("Inserted text goes here.");
+        // Ensure the document contains at least one table.
+        // If no table exists, create a simple 2x2 table for demonstration.
+        if (doc.GetChildNodes(NodeType.Table, true).Count == 0)
+        {
+            builder.StartTable();
+            builder.InsertCell();               // Row 0, Column 0
+            builder.InsertCell();               // Row 0, Column 1
+            builder.EndRow();
+            builder.InsertCell();               // Row 1, Column 0
+            builder.InsertCell();               // Row 1, Column 1
+            builder.EndTable();
+        }
+
+        // Move the cursor to the target cell.
+        // Parameters: tableIndex, rowIndex, columnIndex, characterIndex.
+        // Here we target the cell at row 1, column 1 (second row, second column).
+        builder.MoveToCell(tableIndex: 0, rowIndex: 1, columnIndex: 1, characterIndex: 0);
+
+        // Insert the desired text into the current cell.
+        builder.Write("Inserted text");
 
         // Save the modified document.
-        doc.Save("Output.docx");
+        doc.Save("Output.docx");   // change extension if you need WORDML output (e.g., .xml)
     }
 }

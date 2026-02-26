@@ -1,30 +1,51 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class ApplyTableStyleOptions
 {
     static void Main()
     {
-        // Create a new document (DOT template)
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and insert at least one cell (required before setting formatting)
+        // Start building a table. At least one cell must be inserted before any formatting.
         Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Writeln("Header");
-        builder.EndRow();
 
-        // Apply a built‑in table style
+        // Optionally assign a built‑in style to the table.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Apply specific style options (e.g., first row and row banding)
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+        // Apply the desired style options (first column, first row, and row banding).
+        table.StyleOptions = TableStyleOptions.FirstColumn |
+                              TableStyleOptions.FirstRow |
+                              TableStyleOptions.RowBands;
 
-        // End the table
+        // Populate the first row.
+        builder.Writeln("Item");
+        builder.InsertCell();
+        builder.Writeln("Quantity (kg)");
+        builder.EndRow();
+
+        // Populate a second row.
+        builder.InsertCell();
+        builder.Writeln("Apples");
+        builder.InsertCell();
+        builder.Writeln("20");
+        builder.EndRow();
+
+        // Populate a third row.
+        builder.InsertCell();
+        builder.Writeln("Bananas");
+        builder.InsertCell();
+        builder.Writeln("40");
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document as a DOT template
-        doc.Save("TableWithStyleOptions.dot");
+        // Save the document as a DOT template.
+        doc.Save("TableWithStyle.dot");
     }
 }

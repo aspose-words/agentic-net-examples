@@ -1,17 +1,29 @@
+using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsDotxExample
 {
-    static void Main()
+    class Program
     {
-        // Load an existing document (any supported format, e.g., DOCX)
-        Document doc = new Document("input.docx");
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Set up save options to specify DOTX (macro‑free template) format
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Dotx);
+            // Optionally add some content using DocumentBuilder.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello from a DOTX template!");
 
-        // Save the document as a DOTX file
-        doc.Save("output.dotx", saveOptions);
+            // Save the document as a DOTX (Word template) file.
+            // The Save method with (string, SaveFormat) follows the provided rule.
+            doc.Save("OutputTemplate.dotx", SaveFormat.Dotx);
+
+            // Load the saved DOTX file back into a Document object.
+            // This uses the Document(string) constructor rule.
+            Document loadedDoc = new Document("OutputTemplate.dotx");
+
+            // Verify that the content was loaded correctly (optional).
+            Console.WriteLine(loadedDoc.GetText().Trim());
+        }
     }
 }

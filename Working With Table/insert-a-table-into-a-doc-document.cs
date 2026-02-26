@@ -2,40 +2,45 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class InsertTableExample
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Create a DocumentBuilder which simplifies inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start a new table. The method returns the Table node that was created.
         Table table = builder.StartTable();
 
-        // First row.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Row 1, Cell 1.");
+
+        // First row, second cell.
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Row 1, Cell 2.");
+
+        // End the first row.
         builder.EndRow();
 
-        // Second row.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Data 1");
+        builder.Write("Row 2, Cell 1.");
+
+        // Second row, second cell.
         builder.InsertCell();
-        builder.Write("Data 2");
+        builder.Write("Row 2, Cell 2.");
+
+        // End the second row.
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Adjust column widths to fit the contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-        // Save the document as a .doc file.
-        doc.Save("TableDocument.doc");
+        // Save the document to disk.
+        doc.Save("InsertedTable.docx");
     }
 }

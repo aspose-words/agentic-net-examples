@@ -8,24 +8,27 @@ class Program
     {
         // Create a new empty document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an image and obtain the Shape object that represents it.
-        Shape shape = builder.InsertImage("ImageDir/Logo.jpg");
+        // Ensure the document has a paragraph to contain the shape.
+        if (doc.FirstSection.Body.FirstParagraph == null)
+        {
+            doc.FirstSection.Body.AppendChild(new Paragraph(doc));
+        }
 
-        // Make the shape floating (not inline) and place it behind the text.
-        shape.WrapType = WrapType.None;
-        shape.BehindText = true;
+        // Create a shape of type Image.
+        Shape shape = new Shape(doc, ShapeType.Image);
 
-        // Position the shape relative to the page.
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        // Set the image file for the shape.
+        shape.ImageData.SetImage("ImageDir/Windows MetaFile.wmf");
 
-        // Center the shape on the page.
-        shape.HorizontalAlignment = HorizontalAlignment.Center;
-        shape.VerticalAlignment = VerticalAlignment.Center;
+        // Define the shape size.
+        shape.Width = 100;
+        shape.Height = 100;
 
-        // Save the document as a DOCX file.
-        doc.Save("ArtifactsDir/Image.InsertShape.docx");
+        // Append the shape to the first paragraph of the document.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(shape);
+
+        // Save the document to a DOCX file.
+        doc.Save("ArtifactsDir/Image.FromFile.docx");
     }
 }

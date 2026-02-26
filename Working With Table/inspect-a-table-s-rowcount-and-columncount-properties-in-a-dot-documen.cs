@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class InspectTableDimensions
 {
     static void Main()
     {
@@ -17,16 +17,13 @@ class Program
         {
             Table table = tables[i];
 
-            // Number of rows in the table.
+            // Row count is the number of Row nodes in the table.
             int rowCount = table.Rows.Count;
 
-            // Number of columns – assume a uniform table and use the first row's cell count.
-            int columnCount = table.FirstRow?.Cells.Count ?? 0;
+            // Column count is the number of cells in the first row (if the table has rows).
+            int columnCount = table.FirstRow != null ? table.FirstRow.Count : 0;
 
             Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
         }
-
-        // Optionally save the document after inspection (no changes made).
-        doc.Save("Template_Inspected.dot");
     }
 }

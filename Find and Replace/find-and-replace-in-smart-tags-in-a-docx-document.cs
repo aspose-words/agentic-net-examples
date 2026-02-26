@@ -1,44 +1,28 @@
 using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
-using Aspose.Words.Markup;
 using Aspose.Words.Replacing;
 
-class SmartTagReplacingCallback : IReplacingCallback
-{
-    // Called for each match found by the Find/Replace engine.
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        // Walk up the node hierarchy to see if the match is inside a SmartTag.
-        Node current = args.MatchNode;
-        while (current != null && !(current is SmartTag))
-            current = current.ParentNode;
-
-        // If the match is within a SmartTag, allow the replacement.
-        if (current is SmartTag)
-            return ReplaceAction.Replace;
-
-        // Otherwise skip this match – we only want to replace inside SmartTags.
-        return ReplaceAction.Skip;
-    }
-}
-
-class Program
+class SmartTagFindReplace
 {
     static void Main()
     {
-        // Load the DOCX document.
-        Document doc = new Document("Input.docx");
+        // Load the DOCX document that contains smart tags.
+        Document doc = new Document(@"C:\Docs\InputWithSmartTags.docx");
 
-        // Configure find/replace options with our custom callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new SmartTagReplacingCallback();
+        // Configure find/replace options to treat the content of StructuredDocumentTag (SmartTag)
+        // as plain text, allowing the replace operation to work inside smart tags.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            IgnoreStructuredDocumentTags = true   // Treat smart tag content as simple text.
+        };
 
-        // Example: replace the word "oldValue" with "newValue" only inside SmartTags.
-        Regex findPattern = new Regex("oldValue", RegexOptions.IgnoreCase);
-        doc.Range.Replace(findPattern, "newValue", options);
+        // Perform the find-and-replace operation.
+        // Example: replace the placeholder "_FullName_" with "John Doe".
+        int replacements = doc.Range.Replace("_FullName_", "John Doe", options);
+
+        Console.WriteLine($"Number of replacements made: {replacements}");
 
         // Save the modified document.
-        doc.Save("Output.docx");
+        doc.Save(@"C:\Docs\OutputWithSmartTagsReplaced.docx");
     }
 }

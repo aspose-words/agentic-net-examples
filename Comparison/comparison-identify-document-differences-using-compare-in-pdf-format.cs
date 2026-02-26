@@ -7,35 +7,21 @@ class Program
 {
     static void Main()
     {
-        // Load the two documents to be compared.
+        // Load the two documents that will be compared.
         Document docOriginal = new Document("Original.docx");
         Document docEdited   = new Document("Edited.docx");
 
-        // Configure comparison options.
-        CompareOptions compareOptions = new CompareOptions
+        // The Compare method requires that both documents have no existing revisions.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            CompareMoves = true,                         // Track moved content.
-            Granularity = Granularity.WordLevel,         // Track changes by word.
-            IgnoreFormatting = false,                    // Consider formatting changes.
-            IgnoreComments = false,
-            IgnoreFootnotes = false,
-            IgnoreHeadersAndFooters = false,
-            IgnoreTables = false,
-            IgnoreTextboxes = false,
-            IgnoreFields = false,
-            IgnoreCaseChanges = false,
-            Target = ComparisonTargetType.New           // Use the edited document as the base.
-        };
+            // Perform the comparison. All differences are added to docOriginal as revisions.
+            // "Comparer" will appear as the author of the revisions, and the current time is used.
+            docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
+        }
 
-        // Perform the comparison. Revisions are added to docOriginal.
-        docOriginal.Compare(docEdited, "Author", DateTime.Now, compareOptions);
-
-        // Save the result as a PDF with revisions visible.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            Compliance = PdfCompliance.Pdf17   // Use standard PDF 1.7 compliance.
-        };
-
+        // Save the resulting document (with revisions) as a PDF.
+        // PdfSaveOptions can be customized if needed; here we use the defaults.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
         docOriginal.Save("ComparisonResult.pdf", pdfOptions);
     }
 }

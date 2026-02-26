@@ -1,46 +1,46 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
-using Aspose.Words.Saving;
 
-namespace ComparisonExample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Load the original and the edited DOCX documents.
+        Document docOriginal = new Document("Original.docx");
+        Document docEdited = new Document("Edited.docx");
+
+        // Configure comparison options to ignore all types of changes.
+        CompareOptions compareOptions = new CompareOptions
         {
-            // Load the original and the edited documents.
-            Document original = new Document("Original.docx");
-            Document edited = new Document("Edited.docx");
+            // Ignore formatting differences.
+            IgnoreFormatting = true,
+            // Ignore case changes (case‑insensitive comparison).
+            IgnoreCaseChanges = true,
+            // Do not compare comments.
+            IgnoreComments = true,
+            // Do not compare tables.
+            IgnoreTables = true,
+            // Do not compare fields.
+            IgnoreFields = true,
+            // Do not compare footnotes and endnotes.
+            IgnoreFootnotes = true,
+            // Do not compare the contents of text boxes.
+            IgnoreTextboxes = true,
+            // Do not compare headers and footers.
+            IgnoreHeadersAndFooters = true,
+            // Do not generate move revisions.
+            CompareMoves = false,
+            // Use the edited document as the base for comparison.
+            Target = ComparisonTargetType.New
+        };
 
-            // Configure comparison options to ignore all changes that should not affect the result.
-            CompareOptions compareOptions = new CompareOptions
-            {
-                // Ignore formatting changes (bold, italic, font size, etc.).
-                IgnoreFormatting = true,
-                // Ignore changes in headers and footers.
-                IgnoreHeadersAndFooters = true,
-                // Ignore changes in footnotes and endnotes.
-                IgnoreFootnotes = true,
-                // Ignore changes in comments.
-                IgnoreComments = true,
-                // Ignore changes in tables.
-                IgnoreTables = true,
-                // Ignore changes inside text boxes.
-                IgnoreTextboxes = true,
-                // Ignore changes in fields (e.g., DATE, PAGE).
-                IgnoreFields = true,
-                // Do not compare moves (optional, can be set to false to keep move tracking).
-                CompareMoves = false,
-                // Use the original document as the base for comparison.
-                Target = ComparisonTargetType.Current
-            };
+        // Perform the comparison. Revisions will be added to docOriginal,
+        // but because all change types are ignored, the resulting document
+        // will contain no visible revisions.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
 
-            // Perform the comparison. The result (revisions) will be stored in the original document.
-            original.Compare(edited, "Comparer", DateTime.Now, compareOptions);
-
-            // Save the result as a DOCX file using default save options.
-            original.Save("ComparisonResult.docx", SaveFormat.Docx);
-        }
+        // Save the comparison result.
+        docOriginal.Save("ComparisonResult.docx");
     }
 }

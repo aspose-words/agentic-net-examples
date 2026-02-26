@@ -1,45 +1,64 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Fields;
 
-namespace BarcodeExample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Assign a custom barcode generator (implementation must be provided by the user).
+        doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
+
+        // Set up barcode parameters – this example creates a QR code.
+        BarcodeParameters parameters = new BarcodeParameters
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            BarcodeType = "QR",
+            BarcodeValue = "ABC123",
+            BackgroundColor = "0xF8BD69",
+            ForegroundColor = "0xB5413B",
+            ErrorCorrectionLevel = "3",
+            ScalingFactor = "250",
+            SymbolHeight = "1000",
+            SymbolRotation = "0"
+        };
 
-            // Define barcode parameters (example: QR code).
-            // These values correspond to the BARCODE field switches.
-            string barcodeType = "QR";                 // \b switch – barcode type
-            string barcodeValue = "ABC123";            // the data to encode
-            string backgroundColor = "0xF8BD69";       // \b switch – background colour (hex)
-            string foregroundColor = "0xB5413B";       // \f switch – foreground colour (hex)
-            string errorCorrectionLevel = "3";        // \e switch – error correction level (for QR)
-            string scalingFactor = "250";             // \s switch – scaling factor (percentage)
-            string symbolHeight = "1000";             // \h switch – symbol height (in points)
-            string symbolRotation = "0";              // \r switch – rotation angle (degrees)
+        // Generate the barcode image, optionally save it, and insert it into the document.
+        using (Stream imgStream = doc.FieldOptions.BarcodeGenerator.GetBarcodeImage(parameters))
+        {
+            // Save the image to a file (optional).
+            using (FileStream file = new FileStream("QRCode.jpg", FileMode.Create))
+            {
+                imgStream.CopyTo(file);
+            }
 
-            // Insert a BARCODE field with the above options.
-            // The field syntax is:
-            //   BARCODE <type> "<value>" \b <bg> \f <fg> \e <ec> \s <scale> \h <height> \r <rotation>
-            string fieldCode = $"BARCODE {barcodeType} \"{barcodeValue}\" " +
-                               $"\\b {backgroundColor} " +
-                               $"\\f {foregroundColor} " +
-                               $"\\e {errorCorrectionLevel} " +
-                               $"\\s {scalingFactor} " +
-                               $"\\h {symbolHeight} " +
-                               $"\\r {symbolRotation}";
-
-            builder.InsertField(fieldCode);
-
-            // Update fields so the BARCODE field is rendered as an image.
-            doc.UpdateFields();
-
-            // Save the document to a DOCX file.
-            doc.Save("BarcodeDocument.docx");
+            // Reset the stream position before inserting into the document.
+            imgStream.Position = 0;
+            builder.InsertImage(imgStream);
         }
+
+        // Save the resulting DOCX file.
+        doc.Save("BarcodeDocument.docx");
+    }
+}
+
+// Minimal placeholder implementation of IBarcodeGenerator.
+// In a real scenario, this class should generate a barcode image based on the supplied parameters.
+public class CustomBarcodeGenerator : IBarcodeGenerator
+{
+    public Stream GetBarcodeImage(BarcodeParameters parameters)
+    {
+        // Return an empty stream as a placeholder.
+        return new MemoryStream();
+    }
+
+    public Stream GetOldBarcodeImage(BarcodeParameters parameters)
+    {
+        // Return an empty stream as a placeholder.
+        return new MemoryStream();
     }
 }

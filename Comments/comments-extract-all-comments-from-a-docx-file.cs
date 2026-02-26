@@ -6,36 +6,25 @@ class Program
 {
     static void Main()
     {
-        // Path to the DOCX file.
-        string inputPath = "input.docx";
+        // Load the DOCX file.
+        Document doc = new Document("Input.docx");
 
-        // Load the document.
-        Document doc = new Document(inputPath);
+        // Store the extracted comment texts.
+        List<string> commentTexts = new List<string>();
 
-        // Extract all comments.
-        List<string> commentTexts = ExtractComments(doc);
-
-        // Output the comments.
-        foreach (string text in commentTexts)
-            Console.WriteLine(text);
-    }
-
-    // Returns a list containing the text of each comment in the document.
-    static List<string> ExtractComments(Document doc)
-    {
-        var comments = new List<string>();
-
-        // Retrieve all comment nodes from the document.
+        // Retrieve all comment nodes (including replies) from the document.
         NodeCollection commentNodes = doc.GetChildNodes(NodeType.Comment, true);
-
-        // Iterate through each comment and collect its text.
         foreach (Comment comment in commentNodes)
         {
-            // The comment's text is stored in its range.
-            string text = comment.Range.Text.Trim();
-            comments.Add(text);
+            // Get the plain text of the comment and trim any trailing line breaks.
+            string text = comment.GetText().Trim();
+            commentTexts.Add(text);
         }
 
-        return comments;
+        // Output each comment to the console.
+        foreach (string text in commentTexts)
+        {
+            Console.WriteLine(text);
+        }
     }
 }

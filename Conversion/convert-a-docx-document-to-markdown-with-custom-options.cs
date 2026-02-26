@@ -1,46 +1,43 @@
 using System;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class ConvertDocxToMarkdown
 {
     static void Main()
     {
-        // Input DOCX file path.
-        string inputPath = @"C:\Docs\input.docx";
+        // Path to the source DOCX file.
+        string inputPath = @"C:\Docs\InputDocument.docx";
 
-        // Output Markdown file path.
-        string outputPath = @"C:\Docs\output.md";
+        // Path where the resulting Markdown file will be saved.
+        string outputPath = @"C:\Docs\OutputDocument.md";
 
         // Load the DOCX document.
         Document doc = new Document(inputPath);
 
-        // Configure Markdown save options with custom settings.
+        // Configure the Markdown save options.
         MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
         {
-            // Export tables that cannot be represented in pure Markdown as raw HTML.
-            ExportAsHtml = MarkdownExportAsHtml.NonCompatibleTables,
-
-            // Export images as Base64 strings embedded directly in the Markdown file.
+            // Embed images directly in the Markdown file as Base64 data URIs.
             ExportImagesAsBase64 = true,
 
-            // Preserve empty paragraphs as empty lines in the output.
-            // Note: The EmptyParagraphExportMode enum is not available in older versions of Aspose.Words.
-            // If you are using a version that supports it, uncomment the line below:
-            // EmptyParagraphExportMode = EmptyParagraphExportMode.EmptyLine,
+            // Export tables that cannot be represented in pure Markdown as raw HTML.
+            ExportAsHtml = MarkdownExportAsHtml.NonCompatibleTables,
 
             // Export OfficeMath objects as LaTeX markup.
             OfficeMathExportMode = MarkdownOfficeMathExportMode.Latex,
 
-            // Use UTF‑8 encoding for the output file.
-            Encoding = Encoding.UTF8,
+            // Export all links using reference style.
+            LinkExportMode = MarkdownLinkExportMode.Reference,
 
-            // Enable pretty formatting of the generated Markdown.
-            PrettyFormat = true
+            // Set the image resolution (relevant when images are saved as separate files).
+            ImageResolution = 300,
+
+            // Explicitly set the save format to Markdown.
+            SaveFormat = SaveFormat.Markdown
         };
 
-        // Save the document as Markdown using the configured options.
+        // Save the document as a Markdown file using the configured options.
         doc.Save(outputPath, saveOptions);
     }
 }

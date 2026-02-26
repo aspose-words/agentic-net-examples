@@ -3,34 +3,26 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Loading;
 
-class TableInspection
+class Program
 {
     static void Main()
     {
-        // Load a plain‑text document. TxtLoadOptions allows us to specify any additional
-        // loading behavior for TXT files (e.g., encoding, direction, etc.).
-        TxtLoadOptions loadOptions = new TxtLoadOptions();
-        Document doc = new Document("Input.txt", loadOptions);
+        // Load the TXT document using default TxtLoadOptions.
+        Document doc = new Document("input.txt", new TxtLoadOptions());
 
-        // Access the collection of tables in the first section's body.
-        TableCollection tables = doc.FirstSection.Body.Tables;
-
-        // Iterate through each table and output its row and column counts.
-        for (int i = 0; i < tables.Count; i++)
+        // Iterate through all tables in the document.
+        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
-            Table table = tables[i];
-
-            // Row count is directly available.
+            // Number of rows in the table.
             int rowCount = table.Rows.Count;
 
-            // Column count is derived from the number of cells in the first row.
-            // (All rows in a well‑formed table have the same number of cells.)
-            int columnCount = table.Rows[0].Cells.Count;
+            // Number of columns in the table (based on the first row).
+            int columnCount = table.FirstRow != null ? table.FirstRow.Cells.Count : 0;
 
-            Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
+            Console.WriteLine($"Table found: {rowCount} rows x {columnCount} columns");
         }
 
-        // (Optional) Save the document if any modifications were made.
-        // doc.Save("Output.docx");
+        // Optionally save the document after inspection.
+        doc.Save("output.docx");
     }
 }

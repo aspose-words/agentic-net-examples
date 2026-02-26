@@ -2,38 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-namespace DocumentComparisonDemo
+class DocumentComparison
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Load the original and edited documents.
+        Document docOriginal = new Document("Original.docx");
+        Document docEdited = new Document("Edited.docx");
+
+        // Ensure both documents have no revisions before comparison.
+        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
+            throw new InvalidOperationException("Both documents must be revision‑free before comparison.");
+
+        // Compare the documents, creating revisions in the original document.
+        // "JD" will be used as the author initials for the revisions.
+        docOriginal.Compare(docEdited, "JD", DateTime.Now);
+
+        // Optional: iterate through the generated revisions and output their details.
+        foreach (Revision rev in docOriginal.Revisions)
         {
-            // Paths to the source documents.
-            string originalPath = @"C:\Docs\Original.docx";
-            string editedPath   = @"C:\Docs\Edited.docx";
-
-            // Load the two documents that will be compared.
-            Document docOriginal = new Document(originalPath);
-            Document docEdited   = new Document(editedPath);
-
-            // Configure comparison options.
-            CompareOptions compareOptions = new CompareOptions
-            {
-                // Example: track changes at the word level and compare moves.
-                Granularity = Granularity.WordLevel,
-                CompareMoves = true,
-
-                // Set which document is used as the base for comparison.
-                // Current = docOriginal, New = docEdited.
-                Target = ComparisonTargetType.Current
-            };
-
-            // Perform the comparison. Revisions will be added to docOriginal.
-            docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
-
-            // Save the result (docOriginal now contains revision marks).
-            string resultPath = @"C:\Docs\ComparedResult.docx";
-            docOriginal.Save(resultPath);
+            Console.WriteLine($"Revision type: {rev.RevisionType}, Node type: {rev.ParentNode.NodeType}");
+            Console.WriteLine($"\tChanged text: \"{rev.ParentNode.GetText()}\"");
         }
+
+        // Accept all revisions to transform the original document into the edited version.
+        docOriginal.Revisions.AcceptAll();
+
+        // Save the resulting document.
+        docOriginal.Save("ComparedResult.docx");
     }
 }

@@ -1,29 +1,33 @@
-using System.Drawing;
+using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
-class Program
+namespace AsposeWordsHorizontalRuleExample
 {
-    static void Main()
+    class Program
     {
-        // Load the existing DOTM template.
-        Document doc = new Document(@"Template.dotm");
+        static void Main(string[] args)
+        {
+            // Create a new empty document.
+            Document doc = new Document();
 
-        // Create a DocumentBuilder attached to the loaded document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Initialize DocumentBuilder to work with the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a horizontal rule at the current cursor position.
-        Shape horizontalRule = builder.InsertHorizontalRule();
+            // Insert a horizontal rule shape at the current cursor position.
+            Shape horizontalRule = builder.InsertHorizontalRule();
 
-        // Optional: customize the appearance of the horizontal rule.
-        HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
-        format.Alignment = HorizontalRuleAlignment.Center; // Center the rule.
-        format.WidthPercent = 80;                           // 80% of the page width.
-        format.Height = 2;                                 // Height in points.
-        format.Color = Color.DarkGray;                     // Rule color.
-        format.NoShade = true;                             // Disable 3D shading.
+            // Optional: customize the appearance of the horizontal rule.
+            HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
+            format.Alignment = HorizontalRuleAlignment.Center;   // Center the rule.
+            format.WidthPercent = 70;                           // 70% of the page width.
+            format.Height = 3;                                  // Height in points.
+            format.Color = Color.Blue;                          // Blue color.
+            format.NoShade = true;                              // Solid color, no 3D shading.
 
-        // Save the modified document back as a DOTM file.
-        doc.Save(@"Result.dotm", SaveFormat.Dotm);
+            // Save the document as a macro-enabled template (.dotm).
+            doc.Save("HorizontalRuleTemplate.dotm");
+        }
     }
 }

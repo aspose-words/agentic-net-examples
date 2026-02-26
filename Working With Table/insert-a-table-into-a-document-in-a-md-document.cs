@@ -3,7 +3,7 @@ using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Tables;
 
-class InsertTableIntoMarkdown
+class Program
 {
     static void Main()
     {
@@ -13,35 +13,34 @@ class InsertTableIntoMarkdown
         // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading before the table.
-        builder.Writeln("Sample table:");
-
-        // Start a new table.
+        // Start a table and add two rows with two cells each.
         builder.StartTable();
 
-        // First cell – right aligned text.
+        // First row.
         builder.InsertCell();
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Right;
-        builder.Write("Cell1");
-
-        // Second cell – center aligned text.
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.Write("Cell2");
+        builder.Write("Cell 2");
+        builder.EndRow();
 
-        // End the first (and only) row.
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Configure Markdown save options to export tables as raw HTML.
+        // Configure Markdown save options.
+        // Export tables using pure Markdown syntax (no raw HTML).
         MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
         {
-            ExportAsHtml = MarkdownExportAsHtml.Tables
+            ExportAsHtml = MarkdownExportAsHtml.None
         };
 
         // Save the document as a Markdown file.
-        doc.Save("SampleTable.md", saveOptions);
+        doc.Save("TableInMarkdown.md", saveOptions);
     }
 }

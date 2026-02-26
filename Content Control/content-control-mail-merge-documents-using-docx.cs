@@ -1,32 +1,36 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
+using Aspose.Words.Markup;
 
 class Program
 {
     static void Main()
     {
-        // Load a DOCX template that contains content controls (structured document tags)
-        // whose tags match the field names we will provide (e.g., "FirstName", "LastName").
-        Document doc = new Document("Template.docx");
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable mail merge to work with content controls instead of traditional MERGEFIELD fields.
-        doc.MailMerge.UseNonMergeFields = true;
+        // Insert a plain‑text content control for the "FullName" field.
+        StructuredDocumentTag fullNameTag = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+        fullNameTag.Title = "FullName";               // Title is used as the mail‑merge field name.
+        fullNameTag.PlaceholderName = "FullName";
 
-        // Define the field names that correspond to the tags of the content controls.
-        string[] fieldNames = { "FirstName", "LastName", "Address" };
+        // Add a line break between the controls.
+        builder.Writeln();
 
-        // Provide the values that will be inserted into the matching content controls.
-        object[] fieldValues = { "John", "Doe", "123 Main St., Anytown" };
+        // Insert a plain‑text content control for the "Address" field.
+        StructuredDocumentTag addressTag = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+        addressTag.Title = "Address";
+        addressTag.PlaceholderName = "Address";
 
-        // Perform the mail merge operation.
+        // Prepare mail‑merge data. Field names must match the titles of the content controls.
+        string[] fieldNames = { "FullName", "Address" };
+        object[] fieldValues = { "James Bond", "Secret Service Headquarters" };
+
+        // Execute the mail merge; the content controls will be populated with the values.
         doc.MailMerge.Execute(fieldNames, fieldValues);
 
-        // Optional: remove any empty paragraphs or unused fields that may remain after merging.
-        doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveEmptyParagraphs |
-                                      MailMergeCleanupOptions.RemoveUnusedFields;
-
-        // Save the merged document to a new DOCX file.
-        doc.Save("MergedDocument.docx");
+        // Save the resulting document.
+        doc.Save("ContentControlMailMerge.docx");
     }
 }

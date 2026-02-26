@@ -1,51 +1,48 @@
-using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
-using Aspose.Words.Replacing;
 using Aspose.Words.Drawing;
+using Aspose.Words.Replacing;
+using System.Text.RegularExpressions;
 
-class ShapeReplacingHandler : IReplacingCallback
-{
-    // This method is called for each match found during the replace operation.
-    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
-    {
-        // Create a new picture shape.
-        Shape shape = new Shape(args.MatchNode.Document, ShapeType.Image);
-        // Set the image for the shape (replace with your own image path).
-        shape.ImageData.SetImage("ReplacementImage.png");
-        // Set desired size.
-        shape.Width = 100;
-        shape.Height = 100;
-        // Make the shape inline so it behaves like a character.
-        shape.WrapType = WrapType.Inline;
-
-        // Insert the shape after the paragraph that contains the match.
-        Paragraph paragraph = (Paragraph)args.MatchNode.ParentNode;
-        paragraph.ParentNode.InsertAfter(shape, paragraph);
-
-        // Remove the original matched text node.
-        args.MatchNode.Remove();
-
-        // Skip the default replace action because we have already performed the replacement.
-        return ReplaceAction.Skip;
-    }
-}
-
-class FindReplaceWithShapeExample
+class Program
 {
     static void Main()
     {
-        // Load the existing DOCX document.
-        Document doc = new Document("InputDocument.docx");
+        // Load the DOCX document.
+        Document doc = new Document("Input.docx");
 
-        // Set up find/replace options with our custom callback.
+        // Configure find/replace to use a custom callback.
         FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new ShapeReplacingHandler();
+        options.ReplacingCallback = new ShapeReplacingCallback();
 
-        // Perform the replace: every occurrence of the placeholder "[SHAPE]" will be replaced by the shape.
-        doc.Range.Replace(new Regex(@"\[SHAPE\]"), "", options);
+        // Replace the placeholder "[SHAPE]" with a rectangle shape.
+        // The replacement string is empty because the callback inserts the shape.
+        doc.Range.Replace(new Regex(@"\[SHAPE\]"), string.Empty, options);
 
         // Save the modified document.
-        doc.Save("OutputDocument.docx");
+        doc.Save("Output.docx");
+    }
+}
+
+// Callback that replaces each found placeholder with a shape.
+class ShapeReplacingCallback : IReplacingCallback
+{
+    public ReplaceAction Replacing(ReplacingArgs args)
+    {
+        // Obtain the document containing the match. The Document property returns DocumentBase,
+        // so we need to cast it to Document.
+        Document doc = (Document)args.MatchNode.Document;
+
+        // Position the builder at the match node.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveTo(args.MatchNode);
+
+        // Insert a rectangle shape (100x50 points).
+        builder.InsertShape(ShapeType.Rectangle, 100, 50);
+
+        // Remove the original placeholder text node.
+        args.MatchNode.Remove();
+
+        // Skip the default replacement since we handled it.
+        return ReplaceAction.Skip;
     }
 }

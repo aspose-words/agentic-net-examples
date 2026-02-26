@@ -1,23 +1,17 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 
 class Program
 {
     static void Main()
     {
         // Path to the source DOCX file.
-        string sourcePath = "source.docx";
+        string sourcePath = "input.docx";
 
-        // Create LoadOptions and explicitly set the format to DOCX.
-        LoadOptions loadOptions = new LoadOptions();
-        loadOptions.LoadFormat = LoadFormat.Docx;
+        // Load the document using the DOCX format constructor.
+        Document doc = new Document(sourcePath);
 
-        // Load the document using the specified options.
-        Document doc = new Document(sourcePath, loadOptions);
-
-        // The document is now loaded and can be processed further.
-        // Example: output the document text to the console.
+        // Example usage: output the document's plain text to the console.
         Console.WriteLine(doc.GetText());
     }
 }

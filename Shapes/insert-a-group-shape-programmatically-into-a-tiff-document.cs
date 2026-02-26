@@ -1,8 +1,7 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
+using System.Drawing;
 
 class InsertGroupShapeIntoTiff
 {
@@ -10,41 +9,31 @@ class InsertGroupShapeIntoTiff
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add content and shapes.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Get the current paragraph (the builder is positioned at the start of the document).
-        Paragraph paragraph = builder.CurrentParagraph;
+        // Insert a rectangle shape.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rect.Left = 50;   // Position relative to the page.
+        rect.Top = 50;
+        rect.Stroke.Color = Color.Blue;
 
-        // Create a group shape and set its size and position.
-        GroupShape group = new GroupShape(doc);
-        // Bounds are defined in points. Here we create a 200x200 points group at (0,0).
-        group.Bounds = new RectangleF(0, 0, 200, 200);
-        // The coordinate space for child shapes uses integer types (Point and Size).
-        group.CoordOrigin = new Point(0, 0);
-        group.CoordSize   = new Size(200, 200);
+        // Insert an ellipse shape.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 100);
+        ellipse.Left = 300;
+        ellipse.Top = 100;
+        ellipse.Stroke.Color = Color.Green;
 
-        // Add the group shape to the document.
-        paragraph.AppendChild(group);
+        // Group the two shapes. The group shape will be inserted at the current builder position.
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Create a rectangle shape to place inside the group.
-        Shape innerShape = new Shape(doc, ShapeType.Rectangle);
-        innerShape.Width = 100;
-        innerShape.Height = 100;
-        innerShape.Left = 50;   // Position within the group's coordinate space.
-        innerShape.Top = 50;
-        innerShape.Fill.Color = Color.LightBlue;
-        innerShape.Stroke.Color = Color.DarkBlue;
+        // Optionally adjust the group’s position or size.
+        group.Left = 0;
+        group.Top = 0;
 
-        // Add the rectangle to the group.
-        group.AppendChild(innerShape);
-
-        // Save the document as a TIFF image.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            // Example: use LZW compression (optional).
-            TiffCompression = TiffCompression.Lzw
-        };
-
-        doc.Save("GroupShapeOutput.tiff", tiffOptions);
+        // Save the document as a multi‑page TIFF image.
+        // Each page of the Word document becomes one frame in the TIFF file.
+        doc.Save("GroupShape.tiff", SaveFormat.Tiff);
     }
 }

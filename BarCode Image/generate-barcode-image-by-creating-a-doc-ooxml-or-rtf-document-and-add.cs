@@ -1,33 +1,31 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Saving;
 
-class GenerateBarcodeDocument
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Ensure the document has at least one paragraph to insert the field into.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph ?? doc.FirstSection.Body.AppendParagraph(string.Empty);
+        // Insert a DISPLAYBARCODE field.
+        FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
-        // Build a DISPLAYBARCODE field that will render a QR code with the value "ABC123".
-        // The field code syntax: DISPLAYBARCODE \b QR \d ABC123
-        FieldBuilder fieldBuilder = new FieldBuilder(FieldType.FieldDisplayBarcode);
-        fieldBuilder.AddSwitch("\\b", "QR");          // Set the barcode type.
-        fieldBuilder.AddSwitch("\\d", "ABC123");     // Set the barcode value.
+        // Configure the barcode (example: QR code with custom colors and scaling).
+        barcodeField.BarcodeType = "QR";
+        barcodeField.BarcodeValue = "ABC123";
+        barcodeField.BackgroundColor = "0xF8BD69";
+        barcodeField.ForegroundColor = "0xB5413B";
+        barcodeField.ErrorCorrectionLevel = "3";
+        barcodeField.ScalingFactor = "250";
+        barcodeField.SymbolHeight = "1000";
+        barcodeField.SymbolRotation = "0";
 
-        // Insert the field at the end of the paragraph.
-        fieldBuilder.BuildAndInsert(para);
+        // Add a line break after the field (optional).
+        builder.Writeln();
 
-        // Save the document in DOCX format using OoxmlSaveOptions.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions
-        {
-            // Example: enable pretty formatting for easier inspection (optional).
-            PrettyFormat = true
-        };
-        doc.Save("BarcodeDocument.docx", saveOptions);
+        // Save the document in DOCX format.
+        doc.Save("DisplayBarcode.docx");
     }
 }

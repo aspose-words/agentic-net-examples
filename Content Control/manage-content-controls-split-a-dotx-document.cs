@@ -3,24 +3,40 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace SplitDotxExample
+class SplitDotx
 {
-    // Custom callback to control how each document part is saved when the document is split.
-    public class PartRenamer : IDocumentPartSavingCallback
+    static void Main()
     {
-        private readonly string _baseFileName;
-        private readonly DocumentSplitCriteria _criteria;
-        private int _partIndex = 0;
+        // Load the DOTX template file.
+        Document doc = new Document("Template.dotx");
 
-        public PartRenamer(string baseFileName, DocumentSplitCriteria criteria)
+        // Configure HTML save options to split the document at each section break.
+        HtmlSaveOptions options = new HtmlSaveOptions();
+        options.DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak;
+
+        // Assign a callback that will rename each generated part file.
+        options.DocumentPartSavingCallback = new PartRenamer("SplitPart", options.DocumentSplitCriteria);
+
+        // Save the document; Aspose.Words will create multiple HTML files according to the split criteria.
+        doc.Save("Output.html", options);
+    }
+
+    // Callback implementation that customizes the file name of each document part.
+    private class PartRenamer : IDocumentPartSavingCallback
+    {
+        private readonly string _baseName;
+        private readonly DocumentSplitCriteria _criteria;
+        private int _counter;
+
+        public PartRenamer(string baseName, DocumentSplitCriteria criteria)
         {
-            _baseFileName = baseFileName;
+            _baseName = baseName;
             _criteria = criteria;
         }
 
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+        public void DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Determine a readable part type name based on the split criteria.
+            // Determine a readable part type based on the split criteria.
             string partType = _criteria switch
             {
                 DocumentSplitCriteria.PageBreak => "Page",
@@ -31,35 +47,10 @@ namespace SplitDotxExample
             };
 
             // Build a new file name for the part.
-            string newFileName = $"{Path.GetFileNameWithoutExtension(_baseFileName)}_{++_partIndex}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+            string newFileName = $"{_baseName}_Part{++_counter}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
 
-            // Assign the new file name.
+            // Apply the new file name. Let Aspose handle the stream automatically.
             args.DocumentPartFileName = newFileName;
-
-            // Optionally, you could provide a custom stream instead of a file name:
-            // args.DocumentPartStream = new FileStream(Path.Combine(Path.GetDirectoryName(_baseFileName) ?? "", newFileName), FileMode.Create);
-        }
-    }
-
-    class Program
-    {
-        static void Main()
-        {
-            // Load the DOTX template.
-            Document doc = new Document("Template.dotx");
-
-            // Prepare HTML save options with split criteria.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions
-            {
-                // Split the document into separate HTML files at each section break.
-                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-
-                // Use the custom callback to rename each part.
-                DocumentPartSavingCallback = new PartRenamer("SplitResult.html", DocumentSplitCriteria.SectionBreak)
-            };
-
-            // Save the document; Aspose.Words will create multiple HTML files according to the split criteria.
-            doc.Save("SplitResult.html", saveOptions);
         }
     }
 }

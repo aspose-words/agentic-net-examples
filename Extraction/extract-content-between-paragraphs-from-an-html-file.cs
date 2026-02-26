@@ -4,25 +4,38 @@ using Aspose.Words;
 
 class ExtractParagraphContent
 {
-    static void Main(string[] args)
+    static void Main()
     {
-        // Path to the HTML file. Adjust as needed or pass as a command‑line argument.
-        string htmlPath = args.Length > 0 ? args[0] : "input.html";
+        // Path to the source HTML file.
+        string inputPath = @"C:\Temp\input.html";
 
-        // Load the HTML document into an Aspose.Words Document.
-        Document doc = new Document(htmlPath);
+        // Path to the output text file that will contain the extracted paragraph contents.
+        string outputPath = @"C:\Temp\extracted_paragraphs.txt";
 
-        // Access the collection of paragraphs in the main story (body) of the first section.
+        // Load the HTML document. The Document constructor automatically detects the format.
+        Document doc = new Document(inputPath);
+
+        // Get the collection of paragraphs from the main body of the first section.
         ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
 
-        // Iterate through each paragraph and output its plain text.
-        for (int i = 0; i < paragraphs.Count; i++)
+        // Open a StreamWriter to write the extracted texts.
+        using (StreamWriter writer = new StreamWriter(outputPath))
         {
-            // Get the text of the current paragraph (includes the paragraph break).
-            string text = paragraphs[i].GetText();
+            // Iterate through each paragraph.
+            foreach (Paragraph para in paragraphs)
+            {
+                // Get the text of the paragraph, including the trailing paragraph break character.
+                string textWithBreak = para.GetText();
 
-            // Trim the trailing paragraph break characters for cleaner output.
-            Console.WriteLine($"Paragraph {i + 1}: {text.TrimEnd('\r', '\n')}");
+                // Trim the trailing paragraph break characters (\r, \n, or \f) to obtain clean content.
+                string cleanText = textWithBreak.TrimEnd('\r', '\n', '\f');
+
+                // Write the cleaned paragraph text to the output file.
+                writer.WriteLine(cleanText);
+            }
         }
+
+        // Optionally, save the document back to another format (e.g., plain text) if needed.
+        // doc.Save(@"C:\Temp\output.txt", SaveFormat.Text);
     }
 }

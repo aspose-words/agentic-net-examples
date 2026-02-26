@@ -1,53 +1,51 @@
 using System;
+using System.Collections.Generic;
+using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;          // <-- added
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-namespace AsposeWordsChartSeriesDemo
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Create a new blank document and a DocumentBuilder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a column chart of size 500x300 points.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        Chart chart = chartShape.Chart;
+
+        // Remove the demo data that comes with a newly inserted chart.
+        chart.Series.Clear();
+
+        // Define categories for the X‑axis.
+        string[] categories = { "Category 1", "Category 2", "Category 3" };
+
+        // Add two series with values for each category.
+        chart.Series.Add("Series A", categories, new double[] { 10.5, 20.3, 30.7 });
+        chart.Series.Add("Series B", categories, new double[] { 15.2, 25.8, 35.1 });
+
+        // Iterate over the series collection using the enumerator.
+        using (IEnumerator<ChartSeries> enumerator = chart.Series.GetEnumerator())
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert a column chart with a predefined size.
-            Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
-            Chart chart = chartShape.Chart;
-
-            // The chart comes with demo data (three series). Remove it to start fresh.
-            chart.Series.Clear();
-
-            // Define categories for the X axis.
-            string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-
-            // Add two new series with values for each category.
-            chart.Series.Add("Revenue", categories, new double[] { 12000, 15000, 13000, 17000 });
-            chart.Series.Add("Expenses", categories, new double[] { 8000, 9000, 8500, 9500 });
-
-            // Enumerate the series collection and output each series name.
-            foreach (ChartSeries series in chart.Series)
+            while (enumerator.MoveNext())
             {
-                Console.WriteLine($"Series name: {series.Name}");
+                ChartSeries current = enumerator.Current;
+                Console.WriteLine($"Series name: {current.Name}");
             }
-
-            // Add a third series.
-            chart.Series.Add("Profit", categories, new double[] { 4000, 6000, 4500, 7500 });
-
-            // Remove the second series (index 1, which is "Expenses").
-            chart.Series.RemoveAt(1);
-
-            // Verify the removal.
-            Console.WriteLine("\nAfter removal:");
-            foreach (ChartSeries series in chart.Series)
-            {
-                Console.WriteLine($"Series name: {series.Name}");
-            }
-
-            // Save the document to disk.
-            doc.Save("ChartSeriesCollectionDemo.docx");
         }
+
+        // Access a series by index (zero‑based). Change its fill colour.
+        ChartSeries firstSeries = chart.Series[0];
+        firstSeries.Format.Fill.ForeColor = Color.Red;
+
+        // Remove the second series by index.
+        chart.Series.RemoveAt(1);
+
+        // Save the document to the file system.
+        string artifactsDir = "output/";
+        doc.Save(artifactsDir + "ChartSeriesCollectionExample.docx");
     }
 }

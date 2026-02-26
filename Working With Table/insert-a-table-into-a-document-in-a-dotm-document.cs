@@ -6,36 +6,40 @@ class Program
 {
     static void Main()
     {
-        // Load an existing DOTM template (macros are preserved when loading a .dotm file)
-        Document doc = new Document(@"C:\Templates\Template.dotm");
+        // Load the existing DOTM template.
+        Document doc = new Document("Template.dotm");
 
-        // Create a DocumentBuilder attached to the loaded document
+        // Create a DocumentBuilder for the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table
+        // Position the builder where the table should be inserted.
+        builder.MoveToDocumentEnd();
+
+        // Start a new table.
         Table table = builder.StartTable();
 
-        // First row – header cells
+        // First row.
         builder.InsertCell();
-        builder.Writeln("Header 1");
+        builder.Write("Cell 1,1");
         builder.InsertCell();
-        builder.Writeln("Header 2");
+        builder.Write("Cell 1,2");
         builder.EndRow();
 
-        // Second row – data cells
+        // Second row.
         builder.InsertCell();
-        builder.Writeln("Value 1");
+        builder.Write("Cell 2,1");
         builder.InsertCell();
-        builder.Writeln("Value 2");
+        builder.Write("Cell 2,2");
         builder.EndRow();
 
-        // End the table
+        // Finish the table.
         builder.EndTable();
 
-        // Optional: adjust table layout (auto‑fit to contents)
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        // Optional: set title and description for accessibility.
+        table.Title = "Sample Table";
+        table.Description = "Demonstrates inserting a table into a DOTM document.";
 
-        // Save the document. Use SaveFormat.Docm if you need to keep the macros.
-        doc.Save(@"C:\Output\Result.docx");
+        // Save the modified document.
+        doc.Save("Output.dotm");
     }
 }

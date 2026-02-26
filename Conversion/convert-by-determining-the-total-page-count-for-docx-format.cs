@@ -1,14 +1,14 @@
-using System;
 using Aspose.Words;
+using System;
 
 class Program
 {
     static void Main()
     {
-        // Load the DOCX document from file.
+        // Load the DOCX document.
         Document doc = new Document("input.docx");
 
-        // Retrieve the total number of pages after layout.
+        // Determine the total number of pages.
         int totalPages = doc.PageCount;
 
         // Output the page count.

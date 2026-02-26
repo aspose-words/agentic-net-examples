@@ -1,53 +1,55 @@
 using System;
-using System.Text;
+using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
-class ExtractBetweenParagraphs
+class Program
 {
     static void Main()
     {
-        // Path to the WORDML (XML) document.
-        const string inputPath = @"C:\Docs\input.xml";
+        // Load the WORDML (or any supported Word) document.
+        // The constructor automatically detects the format, so a .xml WordML file works here.
+        Document doc = new Document("Input.docx");
 
-        // Load the WORDML document. Aspose.Words automatically detects the format.
-        Document doc = new Document(inputPath);
+        // Access the collection of paragraphs in the main body of the first section.
+        ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
 
-        // Indices of the start and end paragraphs (zero‑based).
-        // Adjust these values to the paragraphs that bound the region you want to extract.
-        const int startParagraphIndex = 2; // third paragraph in the document
-        const int endParagraphIndex   = 5; // sixth paragraph in the document
+        // Define markers that bound the region we want to extract.
+        // In this example we capture everything between a paragraph that contains "Start"
+        // and a paragraph that contains "End".
+        bool capture = false;
+        List<string> extractedLines = new List<string>();
 
-        // Retrieve the start and end Paragraph nodes.
-        Paragraph startParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, startParagraphIndex, true);
-        Paragraph endParagraph   = (Paragraph)doc.GetChild(NodeType.Paragraph, endParagraphIndex, true);
-
-        if (startParagraph == null || endParagraph == null)
+        foreach (Paragraph para in paragraphs)
         {
-            Console.WriteLine("One of the specified paragraph indices is out of range.");
-            return;
+            // Get the visible text of the paragraph (trimmed to remove the trailing paragraph break).
+            string text = para.GetText().Trim();
+
+            if (text.Equals("Start", StringComparison.OrdinalIgnoreCase))
+            {
+                // Begin capturing after the start marker.
+                capture = true;
+                continue; // Skip the marker paragraph itself.
+            }
+
+            if (text.Equals("End", StringComparison.OrdinalIgnoreCase))
+            {
+                // Stop capturing when the end marker is reached.
+                capture = false;
+                break; // Exit the loop if only the first region is needed.
+            }
+
+            if (capture)
+            {
+                // Collect the paragraph text.
+                extractedLines.Add(text);
+            }
         }
 
-        // Build a string containing all content that lies strictly between the two paragraphs.
-        StringBuilder betweenText = new StringBuilder();
+        // Combine the captured paragraphs into a single string.
+        string result = string.Join(Environment.NewLine, extractedLines);
 
-        // Begin with the node immediately after the start paragraph.
-        Node currentNode = startParagraph.NextSibling;
-
-        // Walk the node tree until we reach the end paragraph.
-        while (currentNode != null && currentNode != endParagraph)
-        {
-            // Append the textual representation of the current node.
-            // GetText() returns the text of the node and all its descendants.
-            betweenText.Append(currentNode.GetText());
-
-            // Move to the next node in the document order.
-            currentNode = currentNode.NextSibling;
-        }
-
-        // Output the extracted text.
-        Console.WriteLine("Content between paragraph {0} and paragraph {1}:", startParagraphIndex, endParagraphIndex);
-        Console.WriteLine(betweenText.ToString());
+        // Save the extracted content to a plain‑text file (optional).
+        File.WriteAllText("Extracted.txt", result);
     }
 }

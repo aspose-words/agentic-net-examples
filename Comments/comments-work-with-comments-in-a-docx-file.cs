@@ -5,37 +5,36 @@ class Program
 {
     static void Main()
     {
-        // Load an existing DOCX file.
-        Document doc = new Document("Input.docx");
+        // Create a new blank Word document.
+        Document doc = new Document();
 
-        // Create a DocumentBuilder to work with the document.
+        // Use DocumentBuilder to add some paragraphs to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Second paragraph.");
 
-        // Write some text to the document.
-        builder.Writeln("This is a sample paragraph.");
+        // -------------------------------------------------
+        // Add a comment anchored to the first paragraph.
+        // -------------------------------------------------
+        // Create the comment node with author information.
+        Comment comment = new Comment(doc, "Alice", "A", DateTime.Today);
 
-        // Add a comment to the last paragraph.
-        Comment comment = new Comment(doc, "John Doe", "J.D.", DateTime.Now);
-        // The Comment object contains a Paragraph collection. Add the comment text to the first paragraph.
-        comment.Paragraphs[0].AppendChild(new Run(doc, "Please review this sentence."));
-        builder.CurrentParagraph.AppendChild(comment);
+        // The comment must be a child of a Paragraph node.
+        Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+        firstParagraph.AppendChild(comment);
 
-        // Iterate through all comments in the document.
-        foreach (Comment c in doc.GetChildNodes(NodeType.Comment, true))
-        {
-            // Output comment details.
-            Console.WriteLine($"Comment Id: {c.Id}");
-            Console.WriteLine($"Author: {c.Author}");
-            Console.WriteLine($"Date: {c.DateTime}");
-            Console.WriteLine($"Text: {c.GetText().Trim()}");
-            Console.WriteLine($"Done: {c.Done}");
-            Console.WriteLine();
+        // Add the comment's visible text inside a new paragraph.
+        Paragraph commentParagraph = (Paragraph)comment.AppendChild(new Paragraph(doc));
+        commentParagraph.AppendChild(new Run(doc, "This is a comment."));
 
-            // Mark the comment as done.
-            c.Done = true;
-        }
+        // -------------------------------------------------
+        // Add a reply to the previously created comment.
+        // -------------------------------------------------
+        comment.AddReply("Bob", "B", DateTime.Today, "Reply to comment.");
 
-        // Save the modified document.
-        doc.Save("Output.docx");
+        // -------------------------------------------------
+        // Save the document using the provided Save method.
+        // -------------------------------------------------
+        doc.Save("CommentsDemo.docx");
     }
 }

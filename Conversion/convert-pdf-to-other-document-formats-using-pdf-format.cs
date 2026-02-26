@@ -1,75 +1,84 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-namespace PdfConversionExample
+class PdfConversionExample
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Path to the source PDF file.
+        string pdfPath = @"C:\Input\sample.pdf";
+
+        // Load the PDF document using the Document constructor (load rule).
+        Document pdfDoc = new Document(pdfPath);
+
+        // -----------------------------------------------------------------
+        // Convert PDF to DOCX
+        // -----------------------------------------------------------------
+        string docxPath = @"C:\Output\sample_converted.docx";
+        pdfDoc.Save(docxPath, SaveFormat.Docx); // Save rule with explicit format.
+
+        // -----------------------------------------------------------------
+        // Convert PDF to HTML
+        // -----------------------------------------------------------------
+        string htmlPath = @"C:\Output\sample_converted.html";
+        pdfDoc.Save(htmlPath, SaveFormat.Html); // Save rule with explicit format.
+
+        // -----------------------------------------------------------------
+        // Convert PDF to plain text
+        // -----------------------------------------------------------------
+        string txtPath = @"C:\Output\sample_converted.txt";
+        pdfDoc.Save(txtPath, SaveFormat.Text); // Save rule with explicit format.
+
+        // -----------------------------------------------------------------
+        // Convert PDF to RTF
+        // -----------------------------------------------------------------
+        string rtfPath = @"C:\Output\sample_converted.rtf";
+        pdfDoc.Save(rtfPath, SaveFormat.Rtf); // Save rule with explicit format.
+
+        // -----------------------------------------------------------------
+        // Convert PDF to EPUB
+        // -----------------------------------------------------------------
+        string epubPath = @"C:\Output\sample_converted.epub";
+        pdfDoc.Save(epubPath, SaveFormat.Epub); // Save rule with explicit format.
+
+        // -----------------------------------------------------------------
+        // Convert PDF to ODT (OpenDocument Text)
+        // -----------------------------------------------------------------
+        string odtPath = @"C:\Output\sample_converted.odt";
+        pdfDoc.Save(odtPath, SaveFormat.Odt); // Save rule with explicit format.
+
+        // -----------------------------------------------------------------
+        // Convert PDF to XPS
+        // -----------------------------------------------------------------
+        string xpsPath = @"C:\Output\sample_converted.xps";
+        pdfDoc.Save(xpsPath, SaveFormat.Xps); // Save rule with explicit format.
+
+        // -----------------------------------------------------------------
+        // Convert PDF to Markdown
+        // -----------------------------------------------------------------
+        string mdPath = @"C:\Output\sample_converted.md";
+        pdfDoc.Save(mdPath, SaveFormat.Markdown); // Save rule with explicit format.
+
+        // -----------------------------------------------------------------
+        // Convert PDF to PNG (first page only) using ImageSaveOptions.
+        // -----------------------------------------------------------------
+        string pngPath = @"C:\Output\sample_converted.png";
+        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            // Path to the source PDF file.
-            string pdfPath = @"C:\Docs\sample.pdf";
+            // Render only the first page.
+            PageSet = new PageSet(0)
+        };
+        pdfDoc.Save(pngPath, pngOptions); // Save rule with SaveOptions.
 
-            // Load the PDF document using PdfLoadOptions.
-            // PdfLoadOptions allows you to control how the PDF is interpreted.
-            var loadOptions = new PdfLoadOptions
-            {
-                // Example: skip images while loading (set to false to keep them).
-                SkipPdfImages = false,
-                // Example: set password if the PDF is encrypted.
-                Password = null
-            };
-            Document pdfDocument = new Document(pdfPath, loadOptions);
+        // -----------------------------------------------------------------
+        // Convert PDF to TIFF (all pages) using ImageSaveOptions.
+        // -----------------------------------------------------------------
+        string tiffPath = @"C:\Output\sample_converted.tiff";
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        pdfDoc.Save(tiffPath, tiffOptions); // Save rule with SaveOptions.
 
-            // -----------------------------------------------------------------
-            // Convert PDF to DOCX (Microsoft Word Open XML format).
-            // -----------------------------------------------------------------
-            string docxPath = @"C:\Docs\sample_converted.docx";
-            pdfDocument.Save(docxPath, SaveFormat.Docx);
-
-            // -----------------------------------------------------------------
-            // Convert PDF to HTML.
-            // -----------------------------------------------------------------
-            string htmlPath = @"C:\Docs\sample_converted.html";
-            var htmlOptions = new HtmlSaveOptions
-            {
-                // Export images as separate files (default behavior).
-                ExportImagesAsBase64 = false,
-                // Keep the original document structure.
-                ExportGeneratorName = true,
-                // Use UTF-8 encoding without BOM.
-                Encoding = new System.Text.UTF8Encoding(false)
-            };
-            pdfDocument.Save(htmlPath, htmlOptions);
-
-            // -----------------------------------------------------------------
-            // Convert PDF to XPS (XML Paper Specification).
-            // -----------------------------------------------------------------
-            string xpsPath = @"C:\Docs\sample_converted.xps";
-            pdfDocument.Save(xpsPath, SaveFormat.Xps);
-
-            // -----------------------------------------------------------------
-            // Convert PDF to plain text.
-            // -----------------------------------------------------------------
-            string txtPath = @"C:\Docs\sample_converted.txt";
-            pdfDocument.Save(txtPath, SaveFormat.Text);
-
-            // -----------------------------------------------------------------
-            // Convert PDF to ODT (OpenDocument Text).
-            // -----------------------------------------------------------------
-            string odtPath = @"C:\Docs\sample_converted.odt";
-            pdfDocument.Save(odtPath, SaveFormat.Odt);
-
-            // -----------------------------------------------------------------
-            // Optional: Detect the format of the original file using FileFormatUtil.
-            // -----------------------------------------------------------------
-            FileFormatInfo formatInfo = FileFormatUtil.DetectFileFormat(pdfPath);
-            Console.WriteLine($"Original file format: {formatInfo.LoadFormat}");
-            Console.WriteLine($"Is encrypted: {formatInfo.IsEncrypted}");
-            Console.WriteLine($"Has macros: {formatInfo.HasMacros}");
-        }
+        // All conversions completed.
+        Console.WriteLine("PDF conversion to multiple formats completed successfully.");
     }
 }

@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 
 class ExtractBetweenNodes
@@ -7,55 +7,53 @@ class ExtractBetweenNodes
     static void Main()
     {
         // Load the DOTX template.
-        Document doc = new Document("Template.dotx");
+        Document template = new Document("Template.dotx");
 
-        // Find the start and end nodes.
-        // For this example we look for paragraphs that contain the markers "[START]" and "[END]".
-        Paragraph startNode = null;
-        Paragraph endNode = null;
+        // Define the bookmark names that mark the start and end of the range to extract.
+        const string startBookmarkName = "Start";
+        const string endBookmarkName = "End";
 
-        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
+        // Locate the start and end bookmark nodes.
+        BookmarkStart startBookmark = template.Range.Bookmarks[startBookmarkName]?.BookmarkStart;
+        BookmarkEnd endBookmark = template.Range.Bookmarks[endBookmarkName]?.BookmarkEnd;
+
+        if (startBookmark == null || endBookmark == null)
         {
-            string text = para.GetText();
-
-            if (startNode == null && text.Contains("[START]"))
-                startNode = para;
-
-            if (endNode == null && text.Contains("[END]"))
-                endNode = para;
-
-            if (startNode != null && endNode != null)
-                break;
-        }
-
-        if (startNode == null || endNode == null)
-        {
-            Console.WriteLine("Start or end marker not found.");
+            Console.WriteLine("Start or End bookmark not found.");
             return;
         }
 
-        // Collect text of all nodes that are between the start and end markers (exclusive).
-        Node current = startNode.NextSibling;
-        var extractedText = new System.Text.StringBuilder();
+        // Create a new empty document that will hold the extracted content.
+        Document extracted = new Document();
+        // Remove the default section/paragraph that Aspose.Words creates.
+        extracted.RemoveAllChildren();
 
-        while (current != null && current != endNode)
+        // Create a single section and body for the destination document.
+        Section destSection = new Section(extracted);
+        extracted.AppendChild(destSection);
+        Body destBody = new Body(extracted);
+        destSection.AppendChild(destBody);
+
+        // Prepare a NodeImporter for efficient node copying.
+        NodeImporter importer = new NodeImporter(template, extracted, ImportFormatMode.KeepSourceFormatting);
+
+        // Collect all nodes that are between the start and end bookmarks (exclusive).
+        List<Node> nodesBetween = new List<Node>();
+        Node current = startBookmark.NextSibling;
+        while (current != null && current != endBookmark)
         {
-            // Append the text of the current node.
-            extractedText.Append(current.GetText());
-
-            // Move to the next sibling; if null, walk up the tree to find the next node in document order.
-            if (current.NextSibling != null)
-                current = current.NextSibling;
-            else
-                current = current.ParentNode?.NextSibling;
+            nodesBetween.Add(current);
+            current = current.NextSibling;
         }
 
-        // Output the extracted content.
-        string result = extractedText.ToString().Trim();
-        Console.WriteLine("Extracted content between markers:");
-        Console.WriteLine(result);
+        // Import the collected nodes into the new document.
+        foreach (Node node in nodesBetween)
+        {
+            Node importedNode = importer.ImportNode(node, true);
+            destBody.AppendChild(importedNode);
+        }
 
-        // Optionally, save the extracted text to a plain‑text file.
-        File.WriteAllText("ExtractedContent.txt", result);
+        // Save the extracted content to a new DOCX file.
+        extracted.Save("ExtractedContent.docx");
     }
 }

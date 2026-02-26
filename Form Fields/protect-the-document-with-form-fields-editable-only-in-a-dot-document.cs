@@ -1,7 +1,6 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Fields;
+using Aspose.Words.Fields; // Added for TextFormFieldType
 
 class Program
 {
@@ -9,18 +8,19 @@ class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add content and a form field.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Please fill in the following form field:");
-        // Insert a regular text input form field.
-        builder.InsertTextInput("FormField1", TextFormFieldType.Regular, "", "Enter value here", 0);
 
-        // Protect the document so that only form fields can be edited.
+        // Add some explanatory text.
+        builder.Writeln("Please fill in the form field below:");
+
+        // Insert a plain text form field that the user can edit.
+        builder.InsertTextInput("FormField1", TextFormFieldType.Regular, "", "Enter text here", 0);
+
+        // Protect the document so that only form fields are editable.
         doc.Protect(ProtectionType.AllowOnlyFormFields);
 
         // Save the document as a DOT (Word template) file.
         DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Dot);
-        doc.Save("FormOnlyTemplate.dot", saveOptions);
+        doc.Save("FormTemplate.dot", saveOptions);
     }
 }

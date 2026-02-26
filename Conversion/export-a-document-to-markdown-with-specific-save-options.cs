@@ -1,59 +1,67 @@
-using System.Text;
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+public class MarkdownExportExample
 {
-    static void Main()
+    /// <summary>
+    /// Exports a document to Markdown using specific save options.
+    /// </summary>
+    /// <param name="inputFilePath">Path to the source document.</param>
+    /// <param name="outputFilePath">Path where the Markdown file will be saved.</param>
+    public static void Export(string inputFilePath, string outputFilePath)
     {
-        // Create a new document and a builder to add content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add sample markdown-like content.
-        builder.Writeln("## Sample Markdown Export");
-        builder.Writeln("This is a paragraph with **bold** text.");
-        builder.Writeln();
-
-        // Insert a simple table.
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-        builder.EndTable();
+        // Load the source document.
+        Document doc = new Document(inputFilePath);
 
         // Configure Markdown save options.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
+
+        // Export tables as raw HTML.
+        saveOptions.ExportAsHtml = MarkdownExportAsHtml.Tables;
+
+        // Export list items as plain text.
+        saveOptions.ListExportMode = MarkdownListExportMode.PlainText;
+
+        // Export links using reference style.
+        saveOptions.LinkExportMode = MarkdownLinkExportMode.Reference;
+
+        // Include underline formatting using "++".
+        saveOptions.ExportUnderlineFormatting = true;
+
+        // Explicitly set the save format to Markdown (optional, kept for clarity).
+        saveOptions.SaveFormat = SaveFormat.Markdown;
+
+        // Save the document as Markdown with the specified options.
+        doc.Save(outputFilePath, saveOptions);
+    }
+}
+
+public class Program
+{
+    /// <summary>
+    /// Entry point required for a console application.
+    /// Usage: dotnet run <inputFilePath> <outputFilePath>
+    /// </summary>
+    public static void Main(string[] args)
+    {
+        if (args.Length != 2)
         {
-            // Export tables as raw HTML to preserve complex structures.
-            ExportAsHtml = MarkdownExportAsHtml.Tables,
+            Console.WriteLine("Usage: <program> <inputFilePath> <outputFilePath>");
+            return;
+        }
 
-            // Export lists using standard markdown syntax.
-            ListExportMode = MarkdownListExportMode.MarkdownSyntax,
+        string inputPath = args[0];
+        string outputPath = args[1];
 
-            // Export links as reference style.
-            LinkExportMode = MarkdownLinkExportMode.Reference,
-
-            // Preserve empty paragraphs as empty lines.
-            EmptyParagraphExportMode = MarkdownEmptyParagraphExportMode.EmptyLine,
-
-            // Use UTF-8 encoding without BOM.
-            Encoding = new UTF8Encoding(false),
-
-            // Do not embed the Aspose.Words generator name.
-            ExportGeneratorName = false,
-
-            // Save images as Base64 strings.
-            ExportImagesAsBase64 = true,
-
-            // If images were saved as files, specify folder and alias.
-            ImagesFolder = "Images",
-            ImagesFolderAlias = "images"
-        };
-
-        // Save the document to a Markdown file using the configured options.
-        doc.Save("Output.md", saveOptions);
+        try
+        {
+            MarkdownExportExample.Export(inputPath, outputPath);
+            Console.WriteLine($"Document exported successfully to '{outputPath}'.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during export: {ex.Message}");
+        }
     }
 }

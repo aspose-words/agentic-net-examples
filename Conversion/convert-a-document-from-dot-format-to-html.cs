@@ -2,24 +2,20 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class DotToHtmlConverter
+class Program
 {
     static void Main()
     {
-        // Path to the folder that contains the source .dot file and where the HTML will be saved.
-        string folderPath = @"C:\Documents\";
+        // Input DOT (Word template) file path
+        string inputPath = @"C:\Docs\Template.dot";
 
-        // Load the DOT template. The LoadFormat is detected automatically.
-        Document doc = new Document(System.IO.Path.Combine(folderPath, "template.dot"));
+        // Output HTML file path
+        string outputPath = @"C:\Docs\Template.html";
 
-        // Configure HTML save options. Use HTML5 standard for the output.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
-        {
-            HtmlVersion = HtmlVersion.Html5,
-            PrettyFormat = true   // Optional: make the HTML output more readable.
-        };
+        // Load the DOT document
+        Document doc = new Document(inputPath);
 
-        // Save the document as an HTML file.
-        doc.Save(System.IO.Path.Combine(folderPath, "output.html"), htmlOptions);
+        // Save the document as HTML
+        doc.Save(outputPath, SaveFormat.Html);
     }
 }

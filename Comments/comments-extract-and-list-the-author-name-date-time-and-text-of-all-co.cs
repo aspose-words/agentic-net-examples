@@ -1,14 +1,12 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
-class ExtractComments
+class Program
 {
     static void Main()
     {
-        // Load the DOCX document.
-        Document doc = new Document("input.docx");
+        // Load the DOCX file.
+        Document doc = new Document("Input.docx");
 
         // Retrieve all comment nodes in the document.
         NodeCollection commentNodes = doc.GetChildNodes(NodeType.Comment, true);
@@ -16,19 +14,10 @@ class ExtractComments
         // Iterate through each comment and output its details.
         foreach (Comment comment in commentNodes)
         {
-            // Author of the comment.
-            string author = comment.Author;
-
-            // Date and time when the comment was made.
-            DateTime dateTime = comment.DateTime;
-
-            // Text content of the comment (trimmed to remove extra whitespace).
-            string text = comment.GetText().Trim();
-
-            Console.WriteLine($"Author: {author}");
-            Console.WriteLine($"DateTime: {dateTime}");
-            Console.WriteLine($"Text: {text}");
-            Console.WriteLine(new string('-', 40));
+            Console.WriteLine($"Author: {comment.Author}");
+            Console.WriteLine($"DateTime: {comment.DateTime}");
+            Console.WriteLine($"Text: {comment.GetText().Trim()}");
+            Console.WriteLine();
         }
     }
 }

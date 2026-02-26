@@ -6,21 +6,25 @@ class FindReplaceExample
 {
     static void Main()
     {
-        // Load an existing DOCX document.
-        // The Document constructor automatically detects the file format.
+        // Load the source DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Create FindReplaceOptions to customize the replace operation.
-        FindReplaceOptions options = new FindReplaceOptions();
-        // Example: make the search case‑insensitive and match whole words only.
-        options.MatchCase = false;
-        options.FindWholeWordsOnly = true;
+        // Configure find/replace options.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            // Perform a case‑insensitive search.
+            MatchCase = false,
+            // Replace only whole‑word matches.
+            FindWholeWordsOnly = true
+        };
 
-        // Perform the find‑and‑replace.
-        // Replace every occurrence of "oldText" with "newText" using the specified options.
-        doc.Range.Replace("oldText", "newText", options);
+        // Replace all occurrences of the placeholder with the desired text.
+        int replacementsMade = doc.Range.Replace("_FullName_", "John Doe", options);
 
-        // Save the modified document.
+        // Optionally, output the number of replacements performed.
+        Console.WriteLine($"Replacements made: {replacementsMade}");
+
+        // Save the updated document.
         doc.Save("Output.docx");
     }
 }

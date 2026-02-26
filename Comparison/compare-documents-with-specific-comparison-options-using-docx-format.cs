@@ -2,39 +2,41 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class CompareDocuments
+class DocumentComparison
 {
     static void Main()
     {
-        // Load the two DOCX documents to be compared.
-        Document original = new Document("Original.docx");
-        Document revised = new Document("Revised.docx");
+        // Load the two documents to be compared.
+        Document docOriginal = new Document("Original.docx");
+        Document docEdited   = new Document("Edited.docx");
 
-        // Configure comparison options.
-        CompareOptions options = new CompareOptions
+        // Ensure both documents have no existing revisions (required before comparison).
+        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
         {
-            // Do not track moved content.
-            CompareMoves = false,
-            // Track changes at the word level.
-            Granularity = Granularity.WordLevel,
-            // Ignore case differences.
-            IgnoreCaseChanges = true,
-            // Ignore comments, formatting, footnotes, headers/footers, tables, textboxes, and fields.
-            IgnoreComments = true,
-            IgnoreFormatting = true,
-            IgnoreFootnotes = true,
-            IgnoreHeadersAndFooters = true,
-            IgnoreTables = true,
-            IgnoreTextboxes = true,
-            IgnoreFields = true,
-            // Use the revised document as the base for comparison.
-            Target = ComparisonTargetType.New
+            docOriginal.Revisions.RejectAll();
+            docEdited.Revisions.RejectAll();
+        }
+
+        // Set up comparison options.
+        CompareOptions compareOptions = new CompareOptions
+        {
+            // Example options – adjust as needed.
+            CompareMoves               = true,                     // Track moved text.
+            IgnoreFormatting           = true,                     // Ignore formatting changes.
+            IgnoreComments             = true,                     // Ignore comment changes.
+            IgnoreTables               = false,                    // Include table changes.
+            IgnoreFields               = false,                    // Include field changes.
+            IgnoreFootnotes            = false,                    // Include footnote/endnote changes.
+            IgnoreTextboxes            = false,                    // Include textbox changes.
+            IgnoreHeadersAndFooters    = false,                    // Include header/footer changes.
+            Granularity                = Granularity.WordLevel,    // Track changes at word level.
+            Target                     = ComparisonTargetType.New // Use the edited document as the base.
         };
 
-        // Perform the comparison. Revisions are added to the 'original' document.
-        original.Compare(revised, "Reviewer", DateTime.Now, options);
+        // Perform the comparison. Revisions are added to docOriginal.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
 
-        // Save the document that now contains the revision marks.
-        original.Save("ComparisonResult.docx");
+        // Save the resulting document (with revisions) as DOCX.
+        docOriginal.Save("ComparisonResult.docx");
     }
 }

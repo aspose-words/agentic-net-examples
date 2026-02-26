@@ -1,24 +1,23 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class ProtectDocumentExample
+namespace AsposeWordsExample
 {
-    static void Main()
+    class Program
     {
-        // Path to the existing DOCX file.
-        string inputPath = @"C:\Docs\input.docx";
+        static void Main()
+        {
+            // Load an existing DOCX document from the file system.
+            // The Document(string) constructor follows the provided load rule.
+            Document doc = new Document("InputDocument.docx");
 
-        // Load the document from the file system.
-        Document doc = new Document(inputPath);
+            // Protect the document so that only form fields can be edited.
+            // This uses the Protect(ProtectionType) method as defined in the rules.
+            doc.Protect(ProtectionType.AllowOnlyFormFields);
 
-        // Apply protection that allows only form fields to be edited.
-        doc.Protect(ProtectionType.AllowOnlyFormFields);
-
-        // Path where the protected document will be saved.
-        string outputPath = @"C:\Docs\output_protected.docx";
-
-        // Save the protected document.
-        doc.Save(outputPath, SaveFormat.Docx);
+            // Save the protected document back to the file system.
+            // The Save(string) method follows the provided save rule.
+            doc.Save("ProtectedDocument.docx");
+        }
     }
 }

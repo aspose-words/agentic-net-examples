@@ -5,40 +5,30 @@ using Aspose.Words.Saving;
 
 namespace DocumentSplitExample
 {
-    // Custom callback to rename each split part of the document.
-    public class SavedDocumentPartRename : IDocumentPartSavingCallback
+    // Callback that assigns a custom name to each split part.
+    public class PartNamingCallback : IDocumentPartSavingCallback
     {
         private readonly string _baseFileName;
-        private readonly DocumentSplitCriteria _splitCriteria;
-        private int _partCounter;
+        private int _partIndex = 0;
 
-        public SavedDocumentPartRename(string baseFileName, DocumentSplitCriteria splitCriteria)
+        public PartNamingCallback(string baseFileName)
         {
             _baseFileName = baseFileName;
-            _splitCriteria = splitCriteria;
-            _partCounter = 0;
         }
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Determine a readable part type based on the split criteria used.
-            string partType = _splitCriteria switch
-            {
-                DocumentSplitCriteria.PageBreak => "Page",
-                DocumentSplitCriteria.ColumnBreak => "Column",
-                DocumentSplitCriteria.SectionBreak => "Section",
-                DocumentSplitCriteria.HeadingParagraph => "Heading",
-                _ => "Part"
-            };
+            // Increment part counter.
+            _partIndex++;
 
-            // Build a new file name for the part.
-            string newFileName = $"{_baseFileName}_part{++_partCounter}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+            // Build a new file name for the part, preserving the original extension.
+            string newFileName = $"{_baseFileName}_Part{_partIndex}{Path.GetExtension(args.DocumentPartFileName)}";
 
             // Assign the new file name.
             args.DocumentPartFileName = newFileName;
 
-            // Alternatively, you could provide a custom stream:
-            // args.DocumentPartStream = new FileStream(Path.Combine(ArtifactsDir, newFileName), FileMode.Create);
+            // Optionally, you could provide a custom stream instead:
+            // args.DocumentPartStream = new FileStream(Path.Combine(Path.GetDirectoryName(newFileName), newFileName), FileMode.Create);
         }
     }
 
@@ -46,28 +36,20 @@ namespace DocumentSplitExample
     {
         static void Main()
         {
-            // Path to the source DOCX document.
-            string inputPath = @"C:\Docs\SourceDocument.docx";
+            // Load the source DOCX document.
+            Document doc = new Document("InputDocument.docx");
 
-            // Load the document from file.
-            Document doc = new Document(inputPath);
-
-            // Define the output base file name (without extension).
-            string outputBaseName = "SplitDocument";
-
-            // Configure HTML save options with split criteria.
+            // Configure HTML save options to split the document at each heading paragraph.
             HtmlSaveOptions saveOptions = new HtmlSaveOptions
             {
-                // Split the document at each section break.
-                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-
-                // Use the custom callback to control part file names.
-                DocumentPartSavingCallback = new SavedDocumentPartRename(outputBaseName, DocumentSplitCriteria.SectionBreak)
+                DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
+                // Assign the callback that will name each split part.
+                DocumentPartSavingCallback = new PartNamingCallback("SplitDocument")
             };
 
-            // Save the document; Aspose.Words will create multiple HTML files according to the split criteria.
-            string outputPath = Path.Combine(@"C:\Docs\Output", $"{outputBaseName}.html");
-            doc.Save(outputPath, saveOptions);
+            // Save the document. Aspose.Words will create multiple HTML files,
+            // one for each heading paragraph, using the names supplied by the callback.
+            doc.Save("SplitDocument.html", saveOptions);
         }
     }
 }

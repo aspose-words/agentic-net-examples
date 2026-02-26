@@ -1,77 +1,58 @@
 using System;
-using System.IO;
 using System.Threading;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsCancellationDemo
 {
-    static void Main()
+    // Callback that aborts saving when the supplied CancellationToken is signaled.
+    public class TokenSavingCallback : IDocumentSavingCallback
     {
-        // Create a cancellation token source that will cancel after 500 ms.
-        using var cts = new CancellationTokenSource(500);
+        private readonly CancellationToken _cancellationToken;
 
-        // Attach a loading callback that checks the token.
-        var loadOptions = new LoadOptions
+        public TokenSavingCallback(CancellationToken cancellationToken)
         {
-            ProgressCallback = new LoadingCancellationCallback(cts.Token)
-        };
+            _cancellationToken = cancellationToken;
+        }
 
-        try
+        // This method is called periodically during document saving.
+        public void Notify(DocumentSavingArgs args)
         {
-            // Load the document with the custom loading callback.
-            Document doc = new Document("Big document.docx", loadOptions);
+            if (_cancellationToken.IsCancellationRequested)
+                // Throwing OperationCanceledException aborts the save operation.
+                throw new OperationCanceledException(
+                    $"Saving canceled. EstimatedProgress = {args.EstimatedProgress}");
+        }
+    }
 
-            // Attach a saving callback that also checks the token.
-            var saveOptions = new PdfSaveOptions
+    class Program
+    {
+        static void Main()
+        {
+            // Create a cancellation token that will be triggered after 200 milliseconds.
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(200);
+
+            // Load the source DOCX document.
+            Document doc = new Document("InputDocument.docx");
+
+            // Configure save options and attach the cancellation callback.
+            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
             {
-                ProgressCallback = new SavingCancellationCallback(cts.Token)
+                ProgressCallback = new TokenSavingCallback(cts.Token)
             };
 
-            // Save the document; the callback may abort the operation.
-            doc.Save("output.pdf", saveOptions);
+            try
+            {
+                // Attempt to save the document; may be canceled by the token.
+                doc.Save("OutputDocument.docx", saveOptions);
+                Console.WriteLine("Document saved successfully.");
+            }
+            catch (OperationCanceledException ex)
+            {
+                // Handle the cancellation gracefully.
+                Console.WriteLine($"Save operation was canceled: {ex.Message}");
+            }
         }
-        catch (OperationCanceledException ex)
-        {
-            // Handle the cancellation.
-            Console.WriteLine($"Processing was canceled: {ex.Message}");
-        }
-    }
-}
-
-// Implements IDocumentLoadingCallback and aborts loading when the token is cancelled.
-class LoadingCancellationCallback : IDocumentLoadingCallback
-{
-    private readonly CancellationToken _token;
-
-    public LoadingCancellationCallback(CancellationToken token)
-    {
-        _token = token;
-    }
-
-    public void Notify(DocumentLoadingArgs args)
-    {
-        if (_token.IsCancellationRequested)
-            throw new OperationCanceledException(
-                $"Loading canceled at {DateTime.Now}; EstimatedProgress = {args.EstimatedProgress}");
-    }
-}
-
-// Implements IDocumentSavingCallback and aborts saving when the token is cancelled.
-class SavingCancellationCallback : IDocumentSavingCallback
-{
-    private readonly CancellationToken _token;
-
-    public SavingCancellationCallback(CancellationToken token)
-    {
-        _token = token;
-    }
-
-    public void Notify(DocumentSavingArgs args)
-    {
-        if (_token.IsCancellationRequested)
-            throw new OperationCanceledException(
-                $"Saving canceled at {DateTime.Now}; EstimatedProgress = {args.EstimatedProgress}");
     }
 }

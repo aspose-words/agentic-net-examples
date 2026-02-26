@@ -6,33 +6,35 @@ class TrackChangesWithContentControl
 {
     static void Main()
     {
-        // Create a new blank document (create rule)
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Start tracking revisions (track changes)
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
-
-        // Insert some text before the content control
+        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Paragraph before the content control.");
 
-        // Insert a rich‑text content control (StructuredDocumentTag) into the document body
-        StructuredDocumentTag richControl = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
-        richControl.Title = "SampleControl"; // optional title
-        builder.InsertNode(richControl);
+        // Start tracking revisions – all subsequent changes will be recorded.
+        doc.StartTrackRevisions("John Doe");
 
-        // Move the builder inside the content control and add editable text
-        builder.MoveTo(richControl);
-        builder.Write("Editable text inside the content control.");
+        // Insert a plain‑text content control (structured document tag).
+        StructuredDocumentTag sdt = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+        sdt.Title = "SampleControl";
+        sdt.Tag = "SampleTag";
 
-        // Continue with normal document content
-        builder.Writeln();
-        builder.Writeln("Paragraph after the content control.");
+        // Add initial text inside the content control.
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Initial text inside the content control.");
+        para.AppendChild(run);
+        sdt.AppendChild(para);
 
-        // Stop tracking revisions (optional, can keep tracking)
+        // Stop tracking for now.
         doc.StopTrackRevisions();
 
-        // Save the document to a DOCX file (save rule)
-        doc.Save("TrackedChangesWithContentControl.docx");
+        // Make another change while tracking is active to demonstrate a second revision.
+        doc.StartTrackRevisions("John Doe");
+        builder.Writeln("Additional paragraph added after the content control.");
+        doc.StopTrackRevisions();
+
+        // Save the document – the .docx will show tracked changes when opened in Word.
+        doc.Save("TrackedChanges.docx");
     }
 }

@@ -1,76 +1,49 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class AddShapesToGroupShape
+class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape that will contain other shapes.
-        GroupShape group = new GroupShape(doc);
-        // Set the size of the group shape (in points).
-        group.Width = 400;
-        group.Height = 300;
-        // Position the group shape on the page.
-        group.Left = 100;
-        group.Top = 100;
-        // Define the coordinate space inside the group shape.
-        group.CoordOrigin = new Point(0, 0);
-        group.CoordSize = new Size(5000, 5000); // Large enough for child shapes.
+        // Insert a rectangle shape.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rect.Left = 20;               // Position relative to the page.
+        rect.Top = 20;
+        rect.Stroke.Color = Color.Blue;
 
-        // -------------------------------------------------
-        // Add a rectangle shape to the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 200;
-        rect.Height = 100;
-        rect.Left = 50;   // Position relative to the group's coordinate space.
-        rect.Top = 50;
-        rect.Fill.ForeColor = Color.LightBlue;
-        rect.Fill.Visible = true;
-        rect.Stroke.Color = Color.DarkBlue;
-        rect.Stroke.Weight = 2.0;
-        group.AppendChild(rect);
+        // Insert an ellipse shape.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 100);
+        ellipse.Left = 250;
+        ellipse.Top = 30;
+        ellipse.Stroke.Color = Color.Green;
 
-        // Add a line shape to the group.
-        Shape line = new Shape(doc, ShapeType.Line);
-        line.Width = 300;
-        line.Height = 0; // Height is not used for a horizontal line.
-        line.Left = 100;
-        line.Top = 200;
-        line.Stroke.Color = Color.Red;
-        line.Stroke.Weight = 3.0;
-        line.Stroke.DashStyle = DashStyle.Dash;
-        line.Stroke.StartArrowType = ArrowType.Arrow;
-        line.Stroke.EndArrowType = ArrowType.Diamond;
-        group.AppendChild(line);
+        // Group the rectangle and ellipse into a single GroupShape.
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Add a text box shape to the group.
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.Width = 180;
-        textBox.Height = 60;
-        textBox.Left = 250;
-        textBox.Top = 150;
-        textBox.Fill.ForeColor = Color.LightYellow;
-        textBox.Fill.Visible = true;
-        textBox.Stroke.Color = Color.Orange;
-        textBox.Stroke.Weight = 1.5;
-        // Insert some text into the text box.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Group Shape Text");
-        para.AppendChild(run);
-        textBox.FirstParagraph.AppendChild(para);
-        group.AppendChild(textBox);
-        // -------------------------------------------------
+        // Create a star shape that will be added directly to the group.
+        Shape star = new Shape(doc, ShapeType.Star)
+        {
+            Width = 80,
+            Height = 80,
+            // Position inside the group's own coordinate system.
+            Left = -40,
+            Top = -40,
+            FillColor = Color.Yellow
+        };
 
-        // Insert the group shape into the document.
-        builder.InsertNode(group);
+        // Append the star to the existing group.
+        group.AppendChild(star);
 
-        // Save the document to a DOCX file.
-        doc.Save("GroupShapeComplex.docx");
+        // Adjust the group's internal coordinate system (optional).
+        group.CoordSize = new Size(500, 500);   // Scale of the group's coordinate plane.
+        group.CoordOrigin = new Point(-250, -250); // Move origin to the centre of the group.
+
+        // Save the document containing the complex grouped shapes.
+        doc.Save("ComplexGroupShape.docx");
     }
 }

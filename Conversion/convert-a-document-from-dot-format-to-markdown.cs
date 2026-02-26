@@ -1,31 +1,41 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class DotToMarkdownConverter
+namespace DotToMarkdownConverter
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOT (Word template) file.
-        string inputPath = @"C:\Docs\Template.dot";
-
-        // Path where the resulting Markdown file will be saved.
-        string outputPath = @"C:\Docs\Converted.md";
-
-        // Load the DOT file. Explicitly specify the format to avoid auto‑detection.
-        var loadOptions = new LoadOptions
+        static void Main(string[] args)
         {
-            LoadFormat = LoadFormat.Dot
-        };
-        Document doc = new Document(inputPath, loadOptions);
+            // Example usage:
+            // Provide the full path to the source .dot file and the desired output .md file.
+            string sourceDotPath = @"C:\Docs\Template.dot";
+            string targetMarkdownPath = @"C:\Docs\Converted.md";
 
-        // Configure Markdown save options if needed. The class does not expose a
-        // PreserveEmptyLines property, so we use the default options or set other
-        // supported properties here.
-        var saveOptions = new MarkdownSaveOptions();
+            ConvertDotToMarkdown(sourceDotPath, targetMarkdownPath);
+        }
 
-        // Save the document as Markdown.
-        doc.Save(outputPath, saveOptions);
+        /// <summary>
+        /// Converts a Microsoft Word template (.dot) to a Markdown (.md) document.
+        /// </summary>
+        /// <param name="inputPath">Full path to the source .dot file.</param>
+        /// <param name="outputPath">Full path where the Markdown file will be saved.</param>
+        static void ConvertDotToMarkdown(string inputPath, string outputPath)
+        {
+            // Load the .dot template into an Aspose.Words Document.
+            Document doc = new Document(inputPath);
+
+            // Configure save options for Markdown output.
+            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+            {
+                // Explicitly set the format to Markdown (optional, but ensures correctness).
+                SaveFormat = SaveFormat.Markdown
+            };
+
+            // Save the document as Markdown using the configured options.
+            doc.Save(outputPath, saveOptions);
+        }
     }
 }

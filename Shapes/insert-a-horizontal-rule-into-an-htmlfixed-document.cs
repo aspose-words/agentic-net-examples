@@ -1,8 +1,6 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 class Program
 {
@@ -10,26 +8,22 @@ class Program
     {
         // Create a new empty document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a horizontal rule shape into the document.
+        // Insert a horizontal rule shape at the current cursor position.
         Shape horizontalRule = builder.InsertHorizontalRule();
 
-        // Customize the appearance of the horizontal rule.
-        HorizontalRuleFormat hrFormat = horizontalRule.HorizontalRuleFormat;
-        hrFormat.Alignment = HorizontalRuleAlignment.Center;   // Center the rule.
-        hrFormat.WidthPercent = 80;                           // 80% of the page width.
-        hrFormat.Height = 2;                                  // Height in points.
-        hrFormat.Color = Color.DarkGray;                      // Gray color.
-        hrFormat.NoShade = true;                              // Solid color, no 3‑D shading.
+        // Optional: customize the appearance of the horizontal rule.
+        HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
+        format.Alignment = HorizontalRuleAlignment.Center; // Center the rule.
+        format.WidthPercent = 70;                           // 70% of the page width.
+        format.Height = 3;                                  // Height of 3 points.
+        format.Color = Color.Blue;                          // Blue color.
+        format.NoShade = true;                              // Solid color, no 3‑D shading.
 
-        // Save the document as an HTML Fixed file.
-        HtmlFixedSaveOptions saveOptions = new HtmlFixedSaveOptions
-        {
-            // Optional: set page alignment (default is Center).
-            PageHorizontalAlignment = HtmlFixedPageHorizontalAlignment.Center
-        };
-
-        doc.Save("HorizontalRule.html", saveOptions);
+        // Save the document in HTML Fixed format.
+        doc.Save("HorizontalRule.html", SaveFormat.HtmlFixed);
     }
 }

@@ -1,37 +1,34 @@
-using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
-class ChartFormattingExample
+class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart with a specific size.
+        // Insert a column chart.
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Example: clear the default demo series and add custom data.
+        // Remove default series and add custom data.
         chart.Series.Clear();
-        chart.Series.Add("Series 1", new[] { "A", "B", "C" }, new double[] { 10, 20, 30 });
+        string[] categories = new[] { "Category 1", "Category 2" };
+        chart.Series.Add("Series 1", categories, new double[] { 1, 2 });
+        chart.Series.Add("Series 2", categories, new double[] { 3, 4 });
 
-        // ----- Fill formatting -----
-        // Set a solid fill color for the entire chart area.
-        chart.Format.Fill.Solid(Color.LightBlue);
+        // Set chart background fill to a solid color.
+        chart.Format.Fill.Solid(Color.DarkSlateGray);
 
-        // ----- Stroke (line) formatting -----
-        // Set the outline (stroke) color, weight and dash style.
-        chart.Format.Stroke.Color = Color.DarkBlue;   // Outline color.
-        chart.Format.Stroke.Weight = 2.0;            // Thickness in points.
-        chart.Format.Stroke.DashStyle = DashStyle.Dash; // Dashed line.
+        // Set chart outline (stroke) color and weight.
+        chart.Format.Stroke.Color = Color.Red;
+        chart.Format.Stroke.Weight = 2.0; // points
 
-        // Save the document to a DOCX file.
-        string artifactsDir = @"C:\Temp\";
-        doc.Save(System.IO.Path.Combine(artifactsDir, "ChartWithFillAndStroke.docx"));
+        // Save the document.
+        doc.Save("ChartWithFormatting.docx");
     }
 }

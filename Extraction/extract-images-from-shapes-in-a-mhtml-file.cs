@@ -1,46 +1,53 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
-
-class ImageExtractor : IImageSavingCallback
-{
-    public void ImageSaving(ImageSavingArgs args)
-    {
-        // Create a folder for the extracted images if it does not exist.
-        const string outputFolder = "ExtractedImages";
-        Directory.CreateDirectory(outputFolder);
-
-        // Build the full path for the image file.
-        string imagePath = Path.Combine(outputFolder, args.ImageFileName);
-
-        // Write the image stream to the file.
-        using (FileStream fileStream = new FileStream(imagePath, FileMode.Create))
-        {
-            args.ImageStream.CopyTo(fileStream);
-        }
-
-        // Instruct Aspose.Words not to keep the stream open after the callback.
-        args.KeepImageStreamOpen = false;
-    }
-}
+using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
+        // Path to the source MHTML file.
+        string mhtmlPath = @"C:\Input\document.mht";
+
+        // Folder where extracted images will be saved.
+        string outputFolder = @"C:\Output\Images\";
+
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputFolder);
+
         // Load the MHTML document.
-        Document doc = new Document("input.mht");
-
-        // Configure save options to trigger the ImageSaving callback.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        LoadOptions loadOptions = new LoadOptions
         {
-            ExportImagesAsBase64 = false,          // Save images as separate files.
-            ImageSavingCallback = new ImageExtractor()
+            LoadFormat = LoadFormat.Mhtml
         };
+        Document doc = new Document(mhtmlPath, loadOptions);
 
-        // Save to a temporary file; the callback extracts all images.
-        doc.Save("temp.mht", saveOptions);
+        // Get all shape nodes in the document.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+
+        int imageIndex = 0;
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        {
+            // Process only shapes that contain an image.
+            if (shape.HasImage)
+            {
+                // Determine the appropriate file extension based on the image type.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string fileName = $"Image_{imageIndex}{extension}";
+                string fullPath = Path.Combine(outputFolder, fileName);
+
+                // Save the image data to the file system.
+                shape.ImageData.Save(fullPath);
+
+                Console.WriteLine($"Saved image #{imageIndex} to: {fullPath}");
+                imageIndex++;
+            }
+        }
+
+        Console.WriteLine($"Extraction complete. {imageIndex} image(s) saved.");
     }
 }

@@ -2,41 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class JoinTablesExample
+class Program
 {
     static void Main()
     {
-        // Load the document that already contains two tables.
-        string inputPath = @"C:\Docs\Input.docx";
-        Document doc = new Document(inputPath);
+        // Load the document that already contains the two tables to be merged.
+        Document doc = new Document("Tables.docx");
 
-        // Access the collection of tables in the first section's body.
-        TableCollection tables = doc.FirstSection.Body.Tables;
+        // Retrieve the first table from the document's body.
+        Table firstTable = doc.FirstSection.Body.Tables[0];
 
-        // Ensure there are at least two tables to join.
-        if (tables.Count < 2)
-        {
-            Console.WriteLine("The document must contain at least two tables.");
-            return;
-        }
+        // Retrieve the second table using the GetChild method (index 1 = second table).
+        Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
 
-        // Get references to the two tables we want to join.
-        Table firstTable = tables[0];
-        Table secondTable = tables[1];
-
-        // Append a copy of each row from the second table to the first table.
-        // Clone each row (deep clone) so that the original second table can be removed safely.
-        foreach (Row row in secondTable.Rows)
-        {
-            Row clonedRow = (Row)row.Clone(true);
-            firstTable.Rows.Add(clonedRow);
-        }
+        // Transfer all rows from the second table to the first table.
+        // The loop continues until the second table has no more child nodes (rows).
+        while (secondTable.HasChildNodes)
+            firstTable.Rows.Add(secondTable.FirstRow);
 
         // Remove the now‑empty second table from the document.
         secondTable.Remove();
 
-        // Save the modified document.
-        string outputPath = @"C:\Docs\Output.docx";
-        doc.Save(outputPath);
+        // Save the modified document containing the combined table.
+        doc.Save("CombinedTables.docx");
     }
 }

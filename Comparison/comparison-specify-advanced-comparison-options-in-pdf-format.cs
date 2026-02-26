@@ -3,44 +3,35 @@ using Aspose.Words;
 using Aspose.Words.Comparing;
 using Aspose.Words.Saving;
 
-class Program
+class ComparisonWithAdvancedOptions
 {
     static void Main()
     {
-        // Load the two documents that will be compared.
-        Document docOriginal = new Document("Original.docx");
-        Document docRevised = new Document("Revised.docx");
+        // Paths to the source documents and output folder.
+        string MyDir = @"C:\Docs\";
+        string ArtifactsDir = @"C:\Output\";
 
-        // Configure comparison options.
-        // - Track changes at the word level.
-        // - Do not ignore formatting or comments.
-        // - Use the revised document as the base for comparison.
-        // - Enable advanced options to ignore DrawingML unique IDs but consider SDT store item IDs.
-        CompareOptions compareOptions = new CompareOptions
-        {
-            Granularity = Granularity.WordLevel,
-            IgnoreFormatting = false,
-            IgnoreComments = false,
-            Target = ComparisonTargetType.New
-        };
+        // Load the original and the edited documents.
+        Document docOriginal = new Document(MyDir + "Original.docx");
+        Document docEdited   = new Document(MyDir + "Edited.docx");
+
+        // Configure advanced comparison options.
+        CompareOptions compareOptions = new CompareOptions();
+        // Ignore differences in DrawingML unique IDs (e.g., shapes, charts).
         compareOptions.AdvancedOptions.IgnoreDmlUniqueId = true;
-        compareOptions.AdvancedOptions.IgnoreStoreItemId = false;
+        // Ignore differences in StructuredDocumentTag (SDT) store item IDs.
+        compareOptions.AdvancedOptions.IgnoreStoreItemId = true;
 
-        // Perform the comparison. Revisions are added to docOriginal.
-        docOriginal.Compare(docRevised, "Reviewer", DateTime.Now, compareOptions);
+        // Perform the comparison. Revisions will be added to docOriginal.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
 
-        // Set PDF save options.
-        // - Save as PDF/A-2u (ISO 32000‑2) for long‑term preservation.
-        // - Embed all fonts to ensure the PDF looks the same on any machine.
-        // - Update fields before saving.
+        // Set PDF save options, e.g., comply with PDF/A-1b for archival purposes.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA2u,
-            EmbedFullFonts = true,
-            UpdateFields = true
+            Compliance = PdfCompliance.PdfA1b
         };
 
-        // Save the compared document as a PDF file.
-        docOriginal.Save("ComparedResult.pdf", pdfOptions);
+        // Save the compared document (with revisions) as a PDF file.
+        docOriginal.Save(ArtifactsDir + "ComparisonResult.pdf", pdfOptions);
     }
 }

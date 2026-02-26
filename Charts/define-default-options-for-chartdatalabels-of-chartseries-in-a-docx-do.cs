@@ -1,54 +1,79 @@
-using System.Drawing;
+using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
-class Program
+namespace ChartDataLabelDefaults
 {
-    static void Main()
+    class Program
     {
-        // Create a new document and a builder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new document and a builder.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-        Chart chart = chartShape.Chart;
+            // Insert a line chart.
+            Shape chartShape = builder.InsertChart(ChartType.Line, 500, 300);
+            Chart chart = chartShape.Chart;
 
-        // Remove the demo series that Aspose adds by default.
-        chart.Series.Clear();
+            // Remove the demo series that Aspose.Words adds by default.
+            chart.Series.Clear();
 
-        // Add a sample series with three categories.
-        chart.Series.Add(
-            "Series 1",
-            new[] { "Category 1", "Category 2", "Category 3" },
-            new[] { 4.0, 5.0, 6.0 });
+            // Add a custom series with sample data.
+            ChartSeries series = chart.Series.Add("Revenue",
+                new[] { "Jan", "Feb", "Mar", "Apr" },
+                new[] { 25.6, 21.4, 33.8, 28.1 });
 
-        // Get the first (and only) series.
-        ChartSeries series = chart.Series[0];
+            // Apply default data‑label settings to the series.
+            SetDefaultDataLabelOptions(series);
 
-        // Enable data labels for the series.
-        series.HasDataLabels = true;
+            // If the chart has more than one series, apply the same defaults to each.
+            foreach (ChartSeries s in chart.Series)
+            {
+                SetDefaultDataLabelOptions(s);
+            }
 
-        // Configure default options for all data labels in the series.
-        ChartDataLabelCollection dataLabels = series.DataLabels;
-        dataLabels.ShowValue = true;                     // Show the numeric value.
-        dataLabels.ShowCategoryName = true;              // Show the category name.
-        dataLabels.ShowSeriesName = false;               // Do not show the series name.
-        dataLabels.ShowPercentage = false;               // Not a pie chart – keep false.
-        dataLabels.ShowLegendKey = false;                // No legend key.
-        dataLabels.ShowLeaderLines = false;              // No leader lines.
-        dataLabels.Separator = ", ";                     // Separator between parts.
-        dataLabels.Font.Color = Color.White;             // Font color for the whole series.
-        dataLabels.Position = ChartDataLabelPosition.InsideBase; // Default position.
-        dataLabels.Orientation = ShapeTextOrientation.VerticalFarEast; // Text orientation.
-        dataLabels.Rotation = -45;                       // Rotate the label.
+            // Save the document.
+            doc.Save("ChartWithDefaultDataLabels.docx");
+        }
 
-        // Example of overriding a single label (optional).
-        dataLabels[0].Font.Color = Color.DarkRed;
-        dataLabels[0].Position = ChartDataLabelPosition.OutsideEnd;
+        /// <summary>
+        /// Configures a ChartSeries so that its data labels have a consistent set of default options.
+        /// </summary>
+        /// <param name="series">The series to configure.</param>
+        private static void SetDefaultDataLabelOptions(ChartSeries series)
+        {
+            // Enable data labels for the series.
+            series.HasDataLabels = true;
 
-        // Save the document.
-        doc.Save("ChartDataLabelsDefaults.docx");
+            // Access the collection that represents the series' data labels.
+            ChartDataLabelCollection dataLabels = series.DataLabels;
+
+            // Show common elements on every label.
+            dataLabels.ShowValue = true;               // Display the numeric value.
+            dataLabels.ShowCategoryName = true;        // Display the category (X‑axis) name.
+            dataLabels.ShowSeriesName = true;          // Display the series name.
+            dataLabels.ShowLeaderLines = true;         // Show leader lines.
+            dataLabels.ShowLegendKey = true;           // Show the legend key.
+            dataLabels.ShowPercentage = false;         // Do not show percentage (relevant for pie charts).
+
+            // Set a generic number format (two decimal places).
+            dataLabels.NumberFormat.FormatCode = "0.00";
+
+            // Use a comma and a space as the separator between label parts.
+            dataLabels.Separator = ", ";
+
+            // Set a default font size for readability.
+            dataLabels.Font.Size = 10;
+
+            // Optionally, set a default fill and outline for the label callout.
+            ChartFormat format = dataLabels.Format;
+            format.ShapeType = ChartShapeType.Rectangle; // Simple rectangle label.
+            format.Fill.Solid(Color.White);
+            format.Stroke.Color = Color.Black;
+            format.Stroke.Weight = 0.5; // Stroke width expressed in points.
+        }
     }
 }

@@ -1,41 +1,42 @@
 using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;          // <-- added
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-namespace ChartDataPointExample
+class ChartDataPointExample
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a line chart into the document.
-            // Width = 500 points, Height = 350 points.
-            Shape chartShape = builder.InsertChart(ChartType.Line, 500, 350);
-            Chart chart = chartShape.Chart;
+        // Insert a column chart into the document.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 350);
+        Chart chart = chartShape.Chart;
 
-            // Access the second series (index 1) and its third data point (index 2).
-            ChartSeries series = chart.Series[1];
-            ChartDataPoint dataPoint = series.DataPoints[2];
+        // Ensure the chart has at least one series.
+        if (chart.Series.Count == 0)
+            throw new InvalidOperationException("The chart does not contain any series.");
 
-            // Change the fill color of this data point to red.
-            dataPoint.Format.Fill.ForeColor = Color.Red;
+        // Get the first series in the chart.
+        ChartSeries series = chart.Series[0];
 
-            // Set a custom marker for the data point: a diamond with size 12.
-            dataPoint.Marker.Symbol = MarkerSymbol.Diamond;
-            dataPoint.Marker.Size = 12;
+        // Ensure the series has at least one data point.
+        if (series.DataPoints.Count == 0)
+            throw new InvalidOperationException("The series does not contain any data points.");
 
-            // Optionally clear the formatting to revert to series defaults.
-            // dataPoint.ClearFormat();
+        // Access the first data point of the series.
+        ChartDataPoint dataPoint = series.DataPoints[0];
 
-            // Save the document to a DOCX file.
-            string outputPath = "ChartDataPointExample.docx";
-            doc.Save(outputPath);
-        }
+        // Change the fill color of the data point to red.
+        dataPoint.Format.Fill.Color = Color.Red;
+
+        // Optionally clear the formatting of the data point, reverting to series defaults.
+        dataPoint.ClearFormat();
+
+        // Save the document to a DOCX file.
+        doc.Save("ChartDataPointExample.docx");
     }
 }

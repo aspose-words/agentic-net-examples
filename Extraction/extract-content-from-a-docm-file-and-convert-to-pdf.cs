@@ -6,22 +6,11 @@ class Program
 {
     static void Main()
     {
-        // Path to the source DOCM file.
-        string docmPath = @"C:\Docs\source.docm";
+        // Load the macro-enabled Word document (DOCM) from the file system.
+        Document doc = new Document("input.docm");
 
-        // Path where the resulting PDF will be saved.
-        string pdfPath = @"C:\Docs\result.pdf";
-
-        // Load the DOCM document. The constructor automatically detects the format.
-        Document document = new Document(docmPath);
-
-        // (Optional) Extract plain‑text content from the document.
-        // string plainText = document.GetText();
-
-        // Create PDF save options – can be customized if needed.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-        // Save the document as PDF using the specified options.
-        document.Save(pdfPath, pdfOptions);
+        // Convert and save the document as a PDF file.
+        // The SaveFormat.Pdf enum specifies the PDF output format.
+        doc.Save("output.pdf", SaveFormat.Pdf);
     }
 }

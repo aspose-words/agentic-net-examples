@@ -1,28 +1,36 @@
 using System;
-using Aspose.Words;
-using Aspose.Words.Markup;
+using System.IO;
+using Aspose.Words; // Namespace for PlainTextDocument
 
 class Program
 {
     static void Main()
     {
-        // Load the plain‑text document. Aspose.Words automatically detects the TXT format.
-        Document doc = new Document("input.txt");
+        // Load the plain‑text document from a file.
+        string inputPath = "input.txt";
+        PlainTextDocument txtDoc = new PlainTextDocument(inputPath);
 
-        // Try to locate a content control (structured document tag) by title.
-        // GetByTitle returns IStructuredDocumentTag, so we need an explicit cast to StructuredDocumentTag.
-        StructuredDocumentTag sdt = doc.Range.StructuredDocumentTags.GetByTitle("MyTagTitle") as StructuredDocumentTag;
+        // Markers that define the region to extract.
+        string startMarker = "[START]";
+        string endMarker   = "[END]";
 
-        // If the tag was not found, fall back to the first tag in the collection (if any).
-        if (sdt == null && doc.Range.StructuredDocumentTags.Count > 0)
+        // Get the full text of the document.
+        string fullText = txtDoc.Text;
+
+        // Locate the start and end positions of the region.
+        int startIdx = fullText.IndexOf(startMarker, StringComparison.Ordinal);
+        int endIdx   = fullText.IndexOf(endMarker, startIdx + startMarker.Length, StringComparison.Ordinal);
+
+        // Extract the substring between the markers, if both are found.
+        string extracted = string.Empty;
+        if (startIdx != -1 && endIdx != -1 && endIdx > startIdx)
         {
-            sdt = doc.Range.StructuredDocumentTags[0] as StructuredDocumentTag;
+            int contentStart = startIdx + startMarker.Length;
+            extracted = fullText.Substring(contentStart, endIdx - contentStart);
         }
 
-        // Extract the text that lies inside the content control.
-        string extractedText = sdt?.Range?.Text ?? string.Empty;
-
-        // Output the extracted text.
-        Console.WriteLine(extractedText);
+        // Save the extracted content to a new text file.
+        string outputPath = "extracted.txt";
+        File.WriteAllText(outputPath, extracted);
     }
 }

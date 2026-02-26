@@ -1,66 +1,77 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Markup;
 
-namespace SplitDotmExample
+namespace ManageContentControls
 {
-    // Callback that renames each split part when saving.
-    public class SavedDocumentPartRename : IDocumentPartSavingCallback
+    class Program
     {
-        private readonly string _baseFileName;
-        private readonly DocumentSplitCriteria _splitCriteria;
-        private int _partCounter;
-
-        public SavedDocumentPartRename(string baseFileName, DocumentSplitCriteria splitCriteria)
+        static void Main(string[] args)
         {
-            _baseFileName = baseFileName;
-            _splitCriteria = splitCriteria;
-            _partCounter = 0;
-        }
-
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
-        {
-            // Determine a readable part type name.
-            string partType = _splitCriteria switch
+            // Validate arguments.
+            if (args.Length != 2)
             {
-                DocumentSplitCriteria.PageBreak => "Page",
-                DocumentSplitCriteria.ColumnBreak => "Column",
-                DocumentSplitCriteria.SectionBreak => "Section",
-                DocumentSplitCriteria.HeadingParagraph => "Heading",
-                _ => "Part"
-            };
+                Console.WriteLine("Usage: ManageContentControls <sourceDotmPath> <outputFolder>");
+                return;
+            }
 
-            // Build a new file name for the part.
-            string newFileName = $"{Path.GetFileNameWithoutExtension(_baseFileName)}_part{++_partCounter}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+            string sourceDotmPath = args[0];
+            string outputFolder = args[1];
 
-            // Set the file name – Aspose.Words will write the part to this file.
-            args.DocumentPartFileName = newFileName;
-
-            // Alternatively you could provide a custom stream:
-            // args.DocumentPartStream = new FileStream(Path.Combine(Path.GetDirectoryName(_baseFileName) ?? "", newFileName), FileMode.Create);
+            var splitter = new DotmSplitter();
+            splitter.SplitDotmByContentControls(sourceDotmPath, outputFolder);
         }
     }
 
-    class Program
+    public class DotmSplitter
     {
-        static void Main()
+        /// <summary>
+        /// Splits a DOTM (macro‑enabled template) into separate documents.
+        /// Each top‑level content control (StructuredDocumentTag) becomes its own DOCX file.
+        /// </summary>
+        /// <param name="sourceDotmPath">Full path to the source .dotm file.</param>
+        /// <param name="outputFolder">Folder where the split documents will be saved.</param>
+        public void SplitDotmByContentControls(string sourceDotmPath, string outputFolder)
         {
-            // Load the DOTM template. The format is detected automatically.
-            Document doc = new Document("Template.dotm");
+            // Load the source DOTM document.
+            Document sourceDoc = new Document(sourceDotmPath);
 
-            // Prepare HTML save options with split criteria.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+            // Ensure the output folder exists.
+            if (!Directory.Exists(outputFolder))
+                Directory.CreateDirectory(outputFolder);
+
+            // Retrieve all StructuredDocumentTag nodes (content controls).
+            // The second argument 'true' makes the search recursive.
+            NodeCollection sdtNodes = sourceDoc.GetChildNodes(NodeType.StructuredDocumentTag, true);
+
+            int partIndex = 1;
+            foreach (StructuredDocumentTag sdt in sdtNodes)
             {
-                // Split the document into separate HTML files at each section break.
-                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
+                // Consider only top‑level content controls (direct children of the document body).
+                if (sdt.ParentNode?.NodeType != NodeType.Body)
+                    continue;
 
-                // Use the custom callback to control part file names.
-                DocumentPartSavingCallback = new SavedDocumentPartRename("Output.html", DocumentSplitCriteria.SectionBreak)
-            };
+                // Create a new blank document that will hold the extracted part.
+                Document partDoc = new Document();
+                partDoc.EnsureMinimum(); // Guarantees at least one section and one paragraph.
 
-            // Save the document. Each section will be saved as a separate HTML file.
-            doc.Save("Output.html", saveOptions);
+                // Import the content control (including its children) into the new document.
+                NodeImporter importer = new NodeImporter(sourceDoc, partDoc, ImportFormatMode.KeepSourceFormatting);
+                Node importedNode = importer.ImportNode(sdt, true);
+
+                // Append the imported node to the body of the new document.
+                partDoc.FirstSection.Body.AppendChild(importedNode);
+
+                // Build a file name for the part.
+                string partFileName = Path.Combine(outputFolder, $"Part_{partIndex}.docx");
+
+                // Save the part.
+                partDoc.Save(partFileName);
+
+                Console.WriteLine($"Saved: {partFileName}");
+                partIndex++;
+            }
         }
     }
 }

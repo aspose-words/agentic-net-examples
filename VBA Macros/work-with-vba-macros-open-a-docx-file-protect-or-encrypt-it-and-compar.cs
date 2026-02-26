@@ -1,77 +1,73 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Vba;
-using Aspose.Words.Loading;
+using Aspose.Words.Settings;
 
-class Program
+class VbaMacroProtectionAndComparison
 {
     static void Main()
     {
         // Paths to the source documents.
-        string sourcePath = "DocumentWithMacros.docm";   // Document that contains VBA macros.
-        string comparePath = "AnotherDocument.docx";    // Document to compare against.
-        string protectedPath = "ProtectedDocument.docx"; // Output path for the protected/encrypted file.
+        const string sourcePath1 = @"C:\Docs\DocumentWithMacros.docx";
+        const string sourcePath2 = @"C:\Docs\AnotherDocument.docx";
 
         // -----------------------------------------------------------------
-        // 1. Load the source document (it may contain macros).
+        // 1. Load the first document and check if it contains VBA macros.
         // -----------------------------------------------------------------
-        Document sourceDoc = new Document(sourcePath);
+        Document doc1 = new Document(sourcePath1);
+
+        // Detect file format information without fully loading the document.
+        FileFormatInfo formatInfo = FileFormatUtil.DetectFileFormat(sourcePath1);
+        bool hasMacros = formatInfo.HasMacros;
+        Console.WriteLine($"Document '{sourcePath1}' contains macros: {hasMacros}");
 
         // -----------------------------------------------------------------
-        // 2. Apply write‑protection (password required to modify) and
-        //    encrypt the file with a password when saving.
+        // 2. Protect the first document (read‑only) with a password.
         // -----------------------------------------------------------------
-        // Write‑protection – does NOT encrypt the content.
-        sourceDoc.WriteProtection.SetPassword("WritePass");
-        sourceDoc.WriteProtection.ReadOnlyRecommended = true;
+        const string protectPassword = "Protect123";
+        doc1.Protect(ProtectionType.ReadOnly, protectPassword);
 
-        // Encryption – set a password in OoxmlSaveOptions.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+        // Save the protected document.
+        const string protectedPath = @"C:\Docs\DocumentWithMacros_Protected.docx";
+        doc1.Save(protectedPath);
+        Console.WriteLine($"Protected document saved to: {protectedPath}");
+
+        // -----------------------------------------------------------------
+        // 3. Load the second document and encrypt it with a password.
+        // -----------------------------------------------------------------
+        Document doc2 = new Document(sourcePath2);
+
+        // Use OoxmlSaveOptions to apply encryption when saving as .docx.
+        const string encryptPassword = "Encrypt456";
+        OoxmlSaveOptions encryptOptions = new OoxmlSaveOptions
         {
-            Password = "EncryptPass"
+            Password = encryptPassword
         };
 
-        // Save the protected and encrypted document.
-        sourceDoc.Save(protectedPath, saveOptions);
+        const string encryptedPath = @"C:\Docs\AnotherDocument_Encrypted.docx";
+        doc2.Save(encryptedPath, encryptOptions);
+        Console.WriteLine($"Encrypted document saved to: {encryptedPath}");
 
         // -----------------------------------------------------------------
-        // 3. Load the protected document back (providing the encryption password).
+        // 4. Compare the original (unprotected) versions of the two documents.
         // -----------------------------------------------------------------
-        LoadOptions loadOptions = new LoadOptions("EncryptPass");
-        Document protectedDoc = new Document(protectedPath, loadOptions);
+        // Reload the original documents to ensure we compare the unprotected content.
+        Document originalDoc1 = new Document(sourcePath1);
+        Document originalDoc2 = new Document(sourcePath2);
+
+        // Perform the comparison; the result will be stored in originalDoc1.
+        const string author = "ComparisonEngine";
+        originalDoc1.Compare(originalDoc2, author, DateTime.Now);
+
+        const string comparisonResultPath = @"C:\Docs\ComparisonResult.docx";
+        originalDoc1.Save(comparisonResultPath);
+        Console.WriteLine($"Comparison document saved to: {comparisonResultPath}");
 
         // -----------------------------------------------------------------
-        // 4. Load the document to compare with.
+        // 5. (Optional) Verify that the comparison document contains revisions.
         // -----------------------------------------------------------------
-        Document compareDoc = new Document(comparePath);
-
-        // -----------------------------------------------------------------
-        // 5. Compare the two documents.
-        // -----------------------------------------------------------------
-        bool textsEqual = protectedDoc.GetText() == compareDoc.GetText();
-
-        bool macrosEqual = protectedDoc.HasMacros == compareDoc.HasMacros &&
-                           (!protectedDoc.HasMacros || 
-                            protectedDoc.VbaProject.Modules.Count == compareDoc.VbaProject.Modules.Count);
-
-        bool writeProtectionEqual = protectedDoc.WriteProtection.IsWriteProtected == compareDoc.WriteProtection.IsWriteProtected &&
-                                    (!protectedDoc.WriteProtection.IsWriteProtected ||
-                                     protectedDoc.WriteProtection.ValidatePassword("WritePass") ==
-                                     compareDoc.WriteProtection.ValidatePassword("WritePass"));
-
-        // -----------------------------------------------------------------
-        // 6. Detect encryption status using FileFormatUtil.
-        // -----------------------------------------------------------------
-        FileFormatInfo formatInfo = FileFormatUtil.DetectFileFormat(protectedPath);
-        bool isEncrypted = formatInfo.IsEncrypted;
-
-        // -----------------------------------------------------------------
-        // 7. Output the comparison results.
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Texts equal: {textsEqual}");
-        Console.WriteLine($"Macros equal: {macrosEqual}");
-        Console.WriteLine($"Write protection equal: {writeProtectionEqual}");
-        Console.WriteLine($"File is encrypted: {isEncrypted}");
+        Document comparisonDoc = new Document(comparisonResultPath);
+        int revisionCount = comparisonDoc.Revisions.Count;
+        Console.WriteLine($"Number of revisions in comparison document: {revisionCount}");
     }
 }

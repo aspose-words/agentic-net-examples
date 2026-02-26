@@ -2,28 +2,52 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class ApplyTableStyleToRtf
+class Program
 {
     static void Main()
     {
-        // Load the existing RTF document.
-        Document doc = new Document("InputDocument.rtf");
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Assume the document contains at least one table.
-        // Get the first table in the document.
-        Table table = doc.FirstSection.Body.Tables[0];
+        // Start a new table. Insert at least one cell before applying any table formatting.
+        Table table = builder.StartTable();
+        builder.InsertCell();
 
-        // Apply a built‑in table style by setting the StyleIdentifier.
-        // For example, use the Light Grid style.
-        table.StyleIdentifier = StyleIdentifier.LightGrid;
+        // Apply a built‑in table style using its identifier.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Optionally, specify which parts of the style are applied.
-        // Here we enable first row, first column and row banding.
+        // Optionally specify which parts of the style are applied.
         table.StyleOptions = TableStyleOptions.FirstRow |
-                             TableStyleOptions.FirstColumn |
-                             TableStyleOptions.RowBands;
+                             TableStyleOptions.RowBands |
+                             TableStyleOptions.FirstColumn;
 
-        // Save the modified document back to RTF format.
-        doc.Save("OutputDocument.rtf");
+        // Resize the table to fit its contents.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+        // Populate the table with some sample rows.
+        builder.Writeln("Item");
+        builder.CellFormat.RightPadding = 40;
+        builder.InsertCell();
+        builder.Writeln("Quantity (kg)");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("Apples");
+        builder.InsertCell();
+        builder.Writeln("20");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("Bananas");
+        builder.InsertCell();
+        builder.Writeln("40");
+        builder.EndRow();
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Save the document as an RTF file.
+        doc.Save("TableWithStyle.rtf");
     }
 }

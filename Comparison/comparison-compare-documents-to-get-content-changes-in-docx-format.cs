@@ -2,28 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class DocumentComparison
+class Program
 {
     static void Main()
     {
-        // Load the original and the edited documents.
+        // Load the two documents to be compared.
         Document docOriginal = new Document("Original.docx");
         Document docEdited   = new Document("Edited.docx");
 
-        // Configure comparison options (customize as needed).
-        CompareOptions compareOptions = new CompareOptions
+        // Both documents must be revision‑free before invoking Compare.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            // Example: track changes at the word level and ignore case changes.
-            Granularity = Granularity.WordLevel,
-            IgnoreCaseChanges = true,
-            // Use the edited document as the target for comparison.
-            Target = ComparisonTargetType.New
-        };
+            // Configure comparison options (optional).
+            CompareOptions options = new CompareOptions
+            {
+                // Track changes at the word level.
+                Granularity = Granularity.WordLevel,
+                // Show changes relative to the edited document.
+                Target = ComparisonTargetType.New
+            };
 
-        // Perform the comparison. Revisions will be added to docOriginal.
-        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+            // Compare the documents. Revisions are added to docOriginal.
+            docOriginal.Compare(docEdited, "Comparer", DateTime.Now, options);
+        }
 
-        // Save the resulting document with revisions in DOCX format.
-        docOriginal.Save("ComparedResult.docx");
+        // Save the result – the document now contains revision marks.
+        docOriginal.Save("ComparisonResult.docx");
     }
 }

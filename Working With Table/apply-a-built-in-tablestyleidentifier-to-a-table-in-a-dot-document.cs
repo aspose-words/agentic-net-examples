@@ -2,44 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class ApplyTableStyleToDot
+class ApplyTableStyle
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Load the DOT template.
+        Document doc = new Document("Template.dot");
 
-        // Use DocumentBuilder to construct the table.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Find the first table in the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table != null)
+        {
+            // Apply a built‑in table style using its identifier.
+            table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Start a new table.
-        Table table = builder.StartTable();
+            // Optionally, specify which parts of the style are applied.
+            table.StyleOptions = TableStyleOptions.FirstColumn |
+                                 TableStyleOptions.RowBands |
+                                 TableStyleOptions.FirstRow;
 
-        // Insert the first cell – a table must contain at least one row before any style can be set.
-        builder.InsertCell();
+            // Adjust column widths to fit the content.
+            table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        }
 
-        // Apply a built‑in table style by its identifier.
-        // Example: LightGrid (you can replace with any other StyleIdentifier value).
-        table.StyleIdentifier = StyleIdentifier.LightGrid;
-
-        // Optionally specify which parts of the style are applied.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-
-        // Let the table auto‑fit its contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-        // Populate the table with a simple two‑row example.
-        builder.Writeln("Header");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Writeln("Data");
-        builder.EndRow();
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document as a DOT (Word template) file.
-        doc.Save("TableWithStyle.dot");
+        // Save the modified document.
+        doc.Save("StyledDocument.docx");
     }
 }

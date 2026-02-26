@@ -1,14 +1,20 @@
+using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class Program
+class DocxToPdfConverter
 {
     static void Main()
     {
-        // Load the source DOCX document from disk.
-        Document doc = new Document("input.docx");
+        // Path to the source DOCX file.
+        string inputPath = @"C:\Docs\SampleDocument.docx";
 
-        // Save the document as PDF. The SaveFormat.Pdf enum tells Aspose.Words to use PDF output.
-        doc.Save("output.pdf", SaveFormat.Pdf);
+        // Path where the resulting PDF will be saved.
+        string outputPath = @"C:\Docs\SampleDocument.pdf";
+
+        // Load the DOCX document from the file system.
+        Document doc = new Document(inputPath);
+
+        // Save the document as PDF using the SaveFormat.Pdf enumeration.
+        doc.Save(outputPath, SaveFormat.Pdf);
     }
 }

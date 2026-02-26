@@ -1,35 +1,28 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Fields;
 
-namespace InsertComboBoxIntoTxt
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Initialize a DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Initialize a DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Define the items that will appear in the combo box.
-            string[] comboItems = new string[]
-            {
-                "-- Select an option --",
-                "Apple",
-                "Banana",
-                "Cherry"
-            };
+        // Write a prompt before the combo box.
+        builder.Write("Pick a fruit: ");
 
-            // Insert a combo box form field named "FruitCombo" with the defined items.
-            // The last parameter (0) sets the default selected index.
-            builder.InsertComboBox("FruitCombo", comboItems, 0);
+        // Define the items that will appear in the combo box.
+        string[] items = { "Apple", "Banana", "Cherry" };
 
-            // Save the document as plain text. TxtSaveOptions can be used to control the export.
-            TxtSaveOptions txtOptions = new TxtSaveOptions();
-            doc.Save("ComboBox.txt", txtOptions);
-        }
+        // Insert the combo box form field.
+        // Parameters: name of the field, array of items, index of the initially selected item.
+        builder.InsertComboBox("FruitComboBox", items, 0);
+
+        // Save the document as a plain text file.
+        doc.Save("ComboBoxDocument.txt");
     }
 }

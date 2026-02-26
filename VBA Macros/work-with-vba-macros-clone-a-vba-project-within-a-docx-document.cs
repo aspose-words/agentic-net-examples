@@ -5,19 +5,19 @@ class Program
 {
     static void Main()
     {
-        // Load the source document that contains a VBA project.
-        Document sourceDoc = new Document("Source.docm");
+        // Load the source document that already contains a VBA project.
+        Document srcDoc = new Document("SourceWithMacros.docm");
+
+        // Create a new empty document that will receive the cloned VBA project.
+        Document destDoc = new Document();
 
         // Clone the VBA project from the source document.
-        VbaProject clonedProject = sourceDoc.VbaProject.Clone();
+        VbaProject clonedProject = srcDoc.VbaProject.Clone();
 
-        // Create a new blank document.
-        Document targetDoc = new Document();
+        // Assign the cloned project to the destination document.
+        destDoc.VbaProject = clonedProject;
 
-        // Assign the cloned VBA project to the new document.
-        targetDoc.VbaProject = clonedProject;
-
-        // Save the new document with the cloned macros.
-        targetDoc.Save("ClonedProject.docm");
+        // Save the destination document as a macro‑enabled file.
+        destDoc.Save("ClonedVbaProject.docm");
     }
 }

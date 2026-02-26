@@ -1,36 +1,25 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
-class DocumentComparison
+class Program
 {
     static void Main()
     {
-        // Load the original and the edited documents (DOCX format).
-        Document original = new Document("Original.docx");
-        Document edited = new Document("Edited.docx");
+        // Load the original document.
+        Document docOriginal = new Document("Original.docx");
 
-        // Configure comparison options.
-        CompareOptions compareOptions = new CompareOptions
+        // Load the document to compare against.
+        Document docEdited = new Document("Edited.docx");
+
+        // Documents must not contain revisions before comparison.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            // Example: compare moves, ignore formatting, etc.
-            CompareMoves = true,
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
-            // Use the edited document as the target for comparison.
-            Target = ComparisonTargetType.New
-        };
+            // Compare the two documents.
+            // The author name and the current date/time are recorded in the generated revisions.
+            docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
+        }
 
-        // Perform the comparison. Revisions will be added to the original document.
-        original.Compare(edited, "Comparer", DateTime.Now, compareOptions);
-
-        // Save the result with revisions to a new DOCX file.
-        original.Save("ComparedResult.docx");
+        // Save the original document, now containing revision marks that represent the differences.
+        docOriginal.Save("ComparisonResult.docx");
     }
 }

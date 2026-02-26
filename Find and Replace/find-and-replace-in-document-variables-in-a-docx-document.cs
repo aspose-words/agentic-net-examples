@@ -7,31 +7,21 @@ class Program
 {
     static void Main()
     {
-        // Load the existing DOCX file.
-        Document doc = new Document("Input.docx");
+        // Load the DOCX template.
+        Document doc = new Document("Template.docx");
 
-        // Define the variable names and the values to replace them with.
-        var variableReplacements = new Dictionary<string, string>
+        // Iterate through all document variables.
+        foreach (KeyValuePair<string, string> variable in doc.Variables)
         {
-            { "CustomerName", "John Doe" },
-            { "OrderNumber", "12345" },
-            { "Address", "123 Main St, Anytown" }
-        };
+            // Define the placeholder format used in the document.
+            // Example: ${VariableName}
+            string placeholder = "${" + variable.Key + "}";
 
-        // Update the document's variable collection.
-        foreach (var kvp in variableReplacements)
-        {
-            // If the variable already exists, assign the new value; otherwise add it.
-            if (doc.Variables.Contains(kvp.Key))
-                doc.Variables[kvp.Key] = kvp.Value;
-            else
-                doc.Variables.Add(kvp.Key, kvp.Value);
+            // Replace each placeholder with its corresponding variable value.
+            doc.Range.Replace(placeholder, variable.Value);
         }
 
-        // Refresh all DOCVARIABLE fields so they display the updated values.
-        doc.Range.UpdateFields();
-
-        // Save the modified document.
-        doc.Save("Output.docx");
+        // Save the updated document.
+        doc.Save("Result.docx");
     }
 }

@@ -2,39 +2,29 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-namespace VbaModuleCloneExample
+class CloneVbaModule
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Load the source document that already contains a VBA project.
-            Document doc = new Document("InputDocument.docm");
+        // Load the source document that contains VBA macros.
+        Document doc = new Document("Input.docm");
 
-            // Access the VBA project of the document.
-            VbaProject vbaProject = doc.VbaProject;
+        // Access the VBA project of the document.
+        VbaProject vbaProject = doc.VbaProject;
 
-            // Ensure there is at least one module to clone.
-            if (vbaProject.Modules.Count == 0)
-            {
-                Console.WriteLine("The document does not contain any VBA modules.");
-                return;
-            }
+        // Retrieve the module you want to clone (by name or index).
+        VbaModule sourceModule = vbaProject.Modules["Module1"]; // adjust the name as needed
 
-            // Get the first module (or any specific module by index or name).
-            VbaModule originalModule = vbaProject.Modules[0];
+        // Perform a deep clone of the module.
+        VbaModule clonedModule = sourceModule.Clone();
 
-            // Clone the module. The Clone method creates a deep copy of the module.
-            VbaModule clonedModule = originalModule.Clone();
+        // Give the cloned module a unique name.
+        clonedModule.Name = "Module1_Copy";
 
-            // Optionally give the cloned module a new name to avoid name conflicts.
-            clonedModule.Name = originalModule.Name + "_Copy";
+        // Add the cloned module back into the VBA project.
+        vbaProject.Modules.Add(clonedModule);
 
-            // Add the cloned module back into the VBA project.
-            vbaProject.Modules.Add(clonedModule);
-
-            // Save the document with the new cloned module.
-            doc.Save("OutputDocument.docm");
-        }
+        // Save the document with the new cloned module.
+        doc.Save("Output.docm");
     }
 }

@@ -1,31 +1,25 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class ApplyTableStyle
+class Program
 {
     static void Main()
     {
-        // Load the HTML document that contains a table.
+        // Load the HTML document.
         Document doc = new Document("input.html");
 
-        // Find the first table in the document.
+        // Locate the first table in the document.
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
+        if (table != null)
         {
-            Console.WriteLine("No table found in the document.");
-            return;
+            // Apply a built‑in table style using its identifier.
+            table.StyleIdentifier = StyleIdentifier.TableGrid;
+
+            // Optionally specify which parts of the style are applied.
+            table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
         }
 
-        // Apply a built‑in table style by its identifier.
-        // For example, use the LightGrid style.
-        table.StyleIdentifier = StyleIdentifier.LightGrid;
-
-        // Optionally, specify which parts of the style should be applied.
-        // Here we enable first row formatting and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-
-        // Save the modified document.
+        // Save the document with the applied style.
         doc.Save("output.docx");
     }
 }

@@ -6,25 +6,25 @@ class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new empty Word document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Initialize a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a line of text that will appear before the form field.
-        builder.Writeln("Please enter your name:");
+        // Write a prompt before the form field.
+        builder.Write("Please enter your name: ");
 
-        // Insert a text input form field.
+        // Insert a text input form field at the current cursor position.
         // Parameters:
-        //   name            – internal name of the field.
-        //   type            – type of the text field (Regular allows any text).
-        //   format          – optional format string (empty for none).
-        //   defaultText     – placeholder text shown to the user.
-        //   maxLength       – maximum number of characters (0 = unlimited, 30 here).
-        builder.InsertTextInput("UserName", TextFormFieldType.Regular, "", "Enter name here", 30);
+        //   name          – bookmark name for the field (optional).
+        //   type          – type of the text form field (regular text in this case).
+        //   format        – format string (empty for default).
+        //   fieldValue    – placeholder text shown to the user.
+        //   maxLength     – 0 means unlimited length.
+        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "Enter name here", 0);
 
-        // Save the document in Markdown format.
-        doc.Save("FormFieldDocument.md", SaveFormat.Markdown);
+        // Save the document as a Markdown file.
+        doc.Save("FormField.md");
     }
 }

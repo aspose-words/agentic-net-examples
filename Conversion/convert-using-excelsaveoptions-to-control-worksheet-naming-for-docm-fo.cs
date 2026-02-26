@@ -1,21 +1,25 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsExample
 {
-    static void Main()
+    class Program
     {
-        // Load the source document (any supported format, e.g., DOCX).
-        Document doc = new Document("Input.docx");
+        static void Main()
+        {
+            // Load an existing Word document.
+            Document doc = new Document("MyDir/input.docx");
 
-        // Configure save options for the DOCM (macro‑enabled Word) format.
-        // The constructor that accepts a SaveFormat ensures the correct format is used.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
+            // Create OoxmlSaveOptions for the DOCM format.
+            // The constructor that accepts a SaveFormat ensures the correct options type is used.
+            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
 
-        // Optional: set the OOXML compliance level if specific features are required.
-        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
+            // Example of setting an additional option – disable embedding the generator name.
+            saveOptions.ExportGeneratorName = false;
 
-        // Save the document as a DOCM file using the configured options.
-        doc.Save("Output.docm", saveOptions);
+            // Save the document as a macro‑enabled DOCM file using the specified options.
+            doc.Save("ArtifactsDir/output.docm", saveOptions);
+        }
     }
 }

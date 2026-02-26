@@ -6,40 +6,51 @@ class UpdateContentControls
 {
     static void Main()
     {
-        // Load the existing DOCX file.
-        Document doc = new Document("Input.docx");
+        // Load the existing DOCX file that contains content controls (structured document tags).
+        Document doc = new Document("InputWithContentControls.docx");
 
-        // Iterate through all content controls (structured document tags) in the document.
-        foreach (StructuredDocumentTag sdt in doc.Range.StructuredDocumentTags)
+        // Retrieve all content controls in the document.
+        NodeCollection sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true);
+
+        // Iterate through each content control and update its contents as needed.
+        foreach (StructuredDocumentTag sdt in sdtNodes)
         {
-            // Update a content control identified by its Tag property.
-            if (sdt.Tag == "CustomerName")
+            // Example: Update a plain‑text content control with the title "CustomerName".
+            if (sdt.Title == "CustomerName")
             {
-                UpdateTagText(sdt, "John Doe");
+                // Remove any existing child nodes (e.g., previous text).
+                sdt.RemoveAllChildren();
+
+                // Insert the new text into the content control.
+                sdt.AppendChild(new Run(doc, "John Doe"));
             }
-            // Update a content control identified by its Title property.
-            else if (sdt.Title == "CurrentDate")
+
+            // Example: Update a plain‑text content control with the tag "Address".
+            if (sdt.Tag == "Address")
             {
-                UpdateTagText(sdt, DateTime.Today.ToString("MMMM dd, yyyy"));
+                sdt.RemoveAllChildren();
+                sdt.AppendChild(new Run(doc, "123 Main Street, Springfield"));
+            }
+
+            // Example: For a dropdown list content control, set the selected value.
+            if (sdt.SdtType == SdtType.DropDownList && sdt.Title == "Country")
+            {
+                // The list items are stored in the SdtListItemCollection.
+                // Choose the item with the desired display text (e.g., "USA").
+                foreach (SdtListItem item in sdt.ListItems)
+                {
+                    if (item.DisplayText == "USA")
+                    {
+                        // The selected value is stored in the SdtListItem's Value property.
+                        sdt.RemoveAllChildren();
+                        sdt.AppendChild(new Run(doc, item.Value));
+                        break;
+                    }
+                }
             }
         }
 
-        // Save the modified document.
-        doc.Save("Output.docx");
-    }
-
-    /// <summary>
-    /// Replaces the contents of a StructuredDocumentTag with the specified text.
-    /// </summary>
-    private static void UpdateTagText(StructuredDocumentTag tag, string newText)
-    {
-        // Remove any existing child nodes (the current content of the control).
-        tag.RemoveAllChildren();
-
-        // Create a new Run node that holds the replacement text.
-        Run run = new Run(tag.Document, newText);
-
-        // Append the Run to the content control.
-        tag.AppendChild(run);
+        // Save the modified document to a new file.
+        doc.Save("UpdatedContentControls.docx");
     }
 }

@@ -1,43 +1,49 @@
 using System;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Markup;
 
 class ExtractBetweenNodes
 {
     static void Main()
     {
-        // Load the DOC file.
-        Document doc = new Document("Input.doc");
+        // Load the source DOC file.
+        Document sourceDoc = new Document("Input.doc");
 
-        // Identify the start and end nodes. In this example we use two bookmarks named "Start" and "End".
-        Bookmark startBookmark = doc.Range.Bookmarks["Start"];
-        Bookmark endBookmark = doc.Range.Bookmarks["End"];
+        // Assume the document contains two bookmarks that define the range to extract:
+        // "Start" marks the beginning and "End" marks the end.
+        Bookmark startBookmark = sourceDoc.Range.Bookmarks["Start"];
+        Bookmark endBookmark = sourceDoc.Range.Bookmarks["End"];
 
-        if (startBookmark == null || endBookmark == null)
-        {
-            Console.WriteLine("Required bookmarks not found.");
-            return;
-        }
-
-        // Nodes that mark the boundaries.
+        // Get the actual nodes that delimit the range.
         Node startNode = startBookmark.BookmarkStart;
         Node endNode = endBookmark.BookmarkEnd;
 
-        // Collect text that lies between the two nodes (excluding the bookmark markers themselves).
-        StringBuilder extracted = new StringBuilder();
+        // Create a new blank document that will hold the extracted fragment.
+        Document fragmentDoc = new Document();
 
-        // Begin with the node immediately after the start bookmark.
-        Node cur = startNode.NextSibling;
+        // Use NodeImporter to copy nodes from the source document to the fragment
+        // while preserving the original formatting.
+        NodeImporter importer = new NodeImporter(sourceDoc, fragmentDoc, ImportFormatMode.KeepSourceFormatting);
 
-        while (cur != null && cur != endNode)
+        // Walk through the sibling nodes that lie between the start and end bookmarks.
+        // Exclude the bookmark nodes themselves.
+        Node current = startNode.NextSibling;
+        while (current != null && current != endNode)
         {
-            extracted.Append(cur.GetText());
-            cur = cur.NextSibling;
+            // Import the node into the fragment document.
+            Node importedNode = importer.ImportNode(current, true);
+            // Append the imported node to the body of the fragment document.
+            fragmentDoc.FirstSection.Body.AppendChild(importedNode);
+            // Move to the next sibling.
+            current = current.NextSibling;
         }
 
-        // Output the extracted content.
-        Console.WriteLine("Extracted text:");
-        Console.WriteLine(extracted.ToString());
+        // The extracted text is now available via the fragment's Range.Text property.
+        string extractedText = fragmentDoc.Range.Text.Trim();
+
+        Console.WriteLine("Extracted text between bookmarks:");
+        Console.WriteLine(extractedText);
+
+        // Optionally, save the extracted fragment as a separate DOCX file.
+        fragmentDoc.Save("ExtractedFragment.docx");
     }
 }

@@ -1,58 +1,46 @@
 using System;
 using Aspose.Words;
 
-class TrackChangesDemo
+class Program
 {
     static void Main()
     {
-        // Load a DOCX file that contains tracked changes.
+        // Load the DOCX file that contains tracked changes.
+        // The Document constructor handles the loading operation.
         Document doc = new Document("Revisions.docx");
 
-        // -----------------------------------------------------------------
-        // 1. Iterate over revision groups.
-        //    A group represents a sequence of adjacent revisions made by the same author.
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Revision groups count: {doc.Revisions.Groups.Count}");
+        // Ensure the document actually has revisions before processing.
+        if (!doc.HasRevisions)
+        {
+            Console.WriteLine("The document does not contain any revisions.");
+            return;
+        }
+
+        // Iterate through each revision group.
+        // A RevisionGroup represents a sequential set of revisions made by the same author.
         foreach (RevisionGroup group in doc.Revisions.Groups)
         {
-            Console.WriteLine($"Group author: {group.Author}");
-            Console.WriteLine($"Group type  : {group.RevisionType}");
-            Console.WriteLine($"Group text  : {group.Text.Trim()}");
-            Console.WriteLine();
+            // Output basic information about the group.
+            Console.WriteLine($"Author: {group.Author}");
+            Console.WriteLine($"Revision Type: {group.RevisionType}");
+            Console.WriteLine($"Text: {group.Text}");
+            Console.WriteLine(new string('-', 40));
         }
 
-        // -----------------------------------------------------------------
-        // 2. Iterate over individual revisions.
-        //    Each Revision object gives detailed information about a single change.
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Total revisions: {doc.Revisions.Count}");
+        // Optionally, iterate through individual revisions for more granular details.
+        Console.WriteLine("Individual revisions:");
         foreach (Revision rev in doc.Revisions)
         {
-            Console.WriteLine($"Revision author: {rev.Author}");
-            Console.WriteLine($"Revision type  : {rev.RevisionType}");
-
-            // For node‑based revisions (Insertion, Deletion, Moving, FormatChange) the
-            // affected text can be obtained from the ParentNode.
-            if (rev.RevisionType != RevisionType.StyleDefinitionChange && rev.ParentNode != null)
-            {
-                Console.WriteLine($"Revision text  : {rev.ParentNode.GetText().Trim()}");
-            }
-            // For style definition changes the affected style is available via ParentStyle.
-            else if (rev.ParentStyle != null)
-            {
-                Console.WriteLine($"Affected style  : {rev.ParentStyle.Name}");
-            }
-
-            Console.WriteLine();
+            Console.WriteLine($"Author: {rev.Author}");
+            Console.WriteLine($"Date: {rev.DateTime}");
+            Console.WriteLine($"Type: {rev.RevisionType}");
+            // The ParentNode contains the node that was changed.
+            // GetText() returns the text of that node (or a description for format changes).
+            Console.WriteLine($"Changed Text: {rev.ParentNode?.GetText().Trim()}");
+            Console.WriteLine(new string('-', 40));
         }
 
-        // -----------------------------------------------------------------
-        // 3. (Optional) Accept or reject revisions based on criteria.
-        //    Example: accept only insertions made by "John Doe".
-        // -----------------------------------------------------------------
-        // doc.Revisions.Accept(new RevisionCriteria("John Doe", RevisionType.Insertion));
-
-        // Save the document after processing revisions.
+        // Save the document unchanged (optional, demonstrates the save lifecycle rule).
         doc.Save("Revisions_Processed.docx");
     }
 }

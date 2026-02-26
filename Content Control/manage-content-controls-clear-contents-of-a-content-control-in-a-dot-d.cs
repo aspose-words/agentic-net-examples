@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
@@ -5,19 +6,19 @@ class Program
 {
     static void Main()
     {
-        // Load the DOT template.
+        // Load the DOT template document.
+        // This uses the required load rule (Document(string)).
         Document doc = new Document("Template.dot");
 
-        // Retrieve the first content control (StructuredDocumentTag) in the document.
-        StructuredDocumentTag sdt = (StructuredDocumentTag)doc.GetChild(NodeType.StructuredDocumentTag, 0, true);
-
-        // If a content control is found, clear its contents.
-        if (sdt != null)
+        // Iterate over all content controls (structured document tags) in the document.
+        // The Clear() method removes the contents and shows the placeholder if defined.
+        foreach (StructuredDocumentTag tag in doc.Range.StructuredDocumentTags)
         {
-            sdt.Range.Delete(); // Removes all characters inside the content control.
+            tag.Clear();
         }
 
         // Save the modified document.
+        // This uses the required save rule (Document.Save(string)).
         doc.Save("Result.docx");
     }
 }

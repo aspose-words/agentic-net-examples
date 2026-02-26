@@ -1,49 +1,43 @@
 using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Words.Fields;
 
-namespace FindReplaceWithFieldExample
+class Program
 {
-    // Custom callback that replaces each match with a DATE field.
-    class InsertDateFieldHandler : IReplacingCallback
+    static void Main()
     {
-        public ReplaceAction Replacing(ReplacingArgs args)
+        // Load the source DOCX document.
+        Document doc = new Document("Input.docx");
+
+        // Configure find/replace options with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions
         {
-            // The Document property of MatchNode returns DocumentBase; cast it to Document.
-            Document doc = (Document)args.MatchNode.Document;
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            ReplacingCallback = new FieldReplacingCallback()
+        };
 
-            // Move the builder to the start of the match.
-            // The match may span multiple runs; moving to the match node positions the cursor correctly.
-            builder.MoveTo(args.MatchNode);
+        // Replace the placeholder text with a field.
+        doc.Range.Replace("_FieldPlaceholder_", string.Empty, options);
 
-            // Insert a DATE field at the match location.
-            builder.InsertField(FieldType.FieldDate, true);
-
-            // Skip the default text replacement because we have already inserted the field.
-            return ReplaceAction.Skip;
-        }
+        // Save the modified document.
+        doc.Save("Output.docx");
     }
+}
 
-    class Program
+// Callback that replaces each match with a DATE field.
+class FieldReplacingCallback : IReplacingCallback
+{
+    public ReplaceAction Replacing(ReplacingArgs args)
     {
-        static void Main()
-        {
-            // Load the source DOCX document.
-            Document doc = new Document("Input.docx");
+        // The match node is a Run that contains the placeholder text.
+        // Insert the field at the position of the match.
+        DocumentBuilder builder = new DocumentBuilder((Document)args.MatchNode.Document);
+        builder.MoveTo(args.MatchNode);
+        builder.InsertField("DATE", "\\@ \"MMMM d, yyyy\"");
 
-            // Set up find/replace options with the custom callback.
-            FindReplaceOptions options = new FindReplaceOptions();
-            options.ReplacingCallback = new InsertDateFieldHandler();
+        // Remove the original placeholder text.
+        args.MatchNode.Remove();
 
-            // Replace all occurrences of the placeholder text with a DATE field.
-            // The replacement string is empty because the callback handles insertion.
-            doc.Range.Replace(new Regex(@"\[DATE\]"), string.Empty, options);
-
-            // Save the modified document.
-            doc.Save("Output.docx");
-        }
+        // Skip the default text replacement.
+        return ReplaceAction.Skip;
     }
 }

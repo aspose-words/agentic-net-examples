@@ -3,63 +3,59 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+namespace WordArtExample
 {
-    static void Main()
+    class Program
     {
-        // Create a new empty document.
-        Document doc = new Document();
-
-        // Insert a WordArt shape into the document.
-        Shape wordArt = AppendWordArt(
-            doc,
-            "Hello Aspose!",          // Text to display.
-            "Arial",                  // Font family.
-            400,                      // Shape width.
-            50,                       // Shape height.
-            Color.Yellow,             // Fill color.
-            Color.Blue,               // Outline (stroke) color.
-            ShapeType.TextPlainText   // WordArt shape type.
-        );
-
-        // Apply additional formatting to the WordArt.
-        wordArt.TextPath.Bold = true;
-        wordArt.TextPath.Italic = true;
-        wordArt.TextPath.Size = 36; // Font size in points.
-
-        // Save the document.
-        doc.Save("WordArtShape.docx");
-    }
-
-    // Helper method that creates an inline WordArt shape and adds it to a new paragraph.
-    private static Shape AppendWordArt(
-        Document doc,
-        string text,
-        string fontFamily,
-        double width,
-        double height,
-        Color fillColor,
-        Color lineColor,
-        ShapeType shapeType)
-    {
-        // Create an inline shape of a WordArt‑designated type.
-        Shape shape = new Shape(doc, shapeType)
+        static void Main()
         {
-            WrapType = WrapType.Inline,
-            Width = width,
-            Height = height,
-            FillColor = fillColor,
-            StrokeColor = lineColor
-        };
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Set the WordArt text and font.
-        shape.TextPath.Text = text;
-        shape.TextPath.FontFamily = fontFamily;
+            // Insert a WordArt shape into the document.
+            AppendWordArt(
+                doc,
+                "Aspose.Words WordArt",   // Text to display
+                "Arial",                  // Font family
+                400,                      // Shape width (points)
+                50,                       // Shape height (points)
+                Color.Yellow,             // Fill color of the shape
+                Color.Blue,               // Outline (stroke) color
+                ShapeType.TextPlainText   // WordArt shape type
+            );
 
-        // Insert the shape into a new paragraph.
-        Paragraph para = (Paragraph)doc.FirstSection.Body.AppendChild(new Paragraph(doc));
-        para.AppendChild(shape);
+            // Save the document to a DOCX file.
+            doc.Save("WordArt.docx");
+        }
 
-        return shape;
+        /// <summary>
+        /// Creates an inline WordArt shape, configures its text path, and adds it to the document.
+        /// </summary>
+        private static Shape AppendWordArt(Document doc, string text, string fontFamily,
+                                          double shapeWidth, double shapeHeight,
+                                          Color fillColor, Color strokeColor,
+                                          ShapeType wordArtShapeType)
+        {
+            // Create a shape of a WordArt‑designated type.
+            Shape shape = new Shape(doc, wordArtShapeType)
+            {
+                WrapType = WrapType.Inline,
+                Width = shapeWidth,
+                Height = shapeHeight,
+                FillColor = fillColor,
+                StrokeColor = strokeColor
+            };
+
+            // Configure the WordArt text.
+            shape.TextPath.Text = text;
+            shape.TextPath.FontFamily = fontFamily;
+            shape.TextPath.Bold = true;   // Example formatting
+
+            // Append the shape to a new paragraph in the document body.
+            Paragraph para = (Paragraph)doc.FirstSection.Body.AppendChild(new Paragraph(doc));
+            para.AppendChild(shape);
+
+            return shape;
+        }
     }
 }

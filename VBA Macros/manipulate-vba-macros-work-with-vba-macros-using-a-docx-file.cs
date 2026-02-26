@@ -2,64 +2,60 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-class Program
+class VbaMacroExample
 {
     static void Main()
     {
-        // Path to the input document (must be a macro‑enabled format, e.g., .docm).
-        string inputPath = @"C:\Docs\InputDocument.docm";
-        // Path where the modified document will be saved.
-        string outputPath = @"C:\Docs\OutputDocument.docm";
+        // Load an existing DOCX file.
+        Document doc = new Document("Input.docx");
 
-        // Load the existing document.
-        Document doc = new Document(inputPath);
-
-        // Check whether the document already contains a VBA project (macros).
+        // Check whether the document already contains VBA macros.
         if (doc.HasMacros)
         {
-            Console.WriteLine("Document already contains VBA macros.");
+            // Document already has a VBA project. Access it.
+            VbaProject project = doc.VbaProject;
+
+            // Output basic information about the existing VBA project.
+            Console.WriteLine($"Existing VBA project name: {project.Name}");
+            Console.WriteLine($"Modules count: {project.Modules.Count}");
+
+            // Modify the source code of the first module (if any).
+            if (project.Modules.Count > 0)
+            {
+                VbaModule firstModule = project.Modules[0];
+                Console.WriteLine($"Modifying module: {firstModule.Name}");
+                firstModule.SourceCode = @"Sub UpdatedMacro()
+    MsgBox ""This macro has been updated by Aspose.Words.""
+End Sub";
+            }
         }
         else
         {
-            Console.WriteLine("Document does not contain VBA macros. Creating a new VBA project.");
-            // Create a new VBA project and assign it to the document.
-            VbaProject project = new VbaProject
+            // No VBA project present – create a new one.
+            VbaProject newProject = new VbaProject
             {
-                Name = "AsposeDemoProject",
-                CodePage = 1252 // Typical Windows Latin code page.
+                Name = "AsposeGeneratedProject",
+                CodePage = 1252 // Western European (Windows) code page.
             };
-            doc.VbaProject = project;
-        }
 
-        // Access the VBA project (it is guaranteed to exist now).
-        VbaProject vbaProject = doc.VbaProject;
+            // Assign the new VBA project to the document.
+            doc.VbaProject = newProject;
 
-        // Create a new procedural module.
-        VbaModule newModule = new VbaModule
-        {
-            Name = "DemoModule",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"
-Sub HelloWorld()
+            // Create a new VBA module.
+            VbaModule module = new VbaModule
+            {
+                Name = "AsposeModule",
+                Type = VbaModuleType.ProceduralModule,
+                SourceCode = @"Sub HelloWorld()
     MsgBox ""Hello from Aspose.Words VBA!""
 End Sub"
-        };
+            };
 
-        // Add the module to the project's module collection.
-        vbaProject.Modules.Add(newModule);
-        Console.WriteLine($"Added module '{newModule.Name}' to the VBA project.");
-
-        // Optionally, modify an existing module if one is present.
-        if (vbaProject.Modules.Count > 0)
-        {
-            // Example: prepend a comment to the first module's source code.
-            VbaModule firstModule = vbaProject.Modules[0];
-            firstModule.SourceCode = "' Updated by Aspose.Words\n" + firstModule.SourceCode;
-            Console.WriteLine($"Updated source code of module '{firstModule.Name}'.");
+            // Add the module to the VBA project.
+            doc.VbaProject.Modules.Add(module);
         }
 
-        // Save the document in a macro‑enabled format.
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to '{outputPath}'.");
+        // Save the document as a macro‑enabled file (DOCM) to preserve the VBA project.
+        doc.Save("Output.docm");
     }
 }

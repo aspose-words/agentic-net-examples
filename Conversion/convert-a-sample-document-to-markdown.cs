@@ -2,36 +2,38 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsMarkdownExample
 {
-    static void Main()
+    class Program
     {
-        // Path to the source Word document.
-        string inputPath = @"C:\Docs\Sample.docx";
-
-        // Path where the Markdown file will be saved.
-        string outputPath = @"C:\Docs\Sample.md";
-
-        // Load the document from the file system.
-        Document doc = new Document(inputPath);
-
-        // Configure options for saving as Markdown.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+        static void Main()
         {
-            // Export tables that cannot be represented in pure Markdown as raw HTML.
-            ExportAsHtml = MarkdownExportAsHtml.NonCompatibleTables,
+            // Path to the source document (any format supported by Aspose.Words, e.g., DOCX).
+            string sourcePath = @"C:\Docs\SampleDocument.docx";
 
-            // Export links using reference style.
-            LinkExportMode = MarkdownLinkExportMode.Reference,
+            // Path where the Markdown file will be saved.
+            string outputPath = @"C:\Docs\SampleDocument.md";
 
-            // Preserve empty paragraphs as empty lines.
-            EmptyParagraphExportMode = MarkdownEmptyParagraphExportMode.EmptyLine,
+            // Load the source document using the Document constructor (load rule).
+            Document doc = new Document(sourcePath);
 
-            // Explicitly set the target format (optional, defaults to Markdown).
-            SaveFormat = SaveFormat.Markdown
-        };
+            // Create MarkdownSaveOptions (create rule) and configure desired options.
+            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+            {
+                // Explicitly set the format to Markdown (save rule requirement).
+                SaveFormat = SaveFormat.Markdown,
 
-        // Save the document in Markdown format using the configured options.
-        doc.Save(outputPath, saveOptions);
+                // Example option: export tables that cannot be represented in pure Markdown as raw HTML.
+                ExportAsHtml = MarkdownExportAsHtml.NonCompatibleTables,
+
+                // Example option: preserve empty paragraphs as empty lines.
+                EmptyParagraphExportMode = MarkdownEmptyParagraphExportMode.EmptyLine
+            };
+
+            // Save the document as Markdown using the configured options (save rule).
+            doc.Save(outputPath, saveOptions);
+
+            Console.WriteLine("Document successfully converted to Markdown.");
+        }
     }
 }

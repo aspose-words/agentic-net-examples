@@ -1,6 +1,7 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
 class Program
 {
@@ -8,41 +9,27 @@ class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a GroupShape that will hold other shapes.
-        GroupShape group = new GroupShape(doc);
+        // Insert two individual shapes that will be grouped.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        shape1.Left = 20;
+        shape1.Top = 20;
+        shape1.Stroke.Color = Color.Red;
 
-        // Set the size of the group shape (in points).
-        group.Width = 300;
-        group.Height = 200;
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        shape2.Left = 40;
+        shape2.Top = 50;
+        shape2.Stroke.Color = Color.Green;
 
-        // Define the coordinate space inside the group.
-        // Here we use a 10000 x 10000 coordinate system (common for DrawingML).
-        group.CoordOrigin = new System.Drawing.Point(0, 0);
-        group.CoordSize = new System.Drawing.Size(10000, 10000);
+        // Group the two shapes into a new GroupShape node.
+        GroupShape group1 = builder.InsertGroupShape(shape1, shape2);
 
-        // Position the group shape on the page.
-        group.Left = 100;   // 100 points from the left margin
-        group.Top = 100;    // 100 points from the top margin
-        group.WrapType = WrapType.None; // Floating shape
+        // Clone one of the original shapes (deep clone) and add it to a second group together with the first group.
+        Shape shape3 = (Shape)shape1.Clone(true);
+        GroupShape group2 = builder.InsertGroupShape(group1, shape3);
 
-        // Create a rectangle shape to place inside the group.
-        Shape rect = new Shape(doc, ShapeType.Rectangle);
-        rect.Width = 2000;   // Width in the group's coordinate space
-        rect.Height = 1000;  // Height in the group's coordinate space
-        rect.Left = 1000;    // Position within the group
-        rect.Top = 500;
-        rect.Fill.Color = System.Drawing.Color.LightBlue;
-        rect.StrokeColor = System.Drawing.Color.DarkBlue;
-        rect.StrokeWeight = 2;
-
-        // Add the rectangle to the group.
-        group.AppendChild(rect);
-
-        // Insert the group shape into the document body.
-        doc.FirstSection.Body.AppendChild(group);
-
-        // Save the document as DOCX.
-        doc.Save("GroupShapeExample.docx");
+        // Save the document to a DOCX file.
+        doc.Save("Shape.CombineGroupShape.docx");
     }
 }

@@ -3,26 +3,20 @@ using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class Program
+class RtfToPdfConverter
 {
     static void Main()
     {
-        // Paths to the source RTF file and the destination PDF file.
+        // Input RTF file path
         string rtfPath = "input.rtf";
+
+        // Output PDF file path
         string pdfPath = "output.pdf";
 
-        // Load the RTF document using RtfLoadOptions.
-        RtfLoadOptions loadOptions = new RtfLoadOptions();
-        Document document = new Document(rtfPath, loadOptions);
+        // Load the RTF document using the default RtfLoadOptions
+        Document doc = new Document(rtfPath, new RtfLoadOptions());
 
-        // Extract plain‑text content from the RTF file.
-        PlainTextDocument plainText = new PlainTextDocument(rtfPath, loadOptions);
-        string extractedText = plainText.Text;
-        Console.WriteLine("Extracted Text:");
-        Console.WriteLine(extractedText);
-
-        // Save the document as PDF using PdfSaveOptions.
-        PdfSaveOptions saveOptions = new PdfSaveOptions();
-        document.Save(pdfPath, saveOptions);
+        // Save the loaded document as PDF using the default PdfSaveOptions
+        doc.Save(pdfPath, new PdfSaveOptions());
     }
 }

@@ -1,38 +1,25 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 class SplitDocumentByPages
 {
     static void Main()
     {
         // Load the source DOCX document.
-        Document sourceDoc = new Document("InputDocument.docx");
+        Document source = new Document("InputDocument.docx");
 
-        // Determine the total number of pages in the document.
-        int totalPages = sourceDoc.PageCount;
+        // Determine how many pages the document contains.
+        int totalPages = source.PageCount;
 
-        // Loop through each page and extract it to a separate document.
-        for (int pageIndex = 0; pageIndex < totalPages; pageIndex++)
+        // Iterate over each page, extract it, and save it as a separate file.
+        for (int i = 0; i < totalPages; i++)
         {
-            // Extract a single page. The ExtractPages method uses zero‑based page indices.
-            Document pageDoc = sourceDoc.ExtractPages(pageIndex, pageIndex);
+            // Extract a single page (zero‑based index) from the source document.
+            Document singlePage = source.ExtractPages(i, 1);
 
-            // Optional: customize page numbering for the extracted document.
-            // By default the start page number is preserved; uncomment to reset.
-            // PageExtractOptions options = new PageExtractOptions
-            // {
-            //     UpdatePageStartingNumber = false,
-            //     UnlinkPagesNumberFields = false
-            // };
-            // pageDoc = sourceDoc.ExtractPages(pageIndex, pageIndex, options);
-
-            // Save the extracted page as a separate DOCX file.
-            string outputPath = $"Page_{pageIndex + 1}.docx";
-            pageDoc.Save(outputPath);
+            // Save the extracted page. The file name includes the page number (1‑based for readability).
+            string outputFileName = $"Page_{i + 1}.docx";
+            singlePage.Save(outputFileName);
         }
-
-        Console.WriteLine("Document split into individual pages successfully.");
     }
 }

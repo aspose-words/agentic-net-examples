@@ -6,27 +6,27 @@ class Program
 {
     static void Main()
     {
-        // Load the DOTM document from disk.
-        Document doc = new Document("Input.dotm"); // replace with the actual path to the .dotm file
+        // Load the DOTM template document.
+        Document doc = new Document("Template.dotm");
 
-        // Get the collection of tables in the first section's body.
-        TableCollection tables = doc.FirstSection.Body.Tables;
+        // Retrieve all tables in the document (including those inside other nodes).
+        NodeCollection tableNodes = doc.GetChildNodes(NodeType.Table, true);
 
         // Iterate through each table and output its row and column counts.
-        for (int i = 0; i < tables.Count; i++)
+        foreach (Table table in tableNodes)
         {
-            Table table = tables[i];
-
-            // Number of rows in the table.
+            // Number of rows in the current table.
             int rowCount = table.Rows.Count;
 
-            // Number of columns – assume a uniform table and use the first row's cell count.
-            int columnCount = rowCount > 0 ? table.Rows[0].Cells.Count : 0;
+            // Number of columns is determined by the cell count of the first row (if any rows exist).
+            int columnCount = 0;
+            if (rowCount > 0)
+                columnCount = table.Rows[0].Cells.Count;
 
-            Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
+            Console.WriteLine($"Table found: Rows = {rowCount}, Columns = {columnCount}");
         }
 
-        // (Optional) Save the document if any modifications were made.
-        // doc.Save("Output.docx");
+        // Save the document (optional – demonstrates the required save lifecycle step).
+        doc.Save("Output.docx");
     }
 }

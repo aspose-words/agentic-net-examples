@@ -3,66 +3,34 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsExample
+public class DotToImagesConverter
 {
-    // Callback to save each page of the document as a separate image file.
-    public class ImagePageSavingCallback : IPageSavingCallback
+    public static void Main()
     {
-        private readonly string _outputFolder;
-        private readonly string _imageExtension;
+        // Path to the source DOT file (Word template)
+        const string inputFilePath = "Template.dot";
 
-        public ImagePageSavingCallback(string outputFolder, string imageExtension)
+        // Directory where the resulting page images will be saved
+        const string outputDirectory = "PageImages";
+        Directory.CreateDirectory(outputDirectory);
+
+        // Load the DOT document. No LoadOptions are required for a plain template.
+        Document doc = new Document(inputFilePath);
+
+        // Prepare image save options – PNG format with 300 DPI resolution.
+        ImageSaveOptions imageSaveOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            _outputFolder = outputFolder;
-            _imageExtension = imageExtension;
-        }
+            Resolution = 300
+        };
 
-        public void PageSaving(PageSavingArgs args)
+        // Export each page of the document to a separate PNG file.
+        for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
         {
-            // Build the file name for the current page.
-            string fileName = Path.Combine(_outputFolder, $"Page_{args.PageIndex}{_imageExtension}");
+            // Tell Aspose.Words which page to render.
+            imageSaveOptions.PageSet = new PageSet(pageIndex);
 
-            // Set the file name – Aspose.Words will create the file automatically.
-            args.PageFileName = fileName;
-
-            // Alternatively, you could provide a custom stream:
-            // args.PageStream = new FileStream(fileName, FileMode.Create);
-        }
-    }
-
-    public class ConvertDotToImages
-    {
-        public static void Main()
-        {
-            // Path to the source DOT (Word template) file.
-            string dotFilePath = @"C:\Docs\Template.dot";
-
-            // Folder where the resulting images will be saved.
-            string outputFolder = @"C:\Docs\Images";
-
-            // Ensure the output directory exists.
-            Directory.CreateDirectory(outputFolder);
-
-            // Load the DOT document.
-            Document doc = new Document(dotFilePath);
-
-            // Configure image save options.
-            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
-            {
-                // Render all pages.
-                PageSet = PageSet.All,
-
-                // Optional: set resolution (dpi) for higher quality.
-                HorizontalResolution = 300,
-                VerticalResolution = 300,
-
-                // Use a callback to name each page image file.
-                PageSavingCallback = new ImagePageSavingCallback(outputFolder, ".png")
-            };
-
-            // The file name passed to Save is not used because the callback provides per‑page names.
-            // It can be any valid path; we use a dummy name.
-            doc.Save(Path.Combine(outputFolder, "dummy.png"), saveOptions);
+            string outputPath = Path.Combine(outputDirectory, $"Page_{pageIndex + 1}.png");
+            doc.Save(outputPath, imageSaveOptions);
         }
     }
 }

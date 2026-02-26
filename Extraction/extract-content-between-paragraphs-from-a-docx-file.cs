@@ -1,39 +1,45 @@
 using System;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 
-class ExtractBetweenParagraphs
+class Program
 {
     static void Main()
     {
-        // Load the DOCX file (uses the provided load rule)
+        // Load the DOCX file from disk.
         Document doc = new Document("Input.docx");
 
-        // Define the indexes of the start and end paragraphs (inclusive).
-        // For example, extract content that lies between paragraph 2 and paragraph 5.
-        int startParagraphIndex = 2; // zero‑based index of the first boundary paragraph
-        int endParagraphIndex   = 5; // zero‑based index of the second boundary paragraph
+        // Example: extract text that lies between paragraph index 2 (inclusive) and 5 (exclusive).
+        // Paragraph indices are zero‑based.
+        int startIndex = 2;
+        int endIndex   = 5;
 
-        // Validate indexes.
-        if (startParagraphIndex < 0 || endParagraphIndex >= doc.FirstSection.Body.Paragraphs.Count ||
-            startParagraphIndex >= endParagraphIndex)
+        // Validate the range.
+        ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
+        if (startIndex < 0 || endIndex > paragraphs.Count || startIndex >= endIndex)
         {
-            Console.WriteLine("Invalid paragraph indexes.");
+            Console.WriteLine("Invalid paragraph range.");
             return;
         }
 
-        // Build the text that exists strictly between the two boundary paragraphs.
-        StringBuilder betweenText = new StringBuilder();
-
-        // Loop over the paragraphs that are between the two boundaries.
-        for (int i = startParagraphIndex + 1; i < endParagraphIndex; i++)
+        // Build the extracted text.
+        StringBuilder extractedBuilder = new StringBuilder();
+        for (int i = startIndex; i < endIndex; i++)
         {
-            Paragraph para = doc.FirstSection.Body.Paragraphs[i];
-            betweenText.Append(para.GetText()); // GetText includes the paragraph break.
+            // GetText returns the paragraph text plus a paragraph break.
+            // Trim the trailing break to avoid duplicate empty lines.
+            extractedBuilder.Append(paragraphs[i].GetText().TrimEnd('\r', '\n'));
+            extractedBuilder.Append(Environment.NewLine);
         }
 
-        // Output the extracted content.
-        Console.WriteLine("Content between paragraph {0} and {1}:", startParagraphIndex, endParagraphIndex);
-        Console.WriteLine(betweenText.ToString());
+        string extractedText = extractedBuilder.ToString().TrimEnd();
+
+        // Display the result.
+        Console.WriteLine("Extracted content between paragraphs:");
+        Console.WriteLine(extractedText);
+
+        // Optionally write the extracted content to a plain‑text file.
+        File.WriteAllText("Extracted.txt", extractedText);
     }
 }

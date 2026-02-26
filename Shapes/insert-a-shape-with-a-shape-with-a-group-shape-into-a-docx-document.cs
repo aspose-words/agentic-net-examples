@@ -3,38 +3,39 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class InsertGroupShapeExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a group shape that will contain other shapes.
-        GroupShape group = new GroupShape(doc);
-        // Set the size and position of the group shape.
-        group.Bounds = new RectangleF(0, 0, 200, 200);
-        group.WrapType = WrapType.None; // Floating shape.
-        group.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        group.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        group.HorizontalAlignment = HorizontalAlignment.Center;
-        group.VerticalAlignment = VerticalAlignment.Center;
+        // Insert the first shape (rectangle) and set its position and stroke.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        shape1.Left = 20;
+        shape1.Top = 20;
+        shape1.Stroke.Color = Color.Red;
 
-        // Create a child shape (a rectangle) and add it to the group.
-        Shape child = new Shape(doc, ShapeType.Rectangle);
-        child.Width = 100;
-        child.Height = 50;
-        child.Left = 50; // Position inside the group.
-        child.Top = 50;
-        child.Fill.ForeColor = Color.LightBlue;
-        child.Stroke.Color = Color.DarkBlue;
-        group.AppendChild(child);
+        // Insert the second shape (ellipse) and set its position and stroke.
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        shape2.Left = 40;
+        shape2.Top = 50;
+        shape2.Stroke.Color = Color.Green;
 
-        // Insert the group shape into the document.
-        builder.InsertNode(group);
+        // Group the two shapes. The InsertGroupShape method automatically inserts the new GroupShape
+        // at the current builder position.
+        GroupShape group = builder.InsertGroupShape(shape1, shape2);
+
+        // Clone the first shape and add the clone as a child of the group.
+        Shape shape3 = (Shape)shape1.Clone(true);
+        group.AppendChild(shape3);
+
+        // (Optional) Insert the group again at the current position – this demonstrates using InsertNode.
+        // The group is already in the document, so this call will place a second copy.
+        builder.InsertNode(group.Clone(true));
 
         // Save the document to a DOCX file.
-        doc.Save("GroupShape.docx");
+        doc.Save("GroupShapeExample.docx");
     }
 }

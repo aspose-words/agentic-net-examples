@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class FindReplaceExample
 {
     static void Main()
     {
@@ -16,10 +16,11 @@ class Program
             FindWholeWordsOnly = true
         };
 
-        // Replace all occurrences of "oldWord" with "newWord" using the options.
-        doc.Range.Replace("oldWord", "newWord", options);
+        // Perform the replacement.
+        // Replace all occurrences of "Apple" with "Orange" respecting the options.
+        doc.Range.Replace("Apple", "Orange", options);
 
-        // Save the updated document.
+        // Save the modified document.
         doc.Save("Output.docx");
     }
 }

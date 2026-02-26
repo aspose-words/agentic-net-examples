@@ -2,38 +2,39 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
-class XmlMappingRangedSdtExample
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for inserting nodes.
+        // Add a custom XML part that will supply data for the content control.
+        string xmlPartId = Guid.NewGuid().ToString("B");
+        string xml = "<root><author>John Doe</author><title>Sample Book</title></root>";
+        CustomXmlPart customXml = doc.CustomXmlParts.Add(xmlPartId, xml);
+
+        // Use DocumentBuilder to insert nodes into the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a custom XML part that will be the data source for the content control.
-        string xmlPartId = Guid.NewGuid().ToString("B");
-        string xmlContent = "<root><value>Mapped text from XML</value></root>";
-        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, xmlContent);
+        // Insert the start of a ranged content control (plain‑text type).
+        StructuredDocumentTagRangeStart rangeStart = new StructuredDocumentTagRangeStart(doc, SdtType.PlainText);
+        rangeStart.Title = "BookInfo";               // optional title
+        builder.InsertNode(rangeStart);               // place the start tag at the cursor
 
-        // Insert the start of a ranged Structured Document Tag (content control).
-        // Use RichText type so the control can contain paragraphs.
-        StructuredDocumentTagRangeStart sdtStart = new StructuredDocumentTagRangeStart(doc, SdtType.RichText);
-        builder.InsertNode(sdtStart);
+        // Content that will be bound to the XML mapping.
+        builder.Writeln("Author: ");
+        builder.Writeln("Title: ");
 
-        // Insert some placeholder content that will be inside the ranged content control.
-        builder.Writeln("This paragraph is inside the ranged content control.");
+        // Insert the matching end tag for the ranged content control.
+        StructuredDocumentTagRangeEnd rangeEnd = new StructuredDocumentTagRangeEnd(doc, rangeStart.Id);
+        builder.InsertNode(rangeEnd);
 
-        // Insert the end of the ranged Structured Document Tag.
-        StructuredDocumentTagRangeEnd sdtEnd = new StructuredDocumentTagRangeEnd(doc, sdtStart.Id);
-        builder.InsertNode(sdtEnd);
+        // Map the start tag to the <author> element of the custom XML part.
+        // The XPath selects the first <author> element under <root>.
+        rangeStart.XmlMapping.SetMapping(customXml, "/root[1]/author[1]", string.Empty);
 
-        // Map the content control to the XML element using XPath.
-        // The control will display the text of the <value> element.
-        sdtStart.XmlMapping.SetMapping(xmlPart, "/root[1]/value[1]", string.Empty);
-
-        // Save the document to a file.
-        doc.Save("RangedContentControlWithXmlMapping.docx");
+        // Save the resulting document.
+        doc.Save("MappedRangeContentControl.docx");
     }
 }

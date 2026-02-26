@@ -2,31 +2,27 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class RetrieveFormFieldValue
+class Program
 {
     static void Main()
     {
-        // Load an existing DOCX document.
-        Document doc = new Document("InputDocument.docx");
+        // Path to the DOCX file that contains form fields.
+        string filePath = "input.docx";
+
+        // Load the document from the file system.
+        Document doc = new Document(filePath);
 
         // Access the collection of form fields in the document.
         FormFieldCollection formFields = doc.Range.FormFields;
 
-        // Specify the name of the form field whose value we want to retrieve.
-        string fieldName = "MyTextInput";
+        // Example: retrieve the first form field by index.
+        // You can also retrieve by name: doc.Range.FormFields["MyFormFieldName"]
+        FormField formField = formFields[0];
 
-        // Find the form field by name.
-        FormField field = formFields[fieldName];
+        // The Result property holds the current value of the form field.
+        string fieldValue = formField.Result;
 
-        if (field != null)
-        {
-            // For text input fields, the entered value is stored in the Result property.
-            string fieldValue = field.Result;
-            Console.WriteLine($"Form field \"{fieldName}\" value: {fieldValue}");
-        }
-        else
-        {
-            Console.WriteLine($"Form field \"{fieldName}\" not found.");
-        }
+        // Output the field name and its value.
+        Console.WriteLine($"Form field '{formField.Name}' value: {fieldValue}");
     }
 }

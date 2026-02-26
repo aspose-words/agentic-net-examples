@@ -1,18 +1,14 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load the source document in DOT format.
+        // Load the source document in DOT (Word template) format.
         Document doc = new Document("input.dot");
 
-        // Configure save options to produce an EPUB file.
-        HtmlSaveOptions epubOptions = new HtmlSaveOptions(SaveFormat.Epub);
-
-        // Save the document as EPUB using the configured options.
-        doc.Save("output.epub", epubOptions);
+        // Save the document as EPUB using the SaveFormat enumeration.
+        doc.Save("output.epub", SaveFormat.Epub);
     }
 }

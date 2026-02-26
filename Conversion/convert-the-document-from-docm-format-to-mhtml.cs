@@ -1,26 +1,25 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class Program
+namespace DocmToMhtmlConverter
 {
-    static void Main()
+    class Program
     {
-        // Load the macro-enabled DOCM document.
-        Document doc = new Document("input.docm");
-
-        // Configure save options for MHTML output.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        static void Main(string[] args)
         {
-            // Example: use HTML5 standard for the generated MHTML.
-            HtmlVersion = HtmlVersion.Html5,
-            // Optional: embed images as Base64 to keep everything in a single file.
-            ExportImagesAsBase64 = true,
-            // Optional: include document properties in the output.
-            ExportDocumentProperties = true
-        };
+            // Path to the source DOCM file.
+            string inputPath = @"C:\Docs\SourceDocument.docm";
 
-        // Save the document as MHTML.
-        doc.Save("output.mhtml", saveOptions);
+            // Path where the resulting MHTML file will be saved.
+            string outputPath = @"C:\Docs\ConvertedDocument.mht";
+
+            // Load the DOCM document.
+            Document doc = new Document(inputPath);
+
+            // Save the document in MHTML (Web archive) format.
+            doc.Save(outputPath, SaveFormat.Mhtml);
+
+            Console.WriteLine("Conversion completed successfully.");
+        }
     }
 }

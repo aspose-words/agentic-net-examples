@@ -1,32 +1,36 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class InsertShapeWithPicture
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for inserting content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Ensure the document has at least one paragraph to host the shape.
+        // If the document is empty, Aspose.Words creates a first paragraph automatically.
+        Paragraph para = doc.FirstSection.Body.FirstParagraph;
 
-        // Create a new shape of type Image.
+        // Create a shape of type Image. This shape will hold the picture.
         Shape pictureShape = new Shape(doc, ShapeType.Image);
 
-        // Load an image file into the shape.
-        // Replace "MyImage.jpg" with the actual path to your picture.
-        pictureShape.ImageData.SetImage("MyImage.jpg");
+        // Set the image that the shape will display.
+        // Replace the path with the actual location of your image file.
+        string imagePath = Path.Combine(Environment.CurrentDirectory, "SampleImage.jpg");
+        pictureShape.ImageData.SetImage(imagePath);
 
         // Optionally set the size of the shape (in points).
-        pictureShape.Width = 200;   // 200 points ≈ 2.78 inches
-        pictureShape.Height = 150;  // 150 points ≈ 2.08 inches
+        pictureShape.Width = 200;   // 200 points wide
+        pictureShape.Height = 150;  // 150 points high
 
-        // Insert the shape into the document at the current builder position.
-        builder.InsertNode(pictureShape);
+        // Append the shape to the paragraph so it becomes part of the document.
+        para.AppendChild(pictureShape);
 
-        // Save the document to a DOCX file.
-        doc.Save("ShapeWithPicture.docx");
+        // Save the document in DOCX format.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ShapeWithPicture.docx");
+        doc.Save(outputPath);
     }
 }

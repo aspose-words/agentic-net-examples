@@ -1,48 +1,33 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
-class JoinTablesInMarkdown
+namespace AsposeWordsTableMerge
 {
-    static void Main()
+    class Program
     {
-        // Paths to the input and output files.
-        string inputPath = @"C:\Docs\InputDocument.docx";
-        string outputPath = @"C:\Docs\JoinedTables.md";
-
-        // Load the existing document.
-        Document doc = new Document(inputPath);
-
-        // Ensure the document has at least two tables.
-        if (doc.FirstSection?.Body?.Tables?.Count < 2)
+        static void Main()
         {
-            Console.WriteLine("The document does not contain two tables to join.");
-            return;
+            // Load the Markdown document that already contains at least two tables.
+            Document doc = new Document("input.md");
+
+            // Retrieve the first table from the document's body.
+            Table firstTable = doc.FirstSection.Body.Tables[0];
+
+            // Retrieve the second table using the generic GetChild method.
+            Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
+
+            // Append all rows from the second table to the first table.
+            while (secondTable.HasChildNodes)
+                firstTable.Rows.Add(secondTable.FirstRow);
+
+            // Remove the now‑empty second table container.
+            secondTable.Remove();
+
+            // Save the modified document back to Markdown format.
+            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
+            doc.Save("output.md", saveOptions);
         }
-
-        // Retrieve the first two tables.
-        Table firstTable = doc.FirstSection.Body.Tables[0];
-        Table secondTable = doc.FirstSection.Body.Tables[1];
-
-        // Append all rows from the second table to the first table.
-        // Clone each row to preserve formatting and content.
-        foreach (Row row in secondTable.Rows)
-        {
-            // Clone the row (deep clone) and add it to the first table.
-            firstTable.Rows.Add(row.Clone(true));
-        }
-
-        // Remove the now redundant second table from the document.
-        secondTable.Remove();
-
-        // Save the document as Markdown, exporting tables as raw HTML.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
-        {
-            ExportAsHtml = MarkdownExportAsHtml.Tables
-        };
-        doc.Save(outputPath, saveOptions);
-
-        Console.WriteLine("Tables have been joined and saved to Markdown.");
     }
 }

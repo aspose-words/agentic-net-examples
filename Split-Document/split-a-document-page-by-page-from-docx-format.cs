@@ -1,40 +1,26 @@
-using System.IO;
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class SplitDocumentByPages
 {
     static void Main()
     {
         // Load the source DOCX document.
-        Document doc = new Document("Input.docx");
+        Document sourceDoc = new Document("InputDocument.docx");
 
-        // Configure HTML fixed save options to split the document page by page.
-        HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions();
+        // Determine the total number of pages in the document.
+        int totalPages = sourceDoc.PageCount;
 
-        // Assign a callback that will name each page file.
-        htmlOptions.PageSavingCallback = new PageSavingCallback();
-
-        // Save the document. The callback will create separate HTML files for each page.
-        doc.Save("CombinedOutput.html", htmlOptions);
-    }
-
-    // Callback implementation that defines how each page is saved.
-    private class PageSavingCallback : IPageSavingCallback
-    {
-        public void PageSaving(PageSavingArgs args)
+        // Iterate through each page and extract it as a separate document.
+        for (int pageIndex = 0; pageIndex < totalPages; pageIndex++)
         {
-            // Build a file name that includes the zero‑based page index.
-            string pageFileName = $"Page_{args.PageIndex}.html";
+            // Extract a single page (zero‑based index, count = 1).
+            Document singlePageDoc = sourceDoc.ExtractPages(pageIndex, 1);
 
-            // Option 1: set the file name directly.
-            args.PageFileName = pageFileName;
-
-            // Option 2 (alternative): write to a custom stream.
-            // args.PageStream = new FileStream(pageFileName, FileMode.Create);
-
-            // Ensure the stream is closed after saving.
-            args.KeepPageStreamOpen = false;
+            // Save the extracted page to a new DOCX file.
+            string outputFileName = $"Page_{pageIndex + 1}.docx";
+            singlePageDoc.Save(outputFileName);
         }
     }
 }

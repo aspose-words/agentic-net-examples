@@ -1,32 +1,30 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using System.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to work with the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a horizontal rule at the current cursor position.
-        Shape horizontalRule = builder.InsertHorizontalRule();
+        // Insert a horizontal rule shape at the current cursor position.
+        Shape hr = builder.InsertHorizontalRule();
 
-        // Customize the appearance of the horizontal rule (optional).
-        HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
+        // Optional: customize the appearance of the horizontal rule.
+        HorizontalRuleFormat format = hr.HorizontalRuleFormat;
         format.Alignment = HorizontalRuleAlignment.Center; // Centered on the page.
-        format.WidthPercent = 80;                           // 80% of the page width.
-        format.Height = 2;                                  // 2 points tall.
-        format.Color = Color.Black;                         // Black color.
-        format.NoShade = true;                              // No 3‑D shading.
+        format.WidthPercent = 70;                           // 70% of the page width.
+        format.Height = 3;                                  // Height of 3 points.
+        format.Color = Color.Blue;                         // Blue color.
+        format.NoShade = true;                              // Solid color, no 3‑D shading.
 
-        // Save the document in RTF format.
-        RtfSaveOptions rtfOptions = new RtfSaveOptions();
-        doc.Save("HorizontalRule.rtf", rtfOptions);
+        // Save the document as an RTF file.
+        doc.Save("HorizontalRuleDocument.rtf");
     }
 }

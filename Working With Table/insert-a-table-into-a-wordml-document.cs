@@ -1,35 +1,48 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class InsertTableExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder which simplifies node insertion.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Begin a new table.
+        // Start a new table. The method returns the Table node that was created.
         Table table = builder.StartTable();
 
-        // First row – header cells.
+        // First row, first cell.
         builder.InsertCell();
-        builder.Write("Header 1");
+        builder.Write("Row 1, Cell 1");
+
+        // First row, second cell.
         builder.InsertCell();
-        builder.Write("Header 2");
+        builder.Write("Row 1, Cell 2");
+
+        // End the first row.
         builder.EndRow();
 
-        // Second row – data cells.
+        // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
+        builder.Write("Row 2, Cell 1");
 
-        // Finish the table.
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
+
+        // End the second row and the table.
+        builder.EndRow();
         builder.EndTable();
 
-        // Save the document in WORDML (WordprocessingML) format.
-        doc.Save("TableDocument.xml", SaveFormat.WordML);
+        // Optional: set table title and description for accessibility.
+        table.Title = "Sample Table";
+        table.Description = "A simple 2x2 table created with Aspose.Words";
+
+        // Save the document to a file.
+        doc.Save("SampleTable.docx");
     }
 }

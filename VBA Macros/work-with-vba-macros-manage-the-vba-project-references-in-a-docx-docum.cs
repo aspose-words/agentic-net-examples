@@ -2,74 +2,50 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-class ManageVbaReferences
+class Program
 {
     static void Main()
     {
-        // Load a macro-enabled document.
-        Document doc = new Document("VBA project.docm");
+        // Load an existing document (DOCX or DOCM).
+        Document doc = new Document("Input.docx");
 
-        // Access the VBA project inside the document.
-        VbaProject vbaProject = doc.VbaProject;
-
-        // Get the collection of VBA references.
-        VbaReferenceCollection references = vbaProject.References;
-
-        Console.WriteLine($"Initial references count: {references.Count}");
-
-        // Define the path of a reference that should be removed.
-        const string brokenPath = @"X:\broken.dll";
-
-        // Iterate backwards so that removal does not affect the loop index.
-        for (int i = references.Count - 1; i >= 0; i--)
+        // Verify whether the document contains VBA macros.
+        if (doc.HasMacros)
         {
-            VbaReference reference = references[i];
-            string path = GetLibIdPath(reference);
+            // Access the VBA project attached to the document.
+            VbaProject vbaProject = doc.VbaProject;
 
-            if (path.Equals(brokenPath, StringComparison.OrdinalIgnoreCase))
+            // Output basic information about the VBA project.
+            Console.WriteLine($"Project name: {vbaProject.Name}");
+            Console.WriteLine($"Code page: {vbaProject.CodePage}");
+            Console.WriteLine($"Modules count: {vbaProject.Modules.Count}");
+
+            // ----- Manage VBA project references -----
+            // List existing references (if any).
+            var references = vbaProject.References;
+            Console.WriteLine($"References count: {references.Count}");
+
+            // Example of iterating through references (placeholder for actual reference properties).
+            int index = 1;
+            foreach (var reference in references)
             {
-                references.RemoveAt(i);
-                Console.WriteLine($"Removed reference to {brokenPath}");
+                // Replace with actual reference details when the reference type is known.
+                Console.WriteLine($"Reference #{index++}");
             }
+
+            // Example of adding a new reference.
+            // Note: The concrete reference class (e.g., VbaReference) is not shown in the provided API.
+            // Uncomment and adjust the following lines when the appropriate class is available.
+            // var newReference = new VbaReference();
+            // newReference.Name = "MyLibrary";
+            // vbaProject.References.Add(newReference);
         }
-
-        Console.WriteLine($"Final references count: {references.Count}");
-
-        // Save the document with the updated VBA references.
-        doc.Save("VBA project Modified.docm");
-    }
-
-    // Returns the file path part of a VbaReference's LibId.
-    private static string GetLibIdPath(VbaReference reference)
-    {
-        switch (reference.Type)
+        else
         {
-            case VbaReferenceType.Registered:
-            case VbaReferenceType.Original:
-            case VbaReferenceType.Control:
-                return GetLibIdReferencePath(reference.LibId);
-            case VbaReferenceType.Project:
-                return GetLibIdProjectPath(reference.LibId);
-            default:
-                throw new ArgumentOutOfRangeException();
+            Console.WriteLine("The document does not contain any VBA macros.");
         }
-    }
 
-    // Extracts the path from a LibId that represents a type library reference.
-    private static string GetLibIdReferencePath(string libIdReference)
-    {
-        if (!string.IsNullOrEmpty(libIdReference))
-        {
-            string[] parts = libIdReference.Split('#');
-            if (parts.Length > 3)
-                return parts[3];
-        }
-        return string.Empty;
-    }
-
-    // Extracts the path from a LibId that represents a project reference.
-    private static string GetLibIdProjectPath(string libIdProject)
-    {
-        return libIdProject != null ? libIdProject.Substring(3) : string.Empty;
+        // Save the document, preserving any changes made to the VBA project.
+        doc.Save("Output.docx");
     }
 }

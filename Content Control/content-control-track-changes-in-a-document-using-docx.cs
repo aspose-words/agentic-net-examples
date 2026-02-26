@@ -1,48 +1,33 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank Word document.
         Document doc = new Document();
 
-        // Enable tracking of revisions (track changes).
-        doc.TrackRevisions = true;
-
-        // Build the initial content of the document.
+        // Use DocumentBuilder to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is the original paragraph.");          // Paragraph 1
-        builder.Writeln("Paragraph to be edited.");                 // Paragraph 2
 
-        // Insert a simple table.
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndTable();
+        // Begin tracking revisions. All subsequent edits will be recorded as revisions.
+        // The author name "User" will appear in the revision metadata.
+        doc.StartTrackRevisions("User");
 
-        // ----- Perform edits after tracking is enabled -----
+        // Insert text while tracking is active – this will be stored as an insertion revision.
+        builder.Writeln("First line of text.");
 
-        // 1. Modify the text of the first paragraph.
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        if (firstParagraph.Runs.Count > 0)
-            firstParagraph.Runs[0].Text = "This is the modified paragraph.";
+        // Insert another paragraph – also recorded as a revision.
+        builder.Writeln("Second line, added while tracking.");
 
-        // 2. Delete the second paragraph.
-        Paragraph secondParagraph = doc.FirstSection.Body.Paragraphs[1];
-        secondParagraph.Remove();
+        // Stop tracking revisions. Edits after this point will not be recorded.
+        doc.StopTrackRevisions();
 
-        // 3. Change the text inside the second cell of the table.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        Cell secondCell = table.Rows[0].Cells[1];
-        if (secondCell.FirstParagraph.Runs.Count > 0)
-            secondCell.FirstParagraph.Runs[0].Text = "Edited Cell 2";
+        // Add content after tracking stopped – this will appear as normal text, not a revision.
+        builder.Writeln("This line is not tracked.");
 
-        // Save the document; it will contain the tracked changes (revisions).
+        // Save the document. The file will contain the tracked changes (revisions) made above.
         doc.Save("TrackedChanges.docx");
     }
 }

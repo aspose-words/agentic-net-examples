@@ -4,53 +4,36 @@ using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class MarkdownConverter
+class Program
 {
     static void Main()
     {
-        // Path to the source Markdown file.
-        string markdownPath = @"C:\Docs\source.md";
+        // Sample markdown content
+        string markdown = "# Title\n\nThis is a sample markdown document.\n\n[[Placeholder]]";
 
-        // Path to the output HTML file.
-        string htmlPath = @"C:\Docs\converted.html";
-
-        // Load the Markdown document with custom load options.
-        var loadOptions = new MarkdownLoadOptions
+        // Load the markdown into a Document using MarkdownLoadOptions
+        using (MemoryStream inputStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(markdown)))
         {
-            // Preserve empty lines in the source Markdown.
-            PreserveEmptyLines = true,
+            MarkdownLoadOptions loadOptions = new MarkdownLoadOptions
+            {
+                PreserveEmptyLines = true // keep empty lines during load
+            };
 
-            // Resolve relative URIs based on this base URI (optional).
-            BaseUri = "https://example.com/resources/"
-        };
+            Document doc = new Document(inputStream, loadOptions);
 
-        // Create a Document object from the Markdown file.
-        Document doc = new Document(markdownPath, loadOptions);
+            // Replace a placeholder with actual text
+            doc.Range.Replace("[[Placeholder]]", "Replaced content");
 
-        // (Optional) Manipulate the document here, e.g., modify content controls.
-        // For demonstration, we will just ensure the document is not empty.
-        if (doc.GetText().Trim().Length == 0)
-        {
-            Console.WriteLine("The loaded Markdown document is empty.");
-            return;
+            // Save the document as a DOCX file
+            doc.Save("Output.docx", SaveFormat.Docx);
+
+            // Save the document back to Markdown with custom export options
+            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+            {
+                ExportAsHtml = MarkdownExportAsHtml.Tables // export tables as raw HTML (example)
+            };
+
+            doc.Save("Output.md", saveOptions);
         }
-
-        // Configure save options for HTML output.
-        var saveOptions = new HtmlSaveOptions(SaveFormat.Html)
-        {
-            // Export the document generator name (Aspose.Words) into the output.
-            ExportGeneratorName = true,
-
-            // Export images as Base64 to keep a single HTML file.
-            ExportImagesAsBase64 = true,
-
-            // Use pretty formatting for readability.
-            PrettyFormat = true
-        };
-
-        // Save the document as HTML.
-        doc.Save(htmlPath, saveOptions);
-
-        Console.WriteLine($"Markdown file '{markdownPath}' was successfully converted to HTML at '{htmlPath}'.");
     }
 }

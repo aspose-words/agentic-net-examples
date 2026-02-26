@@ -1,41 +1,27 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class JoinTablesInDocm
+class Program
 {
     static void Main()
     {
         // Load the existing DOCM document.
-        Document doc = new Document("Input.docm");
+        Document doc = new Document("input.docm");
 
-        // Get the collection of tables in the first section's body.
-        TableCollection tables = doc.FirstSection.Body.Tables;
+        // Retrieve the first two tables in the document.
+        Table firstTable = doc.FirstSection.Body.Tables[0];
+        Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
 
-        // Ensure there are at least two tables to join.
-        if (tables.Count < 2)
+        // Transfer all rows from the second table to the first table.
+        while (secondTable.HasChildNodes)
         {
-            Console.WriteLine("The document does not contain two tables to join.");
-            return;
+            firstTable.Rows.Add(secondTable.FirstRow);
         }
 
-        // Reference the first and second tables.
-        Table firstTable = tables[0];
-        Table secondTable = tables[1];
-
-        // Append all rows from the second table to the first table.
-        // Clone each row to keep the original formatting and content.
-        foreach (Row row in secondTable.Rows)
-        {
-            // Clone the row (deep clone) and add it to the first table.
-            Row clonedRow = (Row)row.Clone(true);
-            firstTable.Rows.Add(clonedRow);
-        }
-
-        // Remove the now redundant second table from the document.
+        // Remove the now‑empty second table container.
         secondTable.Remove();
 
-        // Save the modified document as a DOCM file.
-        doc.Save("Output.docm");
+        // Save the document with the combined table.
+        doc.Save("output.docm");
     }
 }

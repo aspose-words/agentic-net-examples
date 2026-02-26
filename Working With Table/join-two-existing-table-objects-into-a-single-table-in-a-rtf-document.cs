@@ -6,23 +6,28 @@ class Program
 {
     static void Main()
     {
-        // Load the existing RTF document.
+        // Load the source RTF document.
         Document doc = new Document("Input.rtf");
 
         // Retrieve the first two tables in the document.
-        Table table1 = doc.FirstSection.Body.Tables[0];
-        Table table2 = doc.FirstSection.Body.Tables[1];
+        // The Body.Tables collection provides direct access to tables.
+        Table firstTable = doc.FirstSection.Body.Tables[0];
+        Table secondTable = doc.FirstSection.Body.Tables[1];
 
-        // Append all rows from the second table to the first table.
-        // Clone each row to keep the original table intact until removal.
-        foreach (Row row in table2.Rows)
+        // Transfer all rows from the second table to the first table.
+        // While the second table still contains rows, move its first row.
+        while (secondTable.HasChildNodes)
         {
-            Row clonedRow = (Row)row.Clone(true);
-            table1.Rows.Add(clonedRow);
+            // Extract the first row from the second table.
+            Row rowToMove = secondTable.FirstRow;
+            // Detach the row from its current parent.
+            secondTable.RemoveChild(rowToMove);
+            // Append the row to the first table.
+            firstTable.Rows.Add(rowToMove);
         }
 
-        // Remove the now redundant second table from the document.
-        table2.Remove();
+        // Remove the now empty second table from the document.
+        secondTable.Remove();
 
         // Save the modified document back to RTF format.
         doc.Save("Output.rtf");

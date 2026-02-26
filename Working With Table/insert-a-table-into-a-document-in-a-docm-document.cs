@@ -2,37 +2,38 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+namespace AsposeWordsTableInsert
 {
-    static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        static void Main(string[] args)
+        {
+            // Path to the existing DOCM template.
+            string dataDir = @"C:\Data\";
+            string inputPath = System.IO.Path.Combine(dataDir, "Template.docm");
+            string outputPath = System.IO.Path.Combine(dataDir, "Output.docm");
 
-        // Initialize a DocumentBuilder for the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Load the DOCM document.
+            Document doc = new Document(inputPath);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+            // Create a DocumentBuilder attached to the loaded document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First row – header cells.
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
-        builder.EndRow();
+            // Insert a simple 2‑cell table at the current cursor position.
+            Table table = builder.StartTable();          // Starts a new table and returns the Table node.
+            builder.InsertCell();                        // First cell.
+            builder.Write("First cell");                 // Add text to the first cell.
+            builder.InsertCell();                        // Second cell.
+            builder.Write("Second cell");                // Add text to the second cell.
+            builder.EndRow();                            // End the first row.
+            builder.EndTable();                          // Finish the table.
 
-        // Second row – data cells.
-        builder.InsertCell();
-        builder.Write("Data 1");
-        builder.InsertCell();
-        builder.Write("Data 2");
-        builder.EndRow();
+            // Optionally set table title/description (useful for DOCX/ DOCM compliance).
+            table.Title = "Sample Table";
+            table.Description = "A table inserted programmatically into a DOCM file.";
 
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document as a macro‑enabled DOCM file.
-        doc.Save("Output.docm");
+            // Save the modified document as DOCM.
+            doc.Save(outputPath, SaveFormat.Docm);
+        }
     }
 }

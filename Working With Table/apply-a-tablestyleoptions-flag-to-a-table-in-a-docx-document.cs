@@ -2,38 +2,43 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class ApplyTableStyleOptions
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table.
+        // Use DocumentBuilder to construct a table.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         Table table = builder.StartTable();
 
-        // First row (header).
+        // Insert at least one cell/row before applying any table formatting.
         builder.InsertCell();
-        builder.Write("Header");
+        builder.Writeln("Header 1");
+        builder.InsertCell();
+        builder.Writeln("Header 2");
         builder.EndRow();
 
-        // Second row (data).
+        // Add a data row.
         builder.InsertCell();
-        builder.Write("Data");
+        builder.Writeln("Data 1");
+        builder.InsertCell();
+        builder.Writeln("Data 2");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table construction.
         builder.EndTable();
 
         // Apply a built‑in table style.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
         // Apply specific style options using the TableStyleOptions flags.
-        // Here we enable formatting for the first row, first column, and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow |
-                             TableStyleOptions.FirstColumn |
-                             TableStyleOptions.RowBands;
+        // Here we enable the first row formatting and row banding.
+        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+
+        // Optionally auto‑fit the table to its contents.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
         // Save the document to a DOCX file.
         doc.Save("TableWithStyleOptions.docx");

@@ -1,40 +1,38 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Saving;
 
-class BarcodeToPdf
+class Program
 {
     static void Main()
     {
-        // Paths for the output files.
-        string docxPath = "BarcodeDocument.docx";
-        string pdfPath = "BarcodeDocument.pdf";
-
-        // Create a new blank document.
+        // Create a new document and a DocumentBuilder to edit it.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a MERGEBARCODE field. The second argument (true) tells the builder to
-        // add the field to the end of the current paragraph.
-        builder.InsertField(FieldType.FieldMergeBarcode, true);
+        // Set up barcode parameters for a QR code.
+        BarcodeParameters barcodeParameters = new BarcodeParameters
+        {
+            BarcodeType = "QR",
+            BarcodeValue = "ABC123",
+            BackgroundColor = "0xF8BD69",
+            ForegroundColor = "0xB5413B",
+            ErrorCorrectionLevel = "3",
+            ScalingFactor = "250",
+            SymbolHeight = "1000",
+            SymbolRotation = "0"
+        };
 
-        // Retrieve the field we just inserted (it will be the last field in the document).
-        FieldMergeBarcode barcodeField = (FieldMergeBarcode)doc.Range.Fields[doc.Range.Fields.Count - 1];
+        // Generate the barcode image using the built‑in barcode generator.
+        using (Stream img = doc.FieldOptions.BarcodeGenerator.GetBarcodeImage(barcodeParameters))
+        {
+            // Insert the generated image into the document.
+            img.Position = 0;
+            builder.InsertImage(img);
+        }
 
-        // Configure the barcode parameters.
-        barcodeField.BarcodeType = "QR";          // QR code type.
-        barcodeField.BarcodeValue = "ABC123";    // Data to encode.
-        barcodeField.DisplayText = true;         // Show the encoded text below the image.
-
-        // Update fields so the barcode image is generated.
-        doc.UpdateFields();
-
-        // Save the document as DOCX (optional, shows the field in Word format).
-        doc.Save(docxPath);
-
-        // Save the same document as PDF.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        doc.Save(pdfPath, pdfOptions);
+        // Save the resulting document as a PDF file.
+        doc.Save("BarcodeOutput.pdf");
     }
 }

@@ -2,65 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class JoinTablesInPdf
+class Program
 {
     static void Main()
     {
-        // Load the PDF document (Aspose.Words can load PDF files).
+        // Load the source PDF document that already contains at least two tables.
         Document doc = new Document("input.pdf");
 
-        // Get the collection of tables in the first section.
-        TableCollection tables = doc.FirstSection.Body.Tables;
+        // Retrieve the first table from the document's body.
+        Table firstTable = doc.FirstSection.Body.Tables[0];
 
-        // Ensure there are at least two tables to join.
-        if (tables.Count < 2)
+        // Retrieve the second table using the generic GetChild method.
+        Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
+
+        // Transfer all rows from the second table to the first table.
+        while (secondTable.HasChildNodes)
         {
-            Console.WriteLine("The document must contain at least two tables.");
-            return;
+            // Add the first row of the second table to the first table.
+            // This also removes the row from the second table.
+            firstTable.Rows.Add(secondTable.FirstRow);
         }
 
-        // Retrieve the two tables we want to merge.
-        Table table1 = tables[0];
-        Table table2 = tables[1];
+        // Remove the now‑empty second table container from the document.
+        secondTable.Remove();
 
-        // Create a new empty table that will hold the merged rows.
-        Table mergedTable = new Table(doc);
-
-        // Copy the formatting from the first table (optional, adjust as needed).
-        mergedTable.Style = table1.Style;
-        mergedTable.StyleIdentifier = table1.StyleIdentifier;
-        mergedTable.StyleOptions = table1.StyleOptions;
-        mergedTable.Alignment = table1.Alignment;
-        mergedTable.PreferredWidth = table1.PreferredWidth;
-        mergedTable.AllowAutoFit = table1.AllowAutoFit;
-        mergedTable.CellSpacing = table1.CellSpacing;
-        mergedTable.TextWrapping = table1.TextWrapping;
-
-        // Helper method to clone rows from a source table into the merged table.
-        void AppendRows(Table source)
-        {
-            foreach (Row srcRow in source.Rows)
-            {
-                // Clone the row (deep clone) and add it to the merged table.
-                Row clonedRow = (Row)srcRow.Clone(true);
-                mergedTable.Rows.Add(clonedRow);
-            }
-        }
-
-        // Append rows from both tables.
-        AppendRows(table1);
-        AppendRows(table2);
-
-        // Insert the merged table into the document at the position of the first table.
-        // ParentNode is a Node, but InsertBefore is defined on CompositeNode, so cast it.
-        CompositeNode parent = (CompositeNode)table1.ParentNode;
-        parent.InsertBefore(mergedTable, table1);
-
-        // Remove the original tables from the document.
-        table1.Remove();
-        table2.Remove();
-
-        // Save the modified document as PDF.
-        doc.Save("output.pdf");
+        // Save the modified document back to PDF format.
+        doc.Save("output.pdf", SaveFormat.Pdf);
     }
 }

@@ -1,47 +1,50 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Replacing;
+using Aspose.Words.Loading;
 
-namespace FontSubstitutionExample
+class FontSubstitutionExample
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Write text using a font that does not exist on the system.
+        builder.Font.Name = "MissingFont";
+        builder.Writeln("This line uses a missing font and will be substituted.");
+
+        // Collect warnings that occur during loading/saving.
+        WarningInfoCollection warnings = new WarningInfoCollection();
+        doc.WarningCallback = warnings;
+
+        // Configure font substitution settings.
+        FontSettings fontSettings = new FontSettings();
+
+        // Default substitution rule – use Arial when no other substitute is found.
+        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial";
+
+        // Table substitution rule – try these fonts in order when "MissingFont" is unavailable.
+        fontSettings.SubstitutionSettings.TableSubstitution.SetSubstitutes(
+            "MissingFont", new[] { "Times New Roman", "Courier New" });
+
+        // Apply the font settings to the document.
+        doc.FontSettings = fontSettings;
+
+        // Save the document (triggers font substitution).
+        doc.Save("FontSubstitutionResult.docx");
+
+        // Output any font substitution warnings.
+        foreach (WarningInfo info in warnings)
         {
-            // Load a DOCX document that uses a font which may be missing on the system.
-            Document doc = new Document("Input.docx"); // load
-
-            // Collect warnings that occur during loading/saving (e.g., font substitution warnings).
-            WarningInfoCollection warnings = new WarningInfoCollection();
-            doc.WarningCallback = warnings;
-
-            // Configure font settings.
-            FontSettings fontSettings = new FontSettings();
-
-            // Set a default font that will be used when no other substitution rule resolves the missing font.
-            fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial";
-
-            // Optionally, point Aspose.Words to a folder that contains additional TrueType fonts.
-            // Replace "FontsFolderPath" with the actual path to your fonts directory.
-            fontSettings.SetFontsFolder("FontsFolderPath", false);
-
-            // Add a table substitution: if "Arial" is not found, use "Arvo" or "Slab" as substitutes.
-            fontSettings.SubstitutionSettings.TableSubstitution.AddSubstitutes("Arial", "Arvo", "Slab");
-
-            // Apply the configured font settings to the document.
-            doc.FontSettings = fontSettings;
-
-            // Save the document to PDF (or any other format). This triggers the font substitution process.
-            doc.Save("Output.pdf"); // save
-
-            // Output any font substitution warnings that were captured.
-            foreach (WarningInfo info in warnings)
+            if (info.WarningType == WarningType.FontSubstitution)
             {
-                if (info.WarningType == WarningType.FontSubstitution)
-                {
-                    Console.WriteLine(info.Description);
-                }
+                FontSubstitutionWarningInfo fontInfo = (FontSubstitutionWarningInfo)info;
+                Console.WriteLine($"Requested font: {fontInfo.RequestedFamilyName}");
+                Console.WriteLine($"Substituted with: {fontInfo.ResolvedFont?.FullFontName}");
+                Console.WriteLine($"Reason: {fontInfo.Reason}");
+                Console.WriteLine($"Description: {fontInfo.Description}");
             }
         }
     }
