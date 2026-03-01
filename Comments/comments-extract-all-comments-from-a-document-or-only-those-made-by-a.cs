@@ -1,60 +1,79 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
-public class CommentExtractor
+class CommentExtractor
 {
-    /// <summary>
-    /// Extracts comments from a DOCX file.
-    /// If <paramref name="author"/> is null, all comments are extracted;
-    /// otherwise only comments authored by the specified person are extracted.
-    /// The extracted comments are written to a new document saved at <paramref name="outputPath"/>.
-    /// </summary>
-    public static void ExtractComments(string inputPath, string outputPath, string author = null)
+    static void Main()
     {
-        // Load the source document (lifecycle rule: load from file)
+        // Path to the source DOCX file.
+        const string inputPath = "InputDocument.docx";
+
+        // Load the source document (lifecycle rule: load).
         Document sourceDoc = new Document(inputPath);
 
-        // Retrieve all comment nodes in the document (including those in headers/footers)
-        NodeCollection commentNodes = sourceDoc.GetChildNodes(NodeType.Comment, true);
+        // Retrieve all comment nodes in the document (including those in headers/footers).
+        NodeCollection allComments = sourceDoc.GetChildNodes(NodeType.Comment, true);
 
-        // Create a new blank document to store the extracted comments (lifecycle rule: create)
+        // Example 1: Extract all comments.
+        List<Comment> extractedAll = new List<Comment>();
+        foreach (Comment comment in allComments)
+        {
+            extractedAll.Add(comment);
+        }
+
+        // Example 2: Extract comments made by a specific author.
+        const string targetAuthor = "John Doe"; // Set to null or empty to skip author filtering.
+        List<Comment> extractedByAuthor = new List<Comment>();
+        if (!string.IsNullOrEmpty(targetAuthor))
+        {
+            foreach (Comment comment in allComments)
+            {
+                if (string.Equals(comment.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
+                {
+                    extractedByAuthor.Add(comment);
+                }
+            }
+        }
+
+        // Create a new document to store the extracted comments (lifecycle rule: create).
         Document resultDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(resultDoc);
 
-        // Iterate through each comment node
-        foreach (Comment comment in commentNodes)
+        // Helper method to write a collection of comments into the result document.
+        void WriteComments(IEnumerable<Comment> comments, string heading)
         {
-            // If an author filter is supplied, skip comments that don't match
-            if (author != null && !string.Equals(comment.Author, author, StringComparison.OrdinalIgnoreCase))
-                continue;
+            builder.Writeln(heading);
+            builder.Font.Bold = true;
+            builder.Writeln($"Total: {System.Linq.Enumerable.Count(comments)}");
+            builder.Font.Bold = false;
+            builder.Writeln();
 
-            // Write comment details to the result document
-            builder.Writeln($"Author: {comment.Author}");
-            builder.Writeln($"Date  : {comment.DateTime}");
-            builder.Writeln("Text  :");
-            builder.Writeln(comment.GetText().Trim());
+            foreach (Comment c in comments)
+            {
+                // Write author and comment text.
+                builder.Writeln($"Author: {c.Author}");
+                // The comment text is stored in its child paragraphs; convert to plain text.
+                string commentText = c.ToString(SaveFormat.Text).Trim();
+                builder.Writeln($"Comment: {commentText}");
+                builder.Writeln(); // Blank line between comments.
+            }
+
             builder.Writeln(new string('-', 40));
+            builder.Writeln();
         }
 
-        // Save the result document (lifecycle rule: save to file)
+        // Write all comments.
+        WriteComments(extractedAll, "All Comments");
+
+        // Write filtered comments if a target author was specified.
+        if (!string.IsNullOrEmpty(targetAuthor))
+        {
+            WriteComments(extractedByAuthor, $"Comments by \"{targetAuthor}\"");
+        }
+
+        // Save the result document containing the extracted comments (lifecycle rule: save).
+        const string outputPath = "ExtractedComments.docx";
         resultDoc.Save(outputPath);
-    }
-
-    // Example usage
-    public static void Main()
-    {
-        // Path to the source DOCX file
-        string sourceFile = @"C:\Docs\Sample.docx";
-
-        // Path where the extracted comments will be saved
-        string resultFileAll = @"C:\Docs\AllComments.docx";
-        string resultFileAuthor = @"C:\Docs\JohnDoeComments.docx";
-
-        // Extract all comments
-        ExtractComments(sourceFile, resultFileAll);
-
-        // Extract only comments made by "John Doe"
-        ExtractComments(sourceFile, resultFileAuthor, "John Doe");
     }
 }
