@@ -6,23 +6,17 @@ class ProtectDocumentExample
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank Word document.
         Document doc = new Document();
 
-        // Add some content using DocumentBuilder.
+        // Insert some sample text.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document will be protected.");
+        builder.Writeln("This document is protected with read‑only protection.");
 
-        // Protect the document for read‑only editing and set a password.
-        // The password is required only when the document is opened in Microsoft Word.
-        doc.Protect(ProtectionType.ReadOnly, "MySecretPwd");
+        // Apply read‑only protection and set a password.
+        doc.Protect(ProtectionType.ReadOnly, "SecretPwd");
 
-        // Additionally, set write‑protection (read‑only recommendation) with a password.
-        // This does not encrypt the file; it only prevents accidental edits.
-        doc.WriteProtection.SetPassword("WritePwd");
-        doc.WriteProtection.ReadOnlyRecommended = true;
-
-        // Save the protected document to a DOCX file.
+        // Save the protected document in DOCX format.
         doc.Save("ProtectedDocument.docx");
     }
 }

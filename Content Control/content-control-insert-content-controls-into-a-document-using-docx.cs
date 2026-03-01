@@ -2,42 +2,35 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
-class ContentControlExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank Word document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Use DocumentBuilder to add content to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a plain‑text content control (StructuredDocumentTag) at the current cursor position.
-        // The builder is automatically positioned inside the newly created content control.
-        StructuredDocumentTag sdt = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+        // Add a descriptive paragraph.
+        builder.Writeln("Below is a rich‑text content control (Structured Document Tag):");
+        builder.Writeln(); // Add an empty line for spacing.
 
-        // Optionally set properties of the content control.
-        sdt.Title = "SamplePlainTextControl";
-        sdt.Tag = "PlainTextTag";
+        // Insert a rich‑text content control.
+        StructuredDocumentTag sdt = builder.InsertStructuredDocumentTag(SdtType.RichText);
 
-        // Write some placeholder text inside the content control.
-        builder.Writeln("This text is inside a plain‑text content control.");
+        // Configure the content control's properties.
+        sdt.Title = "CustomerInfo";          // Title shown in the UI.
+        sdt.Tag = "CustomerInfoTag";         // Tag used for identification.
+        sdt.PlaceholderName = "Enter customer details here";
 
-        // Move the cursor out of the content control to continue normal document editing.
+        // Insert default text inside the content control.
+        builder.Writeln("John Doe, 123 Main St.");
+
+        // Ensure the cursor is at the end of the document before saving.
         builder.MoveToDocumentEnd();
 
-        // Insert a rich‑text content control as another example.
-        StructuredDocumentTag richSdt = builder.InsertStructuredDocumentTag(SdtType.RichText);
-        richSdt.Title = "SampleRichTextControl";
-        richSdt.Tag = "RichTextTag";
-
-        // Add formatted content inside the rich‑text control.
-        builder.Font.Bold = true;
-        builder.Writeln("Bold text inside a rich‑text content control.");
-        builder.Font.Bold = false;
-        builder.Writeln("Normal text inside the same control.");
-
         // Save the document in DOCX format.
-        doc.Save("ContentControl.docx");
+        doc.Save("ContentControlExample.docx");
     }
 }
