@@ -3,57 +3,65 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+namespace BarcodeExample
 {
-    static void Main()
+    // Simple custom barcode generator that returns a placeholder PNG image.
+    // The placeholder is a 1x1 pixel transparent PNG encoded as a Base64 string.
+    public class CustomBarcodeGenerator : IBarcodeGenerator
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Base64 representation of a minimal PNG (1x1 transparent pixel).
+        private static readonly byte[] PlaceholderPng = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
 
-        // Assign a custom barcode generator (implementation provided below).
-        doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
-
-        // Define the parameters for the barcode we want to generate.
-        BarcodeParameters parameters = new BarcodeParameters
+        // Generates a barcode image based on the supplied parameters.
+        // For demonstration we ignore the parameters and return the placeholder image.
+        public Stream GetBarcodeImage(BarcodeParameters parameters)
         {
-            BarcodeType = "QR",                 // Type of barcode.
-            BarcodeValue = "ABC123",            // Data to encode.
-            BackgroundColor = "0xF8BD69",       // Background colour (hex).
-            ForegroundColor = "0xB5413B",       // Foreground colour (hex).
-            ErrorCorrectionLevel = "3",         // QR error correction level.
-            ScalingFactor = "250",              // Scaling factor (percentage).
-            SymbolHeight = "1000",              // Height in twips.
-            SymbolRotation = "0"                // Rotation.
-        };
-
-        // Generate the barcode image as a stream and insert it into the document.
-        using (Stream imgStream = doc.FieldOptions.BarcodeGenerator.GetBarcodeImage(parameters))
-        {
-            // Reset the stream position before inserting.
-            imgStream.Position = 0;
-            builder.InsertImage(imgStream);
+            // Return a new MemoryStream each call so the caller can safely dispose it.
+            return new MemoryStream(PlaceholderPng, writable: false);
         }
 
-        // Save the resulting DOCX file.
-        doc.Save("BarcodeDocument.docx");
-    }
-}
-
-// Minimal stub implementation of IBarcodeGenerator.
-// In a real application this would generate an actual barcode image.
-class CustomBarcodeGenerator : IBarcodeGenerator
-{
-    public Stream GetBarcodeImage(BarcodeParameters parameters)
-    {
-        // Placeholder: return an empty memory stream.
-        // Replace with actual barcode generation logic.
-        return new MemoryStream();
+        // Generates an image for the old‑fashioned BARCODE field.
+        // Reuse the same placeholder implementation.
+        public Stream GetOldBarcodeImage(BarcodeParameters parameters)
+        {
+            return GetBarcodeImage(parameters);
+        }
     }
 
-    public Stream GetOldBarcodeImage(BarcodeParameters parameters)
+    class Program
     {
-        // Placeholder for the old-fashioned barcode field.
-        return new MemoryStream();
+        static void Main()
+        {
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Assign the custom barcode generator to the document's field options.
+            doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
+
+            // Define barcode parameters (example: QR code).
+            BarcodeParameters barcodeParameters = new BarcodeParameters
+            {
+                BarcodeType = "QR",
+                BarcodeValue = "ABC123",
+                BackgroundColor = "0xFFFFFF",
+                ForegroundColor = "0x000000",
+                ErrorCorrectionLevel = "3",
+                ScalingFactor = "250",
+                SymbolHeight = "1000",
+                SymbolRotation = "0"
+            };
+
+            // Generate the barcode image and insert it into the document.
+            using (Stream imgStream = doc.FieldOptions.BarcodeGenerator.GetBarcodeImage(barcodeParameters))
+            {
+                // Insert the image at the current cursor position.
+                builder.InsertImage(imgStream);
+            }
+
+            // Save the document as DOCX.
+            doc.Save("BarcodeDocument.docx");
+        }
     }
 }

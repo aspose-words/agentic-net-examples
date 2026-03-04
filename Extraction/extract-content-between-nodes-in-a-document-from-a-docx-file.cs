@@ -1,44 +1,50 @@
 using System;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Markup;
 
-namespace AsposeWordsExtractBetweenNodes
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Load the DOCX file (lifecycle: load)
+        Document doc = new Document("Input.docx");
+
+        // The document must contain two bookmarks named "Start" and "End"
+        Bookmark startBookmark = doc.Range.Bookmarks["Start"];
+        Bookmark endBookmark = doc.Range.Bookmarks["End"];
+
+        if (startBookmark == null || endBookmark == null)
         {
-            // Load the source DOCX file.
-            Document srcDoc = new Document("input.docx");
-
-            // Example: extract all content that lies between the 2nd and 5th paragraphs (inclusive start, exclusive end).
-            // Adjust the indices as needed for your specific scenario.
-            Paragraph startParagraph = (Paragraph)srcDoc.GetChild(NodeType.Paragraph, 1, true); // 0‑based index
-            Paragraph endParagraph   = (Paragraph)srcDoc.GetChild(NodeType.Paragraph, 4, true);
-
-            // Collect the text of every node that appears after the start node and before the end node.
-            StringBuilder extractedText = new StringBuilder();
-            Node curNode = startParagraph.NextSibling;
-
-            while (curNode != null && curNode != endParagraph)
-            {
-                // GetText() returns the text of the node and its children.
-                extractedText.Append(curNode.GetText());
-                curNode = curNode.NextSibling;
-            }
-
-            // Output the extracted text to the console.
-            Console.WriteLine("Extracted content between the specified nodes:");
-            Console.WriteLine(extractedText.ToString());
-
-            // Optionally, create a new document that contains only the extracted content.
-            Document resultDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(resultDoc);
-            builder.Writeln(extractedText.ToString());
-
-            // Save the new document.
-            resultDoc.Save("extracted_content.docx");
+            Console.WriteLine("Bookmarks 'Start' and/or 'End' not found in the document.");
+            return;
         }
+
+        // Nodes that mark the boundaries
+        Node startNode = startBookmark.BookmarkStart;
+        Node endNode   = endBookmark.BookmarkEnd;
+
+        // Extract text that lies between the two bookmarks
+        string extracted = GetTextBetween(startNode, endNode, doc);
+        Console.WriteLine("Extracted text between bookmarks:");
+        Console.WriteLine(extracted);
+    }
+
+    // Returns the concatenated text of all nodes that are strictly between startNode and endNode.
+    static string GetTextBetween(Node startNode, Node endNode, Document doc)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        // Move to the first node after the start bookmark using the overload that requires the root node.
+        Node current = startNode.NextPreOrder(doc);
+
+        // Walk the document tree until we reach the end bookmark (exclusive).
+        while (current != null && !current.Equals(endNode))
+        {
+            sb.Append(current.GetText());
+            current = current.NextPreOrder(doc);
+        }
+
+        return sb.ToString();
     }
 }

@@ -1,27 +1,30 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;
 
-class Program
+namespace AsposeWordsCheckboxExample
 {
-    static void Main()
+    class Program
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main(string[] args)
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Add some explanatory text.
-        builder.Writeln("Please check the box below:");
+            // Initialize a DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a checkbox form field at the current cursor position.
-        // Parameters: name, defaultValue, checkedValue, size (0 = automatic size).
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, false, 0);
+            // Write some explanatory text before the checkbox.
+            builder.Writeln("Please check the box below:");
 
-        // Set the checkbox to have an explicit size (optional).
-        checkBox.IsCheckBoxExactSize = true;
-        checkBox.CheckBoxSize = 12; // size in points
+            // Insert a checkbox form field at the current cursor position.
+            // Parameters: name, checkedValue (initial state), size (0 = auto size).
+            builder.InsertCheckBox("MyCheckBox", false, 0);
 
-        // Save the document in RTF format.
-        doc.Save("CheckboxDocument.rtf", SaveFormat.Rtf);
+            // Add a line break after the checkbox for readability.
+            builder.Writeln();
+
+            // Save the document in RTF format.
+            doc.Save("CheckboxDocument.rtf");
+        }
     }
 }

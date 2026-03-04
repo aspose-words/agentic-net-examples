@@ -6,20 +6,21 @@ class Program
 {
     static void Main()
     {
-        // Path to the source DOCM file.
-        string inputPath = "Input.docm";
+        // Input DOCM file path
+        string inputPath = "input.docm";
 
-        // Path where the Markdown file will be saved.
-        string outputPath = "Output.md";
+        // Output Markdown file path
+        string outputPath = "output.md";
 
-        // Load the DOCM document.
+        // Load the DOCM document
         Document doc = new Document(inputPath);
 
-        // Set up Markdown save options.
+        // Configure Markdown save options
         MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
-        saveOptions.SaveFormat = SaveFormat.Markdown; // Explicitly specify Markdown format.
+        // Explicitly set the target format (optional, as the extension also determines it)
+        saveOptions.SaveFormat = SaveFormat.Markdown;
 
-        // Save the document as a Markdown file.
+        // Save the document as Markdown
         doc.Save(outputPath, saveOptions);
     }
 }

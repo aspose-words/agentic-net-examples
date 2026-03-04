@@ -1,15 +1,15 @@
 using System;
 using Aspose.Words;
 
-class DocxToPdfConverter
+class Program
 {
     static void Main()
     {
         // Path to the source DOCX file.
-        string inputFile = @"C:\Docs\Sample.docx";
+        string inputFile = "input.docx";
 
-        // Path where the resulting PDF will be saved.
-        string outputFile = @"C:\Docs\Sample.pdf";
+        // Path where the PDF will be saved.
+        string outputFile = "output.pdf";
 
         // Load the DOCX document.
         Document doc = new Document(inputFile);

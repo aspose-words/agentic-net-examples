@@ -1,37 +1,29 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class BatchDocConverter
+namespace BatchConversionExample
 {
-    static void Main()
+    class Program
     {
-        // Folder containing source documents of various formats.
-        string inputFolder = @"C:\Input";
-
-        // Folder where the converted DOC files will be saved.
-        string outputFolder = @"C:\Output";
-
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
-
-        // Iterate over each file in the input folder.
-        foreach (string sourcePath in Directory.GetFiles(inputFolder))
+        static void Main()
         {
-            // Load the source document (auto-detects format).
-            Document doc = new Document(sourcePath);
+            // Input Word document (any supported format, e.g., DOCX)
+            string inputFile = @"C:\Input\SampleDocument.docx";
 
-            // Create save options for the legacy DOC format.
+            // Output file path – the document will be saved in the legacy DOC format
+            string outputFile = @"C:\Output\SampleDocumentConverted.doc";
+
+            // Load the document using the Document(string) constructor (lifecycle rule)
+            Document doc = new Document(inputFile);
+
+            // Create DocSaveOptions specifying the target SaveFormat (Doc)
             DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
 
-            // Construct the output file name with a .doc extension.
-            string targetPath = Path.Combine(
-                outputFolder,
-                Path.GetFileNameWithoutExtension(sourcePath) + ".doc");
+            // Save the document using the Save(string, SaveOptions) overload (lifecycle rule)
+            doc.Save(outputFile, saveOptions);
 
-            // Save the document as DOC using the specified options.
-            doc.Save(targetPath, saveOptions);
+            Console.WriteLine("Document successfully converted to DOC format.");
         }
     }
 }

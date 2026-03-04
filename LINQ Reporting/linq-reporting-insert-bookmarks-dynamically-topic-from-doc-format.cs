@@ -7,71 +7,68 @@ using Aspose.Words.Tables;
 
 namespace AsposeWordsBookmarkDemo
 {
-    // Simple data model representing a topic.
+    // Simple data model used as a data source for the reporting engine.
     public class Topic
     {
         public string Title { get; set; }
         public string Content { get; set; }
-
-        // Constructor to satisfy non‑nullable warnings.
-        public Topic(string title, string content)
-        {
-            Title = title;
-            Content = content;
-        }
     }
 
     public class Program
     {
-        // Entry point.
         public static void Main()
         {
-            // Load the DOCX template that contains the reporting placeholders.
-            Document template = new Document("Template.docx");
+            // 1. Load the DOC template that contains a placeholder for each topic.
+            //    The placeholder can be any unique text, e.g. "<<Topic>>".
+            Document doc = new Document("Template.docx");
 
-            // Sample data source – a list of topics.
+            // 2. Prepare a list of topics that will be merged into the template.
             List<Topic> topics = new List<Topic>
             {
-                new Topic("Introduction", "Welcome to the introduction."),
-                new Topic("Usage", "How to use the product."),
-                new Topic("Conclusion", "Final thoughts.")
+                new Topic { Title = "Introduction", Content = "This is the introduction." },
+                new Topic { Title = "Usage", Content = "How to use the product." },
+                new Topic { Title = "Conclusion", Content = "Final remarks." }
             };
 
-            // Build the report using Aspose.Words ReportingEngine.
+            // 3. Use the ReportingEngine to populate the template.
+            //    The template can reference the data source members via <<[topics.Title]>> etc.
             ReportingEngine engine = new ReportingEngine();
-            // The template can reference the data source as "topics".
-            engine.BuildReport(template, topics, "topics");
+            // The data source name ("topics") must match the name used in the template.
+            engine.BuildReport(doc, topics, "topics");
 
-            // After the report is built, insert bookmarks for each topic.
-            // Use LINQ to enumerate the topics together with their index.
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // 4. After the report is built, insert a bookmark for each topic dynamically.
+            //    We locate the paragraphs that contain the topic title (populated by the engine)
+            //    and wrap the title text with a bookmark whose name is derived from the title.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Get all paragraphs in the document (including those inside tables, headers, etc.).
-            var allParagraphs = template.GetChildNodes(NodeType.Paragraph, true)
-                                         .Cast<Paragraph>()
-                                         .ToList();
+            // Get all paragraphs in the document.
+            NodeCollection allParagraphs = doc.GetChildNodes(NodeType.Paragraph, true);
 
-            foreach (var item in topics.Select((t, i) => new { Topic = t, Index = i }))
+            foreach (Paragraph para in allParagraphs.OfType<Paragraph>())
             {
-                // Find the paragraph that contains the topic title.
-                Paragraph titleParagraph = allParagraphs
-                    .FirstOrDefault(p => p.GetText().Trim().Contains(item.Topic.Title));
+                // Trim the paragraph text to ignore trailing paragraph marks.
+                string paraText = para.GetText().Trim();
 
-                if (titleParagraph != null)
-                {
-                    // Move the builder cursor to the found paragraph.
-                    builder.MoveTo(titleParagraph);
+                // Find a topic whose title exactly matches the paragraph text.
+                Topic matchingTopic = topics.FirstOrDefault(t => t.Title.Equals(paraText, StringComparison.OrdinalIgnoreCase));
+                if (matchingTopic == null) continue; // No matching topic – skip.
 
-                    // Insert a bookmark that spans the whole paragraph.
-                    string bookmarkName = $"Topic_{item.Index + 1}";
-                    builder.StartBookmark(bookmarkName);
-                    // The cursor is already positioned at the start of the paragraph; the bookmark will cover it.
-                    builder.EndBookmark(bookmarkName);
-                }
+                // Move the builder cursor to the start of the paragraph.
+                builder.MoveTo(para.FirstChild);
+
+                // Define a bookmark name (Word bookmark names cannot contain spaces).
+                string bookmarkName = "bm_" + matchingTopic.Title.Replace(' ', '_');
+
+                // Insert the bookmark start, write the title (already present, but we rewrite to be safe),
+                // and then insert the bookmark end.
+                builder.StartBookmark(bookmarkName);
+                // The title text is already in the paragraph; we simply preserve it.
+                builder.Write(matchingTopic.Title);
+                builder.EndBookmark(bookmarkName);
             }
 
-            // Save the final document.
-            template.Save("ReportWithBookmarks.docx");
+            // 5. Save the resulting document.
+            doc.Save("ReportWithBookmarks.docx");
         }
     }
 }

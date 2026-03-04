@@ -3,42 +3,38 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-namespace FindReplaceWithDocument
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Load the document that contains the placeholder.
-            Document mainDoc = new Document("Input.docx");
+        // Load the main document that contains a placeholder like [MY_DOCUMENT].
+        Document mainDoc = new Document("Input.docx");
 
-            // Set up FindReplaceOptions with a custom callback.
-            FindReplaceOptions options = new FindReplaceOptions
-            {
-                ReplacingCallback = new InsertDocumentAtReplaceHandler()
-            };
+        // Set up FindReplaceOptions with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new InsertDocumentCallback();
 
-            // Replace the placeholder "[MY_DOCUMENT]" with the contents of another document.
-            mainDoc.Range.Replace(new Regex(@"\[MY_DOCUMENT\]"), string.Empty, options);
+        // Replace the placeholder with the contents of another document.
+        // The placeholder is identified by a regular expression.
+        mainDoc.Range.Replace(new Regex(@"\[MY_DOCUMENT\]"), string.Empty, options);
 
-            // Save the modified document.
-            mainDoc.Save("Output.docx");
-        }
+        // Save the modified document.
+        mainDoc.Save("Output.docx");
     }
 
     // Callback that inserts another document at the location of the match.
-    class InsertDocumentAtReplaceHandler : IReplacingCallback
+    private class InsertDocumentCallback : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
             // Load the document to be inserted.
-            Document subDoc = new Document("Insert.docx");
+            Document insertDoc = new Document("Insert.docx");
 
-            // The match is inside a Run; its parent is a Paragraph.
+            // The match node's parent is a Paragraph; we will insert after it.
             Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
 
-            // Insert the sub‑document after the placeholder paragraph.
-            InsertDocument(placeholderParagraph, subDoc);
+            // Insert the whole document after the placeholder paragraph.
+            InsertDocument(placeholderParagraph, insertDoc);
 
             // Remove the placeholder paragraph.
             placeholderParagraph.Remove();
@@ -47,14 +43,16 @@ namespace FindReplaceWithDocument
             return ReplaceAction.Skip;
         }
 
-        // Inserts all nodes of docToInsert after insertionDestination (Paragraph or Table).
+        // Inserts all nodes from docToInsert after insertionDestination.
         private static void InsertDocument(Node insertionDestination, Document docToInsert)
         {
+            // Ensure the destination is a paragraph or a table.
             if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
                 throw new ArgumentException("Insertion destination must be a paragraph or a table.");
 
             CompositeNode dstStory = insertionDestination.ParentNode;
 
+            // Import nodes from the source document into the destination document.
             NodeImporter importer = new NodeImporter(docToInsert, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
 
             foreach (Section srcSection in docToInsert.Sections)

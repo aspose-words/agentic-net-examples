@@ -14,14 +14,14 @@ class ApplyFontToRuns
         Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
         // Create a run of text.
-        Run run = new Run(doc, "Hello world! This text will use a custom font.");
+        Run run = new Run(doc, "Hello world with custom font!");
 
-        // Apply a specific font to the run via the Font.Name property.
+        // Apply a specific font to the run.
         run.Font.Name = "Courier New";
 
-        // Optionally, set additional font properties (size, color, etc.).
-        run.Font.Size = 24;
-        run.Font.Color = Color.Blue;
+        // Optionally set additional font properties.
+        run.Font.Size = 24;               // 24 points
+        run.Font.Color = Color.Blue;      // Blue color
 
         // Append the run to the paragraph.
         paragraph.AppendChild(run);

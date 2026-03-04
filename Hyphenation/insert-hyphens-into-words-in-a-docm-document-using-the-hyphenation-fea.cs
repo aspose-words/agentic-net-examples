@@ -2,26 +2,26 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Settings;
 
-class Program
+class HyphenateDocm
 {
     static void Main()
     {
-        // Load the existing DOCM document.
-        Document doc = new Document("Input.docm");
+        // Path to the source DOCM file.
+        string inputPath = "input.docm";
 
-        // Turn on automatic hyphenation for the whole document.
+        // Load the existing DOCM document.
+        Document doc = new Document(inputPath);
+
+        // Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
 
         // Optional: configure additional hyphenation settings.
-        // Set the hyphenation zone to 0.5 inch (720 twentieths of a point).
-        doc.HyphenationOptions.HyphenationZone = 720;
-        // Allow at most two consecutive lines to end with hyphens.
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2; // limit consecutive hyphenated lines
+        doc.HyphenationOptions.HyphenationZone = 720;      // 0.5 inch from the right margin
+        doc.HyphenationOptions.HyphenateCaps = true;      // hyphenate all‑caps words
 
-        // Rebuild the layout so that hyphenation is applied.
-        doc.UpdatePageLayout();
-
-        // Save the modified document.
-        doc.Save("Output.docm");
+        // Save the modified document as a DOCM file.
+        string outputPath = "output.docm";
+        doc.Save(outputPath);
     }
 }

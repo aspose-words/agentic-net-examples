@@ -12,19 +12,13 @@ class Program
         // Use DocumentBuilder to add content to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the paragraph style to Heading 1 and write the heading text.
+        // Set the paragraph style to Heading 1 for the title.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+
+        // Write the heading text.
         builder.Writeln("LINQ Reporting Introduction to LINQ Reporting Engine");
 
-        // Prepare a simple (empty) data source for the ReportingEngine.
-        // In this example the template does not contain any tags, so an empty anonymous object suffices.
-        var dataSource = new { };
-
-        // Initialize the ReportingEngine and populate the document.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, dataSource);
-
-        // Save the resulting document to disk.
-        doc.Save("LINQReporting.docx");
+        // Save the document to a file.
+        doc.Save("LINQReportingEngine.docx");
     }
 }

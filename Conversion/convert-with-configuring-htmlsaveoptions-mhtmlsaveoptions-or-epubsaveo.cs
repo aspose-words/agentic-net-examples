@@ -1,59 +1,24 @@
-using System.Text;
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class ConvertToDocm
 {
     static void Main()
     {
-        // Load a source document. Aspose.Words can load DOCX, HTML, MHTML, EPUB, etc.
-        Document doc = new Document("Source.docx");
+        // Load the source document (any format supported by Aspose.Words).
+        Document doc = new Document("Input.docx");
 
-        // -----------------------------------------------------------------
-        // Convert to DOCM (macro‑enabled Word) using OoxmlSaveOptions.
-        // The factory method creates the correct SaveOptions subclass for DOCM.
-        // -----------------------------------------------------------------
-        SaveOptions docmOptions = SaveOptions.CreateSaveOptions(SaveFormat.Docm);
+        // For saving as a macro‑enabled Word document (DOCM) we must use OoxmlSaveOptions.
+        // HtmlSaveOptions, MhtmlSaveOptions, and EpubSaveOptions are intended for HTML‑based formats
+        // and cannot be used to produce a DOCM file.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
 
-        // The returned object is OoxmlSaveOptions; cast to access OOXML‑specific settings.
-        if (docmOptions is OoxmlSaveOptions ooxml)
-        {
-            // Example configuration: enforce strict OOXML compliance and set a password.
-            ooxml.Compliance = OoxmlCompliance.Iso29500_2008_Strict;
-            ooxml.Password = "SecretPassword";
-        }
+        // Optional: configure additional options for the DOCM output.
+        saveOptions.Compliance = OoxmlCompliance.Ecma376_2006; // OOXML version.
+        saveOptions.PrettyFormat = true;                     // Human‑readable XML.
 
-        // Save the document as DOCM.
-        doc.Save("Result.docm", docmOptions);
-
-        // -----------------------------------------------------------------
-        // Additional conversions using HtmlSaveOptions for HTML, MHTML, and EPUB.
-        // -----------------------------------------------------------------
-
-        // Convert to HTML.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
-        {
-            ExportTextInputFormFieldAsText = true,
-            Encoding = Encoding.UTF8,
-            PrettyFormat = true
-        };
-        doc.Save("Result.html", htmlOptions);
-
-        // Convert to MHTML.
-        HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
-        {
-            ExportCidUrlsForMhtmlResources = true,
-            Encoding = Encoding.UTF8
-        };
-        doc.Save("Result.mhtml", mhtmlOptions);
-
-        // Convert to EPUB.
-        HtmlSaveOptions epubOptions = new HtmlSaveOptions(SaveFormat.Epub)
-        {
-            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-            ExportDocumentProperties = true,
-            Encoding = Encoding.UTF8
-        };
-        doc.Save("Result.epub", epubOptions);
+        // Save the document as a DOCM file using the configured options.
+        doc.Save("Output.docm", saveOptions);
     }
 }

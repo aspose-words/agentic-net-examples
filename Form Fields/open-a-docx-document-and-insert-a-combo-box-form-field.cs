@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class InsertComboBoxExample
+class Program
 {
     static void Main()
     {
@@ -15,12 +15,17 @@ class InsertComboBoxExample
         // Write some prompt text before the combo box.
         builder.Write("Please select a fruit: ");
 
-        // Define the items that will appear in the combo box.
+        // Define the items for the combo box.
         string[] items = { "Apple", "Banana", "Cherry" };
 
         // Insert the combo box form field at the current cursor position.
         // Parameters: name of the field, array of items, index of the initially selected item.
-        builder.InsertComboBox("FruitComboBox", items, 0);
+        FormField comboBox = builder.InsertComboBox("FruitComboBox", items, 0);
+
+        // Optionally, you can set additional properties on the form field.
+        // For example, make the field enabled (default) and set a help text.
+        comboBox.Enabled = true;
+        comboBox.HelpText = "Choose your favorite fruit.";
 
         // Save the modified document.
         doc.Save("OutputDocument.docx");

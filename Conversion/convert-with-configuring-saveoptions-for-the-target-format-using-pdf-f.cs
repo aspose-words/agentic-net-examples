@@ -2,29 +2,22 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsPdfConversion
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Path to the source document (any format supported by Aspose.Words)
-            string inputPath = @"C:\Docs\SourceDocument.docx";
+        // Load the source document (replace with your actual file path).
+        Document doc = new Document("Input.docx");
 
-            // Path where the PDF will be saved
-            string outputPath = @"C:\Docs\ConvertedDocument.pdf";
+        // Create a SaveOptions object suitable for PDF format.
+        // This uses the provided SaveOptions.CreateSaveOptions(SaveFormat) rule.
+        SaveOptions saveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
 
-            // Load the document using the provided load rule
-            Document doc = new Document(inputPath);
+        // Example configuration: enable memory optimization for large documents.
+        saveOptions.MemoryOptimization = true;
 
-            // Create a SaveOptions object suitable for PDF using the provided factory method
-            SaveOptions pdfSaveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
-
-            // Example configuration: enable memory optimization for large documents
-            pdfSaveOptions.MemoryOptimization = true;
-
-            // Save the document as PDF with the configured options using the provided save rule
-            doc.Save(outputPath, pdfSaveOptions);
-        }
+        // Save the document as PDF using the configured SaveOptions.
+        // This uses the Document.Save(string, SaveOptions) rule.
+        doc.Save("Output.pdf", saveOptions);
     }
 }

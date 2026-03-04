@@ -2,15 +2,15 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Settings;
 
-class MailMessageExample
+class MailMergeEmailExample
 {
     static void Main()
     {
-        // Create a blank Word document.
+        // Create a blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple mail merge template.
+        // Build the document content with merge fields.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Write("Dear ");
         builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
         builder.Write(" ");
@@ -18,17 +18,18 @@ class MailMessageExample
         builder.Writeln(":");
         builder.InsertField("MERGEFIELD Message", "<Message>");
 
-        // Configure mail‑merge settings so that the result will be an e‑mail.
+        // Configure mail merge settings so that Word will generate an e‑mail
+        // when the document is opened.
         MailMergeSettings settings = doc.MailMergeSettings;
-        settings.Destination = MailMergeDestination.Email;          // Generate e‑mail.
-        settings.MailSubject = "Welcome to Aspose.Words";           // Subject line.
-        settings.AddressFieldName = "EmailAddress";                 // Column that contains e‑mail addresses.
-        settings.MailAsAttachment = false;                         // Put the merged document in the e‑mail body.
+        settings.Destination = MailMergeDestination.Email;          // Generate e‑mail
+        settings.MailSubject = "Hello ${FirstName}";                // Subject line (Word will replace the placeholder)
+        settings.MailAsAttachment = true;                          // Send the merged document as an attachment
+        settings.AddressFieldName = "Email";                        // Column that contains the recipient address
 
-        // Normally you would also set the data source (e.g., a CSV file) and execute the merge.
-        // For this example we only demonstrate the configuration and conversion.
+        // (Optional) Specify the main document type as e‑mail.
+        settings.MainDocumentType = MailMergeMainDocumentType.Email;
 
-        // Save the document. When opened in Microsoft Word the mail merge will produce an e‑mail.
-        doc.Save("MailMessageExample.docx");
+        // Save the document. When opened in Microsoft Word, it will prompt to send an e‑mail.
+        doc.Save("MailMergeEmailExample.docx");
     }
 }

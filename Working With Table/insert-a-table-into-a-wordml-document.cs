@@ -6,10 +6,10 @@ class InsertTableExample
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder which simplifies node insertion.
+        // Initialize a DocumentBuilder which provides a convenient way to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a new table. The method returns the Table node that was created.
@@ -38,11 +38,11 @@ class InsertTableExample
         builder.EndRow();
         builder.EndTable();
 
-        // Optional: set table title and description for accessibility.
+        // Optionally set a title and description for the table (useful for accessibility).
         table.Title = "Sample Table";
-        table.Description = "A simple 2x2 table created with Aspose.Words";
+        table.Description = "A simple 2x2 table inserted via Aspose.Words";
 
-        // Save the document to a file.
-        doc.Save("SampleTable.docx");
+        // Save the document in WORDML (XML) format.
+        doc.Save("InsertedTable.xml", SaveFormat.WordML);
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,13 +9,11 @@ class Program
         // Load the source DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Create a PdfSaveOptions object to configure PDF saving behavior.
+        // Create a PdfSaveOptions object and configure it for PDF/A‑1b compliance.
         PdfSaveOptions saveOptions = new PdfSaveOptions();
+        saveOptions.Compliance = PdfCompliance.PdfA1b; // PDF/A‑1b ensures visual fidelity.
 
-        // Set the PDF/A compliance level (e.g., PDF/A-1b).
-        saveOptions.Compliance = PdfCompliance.PdfA1b;
-
-        // Save the document as a PDF file using the configured options.
+        // Save the document as PDF using the configured options.
         doc.Save("Output.pdf", saveOptions);
     }
 }

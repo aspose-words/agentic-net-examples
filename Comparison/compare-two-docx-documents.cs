@@ -6,29 +6,30 @@ class Program
 {
     static void Main()
     {
-        // Load the two documents to be compared.
+        // Load the original and the edited documents.
         Document docOriginal = new Document("Original.docx");
-        Document docEdited   = new Document("Edited.docx");
+        Document docEdited = new Document("Edited.docx");
 
-        // Comparison can only be performed when both documents have no existing revisions.
+        // Ensure both documents have no existing revisions before comparison.
         if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            // Optional: configure comparison options.
-            CompareOptions options = new CompareOptions
+            // Configure comparison options (customize as needed).
+            CompareOptions compareOptions = new CompareOptions
             {
-                // Track changes at the word level.
-                Granularity = Granularity.WordLevel,
-                // Ignore case differences.
-                IgnoreCaseChanges = true,
-                // Use the edited document as the base for comparison.
+                // Example settings – adjust according to your requirements.
+                IgnoreFormatting = false,
+                IgnoreCaseChanges = false,
                 Target = ComparisonTargetType.New
             };
 
-            // Perform the comparison. Revisions are added to docOriginal.
-            docOriginal.Compare(docEdited, "JD", DateTime.Now, options);
+            // Compare the documents. Revisions will be added to docOriginal.
+            docOriginal.Compare(docEdited, "Author", DateTime.Now, compareOptions);
         }
 
-        // Save the result which now contains the revision markup.
+        // Save the document that now contains the revision marks.
         docOriginal.Save("ComparedResult.docx");
+
+        // Output the number of revisions detected.
+        Console.WriteLine($"Revisions count: {docOriginal.Revisions.Count}");
     }
 }

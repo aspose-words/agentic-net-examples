@@ -6,17 +6,17 @@ class ProtectDocumentExample
     static void Main()
     {
         // Path to the existing DOCX file.
-        string inputPath = "input.docx";
+        string inputPath = @"C:\Docs\input.docx";
 
         // Load the document from the file system.
         Document doc = new Document(inputPath);
 
-        // Apply protection to the entire document.
-        // Here we use ReadOnly protection; other types are available in the ProtectionType enum.
+        // Apply protection to the whole document.
+        // Here we use ReadOnly protection, which prevents any changes.
         doc.Protect(ProtectionType.ReadOnly);
 
         // Path where the protected document will be saved.
-        string outputPath = "protected.docx";
+        string outputPath = @"C:\Docs\protected.docx";
 
         // Save the protected document.
         doc.Save(outputPath);

@@ -3,47 +3,34 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class DocumentToImageConverter
+namespace AsposeWordsImageConversion
 {
-    static void Main()
+    class Program
     {
-        // Path to the source document (any format supported by Aspose.Words).
-        string sourcePath = @"C:\Docs\SampleDocument.docx";
-
-        // Folder where the resulting images will be saved.
-        string outputFolder = @"C:\Docs\ConvertedImages";
-
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
-
-        // Load the document from the file system.
-        Document doc = new Document(sourcePath);
-
-        // Choose the desired image format (e.g., PNG, JPEG, BMP, etc.).
-        // Here we use PNG as an example.
-        SaveFormat imageFormat = SaveFormat.Png;
-
-        // Configure image save options.
-        ImageSaveOptions options = new ImageSaveOptions(imageFormat)
+        static void Main()
         {
-            // Optional: set resolution, quality, etc.
-            Resolution = 300,          // 300 DPI
-            JpegQuality = 90          // Ignored for PNG but kept for completeness
-        };
+            // Path to the source document (any format supported by Aspose.Words)
+            string sourcePath = @"C:\Input\SampleDocument.docx";
 
-        // Iterate through each page of the document and save it as a separate image.
-        for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
-        {
-            // Render only the current page.
-            options.PageSet = new PageSet(pageIndex);
+            // Path to the output image file (choose any supported image format, e.g., PNG)
+            string outputPath = @"C:\Output\SampleDocument.png";
 
-            // Build the output file name.
-            string outputPath = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.{imageFormat.ToString().ToLower()}");
+            // Load the document from the file system.
+            Document doc = new Document(sourcePath);
 
-            // Save the page as an image.
-            doc.Save(outputPath, options);
+            // Configure image save options – specify the desired image format.
+            ImageSaveOptions imageOptions = new ImageSaveOptions(SaveFormat.Png);
+
+            // Optional: adjust image quality, resolution, etc. (commented out defaults)
+            // imageOptions.Resolution = 300;          // DPI
+            // imageOptions.JpegQuality = 90;         // For JPEG formats
+            // imageOptions.ImageColorMode = ImageColorMode.None;
+
+            // Save the first page of the document as an image.
+            // When saving to an image format, only the first page is rendered.
+            doc.Save(outputPath, imageOptions);
+
+            Console.WriteLine("Document has been converted to image successfully.");
         }
-
-        Console.WriteLine("Document conversion to images completed.");
     }
 }

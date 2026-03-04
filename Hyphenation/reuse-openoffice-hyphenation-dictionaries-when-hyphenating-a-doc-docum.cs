@@ -2,63 +2,64 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Settings;
 
 class Program
 {
     static void Main()
     {
-        // Folder that contains the source document and the OpenOffice hyphenation dictionaries.
-        string dataDir = @"C:\Data\";
+        // Paths to the input files and output folder.
+        string myDir = @"C:\MyDir\";
+        string artifactsDir = @"C:\Artifacts\";
 
-        // Load the DOC/DOCX document that needs hyphenation.
-        Document doc = new Document(Path.Combine(dataDir, "German text.docx"));
-
-        // Enable automatic hyphenation and configure optional parameters.
-        doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch (720 / 20 points)
-        doc.HyphenationOptions.HyphenateCaps = true;
-
-        // Register a callback that will supply dictionaries on demand.
-        Hyphenation.Callback = new CustomHyphenationDictionaryRegister(dataDir);
-
-        // Save the document; during layout the callback will load the required dictionaries.
-        doc.Save(Path.Combine(dataDir, "Hyphenated.pdf"));
-    }
-}
-
-// Callback implementation that maps language codes to OpenOffice dictionary files.
-class CustomHyphenationDictionaryRegister : IHyphenationCallback
-{
-    private readonly Dictionary<string, string> _dictionaryFiles;
-
-    public CustomHyphenationDictionaryRegister(string baseDirectory)
-    {
-        // Populate the map with the languages you intend to support.
-        _dictionaryFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        // Register an English dictionary upfront (optional, demonstrates RegisterDictionary overload with Stream).
+        using (Stream enStream = new FileStream(Path.Combine(myDir, "hyph_en_US.dic"), FileMode.Open))
         {
-            { "en-US", Path.Combine(baseDirectory, "hyph_en_US.dic") },
-            { "de-CH", Path.Combine(baseDirectory, "hyph_de_CH.dic") }
-            // Add more entries as needed, e.g. { "fr-FR", Path.Combine(baseDirectory, "hyph_fr_FR.dic") }
-        };
-    }
-
-    // This method is called by Aspose.Words when a dictionary for a language is missing.
-    public void RequestDictionary(string language)
-    {
-        // If the dictionary is already registered, nothing to do.
-        if (Hyphenation.IsDictionaryRegistered(language))
-            return;
-
-        // Try to locate a dictionary file for the requested language.
-        if (_dictionaryFiles.TryGetValue(language, out string filePath) && File.Exists(filePath))
-        {
-            // Register the dictionary from the file.
-            Hyphenation.RegisterDictionary(language, filePath);
+            Hyphenation.RegisterDictionary("en-US", enStream);
         }
-        else
+
+        // Set a callback that will load dictionaries on demand when the layout engine needs them.
+        Hyphenation.Callback = new CustomHyphenationDictionaryRegister(myDir);
+
+        // Load a DOC document that contains text in a language for which we have a dictionary (e.g., German - de-CH).
+        Document doc = new Document(Path.Combine(myDir, "German text.doc"));
+
+        // Enable automatic hyphenation for the document.
+        doc.HyphenationOptions.AutoHyphenation = true;
+
+        // Save the document (PDF format forces layout processing and thus hyphenation).
+        doc.Save(Path.Combine(artifactsDir, "Hyphenated.pdf"));
+    }
+
+    // Implementation of IHyphenationCallback that registers dictionaries from local files.
+    private class CustomHyphenationDictionaryRegister : IHyphenationCallback
+    {
+        private readonly Dictionary<string, string> _dictionaryFiles;
+
+        public CustomHyphenationDictionaryRegister(string baseDir)
         {
-            // No dictionary available – optionally register a null dictionary to suppress further callbacks.
+            // Map language codes to dictionary file paths.
+            _dictionaryFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "en-US", Path.Combine(baseDir, "hyph_en_US.dic") },
+                { "de-CH", Path.Combine(baseDir, "hyph_de_CH.dic") }
+            };
+        }
+
+        public void RequestDictionary(string language)
+        {
+            // If the dictionary is already registered, nothing to do.
+            if (Hyphenation.IsDictionaryRegistered(language))
+                return;
+
+            // Register the dictionary if we have a matching file.
+            if (_dictionaryFiles.TryGetValue(language, out string filePath))
+            {
+                Hyphenation.RegisterDictionary(language, filePath);
+                return;
+            }
+
+            // No dictionary available – register a null dictionary to suppress further callbacks for this language.
             Hyphenation.RegisterDictionary(language, (string)null);
         }
     }

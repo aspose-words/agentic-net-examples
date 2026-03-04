@@ -1,66 +1,73 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
 namespace AsposeWordsMarkdownExample
 {
-    public class MarkdownConverter
+    public class ExampleConversion
     {
-        /// <summary>
-        /// Converts a Word document to Markdown using Aspose.Words.
-        /// </summary>
-        /// <param name="inputPath">Full path to the source .doc/.docx file.</param>
-        /// <param name="outputPath">Full path where the .md file will be saved.</param>
-        public void ConvertToMarkdown(string inputPath, string outputPath)
+        private readonly string _myDir;
+        private readonly string _artifactsDir;
+
+        public ExampleConversion(string myDir, string artifactsDir)
         {
-            // Load the source document from the file system.
-            Document doc = new Document(inputPath);
+            _myDir = myDir;
+            _artifactsDir = artifactsDir;
+        }
 
-            // Initialize Markdown save options.
-            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
+        public void ConvertToMarkdown()
+        {
+            // Load the source document (e.g., a DOCX file) from the input directory.
+            Document doc = new Document(Path.Combine(_myDir, "Example.docx"));
 
-            // Example option: export OfficeMath objects as images.
-            saveOptions.OfficeMathExportMode = MarkdownOfficeMathExportMode.Image;
+            // Create Markdown save options.
+            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+            {
+                // Export empty paragraphs as empty lines.
+                EmptyParagraphExportMode = MarkdownEmptyParagraphExportMode.EmptyLine,
 
-            // Additional optional settings (uncomment as needed):
-            // Export tables as raw HTML.
-            // saveOptions.ExportAsHtml = MarkdownExportAsHtml.Tables;
+                // Export OfficeMath as images.
+                OfficeMathExportMode = MarkdownOfficeMathExportMode.Image,
 
-            // Export empty paragraphs as empty lines.
-            // saveOptions.EmptyParagraphExportMode = MarkdownEmptyParagraphExportMode.EmptyLine;
+                // Export tables that cannot be represented in pure Markdown as raw HTML.
+                ExportAsHtml = MarkdownExportAsHtml.NonCompatibleTables,
 
-            // Save the document in Markdown format.
+                // Export links as reference style.
+                LinkExportMode = MarkdownLinkExportMode.Reference,
+
+                // Export underline formatting using "++".
+                ExportUnderlineFormatting = true,
+
+                // Ensure the format is set to Markdown (required when using SaveFormat property).
+                SaveFormat = SaveFormat.Markdown
+            };
+
+            // Define the output file path.
+            string outputPath = Path.Combine(_artifactsDir, "ExampleConverted.md");
+
+            // Save the document as Markdown using the configured options.
             doc.Save(outputPath, saveOptions);
         }
     }
 
-    class Program
+    public static class Program
     {
-        /// <summary>
-        /// Entry point of the console application.
-        /// </summary>
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            // Simple argument validation.
-            if (args.Length != 2)
-            {
-                Console.WriteLine("Usage: MarkdownConverter <input.docx> <output.md>");
-                return;
-            }
+            // Determine input and output directories.
+            // Here we use the current working directory for input and a sub‑folder "Artifacts" for output.
+            string inputDir = Directory.GetCurrentDirectory();
+            string outputDir = Path.Combine(inputDir, "Artifacts");
 
-            string inputPath = args[0];
-            string outputPath = args[1];
+            // Ensure the output directory exists.
+            Directory.CreateDirectory(outputDir);
 
-            try
-            {
-                var converter = new MarkdownConverter();
-                converter.ConvertToMarkdown(inputPath, outputPath);
-                Console.WriteLine($"Document converted successfully to '{outputPath}'.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error during conversion: {ex.Message}");
-            }
+            // Create the conversion helper and run the conversion.
+            var conversion = new ExampleConversion(inputDir, outputDir);
+            conversion.ConvertToMarkdown();
+
+            Console.WriteLine($"Markdown file created at: {Path.Combine(outputDir, "ExampleConverted.md")}");
         }
     }
 }

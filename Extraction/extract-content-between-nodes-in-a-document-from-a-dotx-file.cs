@@ -7,15 +7,12 @@ class ExtractBetweenNodes
     static void Main()
     {
         // Load the DOTX template.
-        Document template = new Document("Template.dotx");
+        Document srcDoc = new Document("Template.dotx");
 
-        // Define the bookmark names that mark the start and end of the range to extract.
-        const string startBookmarkName = "Start";
-        const string endBookmarkName = "End";
-
-        // Locate the start and end bookmark nodes.
-        BookmarkStart startBookmark = template.Range.Bookmarks[startBookmarkName]?.BookmarkStart;
-        BookmarkEnd endBookmark = template.Range.Bookmarks[endBookmarkName]?.BookmarkEnd;
+        // Assume the document contains two bookmarks named "Start" and "End"
+        // that define the region we want to extract.
+        Bookmark startBookmark = srcDoc.Range.Bookmarks["Start"];
+        Bookmark endBookmark = srcDoc.Range.Bookmarks["End"];
 
         if (startBookmark == null || endBookmark == null)
         {
@@ -23,37 +20,38 @@ class ExtractBetweenNodes
             return;
         }
 
-        // Create a new empty document that will hold the extracted content.
-        Document extracted = new Document();
-        // Remove the default section/paragraph that Aspose.Words creates.
-        extracted.RemoveAllChildren();
+        // Get the actual nodes that mark the boundaries.
+        Node startNode = startBookmark.BookmarkStart;
+        Node endNode = endBookmark.BookmarkEnd;
 
-        // Create a single section and body for the destination document.
-        Section destSection = new Section(extracted);
-        extracted.AppendChild(destSection);
-        Body destBody = new Body(extracted);
-        destSection.AppendChild(destBody);
-
-        // Prepare a NodeImporter for efficient node copying.
-        NodeImporter importer = new NodeImporter(template, extracted, ImportFormatMode.KeepSourceFormatting);
-
-        // Collect all nodes that are between the start and end bookmarks (exclusive).
+        // Collect all nodes that lie between the start and end nodes (exclusive).
         List<Node> nodesBetween = new List<Node>();
-        Node current = startBookmark.NextSibling;
-        while (current != null && current != endBookmark)
+        Node cur = startNode.NextPreOrder(srcDoc);
+        while (cur != null && cur != endNode)
         {
-            nodesBetween.Add(current);
-            current = current.NextSibling;
+            nodesBetween.Add(cur);
+            cur = cur.NextPreOrder(srcDoc);
         }
 
-        // Import the collected nodes into the new document.
+        // Create a new blank document to hold the extracted content.
+        Document destDoc = new Document();
+        // Ensure the destination document has at least one section and a body.
+        if (destDoc.FirstSection == null)
+            destDoc.AppendChild(new Section(destDoc));
+        if (destDoc.FirstSection.Body == null)
+            destDoc.FirstSection.AppendChild(new Body(destDoc));
+
+        // Use NodeImporter for efficient import of nodes from the source to the destination.
+        NodeImporter importer = new NodeImporter(srcDoc, destDoc, ImportFormatMode.KeepSourceFormatting);
+
+        // Append each imported node to the body of the destination document.
         foreach (Node node in nodesBetween)
         {
             Node importedNode = importer.ImportNode(node, true);
-            destBody.AppendChild(importedNode);
+            destDoc.FirstSection.Body.AppendChild(importedNode);
         }
 
-        // Save the extracted content to a new DOCX file.
-        extracted.Save("ExtractedContent.docx");
+        // Save the extracted content as a separate DOCX file.
+        destDoc.Save("ExtractedContent.docx");
     }
 }

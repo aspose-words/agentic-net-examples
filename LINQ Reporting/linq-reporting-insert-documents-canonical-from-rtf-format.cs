@@ -2,35 +2,27 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class InsertRtfWithLinqReporting
+class Program
 {
     static void Main()
     {
-        // Path to the source RTF document that will be inserted.
-        string rtfPath = @"C:\Docs\SourceDocument.rtf";
-
-        // Path where the final merged document will be saved.
-        string outputPath = @"C:\Docs\MergedResult.docx";
-
-        // 1. Load the source RTF document.
-        Document sourceDoc = new Document(rtfPath);
-
-        // 2. Create a template document in memory.
+        // Create a template document that contains a LINQ Reporting placeholder.
         Document template = new Document();                     // create blank document
-        DocumentBuilder builder = new DocumentBuilder(template); // create builder for the template
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Report Header");                      // any static content
+        builder.Writeln("<<doc [src.Document]>>");             // placeholder for the RTF document
+        builder.Writeln("Report Footer");                      // any static content
 
-        // Insert a LINQ Reporting placeholder that will be replaced with the source document.
-        // The placeholder syntax <<doc [src.Document]>> tells the engine to insert the whole document.
-        builder.Writeln("<<doc [src.Document]>>");
+        // Load the source document that is in RTF format.
+        Document rtfSource = new Document("Source.rtf");        // load existing RTF file
 
-        // 3. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
+        // Use the ReportingEngine to replace the placeholder with the loaded RTF document.
+        ReportingEngine engine = new ReportingEngine();        // create reporting engine
+        // The data source array contains the document to insert,
+        // and the corresponding name ("src") matches the placeholder prefix.
+        engine.BuildReport(template, new object[] { rtfSource }, new string[] { "src" });
 
-        // The data source array contains the document to be inserted.
-        // The corresponding name "src" is used in the placeholder.
-        engine.BuildReport(template, new object[] { sourceDoc }, new string[] { "src" });
-
-        // 4. Save the merged document.
-        template.Save(outputPath);
+        // Save the final merged document.
+        template.Save("MergedResult.docx");                    // save to DOCX (format inferred from extension)
     }
 }

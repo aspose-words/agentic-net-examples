@@ -1,0 +1,22 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Document merge/insert rules": [
+        "Import the correct namespace for form fields: Aspose.Words.Fields."
+      ],
+      "Loading rules": [
+        "Use the correct constructor for Document (string fileName) and DocumentBuilder (Document).",
+        "Create or load a Document before applying protection.",
+        "Keep the Document(string) constructor for loading the DOCX as the prescribed load rule."
+      ],
+      "Saving/Export rules": [
+        "Specify the save format explicitly (SaveFormat.Docm) when saving a macro‑enabled document.",
+        "Ensure HtmlFixedSaveOptions.ExportFormFields is set to true to export interactive form fields.",
+        "Use HtmlFixedSaveOptions with ExportFormFields = true to export form fields as interactive HTML input elements.",
+        "Save the document with the configured HtmlFixedSaveOptions.",
+        "Keep the protection type as AllowOnlyFormFields and save using SaveFormat.Dot."
+      ]
+    }
+  }
+}

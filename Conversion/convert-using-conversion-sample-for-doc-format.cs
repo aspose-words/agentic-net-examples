@@ -1,25 +1,30 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-namespace AsposeWordsConversionSample
+class ConvertToDocSample
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Input file path (any format supported by Aspose.Words, e.g., DOCX)
-            string inputFile = @"C:\Docs\SampleDocument.docx";
+        // Path to the source document (any format supported by Aspose.Words)
+        string inputPath = @"C:\Input\SampleDocument.docx";
 
-            // Output file path – we want to convert to the legacy DOC format
-            string outputFile = @"C:\Docs\SampleDocumentConverted.doc";
+        // Path where the converted DOC file will be saved
+        string outputPath = @"C:\Output\ConvertedDocument.doc";
 
-            // Load the source document using the Document constructor that accepts a file name
-            Document doc = new Document(inputFile);
+        // Load the source document using the Document(string) constructor
+        Document doc = new Document(inputPath);
 
-            // Save the document in the DOC format using the Save method that takes a file name and a SaveFormat enum
-            doc.Save(outputFile, SaveFormat.Doc);
+        // Option 1: Save directly specifying the SaveFormat enum
+        doc.Save(outputPath, SaveFormat.Doc);
 
-            Console.WriteLine("Document has been successfully converted to DOC format.");
-        }
+        // Option 2: Use a DocSaveOptions object for more control (e.g., password protection)
+        // Uncomment the following lines if you need to apply save options.
+        /*
+        DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
+        // Example: protect the saved DOC with a password (optional)
+        // saveOptions.Password = "MyPassword";
+        doc.Save(outputPath, saveOptions);
+        */
     }
 }

@@ -1,22 +1,21 @@
-using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
+using System.IO;
 
-namespace AsposeWordsConversionExample
+class ConvertToDoc
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Define input and output locations.
-            // Replace these with actual paths in your environment.
-            string inputPath = @"C:\MyDir\Document.docx";
-            string outputPath = @"C:\ArtifactsDir\Document.ConvertToDoc.doc";
+        // Input DOCX file path
+        string inputPath = @"C:\Docs\Document.docx";
 
-            // Load the source document (DOCX) using the Document constructor.
-            Document doc = new Document(inputPath);
+        // Output DOC file path
+        string outputPath = @"C:\Docs\Converted\Document.doc";
 
-            // Save the document in the legacy DOC format.
-            doc.Save(outputPath, SaveFormat.Doc);
-        }
+        // Load the source document (DOCX)
+        Document doc = new Document(inputPath);
+
+        // Save the document in DOC format
+        doc.Save(outputPath, SaveFormat.Doc);
     }
 }

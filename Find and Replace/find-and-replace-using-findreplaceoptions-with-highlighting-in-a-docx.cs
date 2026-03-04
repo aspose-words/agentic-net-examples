@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -8,23 +7,25 @@ class FindReplaceWithHighlight
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add some sample text.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add some sample text.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document demonstrates Aspose find and replace functionality.");
-        builder.Writeln("Aspose allows developers to work with Word documents programmatically.");
+        builder.Writeln("The quick brown fox jumps over the lazy dog.");
+        builder.Writeln("The quick brown fox is swift.");
 
-        // Configure FindReplaceOptions to apply highlighting to the replacement text.
+        // Configure find/replace options.
         FindReplaceOptions options = new FindReplaceOptions();
-        options.ApplyFont.HighlightColor = Color.Yellow; // Highlight color for the new text.
 
-        // Perform the find-and-replace operation.
-        // Replace the word "Aspose" with "Aspose.Words" and apply the highlighting.
-        doc.Range.Replace("Aspose", "Aspose.Words", options);
+        // Highlight the replaced text with a light yellow background.
+        options.ApplyFont.HighlightColor = Color.LightYellow;
 
-        // Save the modified document to disk.
-        doc.Save("FindReplaceWithHighlight.docx");
+        // Perform the replace operation.
+        // All occurrences of the word "quick" will be replaced with "fast" and highlighted.
+        int replacements = doc.Range.Replace("quick", "fast", options);
+
+        Console.WriteLine($"Number of replacements made: {replacements}");
+
+        // Save the modified document.
+        doc.Save("FindReplaceHighlighted.docx");
     }
 }

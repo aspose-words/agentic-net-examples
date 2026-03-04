@@ -1,0 +1,34 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Bookmark rules": [
+        "When traversing, compare nodes with Equals or reference equality to stop before the end bookmark.",
+        "Use Bookmark.BookmarkStart and Bookmark.BookmarkEnd to obtain the underlying nodes (the Bookmark class does not expose Start/End properties).",
+        "Validate that both bookmarks exist before accessing their nodes.",
+        "Keep the extraction inclusive of both bookmark boundaries, as required by the task.",
+        "Always verify that required bookmarks exist before accessing them to avoid NullReferenceException.",
+        "When iterating nodes with NextPreOrder, stop before the end bookmark to keep the range exclusive."
+      ],
+      "Document merge/insert rules": [
+        "Remove the non‑existent namespace import `using Aspose.Words.Paragraphs;` – the `Paragraph` class resides directly in `Aspose.Words`.",
+        "Do not import namespaces that do not exist in the Aspose.Words for .NET library (e.g., Aspose.Words.Import)."
+      ],
+      "Loading rules": [
+        "Use the overload Node.NextPreOrder(Node rootNode) and pass the document (or any node that is the root of the tree) as the argument.",
+        "Add the required using directive: Aspose.Words.Loading."
+      ],
+      "Saving/Export rules": [
+        "Use HtmlLoadOptions (Aspose.Words.Loading) instead of generic LoadOptions when loading HTML with a BaseUri.",
+        "Keep the load, create, and save operations as provided (Document(string), new Document(), Document.Save(string))."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Set BaseUri on HtmlLoadOptions to resolve relative image paths.",
+        "Keep the rest of the logic unchanged – iterate Shape nodes, check HasImage, and save ImageData."
+      ],
+      "Layout rules": [
+        "Ensure the destination document contains at least one Section and Body before appending nodes."
+      ]
+    }
+  }
+}

@@ -1,22 +1,27 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Fields;
 
-class InsertCheckBoxIntoDot
+class Program
 {
     static void Main()
     {
-        // Create a new blank document (will be saved as a DOT template).
-        Document doc = new Document();
+        // Load an existing DOT (Word template) file
+        Document doc = new Document("Template.dot");
 
-        // Initialize a DocumentBuilder for the document.
+        // Create a DocumentBuilder for the loaded document
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a checkbox form field at the current cursor position.
-        // Parameters: name, checkedValue (initial state), size (0 = auto).
-        builder.InsertCheckBox("MyCheckBox", false, 0);
+        // Insert a checkbox form field at the current cursor position
+        // Parameters: name, isChecked, size (0 = auto size)
+        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
 
-        // Save the document as a Word template (.dot).
-        doc.Save("Template.dot", SaveFormat.Dot);
+        // Optionally configure additional properties of the checkbox
+        checkBox.IsCheckBoxExactSize = false;   // Use automatic size
+        checkBox.HelpText = "Click to toggle";
+        checkBox.OwnHelp = true;
+
+        // Save the modified template back to a DOT file (or another format if desired)
+        doc.Save("TemplateWithCheckBox.dot");
     }
 }

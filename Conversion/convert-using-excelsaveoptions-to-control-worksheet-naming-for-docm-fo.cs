@@ -2,24 +2,32 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsExample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Load an existing Word document.
-            Document doc = new Document("MyDir/input.docx");
+        // Load an existing Word document.
+        Document doc = new Document("Input.docx");
 
-            // Create OoxmlSaveOptions for the DOCM format.
-            // The constructor that accepts a SaveFormat ensures the correct options type is used.
-            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
+        // ------------------------------------------------------------
+        // Save the document as a macro‑enabled DOCM file using OoxmlSaveOptions.
+        // ------------------------------------------------------------
+        // OoxmlSaveOptions allows us to specify the exact OOXML format.
+        OoxmlSaveOptions docmOptions = new OoxmlSaveOptions(SaveFormat.Docm);
+        // Example of setting an additional option – you can customize more if needed.
+        docmOptions.ExportGeneratorName = false; // do not embed Aspose.Words generator info
+        // Save the document as DOCM.
+        doc.Save("Output.docm", docmOptions);
 
-            // Example of setting an additional option – disable embedding the generator name.
-            saveOptions.ExportGeneratorName = false;
-
-            // Save the document as a macro‑enabled DOCM file using the specified options.
-            doc.Save("ArtifactsDir/output.docm", saveOptions);
-        }
+        // ------------------------------------------------------------
+        // Convert the same document to Excel (XLSX) and control worksheet naming.
+        // ------------------------------------------------------------
+        // XlsxSaveOptions controls how sections are mapped to worksheets.
+        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions();
+        // Each section of the Word document will be saved as a separate worksheet.
+        // This effectively controls the worksheet naming (one worksheet per section).
+        xlsxOptions.SectionMode = XlsxSectionMode.MultipleWorksheets;
+        // Save the document as XLSX.
+        doc.Save("Output.xlsx", xlsxOptions);
     }
 }

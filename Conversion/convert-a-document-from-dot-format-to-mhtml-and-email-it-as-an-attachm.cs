@@ -5,74 +5,45 @@ using System.Net.Mail;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-// Entry point for the console application.
-class Program
+class DotToMhtmlEmail
 {
     static void Main()
     {
-        var emailer = new DotToMhtmlEmailer();
-        emailer.ConvertAndSend(
-            dotFilePath: @"C:\Docs\Template.dot",
-            mhtmlFilePath: @"C:\Docs\Output.mhtml",
-            smtpHost: "smtp.example.com",
-            smtpPort: 587,
-            fromAddress: "sender@example.com",
-            toAddress: "recipient@example.com",
-            subject: "Converted Document",
-            body: "Please find the converted MHTML document attached.",
-            smtpUser: "smtp_user",
-            smtpPassword: "smtp_password");
-    }
-}
+        // Path to the source .dot (Word template) file.
+        string sourceDotPath = @"C:\Input\Template.dot";
 
-public class DotToMhtmlEmailer
-{
-    /// <summary>
-    /// Converts a .dot template to .mhtml and sends it as an email attachment.
-    /// </summary>
-    public void ConvertAndSend(string dotFilePath, string mhtmlFilePath,
-                               string smtpHost, int smtpPort,
-                               string fromAddress, string toAddress,
-                               string subject, string body,
-                               string? smtpUser = null, string? smtpPassword = null)
-    {
-        // Load the DOT document.
-        Document doc = new Document(dotFilePath);
+        // Load the .dot document. The Document constructor handles the creation and loading lifecycle.
+        Document doc = new Document(sourceDotPath);
 
-        // Save the document as MHTML.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml);
-        doc.Save(mhtmlFilePath, saveOptions);
-
-        // Prepare and send the email.
-        using (MailMessage message = new MailMessage())
+        // Convert the document to MHTML and store it in a memory stream.
+        using (MemoryStream mhtmlStream = new MemoryStream())
         {
-            message.From = new MailAddress(fromAddress);
-            message.To.Add(new MailAddress(toAddress));
-            message.Subject = subject;
-            message.Body = body;
-            message.IsBodyHtml = false;
+            // Save using the SaveFormat enumeration for MHTML.
+            doc.Save(mhtmlStream, SaveFormat.Mhtml);
 
-            // Attach the generated MHTML file.
-            message.Attachments.Add(new Attachment(mhtmlFilePath));
+            // Reset the stream position so it can be read from the beginning.
+            mhtmlStream.Position = 0;
 
-            using (SmtpClient smtpClient = new SmtpClient(smtpHost, smtpPort))
+            // Prepare the email message.
+            MailMessage message = new MailMessage();
+            message.From = new MailAddress("sender@example.com");
+            message.To.Add("recipient@example.com");
+            message.Subject = "Converted MHTML Document";
+            message.Body = "Please find the converted MHTML document attached.";
+
+            // Attach the MHTML stream. The name given to the attachment will be the filename seen by the recipient.
+            Attachment attachment = new Attachment(mhtmlStream, "Template.mhtml", "application/octet-stream");
+            message.Attachments.Add(attachment);
+
+            // Configure the SMTP client. Adjust host, port, and credentials as needed.
+            SmtpClient smtp = new SmtpClient("smtp.example.com", 587)
             {
-                smtpClient.EnableSsl = true;
+                EnableSsl = true,
+                Credentials = new NetworkCredential("smtp_user", "smtp_password")
+            };
 
-                if (!string.IsNullOrEmpty(smtpUser) && !string.IsNullOrEmpty(smtpPassword))
-                {
-                    smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPassword);
-                }
-                else
-                {
-                    smtpClient.UseDefaultCredentials = true;
-                }
-
-                smtpClient.Send(message);
-            }
+            // Send the email.
+            smtp.Send(message);
         }
-
-        // Optional: delete the temporary MHTML file if you no longer need it.
-        // File.Delete(mhtmlFilePath);
     }
 }

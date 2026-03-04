@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
@@ -11,24 +10,26 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some text using two different fonts.
+        // Write a line using a font that is available on most systems.
         builder.Font.Name = "Arial";
         builder.Writeln("Hello world!");
+
+        // Write a line using a font that is likely unavailable.
         builder.Font.Name = "Amethysta";
         builder.Writeln("The quick brown fox jumps over the lazy dog.");
 
-        // Set up font substitution: if "Amethysta" is unavailable,
-        // first try "Arvo", then "Courier New".
+        // Set up font substitution rules.
+        // If "Amethysta" cannot be found, Aspose.Words will try "Arvo" first,
+        // and if that is also missing, it will fall back to "Courier New".
         FontSettings fontSettings = new FontSettings();
         fontSettings.SubstitutionSettings.TableSubstitution.SetSubstitutes(
             "Amethysta", new[] { "Arvo", "Courier New" });
+
+        // Apply the font settings to the document.
         doc.FontSettings = fontSettings;
 
-        // Ensure the output directory exists.
-        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Save the document to the output folder.
-        doc.Save(Path.Combine(artifactsDir, "FontSettingsExample.docx"));
+        // Save the document to a DOCX file.
+        string outputPath = "FontSettingsExample.docx";
+        doc.Save(outputPath);
     }
 }

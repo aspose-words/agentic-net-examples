@@ -1,0 +1,37 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Document merge/insert rules": [
+        "Do not modify the logical flow; only add the required namespace import."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Add the missing using directive for Aspose.Words.Drawing to bring the Shape class into scope.",
+        "Add `using Aspose.Words.Drawing;` because the `Shape` class resides in that namespace.",
+        "Add the missing `using Aspose.Words.Drawing;` directive so the `Shape` class is recognized.",
+        "Ensure the project references the Aspose.Words for .NET assembly that includes the Drawing namespace.",
+        "Add the missing using directive for Aspose.Words.Drawing to resolve the Shape type.",
+        "Ensure the project references Aspose.Words.dll (the library that contains the Drawing namespace).",
+        "Add the missing using directive for Aspose.Words.Drawing to resolve the Shape class.",
+        "Ensure the project references the Aspose.Words.dll NuGet package (or DLL) that contains the Drawing namespace.",
+        "Add the missing `using Aspose.Words.Drawing;` directive to bring the `Shape` class into scope.",
+        "Ensure the project references the Aspose.Words NuGet package (or DLL) that includes the Drawing namespace."
+      ],
+      "Charts rules": [
+        "Keep existing using directives for Aspose.Words and Aspose.Words.Drawing.Charts.",
+        "Keep `using Aspose.Words.Drawing.Charts;` for chart‑specific types (Chart, ChartType, etc.).",
+        "Keep the existing `using Aspose.Words.Drawing.Charts;` for chart‑related types.",
+        "Keep existing using statements for Aspose.Words and Aspose.Words.Drawing.Charts.",
+        "Keep existing using directives for Aspose.Words.Drawing.Charts to access Chart, ChartSeries, ChartDataPoint, etc.",
+        "Keep all other namespaces unchanged; they already provide required chart types.",
+        "Keep existing using statements for chart‑related namespaces.",
+        "Keep the existing using for Aspose.Words.Drawing.Charts for chart‑related classes.",
+        "Ensure the project references the Aspose.Words .NET library (NuGet package Aspose.Words) that includes chart support.",
+        "Keep existing `using Aspose.Words.Drawing.Charts;` for chart‑related types.",
+        "Do not modify the chart creation or formatting logic; only adjust namespaces.",
+        "Keep existing using statements for Aspose.Words.Drawing.Charts to access Chart, AxisBound, etc.",
+        "Keep existing using directives for chart‑related types (Aspose.Words.Drawing.Charts)."
+      ]
+    }
+  }
+}

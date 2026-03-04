@@ -2,36 +2,70 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+namespace AsposeWordsFormFieldsDemo
 {
-    static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Initialize a DocumentBuilder for inserting content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Create a DocumentBuilder which simplifies inserting content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a checkbox form field.
-        // Parameters: name, defaultChecked, size (in points).
-        builder.InsertCheckBox("AcceptTerms", false, 50);
+            // ------------------------------------------------------------
+            // Insert a checkbox form field.
+            // Parameters: name, isChecked (default state), size (points).
+            // ------------------------------------------------------------
+            builder.Write("Accept terms and conditions: ");
+            FormField checkBox = builder.InsertCheckBox("AcceptTerms", false, 50);
+            // Optional: set additional properties.
+            checkBox.HelpText = "Check to accept the terms.";
+            checkBox.OwnHelp = true;
 
-        // Insert a line break after the checkbox.
-        builder.InsertBreak(BreakType.ParagraphBreak);
+            builder.Writeln(); // Move to next line.
 
-        // Insert a combo box form field.
-        // Parameters: name, list of items, selected index.
-        string[] footwear = { "-- Select footwear --", "Sneakers", "Oxfords", "Flip-flops", "Other" };
-        builder.InsertComboBox("FootwearChoice", footwear, 0);
+            // ------------------------------------------------------------
+            // Insert a combo box (drop‑down) form field.
+            // Parameters: name, list of items, selected index.
+            // ------------------------------------------------------------
+            builder.Write("Select your favorite fruit: ");
+            string[] fruitItems = { "Apple", "Banana", "Cherry", "Date" };
+            FormField comboBox = builder.InsertComboBox("FruitChoice", fruitItems, 0);
+            // Optional: make the field recalculate when the user changes selection.
+            comboBox.CalculateOnExit = true;
 
-        // Insert another line break.
-        builder.InsertBreak(BreakType.ParagraphBreak);
+            builder.Writeln(); // Move to next line.
 
-        // Insert a text input form field.
-        // Parameters: name, type, format, default text, max length (0 = unlimited).
-        builder.InsertTextInput("UserName", TextFormFieldType.Regular, "", "Enter your name here", 0);
+            // ------------------------------------------------------------
+            // Insert a text input form field.
+            // Parameters: name, type, format, default text, max length.
+            // ------------------------------------------------------------
+            builder.Write("Enter your full name: ");
+            FormField textInput = builder.InsertTextInput(
+                "FullName",                     // field name
+                TextFormFieldType.Regular,      // allows any text
+                "",                             // no specific format
+                "John Doe",                     // placeholder/default text
+                0);                             // 0 = unlimited length
 
-        // Save the document to disk.
-        doc.Save("FormFieldsDocument.docx");
+            // Optional: set a macro that runs when the field loses focus.
+            textInput.ExitMacro = "OnExitFullName";
+
+            // ------------------------------------------------------------
+            // Update all fields so that their results are calculated.
+            // This is important for fields like checkboxes that may have a result.
+            // ------------------------------------------------------------
+            doc.UpdateFields();
+
+            // ------------------------------------------------------------
+            // Save the document to disk.
+            // ------------------------------------------------------------
+            string outputPath = "FormFields.docx";
+            doc.Save(outputPath);
+
+            Console.WriteLine($"Document with form fields saved to: {outputPath}");
+        }
     }
 }

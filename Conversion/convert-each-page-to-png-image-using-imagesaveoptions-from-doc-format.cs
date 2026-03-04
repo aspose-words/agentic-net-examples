@@ -3,72 +3,46 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsExamples
+class DocToPngConverter
 {
     /// <summary>
     /// Converts each page of a DOC/DOCX document to a separate PNG image.
     /// </summary>
-    public class DocToPngConverter
+    /// <param name="inputFilePath">Full path to the source Word document.</param>
+    /// <param name="outputFolderPath">Folder where PNG files will be written.</param>
+    public static void ConvertPagesToPng(string inputFilePath, string outputFolderPath)
     {
-        /// <summary>
-        /// Converts each page of a DOC/DOCX document to a separate PNG image.
-        /// </summary>
-        /// <param name="inputFilePath">Full path to the source Word document.</param>
-        /// <param name="outputFolderPath">Folder where PNG files will be written. It will be created if it does not exist.</param>
-        public void Convert(string inputFilePath, string outputFolderPath)
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputFolderPath);
+
+        // Load the Word document from the specified file.
+        Document doc = new Document(inputFilePath);
+
+        // Create ImageSaveOptions for PNG output.
+        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
+        // Optional: set resolution (dpi) for higher quality images.
+        pngOptions.Resolution = 300;
+
+        // Iterate through all pages in the document.
+        for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
         {
-            // Ensure the output directory exists.
-            Directory.CreateDirectory(outputFolderPath);
+            // Configure the options to render only the current page.
+            pngOptions.PageSet = new PageSet(pageIndex);
 
-            // Load the document from the specified file.
-            Document doc = new Document(inputFilePath);
+            // Build the output file name (Page_1.png, Page_2.png, ...).
+            string outputFilePath = Path.Combine(outputFolderPath, $"Page_{pageIndex + 1}.png");
 
-            // Prepare ImageSaveOptions for PNG output.
-            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
-
-            // Iterate through all pages (PageCount is 1‑based).
-            for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
-            {
-                // Set the PageSet to the current zero‑based page index.
-                pngOptions.PageSet = new PageSet(pageIndex);
-
-                // Build the output file name, e.g. "Document_Page_1.png".
-                string outFile = Path.Combine(outputFolderPath,
-                    $"{Path.GetFileNameWithoutExtension(inputFilePath)}_Page_{pageIndex + 1}.png");
-
-                // Save the single page as a PNG image.
-                doc.Save(outFile, pngOptions);
-            }
+            // Save the current page as a PNG image.
+            doc.Save(outputFilePath, pngOptions);
         }
     }
 
-    class Program
+    // Example usage.
+    static void Main()
     {
-        /// <summary>
-        /// Entry point of the console application.
-        /// </summary>
-        static void Main(string[] args)
-        {
-            // Simple argument handling – you can replace these paths with your own.
-            if (args.Length != 2)
-            {
-                Console.WriteLine("Usage: DocToPngConverter <input-doc-path> <output-folder-path>");
-                return;
-            }
+        string sourceDoc = @"C:\Docs\Sample.docx";
+        string pngFolder = @"C:\Docs\PagesAsPng";
 
-            string inputPath = args[0];
-            string outputPath = args[1];
-
-            try
-            {
-                var converter = new DocToPngConverter();
-                converter.Convert(inputPath, outputPath);
-                Console.WriteLine($"Conversion completed. PNG files are saved to '{outputPath}'.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-        }
+        ConvertPagesToPng(sourceDoc, pngFolder);
     }
 }

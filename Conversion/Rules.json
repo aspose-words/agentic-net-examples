@@ -1,0 +1,38 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Comment rules": [
+        "Added a comment explaining why the line was omitted and that the default behavior matches the intended setting."
+      ],
+      "Loading rules": [
+        "Instantiate LoadOptions with the default constructor and set the Password property (the constructor overload with a password string does not exist).",
+        "Remove usage of non‑existent LoadOptions and DocumentConverterPlugin classes; they are not part of Aspose.Words.",
+        "Load the document directly with the Document class.",
+        "Load the RTF source with `new Document(\"SourceDocument.rtf\")`.",
+        "Document(string) constructor rule – loads a document from a file path."
+      ],
+      "Saving/Export rules": [
+        "Ensure the output directory exists before saving the Markdown file.",
+        "Do not change the Aspose.Words API usage; Document.Save infers EPUB from the .epub extension.",
+        "Use Aspose.Words ImageSaveOptions with SaveFormat.Png and PageSet for per‑page rendering.",
+        "Iterate over Document.PageCount and call Document.Save for each page, setting PageSet to a single page index.",
+        "Use EpubSaveOptions (or HtmlSaveOptions with SaveFormat.Epub) for EPUB conversion; the dedicated class provides the correct API surface.",
+        "Keep the SaveFormat argument consistent with the option class (HtmlSaveOptions for Html/Mhtml, EpubSaveOptions for Epub).",
+        "Use a correct MIME type for MHTML attachments (e.g., \"text/html\").",
+        "HtmlSaveOptions(SaveFormat) constructor rule – creates save options for a specific format.",
+        "Document.Save(Stream, SaveOptions) rule – saves a document to a stream using the provided options."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Create the output directory before saving images.",
+        "Use ImageSaveOptions (or any other image‑specific SaveOptions) to define format, resolution, and the PageSet property for per‑page rendering.",
+        "Create image folders before calling Save to avoid runtime errors when the saver tries to write files."
+      ],
+      "Layout rules": [
+        "Create a new section for each worksheet using `InsertBreak(BreakType.SectionBreakNewPage)`.",
+        "Write the desired worksheet name as the first paragraph of the section; Aspose.Words uses this paragraph as the sheet name when `SectionMode = MultipleWorksheets`.",
+        "Do **not** use a non‑existent `WorksheetNames` property; worksheet names are derived from the first paragraph of each section."
+      ]
+    }
+  }
+}

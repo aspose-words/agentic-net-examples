@@ -2,23 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class Program
+class DocumentComparison
 {
     static void Main()
     {
-        // Load the two documents to be compared.
-        Document docOriginal = new Document("Original.docx");
-        Document docEdited   = new Document("Edited.docx");
+        // Paths to the source documents and the output document.
+        string originalPath = "Original.docx";
+        string editedPath   = "Edited.docx";
+        string resultPath   = "Compared.docx";
 
-        // Documents must not contain revisions before comparison.
-        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
-        {
-            // Perform the comparison. The original document will receive Revision objects
-            // that highlight the differences. "AB" are the author initials for the revisions.
-            docOriginal.Compare(docEdited, "AB", DateTime.Now);
-        }
+        // Load the original and edited documents.
+        Document docOriginal = new Document(originalPath);
+        Document docEdited   = new Document(editedPath);
 
-        // Save the document that now contains the tracked changes.
-        docOriginal.Save("ComparisonResult.docx");
+        // Ensure both documents have no tracked revisions before comparison.
+        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
+            throw new InvalidOperationException("Both documents must be revision-free before comparison.");
+
+        // Perform the comparison. The revisions (differences) will be added to docOriginal.
+        // Author initials and timestamp are required parameters.
+        docOriginal.Compare(docEdited, "AU", DateTime.Now);
+
+        // Save the document that now contains the highlighted differences.
+        docOriginal.Save(resultPath);
     }
 }

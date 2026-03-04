@@ -1,25 +1,18 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ProtectDotm
+class Program
 {
     static void Main()
     {
-        // Path to the source DOTM template.
-        string inputPath = @"C:\Docs\Template.dotm";
-
-        // Path where the protected DOTM will be saved.
-        string outputPath = @"C:\Docs\Template_Protected.dotm";
-
-        // Load the existing DOTM document.
-        Document doc = new Document(inputPath);
+        // Load the existing DOTM template.
+        Document doc = new Document("Template.dotm");
 
         // Protect the document so that only form fields can be edited.
         doc.Protect(ProtectionType.AllowOnlyFormFields);
 
-        // Save the document as a DOTM (macro‑enabled template) using DocSaveOptions.
+        // Save the protected document as a DOTM file.
         DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Dot);
-        doc.Save(outputPath, saveOptions);
+        doc.Save("ProtectedTemplate.dotm", saveOptions);
     }
 }

@@ -9,35 +9,43 @@ class Program
     static void Main()
     {
         // Path to the source MHTML file.
-        string mhtmlPath = @"C:\Temp\source.mht";
+        string mhtmlFilePath = @"C:\Input\sample.mht";
 
         // Load the MHTML document using Aspose.Words.
-        Document doc = new Document(mhtmlPath); // load
+        Document doc = new Document(mhtmlFilePath);
 
         // Save the document to a memory stream in MHTML format.
         using (MemoryStream mhtmlStream = new MemoryStream())
         {
-            doc.Save(mhtmlStream, SaveFormat.Mhtml); // save
-            mhtmlStream.Position = 0; // reset for reading
+            doc.Save(mhtmlStream, SaveFormat.Mhtml);
+            mhtmlStream.Position = 0; // Reset stream position for reading.
 
-            // Create a mail message.
+            // Create an attachment from the MHTML stream.
+            Attachment attachment = new Attachment(
+                mhtmlStream,
+                "sample.mht",                     // File name for the attachment.
+                "message/rfc822");                // MIME type for MHTML.
+
+            // Build the mail message.
             MailMessage mail = new MailMessage
             {
                 From = new MailAddress("sender@example.com"),
-                Subject = "Attached MHTML Document",
+                Subject = "MHTML Document Attached",
                 Body = "Please find the MHTML document attached."
             };
             mail.To.Add("recipient@example.com");
-
-            // Attach the MHTML content. Use the appropriate MIME type.
-            Attachment attachment = new Attachment(mhtmlStream, "document.mht", "message/rfc822");
             mail.Attachments.Add(attachment);
 
-            // Send the e‑mail (SMTP settings must be configured for your environment).
-            using (SmtpClient client = new SmtpClient("smtp.example.com"))
-            {
-                client.Send(mail);
-            }
+            // Example: send the email (requires a valid SMTP server).
+            // using (SmtpClient client = new SmtpClient("smtp.example.com"))
+            // {
+            //     client.Credentials = new System.Net.NetworkCredential("user", "password");
+            //     client.Send(mail);
+            // }
+
+            // Dispose resources.
+            attachment.Dispose();
+            mail.Dispose();
         }
     }
 }

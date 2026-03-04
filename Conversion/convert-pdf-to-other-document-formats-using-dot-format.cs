@@ -6,27 +6,30 @@ class PdfToOtherFormats
     static void Main()
     {
         // Path to the source PDF file.
-        string pdfPath = "input.pdf";
+        string pdfPath = "Input/sample.pdf";
 
         // Load the PDF document.
-        Document doc = new Document(pdfPath);
+        Document pdfDoc = new Document(pdfPath);
 
-        // Save the document as a Word template (DOT) format.
-        string dotPath = "output.dot";
-        doc.Save(dotPath, SaveFormat.Dot);
+        // Convert the PDF to a Word template (DOT) format.
+        string dotPath = "Output/sample.dot";
+        pdfDoc.Save(dotPath, SaveFormat.Dot);
 
-        // Convert the same document to additional formats.
+        // Load the generated DOT template.
+        Document dotDoc = new Document(dotPath);
 
-        // Save as DOCX (Office Open XML WordprocessingML).
-        doc.Save("output.docx", SaveFormat.Docx);
+        // Convert the DOT template to various other formats.
 
-        // Save as RTF (Rich Text Format).
-        doc.Save("output.rtf", SaveFormat.Rtf);
+        // DOCX (Office Open XML WordprocessingML Document)
+        dotDoc.Save("Output/sample.docx", SaveFormat.Docx);
 
-        // Save as HTML.
-        doc.Save("output.html", SaveFormat.Html);
+        // HTML (standard HTML format)
+        dotDoc.Save("Output/sample.html", SaveFormat.Html);
 
-        // Save as plain text.
-        doc.Save("output.txt", SaveFormat.Text);
+        // RTF (Rich Text Format)
+        dotDoc.Save("Output/sample.rtf", SaveFormat.Rtf);
+
+        // ODT (OpenDocument Text)
+        dotDoc.Save("Output/sample.odt", SaveFormat.Odt);
     }
 }

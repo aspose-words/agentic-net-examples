@@ -1,0 +1,14 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Loading rules": [
+        "Remove usage of LoadOptions because the type may be unavailable in the referenced Aspose.Words version.",
+        "Assign FontSettings directly to the Document after loading."
+      ],
+      "Saving/Export rules": [
+        "Keep the warning callback to surface font‑substitution warnings during load/save."
+      ]
+    }
+  }
+}

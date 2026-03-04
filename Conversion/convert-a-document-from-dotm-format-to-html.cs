@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 namespace DotmToHtmlConverter
 {
@@ -16,8 +17,8 @@ namespace DotmToHtmlConverter
             // Load the DOTM document using the Document(string) constructor.
             Document doc = new Document(inputFile);
 
-            // Save the loaded document in HTML format.
-            // The Save method with (string, SaveFormat) matches the provided rule.
+            // Save the document in HTML format using the Save method that accepts a file name
+            // and a SaveFormat enumeration value.
             doc.Save(outputFile, SaveFormat.Html);
         }
     }

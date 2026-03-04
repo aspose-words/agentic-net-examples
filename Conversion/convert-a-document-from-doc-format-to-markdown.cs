@@ -7,16 +7,16 @@ class Program
     static void Main()
     {
         // Path to the source DOC file.
-        string inputPath = "input.doc";
+        string inputFile = "Document.doc";
 
         // Path where the Markdown file will be saved.
-        string outputPath = "output.md";
+        string outputFile = "Document.md";
 
         // Load the DOC document from the file system.
-        Document doc = new Document(inputPath);
+        Document doc = new Document(inputFile);
 
-        // Save the document in Markdown format.
-        // The SaveFormat enumeration value for Markdown is SaveFormat.Markdown.
-        doc.Save(outputPath, SaveFormat.Markdown);
+        // Save the loaded document in Markdown format.
+        // The SaveFormat enum value 'Markdown' specifies the target format.
+        doc.Save(outputFile, SaveFormat.Markdown);
     }
 }

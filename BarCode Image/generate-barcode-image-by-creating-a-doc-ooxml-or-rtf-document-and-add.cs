@@ -1,7 +1,8 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class GenerateDisplayBarcode
 {
     static void Main()
     {
@@ -12,7 +13,7 @@ class Program
         // Insert a DISPLAYBARCODE field.
         FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
-        // Configure the barcode (example: QR code with custom colors and scaling).
+        // Configure the field to display a QR code with custom colors and scaling.
         barcodeField.BarcodeType = "QR";
         barcodeField.BarcodeValue = "ABC123";
         barcodeField.BackgroundColor = "0xF8BD69";
@@ -22,7 +23,7 @@ class Program
         barcodeField.SymbolHeight = "1000";
         barcodeField.SymbolRotation = "0";
 
-        // Add a line break after the field (optional).
+        // Move to the next line after the field.
         builder.Writeln();
 
         // Save the document in DOCX format.

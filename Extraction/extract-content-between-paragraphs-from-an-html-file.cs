@@ -1,41 +1,62 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 
-class ExtractParagraphContent
+class ExtractBetweenParagraphs
 {
     static void Main()
     {
         // Path to the source HTML file.
-        string inputPath = @"C:\Temp\input.html";
+        string htmlPath = @"C:\Temp\source.html";
 
-        // Path to the output text file that will contain the extracted paragraph contents.
-        string outputPath = @"C:\Temp\extracted_paragraphs.txt";
+        // Load the HTML document.
+        Document doc = new Document(htmlPath);
 
-        // Load the HTML document. The Document constructor automatically detects the format.
-        Document doc = new Document(inputPath);
-
-        // Get the collection of paragraphs from the main body of the first section.
+        // Access the collection of paragraphs in the main body.
         ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
 
-        // Open a StreamWriter to write the extracted texts.
-        using (StreamWriter writer = new StreamWriter(outputPath))
+        // Define markers that identify the start and end paragraphs.
+        // Adjust these strings to match the exact text of the marker paragraphs.
+        const string startMarker = "START";
+        const string endMarker = "END";
+
+        int startIndex = -1;
+        int endIndex = -1;
+
+        // Locate the indices of the start and end marker paragraphs.
+        for (int i = 0; i < paragraphs.Count; i++)
         {
-            // Iterate through each paragraph.
-            foreach (Paragraph para in paragraphs)
+            string text = paragraphs[i].GetText().Trim(); // GetText includes the paragraph break; Trim removes it.
+            if (startIndex == -1 && text.Equals(startMarker, StringComparison.OrdinalIgnoreCase))
+                startIndex = i;
+            else if (startIndex != -1 && text.Equals(endMarker, StringComparison.OrdinalIgnoreCase))
             {
-                // Get the text of the paragraph, including the trailing paragraph break character.
-                string textWithBreak = para.GetText();
-
-                // Trim the trailing paragraph break characters (\r, \n, or \f) to obtain clean content.
-                string cleanText = textWithBreak.TrimEnd('\r', '\n', '\f');
-
-                // Write the cleaned paragraph text to the output file.
-                writer.WriteLine(cleanText);
+                endIndex = i;
+                break;
             }
         }
 
-        // Optionally, save the document back to another format (e.g., plain text) if needed.
-        // doc.Save(@"C:\Temp\output.txt", SaveFormat.Text);
+        // Validate that both markers were found and that there is content between them.
+        if (startIndex == -1 || endIndex == -1 || endIndex <= startIndex + 1)
+        {
+            Console.WriteLine("Unable to locate valid start/end markers or no content between them.");
+            return;
+        }
+
+        // Extract the text of all paragraphs that lie between the markers.
+        StringBuilder extracted = new StringBuilder();
+        for (int i = startIndex + 1; i < endIndex; i++)
+        {
+            // GetText returns the paragraph text plus a trailing paragraph break.
+            // TrimEnd removes the trailing break while preserving inner spacing.
+            extracted.AppendLine(paragraphs[i].GetText().TrimEnd('\r', '\n'));
+        }
+
+        // Output the extracted content to a plain‑text file.
+        string outputPath = @"C:\Temp\extracted.txt";
+        File.WriteAllText(outputPath, extracted.ToString(), Encoding.UTF8);
+
+        Console.WriteLine($"Content extracted to: {outputPath}");
     }
 }

@@ -3,30 +3,22 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class Program
+class ExtractImagesFromTxt
 {
     static void Main()
     {
-        // Path to the input TXT file. Aspose.Words can load plain text as a document.
-        string inputPath = @"C:\Input\sample.txt";
+        // Load the TXT file as a Word document.
+        // Aspose.Words can import plain text files.
+        Document doc = new Document("Input.txt");
 
-        // Directory where extracted images will be saved.
-        string outputDir = @"C:\Output\Images\";
-
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputDir);
-
-        // Load the TXT file into a Document object.
-        Document doc = new Document(inputPath);
-
-        // Get all Shape nodes in the document (including those inside groups).
+        // Get all shape nodes in the document (including those inside groups).
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
+        // Counter for naming extracted image files.
         int imageIndex = 0;
 
-        // Iterate through each shape and extract the image if it has one.
+        // Iterate through each shape and extract the image if the shape contains one.
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage)
@@ -35,16 +27,15 @@ class Program
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
 
                 // Build the output file name.
-                string imageFileName = $"ExtractedImage_{imageIndex}{extension}";
-                string imagePath = Path.Combine(outputDir, imageFileName);
+                string outputFileName = $"ExtractedImage_{imageIndex}{extension}";
 
                 // Save the image data to the file system.
-                shape.ImageData.Save(imagePath);
+                shape.ImageData.Save(Path.Combine("ExtractedImages", outputFileName));
 
                 imageIndex++;
             }
         }
 
-        Console.WriteLine($"Extracted {imageIndex} image(s) to \"{outputDir}\".");
+        Console.WriteLine($"Extracted {imageIndex} image(s) to the 'ExtractedImages' folder.");
     }
 }

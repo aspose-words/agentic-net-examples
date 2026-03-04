@@ -3,36 +3,28 @@ using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Fields;
 
-class InsertComboBoxIntoMhtml
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some prompt text before the combo box.
+        // Add some explanatory text.
         builder.Write("Pick a fruit: ");
 
         // Define the items that will appear in the combo box.
         string[] items = { "Apple", "Banana", "Cherry" };
 
-        // Insert the combo box form field.
-        // Parameters: name of the field, array of items, index of the initially selected item.
-        builder.InsertComboBox("FruitComboBox", items, 0);
+        // Insert the combo box form field. The first item (index 0) is selected by default.
+        builder.InsertComboBox("FruitCombo", items, 0);
 
-        // Configure HTML/MHTML save options.
-        // ExportDropDownFormFieldAsText = false ensures the combo box is saved as a <select> element.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
-        {
-            ExportDropDownFormFieldAsText = false,
-            // Save as MHTML (MIME HTML) format.
-            SaveFormat = SaveFormat.Mhtml
-        };
+        // Prepare save options for MHTML. Keep the combo box as an interactive <select> element.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml);
+        saveOptions.ExportDropDownFormFieldAsText = false; // preserve dropdown functionality
 
-        // Save the document as an MHTML file.
-        doc.Save("ComboBoxDocument.mhtml", saveOptions);
+        // Save the document as MHTML.
+        doc.Save("ComboBox.mhtml", saveOptions);
     }
 }

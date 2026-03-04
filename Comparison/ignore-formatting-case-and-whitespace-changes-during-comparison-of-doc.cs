@@ -11,28 +11,25 @@ class CompareDocuments
         Document docEdited   = new Document("Edited.docx");
 
         // Configure comparison options to ignore formatting, case changes and whitespace differences.
-        // IgnoreFormatting skips any style/format changes.
-        // IgnoreCaseChanges makes the comparison case‑insensitive.
-        // Whitespace changes are treated as formatting differences, so they are ignored as well.
+        // IgnoreFormatting: skips formatting changes.
+        // IgnoreCaseChanges: makes the comparison case‑insensitive.
+        // Granularity set to CharLevel to detect changes at the character level (including whitespace).
         CompareOptions compareOptions = new CompareOptions
         {
             IgnoreFormatting   = true,
             IgnoreCaseChanges  = true,
-            // Additional flags can be set to ignore other element types if desired.
-            CompareMoves       = false,
-            IgnoreComments     = false,
-            IgnoreTables       = false,
-            IgnoreFields       = false,
-            IgnoreFootnotes    = false,
-            IgnoreTextboxes    = false,
-            IgnoreHeadersAndFooters = false,
+            Granularity        = Granularity.CharLevel,
+            // Other flags can remain false (default) to keep their differences tracked.
             Target = ComparisonTargetType.New
         };
 
-        // Perform the comparison. The revisions will be added to docOriginal.
+        // Perform the comparison. Revisions will be added to docOriginal.
         docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
 
-        // Save the result document that contains the tracked changes.
+        // Optionally accept all revisions so the original document becomes identical to the edited one.
+        docOriginal.Revisions.AcceptAll();
+
+        // Save the result.
         docOriginal.Save("ComparisonResult.docx");
     }
 }

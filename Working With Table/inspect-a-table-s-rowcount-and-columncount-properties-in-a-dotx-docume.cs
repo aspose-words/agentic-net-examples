@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -6,33 +7,28 @@ class InspectTableDimensions
 {
     static void Main()
     {
-        // Path to the DOTX template.
-        string templatePath = @"C:\Data\Template.dotx";
+        // Load the DOTX template document.
+        Document doc = new Document("Template.dotx");
 
-        // Load the DOTX document.
-        Document doc = new Document(templatePath);
-
-        // Get all tables in the first section's body.
-        TableCollection tables = doc.FirstSection.Body.Tables;
+        // Get all tables in the document. GetChildNodes returns a NodeCollection, which does not have ToArray().
+        // Use LINQ's Cast<T>() (or OfType<T>()) to enumerate the Table nodes.
+        var tables = doc.GetChildNodes(NodeType.Table, true).Cast<Table>();
 
         // Iterate through each table and output its row and column counts.
-        for (int i = 0; i < tables.Count; i++)
+        int i = 0;
+        foreach (Table table in tables)
         {
-            Table table = tables[i];
-
             // Row count is the number of Row objects in the table.
             int rowCount = table.Rows.Count;
 
             // Column count is the number of cells in the first row (if any rows exist).
-            int columnCount = 0;
-            if (rowCount > 0 && table.FirstRow != null)
-                columnCount = table.FirstRow.Cells.Count;
+            int columnCount = rowCount > 0 ? table.Rows[0].Cells.Count : 0;
 
             Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
+            i++;
         }
 
         // Optionally save the document after inspection (no changes made).
-        string outputPath = @"C:\Data\Result.docx";
-        doc.Save(outputPath);
+        doc.Save("InspectResult.docx");
     }
 }

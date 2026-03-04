@@ -1,38 +1,42 @@
 using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;          // <-- added for Shape
-using Aspose.Words.Drawing.Charts;   // <-- for Chart, ChartSeries, ChartDataLabel
+using Aspose.Words.Drawing;
+using Aspose.Words.Drawing.Charts;
 
 class ChartDataLabelExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a column chart into the document.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 400);
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Work with the first series in the chart.
-        ChartSeries series = chart.Series[0];
+        // Remove the demo series that Aspose.Words adds by default.
+        chart.Series.Clear();
 
-        // Enable data labels for this series.
+        // Add a custom series with three data points.
+        ChartSeries series = chart.Series.Add(
+            "Sales",
+            new[] { "Q1", "Q2", "Q3" },
+            new[] { 120.5, 150.0, 180.75 });
+
+        // Enable data labels for the series.
         series.HasDataLabels = true;
 
-        // Access a specific data label (second point, index 1).
-        ChartDataLabel dataLabel = series.DataLabels[1];
+        // Access the first data label in the series (index 0).
+        ChartDataLabel firstLabel = series.DataLabels[0];
 
-        // Change the fill color of the data label.
-        dataLabel.Format.Fill.Color = Color.Blue;
+        // Change the fill color of this data label to red.
+        firstLabel.Format.Fill.Color = Color.Red;
 
-        // Set a custom separator string for the label.
-        dataLabel.Separator = " | ";
-
-        // Clear the label's format, reverting to defaults.
-        dataLabel.ClearFormat();
+        // Optionally clear the format of the second data label.
+        ChartDataLabel secondLabel = series.DataLabels[1];
+        secondLabel.ClearFormat();
 
         // Save the document to a DOCX file.
         doc.Save("ChartDataLabelExample.docx");

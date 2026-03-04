@@ -1,77 +1,70 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
 
-class Program
+class HyphenationExample
 {
+    // Paths to your data folders – adjust as needed.
+    private const string MyDir = @"C:\Data\";
+    private const string ArtifactsDir = @"C:\Output\";
+
     static void Main()
     {
-        // Directory that contains the source document and hyphenation dictionary files.
-        string dataDir = @"C:\Data\";
+        // 1. Create a new blank document.
+        Document doc = new Document();
 
-        // Input Word document that contains text in the language we want to hyphenate.
-        string inputDocPath = Path.Combine(dataDir, "German text.docx");
+        // 2. Build the document content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Add a paragraph with German text.
+        builder.Font.Size = 24;
+        builder.Font.LocaleId = new CultureInfo("de-CH").LCID;
+        builder.Writeln("Dies ist ein Beispieltext, der die Silbentrennung demonstriert.");
 
-        // Output PDF file where hyphenated text will be rendered.
-        string outputPdfPath = Path.Combine(dataDir, "HyphenatedOutput.pdf");
-
-        // Register a hyphenation dictionary for German (Switzerland) language.
-        // This dictionary will be used automatically when the document is laid out.
-        Hyphenation.RegisterDictionary("de-CH", Path.Combine(dataDir, "hyph_de_CH.dic"));
-
-        // Set a callback to handle any other language requests during layout.
-        Hyphenation.Callback = new CustomHyphenationDictionaryRegister(dataDir);
-
-        // Load the source document.
-        Document doc = new Document(inputDocPath);
-
-        // Enable automatic hyphenation for the whole document.
+        // 3. Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
+        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch from the right margin.
+        doc.HyphenationOptions.HyphenateCaps = true;
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
 
-        // Save the document to PDF; hyphenation will be applied during the save operation.
-        doc.Save(outputPdfPath);
+        // 4. Register a custom hyphenation dictionary for German (Switzerland).
+        // The dictionary file must be in OpenOffice format.
+        string germanDictionaryPath = Path.Combine(MyDir, "hyph_de_CH.dic");
+        Hyphenation.RegisterDictionary("de-CH", germanDictionaryPath);
+
+        // 5. Optional: set a callback to load dictionaries on demand for other languages.
+        Hyphenation.Callback = new CustomHyphenationDictionaryRegister();
+
+        // 6. Save the document as DOCX (the create‑load‑save lifecycle is respected).
+        doc.Save(Path.Combine(ArtifactsDir, "HyphenatedDocument.docx"));
     }
 
-    // Callback implementation that registers dictionaries on demand.
+    // Callback implementation that registers dictionaries when the layout engine requests them.
     private class CustomHyphenationDictionaryRegister : IHyphenationCallback
     {
-        private readonly Dictionary<string, string> _dictionaryFiles;
-
-        public CustomHyphenationDictionaryRegister(string basePath)
+        private readonly Dictionary<string, string> _dictionaryFiles = new Dictionary<string, string>
         {
-            // Map language codes to dictionary file locations.
-            _dictionaryFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-            {
-                { "en-US", Path.Combine(basePath, "hyph_en_US.dic") },
-                { "de-CH", Path.Combine(basePath, "hyph_de_CH.dic") }
-                // Add more language mappings here if needed.
-            };
-        }
+            { "en-US", Path.Combine(MyDir, "hyph_en_US.dic") },
+            { "de-CH", Path.Combine(MyDir, "hyph_de_CH.dic") }
+            // Add more language‑code / file‑path pairs as needed.
+        };
 
         public void RequestDictionary(string language)
         {
-            Console.Write($"Hyphenation dictionary requested: {language}");
-
             // If the dictionary is already registered, do nothing.
             if (Hyphenation.IsDictionaryRegistered(language))
+                return;
+
+            // Register the dictionary if we have a known file for the requested language.
+            if (_dictionaryFiles.TryGetValue(language, out string filePath) && File.Exists(filePath))
             {
-                Console.WriteLine(", already registered.");
+                Hyphenation.RegisterDictionary(language, filePath);
                 return;
             }
 
-            // Register the dictionary if we have a known file for the requested language.
-            if (_dictionaryFiles.TryGetValue(language, out string filePath))
-            {
-                Hyphenation.RegisterDictionary(language, filePath);
-                Console.WriteLine(", successfully registered.");
-            }
-            else
-            {
-                // No dictionary available; further requests for this language will be ignored.
-                Console.WriteLine(", no dictionary found.");
-            }
+            // If no dictionary is available, register a null dictionary to suppress further callbacks.
+            Hyphenation.RegisterDictionary(language, (string)null);
         }
     }
 }

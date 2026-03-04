@@ -1,5 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -7,33 +6,25 @@ class FindAndReplaceExample
 {
     static void Main()
     {
-        // Define input and output file paths.
-        string inputPath = @"C:\Data\Input.docx";
-        string outputPath = @"C:\Data\Output.docx";
+        // Load an existing DOCX file.
+        Document doc = new Document("Input.docx");
 
-        // Load the existing DOCX document.
-        Document doc = new Document(inputPath);
-
-        // Create a DocumentBuilder for possible additional editing (not required for replace itself).
+        // DocumentBuilder is required for this task (e.g., to add content before/after replacement if needed).
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Example: replace a placeholder token with actual text.
-        string placeholder = "_FullName_";
-        string replacement = "John Doe";
+        // Simple find-and-replace: replace placeholder "_FullName_" with "John Doe".
+        int replacedCount = doc.Range.Replace("_FullName_", "John Doe");
 
-        // Perform a simple case‑insensitive find‑and‑replace across the whole document.
-        int replacedCount = doc.Range.Replace(placeholder, replacement);
-
-        // Optionally, use FindReplaceOptions for more control (e.g., case‑sensitive, whole word only).
+        // Optionally, use FindReplaceOptions to control the replace behavior (case‑sensitive, whole word, etc.).
         FindReplaceOptions options = new FindReplaceOptions
         {
             MatchCase = false,               // ignore case
-            FindWholeWordsOnly = true        // replace only whole word matches
+            FindWholeWordsOnly = true        // replace only whole words
         };
-        // Replace another token using the options.
-        doc.Range.Replace("[Date]", DateTime.Today.ToString("MMMM d, yyyy"), options);
+        // Example of a second replacement using the options.
+        doc.Range.Replace("Company", "Acme Corp", options);
 
         // Save the modified document.
-        doc.Save(outputPath);
+        doc.Save("Output.docx");
     }
 }

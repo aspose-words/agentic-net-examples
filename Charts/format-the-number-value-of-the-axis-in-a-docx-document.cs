@@ -1,38 +1,46 @@
+using System;
 using Aspose.Words;
-using Aspose.Words.Drawing; // <-- added
+using Aspose.Words.Drawing;          // <-- added
 using Aspose.Words.Drawing.Charts;
 
-class Program
+class FormatChartAxisNumber
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart of size 500x300 points.
+        // Insert a column chart into the document.
+        // Width = 500 points, Height = 300 points.
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
         // Remove the demo data series that Aspose.Words adds by default.
         chart.Series.Clear();
 
-        // Add a custom series with categories and numeric values.
+        // Add a custom series with categories (X‑axis) and large numeric values (Y‑axis).
         chart.Series.Add(
-            "Sample Series",
-            new[] { "A", "B", "C", "D" },
-            new double[] { 12345, 67890, 23456, 78901 });
+            "Sales",
+            new[] { "Q1", "Q2", "Q3", "Q4" },
+            new double[] { 1_900_000, 850_000, 2_100_000, 1_500_000 });
 
         // ------------------------------------------------------------
-        // Format the Y‑axis tick labels.
+        // Format the Y‑axis numbers.
+        // The NumberFormat property returns a ChartNumberFormat object.
+        // Set its FormatCode to a custom pattern (e.g., "#,##0") to control
+        // how tick labels are displayed and disable linking to the source cell.
         // ------------------------------------------------------------
-        // Access the NumberFormat object of the Y axis and set a custom format code.
         chart.AxisY.NumberFormat.FormatCode = "#,##0";
-
-        // Disable linking to the source cell so the custom format is used.
         chart.AxisY.NumberFormat.IsLinkedToSource = false;
 
+        // (Optional) Format the X‑axis numbers in a similar way.
+        // chart.AxisX.NumberFormat.FormatCode = "#,##0";
+        // chart.AxisX.NumberFormat.IsLinkedToSource = false;
+
         // Save the document to a DOCX file.
-        doc.Save("AxisNumberFormat.docx");
+        doc.Save("FormattedChartAxis.docx");
     }
 }

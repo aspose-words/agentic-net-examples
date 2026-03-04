@@ -7,25 +7,29 @@ class Program
     static void Main()
     {
         // Load an existing DOCX document.
-        Document doc = new Document("InputDocument.docx");
+        Document doc = new Document("Input.docx");
 
-        // Get a form field by its zero‑based index.
-        // Returns null if the index is out of range.
+        // ----- Retrieve a form field by index -----
+        // The collection is zero‑based; negative indexes count from the end.
         FormField fieldByIndex = doc.Range.FormFields[0];
         if (fieldByIndex != null)
         {
-            Console.WriteLine($"Field at index 0: Name = {fieldByIndex.Name}, Result = {fieldByIndex.Result}");
+            Console.WriteLine($"Field at index 0:");
+            Console.WriteLine($"  Name : {fieldByIndex.Name}");
+            Console.WriteLine($"  Type : {fieldByIndex.Type}");
         }
 
-        // Get a form field by its bookmark (field) name.
-        // Returns null if a field with the specified name does not exist.
-        FormField fieldByName = doc.Range.FormFields["MyComboBox"];
+        // ----- Retrieve a form field by name (bookmark name) -----
+        // The name lookup is case‑insensitive.
+        FormField fieldByName = doc.Range.FormFields["MyCheckBox"];
         if (fieldByName != null)
         {
-            Console.WriteLine($"Field named 'MyComboBox': Type = {fieldByName.Type}, Result = {fieldByName.Result}");
+            Console.WriteLine($"Field with name 'MyCheckBox':");
+            Console.WriteLine($"  Name : {fieldByName.Name}");
+            Console.WriteLine($"  Type : {fieldByName.Type}");
         }
 
-        // Optionally save the document (e.g., after modifications).
-        doc.Save("OutputDocument.docx");
+        // Save the document if any changes were made.
+        doc.Save("Output.docx");
     }
 }

@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
@@ -8,51 +8,53 @@ class FontDemo
 {
     static void Main()
     {
-        // ---------- Create a new blank document ----------
-        Document doc = new Document();                     // create
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Use DocumentBuilder to add content and format fonts.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Set font properties for the first line ----------
+        // Set basic font properties.
         builder.Font.Name = "Courier New";
-        builder.Font.Size = 24;                           // points
-        builder.Font.Color = Color.Blue;
-        builder.Font.Bold = true;
-        builder.Font.Italic = true;
-        builder.Font.Underline = Underline.Double;
-        builder.Font.HighlightColor = Color.Yellow;
+        builder.Font.Size = 24;               // 24 points.
+        builder.Font.Bold = true;             // Bold text.
+        builder.Font.Italic = true;           // Italic text.
+        builder.Font.Color = Color.DarkBlue;  // Font color.
+        builder.Font.Underline = Underline.Double; // Double underline.
+        builder.Font.HighlightColor = Color.Yellow; // Highlight.
 
-        builder.Writeln("Formatted text using Font properties.");
+        // Add a border around the text.
+        builder.Font.Border.Color = Color.Green;
+        builder.Font.Border.LineWidth = 1.5;
+        builder.Font.Border.LineStyle = LineStyle.DashDotStroker;
 
-        // ---------- Change font properties for the second line ----------
-        builder.Font.Name = "Arial";
-        builder.Font.Size = 18;
-        builder.Font.Color = Color.DarkGreen;
-        builder.Font.Bold = false;
-        builder.Font.Italic = false;
-        builder.Font.Underline = Underline.None;
-        builder.Font.HighlightColor = Color.Transparent;
+        // Write the formatted text.
+        builder.Writeln("Formatted text with custom font settings.");
 
-        builder.Writeln("Another line with different font settings.");
+        // -----------------------------------------------------------------
+        // Demonstrate using FontSettings to add a custom font folder.
+        // -----------------------------------------------------------------
+        // Assume there is a folder "CustomFonts" containing TrueType fonts.
+        string customFontsFolder = Path.Combine(Environment.CurrentDirectory, "CustomFonts");
 
-        // ---------- Save the document ----------
-        string outPath = Path.Combine(Environment.CurrentDirectory, "FontDemo.docx");
-        doc.Save(outPath);                                 // save
-
-        // ---------- Load the saved document ----------
-        Document loadedDoc = new Document(outPath);        // load
-
-        // ---------- Modify the font of the first run ----------
-        Paragraph firstPara = loadedDoc.FirstSection.Body.FirstParagraph;
-        if (firstPara.Runs.Count > 0)
+        if (Directory.Exists(customFontsFolder))
         {
-            Font runFont = firstPara.Runs[0].Font;
-            runFont.Name = "Times New Roman";
-            runFont.Size = 28;
-            runFont.Color = Color.Red;
+            // Add the folder as an additional font source.
+            FontSettings.DefaultInstance.SetFontsFolder(customFontsFolder, recursive: true);
         }
 
-        // ---------- Save the modified document ----------
-        string modifiedPath = Path.Combine(Environment.CurrentDirectory, "FontDemo_Modified.docx");
-        loadedDoc.Save(modifiedPath);                     // save
+        // -----------------------------------------------------------------
+        // Demonstrate accessing FontInfos to embed fonts when saving.
+        // -----------------------------------------------------------------
+        // Enable embedding of all used TrueType fonts.
+        FontInfoCollection fontInfos = doc.FontInfos;
+        fontInfos.EmbedTrueTypeFonts = true;
+        fontInfos.EmbedSystemFonts = true;
+        fontInfos.SaveSubsetFonts = true; // Save only the glyphs that are used.
+
+        // Save the document to a DOCX file.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "FormattedDocument.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

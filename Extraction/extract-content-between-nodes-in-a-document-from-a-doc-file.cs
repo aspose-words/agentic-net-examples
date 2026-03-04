@@ -1,49 +1,58 @@
 using System;
+using System.Text;
 using Aspose.Words;
 
 class ExtractBetweenNodes
 {
     static void Main()
     {
-        // Load the source DOC file.
-        Document sourceDoc = new Document("Input.doc");
+        // Path to the source DOC file.
+        string sourcePath = @"C:\Docs\SourceDocument.doc";
 
-        // Assume the document contains two bookmarks that define the range to extract:
-        // "Start" marks the beginning and "End" marks the end.
-        Bookmark startBookmark = sourceDoc.Range.Bookmarks["Start"];
-        Bookmark endBookmark = sourceDoc.Range.Bookmarks["End"];
+        // Load the document (uses the Document(string) constructor – a provided load rule).
+        Document sourceDoc = new Document(sourcePath);
 
-        // Get the actual nodes that delimit the range.
-        Node startNode = startBookmark.BookmarkStart;
-        Node endNode = endBookmark.BookmarkEnd;
+        // Define the names of the bookmarks that mark the start and end of the region to extract.
+        // These bookmarks must exist in the source document.
+        const string startBookmarkName = "Start";
+        const string endBookmarkName   = "End";
 
-        // Create a new blank document that will hold the extracted fragment.
-        Document fragmentDoc = new Document();
+        // Locate the bookmark start nodes using XPath (SelectSingleNode is a provided method).
+        Node startNode = sourceDoc.SelectSingleNode($"//BookmarkStart[@Name='{startBookmarkName}']");
+        Node endNode   = sourceDoc.SelectSingleNode($"//BookmarkStart[@Name='{endBookmarkName}']");
 
-        // Use NodeImporter to copy nodes from the source document to the fragment
-        // while preserving the original formatting.
-        NodeImporter importer = new NodeImporter(sourceDoc, fragmentDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // Walk through the sibling nodes that lie between the start and end bookmarks.
-        // Exclude the bookmark nodes themselves.
-        Node current = startNode.NextSibling;
-        while (current != null && current != endNode)
+        if (startNode == null || endNode == null)
         {
-            // Import the node into the fragment document.
-            Node importedNode = importer.ImportNode(current, true);
-            // Append the imported node to the body of the fragment document.
-            fragmentDoc.FirstSection.Body.AppendChild(importedNode);
-            // Move to the next sibling.
-            current = current.NextSibling;
+            Console.WriteLine("One or both bookmarks were not found.");
+            return;
         }
 
-        // The extracted text is now available via the fragment's Range.Text property.
-        string extractedText = fragmentDoc.Range.Text.Trim();
+        // Accumulate the text that lies between the two bookmark nodes.
+        StringBuilder extractedText = new StringBuilder();
 
-        Console.WriteLine("Extracted text between bookmarks:");
-        Console.WriteLine(extractedText);
+        // Start with the node immediately after the start bookmark.
+        // NextPreOrder requires the root node of the traversal (the document).
+        Node curNode = startNode.NextPreOrder(sourceDoc);
 
-        // Optionally, save the extracted fragment as a separate DOCX file.
-        fragmentDoc.Save("ExtractedFragment.docx");
+        // Walk the document tree until we reach the end bookmark.
+        while (curNode != null && curNode != endNode)
+        {
+            // GetText returns the text of the node and its children.
+            extractedText.Append(curNode.GetText());
+            curNode = curNode.NextPreOrder(sourceDoc);
+        }
+
+        // Create a new blank document (uses the Document() constructor – a provided create rule).
+        Document resultDoc = new Document();
+
+        // Use DocumentBuilder to insert the extracted text into the new document.
+        DocumentBuilder builder = new DocumentBuilder(resultDoc);
+        builder.Writeln(extractedText.ToString().Trim());
+
+        // Save the result (uses the Save(string) method – a provided save rule).
+        string resultPath = @"C:\Docs\ExtractedContent.docx";
+        resultDoc.Save(resultPath);
+
+        Console.WriteLine($"Extracted content saved to: {resultPath}");
     }
 }

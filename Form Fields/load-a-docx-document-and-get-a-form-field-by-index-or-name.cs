@@ -2,41 +2,59 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class FormFieldAccessExample
 {
     static void Main()
     {
-        // Load an existing DOCX document.
-        Document doc = new Document("Input.docx");
+        // Path to the source DOCX file that contains form fields.
+        string inputPath = @"C:\Docs\InputFormFields.docx";
 
-        // ----- Access a form field by index -----
-        // The indexer is zero‑based; negative values count from the end.
-        FormField fieldByIndex = doc.Range.FormFields[0]; // first field
+        // Load the document from the file system.
+        Document doc = new Document(inputPath);
+
+        // Access the collection of form fields in the whole document.
+        FormFieldCollection formFields = doc.Range.FormFields;
+
+        // ----- Retrieve a form field by zero‑based index -----
+        // Example: get the first form field (index 0).
+        FormField fieldByIndex = formFields[0];
         if (fieldByIndex != null)
         {
-            Console.WriteLine($"Field at index 0: Name = \"{fieldByIndex.Name}\", Type = {fieldByIndex.Type}");
-        }
-
-        // Example of using a negative index to get the last field.
-        FormField lastField = doc.Range.FormFields[-1];
-        if (lastField != null)
-        {
-            Console.WriteLine($"Last field (index -1): Name = \"{lastField.Name}\", Type = {lastField.Type}");
-        }
-
-        // ----- Access a form field by name -----
-        // The name lookup is case‑insensitive.
-        FormField fieldByName = doc.Range.FormFields["MyCheckBox"];
-        if (fieldByName != null)
-        {
-            Console.WriteLine($"Field named \"MyCheckBox\": Index = (unknown), Type = {fieldByName.Type}");
+            Console.WriteLine("Field by index:");
+            Console.WriteLine($"  Name   : {fieldByIndex.Name}");
+            Console.WriteLine($"  Type   : {fieldByIndex.Type}");
+            Console.WriteLine($"  Result : {fieldByIndex.Result}");
         }
         else
         {
-            Console.WriteLine("Form field \"MyCheckBox\" not found.");
+            Console.WriteLine("No form field found at the specified index.");
         }
 
-        // Save the document if any changes were made (optional).
-        doc.Save("Output.docx");
+        // ----- Retrieve a form field by its bookmark/name -----
+        // Example: get a field named "MyComboBox".
+        string fieldName = "MyComboBox";
+        FormField fieldByName = formFields[fieldName];
+        if (fieldByName != null)
+        {
+            Console.WriteLine("\nField by name:");
+            Console.WriteLine($"  Name   : {fieldByName.Name}");
+            Console.WriteLine($"  Type   : {fieldByName.Type}");
+            Console.WriteLine($"  Result : {fieldByName.Result}");
+        }
+        else
+        {
+            Console.WriteLine($"\nForm field with name \"{fieldName}\" not found.");
+        }
+
+        // Optionally, modify a field (e.g., change the result of a text input field).
+        if (fieldByName != null && fieldByName.Type == FieldType.FieldFormTextInput)
+        {
+            fieldByName.Result = "New value set by code";
+        }
+
+        // Save the modified document to a new file.
+        string outputPath = @"C:\Docs\OutputFormFields.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"\nDocument saved to: {outputPath}");
     }
 }

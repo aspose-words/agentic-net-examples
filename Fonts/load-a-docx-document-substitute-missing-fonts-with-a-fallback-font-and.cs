@@ -3,15 +3,13 @@ using Aspose.Words;
 using Aspose.Words.Fonts;
 using Aspose.Words.Saving;
 
-class Program
+class FontFallbackToPdf
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\SourceDocument.docx";
-
-        // Path where the resulting PDF will be saved.
-        string outputPath = @"C:\Docs\ResultDocument.pdf";
+        // Paths to the source DOCX and the destination PDF.
+        string inputPath = "input.docx";
+        string outputPath = "output.pdf";
 
         // Load the DOCX document.
         Document doc = new Document(inputPath);
@@ -21,16 +19,14 @@ class Program
         fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial";
         fontSettings.SubstitutionSettings.FontInfoSubstitution.Enabled = true;
 
-        // Preserve original font metrics after substitution.
-        doc.LayoutOptions.KeepOriginalFontMetrics = true;
-
         // Apply the font settings to the document.
         doc.FontSettings = fontSettings;
 
-        // Create PDF save options (default settings are sufficient for this task).
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Preserve original font metrics after substitution.
+        doc.LayoutOptions.KeepOriginalFontMetrics = true;
 
-        // Save the document as PDF, applying the font fallback settings.
+        // Save the document as PDF using PdfSaveOptions (no special options needed here).
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
         doc.Save(outputPath, pdfOptions);
     }
 }

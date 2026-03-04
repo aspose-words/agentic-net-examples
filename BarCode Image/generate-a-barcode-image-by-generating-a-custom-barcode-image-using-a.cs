@@ -1,40 +1,35 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class GenerateBarcodeDoc
+class GenerateBarcode
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define barcode parameters – here we generate a QR code.
-        BarcodeParameters barcodeParams = new BarcodeParameters
-        {
-            BarcodeType = "QR",
-            BarcodeValue = "ABC123",
-            BackgroundColor = "0xF8BD69",
-            ForegroundColor = "0xB5413B",
-            ErrorCorrectionLevel = "3",
-            ScalingFactor = "250",
-            SymbolHeight = "1000",
-            SymbolRotation = "0"
-        };
+        // Insert a MERGEBARCODE field that will generate a QR code.
+        FieldMergeBarcode barcodeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
 
-        // Generate the barcode image using the built‑in barcode generator.
-        // The GetBarcodeImage method returns a stream containing the image data.
-        using (Stream imgStream = doc.FieldOptions.BarcodeGenerator.GetBarcodeImage(barcodeParams))
-        {
-            // Insert the generated image into the document at the current cursor position.
-            builder.InsertImage(imgStream);
-        }
+        // Set the barcode type and the value to encode.
+        barcodeField.BarcodeType = "QR";
+        barcodeField.BarcodeValue = "ABC123";
 
-        // Save the document to a DOCX file.
-        doc.Save("GeneratedBarcode.docx");
+        // Optional: customize colors and other appearance settings.
+        // All these properties are strings, so we provide the values as string literals.
+        barcodeField.BackgroundColor = "F8BD69";      // Background color (hex RGB without '#').
+        barcodeField.ForegroundColor = "B5413B";      // Foreground (bars) color.
+        barcodeField.ErrorCorrectionLevel = "3";      // QR error correction level (0‑3).
+        barcodeField.ScalingFactor = "250";           // Scale the symbol (percentage).
+        barcodeField.SymbolHeight = "1000";           // Height in TWIPS (1/1440 inch).
+        barcodeField.SymbolRotation = "0";            // No rotation.
+
+        // Force the field to update so the barcode image is generated.
+        barcodeField.Update();
+
+        // Save the document containing the generated barcode.
+        doc.Save("BarcodeDocument.docx");
     }
 }

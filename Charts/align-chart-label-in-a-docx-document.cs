@@ -1,17 +1,17 @@
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using System.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the document.
+        // Insert a column chart.
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
@@ -29,6 +29,6 @@ class Program
         yAxis.TickLabels.Font.Color = Color.Blue;
 
         // Save the document.
-        doc.Save("AlignedChartLabel.docx");
+        doc.Save("AlignedChartLabels.docx");
     }
 }

@@ -1,38 +1,33 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
+using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Create a new document and a DocumentBuilder to edit it.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set up barcode parameters for a QR code.
-        BarcodeParameters barcodeParameters = new BarcodeParameters
-        {
-            BarcodeType = "QR",
-            BarcodeValue = "ABC123",
-            BackgroundColor = "0xF8BD69",
-            ForegroundColor = "0xB5413B",
-            ErrorCorrectionLevel = "3",
-            ScalingFactor = "250",
-            SymbolHeight = "1000",
-            SymbolRotation = "0"
-        };
+        // Insert a MERGEBARCODE field that will render a QR code.
+        FieldMergeBarcode barcodeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+        barcodeField.BarcodeType = "QR";               // QR code type.
+        barcodeField.BarcodeValue = "ABC123";          // Data to encode.
 
-        // Generate the barcode image using the built‑in barcode generator.
-        using (Stream img = doc.FieldOptions.BarcodeGenerator.GetBarcodeImage(barcodeParameters))
-        {
-            // Insert the generated image into the document.
-            img.Position = 0;
-            builder.InsertImage(img);
-        }
+        // Optional visual customizations.
+        barcodeField.BackgroundColor = "0xF8BD69";
+        barcodeField.ForegroundColor = "0xB5413B";
+        barcodeField.ErrorCorrectionLevel = "3";
+        barcodeField.ScalingFactor = "250";
+        barcodeField.SymbolHeight = "1000";
+        barcodeField.SymbolRotation = "0";
+
+        // Force the field to calculate and embed the barcode image.
+        barcodeField.Update();
 
         // Save the resulting document as a PDF file.
-        doc.Save("BarcodeOutput.pdf");
+        doc.Save("BarcodeOutput.pdf", SaveFormat.Pdf);
     }
 }

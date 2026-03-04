@@ -9,10 +9,8 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank Word document.
         Document doc = new Document();
-
-        // Add some simple content.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello, this is a DOCM document sent via email.");
 
@@ -20,13 +18,13 @@ class Program
         using (MemoryStream docStream = new MemoryStream())
         {
             doc.Save(docStream, SaveFormat.Docm);
-            docStream.Position = 0; // Reset stream for reading.
+            docStream.Position = 0; // Reset stream position for reading.
 
-            // Prepare the email message.
+            // Build the email message.
             MailMessage message = new MailMessage();
             message.From = new MailAddress("sender@example.com");
             message.To.Add("recipient@example.com");
-            message.Subject = "DOCM Document";
+            message.Subject = "Aspose.Words DOCM Email";
             message.Body = "Please find the attached DOCM document.";
 
             // Attach the DOCM document from the memory stream.
@@ -36,12 +34,11 @@ class Program
                 "application/vnd.ms-word.document.macroEnabled.12");
             message.Attachments.Add(attachment);
 
-            // Configure the SMTP client (replace with real server details).
+            // Configure and send the email using SmtpClient.
             using (SmtpClient client = new SmtpClient("smtp.example.com", 587))
             {
                 client.Credentials = new NetworkCredential("username", "password");
                 client.EnableSsl = true;
-
                 client.Send(message);
             }
         }

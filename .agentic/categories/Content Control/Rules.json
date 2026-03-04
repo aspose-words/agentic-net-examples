@@ -1,0 +1,24 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Range rules": [
+        "Always ensure the node indices are within the document range to avoid null reference exceptions."
+      ],
+      "Loading rules": [
+        "Instantiate LoadOptions with the default constructor and set the Password property instead of using a non‑existent constructor overload.",
+        "Load WORDML using LoadOptions with LoadFormat.WordML.",
+        "Add the required using directive for Aspose.Words.Loading (for LoadOptions)."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Remove references to the Shape class when working with plain‑text (TXT) documents, because Shape belongs to Aspose.Words.Drawing and is not applicable here.",
+        "If you need to keep Shape handling for other document types, add `using Aspose.Words.Drawing;` and keep the Shape check, but for TXT examples the simpler check (Paragraph || Run) is sufficient."
+      ],
+      "Watermark rules": [
+        "Remove any incorrect `using` directive that references the `Watermark` type; it is not a namespace.",
+        "Use the `Document.Watermark` property to access watermark functionality.",
+        "Pass both the watermark text and a `TextWatermarkOptions` instance to `SetText` for custom formatting."
+      ]
+    }
+  }
+}

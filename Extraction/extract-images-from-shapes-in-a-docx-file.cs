@@ -4,19 +4,23 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class ExtractImagesFromShapes
+class ImageExtractor
 {
-    static void Main()
+    // Extracts all images from shapes in a DOCX file and saves them to the specified folder.
+    public static void ExtractImages(string docxPath, string outputFolder)
     {
-        // Load the DOCX document.
-        Document doc = new Document("Input.docx");
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputFolder);
+
+        // Load the Word document.
+        Document doc = new Document(docxPath);
 
         // Get all shape nodes in the document (including those inside groups).
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
 
-        // Iterate through each shape and extract the image if it has one.
+        // Iterate through each shape and process those that contain an image.
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage)
@@ -25,15 +29,24 @@ class ExtractImagesFromShapes
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
 
                 // Build the output file name.
-                string outputFileName = $"ExtractedImage_{imageIndex}{extension}";
+                string imageFileName = Path.Combine(outputFolder, $"ExtractedImage_{imageIndex}{extension}");
 
                 // Save the image data to the file system.
-                shape.ImageData.Save(outputFileName);
+                shape.ImageData.Save(imageFileName);
 
                 imageIndex++;
             }
         }
 
-        Console.WriteLine($"Extracted {imageIndex} image(s) from the document.");
+        Console.WriteLine($"Extracted {imageIndex} image(s) to \"{outputFolder}\".");
+    }
+
+    // Example usage.
+    static void Main()
+    {
+        string inputDocx = @"C:\Docs\Sample.docx";
+        string outputDir = @"C:\Docs\ExtractedImages";
+
+        ExtractImages(inputDocx, outputDir);
     }
 }

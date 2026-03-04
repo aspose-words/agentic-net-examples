@@ -1,31 +1,38 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class InsertFloatingImageExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path to the image that will be inserted.
-        string imagePath = @"C:\Images\Sample.jpg";
+        // Path to the image file to be inserted.
+        string imagePath = @"C:\Images\SampleImage.jpg";
 
-        // Insert a floating image.
-        // Horizontal position: 100 points from the left margin.
-        // Vertical position:   150 points from the top margin.
-        // Size:                200 points wide, 150 points high.
-        // Wrap type:           Square (text wraps around the image).
+        // Desired position (in points) relative to the page margins.
+        double left = 100;   // distance from the left margin
+        double top = 150;    // distance from the top margin
+
+        // Desired size of the image (in points).
+        double width = 200;
+        double height = 120;
+
+        // Insert the image as a floating shape with the specified position, size and wrap type.
         Shape imageShape = builder.InsertImage(
             imagePath,
-            RelativeHorizontalPosition.Margin, 100,
-            RelativeVerticalPosition.Margin, 150,
-            200, 150,
+            RelativeHorizontalPosition.Margin, left,
+            RelativeVerticalPosition.Margin, top,
+            width, height,
             WrapType.Square);
 
-        // Example of additional settings (optional).
-        imageShape.BehindText = false; // place the image in front of the text.
+        // Optional: adjust additional layout properties.
+        imageShape.BehindText = false;                     // place image in front of text
+        imageShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
+        imageShape.RelativeVerticalPosition = RelativeVerticalPosition.Margin;
 
         // Save the document to a file.
         doc.Save(@"C:\Output\FloatingImage.docx");

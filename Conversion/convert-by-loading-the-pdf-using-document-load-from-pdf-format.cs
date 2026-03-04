@@ -9,16 +9,14 @@ class Program
         // Path to the source PDF file.
         string pdfPath = "input.pdf";
 
-        // Create PDF load options (default settings).
+        // Create PdfLoadOptions – you can customize options here if needed.
         PdfLoadOptions loadOptions = new PdfLoadOptions();
 
-        // Load the PDF into an Aspose.Words Document object.
+        // Load the PDF document into an Aspose.Words Document object.
         Document doc = new Document(pdfPath, loadOptions);
 
-        // Example usage: write the extracted text to the console.
-        Console.WriteLine(doc.GetText());
-
-        // Optional: save the document in another format, e.g., DOCX.
-        // doc.Save("output.docx");
+        // Example: save the loaded document as a DOCX file.
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

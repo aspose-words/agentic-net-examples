@@ -1,21 +1,20 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Input DOC file path
-        string inputPath = "Input.doc";
+        // Path to the source DOC file.
+        string inputFile = "input.doc";
 
-        // Desired output MHTML file path
-        string outputPath = "Output.mhtml";
+        // Path where the MHTML file will be saved.
+        string outputFile = "output.mht";
 
-        // Load the DOC document from the file system
-        Document doc = new Document(inputPath);
+        // Load the DOC document from the file system.
+        Document doc = new Document(inputFile);
 
-        // Save the document in MHTML format using the SaveFormat enumeration
-        doc.Save(outputPath, SaveFormat.Mhtml);
+        // Save the loaded document in MHTML (Web archive) format.
+        doc.Save(outputFile, SaveFormat.Mhtml);
     }
 }

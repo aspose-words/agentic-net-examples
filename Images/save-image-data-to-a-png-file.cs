@@ -1,27 +1,39 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class SaveImageToPng
 {
     static void Main()
     {
-        // Load a document that contains images.
-        Document doc = new Document("Images.docx");
+        // Path to the source document that contains images.
+        string docsDir = @"C:\Docs\";
+        string sourceFile = Path.Combine(docsDir, "Images.docx");
 
-        // Retrieve the first shape that actually holds an image.
-        Shape imageShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
-        if (imageShape == null || !imageShape.HasImage)
+        // Load the document.
+        Document doc = new Document(sourceFile);
+
+        // Find the first shape that has an image.
+        Shape imageShape = doc.GetChildNodes(NodeType.Shape, true)
+                              .Cast<Shape>()
+                              .FirstOrDefault(s => s.HasImage);
+
+        if (imageShape == null)
         {
             Console.WriteLine("No image found in the document.");
             return;
         }
 
-        // Save the image data to a PNG file using the ImageData.Save(string) method.
-        string outputFile = "ExtractedImage.png";
+        // Determine the appropriate file extension for the image type.
+        // For this task we force PNG regardless of the original format.
+        string outputFile = Path.Combine(docsDir, "ExtractedImage.png");
+
+        // Save the image data to a PNG file.
+        // ImageData.Save(string) automatically chooses the format based on the file extension.
         imageShape.ImageData.Save(outputFile);
 
-        Console.WriteLine($"Image successfully saved to: {outputFile}");
+        Console.WriteLine($"Image saved to: {outputFile}");
     }
 }

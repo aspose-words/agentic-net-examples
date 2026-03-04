@@ -1,23 +1,20 @@
 using System;
 using Aspose.Words;
 
-namespace AsposeWordsConversion
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Path to the source DOC file.
-            string inputFile = @"C:\Docs\SourceDocument.doc";
+        // Path to the source DOC file.
+        string inputFile = @"C:\Docs\Sample.doc";
 
-            // Path where the HTML output will be saved.
-            string outputFile = @"C:\Docs\ConvertedDocument.html";
+        // Path where the HTML output will be saved.
+        string outputFile = @"C:\Docs\Sample.html";
 
-            // Load the existing DOC file.
-            Document doc = new Document(inputFile);
+        // Load the DOC document from the file system.
+        Document doc = new Document(inputFile);
 
-            // Save the document in HTML format.
-            doc.Save(outputFile, SaveFormat.Html);
-        }
+        // Save the loaded document as HTML.
+        doc.Save(outputFile, SaveFormat.Html);
     }
 }

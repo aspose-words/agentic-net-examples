@@ -2,61 +2,43 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-namespace AsposeWordsExample
+class ExtractBetweenParagraphs
 {
-    class Program
+    static void Main()
     {
-        /// <summary>
-        /// Extracts the combined text of paragraphs between the specified start and end indices
-        /// (inclusive) from a DOTM (macro‑enabled template) file.
-        /// </summary>
-        /// <param name="dotmPath">Full path to the .dotm file.</param>
-        /// <param name="startParagraphIndex">Zero‑based index of the first paragraph to include.</param>
-        /// <param name="endParagraphIndex">Zero‑based index of the last paragraph to include.</param>
-        /// <returns>Plain text containing the concatenated paragraph texts.</returns>
-        static string ExtractBetweenParagraphs(string dotmPath, int startParagraphIndex, int endParagraphIndex)
+        // Load the DOTM (macro-enabled template) file.
+        // The Document constructor automatically detects the format.
+        Document doc = new Document("Template.dotm");
+
+        // Retrieve all paragraph nodes in the document (including those in headers/footers if needed).
+        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+
+        // Define the start and end paragraph indices (zero‑based).
+        // Adjust these values to the desired range.
+        int startIndex = 2; // third paragraph
+        int endIndex = 5;   // sixth paragraph
+
+        // Validate indices.
+        if (startIndex < 0 || endIndex >= paragraphs.Count || startIndex > endIndex)
         {
-            // Load the DOTM file. The Document constructor automatically detects the format.
-            Document doc = new Document(dotmPath);
-
-            // Ensure the document has at least one section and body.
-            if (doc.FirstSection == null || doc.FirstSection.Body == null)
-                throw new InvalidOperationException("The document does not contain any body paragraphs.");
-
-            // Get the collection of all paragraphs in the main story.
-            ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
-
-            // Validate indices.
-            if (startParagraphIndex < 0 || endParagraphIndex < 0 ||
-                startParagraphIndex >= paragraphs.Count || endParagraphIndex >= paragraphs.Count ||
-                startParagraphIndex > endParagraphIndex)
-                throw new ArgumentOutOfRangeException("Invalid paragraph index range.");
-
-            // Accumulate the text of the selected paragraphs.
-            StringWriter writer = new StringWriter();
-            for (int i = startParagraphIndex; i <= endParagraphIndex; i++)
-            {
-                // GetText() returns the paragraph text including the trailing paragraph break.
-                writer.Write(paragraphs[i].GetText());
-            }
-
-            return writer.ToString();
+            Console.WriteLine("Invalid paragraph range specified.");
+            return;
         }
 
-        static void Main(string[] args)
+        // Accumulate the text of the selected paragraphs.
+        StringWriter extractedText = new StringWriter();
+        for (int i = startIndex; i <= endIndex; i++)
         {
-            // Example usage:
-            string dotmFile = @"C:\Docs\Template.dotm";
-
-            // Extract paragraphs 2 through 5 (zero‑based indices 1 to 4).
-            string extractedText = ExtractBetweenParagraphs(dotmFile, 1, 4);
-
-            // Output the result to console or save to a file.
-            Console.WriteLine("Extracted Text:");
-            Console.WriteLine(extractedText);
-
-            // Optionally, save the extracted text to a plain‑text file.
-            File.WriteAllText(@"C:\Docs\ExtractedContent.txt", extractedText);
+            Paragraph para = (Paragraph)paragraphs[i];
+            // GetText() returns the paragraph text including the end‑of‑paragraph marker.
+            extractedText.Write(para.GetText());
         }
+
+        // Output the extracted content to the console.
+        Console.WriteLine("Extracted text between paragraphs {0} and {1}:", startIndex + 1, endIndex + 1);
+        Console.WriteLine(extractedText.ToString());
+
+        // Optionally, save the extracted content to a plain‑text file.
+        File.WriteAllText("ExtractedContent.txt", extractedText.ToString());
     }
 }

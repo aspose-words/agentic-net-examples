@@ -1,54 +1,46 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
-class FontSettingsExample
+class Program
 {
     static void Main()
     {
-        // Define output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(artifactsDir);
-
         // Create a new blank document.
         Document doc = new Document();
-
-        // Access the document builder to insert text.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // 1. Set default font for the whole document (applies to new styles).
-        // -----------------------------------------------------------------
-        doc.Styles.DefaultFont.Name = "Arial";
-        doc.Styles.DefaultFont.Size = 12;
+        // Write a line using a font that is guaranteed to exist.
+        builder.Font.Name = "Arial";
+        builder.Font.Size = 14;
+        builder.Writeln("This line uses the Arial font.");
 
-        // -----------------------------------------------------------------
-        // 2. Configure font substitution rules.
-        //    If a font is missing, substitute it with the listed alternatives.
-        // -----------------------------------------------------------------
+        // Write a line using a font that is likely missing on the system.
+        builder.Font.Name = "Amethysta";
+        builder.Font.Size = 14;
+        builder.Writeln("This line uses the Amethysta font, which will be substituted.");
+
+        // ------------------------------------------------------------
+        // Configure document‑wide font settings.
+        // ------------------------------------------------------------
         FontSettings fontSettings = new FontSettings();
 
-        // Example: substitute the unavailable font "Amethysta" with "Arvo" then "Courier New".
+        // Example: add a custom folder that contains additional fonts.
+        // (Uncomment and set the correct path if you have a folder with fonts.)
+        // FolderFontSource customFolder = new FolderFontSource(@"C:\MyFonts", true);
+        // fontSettings.SetFontsSources(new FontSourceBase[] { customFolder });
+
+        // Define a substitution rule: if "Amethysta" is unavailable,
+        // first try "Arvo", then "Courier New".
         fontSettings.SubstitutionSettings.TableSubstitution.SetSubstitutes(
             "Amethysta", new[] { "Arvo", "Courier New" });
 
         // Assign the configured FontSettings to the document.
         doc.FontSettings = fontSettings;
 
-        // -----------------------------------------------------------------
-        // 3. Write text using both available and unavailable fonts.
-        // -----------------------------------------------------------------
-        builder.Font.Name = "Arial";
-        builder.Writeln("This line uses the default Arial font.");
-
-        builder.Font.Name = "Amethysta"; // This font is likely missing.
-        builder.Writeln("This line uses Amethysta, which will be substituted.");
-
-        // -----------------------------------------------------------------
-        // 4. Save the document as DOCX.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(artifactsDir, "FontSettingsExample.docx");
-        doc.Save(outputPath);
+        // ------------------------------------------------------------
+        // Save the document to a DOCX file.
+        // ------------------------------------------------------------
+        doc.Save("FontSettingsExample.docx");
     }
 }

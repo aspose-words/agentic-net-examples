@@ -3,25 +3,31 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class ReplaceDocumentVariables
 {
     static void Main()
     {
-        // Load the DOCX template.
-        Document doc = new Document("Template.docx");
+        // Load the DOCX document.
+        Document doc = new Document("Input.docx");
 
-        // Iterate through all document variables.
-        foreach (KeyValuePair<string, string> variable in doc.Variables)
+        // Example: add some variables to the document (if they are not already present).
+        // In a real scenario the variables may already exist in the document.
+        doc.Variables.Add("FullName", "John Doe");
+        doc.Variables.Add("Date", DateTime.Today.ToShortDateString());
+
+        // Iterate through all variables and replace placeholders in the document body.
+        // Placeholders are expected to be in the format {{VariableName}}.
+        foreach (KeyValuePair<string, string> entry in doc.Variables)
         {
-            // Define the placeholder format used in the document.
-            // Example: ${VariableName}
-            string placeholder = "${" + variable.Key + "}";
+            string placeholder = $"{{{{{entry.Key}}}}}"; // e.g., {{FullName}}
+            string replacement = entry.Value ?? string.Empty;
 
-            // Replace each placeholder with its corresponding variable value.
-            doc.Range.Replace(placeholder, variable.Value);
+            // Perform a case‑insensitive replace of the placeholder with the variable value.
+            // No special options are required for this simple replacement.
+            doc.Range.Replace(placeholder, replacement);
         }
 
-        // Save the updated document.
-        doc.Save("Result.docx");
+        // Save the modified document.
+        doc.Save("Output.docx");
     }
 }

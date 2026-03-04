@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
@@ -7,45 +6,29 @@ class LoadSystemFontsExample
 {
     static void Main()
     {
-        // Load an existing DOCX document.
-        Document doc = new Document("InputDocument.docx");
+        // Path to the source DOCX document.
+        string inputPath = @"C:\Docs\Sample.docx";
 
-        // Ensure the document has FontSettings (creates a default instance if null).
-        if (doc.FontSettings == null)
-            doc.FontSettings = new FontSettings();
+        // Path where the processed document will be saved.
+        string outputPath = @"C:\Docs\Sample_WithSystemFonts.pdf";
 
-        // Retrieve the system font source that represents all TrueType fonts installed on the OS.
-        FontSourceBase[] sources = doc.FontSettings.GetFontsSources();
-        SystemFontSource systemFontSource = null;
+        // Load the document.
+        Document doc = new Document(inputPath);
 
-        // Find the SystemFontSource among the existing sources.
-        foreach (FontSourceBase source in sources)
-        {
-            if (source is SystemFontSource)
-            {
-                systemFontSource = (SystemFontSource)source;
-                break;
-            }
-        }
+        // Create a new FontSettings instance.
+        FontSettings fontSettings = new FontSettings();
 
-        // If for some reason the system source is missing, create and add it.
-        if (systemFontSource == null)
-        {
-            systemFontSource = new SystemFontSource();
-            doc.FontSettings.SetFontsSources(new FontSourceBase[] { systemFontSource });
-        }
+        // Retrieve all system font folders.
+        string[] systemFontFolders = SystemFontSource.GetSystemFontFolders();
 
-        // Example: list all available system fonts to the console.
-        foreach (PhysicalFontInfo fontInfo in systemFontSource.GetAvailableFonts())
-        {
-            Console.WriteLine($"FontFamilyName: {fontInfo.FontFamilyName}");
-            Console.WriteLine($"FullFontName  : {fontInfo.FullFontName}");
-            Console.WriteLine($"Version       : {fontInfo.Version}");
-            Console.WriteLine($"FilePath      : {fontInfo.FilePath}");
-            Console.WriteLine();
-        }
+        // Configure the FontSettings to use the system font folders.
+        // The second argument (true) enables recursive scanning of subfolders.
+        fontSettings.SetFontsFolders(systemFontFolders, true);
 
-        // Save the document (fonts are now loaded from system folders).
-        doc.Save("OutputDocument.docx");
+        // Assign the configured FontSettings to the document.
+        doc.FontSettings = fontSettings;
+
+        // Save the document (PDF format in this example).
+        doc.Save(outputPath);
     }
 }

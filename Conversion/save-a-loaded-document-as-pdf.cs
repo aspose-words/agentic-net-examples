@@ -1,14 +1,20 @@
 using System;
 using Aspose.Words;
 
-class Program
+class SaveDocumentAsPdf
 {
     static void Main()
     {
-        // Load an existing Word document from the file system.
-        Document doc = new Document("input.docx");
+        // Path to the folder that contains the input document.
+        // Adjust this path as needed for your environment.
+        string dataDir = @"C:\MyDocuments\";
 
-        // Save the loaded document as PDF. The format is inferred from the .pdf extension.
-        doc.Save("output.pdf");
+        // Load an existing Word document (e.g., DOCX) from the file system.
+        // The Document constructor automatically detects the format.
+        Document doc = new Document(dataDir + "input.docx");
+
+        // Save the loaded document as PDF.
+        // The Save method determines the format from the file extension.
+        doc.Save(dataDir + "output.pdf");
     }
 }

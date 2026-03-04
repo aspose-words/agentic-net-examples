@@ -1,5 +1,4 @@
 using System;
-using System.Data;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -7,42 +6,46 @@ class BarcodeExample
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and insert a MERGEBARCODE field (QR code).
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a MERGEBARCODE field that will be filled by mail merge.
-        // The field will generate a QR code.
+        // Insert the field and configure its properties.
         FieldMergeBarcode mergeBarcode = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
-        mergeBarcode.BarcodeType = "QR";
-        mergeBarcode.BarcodeValue = "MyQRCode";
+        mergeBarcode.BarcodeType = "QR";                     // QR code type
+        mergeBarcode.BarcodeValue = "ABC123";               // Data encoded in the QR code
+        mergeBarcode.BackgroundColor = "F8BD69";            // Background colour (hex string without 0x)
+        mergeBarcode.ForegroundColor = "B5413B";            // Foreground colour (hex string without 0x)
+        mergeBarcode.ErrorCorrectionLevel = "3";           // QR error‑correction level (as string)
+        mergeBarcode.ScalingFactor = "250";                // Scale 250 % (as string)
+        mergeBarcode.SymbolHeight = "1000";                // Height in TWIPS (as string)
+        mergeBarcode.SymbolRotation = "0";                 // No rotation (as string)
 
-        // Optional visual customizations – all properties are strings.
-        mergeBarcode.BackgroundColor = "F8BD69";      // Background color (hex RGB, without 0x).
-        mergeBarcode.ForegroundColor = "B5413B";      // Foreground (bars) color.
-        mergeBarcode.ErrorCorrectionLevel = "3";      // QR error correction level (0‑3).
-        mergeBarcode.ScalingFactor = "250";           // Scale to 250 %.
-        mergeBarcode.SymbolHeight = "1000";           // Height in TWIPS.
-        mergeBarcode.SymbolRotation = "0";            // No rotation.
+        builder.Writeln(); // Add a paragraph break after the barcode.
 
-        builder.Writeln(); // Add a paragraph break after the field.
+        // Update fields to render the barcode and save the document.
+        doc.UpdateFields();
+        doc.Save("BarcodeCreated.docx");
 
-        // Prepare a data source for mail merge.
-        DataTable table = new DataTable("Barcodes");
-        table.Columns.Add("MyQRCode");
-        table.Rows.Add("ABC123");
-        table.Rows.Add("DEF456");
+        // Load the previously saved document and add another barcode.
+        Document loadedDoc = new Document("BarcodeCreated.docx");
+        DocumentBuilder loadedBuilder = new DocumentBuilder(loadedDoc);
 
-        // Perform mail merge – each row creates a new page with a DISPLAYBARCODE field.
-        doc.MailMerge.Execute(table);
+        loadedBuilder.Writeln("Additional barcode:");
 
-        // Save the document that now contains barcode fields.
-        doc.Save("BarcodeMerge.docx");
+        // Insert a second MERGEBARCODE field with a different value.
+        FieldMergeBarcode secondBarcode = (FieldMergeBarcode)loadedBuilder.InsertField(FieldType.FieldMergeBarcode, true);
+        secondBarcode.BarcodeType = "QR";
+        secondBarcode.BarcodeValue = "DEF456";
+        secondBarcode.BackgroundColor = "F8BD69";
+        secondBarcode.ForegroundColor = "B5413B";
+        secondBarcode.ErrorCorrectionLevel = "3";
+        secondBarcode.ScalingFactor = "250";
+        secondBarcode.SymbolHeight = "1000";
+        secondBarcode.SymbolRotation = "0";
 
-        // -----------------------------------------------------------------
-        // Load the previously saved document and update fields to render the barcodes.
-        Document loadedDoc = new Document("BarcodeMerge.docx");
-        loadedDoc.UpdateFields(); // Forces field calculation and image generation.
-        loadedDoc.Save("BarcodeMergedUpdated.docx");
+        // Render the new field and save the updated document.
+        loadedDoc.UpdateFields();
+        loadedDoc.Save("BarcodeLoaded.docx");
     }
 }

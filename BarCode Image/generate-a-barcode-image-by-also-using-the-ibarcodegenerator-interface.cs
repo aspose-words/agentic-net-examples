@@ -3,55 +3,43 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class CustomBarcodeGenerator : IBarcodeGenerator
+namespace BarcodeExample
 {
-    // Returns a simple 1x1 PNG image for any barcode request.
-    public Stream GetBarcodeImage(BarcodeParameters parameters)
+    // Simple implementation of IBarcodeGenerator.
+    // In a real scenario you would generate an actual barcode image.
+    public class CustomBarcodeGenerator : IBarcodeGenerator
     {
-        return GetPlaceholderImage();
-    }
-
-    // Returns a simple 1x1 PNG image for old‑fashioned barcode fields.
-    public Stream GetOldBarcodeImage(BarcodeParameters parameters)
-    {
-        return GetPlaceholderImage();
-    }
-
-    private Stream GetPlaceholderImage()
-    {
-        // Minimal PNG (1×1 transparent pixel) byte array.
-        byte[] png = new byte[]
+        // Generates an image for DISPLAYBARCODE fields.
+        public Stream GetBarcodeImage(BarcodeParameters parameters)
         {
-            137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,
-            0,0,0,1,0,0,0,1,8,6,0,0,0,31,21,196,
-            137,0,0,0,12,73,68,65,84,8,153,99,0,1,0,0,
-            5,0,1,13,10,2,0,0,0,0,73,69,78,68,174,66,
-            96,130
-        };
-        return new MemoryStream(png);
+            // Return an empty image stream as a placeholder.
+            // Replace this with actual barcode generation logic if needed.
+            return new MemoryStream();
+        }
+
+        // Generates an image for old‑fashioned BARCODE fields.
+        public Stream GetOldBarcodeImage(BarcodeParameters parameters)
+        {
+            // Return an empty image stream as a placeholder.
+            return new MemoryStream();
+        }
     }
-}
 
-class Program
-{
-    static void Main()
+    class Program
     {
-        // Path to the source DOCX containing barcode fields.
-        string inputPath = "Barcodes.docx";
+        static void Main()
+        {
+            // Load the DOCX document that contains barcode fields.
+            Document doc = new Document("InputDocument.docx");
 
-        // Path where the resulting PDF will be saved.
-        string outputPath = "Barcodes.pdf";
+            // Assign the custom barcode generator to the document.
+            doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
-        // Load the DOCX document.
-        Document doc = new Document(inputPath);
+            // Update all fields so that barcode fields are processed.
+            doc.UpdateFields();
 
-        // Assign the custom barcode generator to the document.
-        doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
-
-        // Update fields so that barcode images are generated.
-        doc.UpdateFields();
-
-        // Save the document as PDF.
-        doc.Save(outputPath, SaveFormat.Pdf);
+            // Save the result as a PDF file.
+            doc.Save("OutputDocument.pdf");
+        }
     }
 }

@@ -1,21 +1,27 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
-class Program
+namespace AsposeWordsDemo
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOCX file.
-        string sourcePath = @"C:\Docs\SourceDocument.docx";
+        static void Main()
+        {
+            // Path to the source DOCX file.
+            string sourcePath = Path.Combine("C:", "Data", "Source.docx");
 
-        // Load the DOCX document using the Document constructor that accepts a file name.
-        Document doc = new Document(sourcePath);
+            // Load the DOCX document using the Document constructor that accepts a file name.
+            Document doc = new Document(sourcePath);
 
-        // Example: output the total number of characters in the document.
-        Console.WriteLine($"Document loaded. Character count: {doc.GetText().Length}");
+            // Example operation: retrieve the plain text of the loaded document.
+            string documentText = doc.GetText();
+            Console.WriteLine("Document text:");
+            Console.WriteLine(documentText);
 
-        // Optional: save the loaded document to a new location.
-        string outputPath = @"C:\Docs\CopyDocument.docx";
-        doc.Save(outputPath);
+            // Optional: save the loaded document to another format (e.g., PDF).
+            string outputPath = Path.Combine("C:", "Data", "Output.pdf");
+            doc.Save(outputPath, SaveFormat.Pdf);
+        }
     }
 }

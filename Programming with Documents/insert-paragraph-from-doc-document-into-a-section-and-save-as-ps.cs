@@ -6,31 +6,37 @@ class InsertParagraphAndSaveAsPs
 {
     static void Main()
     {
-        // Load the source DOC document that contains the paragraph to copy.
+        // Load the source DOC document that contains the paragraph to be copied.
         Document srcDoc = new Document("Source.doc");
 
-        // Create a new blank destination document.
+        // Retrieve the first paragraph from the source document.
+        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
+
+        // Create a new (empty) destination document.
         Document dstDoc = new Document();
 
         // Create a new section and add it to the destination document.
         Section newSection = new Section(dstDoc);
         dstDoc.AppendChild(newSection);
 
-        // Every section must contain a body. Create it and attach to the section.
-        Body body = new Body(dstDoc);
-        newSection.AppendChild(body);
+        // Every section must contain a body; create and attach it.
+        Body newBody = new Body(dstDoc);
+        newSection.AppendChild(newBody);
 
-        // Import the first paragraph from the source document into the destination document.
-        // NodeImporter handles style and list translation between documents.
+        // Import the paragraph from the source document into the destination document.
         NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
-        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
         Paragraph importedParagraph = (Paragraph)importer.ImportNode(srcParagraph, true);
 
-        // Append the imported paragraph to the body of the new section.
-        body.AppendChild(importedParagraph);
+        // Append the imported paragraph to the new section's body.
+        newBody.AppendChild(importedParagraph);
 
-        // Save the resulting document as PostScript (PS) using default save options.
-        PsSaveOptions psOptions = new PsSaveOptions();
+        // Prepare PostScript save options.
+        PsSaveOptions psOptions = new PsSaveOptions
+        {
+            SaveFormat = SaveFormat.Ps
+        };
+
+        // Save the resulting document as a PostScript file.
         dstDoc.Save("Result.ps", psOptions);
     }
 }

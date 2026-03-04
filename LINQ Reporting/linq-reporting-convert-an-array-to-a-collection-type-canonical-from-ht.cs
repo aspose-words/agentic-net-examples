@@ -1,49 +1,51 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class Program
+public class Item
 {
-    static void Main()
-    {
-        // HTML template that uses LINQ Reporting Engine syntax.
-        // The <<foreach [items]>> tag expects a collection named "items".
-        string htmlTemplate = @"
-        <html><body>
-        <<foreach [items]>>
-        <p>Name: <<[Name]>></p>
-        <<endforeach>>
-        </body></html>";
+    public string Name { get; set; }
+}
 
-        // Load the HTML string into an Aspose.Words Document.
+public class Program
+{
+    public static void Main()
+    {
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert an HTML template that expects a collection named "items".
+        // The template uses the foreach tag to iterate over the collection.
+        string htmlTemplate = @"
+<p>Items list:</p>
+<<foreach [items]>>
+    <<[Name]>>
+<<endforeach>>
+";
         builder.InsertHtml(htmlTemplate);
 
-        // Create an array of data objects.
-        Person[] peopleArray = new[]
+        // Prepare the data source: an array of Item objects.
+        Item[] array = new Item[]
         {
-            new Person { Name = "Alice" },
-            new Person { Name = "Bob" },
-            new Person { Name = "Charlie" }
+            new Item { Name = "Apple" },
+            new Item { Name = "Banana" },
+            new Item { Name = "Cherry" }
         };
 
-        // Convert the array to a canonical collection type (List<T>) that the ReportingEngine can iterate.
-        List<Person> peopleList = new List<Person>(peopleArray);
+        // Convert the array to a List<T>, which is the canonical collection type
+        // recognized by the LINQ Reporting Engine.
+        List<Item> items = array.ToList();
 
-        // Build the report using the list as the data source.
+        // Build the report. The data source is an anonymous object that exposes the
+        // collection under the name "items" used in the template.
         ReportingEngine engine = new ReportingEngine();
-        // The third argument is the name used in the template to reference the collection.
-        engine.BuildReport(doc, peopleList, "items");
+        var dataSource = new { items = items };
+        engine.BuildReport(doc, dataSource);
 
-        // Save the populated document.
-        doc.Save("ReportFromHtml.docx");
-    }
-
-    // Simple data class used in the report.
-    public class Person
-    {
-        public string Name { get; set; }
+        // Save the resulting document.
+        doc.Save("ReportFromArray.docx");
     }
 }

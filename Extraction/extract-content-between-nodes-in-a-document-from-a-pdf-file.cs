@@ -1,35 +1,42 @@
-// Load a PDF file as an Aspose.Words document
-string pdfPath = @"C:\Input\sample.pdf";
-Aspose.Words.Document sourceDoc = new Aspose.Words.Document(pdfPath);
+using System;
+using Aspose.Words;
+using Aspose.Words.Saving;
 
-// Assume the PDF (now a Word document) contains two bookmarks named "Start" and "End"
-// that mark the beginning and the end of the region we want to extract.
-Aspose.Words.Bookmark startBookmark = sourceDoc.Range.Bookmarks["Start"];
-Aspose.Words.Bookmark endBookmark = sourceDoc.Range.Bookmarks["End"];
-
-// Validate that both bookmarks exist
-if (startBookmark == null || endBookmark == null)
-    throw new InvalidOperationException("Required bookmarks 'Start' and/or 'End' were not found.");
-
-// The content between the two bookmarks can be obtained by iterating the nodes
-// that lie after the start bookmark and before the end bookmark.
-Aspose.Words.Node startNode = startBookmark.BookmarkStart;
-Aspose.Words.Node endNode = endBookmark.BookmarkEnd;
-
-// Create a new empty document that will hold the extracted content.
-Aspose.Words.Document extractedDoc = new Aspose.Words.Document();
-Aspose.Words.DocumentBuilder builder = new Aspose.Words.DocumentBuilder(extractedDoc);
-
-// Move through the sibling nodes starting after the start bookmark.
-Aspose.Words.Node current = startNode.NextSibling;
-while (current != null && current != endNode)
+class ExtractBetweenNodes
 {
-    // Import the node into the new document to preserve formatting.
-    Aspose.Words.Node imported = extractedDoc.ImportNode(current, true);
-    builder.InsertNode(imported);
-    current = current.NextSibling;
-}
+    static void Main()
+    {
+        // Load the PDF file as a Word document.
+        Document pdfDoc = new Document("input.pdf");
 
-// Save the extracted portion as a separate DOCX file.
-string outputPath = @"C:\Output\extracted_content.docx";
-extractedDoc.Save(outputPath);
+        // Locate the start and end markers using XPath.
+        // Adjust the XPath expressions to match the actual markers in your PDF.
+        Node startNode = pdfDoc.SelectSingleNode("//Paragraph[contains(., 'START_MARKER')]");
+        Node endNode = pdfDoc.SelectSingleNode("//Paragraph[contains(., 'END_MARKER')]");
+
+        if (startNode == null || endNode == null)
+        {
+            Console.WriteLine("Start or end marker not found.");
+            return;
+        }
+
+        // Create a new empty document to hold the extracted content.
+        Document extractedDoc = new Document();
+
+        // Get the body of the new document where nodes will be inserted.
+        var targetBody = extractedDoc.FirstSection.Body;
+
+        // Iterate over the nodes that lie between the start and end markers (exclusive).
+        Node current = startNode.NextSibling;
+        while (current != null && !current.Equals(endNode))
+        {
+            // Import the node into the new document while preserving formatting.
+            Node importedNode = extractedDoc.ImportNode(current, true);
+            targetBody.AppendChild(importedNode);
+            current = current.NextSibling;
+        }
+
+        // Save the extracted portion to a new file.
+        extractedDoc.Save("extracted.docx");
+    }
+}

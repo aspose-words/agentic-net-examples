@@ -1,43 +1,57 @@
 using System;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ConvertDocxToMarkdown
+namespace AsposeWordsMarkdownConversion
 {
-    static void Main()
+    /// <summary>
+    /// Demonstrates how to convert a DOCX file to Markdown using custom <see cref="MarkdownSaveOptions"/>.
+    /// </summary>
+    public static class DocxToMarkdownConverter
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\InputDocument.docx";
-
-        // Path where the resulting Markdown file will be saved.
-        string outputPath = @"C:\Docs\OutputDocument.md";
-
-        // Load the DOCX document.
-        Document doc = new Document(inputPath);
-
-        // Configure the Markdown save options.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+        /// <summary>
+        /// Converts the specified DOCX document to a Markdown file applying custom save options.
+        /// </summary>
+        /// <param name="inputDocxPath">Full path to the source DOCX file.</param>
+        /// <param name="outputMarkdownPath">Full path where the resulting Markdown file will be saved.</param>
+        public static void Convert(string inputDocxPath, string outputMarkdownPath)
         {
-            // Embed images directly in the Markdown file as Base64 data URIs.
-            ExportImagesAsBase64 = true,
+            // Load the existing DOCX document.
+            Document doc = new Document(inputDocxPath);
 
-            // Export tables that cannot be represented in pure Markdown as raw HTML.
-            ExportAsHtml = MarkdownExportAsHtml.NonCompatibleTables,
+            // Create and configure Markdown save options.
+            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+            {
+                // Export images as Base64 strings embedded directly in the Markdown.
+                ExportImagesAsBase64 = true,
 
-            // Export OfficeMath objects as LaTeX markup.
-            OfficeMathExportMode = MarkdownOfficeMathExportMode.Latex,
+                // Export tables that cannot be represented in pure Markdown as raw HTML.
+                ExportAsHtml = MarkdownExportAsHtml.NonCompatibleTables,
 
-            // Export all links using reference style.
-            LinkExportMode = MarkdownLinkExportMode.Reference,
+                // Export OfficeMath objects as LaTeX (useful for Markdown processors that support LaTeX).
+                OfficeMathExportMode = MarkdownOfficeMathExportMode.Latex,
 
-            // Set the image resolution (relevant when images are saved as separate files).
-            ImageResolution = 300,
+                // Use UTF-8 encoding (default, but set explicitly for clarity).
+                Encoding = Encoding.UTF8,
 
-            // Explicitly set the save format to Markdown.
-            SaveFormat = SaveFormat.Markdown
-        };
+                // Enable pretty formatting for readability.
+                PrettyFormat = true
+            };
 
-        // Save the document as a Markdown file using the configured options.
-        doc.Save(outputPath, saveOptions);
+            // Save the document as Markdown using the configured options.
+            doc.Save(outputMarkdownPath, saveOptions);
+        }
+
+        // Example usage.
+        public static void Main()
+        {
+            string sourceDocx = @"C:\Docs\SampleDocument.docx";
+            string targetMd   = @"C:\Docs\SampleDocument.md";
+
+            Convert(sourceDocx, targetMd);
+
+            Console.WriteLine("Conversion completed successfully.");
+        }
     }
 }

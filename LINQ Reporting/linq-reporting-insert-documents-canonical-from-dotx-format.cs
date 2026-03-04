@@ -4,48 +4,38 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class Program
+namespace AsposeWordsReportingExample
 {
-    static void Main()
-    {
-        // Load the DOTX template (create + load lifecycle)
-        Document template = new Document("Template.dotx");
-
-        // Prepare a data source that will be referenced in the template.
-        // The template can use <<[ds.Title]>> and a foreach loop over ds.Items.
-        var dataSource = new
-        {
-            Title = "Quarterly Report",
-            Items = GetReportItems()
-        };
-
-        // Build the report using the ReportingEngine.
-        // The third parameter ("ds") is the name used inside the template to reference the data source.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, dataSource, "ds");
-
-        // Save the populated document (save lifecycle)
-        template.Save("QuarterlyReport.docx");
-    }
-
-    // Generates a collection of items using LINQ – this mimics a typical data retrieval scenario.
-    private static List<ReportItem> GetReportItems()
-    {
-        return Enumerable.Range(1, 5)
-                         .Select(i => new ReportItem
-                         {
-                             Name = $"Product {i}",
-                             Quantity = i * 10,
-                             Price = i * 2.5m
-                         })
-                         .ToList();
-    }
-
-    // Simple POCO that matches the fields used in the template.
+    // Simple data class that will be used as the data source for the report.
     public class ReportItem
     {
+        public int Id { get; set; }
         public string Name { get; set; }
-        public int Quantity { get; set; }
-        public decimal Price { get; set; }
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Load the DOTX template that contains the reporting tags.
+            // The template can reference the data source as <<[src.Id]>> and <<[src.Name]>>.
+            Document template = new Document("Template.dotx");
+
+            // Create a collection of data items using LINQ.
+            List<ReportItem> dataSource = Enumerable.Range(1, 5)
+                .Select(i => new ReportItem
+                {
+                    Id = i,
+                    Name = $"Item {i}"
+                })
+                .ToList();
+
+            // Build the report. The data source name "src" must match the name used in the template tags.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(template, dataSource, "src");
+
+            // Save the populated document.
+            template.Save("ReportResult.docx");
+        }
     }
 }

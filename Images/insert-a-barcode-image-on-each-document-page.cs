@@ -1,6 +1,7 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
+using Aspose.Words.Drawing;
 
 class InsertBarcodeOnEachPage
 {
@@ -10,27 +11,24 @@ class InsertBarcodeOnEachPage
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some sample content that spans multiple pages.
-        builder.Writeln("First page content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Third page content.");
-
-        // Move the builder to the primary header of the document.
-        // The header is shared by all pages in the section, so the barcode will appear on every page.
+        // Move the cursor to the primary header so the content appears on every page.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Insert a DISPLAYBARCODE field and configure its properties.
-        // This field renders the barcode as an image when the document is opened in Word.
+        // Insert a DISPLAYBARCODE field. The second argument (true) updates the field result immediately.
         FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        barcodeField.BarcodeType = "CODE39";          // Choose the barcode type.
-        barcodeField.BarcodeValue = "12345ABCDE";    // The data to encode.
-        barcodeField.AddStartStopChar = true;        // Add start/stop characters for CODE39.
 
-        // Optionally, you can set additional visual properties such as colors, scaling, etc.
-        // barcodeField.BackgroundColor = "0xFFFFFF";
-        // barcodeField.ForegroundColor = "0x000000";
+        // Configure the barcode properties.
+        barcodeField.BarcodeType = "QR";                     // Type of barcode (QR, CODE39, EAN13, etc.).
+        barcodeField.BarcodeValue = "ABC123";                // Data to encode.
+        barcodeField.BackgroundColor = "0xF8BD69";           // Optional background color.
+        barcodeField.ForegroundColor = "0xB5413B";           // Optional foreground color.
+        barcodeField.ErrorCorrectionLevel = "3";            // QR specific: error correction level.
+        barcodeField.ScalingFactor = "250";                 // Scale the symbol.
+        barcodeField.SymbolHeight = "1000";                 // Height in twips.
+        barcodeField.SymbolRotation = "0";                  // Rotation.
+
+        // Optionally, you can force an update of all fields in the document.
+        doc.UpdateFields();
 
         // Save the document.
         doc.Save("BarcodeOnEachPage.docx");

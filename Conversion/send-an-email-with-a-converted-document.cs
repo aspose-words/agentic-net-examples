@@ -11,73 +11,69 @@ namespace SendConvertedDocument
     {
         static void Main(string[] args)
         {
-            // TODO: replace the following placeholders with real values or read them from configuration.
-            string inputFilePath = "sample.docx";               // path to the source Word document
-            string smtpHost = "smtp.example.com";               // SMTP server
-            int smtpPort = 587;                                   // SMTP port (usually 25, 465 or 587)
-            string smtpUser = "user@example.com";               // SMTP username (optional)
-            string smtpPassword = "password";                   // SMTP password (optional)
-            string fromAddress = "sender@example.com";          // sender e‑mail address
-            string toAddress = "recipient@example.com";         // recipient e‑mail address
-            string subject = "Converted PDF Document";          // e‑mail subject
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Usage: SendConvertedDocument <inputFilePath> <recipientEmail>");
+                return;
+            }
 
-            var sender = new EmailSender();
-            sender.SendConvertedDocumentByEmail(
-                inputFilePath,
-                smtpHost,
-                smtpPort,
-                smtpUser,
-                smtpPassword,
-                fromAddress,
-                toAddress,
-                subject);
+            string inputFilePath = args[0];
+            string recipientEmail = args[1];
+
+            try
+            {
+                DocumentEmailSender sender = new DocumentEmailSender();
+                sender.SendConvertedDocumentByEmail(inputFilePath, recipientEmail);
+                Console.WriteLine("Email sent successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
         }
     }
 
-    public class EmailSender
+    public class DocumentEmailSender
     {
         /// <summary>
-        /// Loads a Word document, converts it to PDF in memory, and sends it as an e‑mail attachment.
+        /// Loads a Word document, converts it to PDF, and sends it as an email attachment.
         /// </summary>
-        public void SendConvertedDocumentByEmail(
-            string inputFilePath,
-            string smtpHost,
-            int smtpPort,
-            string smtpUser,
-            string smtpPassword,
-            string fromAddress,
-            string toAddress,
-            string subject)
+        /// <param name="inputFilePath">Full path to the source .docx (or any supported) file.</param>
+        /// <param name="recipientEmail">Email address of the recipient.</param>
+        public void SendConvertedDocumentByEmail(string inputFilePath, string recipientEmail)
         {
             // Load the source document.
             Document doc = new Document(inputFilePath);
 
-            // Convert to PDF and keep the bytes in a MemoryStream.
+            // Convert the document to PDF in a memory stream.
             using (MemoryStream pdfStream = new MemoryStream())
             {
                 doc.Save(pdfStream, SaveFormat.Pdf);
-                pdfStream.Position = 0; // rewind for reading
+                pdfStream.Position = 0;
 
-                // Prepare e‑mail objects inside using blocks to guarantee disposal.
+                // Prepare the email.
                 using (MailMessage message = new MailMessage())
-                using (SmtpClient smtpClient = new SmtpClient(smtpHost, smtpPort))
                 {
-                    message.From = new MailAddress(fromAddress);
-                    message.To.Add(new MailAddress(toAddress));
-                    message.Subject = subject;
-                    message.Body = "Please find the converted PDF document attached.";
+                    message.From = new MailAddress("sender@example.com"); // TODO: replace with a valid sender address.
+                    message.To.Add(recipientEmail);
+                    message.Subject = "Your converted PDF document";
+                    message.Body = "Please find the converted PDF attached.";
 
                     string attachmentName = Path.GetFileNameWithoutExtension(inputFilePath) + ".pdf";
-                    Attachment pdfAttachment = new Attachment(pdfStream, attachmentName, "application/pdf");
-                    message.Attachments.Add(pdfAttachment);
 
-                    smtpClient.EnableSsl = true; // adjust if the server does not require SSL
-                    if (!string.IsNullOrEmpty(smtpUser))
+                    // Attach the PDF.
+                    using (Attachment pdfAttachment = new Attachment(pdfStream, attachmentName, "application/pdf"))
                     {
-                        smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPassword);
-                    }
+                        message.Attachments.Add(pdfAttachment);
 
-                    smtpClient.Send(message);
+                        // Configure SMTP client.
+                        using (SmtpClient smtp = new SmtpClient("smtp.example.com", 587))
+                        {
+                            smtp.EnableSsl = true;
+                            smtp.Credentials = new NetworkCredential("smtp_user", "smtp_password");
+                            smtp.Send(message);
+                        }
+                    }
                 }
             }
         }

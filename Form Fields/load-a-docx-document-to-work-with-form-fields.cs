@@ -1,8 +1,8 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.Fields; // Added for FormField type
 
-class LoadDocumentExample
+class LoadDocxForFormFields
 {
     static void Main()
     {
@@ -10,27 +10,19 @@ class LoadDocumentExample
         string docPath = @"C:\Docs\SampleForm.docx";
 
         // Load the existing document from the file system.
+        // This uses the Document(string) constructor, which is the prescribed load rule.
         Document doc = new Document(docPath);
 
-        // Iterate through all form fields in the document.
+        // Iterate over all form fields in the document.
+        // The FormFields collection is accessed via the document's Range.
         foreach (FormField field in doc.Range.FormFields)
         {
-            // Example: Print the name and current value of each form field.
-            Console.WriteLine($"Field Name: {field.Name}");
-            Console.WriteLine($"Field Type: {field.Type}");
-            Console.WriteLine($"Field Value: {field.Result}");
-            Console.WriteLine();
+            Console.WriteLine($"Field Name: {field.Name}, Type: {field.Type}");
+            // You can read or modify the field value here, e.g.:
+            // field.Result = "New value";
         }
 
-        // (Optional) Modify a specific form field by name.
-        FormField targetField = doc.Range.FormFields["CustomerName"];
-        if (targetField != null)
-        {
-            targetField.Result = "John Doe";
-        }
-
-        // Save the modified document to a new file.
-        string outputPath = @"C:\Docs\SampleForm_Modified.docx";
-        doc.Save(outputPath);
+        // (Optional) Save the document after modifications.
+        // doc.Save(@"C:\Docs\SampleForm_Updated.docx");
     }
 }
