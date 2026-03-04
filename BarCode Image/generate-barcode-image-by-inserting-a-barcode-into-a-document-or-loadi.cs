@@ -1,5 +1,5 @@
 using System;
-using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -7,42 +7,53 @@ class BarcodeExample
 {
     static void Main()
     {
-        // Create a new blank document.
+        // -------------------- Create a document with a MERGEBARCODE field --------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a MERGEBARCODE field that will be filled by mail merge.
-        // The field will generate a QR code.
-        FieldMergeBarcode mergeBarcode = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
-        mergeBarcode.BarcodeType = "QR";
-        mergeBarcode.BarcodeValue = "MyQRCode";
+        // Insert a MERGEBARCODE field that will render a QR code.
+        FieldMergeBarcode mergeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+        mergeField.BarcodeType = "QR";
+        mergeField.BarcodeValue = "ABC123";
+        mergeField.BackgroundColor = "0xF8BD69";
+        mergeField.ForegroundColor = "0xB5413B";
+        mergeField.ErrorCorrectionLevel = "3";
+        mergeField.ScalingFactor = "250";
+        mergeField.SymbolHeight = "1000";
+        mergeField.SymbolRotation = "0";
 
-        // Optional visual customizations – all properties are strings.
-        mergeBarcode.BackgroundColor = "F8BD69";      // Background color (hex RGB, without 0x).
-        mergeBarcode.ForegroundColor = "B5413B";      // Foreground (bars) color.
-        mergeBarcode.ErrorCorrectionLevel = "3";      // QR error correction level (0‑3).
-        mergeBarcode.ScalingFactor = "250";           // Scale to 250 %.
-        mergeBarcode.SymbolHeight = "1000";           // Height in TWIPS.
-        mergeBarcode.SymbolRotation = "0";            // No rotation.
+        // Update the field so the barcode image is generated.
+        mergeField.Update();
 
-        builder.Writeln(); // Add a paragraph break after the field.
-
-        // Prepare a data source for mail merge.
-        DataTable table = new DataTable("Barcodes");
-        table.Columns.Add("MyQRCode");
-        table.Rows.Add("ABC123");
-        table.Rows.Add("DEF456");
-
-        // Perform mail merge – each row creates a new page with a DISPLAYBARCODE field.
-        doc.MailMerge.Execute(table);
-
-        // Save the document that now contains barcode fields.
+        // Save the document that contains the MERGEBARCODE field.
         doc.Save("BarcodeMerge.docx");
 
-        // -----------------------------------------------------------------
-        // Load the previously saved document and update fields to render the barcodes.
+        // -------------------- Load the document and insert a barcode image --------------------
         Document loadedDoc = new Document("BarcodeMerge.docx");
-        loadedDoc.UpdateFields(); // Forces field calculation and image generation.
-        loadedDoc.Save("BarcodeMergedUpdated.docx");
+        DocumentBuilder loadBuilder = new DocumentBuilder(loadedDoc);
+
+        // Prepare barcode parameters identical to those used for the field.
+        BarcodeParameters parameters = new BarcodeParameters
+        {
+            BarcodeType = "QR",
+            BarcodeValue = "ABC123",
+            BackgroundColor = "0xF8BD69",
+            ForegroundColor = "0xB5413B",
+            ErrorCorrectionLevel = "3",
+            ScalingFactor = "250",
+            SymbolHeight = "1000",
+            SymbolRotation = "0"
+        };
+
+        // Generate the barcode image using the built‑in generator (or a custom one if assigned).
+        using (Stream imgStream = loadedDoc.FieldOptions.BarcodeGenerator.GetBarcodeImage(parameters))
+        {
+            // Insert the generated image at the end of the document.
+            loadBuilder.MoveToDocumentEnd();
+            loadBuilder.InsertImage(imgStream);
+        }
+
+        // Save the final document that now contains the barcode image.
+        loadedDoc.Save("BarcodeImage.docx");
     }
 }

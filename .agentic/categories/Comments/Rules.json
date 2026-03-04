@@ -1,0 +1,13 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Comment rules": [
+        "Retrieve comment nodes using `doc.GetChildNodes(NodeType.Comment, true)`."
+      ],
+      "Loading rules": [
+        "Load the document with `new Document(filePath)`."
+      ]
+    }
+  }
+}

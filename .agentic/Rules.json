@@ -1,0 +1,12 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "General common rules": [
+        "Filter by author only when a non‑empty author string is supplied.",
+        "Escape backslashes in file paths with a verbatim string (`@\"C:\\Path\\File.docx\"`).",
+        "Escape double quotes inside interpolated strings using `\\\"` or by using normal string interpolation as shown."
+      ]
+    }
+  }
+}
