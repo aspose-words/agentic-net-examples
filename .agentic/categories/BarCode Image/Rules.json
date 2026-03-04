@@ -1,0 +1,10 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Barcode rules": [
+        "Removed all System.Drawing references (Bitmap, Graphics, Font, Brushes, ImageFormat) because they are not required for inserting barcode fields and cause missing assembly errors."
+      ]
+    }
+  }
+}

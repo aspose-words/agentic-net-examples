@@ -1,0 +1,13 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Images/Shapes/OLE rules": [
+        "Add the missing using directive for Aspose.Words.Drawing to bring the Shape class into scope."
+      ],
+      "Charts rules": [
+        "Keep the existing using for Aspose.Words.Drawing.Charts for Chart, ChartType, etc."
+      ]
+    }
+  }
+}

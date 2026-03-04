@@ -1,0 +1,14 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "General common rules": [
+        "Added `using System.IO;` and used `Path.Combine` for robust file‑path handling.",
+        "Ensured the output directory exists with `Directory.CreateDirectory` to avoid runtime errors.",
+        "Used the correct field class `FieldDisplayBarcode` and set its properties according to the Aspose.Words API documentation.",
+        "Kept only Aspose.Words related namespaces (`Aspose.Words`, `Aspose.Words.Fields`).",
+        "Do not change the logic; only adjust namespaces and imports to resolve compilation errors."
+      ]
+    }
+  }
+}
