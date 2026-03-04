@@ -17,9 +17,9 @@ class Program
 
         // Insert a text input form field at the current cursor position.
         // Parameters:
-        //   name          – bookmark name for the field (optional).
-        //   type          – type of the text form field (regular text in this case).
-        //   format        – format string (empty for default).
+        //   name          – bookmark name for the field (can be empty, but we give a name).
+        //   type          – type of the text field (Regular allows any text).
+        //   format        – format string (empty for no special formatting).
         //   fieldValue    – placeholder text shown to the user.
         //   maxLength     – 0 means unlimited length.
         builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "Enter name here", 0);

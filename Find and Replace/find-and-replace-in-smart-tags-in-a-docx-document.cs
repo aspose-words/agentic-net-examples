@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -7,22 +8,28 @@ class SmartTagFindReplace
     static void Main()
     {
         // Load the DOCX document that contains smart tags.
-        Document doc = new Document(@"C:\Docs\InputWithSmartTags.docx");
+        Document doc = new Document("InputWithSmartTags.docx");
 
-        // Configure find/replace options to treat the content of StructuredDocumentTag (SmartTag)
-        // as plain text, allowing the replace operation to work inside smart tags.
+        // Create FindReplaceOptions.
+        // Setting IgnoreStructuredDocumentTags to true treats the content of smart tags as plain text,
+        // allowing the replace operation to work inside them.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            IgnoreStructuredDocumentTags = true   // Treat smart tag content as simple text.
+            IgnoreStructuredDocumentTags = true,
+            MatchCase = false,               // case‑insensitive replace
+            FindWholeWordsOnly = false       // replace even if the pattern is part of a larger word
         };
 
-        // Perform the find-and-replace operation.
-        // Example: replace the placeholder "_FullName_" with "John Doe".
-        int replacements = doc.Range.Replace("_FullName_", "John Doe", options);
+        // Define the text to find and its replacement.
+        string pattern = "_FullName_";      // example placeholder inside a smart tag
+        string replacement = "John Doe";
 
-        Console.WriteLine($"Number of replacements made: {replacements}");
+        // Perform the find‑and‑replace on the whole document range.
+        int replacedCount = doc.Range.Replace(pattern, replacement, options);
+
+        Console.WriteLine($"Replacements made: {replacedCount}");
 
         // Save the modified document.
-        doc.Save(@"C:\Docs\OutputWithSmartTagsReplaced.docx");
+        doc.Save("OutputWithSmartTagsReplaced.docx");
     }
 }

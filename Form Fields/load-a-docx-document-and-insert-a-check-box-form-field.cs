@@ -2,25 +2,34 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class InsertCheckBoxExample
 {
     static void Main()
     {
-        // Load an existing DOCX document from the file system.
-        Document doc = new Document("input.docx");
+        // Path to the folder that contains the input and output documents.
+        string docsPath = @"C:\Docs\";
 
-        // Create a DocumentBuilder to modify the document.
+        // Load an existing DOCX file.
+        Document doc = new Document(docsPath + "Input.docx");
+
+        // Create a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a checkbox form field at the current cursor position.
-        // Parameters: name of the field, default checked status, size in points (0 = auto size).
+        // Move the cursor to the end of the document (or any desired position).
+        builder.MoveToDocumentEnd();
+
+        // Optional: add some explanatory text before the checkbox.
+        builder.Write("Please check the box: ");
+
+        // Insert a checkbox form field.
+        // Parameters: name, default checked value, size (0 = auto size).
         FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
 
-        // Optional: set the exact size of the checkbox and enable exact sizing.
+        // If you want to specify an exact size, enable it and set the size in points.
         checkBox.IsCheckBoxExactSize = true;
         checkBox.CheckBoxSize = 12; // size in points
 
-        // Save the modified document to a new file.
-        doc.Save("output.docx");
+        // Save the modified document.
+        doc.Save(docsPath + "Output.docx");
     }
 }

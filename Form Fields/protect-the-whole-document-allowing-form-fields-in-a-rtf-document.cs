@@ -1,29 +1,27 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Fields; // Added for TextFormFieldType
 
-class ProtectRtfWithFormFields
+class ProtectRtfDocument
 {
     static void Main()
     {
-        // Path where the output RTF will be saved.
-        string outputPath = @"C:\Output\ProtectedFormFields.rtf";
+        // Path to the source RTF document.
+        string inputPath = "input.rtf";
 
-        // Create a new blank document.
-        Document doc = new Document();
+        // Path where the protected RTF document will be saved.
+        string outputPath = "output.rtf";
 
-        // Use DocumentBuilder to add content and a form field.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Please fill in the form below:");
-        // Insert a regular text input form field.
-        builder.InsertTextInput("TextInput1", TextFormFieldType.Regular, "", "Enter text here", 0);
+        // Load the existing RTF document.
+        Document doc = new Document(inputPath);
 
         // Protect the entire document so that only form fields can be edited.
         doc.Protect(ProtectionType.AllowOnlyFormFields);
 
-        // Save the document as RTF using default RtfSaveOptions.
+        // Create RTF save options (default options are sufficient here).
         RtfSaveOptions saveOptions = new RtfSaveOptions();
+
+        // Save the protected document as RTF.
         doc.Save(outputPath, saveOptions);
     }
 }

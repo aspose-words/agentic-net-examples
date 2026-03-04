@@ -1,32 +1,29 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using System.Text.RegularExpressions;
 
 class Program
 {
     static void Main()
     {
-        // Load the existing DOCX document.
+        // Load an existing DOCX file.
+        // (Assumes the file "Input.docx" exists in the same folder as the executable.)
         Document doc = new Document("Input.docx");
 
-        // Simple string replacement (case‑insensitive, whole document).
-        // Replaces all occurrences of the placeholder "_FullName_" with "John Doe".
-        int count = doc.Range.Replace("_FullName_", "John Doe");
-        Console.WriteLine($"Replacements made: {count}");
+        // Define the text to find and its replacement.
+        string pattern = "_FullName_";
+        string replacement = "John Doe";
 
-        // Example of using FindReplaceOptions for more control:
-        // Replace every period that is immediately before a paragraph break with an exclamation point,
-        // and right‑align the paragraphs that contain the match.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ApplyParagraphFormat.Alignment = ParagraphAlignment.Right;
-        int countWithOptions = doc.Range.Replace(".&p", "!&p", options);
-        Console.WriteLine($"Replacements with options made: {countWithOptions}");
+        // Perform a simple find-and-replace across the whole document.
+        // This uses the Range.Replace(string, string) overload.
+        int count = doc.Range.Replace(pattern, replacement);
 
-        // Example of a regular‑expression replacement:
-        // Replace all numbers with a paragraph break.
-        int regexCount = doc.Range.Replace(new Regex(@"\d+"), "&p");
-        Console.WriteLine($"Regex replacements made: {regexCount}");
+        // Optionally, you can use FindReplaceOptions for more control.
+        // Example: make the replace operation case‑insensitive.
+        // FindReplaceOptions options = new FindReplaceOptions { MatchCase = false };
+        // int count = doc.Range.Replace(pattern, replacement, options);
+
+        Console.WriteLine($"Number of replacements made: {count}");
 
         // Save the modified document.
         doc.Save("Output.docx");

@@ -7,34 +7,32 @@ class DocxToJpegPages
 {
     static void Main()
     {
-        // Path to the source DOCX file (10 pages).
-        string sourceFile = @"C:\Docs\SourceDocument.docx";
+        // Path to the source DOCX file (must contain 10 pages).
+        string sourcePath = @"C:\Docs\SourceDocument.docx";
 
-        // Folder where the JPEG images will be saved.
-        string outputFolder = @"C:\Docs\PageImages";
+        // Directory where the JPEG images will be saved.
+        string outputDir = @"C:\Docs\PagesAsJpeg";
 
         // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
+        Directory.CreateDirectory(outputDir);
 
         // Load the DOCX document.
-        Document doc = new Document(sourceFile);
+        Document doc = new Document(sourcePath);
+
+        // Prepare image save options for JPEG format.
+        ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg);
 
         // Loop through each page in the document.
-        for (int i = 0; i < doc.PageCount; i++)
+        for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
         {
-            // Create ImageSaveOptions for JPEG format.
-            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Jpeg);
+            // Render only the current page.
+            jpegOptions.PageSet = new PageSet(pageIndex);
 
-            // Render only the current page (zero‑based index).
-            options.PageSet = new PageSet(i);
-
-            // Build the output file name (Page_1.jpg, Page_2.jpg, ...).
-            string outFile = Path.Combine(outputFolder, $"Page_{i + 1}.jpg");
+            // Build the output file name: Page1.jpg, Page2.jpg, ...
+            string outputPath = Path.Combine(outputDir, $"Page{pageIndex + 1}.jpg");
 
             // Save the single page as a JPEG image.
-            doc.Save(outFile, options);
+            doc.Save(outputPath, jpegOptions);
         }
-
-        Console.WriteLine("Conversion completed. Images saved to: " + outputFolder);
     }
 }

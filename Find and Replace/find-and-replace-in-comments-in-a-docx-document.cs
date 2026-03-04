@@ -1,24 +1,31 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using System.Text.RegularExpressions;
 
 class CommentFindReplace
 {
     static void Main()
     {
-        // Load the DOCX file.
+        // Load the existing DOCX file.
         Document doc = new Document("Input.docx");
 
         // Define the text to find and its replacement.
-        const string findText = "_FullName_";
-        const string replaceText = "John Doe";
+        string findText = "_FullName_";
+        string replaceText = "John Doe";
 
-        // Iterate through all comment nodes in the document.
+        // Optional: configure find/replace options (e.g., case‑insensitive, whole‑word).
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            MatchCase = false,
+            FindWholeWordsOnly = false
+        };
+
+        // Iterate over all comment nodes in the document.
         foreach (Comment comment in doc.GetChildNodes(NodeType.Comment, true))
         {
-            // Perform a simple find-and-replace within the comment's range.
-            // The Replace method is case‑insensitive by default.
-            comment.Range.Replace(findText, replaceText);
+            // Perform the replace operation within the comment's range.
+            comment.Range.Replace(findText, replaceText, options);
         }
 
         // Save the modified document.

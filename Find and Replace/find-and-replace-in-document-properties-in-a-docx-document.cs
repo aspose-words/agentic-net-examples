@@ -2,32 +2,45 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Properties;
 
-class Program
+class ReplaceDocumentProperties
 {
     static void Main()
     {
-        // Load the DOCX document.
-        Document doc = new Document("Input.docx");
+        // Input and output file paths.
+        string inputPath = @"Input.docx";
+        string outputPath = @"Output.docx";
 
         // Text to find and its replacement.
-        const string pattern = "_Company_";
-        const string replacement = "Contoso Ltd.";
+        string pattern = "OldCompany";
+        string replacement = "NewCompany";
 
-        // Replace occurrences in built‑in document properties.
+        // Load the existing DOCX document.
+        Document doc = new Document(inputPath);
+
+        // ----- Built‑in document properties -----
         foreach (DocumentProperty prop in doc.BuiltInDocumentProperties)
         {
-            if (prop.Value is string str && str.Contains(pattern))
-                prop.Value = str.Replace(pattern, replacement);
+            // Only process string values.
+            if (prop.Value is string text && text.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+            {
+                // Replace the pattern and assign the new value back.
+                prop.Value = text.Replace(pattern, replacement, StringComparison.OrdinalIgnoreCase);
+            }
         }
 
-        // Replace occurrences in custom document properties.
+        // ----- Custom document properties -----
         foreach (DocumentProperty prop in doc.CustomDocumentProperties)
         {
-            if (prop.Value is string str && str.Contains(pattern))
-                prop.Value = str.Replace(pattern, replacement);
+            if (prop.Value is string text && text.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+            {
+                prop.Value = text.Replace(pattern, replacement, StringComparison.OrdinalIgnoreCase);
+            }
         }
 
-        // Save the updated document.
-        doc.Save("Output.docx");
+        // Refresh all DOCPROPERTY fields so they display the updated values.
+        doc.UpdateFields();
+
+        // Save the modified document.
+        doc.Save(outputPath);
     }
 }

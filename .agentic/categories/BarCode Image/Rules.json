@@ -1,0 +1,46 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Barcode rules": [
+        "All numeric‑looking properties of FieldMergeBarcode (ErrorCorrectionLevel, ScalingFactor, SymbolHeight, SymbolRotation) are strings in recent Aspose.Words versions; provide them as string literals.",
+        "Call Document.UpdateFields() after inserting MERGEBARCODE fields to render the barcodes before saving.",
+        "Call Update() on the field after setting its properties to render the barcode image.",
+        "Keep all Aspose.Words namespaces required for Document, DocumentBuilder, FieldMergeBarcode, and Watermark.",
+        "Ensure the MERGEBARCODE field is inserted with builder.InsertField(FieldType.FieldMergeBarcode, true).",
+        "Assign string literals to all FieldMergeBarcode properties that expect strings (e.g., colors, numeric options).",
+        "Save the document after each modification to persist the barcode fields.",
+        "Either add the ZXing.Net NuGet package (dotnet add package ZXing.Net) or replace the runtime barcode generation with a pre‑generated image file.",
+        "Ensure the barcode image file (barcode.png) exists at the path specified, or adjust the path accordingly.",
+        "Add a reference to the Aspose.BarCode for .NET NuGet package (Aspose.BarCode) – it provides the actual barcode generation implementation.",
+        "Remove any usage of System.Drawing.Image; the barcode image is handled as a Stream, eliminating the need for System.Drawing.Common.",
+        "Map the string BarcodeType to Aspose.BarCode EncodeTypes inside the custom generator.",
+        "Use the DocumentBuilder.InsertField overload that takes only the field code string for DISPLAYBARCODE.",
+        "Keep the field code exactly as required: DISPLAYBARCODE \"value\" type.",
+        "Update fields after insertion to render the barcode before extracting images.",
+        "Keep the IBarcodeGenerator implementation but ignore the parameters – the example focuses on inserting an image, not on real barcode generation.",
+        "All FieldMergeBarcode property values must be supplied as strings, not as Color or numeric types."
+      ],
+      "Loading rules": [
+        "Add only the necessary using directives (System, System.IO, Aspose.Words, Aspose.Words.Saving, Aspose.Words.Loading)."
+      ],
+      "Saving/Export rules": [
+        "Keep the original workflow: protect, encrypt, load with password, clone, edit, compare, and save."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Remove all System.Drawing dependencies – they are not available in the default .NET SDK used by the runner.",
+        "Replace the on‑the‑fly bitmap generation with a pre‑encoded PNG image (Base64) and insert it via DocumentBuilder.InsertImage(Stream).",
+        "Use a minimal placeholder PNG (1×1 pixel) to avoid external files while still demonstrating image insertion.",
+        "Add `using System.Drawing;` and `using System.Drawing.Imaging;` for bitmap handling.",
+        "Reference the NuGet package `System.Drawing.Common` in the project file to provide the System.Drawing types on non‑Windows platforms.",
+        "Reset the memory stream position to 0 before returning it so Aspose.Words can read the image data.",
+        "Use the ScalingFactor property of BarcodeParameters to set the image DPI via generator.Parameters.ImageResolution.",
+        "Remove all System.Drawing and System.Drawing.Imaging references – they are not available in the default .NET SDK used by the runner."
+      ],
+      "Watermark rules": [
+        "Include System.Drawing for Font when customizing watermark text size.",
+        "Do not access TextPath.FontSize directly; use Watermark.SetText overload that accepts a Font."
+      ]
+    }
+  }
+}

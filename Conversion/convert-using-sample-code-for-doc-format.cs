@@ -2,27 +2,17 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsSample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Define input and output paths.
-            string inputPath = @"C:\Docs\SampleInput.docx";
-            string outputPath = @"C:\Docs\ConvertedOutput.doc";
+        // Load an existing DOCX document.
+        Document doc = new Document("MyDir/Document.docx");
 
-            // Load an existing document (create/load lifecycle).
-            Document doc = new Document(inputPath);
+        // Prepare save options for the legacy DOC format.
+        DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
 
-            // Create save options for the legacy DOC format.
-            DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
-
-            // Optionally set a password or other options here.
-            // saveOptions.Password = "MyPassword";
-
-            // Save the document as DOC using the save options (save lifecycle).
-            doc.Save(outputPath, saveOptions);
-        }
+        // Save the document as a .doc file.
+        doc.Save("ArtifactsDir/Document.ConvertToDoc.doc", saveOptions);
     }
 }

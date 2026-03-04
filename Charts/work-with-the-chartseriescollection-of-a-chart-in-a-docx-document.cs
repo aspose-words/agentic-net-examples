@@ -1,51 +1,61 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Drawing;               // <-- added
 using Aspose.Words.Drawing.Charts;
 
-class Program
+class ChartSeriesCollectionDemo
 {
     static void Main()
     {
-        // Create a new blank document and a DocumentBuilder.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart of size 500x300 points.
+        // Insert a column chart (default demo data will be generated).
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo data that comes with a newly inserted chart.
-        chart.Series.Clear();
+        // Access the series collection of the chart.
+        ChartSeriesCollection seriesCollection = chart.Series;
 
-        // Define categories for the X‑axis.
-        string[] categories = { "Category 1", "Category 2", "Category 3" };
-
-        // Add two series with values for each category.
-        chart.Series.Add("Series A", categories, new double[] { 10.5, 20.3, 30.7 });
-        chart.Series.Add("Series B", categories, new double[] { 15.2, 25.8, 35.1 });
-
-        // Iterate over the series collection using the enumerator.
-        using (IEnumerator<ChartSeries> enumerator = chart.Series.GetEnumerator())
+        // -----------------------------------------------------------------
+        // 1. Enumerate existing series and output their names.
+        // -----------------------------------------------------------------
+        Console.WriteLine("Existing series:");
+        using (IEnumerator<ChartSeries> enumerator = seriesCollection.GetEnumerator())
         {
             while (enumerator.MoveNext())
             {
-                ChartSeries current = enumerator.Current;
-                Console.WriteLine($"Series name: {current.Name}");
+                Console.WriteLine("- " + enumerator.Current.Name);
             }
         }
 
-        // Access a series by index (zero‑based). Change its fill colour.
-        ChartSeries firstSeries = chart.Series[0];
-        firstSeries.Format.Fill.ForeColor = Color.Red;
+        // -----------------------------------------------------------------
+        // 2. Add a new series with custom categories and values.
+        // -----------------------------------------------------------------
+        string[] categories = { "Category A", "Category B", "Category C" };
+        double[] values = { 12.5, 23.8, 31.4 };
+        ChartSeries newSeries = seriesCollection.Add("Custom Series", categories, values);
+        Console.WriteLine($"Added series: {newSeries.Name}");
 
-        // Remove the second series by index.
-        chart.Series.RemoveAt(1);
+        // -----------------------------------------------------------------
+        // 3. Remove the second series (index 1) from the collection.
+        // -----------------------------------------------------------------
+        if (seriesCollection.Count > 1)
+        {
+            Console.WriteLine($"Removing series at index 1: {seriesCollection[1].Name}");
+            seriesCollection.RemoveAt(1);
+        }
 
-        // Save the document to the file system.
-        string artifactsDir = "output/";
-        doc.Save(artifactsDir + "ChartSeriesCollectionExample.docx");
+        // -----------------------------------------------------------------
+        // 4. Clear all series from the chart (optional, shows usage of Clear).
+        // -----------------------------------------------------------------
+        // seriesCollection.Clear();
+
+        // Save the document to disk.
+        string outputPath = "ChartSeriesCollection.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

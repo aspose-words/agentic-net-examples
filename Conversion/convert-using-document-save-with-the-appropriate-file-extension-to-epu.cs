@@ -5,16 +5,15 @@ class DocmToEpubConverter
 {
     static void Main()
     {
-        // Path to the source DOCM file.
-        string inputPath = @"C:\Docs\SourceDocument.docm";
+        // Path to the folder that contains the input DOCM file.
+        string inputFolder = @"C:\Docs\Input";
+        // Path to the folder where the EPUB file will be saved.
+        string outputFolder = @"C:\Docs\Output";
 
-        // Path to the output EPUB file. The .epub extension tells Aspose.Words to save in EPUB format.
-        string outputPath = @"C:\Docs\ConvertedDocument.epub";
+        // Load the macro‑enabled Word document (DOCM).
+        Document doc = new Document(System.IO.Path.Combine(inputFolder, "sample.docm"));
 
-        // Load the DOCM document.
-        Document doc = new Document(inputPath);
-
-        // Save the document as EPUB. The format is inferred from the file extension.
-        doc.Save(outputPath);
+        // Save the document as EPUB. The format is inferred from the ".epub" extension.
+        doc.Save(System.IO.Path.Combine(outputFolder, "sample.epub"));
     }
 }

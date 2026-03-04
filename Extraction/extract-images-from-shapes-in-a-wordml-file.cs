@@ -8,33 +8,37 @@ class Program
 {
     static void Main()
     {
-        // Path to the folder that contains the WORDML file.
-        string dataDir = @"C:\Data\";
+        // Path to the WORDML (WordprocessingML) file.
+        string inputPath = @"C:\Docs\SampleWordML.xml";
 
-        // Load the WORDML document.
-        Document doc = new Document(Path.Combine(dataDir, "WordMLFile.xml"));
+        // Load the document. Aspose.Words automatically detects the WORDML format.
+        Document doc = new Document(inputPath);
 
         // Get all shape nodes in the document (including those inside groups).
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
 
         // Iterate through each shape and extract the image if it has one.
-        foreach (Shape shape in shapes.OfType<Shape>())
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage)
             {
-                // Determine the appropriate file extension for the image format.
+                // Determine the appropriate file extension based on the image type.
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
 
-                // Build the output file name.
-                string outputPath = Path.Combine(dataDir, $"ExtractedImage_{imageIndex}{extension}");
+                // Build a unique file name for the extracted image.
+                string outputFile = Path.Combine(
+                    @"C:\ExtractedImages",
+                    $"ExtractedImage_{imageIndex}{extension}");
 
                 // Save the image data to the file system.
-                shape.ImageData.Save(outputPath);
+                shape.ImageData.Save(outputFile);
 
                 imageIndex++;
             }
         }
+
+        Console.WriteLine($"Extracted {imageIndex} image(s) to C:\\ExtractedImages");
     }
 }

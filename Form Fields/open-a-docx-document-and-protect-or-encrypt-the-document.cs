@@ -7,42 +7,43 @@ class ProtectOrEncryptDocument
 {
     static void Main()
     {
-        // Paths to the source and output files.
-        string inputPath = @"C:\Docs\Sample.docx";
-        string protectedPath = @"C:\Docs\Sample.Protected.docx";
-        string encryptedPath = @"C:\Docs\Sample.Encrypted.docx";
+        // Path to the source DOCX file.
+        string inputPath = @"C:\Docs\SourceDocument.docx";
 
-        // Load the existing DOCX document.
+        // Load the existing document.
         Document doc = new Document(inputPath);
 
         // -------------------------------------------------
-        // 1. Protect the document (read‑only) with a password.
+        // 1. Protect the document (document protection).
         // -------------------------------------------------
-        // This adds document protection that limits editing in Microsoft Word.
-        // The password is required only when the user tries to modify the document.
-        doc.Protect(ProtectionType.ReadOnly, "ProtectPassword123");
-        // Save the protected document.
-        doc.Save(protectedPath);
+        // Apply read‑only protection with a password.
+        // This restricts editing in Microsoft Word but does not encrypt the file.
+        doc.Protect(ProtectionType.ReadOnly, "DocProtectionPwd");
 
         // -------------------------------------------------
-        // 2. Encrypt the document with a password.
+        // 2. Encrypt the document (save with a password).
         // -------------------------------------------------
-        // Encryption is applied when saving using OoxmlSaveOptions.
-        // The document can be opened only after providing the correct password.
-        OoxmlSaveOptions encryptOptions = new OoxmlSaveOptions
+        // Create save options for OOXML (DOCX) format and set the encryption password.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions
         {
-            Password = "EncryptPassword456"
+            Password = "EncryptionPwd"
         };
-        doc.Save(encryptedPath, encryptOptions);
+
+        // Path for the protected and encrypted output file.
+        string outputPath = @"C:\Docs\ProtectedEncryptedDocument.docx";
+
+        // Save the document using the specified options.
+        doc.Save(outputPath, saveOptions);
 
         // -------------------------------------------------
-        // 3. Load the encrypted document (demonstration).
+        // 3. Demonstrate loading the encrypted document.
         // -------------------------------------------------
-        // When opening an encrypted file, supply the password via LoadOptions.
-        LoadOptions loadOpts = new LoadOptions("EncryptPassword456");
-        Document encryptedDoc = new Document(encryptedPath, loadOpts);
+        // LoadOptions with the correct password are required to open the encrypted file.
+        LoadOptions loadOptions = new LoadOptions("EncryptionPwd");
+        Document loadedDoc = new Document(outputPath, loadOptions);
 
         // Verify that the document was loaded successfully.
-        Console.WriteLine("Encrypted document text: " + encryptedDoc.GetText().Trim());
+        Console.WriteLine("Document text after loading encrypted file:");
+        Console.WriteLine(loadedDoc.GetText());
     }
 }

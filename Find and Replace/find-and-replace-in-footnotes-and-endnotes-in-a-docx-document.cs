@@ -2,28 +2,26 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class FootnoteEndnoteFindReplace
 {
     static void Main()
     {
-        // Load the source DOCX file.
+        // Load the existing DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Configure find/replace options.
-        // Setting IgnoreFootnotes to false (default) ensures that footnotes and endnotes are included in the search.
+        // Create FindReplaceOptions and set IgnoreFootnotes to false
+        // so that the replace operation also processes footnotes and endnotes.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            IgnoreFootnotes = false
+            IgnoreFootnotes = false // false = include footnotes/endnotes in the search
         };
 
-        // Replace the target text throughout the entire document, including footnotes and endnotes.
-        int replacementsMade = doc.Range.Replace("old text", "new text", options);
+        // Define the text to find and its replacement.
+        string findText = "Lorem ipsum";
+        string replaceText = "Replaced Lorem ipsum";
 
-        // Optional: If you need to replace only inside footnotes/endnotes, iterate their ranges.
-        // foreach (Footnote footnote in doc.GetChildNodes(NodeType.Footnote, true))
-        // {
-        //     footnote.Range.Replace("old text", "new text");
-        // }
+        // Perform the find-and-replace across the whole document, including footnotes/endnotes.
+        doc.Range.Replace(findText, replaceText, options);
 
         // Save the modified document.
         doc.Save("Output.docx");

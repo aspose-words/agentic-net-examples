@@ -3,32 +3,43 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class RegexFindReplaceExample
+namespace AsposeWordsRegexReplaceDemo
 {
-    static void Main()
+    class Program
     {
-        // Load an existing DOCX document.
-        Document doc = new Document("Input.docx");
+        static void Main()
+        {
+            // Path to the folder containing the document.
+            string dataDir = @"C:\Data\";
 
-        // Define a regular expression pattern.
-        // This example finds all occurrences of one or more digits.
-        Regex regexPattern = new Regex(@"\d+");
+            // Load an existing DOCX document.
+            Document doc = new Document(dataDir + "Input.docx");
 
-        // Define the replacement string.
-        // "&p" inserts a paragraph break for each match.
-        string replacement = "&p";
+            // Example 1: Replace every sequence of digits with a paragraph break.
+            // The pattern \d+ matches one or more digits.
+            // The replacement string "&p" inserts a paragraph break.
+            doc.Range.Replace(new Regex(@"\d+"), "&p");
 
-        // Optional: configure find/replace options.
-        FindReplaceOptions options = new FindReplaceOptions();
-        // Example: make the operation case‑insensitive (default for regex).
-        options.MatchCase = false;
+            // Example 2: Replace words "gray" or "grey" with "lavender" using a regular expression.
+            // The pattern "gr(a|e)y" captures both spellings.
+            doc.Range.Replace(new Regex("gr(a|e)y"), "lavender");
 
-        // Perform the find‑and‑replace operation on the whole document range.
-        int replacementsMade = doc.Range.Replace(regexPattern, replacement, options);
+            // Example 3: Use substitutions in the replacement string.
+            // This example swaps the order of two captured groups.
+            // Pattern captures two words separated by a space.
+            Regex swapRegex = new Regex(@"(\w+)\s+(\w+)");
+            FindReplaceOptions options = new FindReplaceOptions
+            {
+                // Enable substitution syntax like $1, $2 in the replacement string.
+                UseSubstitutions = true,
+                // Legacy mode must be disabled to support substitutions.
+                LegacyMode = false
+            };
+            // Replacement swaps the two words: "$2 $1"
+            doc.Range.Replace(swapRegex, "$2 $1", options);
 
-        Console.WriteLine($"Number of replacements performed: {replacementsMade}");
-
-        // Save the modified document.
-        doc.Save("Output.docx");
+            // Save the modified document.
+            doc.Save(dataDir + "Output.docx");
+        }
     }
 }

@@ -2,30 +2,36 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsExcelConversion
 {
-    static void Main()
+    class Program
     {
-        // Input Word document path (can be any supported format).
-        string inputPath = @"C:\Docs\InputDocument.docx";
-
-        // Output Excel file path (XLSX format).
-        string outputPath = @"C:\Docs\ConvertedDocument.xlsx";
-
-        // Load the document using the Document constructor (lifecycle rule).
-        Document doc = new Document(inputPath);
-
-        // Configure XlsxSaveOptions (specific to Excel output).
-        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
+        static void Main()
         {
-            // Ensure the save format is set to Xlsx (required by the options).
-            SaveFormat = SaveFormat.Xlsx,
+            // Input document path – can be any format supported by Aspose.Words (e.g., .docx, .pdf, .rtf, etc.).
+            string inputPath = @"C:\Input\SampleDocument.docx";
 
-            // Example: save each section to a separate worksheet.
-            SectionMode = XlsxSectionMode.MultipleWorksheets
-        };
+            // Output Excel file path – the extension determines the Excel format.
+            // Here we use .xlsx (Office Open XML Spreadsheet) which is fully supported.
+            string outputPath = @"C:\Output\ConvertedDocument.xlsx";
 
-        // Save the document to the Excel format using the Save method (lifecycle rule).
-        doc.Save(outputPath, xlsxOptions);
+            // Load the source document using the Document constructor that accepts a file name.
+            Document doc = new Document(inputPath);
+
+            // Configure XLSX save options.
+            XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
+            {
+                // Explicitly set the save format to Xlsx (required by the options class).
+                SaveFormat = SaveFormat.Xlsx,
+
+                // Example: save each section of the source document to a separate worksheet.
+                SectionMode = XlsxSectionMode.MultipleWorksheets
+            };
+
+            // Save the document to the Excel format using the Save method that accepts a file name and SaveOptions.
+            doc.Save(outputPath, xlsxOptions);
+
+            Console.WriteLine("Document successfully converted to Excel format.");
+        }
     }
 }

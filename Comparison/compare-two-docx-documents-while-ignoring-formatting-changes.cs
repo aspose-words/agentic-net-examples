@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class CompareDocs
+class Program
 {
     static void Main()
     {
@@ -10,21 +10,22 @@ class CompareDocs
         Document docOriginal = new Document("Original.docx");
         Document docEdited   = new Document("Edited.docx");
 
-        // The Compare method requires both documents to be revision‑free.
-        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
-            throw new InvalidOperationException("Both documents must not contain revisions before comparison.");
-
-        // Configure comparison to ignore all formatting changes.
-        CompareOptions options = new CompareOptions
+        // The Compare method requires that both documents have no existing revisions.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            IgnoreFormatting = true   // Formatting differences will not generate revisions.
-            // All other options retain their default values (false).
-        };
+            // Configure comparison to ignore formatting changes.
+            CompareOptions compareOptions = new CompareOptions
+            {
+                IgnoreFormatting = true,                 // <-- ignore all formatting differences
+                Target = ComparisonTargetType.New       // compare against the edited document
+                // Other options remain at their default values (false).
+            };
 
-        // Perform the comparison. Revisions are added to docOriginal.
-        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, options);
+            // Perform the comparison. Revisions describing the differences are added to docOriginal.
+            docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+        }
 
-        // Save the result which now contains revision marks.
+        // Save the result document which now contains the revision marks.
         docOriginal.Save("ComparisonResult.docx");
     }
 }

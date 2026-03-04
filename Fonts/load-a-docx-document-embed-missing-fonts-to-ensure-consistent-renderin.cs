@@ -1,29 +1,31 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class EmbedMissingFontsToPdf
 {
     static void Main()
     {
-        // Input DOCX file path
-        string inputPath = @"C:\Docs\input.docx";
+        // Path to the source DOCX file.
+        string docxPath = @"C:\Docs\SourceDocument.docx";
 
-        // Output PDF file path
-        string outputPath = @"C:\Docs\output.pdf";
+        // Path where the resulting PDF will be saved.
+        string pdfPath = @"C:\Docs\ResultDocument.pdf";
 
-        // Load the DOCX document
-        Document doc = new Document(inputPath);
+        // Load the existing DOCX document.
+        Document doc = new Document(docxPath);
 
-        // Configure PDF save options to embed all fonts used in the document
+        // Configure PDF save options to embed all fonts.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Embed every font (including standard Windows fonts) into the PDF
-            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll,
-            // Embed the full font files (no subsetting) to guarantee all glyphs are present
-            EmbedFullFonts = true
+            // Embed the full font files (no sub‑setting) to guarantee that missing fonts are present.
+            EmbedFullFonts = true,
+
+            // Ensure that every font used in the document is embedded.
+            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll
         };
 
-        // Save the document as PDF with the specified embedding options
-        doc.Save(outputPath, pdfOptions);
+        // Save the document as PDF using the configured options.
+        doc.Save(pdfPath, pdfOptions);
     }
 }

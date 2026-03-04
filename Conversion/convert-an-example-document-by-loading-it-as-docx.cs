@@ -5,17 +5,16 @@ class Program
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\example.docx";
+        // Path to the source document (can be any supported format, e.g., PDF, RTF, etc.).
+        string sourcePath = @"C:\Docs\Example.pdf";
 
-        // Path where the converted document will be saved (PDF in this case).
-        string outputPath = @"C:\Docs\example_converted.pdf";
+        // Path where the converted DOCX will be saved.
+        string outputPath = @"C:\Docs\ExampleConverted.docx";
 
-        // Load the DOCX document using the Document(string) constructor.
-        Document doc = new Document(inputPath);
+        // Load the source document. The Document constructor automatically detects the format.
+        Document doc = new Document(sourcePath);
 
-        // Save the loaded document to the desired format.
-        // The format is inferred from the file extension (.pdf).
+        // Save the loaded document as DOCX. The file extension determines the save format.
         doc.Save(outputPath);
     }
 }

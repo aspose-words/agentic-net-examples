@@ -1,5 +1,6 @@
+using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;            // <-- added
+using Aspose.Words.Drawing; // Added for Shape
 using Aspose.Words.Drawing.Charts;
 
 class Program
@@ -16,13 +17,13 @@ class Program
             ConvertUtil.PixelToPoint(300),
             ConvertUtil.PixelToPoint(300));
 
-        // Get the Chart object from the inserted shape.
+        // Access the Chart object from the inserted shape.
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series.
+        // Remove any demo data that Aspose.Words may have added.
         chart.Series.Clear();
 
-        // Add a series with categories and corresponding values.
+        // Add a series with categories (X values) and corresponding Y values.
         chart.Series.Add(
             "My fruit",
             new[] { "Apples", "Bananas", "Cherries" },

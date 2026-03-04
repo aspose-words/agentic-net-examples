@@ -1,5 +1,6 @@
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using System.Text.RegularExpressions;
 
 class Program
 {
@@ -9,8 +10,8 @@ class Program
         Document doc = new Document("Input.docx");
 
         // Text to find and its replacement.
-        string pattern = "_FullName_";
-        string replacement = "John Doe";
+        string findText = "_FullName_";
+        string replaceText = "John Doe";
 
         // Configure find/replace options (case‑insensitive, whole‑word match).
         FindReplaceOptions options = new FindReplaceOptions
@@ -22,7 +23,8 @@ class Program
         // Perform the replacement in each section's body.
         foreach (Section section in doc.Sections)
         {
-            section.Body.Range.Replace(pattern, replacement, options);
+            // The Range of the section's body contains all paragraphs, tables, etc.
+            section.Body.Range.Replace(findText, replaceText, options);
         }
 
         // Save the updated document.

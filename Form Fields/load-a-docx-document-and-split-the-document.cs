@@ -3,31 +3,14 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class DocumentSplitter
+namespace AsposeWordsSplitExample
 {
-    static void Main()
-    {
-        // Load the source DOCX document from the file system.
-        Document doc = new Document("InputDocument.docx");
-
-        // Configure HTML save options to split the document by section.
-        HtmlSaveOptions options = new HtmlSaveOptions
-        {
-            DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-            // Assign a custom callback to control the naming of each split part.
-            DocumentPartSavingCallback = new SavedDocumentPartRename("SplitDocument.html", DocumentSplitCriteria.SectionBreak)
-        };
-
-        // Save the document; Aspose.Words will create multiple HTML files according to the split criteria.
-        doc.Save("SplitDocument.html", options);
-    }
-
-    // Callback that renames each split part generated during the save operation.
-    private class SavedDocumentPartRename : IDocumentPartSavingCallback
+    // Implements a callback to rename each split part when saving.
+    public class SavedDocumentPartRename : IDocumentPartSavingCallback
     {
         private readonly string _baseFileName;
         private readonly DocumentSplitCriteria _splitCriteria;
-        private int _partIndex = 0;
+        private int _partCounter = 0;
 
         public SavedDocumentPartRename(string baseFileName, DocumentSplitCriteria splitCriteria)
         {
@@ -37,7 +20,7 @@ class DocumentSplitter
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Determine a readable part type name based on the split criteria.
+            // Determine a readable part type name.
             string partType = _splitCriteria switch
             {
                 DocumentSplitCriteria.PageBreak => "Page",
@@ -47,14 +30,40 @@ class DocumentSplitter
                 _ => "Part"
             };
 
-            // Build a unique filename for the current part.
-            string partFileName = $"{Path.GetFileNameWithoutExtension(_baseFileName)}_Part{++_partIndex}_{partType}{Path.GetExtension(_baseFileName)}";
+            // Build a unique filename for the part.
+            string partFileName = $"{Path.GetFileNameWithoutExtension(_baseFileName)}_part{++_partCounter}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
 
-            // Set the filename for the part; Aspose.Words will write to this file.
+            // Set the filename where Aspose.Words will write this part.
             args.DocumentPartFileName = partFileName;
 
-            // Optionally, you could provide a custom stream instead:
-            // args.DocumentPartStream = new FileStream(partFileName, FileMode.Create);
+            // Optionally, write to a custom stream (here we use the default file handling).
+            // args.DocumentPartStream = new FileStream(Path.Combine(Path.GetDirectoryName(_baseFileName) ?? "", partFileName), FileMode.Create);
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            // Path to the source DOCX file.
+            string sourcePath = @"C:\Docs\SourceDocument.docx";
+
+            // Load the document from file.
+            Document doc = new Document(sourcePath);
+
+            // Prepare HTML save options with split criteria.
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+            {
+                // Split the document into separate files, one per section.
+                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
+
+                // Assign the custom callback to control part filenames.
+                DocumentPartSavingCallback = new SavedDocumentPartRename(@"C:\Docs\SplitOutput.html", DocumentSplitCriteria.SectionBreak)
+            };
+
+            // Save the document; Aspose.Words will generate multiple HTML files according to the split criteria.
+            string outputPath = @"C:\Docs\SplitOutput.html";
+            doc.Save(outputPath, saveOptions);
         }
     }
 }

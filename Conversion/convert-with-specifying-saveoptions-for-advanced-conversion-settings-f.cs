@@ -1,31 +1,24 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ConvertToDocmWithOptions
+class Program
 {
     static void Main()
     {
-        // Paths to the source and destination files.
-        string dataDir = @"C:\Data\";
-        string inputPath = Path.Combine(dataDir, "input.docx");
-        string outputPath = Path.Combine(dataDir, "output.docm");
-
-        // Load the source document.
-        Document doc = new Document(inputPath);
+        // Load the source document (replace with your actual file path).
+        Document doc = new Document("Input.docx");
 
         // Create OoxmlSaveOptions for the DOCM format.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm)
-        {
-            // Example advanced settings:
-            UpdateFields = true,                     // Update fields before saving.
-            Password = "Secret",                     // Encrypt the saved document.
-            Compliance = OoxmlCompliance.Iso29500_2008_Strict, // Enforce strict OOXML compliance.
-            UseHighQualityRendering = true           // Use high‑quality rendering algorithms.
-        };
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
 
-        // Save the document as a macro‑enabled DOCM file using the specified options.
-        doc.Save(outputPath, saveOptions);
+        // Advanced conversion settings (customize as needed).
+        saveOptions.Password = "MySecretPassword";          // Encrypt the saved DOCM.
+        saveOptions.UpdateFields = true;                    // Update fields before saving.
+        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Strict; // Enforce strict OOXML compliance.
+        saveOptions.UseHighQualityRendering = true;        // Enable high‑quality rendering.
+
+        // Save the document as a macro‑enabled DOCM using the specified options.
+        doc.Save("Output.docm", saveOptions);
     }
 }

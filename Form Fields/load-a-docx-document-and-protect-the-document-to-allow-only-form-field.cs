@@ -1,23 +1,21 @@
 using System;
 using Aspose.Words;
 
-namespace AsposeWordsExample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Load an existing DOCX document from the file system.
-            // The Document(string) constructor follows the provided load rule.
-            Document doc = new Document("InputDocument.docx");
+        // Path to the existing DOCX file.
+        string inputPath = "input.docx";
 
-            // Protect the document so that only form fields can be edited.
-            // This uses the Protect(ProtectionType) method as defined in the rules.
-            doc.Protect(ProtectionType.AllowOnlyFormFields);
+        // Load the document from the file system.
+        Document doc = new Document(inputPath);
 
-            // Save the protected document back to the file system.
-            // The Save(string) method follows the provided save rule.
-            doc.Save("ProtectedDocument.docx");
-        }
+        // Protect the document so that only form fields can be edited.
+        doc.Protect(ProtectionType.AllowOnlyFormFields);
+
+        // Save the protected document.
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

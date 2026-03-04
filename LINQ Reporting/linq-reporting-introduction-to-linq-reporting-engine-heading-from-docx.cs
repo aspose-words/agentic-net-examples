@@ -1,44 +1,39 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingDemo
+class Program
 {
-    // Simple data class that will be used as the data source for the report.
+    static void Main()
+    {
+        // Load the DOCX template that contains LINQ Reporting Engine tags.
+        // Example tag in the template: <<foreach [persons]>><<[Name]>> (Age: <<[Age]>>)<</foreach>>
+        Document template = new Document("Template.docx");
+
+        // Prepare a data source that will be referenced from the template.
+        // Any non‑dynamic, non‑anonymous .NET type can be used; here we use a List<Person>.
+        List<Person> persons = new List<Person>
+        {
+            new Person { Name = "John Doe", Age = 30 },
+            new Person { Name = "Jane Smith", Age = 25 },
+            new Person { Name = "Bob Johnson", Age = 45 }
+        };
+
+        // Create an instance of the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+
+        // Build the report. The third argument is the name used in the template to refer to the data source.
+        engine.BuildReport(template, persons, "persons");
+
+        // Save the populated document.
+        template.Save("Report.docx");
+    }
+
+    // Simple POCO class used as the data model for the report.
     public class Person
     {
         public string Name { get; set; }
         public int Age { get; set; }
-    }
-
-    class Program
-    {
-        static void Main()
-        {
-            // 1. Create a blank Word document that will serve as the template.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            // Insert a heading placeholder that the LINQ Reporting Engine will replace.
-            // The syntax "<<[person.Name]>>" tells the engine to insert the Name property of the data source.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("<<[person.Name]>>");
-
-            // Insert a normal paragraph with another placeholder.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("Age: <<[person.Age]>>");
-
-            // 2. Prepare the data source.
-            Person person = new Person { Name = "John Doe", Age = 42 };
-
-            // 3. Create the ReportingEngine and build the report.
-            ReportingEngine engine = new ReportingEngine();
-            // The second parameter is the data source object.
-            // The third parameter ("person") is the name used to reference the object inside the template.
-            engine.BuildReport(template, person, "person");
-
-            // 4. Save the populated document.
-            template.Save("LinqReportingResult.docx");
-        }
     }
 }

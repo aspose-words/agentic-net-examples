@@ -1,14 +1,21 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-class Program
+class DotToEpubConverter
 {
     static void Main()
     {
-        // Load the source document in DOT (Word template) format.
-        Document doc = new Document("input.dot");
+        // Path to the source DOT (Word template) file.
+        string inputPath = @"C:\Docs\Template.dot";
 
-        // Save the document as EPUB using the SaveFormat enumeration.
-        doc.Save("output.epub", SaveFormat.Epub);
+        // Path where the resulting EPUB file will be saved.
+        string outputPath = @"C:\Docs\Converted.epub";
+
+        // Load the DOT document. The Document constructor automatically detects the format.
+        Document doc = new Document(inputPath);
+
+        // Save the document in EPUB format.
+        doc.Save(outputPath, SaveFormat.Epub);
     }
 }

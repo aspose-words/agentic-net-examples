@@ -1,33 +1,48 @@
 using System;
-using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsImageExport
 {
-    static void Main()
+    class Program
     {
-        // Load the multi‑page DOCX document.
-        Document doc = new Document("Input.docx");
-
-        // Create image save options (PNG format in this example).
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
-        // Optional: set desired resolution and image size.
-        options.Resolution = 300;                     // 300 DPI
-        options.ImageSize = new Size(1240, 1754);     // Approx. A4 at 300 DPI
-
-        // Iterate through all pages and save each one as a separate image file.
-        for (int i = 0; i < doc.PageCount; i++)
+        static void Main()
         {
-            // Render the current page (zero‑based index) only.
-            options.PageSet = new PageSet(i);
+            // Path to the source DOCX document.
+            string inputPath = @"C:\Docs\MultiPageDocument.docx";
 
-            // Build the output file name.
-            string outputFile = $"Page_{i + 1}.png";
+            // Folder where the rendered images will be saved.
+            string outputFolder = @"C:\Docs\Images\";
 
-            // Save the rendered page to an image file.
-            doc.Save(outputFile, options);
+            // Ensure the output folder exists.
+            System.IO.Directory.CreateDirectory(outputFolder);
+
+            // Load the DOCX document.
+            Document doc = new Document(inputPath);
+
+            // Create an ImageSaveOptions object for PNG images.
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
+            {
+                // Optional: set resolution (dpi) and image size.
+                Resolution = 300,
+                ImageSize = new Size(1240, 1754) // A4 at 300 dpi.
+            };
+
+            // Render each page of the document to a separate image file.
+            for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
+            {
+                // Set the PageSet to the current zero‑based page index.
+                options.PageSet = new PageSet(pageIndex);
+
+                // Build the output file name, e.g., Page_1.png, Page_2.png, ...
+                string outputPath = System.IO.Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
+
+                // Save the current page as an image.
+                doc.Save(outputPath, options);
+            }
+
+            Console.WriteLine("Document pages have been successfully exported as images.");
         }
     }
 }

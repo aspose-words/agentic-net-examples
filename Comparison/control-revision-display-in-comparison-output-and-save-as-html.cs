@@ -2,59 +2,55 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Layout;
 using Aspose.Words.Saving;
-using Aspose.Words.Comparing;
 
-class RevisionComparisonToHtml
+namespace RevisionComparisonToHtml
 {
-    static void Main()
+    class Program
     {
-        // Paths to the original and edited documents.
-        string originalPath = @"C:\Docs\Original.docx";
-        string editedPath   = @"C:\Docs\Edited.docx";
-
-        // Load the documents.
-        Document originalDoc = new Document(originalPath);
-        Document editedDoc   = new Document(editedPath);
-
-        // Ensure both documents have no revisions before comparison.
-        if (originalDoc.Revisions.Count != 0 || editedDoc.Revisions.Count != 0)
-            throw new InvalidOperationException("Documents must not contain revisions before comparison.");
-
-        // Set up comparison options (optional – here we compare all elements).
-        CompareOptions compareOptions = new CompareOptions
+        static void Main()
         {
-            CompareMoves = true,
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
-            Target = ComparisonTargetType.Current
-        };
+            // Create the original document and add some content.
+            Document docOriginal = new Document();
+            DocumentBuilder builder = new DocumentBuilder(docOriginal);
+            builder.Writeln("This is the original paragraph.");
+            builder.Writeln("Another line that will stay unchanged.");
 
-        // Perform the comparison. The revisions will be added to the original document.
-        originalDoc.Compare(editedDoc, "Reviewer", DateTime.Now, compareOptions);
+            // Clone the original to create an edited version and modify its content.
+            Document docEdited = (Document)docOriginal.Clone(true);
+            DocumentBuilder editBuilder = new DocumentBuilder(docEdited);
+            // Change the first paragraph.
+            Paragraph firstParagraph = docEdited.FirstSection.Body.FirstParagraph;
+            firstParagraph.Runs[0].Text = "This is the edited paragraph.";
+            // Insert a new paragraph.
+            editBuilder.MoveToDocumentEnd();
+            editBuilder.Writeln("A newly added line.");
 
-        // Configure how revisions are displayed in the rendered output.
-        RevisionOptions revOptions = originalDoc.LayoutOptions.RevisionOptions;
-        revOptions.ShowOriginalRevision = true;   // Show original text instead of revised text.
-        revOptions.ShowRevisionMarks = true;     // Keep revision markup visible.
-        revOptions.ShowRevisionBars = false;     // Hide side revision bars.
-        revOptions.ShowInBalloons = ShowInBalloons.None; // Render revisions inline.
+            // Ensure both documents have no revisions before comparison.
+            if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
+                throw new InvalidOperationException("Documents must not contain revisions before comparison.");
 
-        // Prepare HTML save options.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
-        {
-            HtmlVersion = HtmlVersion.Html5, // Use HTML5 standard.
-            PrettyFormat = true            // Make the output human‑readable.
-            // Headers and footers are exported by default; no explicit property needed.
-        };
+            // Compare the documents – revisions will be added to the original document.
+            docOriginal.Compare(docEdited, "John Doe", DateTime.Now);
 
-        // Save the comparison result as an HTML file.
-        string outputPath = @"C:\Docs\ComparisonResult.html";
-        originalDoc.Save(outputPath, htmlOptions);
+            // Configure how revisions are displayed in the rendered output.
+            RevisionOptions revOptions = docOriginal.LayoutOptions.RevisionOptions;
+            revOptions.ShowOriginalRevision = true;      // Show original text alongside revisions.
+            revOptions.ShowRevisionMarks = true;        // Keep revision markup (e.g., underline/strike).
+            revOptions.ShowRevisionBars = false;        // Hide side revision bars.
+            revOptions.ShowInBalloons = ShowInBalloons.None; // Render revisions inline, not in balloons.
+
+            // Prepare HTML save options.
+            HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
+            {
+                HtmlVersion = HtmlVersion.Html5,   // Use HTML5 compliance.
+                PrettyFormat = true               // Make the output human‑readable.
+            };
+
+            // Save the comparison result as an HTML file.
+            string outputPath = "RevisionComparison.html";
+            docOriginal.Save(outputPath, htmlOptions);
+
+            Console.WriteLine($"Document saved to {outputPath}");
+        }
     }
 }

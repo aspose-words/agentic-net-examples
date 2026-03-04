@@ -7,15 +7,15 @@ class Program
     static void Main()
     {
         // Path to the source DOCX file.
-        string inputPath = "input.docx";
+        string inputPath = "Input.docx";
 
-        // Path to the destination XLSX file.
-        string outputPath = "output.xlsx";
+        // Path where the resulting XLSX file will be saved.
+        string outputPath = "Output.xlsx";
 
-        // Load the DOCX document.
+        // Load the DOCX document from the file system.
         Document doc = new Document(inputPath);
 
-        // Save the document in XLSX format using SaveFormat.Xlsx.
+        // Convert and save the document as an XLSX spreadsheet.
         doc.Save(outputPath, SaveFormat.Xlsx);
     }
 }

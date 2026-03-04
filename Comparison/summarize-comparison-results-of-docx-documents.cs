@@ -4,49 +4,58 @@ using Aspose.Words;
 using Aspose.Words.Comparing;
 using Aspose.Words.AI;
 
-class Program
+class DocumentComparisonSummarizer
 {
     static void Main()
     {
-        // Load the two documents to be compared.
-        Document original = new Document("Original.docx");
-        Document edited = new Document("Edited.docx");
+        // Paths to the original and edited documents.
+        string originalPath = @"C:\Docs\Original.docx";
+        string editedPath   = @"C:\Docs\Edited.docx";
 
-        // Documents must not contain revisions before comparison.
-        if (original.Revisions.Count != 0 || edited.Revisions.Count != 0)
+        // Load the documents.
+        Document originalDoc = new Document(originalPath);
+        Document editedDoc   = new Document(editedPath);
+
+        // Ensure both documents have no revisions before comparison.
+        if (originalDoc.Revisions.Count != 0 || editedDoc.Revisions.Count != 0)
             throw new InvalidOperationException("Both documents must be revision‑free before comparison.");
 
-        // Perform the comparison. Revisions are added to the original document.
-        original.Compare(edited, "Comparer", DateTime.Now);
+        // Perform the comparison.
+        originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
 
-        // Collect revision details into plain text.
-        StringBuilder sb = new StringBuilder();
-        sb.AppendLine("Comparison Summary:");
-        foreach (Revision rev in original.Revisions)
+        // Gather revision details into a plain‑text summary.
+        StringBuilder revisionsInfo = new StringBuilder();
+        revisionsInfo.AppendLine("Document comparison results:");
+        foreach (Revision rev in originalDoc.Revisions)
         {
-            sb.AppendLine($"- Revision Type: {rev.RevisionType}, Node Type: {rev.ParentNode.NodeType}");
-            sb.AppendLine($"  Text: \"{rev.ParentNode.GetText().Trim()}\"");
+            revisionsInfo.AppendLine($"- Type: {rev.RevisionType}");
+            revisionsInfo.AppendLine($"  Node: {rev.ParentNode.NodeType}");
+            revisionsInfo.AppendLine($"  Text: \"{rev.ParentNode.GetText().Trim()}\"");
         }
 
-        // Create a temporary document that holds the raw revision text.
-        Document rawSummaryDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(rawSummaryDoc);
-        builder.Writeln(sb.ToString());
+        // Create a temporary document that contains the revision information.
+        Document tempDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(tempDoc);
+        builder.Writeln(revisionsInfo.ToString());
 
         // Prepare the AI model for summarization.
         string apiKey = Environment.GetEnvironmentVariable("API_KEY");
-        AiModel model = AiModel.Create(AiModelType.Gpt4OMini).WithApiKey(apiKey);
+        AiModel model = ((OpenAiModel)AiModel.Create(AiModelType.Gpt4OMini)
+                                            .WithApiKey(apiKey))
+                                            .WithOrganization("MyOrg")
+                                            .WithProject("MyProject");
 
-        // Configure summarization options (short summary).
+        // Set summarization options (e.g., short summary).
         SummarizeOptions summarizeOptions = new SummarizeOptions
         {
             SummaryLength = SummaryLength.Short
         };
 
-        // Generate a concise summary using the AI model.
-        Document conciseSummary = model.Summarize(rawSummaryDoc, summarizeOptions);
+        // Generate the summary document.
+        Document summaryDoc = model.Summarize(tempDoc, summarizeOptions);
 
-        // Save the final summary document.
-        conciseSummary.Save("ComparisonResultSummary.docx");
+        // Save the summary.
+        string summaryPath = @"C:\Docs\ComparisonSummary.docx";
+        summaryDoc.Save(summaryPath);
     }
 }

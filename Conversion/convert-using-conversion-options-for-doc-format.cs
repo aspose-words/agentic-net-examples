@@ -1,34 +1,32 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Loading;
 
-class ConvertToDoc
+class Program
 {
     static void Main()
     {
-        // Create a new blank document and add some content.
+        // Create a new blank document and add some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello world!");
 
-        // Initialize save options for the legacy DOC format.
+        // Configure save options for the legacy DOC format.
         DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
-        // Example: protect the saved file with a password (RC4 encryption).
-        saveOptions.Password = "MyPassword";
-        // Example: preserve routing slip information if present.
-        saveOptions.SaveRoutingSlip = true;
+        saveOptions.Password = "MyPassword";          // Protect the file with a password.
+        saveOptions.SaveRoutingSlip = true;           // Preserve routing slip if present.
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ConvertedDocument.doc");
-
-        // Save the document using the specified DOC save options.
+        // Save the document using the specified options.
+        string outputPath = "DocSaveOptions.SaveAsDoc.doc";
         doc.Save(outputPath, saveOptions);
 
-        // Load the password‑protected DOC file to verify it was saved correctly.
-        LoadOptions loadOptions = new LoadOptions { Password = "MyPassword" };
+        // Load the saved document using the password.
+        LoadOptions loadOptions = new LoadOptions();
+        loadOptions.Password = "MyPassword";
         Document loadedDoc = new Document(outputPath, loadOptions);
+
+        // Output the document text to verify successful load.
         Console.WriteLine(loadedDoc.GetText().Trim());
     }
 }

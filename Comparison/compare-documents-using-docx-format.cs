@@ -2,39 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class CompareDocs
+class DocumentComparison
 {
     static void Main()
     {
-        // Load the original document.
+        // Load the original and edited documents from disk.
         Document docOriginal = new Document("Original.docx");
-
-        // Load the edited document to compare against.
         Document docEdited = new Document("Edited.docx");
 
         // Ensure both documents have no existing revisions; otherwise Compare will throw.
-        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
-        {
-            // Configure comparison options (optional – all false means track all changes).
-            CompareOptions compareOptions = new CompareOptions
-            {
-                CompareMoves = false,
-                IgnoreFormatting = false,
-                IgnoreCaseChanges = false,
-                IgnoreComments = false,
-                IgnoreTables = false,
-                IgnoreFields = false,
-                IgnoreFootnotes = false,
-                IgnoreTextboxes = false,
-                IgnoreHeadersAndFooters = false,
-                Target = ComparisonTargetType.New
-            };
+        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
+            throw new InvalidOperationException("Both documents must be revision‑free before comparison.");
 
-            // Perform the comparison. Revisions are added to docOriginal.
-            docOriginal.Compare(docEdited, "Reviewer", DateTime.Now, compareOptions);
+        // Perform the comparison. The revisions will be added to docOriginal.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
+
+        // Optional: iterate through the revisions and output their types.
+        foreach (Revision rev in docOriginal.Revisions)
+        {
+            Console.WriteLine($"Revision type: {rev.RevisionType}, node type: {rev.ParentNode.NodeType}");
         }
 
-        // Save the document that now contains the tracked changes (revisions).
-        docOriginal.Save("ComparisonResult.docx");
+        // Accept all revisions so that docOriginal becomes identical to docEdited.
+        docOriginal.Revisions.AcceptAll();
+
+        // Save the resulting document.
+        docOriginal.Save("ComparedResult.docx");
     }
 }

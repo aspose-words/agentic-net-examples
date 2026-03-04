@@ -1,46 +1,47 @@
 using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing; // Added for Shape
+using Aspose.Words.Drawing;          // <-- added
 using Aspose.Words.Drawing.Charts;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart with a width of 500 points and a height of 300 points.
+        // Insert a Column chart of size 500x300 points.
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series that Aspose.Words adds to a new chart.
+        // Remove the demo data that comes with a new chart.
         chart.Series.Clear();
 
-        // Define the categories (X‑axis) and the corresponding values (Y‑axis) for a single series.
+        // Define categories (X‑axis) and values (Y‑axis) for the series.
         string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-        double[] values = { 120.5, 150.0, 130.2, 170.8 };
+        double[] values = { 120.5, 150.0, 130.75, 170.2 };
 
-        // Add a single series to the chart.
-        // This uses the overload: Add(string seriesName, string[] categories, double[] values)
-        ChartSeries series = chart.Series.Add("Revenue", categories, values);
+        // Add a single series to the chart using the appropriate overload.
+        ChartSeries series = chart.Series.Add("Fiscal 2025", categories, values);
 
-        // Set the fill color of the series to green.
-        series.Format.Fill.ForeColor = Color.Green;
+        // Set the fill colour of the series to a custom colour.
+        series.Format.Fill.ForeColor = Color.CornflowerBlue;
 
-        // Enable data labels for the series and configure them to show the value.
+        // Enable data labels for the series and show the value for each point.
         series.HasDataLabels = true;
-        // Apply the same label settings to all data points in the series.
-        for (int i = 0; i < series.DataLabels.Count; i++)
+        foreach (ChartDataLabel label in series.DataLabels)
         {
-            series.DataLabels[i].ShowValue = true;
-            series.DataLabels[i].ShowCategoryName = false;
-            series.DataLabels[i].ShowSeriesName = false;
+            label.ShowValue = true;
+            label.NumberFormat.FormatCode = "0.00";
         }
 
-        // Save the document to a DOCX file.
+        // Optionally, change the chart title.
+        chart.Title.Text = "Quarterly Revenue";
+        chart.Title.Show = true;
+
+        // Save the document to disk.
         doc.Save("ChartSeriesExample.docx");
     }
 }

@@ -1,51 +1,36 @@
 using System;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 
-class ExtractBetweenParagraphs
+class ExtractParagraphContent
 {
     static void Main()
     {
-        // Load the PDF file as an Aspose.Words document.
-        Document sourceDoc = new Document("input.pdf");
+        // Path to the source PDF file.
+        string pdfPath = @"C:\Docs\source.pdf";
 
-        // Define the range of paragraphs to extract (zero‑based indices).
-        // For example, extract content from the 3rd paragraph up to (but not including) the 6th.
-        int startParagraphIndex = 2; // third paragraph
-        int endParagraphIndex   = 5; // sixth paragraph (exclusive)
+        // Load the PDF as an Aspose.Words document.
+        Document doc = new Document(pdfPath);
 
-        // Validate the indices against the actual paragraph count.
-        ParagraphCollection paragraphs = sourceDoc.FirstSection.Body.Paragraphs;
-        if (startParagraphIndex < 0 ||
-            endParagraphIndex > paragraphs.Count ||
-            startParagraphIndex >= endParagraphIndex)
-        {
-            throw new ArgumentOutOfRangeException("Invalid paragraph range specified.");
-        }
-
-        // Gather the text of the selected paragraphs.
+        // Collect the text of each paragraph.
         StringBuilder extractedText = new StringBuilder();
-        for (int i = startParagraphIndex; i < endParagraphIndex; i++)
+
+        // Iterate through all paragraphs in the main body of the first section.
+        foreach (Paragraph paragraph in doc.FirstSection.Body.Paragraphs)
         {
-            Paragraph para = paragraphs[i];
-            extractedText.Append(para.GetText()); // GetText includes the paragraph break.
+            // GetText() returns the paragraph text including the paragraph break character.
+            // Trim the trailing paragraph break and any surrounding whitespace.
+            string text = paragraph.GetText().TrimEnd('\r', '\n').Trim();
+
+            // Append the cleaned text to the result.
+            extractedText.AppendLine(text);
         }
 
-        // Output the extracted content to the console.
-        Console.WriteLine(extractedText.ToString());
+        // Save the extracted content to a plain‑text file.
+        string outputPath = @"C:\Docs\extracted.txt";
+        File.WriteAllText(outputPath, extractedText.ToString());
 
-        // Optionally, save the extracted content as a new Word document.
-        Document resultDoc = new Document(); // create a blank document
-        // Ensure the document has the minimal required nodes.
-        resultDoc.RemoveAllChildren();
-        Section section = new Section(resultDoc);
-        resultDoc.AppendChild(section);
-        Body body = new Body(resultDoc);
-        section.AppendChild(body);
-        Paragraph newPara = new Paragraph(resultDoc);
-        body.AppendChild(newPara);
-        newPara.AppendChild(new Run(resultDoc, extractedText.ToString()));
-
-        resultDoc.Save("ExtractedContent.docx");
+        Console.WriteLine($"Extraction complete. Output saved to: {outputPath}");
     }
 }

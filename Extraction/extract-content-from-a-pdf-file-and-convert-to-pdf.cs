@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
 class PdfExtractAndConvert
@@ -7,25 +8,27 @@ class PdfExtractAndConvert
     static void Main()
     {
         // Path to the source PDF file.
-        string inputPdfPath = "input.pdf";
+        string sourcePdfPath = "input.pdf";
 
-        // Path to the resulting PDF file.
-        string outputPdfPath = "output.pdf";
+        // Load the PDF document. PdfLoadOptions can be used if specific loading behavior is required.
+        PdfLoadOptions loadOptions = new PdfLoadOptions();
+        Document sourceDoc = new Document(sourcePdfPath, loadOptions);
 
-        // Load the source PDF into an Aspose.Words Document.
-        Document sourceDoc = new Document(inputPdfPath);
+        // Extract plain text from the PDF using PlainTextDocument.
+        PlainTextDocument plainText = new PlainTextDocument(sourcePdfPath);
+        string extractedText = plainText.Text;
 
-        // Extract plain text from the PDF.
-        PlainTextDocument plainTextDoc = new PlainTextDocument(inputPdfPath);
-        string extractedText = plainTextDoc.Text;
+        // Create a new blank Word document.
+        Document outputDoc = new Document();
 
-        // Create a new blank document and insert the extracted text.
-        Document newDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(newDoc);
+        // Insert the extracted text into the new document.
+        DocumentBuilder builder = new DocumentBuilder(outputDoc);
         builder.Writeln(extractedText);
 
-        // Save the new document as PDF using PdfSaveOptions.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        newDoc.Save(outputPdfPath, pdfOptions);
+        // Prepare PDF save options (default options are sufficient for a basic conversion).
+        PdfSaveOptions saveOptions = new PdfSaveOptions();
+
+        // Save the new document as a PDF.
+        outputDoc.Save("output.pdf", saveOptions);
     }
 }

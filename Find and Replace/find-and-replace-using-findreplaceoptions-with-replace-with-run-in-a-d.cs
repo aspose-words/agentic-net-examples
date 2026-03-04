@@ -1,52 +1,60 @@
 using System;
 using System.Text.RegularExpressions;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class ReplaceWithRunHandler : IReplacingCallback
-{
-    // This method is called for each match found by the Find/Replace engine.
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        // Create a new Run node that will replace the matched text.
-        Run newRun = new Run(args.MatchNode.Document, "Replacement Text");
-
-        // Example: apply custom formatting to the new run.
-        newRun.Font.Bold = true;
-        newRun.Font.Color = Color.Blue;
-
-        // Insert the new run immediately after the node that contained the match.
-        // InsertAfter is defined on CompositeNode, so cast the parent accordingly.
-        CompositeNode parent = (CompositeNode)args.MatchNode.ParentNode;
-        parent.InsertAfter(newRun, args.MatchNode);
-
-        // Remove the original node that held the matched text.
-        args.MatchNode.Remove();
-
-        // Skip the default replacement because we have already performed the custom one.
-        return ReplaceAction.Skip;
-    }
-}
-
-class FindReplaceWithRunExample
+class Program
 {
     static void Main()
     {
-        // Load the source DOCX document.
+        // Load the DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Configure FindReplaceOptions with a custom callback.
+        // Configure find/replace options with a custom callback that inserts a Run node.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new ReplaceWithRunHandler()
+            ReplacingCallback = new RunReplacingHandler()
         };
 
-        // Perform the find-and-replace operation.
-        // The pattern "PLACEHOLDER" will be replaced by a new Run node.
-        doc.Range.Replace(new Regex("PLACEHOLDER"), string.Empty, options);
+        // Perform the replace. The pattern to find is "_FullName_".
+        // The replacement string is left empty because the callback will handle insertion.
+        doc.Range.Replace("_FullName_", string.Empty, options);
 
         // Save the modified document.
         doc.Save("Output.docx");
+    }
+
+    // Custom callback that replaces the found text with a new Run node.
+    private class RunReplacingHandler : IReplacingCallback
+    {
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // Create a new Run containing the desired replacement text.
+            Run newRun = new Run(args.MatchNode.Document, "John Doe")
+            {
+                // Example of applying formatting to the new Run.
+                Font = { Bold = true, Size = 12 }
+            };
+
+            // Insert the new Run after the node where the match starts.
+            CompositeNode parent = args.MatchNode.ParentNode as CompositeNode;
+            parent?.InsertAfter(newRun, args.MatchNode);
+
+            // Remove all nodes that were part of the original match.
+            // The match may span multiple nodes, so iterate from the start to the end node.
+            Node current = args.MatchNode;
+            while (current != null && current != args.MatchEndNode)
+            {
+                Node next = current.NextSibling;
+                current.Remove();
+                current = next;
+            }
+
+            // Remove the final node of the match.
+            args.MatchEndNode?.Remove();
+
+            // Skip the default replacement because we have already performed the custom insertion.
+            return ReplaceAction.Skip;
+        }
     }
 }

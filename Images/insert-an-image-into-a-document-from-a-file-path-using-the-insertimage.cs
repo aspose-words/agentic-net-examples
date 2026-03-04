@@ -1,25 +1,28 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System;
 
-class Program
+class InsertImageExample
 {
     static void Main()
     {
         // Create a new empty document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path to the image file to be inserted.
+        // Specify the full path to the image file.
         string imagePath = @"C:\Images\Sample.jpg";
 
         // Insert the image inline at the current cursor position.
+        // The overload InsertImage(string) inserts the image at 100% scale.
         Shape imageShape = builder.InsertImage(imagePath);
 
-        // Example: modify the inserted image's properties if needed.
+        // Optional: modify the inserted shape (e.g., set wrap type, position, etc.).
         // imageShape.WrapType = WrapType.Square;
 
-        // Save the document with the inserted image.
+        // Save the resulting document.
         doc.Save(@"C:\Output\ImageInserted.docx");
     }
 }

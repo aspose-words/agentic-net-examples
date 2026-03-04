@@ -3,56 +3,58 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Loading;
+using Aspose.Words.Loading; // Needed for HtmlLoadOptions
 
-class Program
+namespace ExtractImagesFromHtml
 {
-    static void Main()
+    class Program
     {
-        // Path to the HTML file that contains the shapes with images.
-        string htmlFilePath = @"C:\Input\Document.html";
-
-        // Base folder for relative image URIs referenced inside the HTML.
-        string baseImageFolder = @"C:\Input\Images";
-
-        // Folder where extracted images will be saved.
-        string outputFolder = @"C:\Output\ExtractedImages";
-
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
-
-        // Load the HTML document. HtmlLoadOptions.BaseUri allows Aspose.Words to resolve
-        // relative image paths that are referenced in the HTML file.
-        HtmlLoadOptions loadOptions = new HtmlLoadOptions
+        static void Main()
         {
-            BaseUri = baseImageFolder
-        };
-        Document doc = new Document(htmlFilePath, loadOptions);
+            // Path to the source HTML file.
+            string htmlFilePath = @"C:\Input\Document.html";
 
-        // Get all Shape nodes in the document (including those inside headers/footers).
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+            // Base folder for relative image URIs referenced in the HTML.
+            string baseImageFolder = @"C:\Input\Images";
 
-        int imageIndex = 0;
-        foreach (Shape shape in shapes.OfType<Shape>())
-        {
-            // Process only shapes that actually contain an image.
-            if (shape.HasImage)
+            // Folder where extracted images will be saved.
+            string outputFolder = @"C:\Output\ExtractedImages";
+
+            // Ensure the output directory exists.
+            Directory.CreateDirectory(outputFolder);
+
+            // Load the HTML document with a BaseUri so that relative image references can be resolved.
+            HtmlLoadOptions loadOptions = new HtmlLoadOptions
             {
-                // Determine a suitable file extension based on the image type.
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                BaseUri = baseImageFolder
+            };
+            Document doc = new Document(htmlFilePath, loadOptions);
 
-                // Build the output file name.
-                string imageFileName = $"ExtractedImage_{imageIndex}{extension}";
-                string imagePath = Path.Combine(outputFolder, imageFileName);
+            // Get all Shape nodes (including inline and floating images).
+            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
-                // Save the image data to the file system.
-                shape.ImageData.Save(imagePath);
+            int imageIndex = 0;
+            foreach (Shape shape in shapeNodes.OfType<Shape>())
+            {
+                // Process only shapes that actually contain image data.
+                if (shape.HasImage)
+                {
+                    // Determine a suitable file extension based on the image type.
+                    string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
 
-                Console.WriteLine($"Saved image {imageIndex}: {imagePath}");
-                imageIndex++;
+                    // Build the output file name.
+                    string outputFilePath = Path.Combine(
+                        outputFolder,
+                        $"ExtractedImage_{imageIndex}{extension}");
+
+                    // Save the image bytes to the file system.
+                    shape.ImageData.Save(outputFilePath);
+
+                    imageIndex++;
+                }
             }
-        }
 
-        Console.WriteLine($"Extraction complete. {imageIndex} image(s) saved to \"{outputFolder}\".");
+            Console.WriteLine($"Extracted {imageIndex} image(s) to \"{outputFolder}\".");
+        }
     }
 }

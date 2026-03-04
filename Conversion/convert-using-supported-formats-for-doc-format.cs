@@ -1,19 +1,33 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class ConvertToDoc
 {
     static void Main()
     {
-        // Load an existing document. Aspose.Words automatically detects the format.
-        Document doc = new Document("Input.docx");
+        // Path to the source document (can be any supported format, e.g., .docx, .pdf, .html, etc.)
+        string sourcePath = @"C:\Input\SampleDocument.docx";
 
-        // Convert and save the document to the legacy DOC format using the SaveFormat enum.
-        doc.Save("Output.doc", SaveFormat.Doc);
+        // Path where the converted .doc file will be saved.
+        string outputPath = @"C:\Output\SampleDocument.doc";
 
-        // The same conversion can be performed with explicit save options.
-        DocSaveOptions options = new DocSaveOptions(SaveFormat.Doc);
-        doc.Save("OutputWithOptions.doc", options);
+        // Load the source document. The constructor automatically detects the format.
+        Document doc = new Document(sourcePath);
+
+        // Create DocSaveOptions specifying the DOC format.
+        // This uses the provided DocSaveOptions constructor that accepts a SaveFormat.
+        DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
+
+        // Optional: set additional options, e.g., a password or routing slip preservation.
+        // saveOptions.Password = "MyPassword";
+        // saveOptions.SaveRoutingSlip = true;
+
+        // Save the document in the legacy DOC format using the save options.
+        doc.Save(outputPath, saveOptions);
+
+        // Inform the user that conversion is complete.
+        Console.WriteLine($"Document converted and saved to: {outputPath}");
     }
 }

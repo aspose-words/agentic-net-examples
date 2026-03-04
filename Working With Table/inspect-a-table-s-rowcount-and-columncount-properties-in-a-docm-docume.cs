@@ -9,14 +9,9 @@ class InspectTableDimensions
         // Load the DOCM document.
         Document doc = new Document("InputDocument.docm");
 
-        // Get the collection of tables in the first section's body.
-        TableCollection tables = doc.FirstSection.Body.Tables;
-
-        // Iterate through each table and output its row and column counts.
-        for (int i = 0; i < tables.Count; i++)
+        // Iterate through all tables in the document.
+        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
-            Table table = tables[i];
-
             // Row count is the number of Row objects in the table.
             int rowCount = table.Rows.Count;
 
@@ -24,10 +19,10 @@ class InspectTableDimensions
             // If the table has no rows, column count is zero.
             int columnCount = table.FirstRow != null ? table.FirstRow.Cells.Count : 0;
 
-            Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
+            Console.WriteLine($"Table found: Rows = {rowCount}, Columns = {columnCount}");
         }
 
-        // Optionally, save the document (unchanged) to verify load/save works.
-        doc.Save("OutputDocument.docm");
+        // Optionally, save the document (e.g., after inspection or modifications).
+        doc.Save("OutputDocument.docx");
     }
 }

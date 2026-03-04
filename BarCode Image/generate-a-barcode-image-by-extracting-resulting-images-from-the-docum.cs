@@ -9,31 +9,34 @@ class BarcodeImageExtractor
     {
         // Path to the input DOCX that contains barcode fields.
         string dataDir = @"C:\Data\";
-        string inputPath = Path.Combine(dataDir, "Barcodes.docx");
+        string inputDocPath = Path.Combine(dataDir, "Barcodes.docx");
 
-        // Load the document (creation and loading follow the provided lifecycle rules).
-        Document doc = new Document(inputPath);
+        // Load the document.
+        Document doc = new Document(inputDocPath);
 
         // Update all fields so that barcode fields are rendered as images.
         doc.UpdateFields();
 
-        // Iterate through all shapes in the document and extract those that are images.
+        // Get all Shape nodes (they can contain images).
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+
         int imageIndex = 0;
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        foreach (Shape shape in shapeNodes)
         {
+            // Check if the shape actually holds an image.
             if (shape.IsImage)
             {
-                // Build a unique file name for each extracted barcode image.
-                string outputPath = Path.Combine(dataDir, $"BarcodeImage_{imageIndex}.png");
+                // Build a unique file name for each extracted image.
+                string outputImagePath = Path.Combine(dataDir, $"BarcodeImage_{imageIndex}.png");
 
                 // Save the image data to the file system.
-                shape.ImageData.Save(outputPath);
+                shape.ImageData.Save(outputImagePath);
 
                 imageIndex++;
             }
         }
 
-        // Optionally save the updated document (still using the provided save rule).
+        // Optionally save the updated document (fields now contain images).
         string updatedDocPath = Path.Combine(dataDir, "Barcodes_Updated.docx");
         doc.Save(updatedDocPath);
     }

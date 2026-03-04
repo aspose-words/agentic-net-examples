@@ -2,45 +2,55 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class DocumentComparison
+namespace AsposeWordsComparisonExample
 {
-    static void Main()
+    class Program
     {
-        // Paths to the source documents and the output folder.
-        string dataDir = @"C:\Docs\";
-        string outputDir = @"C:\Output\";
-
-        // Load the original and the edited documents.
-        Document docOriginal = new Document(dataDir + "Original.docx");
-        Document docEdited   = new Document(dataDir + "Edited.docx");
-
-        // Configure custom comparison options.
-        CompareOptions compareOptions = new CompareOptions
+        static void Main()
         {
-            // Track changes at the character level.
-            Granularity = Granularity.CharLevel,
+            // Paths to the original and edited documents.
+            string originalPath = @"C:\Docs\Original.docx";
+            string editedPath   = @"C:\Docs\Edited.docx";
 
-            // Use the edited document as the base for comparison (equivalent to Word's "Show changes in: New document").
-            Target = ComparisonTargetType.New,
+            // Load the documents.
+            Document docOriginal = new Document(originalPath);
+            Document docEdited   = new Document(editedPath);
 
-            // Example of ignoring specific element types.
-            IgnoreFormatting = true,
-            IgnoreComments   = true,
-            IgnoreTables     = false,
-            IgnoreFootnotes  = false,
-            IgnoreTextboxes  = false,
-            IgnoreHeadersAndFooters = false,
+            // Ensure both documents have no revisions before comparison.
+            if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
+                throw new InvalidOperationException("Documents must not contain revisions before comparison.");
 
-            // Advanced options – ignore DrawingML unique IDs to avoid false positives.
-            // The AdvancedOptions property is read‑only, but its members are settable.
-            // This follows the provided API contract.
-        };
-        compareOptions.AdvancedOptions.IgnoreDmlUniqueId = true;
+            // Configure comparison options.
+            CompareOptions compareOptions = new CompareOptions
+            {
+                // Track changes at the word level.
+                Granularity = Granularity.WordLevel,
 
-        // Perform the comparison. Revisions will be added to docOriginal.
-        docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+                // Do not ignore formatting changes.
+                IgnoreFormatting = false,
 
-        // Save the result (the original document now contains revision marks).
-        docOriginal.Save(outputDir + "ComparisonResult.docx");
+                // Do not ignore case changes.
+                IgnoreCaseChanges = false,
+
+                // Example: ignore changes in comments.
+                IgnoreComments = true,
+
+                // Example: ignore changes in tables.
+                IgnoreTables = false,
+
+                // Set the base document for comparison (show changes in the new document).
+                Target = ComparisonTargetType.New
+            };
+
+            // Advanced options – for example, ignore DrawingML unique IDs.
+            compareOptions.AdvancedOptions.IgnoreDmlUniqueId = true;
+
+            // Perform the comparison. Revisions will be added to docOriginal.
+            docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+
+            // Save the resulting document with revisions.
+            string resultPath = @"C:\Docs\ComparisonResult.docx";
+            docOriginal.Save(resultPath);
+        }
     }
 }

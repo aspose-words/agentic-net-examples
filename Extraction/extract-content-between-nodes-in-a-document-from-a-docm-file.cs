@@ -1,52 +1,32 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
-class ExtractBetweenBookmarks
+class ExtractBetweenNodes
 {
     static void Main()
     {
-        // Load the DOCM file (lifecycle rule: load)
+        // Load the DOCM file. The constructor automatically detects the format.
         Document doc = new Document("InputDocument.docm");
 
-        // Retrieve the start and end bookmarks that define the region to extract
-        Bookmark startBookmark = doc.Range.Bookmarks["Start"];
-        Bookmark endBookmark = doc.Range.Bookmarks["End"];
-
-        if (startBookmark == null || endBookmark == null)
+        // Assume the region to extract is marked by a bookmark named "ExtractRegion".
+        // The bookmark's Text property returns all text between its start and end nodes.
+        Bookmark bookmark = doc.Range.Bookmarks["ExtractRegion"];
+        if (bookmark == null)
         {
-            Console.WriteLine("Required bookmarks not found.");
+            Console.WriteLine("Bookmark 'ExtractRegion' not found.");
             return;
         }
 
-        // Get the underlying bookmark nodes
-        Node startNode = startBookmark.BookmarkStart;
-        Node endNode = endBookmark.BookmarkEnd;
+        // Extract the text contained within the bookmark.
+        string extractedText = bookmark.Text;
 
-        // Collect text from all nodes that appear after the start node and before the end node
-        StringBuilder extractedText = new StringBuilder();
-        Node current = startNode;
+        // Output the extracted text to the console.
+        Console.WriteLine("Extracted Text:");
+        Console.WriteLine(extractedText);
 
-        // Traverse the document using pre‑order traversal until we reach the end bookmark node
-        while (current != null && current != endNode)
-        {
-            // Append the text of the current node (including its children)
-            extractedText.Append(current.GetText());
-            current = current.NextPreOrder(doc);
-        }
-
-        // Create a new document to hold the extracted content (lifecycle rule: create)
-        Document resultDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(resultDoc);
-
-        // Write the extracted text into the new document
-        builder.Writeln(extractedText.ToString().Trim());
-
-        // Save the result (lifecycle rule: save)
-        resultDoc.Save("ExtractedContent.docx");
-
-        Console.WriteLine("Extraction complete. Saved to ExtractedContent.docx");
+        // Optionally, save the extracted text to a plain‑text file.
+        File.WriteAllText("ExtractedContent.txt", extractedText);
     }
 }

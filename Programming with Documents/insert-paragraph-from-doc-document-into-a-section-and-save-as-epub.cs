@@ -7,43 +7,39 @@ class InsertParagraphAndSaveEpub
 {
     static void Main()
     {
-        // Paths to the source DOC file and the output EPUB file.
-        string sourceDocPath = @"C:\Input\SourceDocument.docx";
-        string outputEpubPath = @"C:\Output\Result.epub";
+        // Load the source document that contains the paragraph to be copied.
+        Document srcDoc = new Document("Source.doc");
 
-        // Load the source document that contains the paragraph to be inserted.
-        Document srcDoc = new Document(sourceDocPath);
-
-        // Create a new blank destination document.
+        // Create a new destination document (blank) and obtain its first section.
         Document dstDoc = new Document();
+        Section dstSection = dstDoc.FirstSection; // The blank document already has one section.
 
-        // Ensure the destination document has at least one section.
-        // (A new Document already contains a default section with a body and a paragraph.)
-        Section dstSection = dstDoc.FirstSection;
+        // Ensure the section has a body (it does by default) – we will insert into its body.
+        Body dstBody = dstSection.Body;
 
-        // Get the paragraph we want to copy from the source document.
-        // For example, take the first paragraph of the first section.
+        // Retrieve the paragraph we want to copy from the source document.
+        // Here we take the first paragraph; adjust the index as needed.
         Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
 
-        // Prepare a NodeImporter to import nodes from srcDoc into dstDoc.
+        // Import the paragraph node from the source document into the destination document.
+        // The NodeImporter handles style and list translation.
         NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // Import the paragraph node (deep clone) so it can be inserted into the destination.
         Node importedParagraph = importer.ImportNode(srcParagraph, true);
 
-        // Append the imported paragraph to the body of the target section.
-        dstSection.Body.AppendChild(importedParagraph);
+        // Insert the imported paragraph into the destination section's body.
+        // AppendChild adds it at the end of the existing content.
+        dstBody.AppendChild(importedParagraph);
 
-        // Configure EPUB save options (optional: set encoding, split criteria, export properties).
-        HtmlSaveOptions epubSaveOptions = new HtmlSaveOptions
+        // Prepare EPUB save options (optional: set split criteria, encoding, etc.).
+        HtmlSaveOptions epubOptions = new HtmlSaveOptions
         {
             SaveFormat = SaveFormat.Epub,
-            Encoding = System.Text.Encoding.UTF8,
-            DocumentSplitCriteria = DocumentSplitCriteria.None,
-            ExportDocumentProperties = true
+            ExportDocumentProperties = true,
+            // By default EPUB splits by heading paragraphs; change if desired.
+            DocumentSplitCriteria = DocumentSplitCriteria.None
         };
 
-        // Save the destination document as an EPUB file.
-        dstDoc.Save(outputEpubPath, epubSaveOptions);
+        // Save the resulting document as an EPUB file.
+        dstDoc.Save("Result.epub", epubOptions);
     }
 }

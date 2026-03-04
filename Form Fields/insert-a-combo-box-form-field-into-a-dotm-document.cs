@@ -2,25 +2,27 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class InsertComboBoxIntoDotm
 {
     static void Main()
     {
-        // Create a new document. The file will be saved as a DOTM (macro‑enabled template).
-        Document doc = new Document();
+        // Load an existing DOTM template (or create a new document if you prefer).
+        Document doc = new Document("Template.dotm");
+
+        // Create a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a prompt for the user.
-        builder.Writeln("Pick a fruit:");
+        // Write some prompt text before the combo box.
+        builder.Write("Pick a fruit: ");
 
-        // Items that will appear in the combo box.
+        // Define the items that will appear in the combo box.
         string[] items = { "Apple", "Banana", "Cherry" };
 
         // Insert the combo box form field at the current cursor position.
-        // The first item ("Apple") will be selected by default (selectedIndex = 0).
+        // Parameters: field name, items array, index of the initially selected item.
         builder.InsertComboBox("FruitCombo", items, 0);
 
-        // Save the document as a DOTM file.
-        doc.Save("ComboBoxTemplate.dotm");
+        // Save the modified document as a DOTM file.
+        doc.Save("Result.dotm");
     }
 }

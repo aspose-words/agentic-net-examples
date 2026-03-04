@@ -17,50 +17,52 @@ namespace AsposeWordsBookmarkDemo
     {
         static void Main()
         {
-            // Load the DOCM template. The template can be an empty document or contain static content.
-            Document doc = new Document(@"C:\Templates\ReportTemplate.docm");
+            // Load the DOCM template that contains the report placeholders.
+            // The template can have fields like <<foreach [topics]>> <<[Title]>> <<[Content]>> <</foreach>>
+            Document doc = new Document("Template.docm");
 
-            // Example source data – in a real scenario this could come from a database, JSON, etc.
-            List<Topic> allTopics = new List<Topic>
+            // Prepare a collection of topics that will be used as the data source.
+            List<Topic> topics = new List<Topic>
             {
                 new Topic { Title = "Introduction", Content = "This is the introduction." },
-                new Topic { Title = "Usage", Content = "How to use the product." },
+                new Topic { Title = "Usage", Content = "Details about usage." },
                 new Topic { Title = "Conclusion", Content = "Final thoughts." }
             };
 
-            // Use LINQ to filter or order topics as needed.
-            // For demonstration we order them alphabetically by title.
-            var orderedTopics = allTopics.OrderBy(t => t.Title).ToList();
+            // Use Aspose.Words ReportingEngine to populate the template with the topics collection.
+            ReportingEngine engine = new ReportingEngine();
+            // The data source name "topics" must match the name used in the template's foreach tag.
+            engine.BuildReport(doc, new object[] { topics }, new[] { "topics" });
 
-            // Use DocumentBuilder to insert each topic as a separate paragraph with a bookmark.
+            // After the report is built, insert a bookmark for each topic dynamically.
+            // The bookmarks will be placed at the start of each topic title.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Move the cursor to the end of the document (or any desired location).
-            builder.MoveToDocumentEnd();
+            // Find all paragraphs that contain a topic title (simple LINQ query on paragraphs).
+            var titleParagraphs = doc.FirstSection.Body.Paragraphs
+                .Cast<Paragraph>()
+                .Where(p => topics.Any(t => p.GetText().Contains(t.Title)))
+                .ToList();
 
-            for (int i = 0; i < orderedTopics.Count; i++)
+            int index = 0;
+            foreach (var paragraph in titleParagraphs)
             {
-                Topic topic = orderedTopics[i];
-                string bookmarkName = $"Topic_{i + 1}";
+                // Move the builder cursor to the paragraph that holds the title.
+                builder.MoveTo(paragraph);
 
-                // Insert a paragraph for the title.
-                builder.Writeln(topic.Title);
-                // Mark the start of the bookmark.
+                // Define a unique bookmark name for each topic.
+                string bookmarkName = $"Topic_{index}";
+
+                // Insert the bookmark start, write the title (already present), then insert the end.
                 builder.StartBookmark(bookmarkName);
-                // Insert the content that belongs to the bookmark.
-                builder.Writeln(topic.Content);
-                // Mark the end of the bookmark.
+                // The title text is already in the paragraph, so we just close the bookmark.
                 builder.EndBookmark(bookmarkName);
+
+                index++;
             }
 
-            // Optionally, use ReportingEngine to process any remaining merge fields in the template.
-            // (If the template contains <<[DataSource.Property]>> style fields.)
-            ReportingEngine engine = new ReportingEngine();
-            // BuildReport can be called with a data source; here we pass the list of topics.
-            engine.BuildReport(doc, orderedTopics, "Topics");
-
             // Save the resulting document. The format is inferred from the extension.
-            doc.Save(@"C:\Output\GeneratedReport.docx");
+            doc.Save("ReportWithBookmarks.docx");
         }
     }
 }

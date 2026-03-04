@@ -1,32 +1,29 @@
 using System;
-using System.IO;
 using Aspose.Words;
+using Aspose.Words.Settings;
 
-namespace InsertHyphensIntoTxt
+class HyphenateTxt
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Path to the folder that contains the input file.
-            string dataDir = @"C:\Data\";
+        // Path to the source TXT file.
+        string inputPath = @"C:\Docs\input.txt";
 
-            // Load a plain‑text file into an Aspose.Words Document.
-            Document doc = new Document(Path.Combine(dataDir, "input.txt"));
+        // Path where the hyphenated TXT will be saved.
+        string outputPath = @"C:\Docs\output.txt";
 
-            // Enable automatic hyphenation so Aspose.Words inserts discretionary hyphens where needed.
-            doc.HyphenationOptions.AutoHyphenation = true;
-            // Optional: adjust hyphenation settings (zone, consecutive limit, etc.) as required.
-            doc.HyphenationOptions.HyphenationZone = 720;          // 0.5 inch from the right margin.
-            doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;    // limit consecutive hyphenated lines.
-            doc.HyphenationOptions.HyphenateCaps = true;         // hyphenate all‑caps words.
+        // Load the plain‑text document.
+        Document doc = new Document(inputPath);
 
-            // When saving to plain text the discretionary hyphen (U+00AD) is not visible.
-            // Replace it with a regular hyphen so the output file shows the inserted hyphens.
-            doc.Range.Replace("\u00AD", "-");
+        // Turn on automatic hyphenation.
+        doc.HyphenationOptions.AutoHyphenation = true;
 
-            // Save the document back to TXT; the inserted hyphens are now visible.
-            doc.Save(Path.Combine(dataDir, "output.txt"));
-        }
+        // Optional: fine‑tune hyphenation behaviour.
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;   // max consecutive hyphenated lines
+        doc.HyphenationOptions.HyphenationZone = 720;       // distance from right margin (in 1/20 pt)
+        doc.HyphenationOptions.HyphenateCaps = true;       // hyphenate all‑caps words
+
+        // Save the document back as TXT – hyphens will be inserted where the layout permits.
+        doc.Save(outputPath);
     }
 }

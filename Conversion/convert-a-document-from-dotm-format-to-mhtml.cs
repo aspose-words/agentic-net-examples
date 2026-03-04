@@ -2,20 +2,24 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace DocumentConversionExample
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOTM file.
-        string inputPath = "input.dotm";
+        static void Main(string[] args)
+        {
+            // Path to the source DOTM (macro‑enabled template) file.
+            string inputPath = @"C:\Docs\Template.dotm";
 
-        // Path where the MHTML file will be saved.
-        string outputPath = "output.mht";
+            // Path where the resulting MHTML (Web archive) file will be saved.
+            string outputPath = @"C:\Docs\Template.mht";
 
-        // Load the DOTM document.
-        Document doc = new Document(inputPath);
+            // Load the DOTM document from the file system.
+            Document doc = new Document(inputPath);
 
-        // Save the document in MHTML format.
-        doc.Save(outputPath, SaveFormat.Mhtml);
+            // Save the loaded document in MHTML format.
+            // The SaveFormat enumeration value Mhtml corresponds to the MHTML (Web archive) format.
+            doc.Save(outputPath, SaveFormat.Mhtml);
+        }
     }
 }

@@ -2,53 +2,45 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class BarcodeDemo
+namespace AsposeWordsBarcodeDemo
 {
-    // Entry point required for a console application.
-    public static void Main(string[] args)
+    class Program
     {
-        Run();
-    }
+        static void Main()
+        {
+            // Load the original DOCX document.
+            Document originalDoc = new Document("Source.docx");
 
-    public static void Run()
-    {
-        // Load the base DOCX document.
-        Document original = new Document("Template.docx");
+            // Clone the original document – this creates a deep copy.
+            Document clonedDoc = originalDoc.Clone();
 
-        // Clone the loaded document to work on a separate copy.
-        Document cloned = original.Clone();
+            // Insert a MERGEBARCODE field into the cloned document.
+            DocumentBuilder builder = new DocumentBuilder(clonedDoc);
+            // Move the cursor to the end of the document before inserting the field.
+            builder.MoveToDocumentEnd();
 
-        // Use DocumentBuilder to insert a MERGEBARCODE field at the end of the cloned document.
-        DocumentBuilder builder = new DocumentBuilder(cloned);
-        builder.MoveToDocumentEnd();
+            // Insert the MERGEBARCODE field and configure its properties.
+            FieldMergeBarcode barcodeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+            barcodeField.BarcodeType = "QR";                 // QR code type.
+            barcodeField.BarcodeValue = "MyQRCode";          // The value to encode.
+            barcodeField.BackgroundColor = "0xF8BD69";       // Optional background colour.
+            barcodeField.ForegroundColor = "0xB5413B";       // Optional foreground colour.
+            barcodeField.ErrorCorrectionLevel = "3";         // High error correction.
+            barcodeField.ScalingFactor = "250";              // Scale the symbol.
+            barcodeField.SymbolHeight = "1000";              // Height in TWIPS.
+            barcodeField.SymbolRotation = "0";               // No rotation.
 
-        // Insert the MERGEBARCODE field and configure its properties.
-        FieldMergeBarcode barcodeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
-        barcodeField.BarcodeType = "QR";                     // QR code type.
-        barcodeField.BarcodeValue = "MyQRCode";              // Data to encode.
-        barcodeField.BackgroundColor = "0xF8BD69";           // Background colour.
-        barcodeField.ForegroundColor = "0xB5413B";           // Foreground colour.
-        barcodeField.ErrorCorrectionLevel = "3";             // QR error correction.
-        barcodeField.ScalingFactor = "250";                  // Scale the symbol.
-        barcodeField.SymbolHeight = "1000";                  // Height in TWIPS.
-        barcodeField.SymbolRotation = "0";                   // No rotation.
+            // Append another document to the cloned document.
+            Document docToAppend = new Document("Append.docx");
+            clonedDoc.AppendDocument(docToAppend, ImportFormatMode.KeepSourceFormatting);
 
-        // Force field update so the barcode image is generated.
-        cloned.UpdateFields();
+            // Split the cloned document – extract the first page into a new document.
+            Document splitDoc = clonedDoc.ExtractPages(0, 1);
 
-        // Load another document that will be appended to the cloned document.
-        Document toAppend = new Document("Appendix.docx");
-        cloned.AppendDocument(toAppend, ImportFormatMode.KeepSourceFormatting);
-
-        // Split the combined document into two parts:
-        // Part 1 – pages 1 and 2 (zero‑based page indices).
-        Document part1 = cloned.ExtractPages(0, 1);
-        // Part 2 – remaining pages.
-        Document part2 = cloned.ExtractPages(2, cloned.PageCount - 1);
-
-        // Save the resulting documents.
-        cloned.Save("Combined.docx");
-        part1.Save("Part1.docx");
-        part2.Save("Part2.docx");
+            // Save the documents.
+            originalDoc.Save("Original.docx");
+            clonedDoc.Save("ClonedWithBarcode.docx");
+            splitDoc.Save("FirstPageSplit.docx");
+        }
     }
 }

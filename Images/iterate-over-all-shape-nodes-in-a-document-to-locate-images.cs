@@ -8,35 +8,36 @@ class Program
 {
     static void Main()
     {
-        // Load the document that contains shapes.
-        Document doc = new Document("Images.docx");
+        // Load the source document.
+        Document doc = new Document("Input.docx");
 
-        // Retrieve all shape nodes in the document (including those inside groups).
+        // Retrieve a live collection of all Shape nodes in the document (deep traversal).
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
-        // Counter for naming extracted images.
         int imageIndex = 0;
 
-        // Iterate through each shape and locate images.
+        // Iterate through each Shape and locate those that contain an image.
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Check if the shape actually contains an image.
-            if (shape.HasImage)
+            if (shape.HasImage) // Image present in this shape.
             {
-                // Determine a suitable file extension based on the image type.
+                // Output basic information about the found image.
+                Console.WriteLine($"Image #{imageIndex}: Type = {shape.ImageData.ImageType}");
+
+                // Optional: save the image to the file system.
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-
-                // Build a unique file name for the extracted image.
                 string fileName = $"ExtractedImage_{imageIndex}{extension}";
-
-                // Save the image data to the file system.
-                shape.ImageData.Save(Path.Combine("ExtractedImages", fileName));
+                string outputPath = Path.Combine("OutputImages", fileName);
+                Directory.CreateDirectory("OutputImages");
+                shape.ImageData.Save(outputPath);
 
                 imageIndex++;
             }
         }
 
-        // Optionally, save the (unchanged) document to a new file.
-        doc.Save("ProcessedDocument.docx");
+        Console.WriteLine($"Total images found: {imageIndex}");
+
+        // Save the (potentially modified) document if further processing is required.
+        doc.Save("Output.docx");
     }
 }

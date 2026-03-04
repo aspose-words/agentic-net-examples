@@ -2,20 +2,27 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace DocumentConversionExample
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOC file.
-        string inputPath = "Input.doc";
+        static void Main()
+        {
+            // Define the input DOC file path.
+            string inputPath = @"C:\MyDir\Document.doc";
 
-        // Path to the destination MHTML file.
-        string outputPath = "Output.mht";
+            // Define the output MHTML file path.
+            string outputPath = @"C:\ArtifactsDir\Document.mht";
 
-        // Load the DOC document from the file system.
-        Document doc = new Document(inputPath);
+            // Load the DOC document from the file system.
+            Document doc = new Document(inputPath);
 
-        // Save the loaded document in MHTML (Web archive) format.
-        doc.Save(outputPath, SaveFormat.Mhtml);
+            // Save the document in MHTML (Web archive) format.
+            // The Save method with a file name and SaveFormat enumerator is used as per the provided rules.
+            doc.Save(outputPath, SaveFormat.Mhtml);
+
+            // Optional: confirm that the file was created.
+            Console.WriteLine($"Document converted to MHTML and saved at: {outputPath}");
+        }
     }
 }

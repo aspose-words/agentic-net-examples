@@ -1,75 +1,74 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsReportingDemo
+public class Topic
 {
-    // Simple data model representing a topic.
-    public class Topic
-    {
-        // Made nullable to satisfy the non‑nullable warnings when using the default constructor.
-        public string? Name { get; set; }
-        public string? Title { get; set; }
-    }
+    // Initialise with empty strings to satisfy non‑nullable warnings.
+    public string Title { get; set; } = string.Empty;
+    public string Content { get; set; } = string.Empty;
+}
 
-    class Program
+public class BookmarkFromDotDemo
+{
+    public void Execute()
     {
-        static void Main()
+        // Load the DOT template that contains a repeatable region for topics.
+        // The template should have a syntax like:
+        //   <<foreach [data.topics]>>
+        //   <<[Title]>>
+        //   <<[Content]>>
+        //   <<end>>
+        Document template = new Document("Template.dot");
+
+        // Prepare a list of topics that will be merged into the template.
+        List<Topic> topics = new List<Topic>
         {
-            // 1. Prepare sample data.
-            List<Topic> topics = new List<Topic>
-            {
-                new Topic { Name = "Intro",   Title = "Introduction to Reporting" },
-                new Topic { Name = "Setup",   Title = "Setting up Aspose.Words" },
-                new Topic { Name = "Example", Title = "Dynamic Bookmark Example" }
-            };
+            new Topic { Title = "Introduction", Content = "This is the introduction." },
+            new Topic { Title = "Usage",        Content = "Details about usage." },
+            new Topic { Title = "Conclusion",   Content = "Final remarks." }
+        };
 
-            // 2. Create a DOT (template) document in memory.
-            //    The template uses ReportingEngine syntax:
-            //    <<foreach [topic]>> – iterate over the collection named "topic".
-            //    <<bookmark [topic.Name]>> – start a bookmark whose name comes from the current item.
-            //    <<[topic.Title]>> – insert the title text.
-            //    <<endbookmark>> – close the bookmark.
-            //    <<endfor>> – end the loop.
-            Document template = new Document();                     // create a blank document
-            DocumentBuilder builder = new DocumentBuilder(template); // helper to add content
+        // Build the report using the LINQ Reporting Engine.
+        // The anonymous object supplies the data source; "data" is the name used in the template.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(template, new { topics }, "data");
 
-            builder.Writeln("Table of Contents:");
-            builder.Writeln(); // empty line
+        // After the report is generated, insert a bookmark for each topic title.
+        DocumentBuilder builder = new DocumentBuilder(template);
+        foreach (Topic topic in topics)
+        {
+            // Locate the paragraph that contains the title text.
+            Paragraph titleParagraph = template.GetChildNodes(NodeType.Paragraph, true)
+                                               .Cast<Paragraph>()
+                                               .FirstOrDefault(p => p.GetText().Contains(topic.Title));
+            if (titleParagraph == null)
+                continue; // Title not found – skip.
 
-            // Begin the foreach loop.
-            builder.Writeln("<<foreach [topic]>>");
+            // Create a bookmark name that is safe for Word (no spaces, unique).
+            string bookmarkName = topic.Title.Replace(' ', '_');
 
-            // Insert a bookmark start. The ReportingEngine will replace [topic.Name] with the actual name.
-            builder.Writeln("<<bookmark [topic.Name]>>");
+            // Move the cursor to the start of the paragraph and start the bookmark.
+            builder.MoveTo(titleParagraph);
+            builder.StartBookmark(bookmarkName);
 
-            // Insert the title that will be inside the bookmark.
-            builder.Writeln("<<[topic.Title]>>");
-
-            // Close the bookmark.
-            builder.Writeln("<<endbookmark>>");
-
-            // End the foreach loop.
-            builder.Writeln("<<endfor>>");
-
-            // Save the template to a DOT file (the extension does not affect processing, but mimics a template).
-            string templatePath = "Template.dot";
-            template.Save(templatePath);
-
-            // 3. Load the template document (simulating a real‑world scenario where the template is stored on disk).
-            Document loadedTemplate = new Document(templatePath);
-
-            // 4. Build the report using ReportingEngine.
-            ReportingEngine engine = new ReportingEngine();
-            // The overload expects a single data‑source name, not an array.
-            engine.BuildReport(loadedTemplate, topics, "topic");
-
-            // 5. Save the generated report.
-            string outputPath = "ReportWithBookmarks.docx";
-            loadedTemplate.Save(outputPath);
-
-            Console.WriteLine($"Report generated successfully: {outputPath}");
+            // Move the cursor to the end of the same paragraph and close the bookmark.
+            // The end of a paragraph is after its last child node.
+            builder.MoveTo(titleParagraph.LastChild);
+            builder.EndBookmark(bookmarkName);
         }
+
+        // Save the final document. The format is inferred from the file extension.
+        template.Save("Result.docx");
+    }
+}
+
+public static class Program
+{
+    public static void Main()
+    {
+        new BookmarkFromDotDemo().Execute();
     }
 }

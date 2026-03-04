@@ -1,6 +1,6 @@
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Fields; // Added for TextFormFieldType
+using Aspose.Words.Fields; // Added for TextFormFieldType enum
 
 class Program
 {
@@ -11,16 +11,17 @@ class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add some explanatory text.
-        builder.Writeln("Please fill in the form field below:");
+        builder.Writeln("Please fill in the following field:");
 
         // Insert a plain text form field that the user can edit.
-        builder.InsertTextInput("FormField1", TextFormFieldType.Regular, "", "Enter text here", 0);
+        // The TextFormFieldType enum resides in Aspose.Words.Fields namespace.
+        builder.InsertTextInput("TextInput1", TextFormFieldType.Regular, "", "Enter text here", 0);
 
         // Protect the document so that only form fields are editable.
         doc.Protect(ProtectionType.AllowOnlyFormFields);
 
         // Save the document as a DOT (Word template) file.
         DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Dot);
-        doc.Save("FormTemplate.dot", saveOptions);
+        doc.Save("FormOnlyTemplate.dot", saveOptions);
     }
 }

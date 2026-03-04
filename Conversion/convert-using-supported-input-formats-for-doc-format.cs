@@ -1,24 +1,55 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+public class DocumentConverter
 {
-    static void Main()
+    // Converts a document from any supported input format to DOC format using file paths.
+    public static void ConvertToDoc(string inputFilePath, string outputFilePath)
     {
-        // Path to the source document (any supported format, e.g., .docx, .pdf, .rtf, etc.)
-        string inputPath = "input.docx";
-
-        // Path where the converted DOC file will be saved.
-        string outputPath = "output.doc";
-
         // Load the source document. Aspose.Words automatically detects the format.
-        Document doc = new Document(inputPath);
+        Document doc = new Document(inputFilePath);
 
-        // Create save options for the legacy DOC format.
+        // Prepare save options for the legacy DOC format.
         DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
 
-        // Save the document to the target DOC file.
-        doc.Save(outputPath, saveOptions);
+        // Save the document as DOC.
+        doc.Save(outputFilePath, saveOptions);
+    }
+
+    // Converts a document from any supported input format to DOC format using streams.
+    public static void ConvertToDoc(Stream inputStream, Stream outputStream)
+    {
+        // Load the source document from the input stream.
+        Document doc = new Document(inputStream);
+
+        // Prepare save options for the legacy DOC format.
+        DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
+
+        // Save the document to the output stream as DOC.
+        doc.Save(outputStream, saveOptions);
+    }
+}
+
+public class Program
+{
+    // Entry point required for a console application.
+    public static void Main(string[] args)
+    {
+        // Example using file paths.
+        string inputPath = "input.pdf"; // TODO: replace with an actual supported input file.
+        string outputPath = "output.doc";
+
+        DocumentConverter.ConvertToDoc(inputPath, outputPath);
+        Console.WriteLine($"Converted '{inputPath}' to '{outputPath}' using file paths.");
+
+        // Example using streams.
+        using (FileStream inStream = File.OpenRead(inputPath))
+        using (FileStream outStream = File.Create("output_stream.doc"))
+        {
+            DocumentConverter.ConvertToDoc(inStream, outStream);
+        }
+        Console.WriteLine("Converted using streams.");
     }
 }

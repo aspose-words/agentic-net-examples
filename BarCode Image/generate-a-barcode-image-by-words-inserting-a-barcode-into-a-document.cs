@@ -10,38 +10,37 @@ class BarcodeExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a MERGEBARCODE field that will generate a QR code.
-        FieldMergeBarcode mergeBarcode = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
-        mergeBarcode.BarcodeType = "QR";
-        mergeBarcode.BarcodeValue = "Sample123";
+        // Insert a MERGEBARCODE field that will render a QR code.
+        FieldMergeBarcode qrField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+        qrField.BarcodeType = "QR";                         // QR code type.
+        qrField.BarcodeValue = "https://example.com";       // Data to encode.
+        qrField.BackgroundColor = "F8BD69";                // Light orange background (hex string).
+        qrField.ForegroundColor = "B5413B";                // Dark red foreground (hex string).
+        qrField.ErrorCorrectionLevel = "3";                // Highest error correction (string).
+        qrField.ScalingFactor = "250";                     // 250 % scaling (string).
+        qrField.SymbolHeight = "1000";                     // Height in TWIPS (string).
+        qrField.SymbolRotation = "0";                      // No rotation (string).
 
-        // Optional appearance settings – colors must be supplied as strings (hex values without the 0x prefix).
-        mergeBarcode.BackgroundColor = "F8BD69"; // Light orange background.
-        mergeBarcode.ForegroundColor = "B5413B"; // Dark red bars.
-        mergeBarcode.ErrorCorrectionLevel = "3";
-        mergeBarcode.ScalingFactor = "250";
-        mergeBarcode.SymbolHeight = "1000";
-        mergeBarcode.SymbolRotation = "0";
+        builder.Writeln(); // Add a line break after the barcode.
 
-        // Add a paragraph break after the field.
-        builder.Writeln();
-
-        // Save the document as DOCX.
-        doc.Save("BarcodeMerge.docx");
+        // Save the document containing the QR code.
+        doc.Save("BarcodeQR.docx");
 
         // -----------------------------------------------------------------
-        // Load the saved document and add a DISPLAYBARCODE field that shows a CODE39 barcode.
-        Document loadedDoc = new Document("BarcodeMerge.docx");
-        DocumentBuilder loadBuilder = new DocumentBuilder(loadedDoc);
-        loadBuilder.MoveToDocumentEnd();
+        // Load the previously saved document and add a CODE39 barcode.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document("BarcodeQR.docx");
+        DocumentBuilder loadedBuilder = new DocumentBuilder(loadedDoc);
 
-        // Insert a DISPLAYBARCODE field.
-        FieldDisplayBarcode displayBarcode = (FieldDisplayBarcode)loadBuilder.InsertField(FieldType.FieldDisplayBarcode, true);
-        displayBarcode.BarcodeType = "CODE39";
-        displayBarcode.BarcodeValue = "12345ABCDE";
-        displayBarcode.AddStartStopChar = true; // Show start/stop characters.
+        loadedBuilder.Writeln("Additional barcode:");
 
-        // Save the modified document.
-        loadedDoc.Save("BarcodeDisplay.docx");
+        // Insert a MERGEBARCODE field for a CODE39 barcode.
+        FieldMergeBarcode code39Field = (FieldMergeBarcode)loadedBuilder.InsertField(FieldType.FieldMergeBarcode, true);
+        code39Field.BarcodeType = "CODE39";          // CODE39 type.
+        code39Field.BarcodeValue = "12345ABCDE";    // Data to encode.
+        code39Field.AddStartStopChar = true;        // Show start/stop characters.
+
+        // Save the updated document.
+        loadedDoc.Save("BarcodeQR_WithCode39.docx");
     }
 }

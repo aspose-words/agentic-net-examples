@@ -2,20 +2,20 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class DocToEpubConverter
+class Program
 {
     static void Main()
     {
         // Path to the source DOC file.
-        string inputPath = @"C:\Docs\SourceDocument.doc";
+        string inputFile = @"C:\Docs\SourceDocument.doc";
 
         // Path where the EPUB file will be saved.
-        string outputPath = @"C:\Docs\ConvertedDocument.epub";
+        string outputFile = @"C:\Docs\ConvertedDocument.epub";
 
-        // Load the DOC document.
-        Document doc = new Document(inputPath);
+        // Load the existing DOC document.
+        Document doc = new Document(inputFile);
 
         // Save the document in EPUB format.
-        doc.Save(outputPath, SaveFormat.Epub);
+        doc.Save(outputFile, SaveFormat.Epub);
     }
 }

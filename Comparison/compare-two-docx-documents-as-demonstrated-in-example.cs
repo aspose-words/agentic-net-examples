@@ -2,33 +2,32 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class DocumentComparison
+class Program
 {
     static void Main()
     {
-        // Load the original and edited documents.
+        // Load the original and edited documents from disk.
         Document docOriginal = new Document("Original.docx");
         Document docEdited = new Document("Edited.docx");
 
-        // Ensure both documents have no revisions before comparison.
-        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
-            throw new InvalidOperationException("Both documents must be revision‑free before comparison.");
+        // Documents must not contain revisions before comparison.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
+        {
+            // Compare the documents. Revisions are added to docOriginal.
+            docOriginal.Compare(docEdited, "JD", DateTime.Now);
+        }
 
-        // Compare the documents, creating revisions in the original document.
-        // "JD" will be used as the author initials for the revisions.
-        docOriginal.Compare(docEdited, "JD", DateTime.Now);
-
-        // Optional: iterate through the generated revisions and output their details.
+        // Iterate through the generated revisions and output their details.
         foreach (Revision rev in docOriginal.Revisions)
         {
             Console.WriteLine($"Revision type: {rev.RevisionType}, Node type: {rev.ParentNode.NodeType}");
-            Console.WriteLine($"\tChanged text: \"{rev.ParentNode.GetText()}\"");
+            Console.WriteLine($"\tChanged text: \"{rev.ParentNode.GetText().Trim()}\"");
         }
 
-        // Accept all revisions to transform the original document into the edited version.
+        // Accept all revisions so that docOriginal becomes identical to docEdited.
         docOriginal.Revisions.AcceptAll();
 
         // Save the resulting document.
-        docOriginal.Save("ComparedResult.docx");
+        docOriginal.Save("Merged.docx");
     }
 }

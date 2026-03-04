@@ -3,49 +3,55 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class ReplaceWithNodeExample
+namespace AsposeWordsReplaceWithNode
 {
-    static void Main()
+    class Program
     {
-        // Load the source document.
-        Document doc = new Document("Input.docx");
-
-        // Define the pattern to search for (e.g., a placeholder like {INSERT_HERE}).
-        Regex placeholderPattern = new Regex(@"\{INSERT_HERE\}");
-
-        // Create FindReplaceOptions with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions(new InsertNodeCallback());
-
-        // Perform the find-and-replace operation.
-        // The replacement string is empty because the callback will handle the insertion.
-        doc.Range.Replace(placeholderPattern, string.Empty, options);
-
-        // Save the modified document.
-        doc.Save("Output.docx");
-    }
-
-    // Callback that inserts a new node (e.g., a paragraph) in place of the matched text.
-    private class InsertNodeCallback : IReplacingCallback
-    {
-        public ReplaceAction Replacing(ReplacingArgs args)
+        static void Main()
         {
-            // Create the node to insert. Here we insert a new paragraph with some text.
-            Paragraph newParagraph = new Paragraph(args.MatchNode.Document);
-            Run run = new Run(args.MatchNode.Document, "This is the inserted paragraph.");
-            newParagraph.AppendChild(run);
+            // Load the source document.
+            Document doc = new Document("Input.docx");
 
-            // The match is inside a Run node; its parent is a Paragraph.
-            Paragraph matchParagraph = (Paragraph)args.MatchNode.ParentNode;
+            // Define the placeholder to search for.
+            string placeholder = @"\[PLACEHOLDER\]";
 
-            // Insert the new paragraph after the paragraph that contains the match.
-            CompositeNode parentStory = matchParagraph.ParentNode;
-            parentStory.InsertAfter(newParagraph, matchParagraph);
+            // Set up FindReplaceOptions with a custom callback.
+            FindReplaceOptions options = new FindReplaceOptions(new InsertNodeCallback());
 
-            // Remove the original paragraph that held the placeholder (optional).
-            matchParagraph.Remove();
+            // Perform the find-and-replace operation.
+            doc.Range.Replace(new Regex(placeholder), string.Empty, options);
 
-            // Skip the default replacement because we have already handled it.
-            return ReplaceAction.Skip;
+            // Save the modified document.
+            doc.Save("Output.docx");
+        }
+
+        // Callback that replaces the matched text with a new node.
+        private class InsertNodeCallback : IReplacingCallback
+        {
+            public ReplaceAction Replacing(ReplacingArgs args)
+            {
+                // Create the node to insert (a new paragraph with some text).
+                Paragraph newParagraph = new Paragraph(args.MatchNode.Document);
+                Run run = new Run(args.MatchNode.Document, "This is the inserted paragraph.");
+                newParagraph.AppendChild(run);
+
+                // Import the new node into the destination document.
+                NodeImporter importer = new NodeImporter(
+                    newParagraph.Document,
+                    args.MatchNode.Document,
+                    ImportFormatMode.KeepSourceFormatting);
+                Node importedNode = importer.ImportNode(newParagraph, true);
+
+                // Insert the imported node after the paragraph that contains the match.
+                Paragraph matchParagraph = (Paragraph)args.MatchNode.ParentNode;
+                CompositeNode parent = matchParagraph.ParentNode;
+                parent.InsertAfter(importedNode, matchParagraph);
+
+                // Remove the original placeholder text.
+                // Since we passed an empty replacement string, the placeholder text is already removed.
+                // Return Skip to prevent the default replacement behavior.
+                return ReplaceAction.Skip;
+            }
         }
     }
 }

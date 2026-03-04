@@ -1,29 +1,33 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Fonts;
+using Aspose.Words.Saving;
 
-class Program
+class FontEmbeddingExample
 {
     static void Main()
     {
-        // Load the source DOCX document.
-        Document doc = new Document("Input.docx");
+        // Load an existing DOCX document.
+        Document doc = new Document("InputDocument.docx");
 
-        // Get the collection that holds information about the fonts used in the document.
+        // Access the collection of fonts used in the document.
         FontInfoCollection fontInfos = doc.FontInfos;
 
-        // Enable embedding of all TrueType fonts when the document is saved.
+        // Enable embedding of all TrueType fonts.
         fontInfos.EmbedTrueTypeFonts = true;
 
-        // Enable embedding of system fonts (useful for East Asian fonts).
-        // This property only takes effect when EmbedTrueTypeFonts is true.
+        // Also embed system fonts (e.g., East Asian fonts) if needed.
         fontInfos.EmbedSystemFonts = true;
 
-        // Optionally, save the full fonts instead of subsets.
-        // Set to false to embed only the glyphs used in the document.
+        // Save the full font data (no subsetting) – set to false to embed only used glyphs.
         fontInfos.SaveSubsetFonts = false;
 
-        // Save the document; the fonts will be embedded according to the settings above.
-        doc.Save("Output_EmbeddedFonts.docx");
+        // OPTIONAL: If the document uses PostScript fonts and you want to embed them,
+        // create a SaveOptions instance and enable the corresponding flag.
+        SaveOptions saveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Docx);
+        saveOptions.AllowEmbeddingPostScriptFonts = true;
+
+        // Save the document with the updated font embedding settings.
+        doc.Save("OutputDocument_WithEmbeddedFonts.docx", saveOptions);
     }
 }

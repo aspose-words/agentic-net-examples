@@ -1,7 +1,8 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class GenerateBarcode
 {
     static void Main()
     {
@@ -9,22 +10,29 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a BARCODE field that will render a barcode image.
-        FieldBarcode barcodeField = (FieldBarcode)builder.InsertField(FieldType.FieldBarcode, true);
+        // Insert a MERGEBARCODE field. This field will generate a barcode when the document is processed.
+        // The second argument (true) tells the builder to update the field result immediately.
+        FieldMergeBarcode barcodeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
 
-        // Set the value to be encoded (e.g., a US ZIP code).
-        barcodeField.PostalAddress = "12345";
+        // Specify the type of barcode you want to generate (e.g., QR, CODE39, EAN13, etc.).
+        barcodeField.BarcodeType = "QR";
 
-        // Specify that the value is a US postal address so the field knows which barcode symbology to use.
-        barcodeField.IsUSPostalAddress = true;
+        // Set the value that will be encoded in the barcode.
+        barcodeField.BarcodeValue = "ABC123";
 
-        // Optional: add a Facing Identification Mark (FIM) to the barcode.
-        barcodeField.FacingIdentificationMark = "C";
+        // Optional: customize appearance (background, foreground colors, error correction, scaling, etc.).
+        // Uncomment and adjust as needed.
+        // barcodeField.BackgroundColor = "0xF8BD69";
+        // barcodeField.ForegroundColor = "0xB5413B";
+        // barcodeField.ErrorCorrectionLevel = "3";
+        // barcodeField.ScalingFactor = "250";
+        // barcodeField.SymbolHeight = "1000";
+        // barcodeField.SymbolRotation = "0";
 
-        // Force the field to calculate its result and generate the barcode image.
-        barcodeField.Update();
+        // Add a paragraph break after the field so the barcode appears on its own line.
+        builder.Writeln();
 
-        // Save the document containing the barcode.
-        doc.Save("BarcodeDocument.docx");
+        // Save the document to a DOCX file.
+        doc.Save("Barcode.docx");
     }
 }

@@ -1,0 +1,21 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Comment rules": [
+        "Remove the non‑existent `Aspose.Words.Comments` namespace import; the `Comment` class lives directly in `Aspose.Words`.",
+        "Keep the logic unchanged – iterate the comment nodes collection backwards and call `Remove()` on matching comments.",
+        "Remove the non‑existent namespace import `Aspose.Words.Comments`.",
+        "All comment‑related types (e.g., `Comment`) are defined directly in the `Aspose.Words` namespace.",
+        "Keep the rest of the logic unchanged – loading the document, retrieving comment nodes, removing them, and saving.",
+        "Remove the non‑existent namespace import `Aspose.Words.Comments` – the `Comment` class resides directly in `Aspose.Words`.",
+        "Keep the existing `using Aspose.Words;` which provides all required types (Document, NodeCollection, NodeType, Comment, etc.).",
+        "No other code changes are required; the logic for extracting and removing comments is correct.",
+        "Remove any non‑existent namespace imports (e.g., Aspose.Words.Comments). The Comment class lives directly in Aspose.Words.",
+        "Remove the non‑existent `Aspose.Words.Comments` namespace; the `Comment` class resides directly in `Aspose.Words`.",
+        "Ensure the project references the Aspose.Words NuGet package (or the appropriate DLL) that contains the `Comment` type.",
+        "Maintain the original logic: load the document, get all comment nodes, filter by `Author`, and return trimmed text."
+      ]
+    }
+  }
+}

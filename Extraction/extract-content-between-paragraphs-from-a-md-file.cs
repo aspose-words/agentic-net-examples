@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
@@ -8,30 +9,33 @@ class Program
     static void Main()
     {
         // Path to the Markdown file.
-        string markdownPath = "input.md";
+        const string markdownPath = "input.md";
 
         // Load the Markdown document while preserving empty lines.
-        using (MemoryStream stream = new MemoryStream(File.ReadAllBytes(markdownPath)))
+        using (FileStream stream = new FileStream(markdownPath, FileMode.Open, FileAccess.Read))
         {
-            MarkdownLoadOptions loadOptions = new MarkdownLoadOptions { PreserveEmptyLines = true };
+            var loadOptions = new MarkdownLoadOptions { PreserveEmptyLines = true };
             Document doc = new Document(stream, loadOptions);
 
-            // Access the collection of paragraphs in the main body.
+            // Get all paragraphs in the main body of the document.
             ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
 
-            // Write each paragraph's content (without the trailing paragraph break) to an output file.
-            using (StreamWriter writer = new StreamWriter("extracted.txt"))
-            {
-                for (int i = 0; i < paragraphs.Count; i++)
-                {
-                    // Get the full text of the paragraph, then trim the paragraph break characters.
-                    string paragraphText = paragraphs[i].GetText().TrimEnd('\r', '\n');
+            // Extract the text of each paragraph (excluding the trailing paragraph break).
+            var resultBuilder = new StringBuilder();
 
-                    writer.WriteLine($"Paragraph {i + 1}:");
-                    writer.WriteLine(paragraphText);
-                    writer.WriteLine(); // Separate entries with an empty line.
-                }
+            for (int i = 0; i < paragraphs.Count; i++)
+            {
+                // GetText() returns the paragraph text plus a paragraph break character.
+                string paragraphText = paragraphs[i].GetText();
+
+                // Remove the trailing paragraph break characters (\r, \n, \f, etc.).
+                paragraphText = paragraphText.TrimEnd('\r', '\n', '\f');
+
+                resultBuilder.AppendLine($"Paragraph {i + 1}: {paragraphText}");
             }
+
+            // Output the extracted content.
+            Console.WriteLine(resultBuilder.ToString());
         }
     }
 }

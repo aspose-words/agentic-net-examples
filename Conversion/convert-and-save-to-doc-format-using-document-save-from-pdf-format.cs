@@ -1,20 +1,20 @@
 using System;
 using Aspose.Words;
 
-class Program
+class PdfToDocConverter
 {
     static void Main()
     {
-        // Input PDF file path
-        string pdfPath = "InputDocument.pdf";
+        // Path to the source PDF file.
+        string pdfPath = @"C:\Input\source.pdf";
 
-        // Output DOC file path
-        string docPath = "ConvertedDocument.doc";
+        // Path where the converted DOC file will be saved.
+        string docPath = @"C:\Output\converted.doc";
 
-        // Load the PDF document using the Document constructor that accepts a file name
-        Document pdfDoc = new Document(pdfPath);
+        // Load the PDF document.
+        Document pdfDocument = new Document(pdfPath);
 
-        // Save the loaded document as a DOC file using the Save method with SaveFormat.Doc
-        pdfDoc.Save(docPath, SaveFormat.Doc);
+        // Save the loaded document as a legacy Word .doc file.
+        pdfDocument.Save(docPath, SaveFormat.Doc);
     }
 }

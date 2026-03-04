@@ -2,19 +2,19 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class WatermarkPdfWithFormFields
 {
     static void Main()
     {
-        // Load the source Word document that contains form fields.
-        Document doc = new Document("Input.docx");
+        // Load an existing Word document that contains form fields.
+        Document doc = new Document("InputDocument.docx");
 
-        // Define watermark appearance.
+        // Configure text watermark options.
         TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
         {
             FontFamily = "Arial",
-            FontSize = 36,
-            Color = Color.Gray,
+            FontSize = 48,
+            Color = Color.LightGray,
             Layout = WatermarkLayout.Diagonal,
             IsSemitrasparent = true
         };
@@ -22,13 +22,13 @@ class Program
         // Apply the text watermark to every page of the document.
         doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
 
-        // Set PDF save options to preserve Word form fields as interactive PDF form fields.
+        // Prepare PDF save options to preserve Word form fields as interactive PDF form fields.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             PreserveFormFields = true
         };
 
         // Save the document as PDF with the watermark and preserved form fields.
-        doc.Save("Output.pdf", pdfOptions);
+        doc.Save("OutputDocument.pdf", pdfOptions);
     }
 }

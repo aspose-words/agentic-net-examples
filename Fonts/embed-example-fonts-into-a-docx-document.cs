@@ -6,14 +6,8 @@ class EmbedFontsExample
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Data\Document.docx";
-
-        // Path where the DOCX with embedded fonts will be saved.
-        string outputPath = @"C:\Output\EmbeddedFonts.docx";
-
-        // Load the existing document.
-        Document doc = new Document(inputPath);
+        // Load an existing DOCX document.
+        Document doc = new Document("Input.docx");
 
         // Access the collection of fonts used in the document.
         FontInfoCollection fontInfos = doc.FontInfos;
@@ -24,10 +18,12 @@ class EmbedFontsExample
         // Also embed system fonts (required when EmbedTrueTypeFonts is true).
         fontInfos.EmbedSystemFonts = true;
 
-        // Save a subset of each embedded font (only the glyphs used in the document).
-        fontInfos.SaveSubsetFonts = true;
+        // Optionally, embed the full font files instead of subsets.
+        // Set to true to embed only the glyphs used in the document (smaller file).
+        // Set to false to embed the entire font (larger file, full editability).
+        fontInfos.SaveSubsetFonts = false;
 
         // Save the document with the embedded fonts.
-        doc.Save(outputPath);
+        doc.Save("Output_EmbeddedFonts.docx");
     }
 }

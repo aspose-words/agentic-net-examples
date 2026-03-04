@@ -7,27 +7,27 @@ class FormatFormFields
     static void Main()
     {
         // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\InputDocument.docx";
+        string inputPath = "input.docx";
 
-        // Path where the formatted document will be saved.
-        string outputPath = @"C:\Docs\FormattedDocument.docx";
+        // Path where the modified document will be saved.
+        string outputPath = "output.docx";
 
         // Load the existing document.
         Document doc = new Document(inputPath);
 
-        // Optional: turn off the default gray shading for form fields.
+        // Turn off the default gray shading for form fields (optional).
         doc.ShadeFormData = false;
 
         // Iterate through all form fields in the document.
         foreach (FormField field in doc.Range.FormFields)
         {
-            // Enable the field (make it editable).
+            // Enable the field so the user can interact with it.
             field.Enabled = true;
 
-            // Example: set a help text for each field.
-            field.HelpText = "Please fill out this field.";
+            // Set a generic help text for demonstration purposes.
+            field.HelpText = "Enter value";
 
-            // Apply field‑type‑specific formatting.
+            // Apply specific formatting based on the field type.
             switch (field.Type)
             {
                 case FieldType.FieldFormCheckBox:
@@ -38,20 +38,19 @@ class FormatFormFields
 
                 case FieldType.FieldFormDropDown:
                     // Select the first item in the drop‑down list.
-                    if (field.DropDownItems.Count > 0)
-                        field.DropDownSelectedIndex = 0;
+                    field.DropDownSelectedIndex = 0;
                     break;
 
                 case FieldType.FieldFormTextInput:
-                    // Set placeholder text for text input fields.
-                    field.TextInputDefault = "Enter text here";
+                    // Set a placeholder text for text input fields.
+                    field.TextInputDefault = "Placeholder";
                     // Optionally set a maximum length.
                     field.MaxLength = 100;
                     break;
             }
         }
 
-        // Update all fields so that any changes are reflected in the document.
+        // Update all fields to reflect any changes made programmatically.
         doc.UpdateFields();
 
         // Save the modified document.

@@ -6,23 +6,19 @@ class ConvertToDoc
 {
     static void Main()
     {
-        // Define input and output file paths.
-        string inputPath = @"C:\Docs\SampleDocument.docx";
-        string outputPath = @"C:\Docs\SampleDocumentConverted.doc";
+        // Step 1: Load the source document.
+        // The constructor automatically detects the format of the input file.
+        Document doc = new Document("InputDocument.docx");
 
-        // Load the source document (any supported format, e.g., DOCX).
-        Document doc = new Document(inputPath);
+        // Step 2: Save the document in the legacy DOC format using the Save method overload that accepts a SaveFormat.
+        doc.Save("OutputDocument.doc", SaveFormat.Doc);
 
-        // Option 1: Save directly using the SaveFormat enumeration.
-        doc.Save(outputPath, SaveFormat.Doc);
-
-        // Option 2: Use DocSaveOptions for more control (e.g., password protection).
-        // Uncomment the following lines to use DocSaveOptions instead of the direct overload.
-        /*
+        // Alternative Step 2: Use DocSaveOptions for more control (e.g., setting a password).
         DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
-        // Example: set a password (optional).
-        // saveOptions.Password = "MySecretPassword";
-        doc.Save(outputPath, saveOptions);
-        */
+        // Example: protect the saved DOC with a password.
+        saveOptions.Password = "MySecretPassword";
+
+        // Save the document with the specified options.
+        doc.Save("OutputDocumentWithPassword.doc", saveOptions);
     }
 }

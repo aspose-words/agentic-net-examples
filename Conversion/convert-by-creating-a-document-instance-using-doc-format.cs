@@ -1,13 +1,20 @@
+using System;
 using Aspose.Words;
 
-class Program
+namespace AsposeWordsExample
 {
-    static void Main()
+    class Program
     {
-        // Create a blank Word document.
-        Document doc = new Document();
+        static void Main()
+        {
+            // Create a blank Word document.
+            Document doc = new Document();
 
-        // Save the document in the legacy DOC format (Microsoft Word 97‑2007).
-        doc.Save("Result.doc", SaveFormat.Doc);
+            // Add a simple paragraph so the file is not empty.
+            doc.FirstSection.Body.FirstParagraph.AppendChild(new Run(doc, "Hello world!"));
+
+            // Save the document in the legacy DOC format (Microsoft Word 97‑2007).
+            doc.Save("Result.doc", SaveFormat.Doc);
+        }
     }
 }

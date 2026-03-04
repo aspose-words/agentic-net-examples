@@ -1,14 +1,17 @@
+using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsConversion
 {
-    static void Main()
+    class Program
     {
-        // Load the source document. The format is detected automatically.
-        Document doc = new Document("InputDocument.docx"); // TODO: replace with your source file path
+        static void Main()
+        {
+            // Load an existing document (any supported format, e.g., DOCX).
+            Document doc = new Document("InputDocument.docx");
 
-        // Save the document in the legacy Microsoft Word 97‑2007 DOC format.
-        doc.Save("ConvertedDocument.doc", SaveFormat.Doc); // TODO: replace with your desired output path
+            // Save the document in the legacy Microsoft Word 97‑2007 DOC format.
+            doc.Save("OutputDocument.doc", SaveFormat.Doc);
+        }
     }
 }

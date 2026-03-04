@@ -1,0 +1,36 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Comment rules": [
+        "Added missing using directives for Aspose.Words.Tables, Aspose.Words.Drawing, Aspose.Words.Fields, and Aspose.Words.Comments to resolve Table, Shape, FieldDate, and Comment types.",
+        "Ensured FootnoteType, Footnote, Table, Shape, FieldDate, Comment, HeaderFooterType, and other element classes are referenced from the correct namespaces.",
+        "Add missing using directives for Aspose.Words.Drawing, Aspose.Words.Tables, Aspose.Words.Fields, and Aspose.Words.Comments.",
+        "Use the correct enum and class names: FootnoteType, Shape, ShapeType, Table, Footnote, FieldDate, Comment.",
+        "Create the original document and populate it with footnotes, tables, textboxes, fields, comments, and headers as shown in the API example."
+      ],
+      "Table rules": [
+        "Add required using directives for Aspose.Words namespaces (Drawing, Fields, Tables, Comparing).",
+        "Removed unused types (FootnoteType, Shape, Table, FieldDate, etc.) that caused compile errors."
+      ],
+      "Range rules": [
+        "Cast the field retrieved from docEdited.Range.Fields[0] to FieldDate before setting UseLunarCalendar."
+      ],
+      "Document merge/insert rules": [
+        "Clone the original document and modify each element to simulate an edited version.",
+        "Remove the non‑existent namespace import `Aspose.Words.AI.Models`."
+      ],
+      "Loading rules": [
+        "If you need to specify the format explicitly, create a LoadOptions instance: new LoadOptions(LoadFormat.Mhtml) and pass it as the second argument."
+      ],
+      "Saving/Export rules": [
+        "Import Aspose.Words.Saving to access PdfSaveOptions and RevisionOptions.",
+        "Create a PdfSaveOptions instance and assign a RevisionOptions object to its RevisionOptions property.",
+        "Set ShowInsertedContent, ShowDeletedContent, and HighlightColor (or other desired properties) on RevisionOptions to control how revisions appear in the PDF.",
+        "Pass the PdfSaveOptions instance to Document.Save instead of using the SaveFormat enum overload.",
+        "Save the resulting document that contains revision marks.",
+        "Save the result using the same .mht extension to retain MHTML output."
+      ]
+    }
+  }
+}

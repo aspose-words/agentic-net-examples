@@ -4,41 +4,59 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class Program
+namespace AsposeWordsPdfInsertExample
 {
-    static void Main()
-    {
-        // Folder that contains the source PDF files.
-        string pdfFolder = @"C:\InputPdfs";
-
-        // Load each PDF as an Aspose.Words Document and wrap it in a simple class.
-        // The wrapper is needed so the ReportingEngine can reference the Document property.
-        PdfWrapper[] pdfSources = Directory.GetFiles(pdfFolder, "*.pdf")
-            .Select(path => new Document(path))               // Load PDF into a Document.
-            .Select(doc => new PdfWrapper { Document = doc }) // Wrap the Document.
-            .ToArray();
-
-        // Create a template document that defines a repeatable region.
-        // The <<foreach [src]>> tag iterates over the array passed to BuildReport.
-        // Inside the region we insert each PDF using the <<doc [src.Document]>> tag.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Combined PDFs:");
-        builder.Writeln("<<foreach [src]>>");
-        builder.Writeln("<<doc [src.Document]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Build the report by providing the array of wrappers and the data source name "src".
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, pdfSources, new[] { "src" });
-
-        // Save the merged document.
-        template.Save(@"C:\Output\Combined.docx");
-    }
-
-    // Simple wrapper class exposing a Document property for the ReportingEngine.
-    public class PdfWrapper
+    // Simple wrapper class that holds a Document instance.
+    public class DocumentWrapper
     {
         public Document Document { get; set; }
+
+        public DocumentWrapper(Document doc)
+        {
+            Document = doc;
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            // Folder that contains source PDF files.
+            string pdfFolder = @"C:\SourcePdfs";
+
+            // -----------------------------------------------------------------
+            // 1. Create a Word template that contains a reporting tag.
+            //    The tag <<doc [src.Document]>> will be replaced with each
+            //    document from the data source during the report build.
+            // -----------------------------------------------------------------
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+            builder.Writeln("Inserted PDFs follow:");
+            // Reporting tag – the data source name will be \"src\".
+            builder.Writeln("<<doc [src.Document]>>");
+            builder.Writeln("\n--- End of inserted PDF ---");
+
+            // -----------------------------------------------------------------
+            // 2. Load all PDF files from the folder and wrap them.
+            // -----------------------------------------------------------------
+            DocumentWrapper[] pdfWrappers = Directory.GetFiles(pdfFolder, "*.pdf")
+                .Select(pdfPath => new DocumentWrapper(new Document(pdfPath)))
+                .ToArray();
+
+            // -----------------------------------------------------------------
+            // 3. Build the report – the ReportingEngine will replace the tag
+            //    with each PDF document. The data source name is \"src\".
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(template,
+                new object[] { pdfWrappers },               // data source array
+                new[] { "src" });                           // corresponding names
+
+            // -----------------------------------------------------------------
+            // 4. Save the resulting document.
+            // -----------------------------------------------------------------
+            string outputPath = @"C:\Result\CombinedFromPdfs.docx";
+            template.Save(outputPath);
+        }
     }
 }

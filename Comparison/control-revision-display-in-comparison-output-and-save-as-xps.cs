@@ -1,30 +1,39 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Layout;
-using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
-// Load the original and edited documents.
-string docsPath = @"C:\Docs\";
-Document docOriginal = new Document(docsPath + "Original.docx");
-Document docEdited   = new Document(docsPath + "Edited.docx");
-
-// Ensure both documents have no revisions before comparison.
-if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
+class RevisionComparisonToXps
 {
-    // Compare the documents – revisions will be added to docOriginal.
-    docOriginal.Compare(docEdited, "Author", DateTime.Now);
+    static void Main()
+    {
+        // Load the original and edited documents.
+        Document docOriginal = new Document("Original.docx");
+        Document docEdited = new Document("Edited.docx");
+
+        // Perform a comparison. The original document will receive Revision objects.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
+
+        // Configure how revisions are displayed during layout.
+        // Hide revision bars, keep revision marks (e.g., underline/strike‑through).
+        docOriginal.LayoutOptions.RevisionOptions.ShowRevisionBars = false;
+        docOriginal.LayoutOptions.RevisionOptions.ShowRevisionMarks = true;
+        // Do not show revisions in balloons.
+        docOriginal.LayoutOptions.RevisionOptions.ShowInBalloons = ShowInBalloons.None;
+
+        // Set the view to the revised (final) version so that the saved XPS reflects the changes.
+        docOriginal.RevisionsView = RevisionsView.Final;
+
+        // Create XPS save options. Adjust any additional options if needed.
+        XpsSaveOptions xpsOptions = new XpsSaveOptions
+        {
+            // Enable high‑quality rendering for better visual fidelity.
+            UseHighQualityRendering = true,
+            // Embed the generator name (default true) – can be left as is.
+            ExportGeneratorName = true
+        };
+
+        // Save the document with revisions applied to XPS format.
+        docOriginal.Save("ComparisonResult.xps", xpsOptions);
+    }
 }
-
-// Show the revised version (with tracked changes) in the layout.
-docOriginal.RevisionsView = RevisionsView.Final;
-
-// Optional: customize how revisions are rendered.
-docOriginal.LayoutOptions.RevisionOptions.ShowRevisionBars = true;
-docOriginal.LayoutOptions.RevisionOptions.RevisionBarsPosition = HorizontalAlignment.Outside;
-docOriginal.LayoutOptions.RevisionOptions.InsertedTextColor = RevisionColor.BrightGreen;
-
-// Save the comparison result as XPS.
-XpsSaveOptions xpsOptions = new XpsSaveOptions();
-xpsOptions.OptimizeOutput = false; // keep original layout fidelity
-docOriginal.Save(docsPath + "ComparisonResult.xps", xpsOptions);

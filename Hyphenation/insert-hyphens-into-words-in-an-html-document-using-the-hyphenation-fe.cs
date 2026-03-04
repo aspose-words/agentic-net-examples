@@ -1,22 +1,29 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Settings;
 
-class Program
+namespace HyphenateHtmlExample
 {
-    static void Main()
+    class Program
     {
-        // Load the source HTML document.
-        Document doc = new Document("input.html");
+        static void Main()
+        {
+            // Path to the folder that contains the input HTML file.
+            string dataDir = @"C:\MyData\";
 
-        // Turn on automatic hyphenation for the whole document.
-        doc.HyphenationOptions.AutoHyphenation = true;
+            // Load the existing HTML document.
+            Document doc = new Document(dataDir + "input.html");
 
-        // Optional: fine‑tune hyphenation behavior.
-        doc.HyphenationOptions.HyphenationZone = 720;          // 0.5 inch from the right margin.
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;    // Max two consecutive hyphenated lines.
+            // Enable automatic hyphenation for the document.
+            doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Save the document back to HTML. Hyphenation inserts soft‑hyphen characters (U+00AD) where needed.
-        doc.Save("output.html");
+            // Optional: fine‑tune hyphenation behavior.
+            doc.HyphenationOptions.HyphenationZone = 720;          // 0.5 inch from the right margin.
+            doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;    // Max two consecutive hyphenated lines.
+            doc.HyphenationOptions.HyphenateCaps = true;         // Hyphenate words in all caps.
+
+            // Save the document back to HTML.
+            // Aspose.Words inserts soft‑hyphen characters (U+00AD) where hyphenation occurs.
+            doc.Save(dataDir + "output.html");
+        }
     }
 }

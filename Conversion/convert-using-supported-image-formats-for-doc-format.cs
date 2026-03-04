@@ -1,43 +1,53 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class SupportedImageFormatsForDoc
+class Program
 {
     static void Main()
     {
-        // Load an existing DOC document.
-        Document doc = new Document("InputDocument.doc");
+        // Load the source DOC document.
+        Document doc = new Document("Input.doc");
 
-        // Define the image formats that are supported when rendering a DOC to images.
+        // Define the image formats that are supported for rendering a DOC.
         SaveFormat[] imageFormats = new SaveFormat[]
         {
             SaveFormat.Png,   // Portable Network Graphics
-            SaveFormat.Jpeg,  // Joint Photographic Experts Group
+            SaveFormat.Jpeg,  // JPEG image
             SaveFormat.Bmp,   // Bitmap
-            SaveFormat.Gif,   // Graphics Interchange Format
-            SaveFormat.Tiff,  // Tagged Image File Format
-            SaveFormat.Emf,   // Enhanced Metafile
-            SaveFormat.Eps,   // Encapsulated PostScript
-            SaveFormat.WebP,  // WebP
+            SaveFormat.Tiff,  // TIFF image
+            SaveFormat.Emf,   // Enhanced Metafile (vector)
+            SaveFormat.Eps,   // Encapsulated PostScript (vector)
+            SaveFormat.WebP,  // WebP image
             SaveFormat.Svg    // Scalable Vector Graphics
         };
 
-        // Iterate through each supported image format and save the first page of the document.
-        for (int i = 0; i < imageFormats.Length; i++)
+        // Iterate through each page of the document.
+        for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
         {
-            // Create ImageSaveOptions with the desired format.
-            ImageSaveOptions options = new ImageSaveOptions(imageFormats[i]);
+            // Export the current page to each of the selected image formats.
+            foreach (SaveFormat format in imageFormats)
+            {
+                // Create ImageSaveOptions for the desired format.
+                ImageSaveOptions options = new ImageSaveOptions(format)
+                {
+                    // Render only the current page.
+                    PageSet = new PageSet(pageIndex),
 
-            // Optionally, set the page to render (e.g., first page).
-            options.PageSet = new PageSet(0);
+                    // Set a reasonable resolution (dpi) for raster formats.
+                    Resolution = 300
+                };
 
-            // Build the output file name based on the format.
-            string extension = FileFormatUtil.SaveFormatToExtension(imageFormats[i]);
-            string outputPath = $"OutputDocument_Page1{extension}";
+                // Determine the file extension for the chosen format.
+                string extension = FileFormatUtil.SaveFormatToExtension(format);
 
-            // Save the document (rendered page) to the image file.
-            doc.Save(outputPath, options);
+                // Build the output file name (e.g., Output_Page1.png).
+                string outputPath = $"Output_Page{pageIndex + 1}{extension}";
+
+                // Save the page as an image using the configured options.
+                doc.Save(outputPath, options);
+            }
         }
     }
 }

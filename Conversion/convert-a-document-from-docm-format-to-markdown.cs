@@ -1,15 +1,29 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-class Program
+namespace DocmToMarkdown
 {
-    static void Main()
+    class Program
     {
-        // Load the macro-enabled DOCM document from the file system.
-        Document doc = new Document("input.docm");
+        static void Main(string[] args)
+        {
+            // Input DOCM file path
+            string inputPath = @"C:\Docs\Sample.docm";
 
-        // Save the loaded document in Markdown format.
-        // The SaveFormat enumeration value 'Markdown' specifies the target format.
-        doc.Save("output.md", SaveFormat.Markdown);
+            // Output Markdown file path
+            string outputPath = @"C:\Docs\Sample.md";
+
+            // Load the DOCM document. The constructor automatically detects the format.
+            Document doc = new Document(inputPath);
+
+            // Save the document as Markdown using the SaveFormat enumeration.
+            // This uses the built‑in save method; no custom save logic is required.
+            doc.Save(outputPath, SaveFormat.Markdown);
+
+            // Alternatively, you can use MarkdownSaveOptions for more control:
+            // var saveOptions = new MarkdownSaveOptions();
+            // doc.Save(outputPath, saveOptions);
+        }
     }
 }

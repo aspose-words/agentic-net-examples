@@ -1,22 +1,22 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;
 
-class Program
+class PdfConversionExample
 {
     static void Main()
     {
-        // Path to the source PDF file.
-        const string inputPath = "input.pdf";
+        // Path to the source document (can be any supported format, e.g., .docx, .pdf, etc.).
+        string inputFile = @"C:\Input\ExampleDocument.pdf";
 
         // Path where the converted PDF will be saved.
-        const string outputPath = "output.pdf";
+        // Saving with a .pdf extension will keep the format as PDF.
+        string outputFile = @"C:\Output\ConvertedDocument.pdf";
 
-        // Load the PDF document using PdfLoadOptions (optional, can be omitted for default loading).
-        LoadOptions loadOptions = new PdfLoadOptions();
-        Document doc = new Document(inputPath, loadOptions);
+        // Load the document. The constructor automatically detects the format (PDF in this case).
+        Document doc = new Document(inputFile);
 
-        // Save the loaded document back to PDF format.
-        doc.Save(outputPath);
+        // Save the loaded document as PDF.
+        doc.Save(outputFile);
     }
 }
