@@ -1,0 +1,11 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Barcode rules": [
+        "Cast the returned Field to the appropriate concrete class (FieldDisplayBarcode or FieldMergeBarcode).",
+        "Keep the \"true\" argument to InsertField to add a field separator, which is required for DISPLAYBARCODE fields."
+      ]
+    }
+  }
+}

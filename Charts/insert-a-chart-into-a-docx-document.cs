@@ -1,5 +1,6 @@
+using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;            // <-- added
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
 class Program
@@ -10,23 +11,27 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a pie chart sized 300x300 pixels (converted to points).
+        // Insert a pie chart with a size of 300x300 pixels (converted to points).
         Shape chartShape = builder.InsertChart(
             ChartType.Pie,
             ConvertUtil.PixelToPoint(300),
             ConvertUtil.PixelToPoint(300));
 
-        // Get the Chart object from the inserted shape.
+        // Retrieve the Chart object from the inserted shape.
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series.
+        // Remove any default demo series.
         chart.Series.Clear();
 
-        // Add a series with categories and corresponding values.
+        // Add a new series with categories and corresponding values.
         chart.Series.Add(
-            "My fruit",
+            "Fruits",
             new[] { "Apples", "Bananas", "Cherries" },
             new[] { 1.3, 2.2, 1.5 });
+
+        // Set a visible title for the chart.
+        chart.Title.Text = "Fruit Distribution";
+        chart.Title.Show = true;
 
         // Save the document to a DOCX file.
         doc.Save("ChartDocument.docx");

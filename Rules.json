@@ -1,0 +1,11 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "General common rules": [
+        "Use the FieldType enum when calling DocumentBuilder.InsertField; do not pass a string.",
+        "Assign numeric values (int) to color, error correction, scaling, height and rotation properties; they are not strings."
+      ]
+    }
+  }
+}
