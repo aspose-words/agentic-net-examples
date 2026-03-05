@@ -1,0 +1,13 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "General common rules": [
+        "Convert numeric values to their string equivalents (e.g., \"3\", \"250\", \"1000\", \"0\").",
+        "Add the SkiaSharp NuGet package reference to the project (e.g., dotnet add package SkiaSharp).",
+        "Dispose all disposable objects (SKBitmap, SKCanvas, SKImage, SKData) using 'using' statements.",
+        "Set colour, error correction, scaling, height and rotation properties as strings matching the API expectations (hex colour strings, numeric strings)."
+      ]
+    }
+  }
+}

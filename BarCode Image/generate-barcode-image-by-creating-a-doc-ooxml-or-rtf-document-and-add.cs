@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -9,7 +10,7 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a DISPLAYBARCODE field.
+        // Insert a DISPLAYBARCODE field into the document.
         FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
         // Configure the barcode (example: QR code with custom colors and scaling).
@@ -21,9 +22,6 @@ class Program
         barcodeField.ScalingFactor = "250";
         barcodeField.SymbolHeight = "1000";
         barcodeField.SymbolRotation = "0";
-
-        // Add a line break after the field (optional).
-        builder.Writeln();
 
         // Save the document in DOCX format.
         doc.Save("DisplayBarcode.docx");

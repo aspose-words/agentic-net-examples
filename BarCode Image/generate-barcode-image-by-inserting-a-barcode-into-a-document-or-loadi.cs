@@ -1,48 +1,35 @@
 using System;
-using System.Data;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class BarcodeExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a MERGEBARCODE field that will be filled by mail merge.
-        // The field will generate a QR code.
-        FieldMergeBarcode mergeBarcode = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
-        mergeBarcode.BarcodeType = "QR";
-        mergeBarcode.BarcodeValue = "MyQRCode";
+        // Insert a MERGEBARCODE field that will generate a QR code.
+        // The second argument (true) tells the builder to update the field immediately.
+        FieldMergeBarcode barcodeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+
+        // Set the barcode type and the value to encode.
+        barcodeField.BarcodeType = "QR";               // string, not int
+        barcodeField.BarcodeValue = "ABC123";          // string, not int
 
         // Optional visual customizations – all properties are strings.
-        mergeBarcode.BackgroundColor = "F8BD69";      // Background color (hex RGB, without 0x).
-        mergeBarcode.ForegroundColor = "B5413B";      // Foreground (bars) color.
-        mergeBarcode.ErrorCorrectionLevel = "3";      // QR error correction level (0‑3).
-        mergeBarcode.ScalingFactor = "250";           // Scale to 250 %.
-        mergeBarcode.SymbolHeight = "1000";           // Height in TWIPS.
-        mergeBarcode.SymbolRotation = "0";            // No rotation.
+        barcodeField.BackgroundColor = "0xF8BD69";     // string representation of color
+        barcodeField.ForegroundColor = "0xB5413B";     // string representation of color
+        barcodeField.ErrorCorrectionLevel = "3";      // string, even though it represents a number
+        barcodeField.ScalingFactor = "250";           // string percentage value
+        barcodeField.SymbolHeight = "1000";           // string height in twips
+        barcodeField.SymbolRotation = "0";            // string rotation angle
 
-        builder.Writeln(); // Add a paragraph break after the field.
+        // Update the field to render the barcode image.
+        barcodeField.Update();
 
-        // Prepare a data source for mail merge.
-        DataTable table = new DataTable("Barcodes");
-        table.Columns.Add("MyQRCode");
-        table.Rows.Add("ABC123");
-        table.Rows.Add("DEF456");
-
-        // Perform mail merge – each row creates a new page with a DISPLAYBARCODE field.
-        doc.MailMerge.Execute(table);
-
-        // Save the document that now contains barcode fields.
-        doc.Save("BarcodeMerge.docx");
-
-        // -----------------------------------------------------------------
-        // Load the previously saved document and update fields to render the barcodes.
-        Document loadedDoc = new Document("BarcodeMerge.docx");
-        loadedDoc.UpdateFields(); // Forces field calculation and image generation.
-        loadedDoc.Save("BarcodeMergedUpdated.docx");
+        // Save the document in DOCX format.
+        doc.Save("BarcodeDocument.docx");
     }
 }
