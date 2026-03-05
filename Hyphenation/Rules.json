@@ -1,0 +1,13 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Document merge/insert rules": [
+        "Import the static class instead: 'using static Aspose.Words.Hyphenation;' or call its members with the fully‑qualified name.",
+        "If you need to register a dictionary, call RegisterDictionary directly after the static import or use Aspose.Words.Hyphenation.RegisterDictionary.",
+        "Add `using static Aspose.Words.Hyphenation;` to import static members (RegisterDictionary, Callback, IsDictionaryRegistered, WarningCallback).",
+        "Update references to Hyphenation members to use the static import (e.g., `WarningCallback = warningInfo;`)."
+      ]
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Table rules": [
+        "Ensure the insertion point is a Paragraph or Table; otherwise throw an ArgumentException."
+      ],
+      "Document merge/insert rules": [
+        "Keep the import logic unchanged; only visitor flow control needed adjustment.",
+        "Remove the non‑existent `Aspose.Words.Import` namespace; `NodeImporter` lives directly under `Aspose.Words`.",
+        "Keep the ImportFormatMode set to KeepSourceFormatting to preserve the source document's styles.",
+        "Remove the non‑existent namespace import `using Aspose.Words.Import;` – `ImportFormatMode` resides directly in `Aspose.Words`.",
+        "Keep the rest of the logic unchanged; `DocumentBuilder.MoveToBookmark` returns a bool and `InsertDocument` works with `ImportFormatMode`."
+      ],
+      "Layout rules": [
+        "Iterate over docToInsert.Sections directly (no need for LINQ OfType)."
+      ]
+    }
+  }
+}

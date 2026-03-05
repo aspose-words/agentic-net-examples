@@ -1,0 +1,18 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Table rules": [
+        "Add the missing using directive for Aspose.Words.Tables to resolve the Table type.",
+        "Ensure the project references Aspose.Words.dll (the core library) which contains Table, NodeType, etc.",
+        "Keep the placeholder removal and table insertion logic unchanged."
+      ],
+      "Loading rules": [
+        "Cast args.MatchNode.Document (DocumentBase) to Document before passing it to DocumentBuilder."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Keep the rest of the logic unchanged; the callback inserts the shape and clears the placeholder text."
+      ]
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Bookmark rules": [
+        "Sanitise bookmark names (remove spaces) because Word bookmark identifiers cannot contain spaces.",
+        "Move the DocumentBuilder cursor to the paragraph's last child before calling EndBookmark so the bookmark spans the whole paragraph.",
+        "Guard against a missing paragraph (null) before trying to create a bookmark."
+      ],
+      "Document merge/insert rules": [
+        "Do not import non‑existent namespaces (e.g., Aspose.Words.Building).",
+        "DocumentBuilder resides in the Aspose.Words namespace; only import what is required.",
+        "Import the modified StructuredDocumentTag via Document.ImportNode, then cast the result back to StructuredDocumentTag."
+      ],
+      "Saving/Export rules": [
+        "Use SaveFormat.Doc when you need DOC output to retain list‑restart information.",
+        "Use the SaveFormat enum from Aspose.Words.Saving when constructing ImageSaveOptions.",
+        "Ensure the PDF file path is correct relative to the executable or provide an absolute path.",
+        "Reference the Aspose.Words namespace for Document, SaveFormat, and PsSaveOptions.",
+        "Set SaveFormat property on PsSaveOptions (optional but clarifies intent).",
+        "Do not use AsposeWordsPrintDocument; instead, save the document to PDF using Document.Save with SaveFormat.Pdf.",
+        "Add a using directive for Aspose.Words only; SaveFormat is defined in that namespace.",
+        "Provide a concrete file path for the generated PDF and inform the user via Console."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Remove the System.Drawing.Printing namespace and PrinterSettings – printing is not supported in .NET Core/5+ for Aspose.Words."
+      ]
+    }
+  }
+}

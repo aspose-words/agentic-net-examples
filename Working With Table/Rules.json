@@ -1,0 +1,12 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Table rules": [
+        "Do not call `ToArray()` on a `NodeCollection`; instead use `Cast<Table>()` or `OfType<Table>()` to enumerate Table nodes.",
+        "Iterate with `foreach` (or convert to a list) after casting, because `NodeCollection` does not implement `IList<Table>` directly.",
+        "Keep the row and column count logic unchanged; it correctly reads `Rows.Count` and the cell count of the first row."
+      ]
+    }
+  }
+}

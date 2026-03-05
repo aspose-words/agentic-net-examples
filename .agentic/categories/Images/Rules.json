@@ -1,0 +1,17 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Document merge/insert rules": [
+        "Import the SkiaSharp namespace and ensure the SkiaSharp NuGet package is referenced."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Keep other image‑insertion code unchanged; Aspose.Words overloads accept file paths for inline/floating images."
+      ],
+      "Watermark rules": [
+        "When adding an image watermark use a SkiaSharp.SKBitmap instance, not a file path string.",
+        "Dispose the SKBitmap (e.g., with a using statement) after setting the watermark to avoid memory leaks."
+      ]
+    }
+  }
+}
