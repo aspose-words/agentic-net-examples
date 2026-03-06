@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -5,23 +6,29 @@ class Program
 {
     static void Main()
     {
-        // Create a new document (or load an existing DOCM with new Document("input.docm"))
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some introductory text
-        builder.Write("Pick a fruit: ");
+        // Write some prompt text before the combo box.
+        builder.Write("Please select a fruit: ");
 
-        // Items for the combo box
+        // Define the items that will appear in the combo box.
         string[] items = { "Apple", "Banana", "Cherry" };
 
-        // Insert the combo box form field; the first item (index 0) is selected by default
-        FormField comboBox = builder.InsertComboBox("FruitCombo", items, 0);
+        // Insert the combo box form field.
+        // Parameters: name of the field, array of items, index of the initially selected item.
+        FormField comboBox = builder.InsertComboBox("FruitComboBox", items, 0);
 
-        // Example of setting an additional property
+        // Optionally, you can modify properties of the inserted form field.
+        // For example, set the field to be enabled and calculate its value on exit.
+        comboBox.Enabled = true;
         comboBox.CalculateOnExit = true;
 
-        // Save the document as a DOCM file
+        // Save the document as a DOCM (macro-enabled) file.
+        // The file extension determines the format.
         doc.Save("ComboBoxFormField.docm");
     }
 }

@@ -1,32 +1,55 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class ApplyTableStyleToTxt
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Begin a table. At least one cell must be inserted before any table formatting.
+        // Start building a table.
         Table table = builder.StartTable();
+
+        // Insert the first cell (required before setting any table formatting).
         builder.InsertCell();
         builder.Writeln("Item");
         builder.InsertCell();
-        builder.Writeln("Quantity");
+        builder.Writeln("Quantity (kg)");
         builder.EndRow();
 
-        // Apply a built‑in table style by its identifier.
-        table.StyleIdentifier = StyleIdentifier.LightGrid;
+        // Add a second row.
+        builder.InsertCell();
+        builder.Writeln("Apples");
+        builder.InsertCell();
+        builder.Writeln("20");
+        builder.EndRow();
 
-        // Optionally specify which parts of the style are applied.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+        // Add a third row.
+        builder.InsertCell();
+        builder.Writeln("Bananas");
+        builder.InsertCell();
+        builder.Writeln("40");
+        builder.EndRow();
 
-        // End the table.
+        // End the table construction.
         builder.EndTable();
 
-        // Save the document as plain text. The table will be rendered as tab‑delimited text.
+        // Apply a built‑in table style using the StyleIdentifier property.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Optionally apply style options (first row, first column, row bands).
+        table.StyleOptions = TableStyleOptions.FirstRow |
+                             TableStyleOptions.FirstColumn |
+                             TableStyleOptions.RowBands;
+
+        // Auto‑fit the table to its contents.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+        // Save the document as a plain‑text file. Table formatting will be lost in the TXT output,
+        // but the style is applied in the document model before saving.
         doc.Save("TableWithStyle.txt");
     }
 }

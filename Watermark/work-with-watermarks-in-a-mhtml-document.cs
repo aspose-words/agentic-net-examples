@@ -1,34 +1,29 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
 class WatermarkMhtmlExample
 {
     static void Main()
     {
-        // Path to the source MHTML document.
-        string inputPath = @"C:\Docs\source.mhtml";
+        // Load an existing MHTML document.
+        Document doc = new Document("InputDocument.mhtml");
 
-        // Path where the watermarked MHTML document will be saved.
-        string outputPath = @"C:\Docs\watermarked.mhtml";
-
-        // Load the MHTML document.
-        Document doc = new Document(inputPath);
-
-        // Configure text watermark options.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+        // Create text watermark options (optional customization).
+        TextWatermarkOptions options = new TextWatermarkOptions
         {
             FontFamily = "Arial",
             FontSize = 36,
-            Color = Color.Black,
+            Color = Color.Gray,
             Layout = WatermarkLayout.Diagonal,
             IsSemitrasparent = false
         };
 
-        // Add a text watermark to every page of the document.
-        doc.Watermark.SetText("Confidential", watermarkOptions);
+        // Add a text watermark to the document.
+        doc.Watermark.SetText("Confidential", options);
 
         // Save the document back to MHTML format.
-        doc.Save(outputPath, SaveFormat.Mhtml);
+        doc.Save("OutputDocument.mhtml");
     }
 }

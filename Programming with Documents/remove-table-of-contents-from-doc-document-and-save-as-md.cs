@@ -1,45 +1,27 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Fields;
+using Aspose.Words.Saving;
 
-namespace RemoveTocAndSaveAsMarkdown
+class RemoveTocAndSaveAsMarkdown
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Load the existing DOC document.
+        Document doc = new Document("InputDocument.docx");
+
+        // Iterate over all fields in reverse order and remove any Table of Contents (TOC) fields.
+        for (int i = doc.Range.Fields.Count - 1; i >= 0; i--)
         {
-            // Path to the source DOC document.
-            string inputPath = @"C:\Docs\SourceDocument.docx";
-
-            // Path where the resulting Markdown file will be saved.
-            string outputPath = @"C:\Docs\ResultDocument.md";
-
-            // Load the existing document from file.
-            Document doc = new Document(inputPath);
-
-            // Remove all Table of Contents (TOC) fields from the document.
-            // Iterate over a copy of the fields collection because removing a field modifies the collection.
-            foreach (Field field in doc.Range.Fields.ToArray())
-            {
-                if (field.Type == FieldType.FieldTOC)
-                {
-                    // The Remove method returns the node that follows the removed field,
-                    // but we do not need to use the return value here.
-                    field.Remove();
-                }
-            }
-
-            // Configure Markdown save options if needed (default options are sufficient for this task).
-            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
-            {
-                // Ensure the format is explicitly set to Markdown.
-                SaveFormat = SaveFormat.Markdown
-            };
-
-            // Save the modified document as a Markdown file.
-            doc.Save(outputPath, saveOptions);
+            Field field = doc.Range.Fields[i];
+            if (field.Type == FieldType.FieldTOC)
+                field.Remove(); // Removes the TOC field from the document.
         }
+
+        // Prepare Markdown save options (default settings are sufficient for this task).
+        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
+
+        // Save the modified document as a Markdown file.
+        doc.Save("OutputDocument.md", saveOptions);
     }
 }

@@ -11,17 +11,18 @@ namespace SendConvertedDocument
     {
         static void Main(string[] args)
         {
-            // TODO: replace the following placeholders with real values or read them from configuration.
-            string inputFilePath = "sample.docx";               // path to the source Word document
+            // ----- Replace the placeholders with real values -----
+            string inputFilePath = "sample.docx";               // path to the source document
             string smtpHost = "smtp.example.com";               // SMTP server
-            int smtpPort = 587;                                   // SMTP port (usually 25, 465 or 587)
-            string smtpUser = "user@example.com";               // SMTP username (optional)
-            string smtpPassword = "password";                   // SMTP password (optional)
-            string fromAddress = "sender@example.com";          // sender e‑mail address
-            string toAddress = "recipient@example.com";         // recipient e‑mail address
+            int smtpPort = 587;                                   // SMTP port (usually 587 or 465)
+            string smtpUser = "user@example.com";               // SMTP user (optional)
+            string smtpPassword = "password";                  // SMTP password (optional)
+            string fromAddress = "sender@example.com";          // sender e‑mail
+            string toAddress = "recipient@example.com";         // recipient e‑mail
             string subject = "Converted PDF Document";          // e‑mail subject
+            string body = "Please find the PDF attached.";      // e‑mail body
 
-            var sender = new EmailSender();
+            var sender = new DocumentEmailSender();
             sender.SendConvertedDocumentByEmail(
                 inputFilePath,
                 smtpHost,
@@ -30,11 +31,12 @@ namespace SendConvertedDocument
                 smtpPassword,
                 fromAddress,
                 toAddress,
-                subject);
+                subject,
+                body);
         }
     }
 
-    public class EmailSender
+    public class DocumentEmailSender
     {
         /// <summary>
         /// Loads a Word document, converts it to PDF in memory, and sends it as an e‑mail attachment.
@@ -47,37 +49,51 @@ namespace SendConvertedDocument
             string smtpPassword,
             string fromAddress,
             string toAddress,
-            string subject)
+            string subject,
+            string body)
         {
             // Load the source document.
             Document doc = new Document(inputFilePath);
 
-            // Convert to PDF and keep the bytes in a MemoryStream.
+            // Convert to PDF and keep the result in a MemoryStream.
             using (MemoryStream pdfStream = new MemoryStream())
             {
+                // Rule: use Save(stream, SaveFormat) overload.
                 doc.Save(pdfStream, SaveFormat.Pdf);
-                pdfStream.Position = 0; // rewind for reading
+                pdfStream.Position = 0; // reset for reading.
 
-                // Prepare e‑mail objects inside using blocks to guarantee disposal.
+                // Prepare the e‑mail.
                 using (MailMessage message = new MailMessage())
-                using (SmtpClient smtpClient = new SmtpClient(smtpHost, smtpPort))
                 {
                     message.From = new MailAddress(fromAddress);
                     message.To.Add(new MailAddress(toAddress));
                     message.Subject = subject;
-                    message.Body = "Please find the converted PDF document attached.";
+                    message.Body = body;
 
                     string attachmentName = Path.GetFileNameWithoutExtension(inputFilePath) + ".pdf";
-                    Attachment pdfAttachment = new Attachment(pdfStream, attachmentName, "application/pdf");
-                    message.Attachments.Add(pdfAttachment);
 
-                    smtpClient.EnableSsl = true; // adjust if the server does not require SSL
-                    if (!string.IsNullOrEmpty(smtpUser))
+                    // Attach the PDF – dispose the attachment with a using block.
+                    using (Attachment pdfAttachment = new Attachment(pdfStream, attachmentName, "application/pdf"))
                     {
-                        smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPassword);
-                    }
+                        message.Attachments.Add(pdfAttachment);
 
-                    smtpClient.Send(message);
+                        // Send via SMTP.
+                        using (SmtpClient smtp = new SmtpClient(smtpHost, smtpPort))
+                        {
+                            if (!string.IsNullOrEmpty(smtpUser))
+                            {
+                                smtp.Credentials = new NetworkCredential(smtpUser, smtpPassword);
+                            }
+                            else
+                            {
+                                smtp.UseDefaultCredentials = true;
+                            }
+
+                            // Most modern servers require SSL/TLS.
+                            smtp.EnableSsl = true;
+                            smtp.Send(message);
+                        }
+                    }
                 }
             }
         }

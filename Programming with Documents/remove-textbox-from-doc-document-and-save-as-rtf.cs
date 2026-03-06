@@ -7,16 +7,22 @@ class RemoveTextBoxAndSaveAsRtf
     static void Main()
     {
         // Load the existing DOC document.
-        Document doc = new Document("InputDocument.docx");
+        Document doc = new Document("InputDocument.doc");
 
-        // Find all shape nodes in the document (including those inside headers/footers).
+        // Find all Shape nodes in the document (including those inside headers/footers).
         NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
 
-        // Remove every shape that is a TextBox.
-        foreach (Shape shape in shapes)
+        // Iterate backwards so that removal does not affect the collection indexing.
+        for (int i = shapes.Count - 1; i >= 0; i--)
         {
+            Shape shape = (Shape)shapes[i];
+
+            // Check if the shape is a TextBox.
             if (shape.ShapeType == ShapeType.TextBox)
+            {
+                // Remove the textbox shape from its parent.
                 shape.Remove();
+            }
         }
 
         // Save the modified document as RTF.

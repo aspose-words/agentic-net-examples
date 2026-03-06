@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -6,20 +6,18 @@ class Program
 {
     static void Main()
     {
-        // Load the existing DOC/DOCX document.
-        Document doc = new Document("input.docx");
+        // Load the source DOC document.
+        Document doc = new Document("input.doc");
 
-        // Collect all shapes that are text boxes.
-        List<Shape> textBoxShapes = new List<Shape>();
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        // Find all Shape nodes in the document (including those inside headers/footers).
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+        // Remove every shape that is a TextBox.
+        foreach (Shape shape in shapes)
         {
             if (shape.ShapeType == ShapeType.TextBox)
-                textBoxShapes.Add(shape);
+                shape.Remove();
         }
-
-        // Remove each text box from the document.
-        foreach (Shape tb in textBoxShapes)
-            tb.Remove();
 
         // Save the modified document as EPUB. The format is inferred from the file extension.
         doc.Save("output.epub");

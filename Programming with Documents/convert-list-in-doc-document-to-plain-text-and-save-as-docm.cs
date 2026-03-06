@@ -6,26 +6,32 @@ class ListToPlainTextConverter
 {
     static void Main()
     {
-        // Paths to the source DOC file and the destination DOCM file.
-        string sourcePath = "input.doc";
-        string destinationPath = "output.docm";
+        // Path to the source DOC file that contains the list.
+        string inputPath = "input.doc";
+
+        // Path where the resulting DOCM file will be saved.
+        string outputPath = "output.docm";
 
         // Load the existing DOC document.
-        Document sourceDoc = new Document(sourcePath);
+        Document sourceDoc = new Document(inputPath);
 
-        // Ensure that list labels are up‑to‑date before extracting plain text.
-        sourceDoc.UpdateListLabels();
+        // Configure text save options to simplify list labels when converting to plain text.
+        TxtSaveOptions txtOptions = new TxtSaveOptions
+        {
+            SimplifyListLabels = true
+        };
 
-        // Extract the document's plain‑text representation (lists are rendered as text).
-        PlainTextDocument plainText = new PlainTextDocument(sourcePath);
-        string textContent = plainText.Text;
+        // Export the document content to plain text using the configured options.
+        string plainText = sourceDoc.ToString(txtOptions);
 
-        // Create a new blank document and write the extracted plain text into it.
+        // Create a new blank document to hold the plain‑text representation.
         Document resultDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(resultDoc);
-        builder.Writeln(textContent);
 
-        // Save the result as a macro‑enabled DOCM file.
-        resultDoc.Save(destinationPath, SaveFormat.Docm);
+        // Insert the plain text into the new document.
+        DocumentBuilder builder = new DocumentBuilder(resultDoc);
+        builder.Writeln(plainText);
+
+        // Save the result as a macro‑enabled Word document (DOCM).
+        resultDoc.Save(outputPath, SaveFormat.Docm);
     }
 }

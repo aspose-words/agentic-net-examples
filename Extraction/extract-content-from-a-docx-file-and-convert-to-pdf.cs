@@ -1,21 +1,21 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Path to the source DOCX file
-        string sourcePath = "input.docx";
+        // Path to the source DOCX file.
+        string inputFile = "input.docx";
 
-        // Path where the PDF will be saved
-        string destinationPath = "output.pdf";
+        // Path where the resulting PDF will be saved.
+        string outputFile = "output.pdf";
 
-        // Load the DOCX document from the file system
-        Document doc = new Document(sourcePath);
+        // Load the DOCX document from the file system.
+        Document doc = new Document(inputFile);
 
-        // Convert and save the document as PDF
-        doc.Save(destinationPath, SaveFormat.Pdf);
+        // Save the loaded document as PDF.
+        // The format is automatically determined from the ".pdf" extension.
+        doc.Save(outputFile);
     }
 }

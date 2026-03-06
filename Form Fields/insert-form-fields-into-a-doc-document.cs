@@ -8,30 +8,28 @@ class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a checkbox form field.
-        // Parameters: name, defaultChecked, size (in points).
-        builder.InsertCheckBox("AcceptTerms", false, 50);
-
-        // Insert a line break after the checkbox.
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        // Insert a text input form field.
+        builder.Write("Enter your name: ");
+        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 0);
+        builder.Writeln();
 
         // Insert a combo box form field.
-        // Parameters: name, list of items, selected index.
-        string[] footwear = { "-- Select footwear --", "Sneakers", "Oxfords", "Flip-flops", "Other" };
-        builder.InsertComboBox("FootwearChoice", footwear, 0);
+        builder.Write("Select your country: ");
+        string[] countries = { "USA", "Canada", "UK", "Australia" };
+        builder.InsertComboBox("CountryField", countries, 0);
+        builder.Writeln();
 
-        // Insert another line break.
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        // Insert a check box form field.
+        builder.Write("Accept terms and conditions: ");
+        builder.InsertCheckBox("AcceptTerms", false, 50);
+        builder.Writeln();
 
-        // Insert a text input form field.
-        // Parameters: name, type, format, default text, max length (0 = unlimited).
-        builder.InsertTextInput("UserName", TextFormFieldType.Regular, "", "Enter your name here", 0);
+        // Update fields to ensure results are calculated.
+        doc.UpdateFields();
 
-        // Save the document to disk.
-        doc.Save("FormFieldsDocument.docx");
+        // Save the document.
+        doc.Save("FormFields.docx");
     }
 }

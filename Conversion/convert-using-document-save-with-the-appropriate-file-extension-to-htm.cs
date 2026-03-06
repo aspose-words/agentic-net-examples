@@ -9,14 +9,23 @@ class DocmToHtmlConverter
         // Path to the source DOCM file.
         string inputPath = @"C:\Docs\SourceDocument.docm";
 
-        // Path to the output HTML file. The .html extension tells Aspose.Words the desired format.
-        string outputPath = @"C:\Docs\ConvertedDocument.html";
-
-        // Load the DOCM document. The constructor automatically detects the format (DOCM).
+        // Load the DOCM document. The format is detected automatically.
         Document doc = new Document(inputPath);
 
-        // Save the document as HTML. Explicitly specify SaveFormat.Html for clarity.
-        doc.Save(outputPath, SaveFormat.Html);
+        // Optional: configure HTML save options if needed.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
+        {
+            // Example option – export headers/footers as part of the body.
+            ExportHeadersFootersMode = ExportHeadersFootersMode.PerSection,
+            // Example option – embed images as Base64 to keep a single HTML file.
+            ExportImagesAsBase64 = true
+        };
+
+        // Path to the output HTML file.
+        string outputPath = @"C:\Docs\ConvertedDocument.html";
+
+        // Save the document as HTML using the specified options.
+        doc.Save(outputPath, saveOptions);
 
         Console.WriteLine("Conversion completed successfully.");
     }

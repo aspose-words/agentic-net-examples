@@ -6,23 +6,25 @@ class MailMergeToPng
 {
     static void Main()
     {
-        // Load the source DOCX file that contains MERGEFIELDs.
+        // Load the source DOCX document that contains MERGEFIELDs.
+        // Replace "Template.docx" with the actual path to your template file.
         Document doc = new Document("Template.docx");
 
-        // Define the names of the merge fields present in the template
-        // and the corresponding values to insert.
-        string[] fieldNames = { "FullName", "Address" };
-        object[] fieldValues = { "John Doe", "123 Main St., Anytown" };
+        // Define the merge field names present in the template and the values to insert.
+        string[] fieldNames = { "FirstName", "LastName" };
+        object[] fieldValues = { "John", "Doe" };
 
-        // Perform a simple mail merge for a single record.
+        // Execute a simple mail merge for a single record.
         doc.MailMerge.Execute(fieldNames, fieldValues);
 
-        // Configure image save options to render the document as PNG.
-        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
-        // Render only the first page (index 0) of the document.
-        pngOptions.PageSet = new PageSet(0);
-
         // Save the merged document as a PNG image.
-        doc.Save("MergedResult.png", pngOptions);
+        // The ImageSaveOptions allow us to control rendering; here we render the first page only.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
+        {
+            PageSet = new PageSet(0) // zero‑based index of the page to render
+        };
+
+        // Replace "Result.png" with the desired output file path.
+        doc.Save("Result.png", options);
     }
 }

@@ -6,33 +6,27 @@ class CompareDocuments
 {
     static void Main()
     {
-        // Load the original and edited documents.
+        // Load the two documents to be compared.
         Document docOriginal = new Document("Original.docx");
         Document docEdited   = new Document("Edited.docx");
 
-        // Configure comparison options to ignore formatting, case changes and whitespace differences.
-        // IgnoreFormatting skips any style/format changes.
-        // IgnoreCaseChanges makes the comparison case‑insensitive.
-        // Whitespace changes are treated as formatting differences, so they are ignored as well.
+        // Configure comparison options to ignore formatting, case changes and treat whitespace as insignificant.
         CompareOptions compareOptions = new CompareOptions
         {
-            IgnoreFormatting   = true,
-            IgnoreCaseChanges  = true,
-            // Additional flags can be set to ignore other element types if desired.
-            CompareMoves       = false,
-            IgnoreComments     = false,
-            IgnoreTables       = false,
-            IgnoreFields       = false,
-            IgnoreFootnotes    = false,
-            IgnoreTextboxes    = false,
-            IgnoreHeadersAndFooters = false,
+            // Ignore any formatting differences (font, style, etc.).
+            IgnoreFormatting = true,
+            // Make the comparison case‑insensitive.
+            IgnoreCaseChanges = true,
+            // Track changes at the character level to catch whitespace modifications.
+            Granularity = Granularity.CharLevel,
+            // Use the edited document as the base for comparison (optional, default is Current).
             Target = ComparisonTargetType.New
         };
 
-        // Perform the comparison. The revisions will be added to docOriginal.
+        // Perform the comparison. Revisions will be added to docOriginal.
         docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
 
-        // Save the result document that contains the tracked changes.
+        // Save the result which contains the revisions (differences) after ignoring the specified aspects.
         docOriginal.Save("ComparisonResult.docx");
     }
 }

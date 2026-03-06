@@ -7,29 +7,23 @@ class Program
 {
     static void Main()
     {
-        // Load the existing DOC document.
-        Document doc = new Document("Input.doc");
+        // Load the source DOC document.
+        Document doc = new Document("input.doc");
 
-        // Retrieve all Shape nodes (including text boxes) from the document.
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-
-        // Iterate backwards so that removing a shape does not affect the loop index.
-        for (int i = shapeNodes.Count - 1; i >= 0; i--)
+        // Find and remove every shape that is a text box.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes)
         {
-            Shape shape = (Shape)shapeNodes[i];
-
-            // Identify text box shapes by their ShapeType.
             if (shape.ShapeType == ShapeType.TextBox)
-            {
-                // Remove the text box from the document.
                 shape.Remove();
-            }
         }
 
-        // Prepare image save options for TIFF output.
+        // Prepare TIFF save options (render all pages into a multi‑frame TIFF).
         ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        // By default all pages are rendered; the following line explicitly sets that behavior.
+        tiffOptions.PageSet = new PageSet(0);
 
-        // Save the modified document as a multi‑page TIFF file.
-        doc.Save("Output.tiff", tiffOptions);
+        // Save the modified document as a TIFF image.
+        doc.Save("output.tiff", tiffOptions);
     }
 }

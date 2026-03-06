@@ -9,41 +9,32 @@ class SplitTableInRtf
         // Load the RTF document.
         Document doc = new Document("InputDocument.rtf");
 
-        // Assume we want to split the first table at a specific row index.
-        // For example, split after the third row (zero‑based index = 2).
-        int splitAfterRowIndex = 2;
-
-        // Get the first table in the document.
+        // Assume we want to split the first table in the document.
         Table originalTable = doc.FirstSection.Body.Tables[0];
 
-        // Validate the split index.
-        if (splitAfterRowIndex < 0 || splitAfterRowIndex >= originalTable.Rows.Count - 1)
+        // Index of the row where the split should occur (zero‑based).
+        // Rows with index < splitRowIndex stay in the original table,
+        // rows with index >= splitRowIndex move to the new table.
+        int splitRowIndex = 2;
+
+        // Clone the original table including its rows.
+        Table newTable = (Table)originalTable.Clone(true);
+
+        // Remove rows that should stay in the original table from the cloned copy.
+        for (int i = 0; i < splitRowIndex; i++)
         {
-            Console.WriteLine("Invalid split index.");
-            return;
+            // The first row of the cloned table corresponds to the row we want to discard.
+            newTable.FirstRow.Remove();
         }
 
-        // Create a new table that will hold the rows after the split point.
-        Table newTable = new Table(doc);
-        // Copy basic formatting from the original table to keep appearance consistent.
-        newTable.PreferredWidth = originalTable.PreferredWidth;
-        newTable.Alignment = originalTable.Alignment;
-        newTable.Style = originalTable.Style;
-        newTable.StyleIdentifier = originalTable.StyleIdentifier;
-        newTable.StyleName = originalTable.StyleName;
-
-        // Move rows from the original table to the new table.
-        // Start moving from the row after the split index.
-        // While moving, the collection size changes, so always remove the row at splitAfterRowIndex + 1.
-        while (originalTable.Rows.Count > splitAfterRowIndex + 1)
+        // Remove rows that belong to the new table from the original table.
+        while (originalTable.Rows.Count > splitRowIndex)
         {
-            // Remove the row from the original table and add it to the new table.
-            Row rowToMove = originalTable.Rows[splitAfterRowIndex + 1];
-            originalTable.Rows.RemoveAt(splitAfterRowIndex + 1);
-            newTable.Rows.Add(rowToMove);
+            // The last row of the original table is the one that should be moved.
+            originalTable.LastRow.Remove();
         }
 
-        // Insert the new table into the document immediately after the original table.
+        // Insert the new table immediately after the original one.
         originalTable.ParentNode.InsertAfter(newTable, originalTable);
 
         // Save the modified document back to RTF (or any other format you need).

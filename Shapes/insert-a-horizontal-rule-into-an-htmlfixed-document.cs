@@ -1,6 +1,7 @@
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
 class Program
 {
@@ -18,9 +19,9 @@ class Program
         // Optional: customize the appearance of the horizontal rule.
         HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
         format.Alignment = HorizontalRuleAlignment.Center; // Center the rule.
-        format.WidthPercent = 70;                           // 70% of the page width.
-        format.Height = 3;                                  // Height of 3 points.
-        format.Color = Color.Blue;                          // Blue color.
+        format.WidthPercent = 80;                           // 80% of the page width.
+        format.Height = 2;                                  // Height of 2 points.
+        format.Color = Color.Black;                         // Black color.
         format.NoShade = true;                              // Solid color, no 3‑D shading.
 
         // Save the document in HTML Fixed format.

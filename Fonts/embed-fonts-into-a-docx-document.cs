@@ -6,21 +6,19 @@ class Program
 {
     static void Main()
     {
-        // Load the source DOCX document.
+        // Load an existing DOCX document.
         Document doc = new Document("Input.docx");
 
         // Get the collection that holds information about the fonts used in the document.
         FontInfoCollection fontInfos = doc.FontInfos;
 
-        // Enable embedding of all TrueType fonts when the document is saved.
+        // Enable embedding of TrueType fonts when the document is saved.
         fontInfos.EmbedTrueTypeFonts = true;
 
-        // Enable embedding of system fonts (useful for East Asian fonts).
-        // This property only takes effect when EmbedTrueTypeFonts is true.
+        // Optionally embed system fonts as well (useful for East Asian languages).
         fontInfos.EmbedSystemFonts = true;
 
-        // Optionally, save the full fonts instead of subsets.
-        // Set to false to embed only the glyphs used in the document.
+        // Save the full font files (set to false to embed only subsets).
         fontInfos.SaveSubsetFonts = false;
 
         // Save the document; the fonts will be embedded according to the settings above.

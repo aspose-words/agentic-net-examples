@@ -2,35 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ListToPlainTextToJpeg
+class ListToPlainTextJpeg
 {
     static void Main()
     {
-        // Path to the source DOC document that contains a list.
-        string sourceDocPath = @"C:\Input\ListDocument.docx";
+        // Paths to the source DOC document and the resulting JPEG image.
+        string sourcePath = "input.docx";
+        string outputPath = "output.jpg";
 
-        // Path where the resulting JPEG image will be saved.
-        string outputJpegPath = @"C:\Output\PlainTextImage.jpg";
+        // Load the original document (lifecycle rule: create/load).
+        Document sourceDoc = new Document(sourcePath);
 
-        // Load the source document.
-        Document sourceDoc = new Document(sourceDocPath);
+        // Extract the document's plain text using the PlainTextDocument helper (rule exists).
+        PlainTextDocument plainTextDoc = new PlainTextDocument(sourcePath);
+        string plainText = plainTextDoc.Text;
 
-        // Extract the plain text from the document.
-        // GetText returns the visible text without field codes or formatting.
-        string plainText = sourceDoc.GetText();
-
-        // Create a new blank document to hold the plain text.
-        Document plainTextDoc = new Document();
-
-        // Use DocumentBuilder to write the extracted text into the new document.
-        DocumentBuilder builder = new DocumentBuilder(plainTextDoc);
+        // Create a new blank document and write the extracted plain text into it.
+        Document resultDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(resultDoc);
         builder.Writeln(plainText);
 
-        // Prepare image save options for JPEG format.
+        // Prepare image save options for JPEG format (rule exists).
         ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg);
+        jpegOptions.JpegQuality = 100; // optional: set high quality
 
-        // Save the document as a JPEG image. Only the first page is rendered,
-        // which contains the whole plain‑text content.
-        plainTextDoc.Save(outputJpegPath, jpegOptions);
+        // Save the document as a JPEG image (lifecycle rule: save with options).
+        resultDoc.Save(outputPath, jpegOptions);
     }
 }

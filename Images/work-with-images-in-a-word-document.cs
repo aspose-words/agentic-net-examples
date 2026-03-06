@@ -1,9 +1,7 @@
 using System;
-using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 class ImageDemo
 {
@@ -11,55 +9,65 @@ class ImageDemo
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Create a DocumentBuilder attached to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // -----------------------------------------------------------------
-        // 1. Insert an inline image from a file path.
+        // 1. Insert an inline image from a local file (default size).
         // -----------------------------------------------------------------
-        // The image will be inserted at the current cursor position with its original size.
-        Shape inlineImage = builder.InsertImage(@"C:\Images\Logo.jpg");
+        // The image will be inserted at the current cursor position.
+        builder.InsertImage(@"Images\SampleImage.jpg");
+
         // Add a paragraph break after the image.
         builder.Writeln();
 
         // -----------------------------------------------------------------
-        // 2. Insert a floating image with custom size and positioning.
+        // 2. Insert an inline image from a stream with custom dimensions.
         // -----------------------------------------------------------------
-        // Parameters: file name, horizontal position relative to page margin,
-        // left offset, vertical position relative to page margin, top offset,
-        // width, height, wrap type.
-        Shape floatingImage = builder.InsertImage(
-            @"C:\Images\Watermark.png",
-            RelativeHorizontalPosition.Margin, 100,
-            RelativeVerticalPosition.Margin, 100,
-            200, 100,
-            WrapType.Square);
-
-        // Configure the floating image to appear behind text.
-        floatingImage.BehindText = true;
-        // Center the image on the page.
-        floatingImage.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        floatingImage.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        floatingImage.HorizontalAlignment = HorizontalAlignment.Center;
-        floatingImage.VerticalAlignment = VerticalAlignment.Center;
-
-        // -----------------------------------------------------------------
-        // 3. Create a shape and set its image using ImageData.SetImage.
-        // -----------------------------------------------------------------
-        Shape shapeWithImage = new Shape(doc, ShapeType.Image);
-        shapeWithImage.Width = 150;
-        shapeWithImage.Height = 150;
-        // Load an image from a stream and assign it to the shape.
-        using (FileStream imgStream = new FileStream(@"C:\Images\Sample.png", FileMode.Open, FileAccess.Read))
+        using (FileStream imageStream = File.OpenRead(@"Images\SampleImage.png"))
         {
-            shapeWithImage.ImageData.SetImage(imgStream);
+            // Insert the image with a width of 200 points and a height of 150 points.
+            builder.InsertImage(imageStream, 200.0, 150.0);
         }
-        // Insert the shape into the document.
-        builder.InsertNode(shapeWithImage);
+
+        // Add a paragraph break after the image.
         builder.Writeln();
 
         // -----------------------------------------------------------------
-        // 4. Save the document to a DOCX file.
+        // 3. Insert a floating image from a byte array.
         // -----------------------------------------------------------------
-        doc.Save(@"C:\Output\ImageDemo.docx", SaveFormat.Docx);
+        // Load the image bytes into a byte array.
+        byte[] imageBytes = File.ReadAllBytes(@"Images\SampleImage.gif");
+
+        // Insert the image as a floating shape positioned 100 points from the left
+        // and 100 points from the top of the page, with a width of 250 points
+        // and a height of 200 points, using a square text wrap.
+        builder.InsertImage(
+            imageBytes,
+            RelativeHorizontalPosition.Page,   // Horizontal reference point.
+            100.0,                             // Left offset.
+            RelativeVerticalPosition.Page,     // Vertical reference point.
+            100.0,                             // Top offset.
+            250.0,                             // Width.
+            200.0,                             // Height.
+            WrapType.Square);                  // Text wrap type.
+
+        // Add a final paragraph break.
+        builder.Writeln();
+
+        // -----------------------------------------------------------------
+        // 4. Insert a floating image centered on the page (behind text).
+        // -----------------------------------------------------------------
+        Shape floatingShape = builder.InsertImage(@"Images\SampleImage.jpg");
+        floatingShape.WrapType = WrapType.None;                     // No text wrapping.
+        floatingShape.BehindText = true;                            // Place behind text.
+        floatingShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        floatingShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        floatingShape.HorizontalAlignment = HorizontalAlignment.Center;
+        floatingShape.VerticalAlignment = VerticalAlignment.Center;
+
+        // Save the document to a file.
+        doc.Save("ImageDemo.docx");
     }
 }

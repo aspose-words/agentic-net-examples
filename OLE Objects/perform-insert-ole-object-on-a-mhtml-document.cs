@@ -1,36 +1,49 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
-class Program
+class InsertOleIntoMhtml
 {
     static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
+        // Path to the source MHTML document.
+        string mhtmlPath = @"C:\Docs\SourceDocument.mht";
 
-        // Initialize a DocumentBuilder to work with the document.
+        // Path to the file that will be embedded as an OLE object (e.g., a PDF).
+        string oleFilePath = @"C:\Docs\Sample.pdf";
+
+        // Optional: path to an icon image to represent the OLE object.
+        // If null, Aspose.Words will use a predefined icon.
+        string iconPath = @"C:\Images\PdfIcon.png";
+
+        // Load the MHTML document.
+        Document doc = new Document(mhtmlPath);
+
+        // Create a DocumentBuilder to modify the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph describing the OLE object.
-        builder.Writeln("Embedded OLE object:");
+        // Insert a paragraph before the OLE object for context.
+        builder.Writeln("Embedded PDF as OLE object:");
 
-        // Path to the file that will be embedded as an OLE object.
-        // In this example we use a generic package (e.g., a ZIP file) so the ProgId is "Package".
-        string oleFilePath = "sample.zip";
-
-        // Open the file as a stream and insert it as an OLE object.
-        using (FileStream oleStream = new FileStream(oleFilePath, FileMode.Open, FileAccess.Read))
+        // Open the icon image as a stream (if an icon is desired).
+        Stream iconStream = null;
+        if (File.Exists(iconPath))
         {
-            // InsertOleObject(stream, progId, asIcon, presentation)
-            // progId: "Package" – generic OLE package.
-            // asIcon: false – display the object content (if supported) rather than an icon.
-            // presentation: null – let Aspose.Words choose a default presentation image.
-            builder.InsertOleObject(oleStream, "Package", false, null);
+            iconStream = new FileStream(iconPath, FileMode.Open, FileAccess.Read);
         }
 
-        // Save the document in MHTML format.
-        doc.Save("Output.mhtml", SaveFormat.Mhtml);
+        // Insert the OLE object.
+        // Parameters: file name, isLinked (false = embed), asIcon (true to display as icon), presentation stream.
+        builder.InsertOleObject(oleFilePath, false, true, iconStream);
+
+        // Clean up the icon stream if it was opened.
+        if (iconStream != null)
+        {
+            iconStream.Dispose();
+        }
+
+        // Save the modified document. Here we save as DOCX, but you can also save back to MHTML.
+        string outputPath = @"C:\Docs\ResultDocument.docx";
+        doc.Save(outputPath);
     }
 }

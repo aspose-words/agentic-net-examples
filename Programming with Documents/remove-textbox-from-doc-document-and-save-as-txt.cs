@@ -1,29 +1,31 @@
-using System.Collections.Generic;
+using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
-class Program
+class RemoveTextBoxAndSaveAsTxt
 {
     static void Main()
     {
-        // Load the source DOC document.
-        Document doc = new Document("Input.docx");
+        // Paths to the source DOC/DOCX file and the destination TXT file.
+        string inputPath = "input.docx";
+        string outputPath = "output.txt";
 
-        // Find all shapes that are text boxes.
-        List<Shape> textBoxes = new List<Shape>();
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        // Load the existing Word document.
+        Document doc = new Document(inputPath);
+
+        // Find all shapes in the document (including those inside headers/footers).
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+        // Remove every shape that is a TextBox.
+        foreach (Shape shape in shapes)
         {
             if (shape.ShapeType == ShapeType.TextBox)
-                textBoxes.Add(shape);
+                shape.Remove();
         }
 
-        // Remove each text box from the document.
-        foreach (Shape tb in textBoxes)
-            tb.Remove();
-
-        // Save the resulting document as plain text.
+        // Save the modified document as plain text.
         TxtSaveOptions txtOptions = new TxtSaveOptions();
-        doc.Save("Output.txt", txtOptions);
+        doc.Save(outputPath, txtOptions);
     }
 }

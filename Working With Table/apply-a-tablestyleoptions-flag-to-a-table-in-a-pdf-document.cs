@@ -1,9 +1,9 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
-class TableStyleOptionsExample
+class ApplyTableStyleOptionsToPdf
 {
     static void Main()
     {
@@ -14,8 +14,28 @@ class TableStyleOptionsExample
         // Start building a table.
         Table table = builder.StartTable();
 
-        // Insert a cell to satisfy the requirement of having at least one row before formatting.
+        // Insert at least one cell/row before applying any formatting.
         builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
+
+        // Add a few data rows.
+        builder.InsertCell();
+        builder.Write("Row 1, Col 1");
+        builder.InsertCell();
+        builder.Write("Row 1, Col 2");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("Row 2, Col 1");
+        builder.InsertCell();
+        builder.Write("Row 2, Col 2");
+        builder.EndRow();
+
+        // End the table construction.
+        builder.EndTable();
 
         // Apply a built‑in table style.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
@@ -25,28 +45,10 @@ class TableStyleOptionsExample
                               TableStyleOptions.FirstColumn |
                               TableStyleOptions.RowBands;
 
-        // Populate the table with some sample data.
-        builder.Writeln("Item");
-        builder.InsertCell();
-        builder.Writeln("Quantity (kg)");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Writeln("Apples");
-        builder.InsertCell();
-        builder.Writeln("20");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Writeln("Bananas");
-        builder.InsertCell();
-        builder.Writeln("40");
-        builder.EndRow();
-
-        // Finish the table.
-        builder.EndTable();
+        // Optional: Auto‑fit the table to its contents.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
         // Save the document as a PDF file.
-        doc.Save("TableStyleOptions.pdf", SaveFormat.Pdf);
+        doc.Save("TableWithStyleOptions.pdf");
     }
 }

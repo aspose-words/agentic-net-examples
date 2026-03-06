@@ -7,60 +7,48 @@ class SplitTableInPdf
 {
     static void Main()
     {
-        // Load the PDF document (Aspose.Words can import PDF files).
+        // Load the source PDF (Aspose.Words can load PDF as a document)
         Document doc = new Document("Input.pdf");
 
-        // Ensure the document has at least one table.
-        if (doc.FirstSection.Body.Tables.Count == 0)
-        {
-            Console.WriteLine("No tables found in the document.");
-            return;
-        }
+        // Assume we want to split the first table in the document after the third row
+        const int splitAfterRowIndex = 2; // zero‑based index
 
-        // Get the first table to split.
+        // Get the first table in the first section
         Table originalTable = doc.FirstSection.Body.Tables[0];
 
-        // Define after which row the table should be split (zero‑based index).
-        // For example, split after the second row (i.e., rows 0 and 1 stay in the original table).
-        int splitAfterRowIndex = 1;
-
-        // Validate the split index.
-        if (splitAfterRowIndex < 0 || splitAfterRowIndex >= originalTable.Rows.Count - 1)
+        // Validate that the table has enough rows to split
+        if (originalTable.Rows.Count <= splitAfterRowIndex + 1)
         {
-            Console.WriteLine("Invalid split index.");
+            Console.WriteLine("The table does not have enough rows to split.");
             return;
         }
 
         // Create a new table that will hold the rows after the split point.
-        Table newTable = new Table(doc);
+        // Clone the original table without its child rows (shallow clone) to preserve formatting.
+        Table newTable = (Table)originalTable.Clone(false);
 
-        // Copy basic formatting from the original table to the new one.
-        newTable.AllowAutoFit = originalTable.AllowAutoFit;
-        newTable.Alignment = originalTable.Alignment;
-        newTable.PreferredWidth = originalTable.PreferredWidth;
-        newTable.Style = originalTable.Style;
-        newTable.StyleIdentifier = originalTable.StyleIdentifier;
-        newTable.StyleName = originalTable.StyleName;
-
-        // Move rows after the split point from the original table to the new table.
-        // Rows are removed from the original table as they are appended to the new table.
-        // The loop continues until only rows up to splitAfterRowIndex remain.
-        while (originalTable.Rows.Count > splitAfterRowIndex + 1)
+        // Move rows from the original table to the new table.
+        // Start moving from the row after the split point to the end.
+        for (int i = originalTable.Rows.Count - 1; i > splitAfterRowIndex; i--)
         {
-            // The row to move is always the one immediately after the split index.
-            Row rowToMove = originalTable.Rows[splitAfterRowIndex + 1];
-            originalTable.RemoveChild(rowToMove);
-            newTable.AppendChild(rowToMove);
+            Row rowToMove = originalTable.Rows[i];
+            // Remove the row from the original table.
+            originalTable.Rows.RemoveAt(i);
+            // Append the row to the new table (preserves formatting).
+            newTable.Rows.Add(rowToMove);
         }
 
-        // Insert the new table directly after the original table in the document tree.
-        originalTable.ParentNode.InsertAfter(newTable, originalTable);
+        // Insert a page break between the two tables.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Move the cursor to the position just after the original table.
+        builder.MoveTo(originalTable.LastRow);
+        builder.Writeln(); // ensure we are after the table.
+        builder.InsertBreak(BreakType.PageBreak);
+
+        // Insert the new table after the page break.
+        builder.InsertNode(newTable);
 
         // Save the modified document as PDF.
-        PdfSaveOptions saveOptions = new PdfSaveOptions();
-        // Optional: set page layout if desired.
-        // saveOptions.PageLayout = PdfPageLayout.OneColumn;
-
-        doc.Save("Output.pdf", saveOptions);
+        doc.Save("Output.pdf", SaveFormat.Pdf);
     }
 }

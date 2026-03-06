@@ -1,45 +1,74 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsReportingExample
+namespace AsposeWordsReportingDemo
 {
+    // Simple data entity that matches the fields used in the template.
+    public class Person
+    {
+        public string FullName { get; set; }
+        public string Address { get; set; }
+
+        public Person(string fullName, string address)
+        {
+            FullName = fullName;
+            Address = address;
+        }
+    }
+
     class Program
     {
         static void Main()
         {
-            // Path to the template document that contains reporting tags.
-            string templatePath = @"C:\Docs\ReportTemplate.docx";
+            // Path to the plain‑text source file.
+            // Expected format per line: FullName|Address
+            const string txtPath = @"Data\People.txt";
 
-            // Path to the plain‑text file (TXT) that holds the raw data, one value per line.
-            string txtDataPath = @"C:\Docs\SourceData.txt";
+            // Load the TXT file, split each line and convert to a collection of Person objects.
+            List<Person> people = LoadPeopleFromTxt(txtPath);
 
-            // Load the template document.
-            Document template = new Document(templatePath);
+            // Load the template document that contains reporting tags, e.g. <<foreach [persons]>><<FullName>> - <<Address>><</foreach>>
+            Document template = new Document(@"Templates\PeopleReportTemplate.docx");
 
-            // Read all lines from the TXT file into a string array.
-            string[] rawLines = File.ReadAllLines(txtDataPath);
-
-            // Convert the array into a collection that the LINQ Reporting Engine can work with.
-            // Here we create a list of anonymous objects with two fields: Index and Value.
-            // The fields can be referenced in the template as <<[data.Index]>> and <<[data.Value]>>.
-            var dataCollection = rawLines
-                .Select((line, idx) => new { Index = idx + 1, Value = line })
-                .ToList();
-
-            // Initialise the reporting engine.
+            // Build the report using the ReportingEngine.
             ReportingEngine engine = new ReportingEngine();
-
-            // Build the report using the collection as a data source.
-            // The second parameter is the name by which the data source will be referenced in the template.
-            engine.BuildReport(template, dataCollection, "data");
+            // The data source name "persons" must match the name used in the template.
+            engine.BuildReport(template, people, "persons");
 
             // Save the generated report.
-            string outputPath = @"C:\Docs\GeneratedReport.docx";
-            template.Save(outputPath);
+            template.Save(@"Output\PeopleReport.docx");
+        }
+
+        // Reads a TXT file and converts each line into a Person object.
+        private static List<Person> LoadPeopleFromTxt(string filePath)
+        {
+            var result = new List<Person>();
+
+            // Ensure the file exists before attempting to read.
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"The data file '{filePath}' was not found.");
+
+            // Read all lines, ignoring empty ones.
+            foreach (string line in File.ReadAllLines(filePath))
+            {
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                // Split the line by the pipe character.
+                string[] parts = line.Split('|');
+                if (parts.Length != 2)
+                    throw new FormatException($"Invalid line format: '{line}'. Expected 'FullName|Address'.");
+
+                string fullName = parts[0].Trim();
+                string address = parts[1].Trim();
+
+                result.Add(new Person(fullName, address));
+            }
+
+            return result;
         }
     }
 }

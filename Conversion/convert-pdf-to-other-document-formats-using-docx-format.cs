@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 namespace PdfConversionExample
 {
@@ -8,29 +9,30 @@ namespace PdfConversionExample
         static void Main()
         {
             // Path to the source PDF file.
-            string pdfPath = @"C:\Input\sample.pdf";
+            string pdfPath = @"C:\Docs\Sample.pdf";
 
-            // Load the PDF document. The Document constructor automatically detects the format.
+            // Load the PDF document using the Document constructor.
             Document pdfDocument = new Document(pdfPath);
 
-            // Convert and save the document as DOCX.
-            string docxPath = @"C:\Output\sample_converted.docx";
-            pdfDocument.Save(docxPath, SaveFormat.Docx);
+            // Convert PDF to DOCX by saving with a .docx extension.
+            string docxPath = @"C:\Docs\SampleConverted.docx";
+            pdfDocument.Save(docxPath); // SaveFormat is inferred from the extension.
 
-            // Additional conversions can be performed by changing the target extension
-            // or by specifying a different SaveFormat value.
-
-            // Example: Save as HTML.
-            string htmlPath = @"C:\Output\sample_converted.html";
+            // Convert PDF to HTML.
+            string htmlPath = @"C:\Docs\SampleConverted.html";
             pdfDocument.Save(htmlPath, SaveFormat.Html);
 
-            // Example: Save as plain text.
-            string txtPath = @"C:\Output\sample_converted.txt";
+            // Convert PDF to plain text.
+            string txtPath = @"C:\Docs\SampleConverted.txt";
             pdfDocument.Save(txtPath, SaveFormat.Text);
 
-            // Example: Save as EPUB.
-            string epubPath = @"C:\Output\sample_converted.epub";
-            pdfDocument.Save(epubPath, SaveFormat.Epub);
+            // Convert PDF to ODT (OpenDocument Text).
+            string odtPath = @"C:\Docs\SampleConverted.odt";
+            pdfDocument.Save(odtPath, SaveFormat.Odt);
+
+            // Optional: Use SaveOptions for advanced scenarios (e.g., password protection).
+            // OoxmlSaveOptions docxOptions = new OoxmlSaveOptions { Password = "Secret" };
+            // pdfDocument.Save(@"C:\Docs\Protected.docx", docxOptions);
 
             Console.WriteLine("Conversion completed successfully.");
         }

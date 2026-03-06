@@ -3,31 +3,32 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsTableMerge
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Load the Markdown document that already contains at least two tables.
-            Document doc = new Document("input.md");
+        // Path to the source Markdown document that contains at least two tables.
+        const string inputPath = @"C:\Docs\Input.md";
 
-            // Retrieve the first table from the document's body.
-            Table firstTable = doc.FirstSection.Body.Tables[0];
+        // Load the Markdown document.
+        Document doc = new Document(inputPath);
 
-            // Retrieve the second table using the generic GetChild method.
-            Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
+        // Retrieve the first table from the document's body.
+        Table firstTable = doc.FirstSection.Body.Tables[0];
 
-            // Append all rows from the second table to the first table.
-            while (secondTable.HasChildNodes)
-                firstTable.Rows.Add(secondTable.FirstRow);
+        // Retrieve the second table using the generic GetChild method.
+        Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
 
-            // Remove the now‑empty second table container.
-            secondTable.Remove();
+        // Append all rows from the second table to the first table.
+        while (secondTable.HasChildNodes)
+            firstTable.Rows.Add(secondTable.FirstRow);
 
-            // Save the modified document back to Markdown format.
-            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
-            doc.Save("output.md", saveOptions);
-        }
+        // Remove the now‑empty second table container.
+        secondTable.Remove();
+
+        // Save the modified document back to Markdown format.
+        const string outputPath = @"C:\Docs\Output.md";
+        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
+        doc.Save(outputPath, saveOptions);
     }
 }

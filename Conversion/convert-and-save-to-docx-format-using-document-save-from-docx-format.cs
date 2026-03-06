@@ -1,16 +1,21 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load an existing document. The source can be any format supported by Aspose.Words.
-        // Replace the path with the actual file you want to convert.
-        Document doc = new Document("input.pdf");
+        // Path to the source document (can be any format supported by Aspose.Words)
+        string inputPath = @"C:\Input\source.pdf";
 
-        // Save the document in DOCX format.
-        // The Save method overload with (string, SaveFormat) is used as defined in the Aspose.Words API.
-        doc.Save("output.docx", SaveFormat.Docx);
+        // Path where the DOCX file will be saved
+        string outputPath = @"C:\Output\result.docx";
+
+        // Load the document from the input file
+        Document doc = new Document(inputPath);
+
+        // Save the loaded document in DOCX format
+        doc.Save(outputPath, SaveFormat.Docx);
     }
 }

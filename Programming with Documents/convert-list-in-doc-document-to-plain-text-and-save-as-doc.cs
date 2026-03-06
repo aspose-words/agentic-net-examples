@@ -1,46 +1,34 @@
 using System;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ListToPlainTextConverter
+class Program
 {
     static void Main()
     {
-        // Paths to the source DOC file and the resulting DOC file.
-        string sourcePath = "input.doc";
-        string resultPath = "output.doc";
+        // Path to the source DOC file that contains the list.
+        string sourcePath = "Input.doc";
 
-        // Load the original document (lifecycle rule: load).
+        // Path where the plain‑text DOC will be saved.
+        string destinationPath = "Output.doc";
+
+        // Load the original document.
         Document sourceDoc = new Document(sourcePath);
 
-        // Configure text save options to simplify list labels (optional, but ensures plain‑text list representation).
-        TxtSaveOptions txtOptions = new TxtSaveOptions
-        {
-            SimplifyListLabels = true,
-            // Ensure the output is plain text.
-            SaveFormat = SaveFormat.Text
-        };
+        // Update list labels so they are correct before extracting text.
+        sourceDoc.UpdateListLabels();
 
-        // Save the document to a memory stream as plain text (lifecycle rule: save).
-        using (MemoryStream txtStream = new MemoryStream())
-        {
-            sourceDoc.Save(txtStream, txtOptions);
-            txtStream.Position = 0; // Reset for reading.
+        // Extract the document's content as plain text.
+        // The PlainTextDocument class reads the file and provides the concatenated text.
+        PlainTextDocument plainTextDoc = new PlainTextDocument(sourcePath);
+        string plainText = plainTextDoc.Text;
 
-            // Read the plain‑text content.
-            string plainText = new StreamReader(txtStream, Encoding.UTF8).ReadToEnd();
+        // Create a new blank document and write the extracted plain text into it.
+        Document resultDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(resultDoc);
+        builder.Writeln(plainText);
 
-            // Create a new blank document (lifecycle rule: create).
-            Document plainDoc = new Document();
-
-            // Write the extracted plain text into the new document.
-            DocumentBuilder builder = new DocumentBuilder(plainDoc);
-            builder.Writeln(plainText);
-
-            // Save the new document as a binary DOC file (lifecycle rule: save).
-            plainDoc.Save(resultPath, SaveFormat.Doc);
-        }
+        // Save the new document in the DOC format.
+        resultDoc.Save(destinationPath, SaveFormat.Doc);
     }
 }

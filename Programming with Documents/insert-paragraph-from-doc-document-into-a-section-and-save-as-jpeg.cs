@@ -1,43 +1,38 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class InsertParagraphAndSaveAsJpeg
+class Program
 {
     static void Main()
     {
-        // Path to the source DOC document that contains the paragraph to copy.
-        string sourcePath = @"C:\Input\SourceDocument.doc";
-
-        // Path where the resulting JPEG image will be saved.
-        string outputPath = @"C:\Output\ResultImage.jpg";
-
-        // Load the source document.
-        Document sourceDoc = new Document(sourcePath);
+        // Load the source DOC file that contains the paragraph to be copied.
+        Document srcDoc = new Document("Source.doc");
 
         // Create a new blank target document.
         Document targetDoc = new Document();
 
-        // Get the first paragraph from the source document.
-        Paragraph sourceParagraph = sourceDoc.FirstSection.Body.FirstParagraph;
+        // Ensure the target document has at least one section, body and paragraph.
+        targetDoc.EnsureMinimum();
 
-        // Import the paragraph node into the target document, preserving its formatting.
-        Node importedParagraph = targetDoc.ImportNode(sourceParagraph, true);
+        // Retrieve the first non‑empty paragraph from the source document.
+        Paragraph srcParagraph = (Paragraph)srcDoc.GetChild(NodeType.Paragraph, 0, true);
 
-        // Append the imported paragraph to the first (and only) section of the target document.
+        // Import the paragraph into the target document, preserving its original formatting.
+        NodeImporter importer = new NodeImporter(srcDoc, targetDoc, ImportFormatMode.KeepSourceFormatting);
+        Node importedParagraph = importer.ImportNode(srcParagraph, true);
+
+        // Append the imported paragraph to the body of the first section in the target document.
         targetDoc.FirstSection.Body.AppendChild(importedParagraph);
 
-        // Prepare image save options for JPEG format.
+        // Configure image save options for JPEG output.
         ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
         {
-            // Optional: set JPEG quality (0-100). Higher value = better quality.
-            JpegQuality = 90,
-            // Render only the first page (the document has a single page with the paragraph).
-            PageSet = new PageSet(0)
+            // Optional: set JPEG quality (0‑100). Higher value = better quality, larger file.
+            JpegQuality = 90
         };
 
-        // Save the target document as a JPEG image.
-        targetDoc.Save(outputPath, jpegOptions);
+        // Save the target document as a JPEG image (only the first page is rendered).
+        targetDoc.Save("Result.jpg", jpegOptions);
     }
 }

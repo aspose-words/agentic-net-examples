@@ -1,30 +1,29 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class DeleteOleObjectExample
+class Program
 {
     static void Main()
     {
-        // Load the DOCX document that contains OLE objects.
-        Document doc = new Document("InputWithOle.docx");
+        // Load the existing DOCX document.
+        Document doc = new Document("input.docx");
 
-        // Retrieve all Shape nodes in the document (including those inside headers/footers).
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        // Locate all shapes that are OLE objects.
+        var oleShapes = doc.GetChildNodes(NodeType.Shape, true)
+                           .Cast<Shape>()
+                           .Where(s => s.ShapeType == ShapeType.OleObject)
+                           .ToList();
 
-        // Iterate over the collection and remove every shape that is an OLE object.
-        // Shape.ShapeType == ShapeType.OleObject identifies OLE objects.
-        for (int i = shapes.Count - 1; i >= 0; i--)
+        // Remove each OLE object shape from the document.
+        foreach (var shape in oleShapes)
         {
-            Shape shape = (Shape)shapes[i];
-            if (shape.ShapeType == ShapeType.OleObject)
-            {
-                // Remove the shape (and thus the embedded OLE object) from its parent.
-                shape.Remove();
-            }
+            shape.Remove();
         }
 
-        // Save the modified document.
-        doc.Save("OutputWithoutOle.docx");
+        // Save the document after OLE objects have been deleted.
+        doc.Save("output.docx");
     }
 }

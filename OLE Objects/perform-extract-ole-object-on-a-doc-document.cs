@@ -3,34 +3,48 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class ExtractOleObjects
+class OleExtractor
 {
     static void Main()
     {
-        // Load the source DOC document.
-        Document doc = new Document("Input.doc");
+        // Path to the source DOC document.
+        string sourceDocPath = @"C:\Docs\sample.doc";
 
-        // Get all shapes in the document (including those inside headers/footers).
+        // Folder where extracted OLE objects will be saved.
+        string outputFolder = @"C:\ExtractedOle";
+
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputFolder);
+
+        // Load the document.
+        Document doc = new Document(sourceDocPath);
+
+        // Get all Shape nodes (they may contain OLE objects).
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
-        int oleIndex = 0;
+        int oleCounter = 0;
+
         foreach (Shape shape in shapeNodes)
         {
-            // Only process shapes that actually contain an OLE object.
+            // Access the OleFormat of the shape; null if the shape is not an OLE object.
             OleFormat oleFormat = shape.OleFormat;
             if (oleFormat == null)
                 continue;
 
-            // Determine a file name for the extracted object.
-            // Use the suggested extension; fall back to .bin if none is provided.
-            string extension = oleFormat.SuggestedExtension ?? ".bin";
-            string outputPath = $"OleObject_{oleIndex}{extension}";
+            // Skip linked OLE objects – saving them throws InvalidOperationException.
+            if (oleFormat.IsLink)
+                continue;
 
-            // Save the embedded OLE data to the file system.
-            oleFormat.Save(outputPath);
+            // Determine a file name using the suggested extension (e.g., ".xlsx").
+            string extension = oleFormat.SuggestedExtension ?? string.Empty;
+            string fileName = $"OleObject_{oleCounter}{extension}";
+            string fullPath = Path.Combine(outputFolder, fileName);
 
-            Console.WriteLine($"Extracted OLE object #{oleIndex} to \"{outputPath}\"");
-            oleIndex++;
+            // Save the embedded OLE object directly to a file.
+            oleFormat.Save(fullPath);
+
+            Console.WriteLine($"Extracted OLE object saved to: {fullPath}");
+            oleCounter++;
         }
     }
 }

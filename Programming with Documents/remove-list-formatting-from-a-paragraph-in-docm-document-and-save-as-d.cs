@@ -10,16 +10,12 @@ class RemoveListFormatting
         Document doc = new Document("InputDocument.docm");
 
         // Iterate through all paragraphs in the document.
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        foreach (Paragraph paragraph in paragraphs)
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
             // If the paragraph is part of a list, remove its list formatting.
-            if (paragraph.ListFormat.IsListItem)
-                paragraph.ListFormat.RemoveNumbers();
+            if (para.ListFormat.IsListItem)
+                para.ListFormat.RemoveNumbers();
         }
-
-        // Optional: clean up any unused list definitions after removal.
-        doc.Cleanup();
 
         // Save the modified document as a macro-enabled template (DOTM).
         doc.Save("OutputDocument.dotm", SaveFormat.Dotm);

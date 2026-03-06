@@ -1,31 +1,37 @@
 using System;
+using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Settings;
-using Aspose.Words.Loading; // Added for LoadOptions and LoadFormat
 
-class Program
+class HyphenateMarkdown
 {
     static void Main()
     {
-        // Input markdown file and output document paths.
-        string inputPath = "input.md";
-        string outputPath = "output.docx";
+        // Path to the input Markdown file.
+        const string inputPath = @"C:\Docs\input.md";
 
-        // Load the markdown file into an Aspose.Words Document.
-        LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Markdown };
-        Document doc = new Document(inputPath, loadOptions);
+        // Path to the output document (Word format will show hyphens when opened in Word).
+        const string outputPath = @"C:\Docs\output.docx";
 
-        // Enable automatic hyphenation for the document.
+        // Load the Markdown document.
+        Document doc = new Document(inputPath);
+
+        // Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
-        // Optional: configure hyphenation behavior.
-        doc.HyphenationOptions.HyphenationZone = 720;          // 0.5 inch from the right margin.
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;    // Max two consecutive hyphenated lines.
-        doc.HyphenationOptions.HyphenateCaps = true;         // Hyphenate all‑caps words.
 
-        // Force layout calculation so hyphenation is applied before saving.
-        doc.UpdatePageLayout();
+        // Optional: set hyphenation parameters.
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;   // Max consecutive hyphenated lines.
+        doc.HyphenationOptions.HyphenationZone = 720;       // 0.5 inch from the right margin.
+        doc.HyphenationOptions.HyphenateCaps = true;       // Hyphenate all‑caps words.
 
-        // Save the resulting document (hyphens will appear where Word would break lines).
+        // Ensure the document language matches a registered hyphenation dictionary.
+        // Here we use US English; Aspose.Words includes the built‑in dictionary for this locale.
+        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
+        {
+            run.Font.LocaleId = new CultureInfo("en-US").LCID;
+        }
+
+        // Save the document. The layout engine will insert hyphens where needed.
         doc.Save(outputPath);
     }
 }

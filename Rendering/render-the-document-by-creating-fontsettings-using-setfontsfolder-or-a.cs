@@ -1,42 +1,51 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Loading; // Added for LoadOptions
 using Aspose.Words.Saving;
+using Aspose.Words.Loading; // Added for LoadOptions
 
-class FontSettingsPdfExample
+class Program
 {
     static void Main()
     {
-        // Path to the source document.
-        string inputPath = @"C:\Docs\Sample.docx";
+        // Folder that contains the custom fonts you want to use.
+        string fontsFolder = @"C:\MyFonts";
 
-        // Path to the folder that contains the custom fonts.
-        // Set the second argument to true to search subfolders as well.
-        string fontsFolder = @"C:\CustomFonts";
+        // Path to the source Word document.
+        string sourceDocPath = @"C:\Docs\Sample.docx";
 
-        // Create a FontSettings instance and point it to the custom fonts folder.
+        // Path where the resulting PDF will be saved.
+        string pdfPath = @"C:\Docs\Sample.pdf";
+
+        // -----------------------------------------------------------------
+        // 1. Create FontSettings and point it to the custom fonts folder.
+        // -----------------------------------------------------------------
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(fontsFolder, recursive: true);
+        // true => search subfolders as well.
+        fontSettings.SetFontsFolder(fontsFolder, true);
 
-        // Load the document using LoadOptions that carry the FontSettings.
-        // This ensures that the fonts are available during layout and rendering.
-        LoadOptions loadOptions = new LoadOptions
-        {
-            FontSettings = fontSettings
-        };
-        Document doc = new Document(inputPath, loadOptions);
+        // -----------------------------------------------------------------
+        // 2. Load the document, applying the FontSettings via LoadOptions.
+        // -----------------------------------------------------------------
+        LoadOptions loadOptions = new LoadOptions();
+        loadOptions.FontSettings = fontSettings; // Apply font settings during load.
 
-        // Alternatively, you could assign the FontSettings after loading:
+        Document doc = new Document(sourceDocPath, loadOptions);
+
+        // If you create a blank document instead, assign the FontSettings directly:
+        // Document doc = new Document();
         // doc.FontSettings = fontSettings;
 
-        // Create PdfSaveOptions – this object can be used to control PDF output.
+        // -----------------------------------------------------------------
+        // 3. Prepare PDF save options (optional customizations).
+        // -----------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Example: embed the full fonts into the PDF.
+        pdfOptions.EmbedFullFonts = true;
 
-        // Path to the output PDF file.
-        string outputPath = @"C:\Docs\Sample.pdf";
-
-        // Save the document as PDF using the options defined above.
-        doc.Save(outputPath, pdfOptions);
+        // -----------------------------------------------------------------
+        // 4. Save the document as PDF using the configured options.
+        // -----------------------------------------------------------------
+        doc.Save(pdfPath, pdfOptions);
     }
 }

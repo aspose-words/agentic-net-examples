@@ -4,38 +4,48 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class ExtractImages
+class ImageExtractor
 {
-    static void Main()
+    // Extracts all images from the specified document and saves them to the output folder.
+    public static void ExtractImages(string inputFilePath, string outputFolder)
     {
-        // Path to the source Word document
-        string inputPath = "Images.docx";
+        // Load the document from the input file.
+        Document doc = new Document(inputFilePath);
 
-        // Directory where extracted images will be saved
-        string outputDir = "ExtractedImages";
-        Directory.CreateDirectory(outputDir);
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputFolder);
 
-        // Load the document
-        Document doc = new Document(inputPath);
-
-        // Retrieve all shape nodes (inline and floating)
-        var shapes = doc.GetChildNodes(NodeType.Shape, true);
+        // Retrieve all shape nodes in the document (including those inside headers/footers).
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
         foreach (Shape shape in shapes.OfType<Shape>())
         {
+            // Process only shapes that actually contain image data.
             if (shape.HasImage)
             {
-                // Determine file extension based on the image type
+                // Determine the appropriate file extension for the image type.
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string fileName = Path.Combine(outputDir, $"Image_{imageIndex}{extension}");
 
-                // Save the image to the file system
+                // Build the full file name for the extracted image.
+                string fileName = Path.Combine(outputFolder, $"Image_{imageIndex}{extension}");
+
+                // Save the image to the file system.
                 shape.ImageData.Save(fileName);
                 imageIndex++;
             }
         }
+    }
+}
 
-        Console.WriteLine($"Extracted {imageIndex} images to '{outputDir}'.");
+class Program
+{
+    static void Main()
+    {
+        // Example usage: specify the source document and the folder for extracted images.
+        string sourceDoc = @"C:\Docs\Images.docx";
+        string targetFolder = @"C:\Docs\ExtractedImages";
+
+        ImageExtractor.ExtractImages(sourceDoc, targetFolder);
     }
 }

@@ -2,25 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsMailMergeToJpeg
 {
-    static void Main()
+    class Program
     {
-        // Load the DOCX template from disk.
-        Document doc = new Document("Template.docx");
+        static void Main()
+        {
+            // Path to the source DOCX template that contains MERGEFIELDs.
+            const string templatePath = "Template.docx";
 
-        // Define the mail‑merge field names present in the template
-        // and the corresponding values to insert.
-        string[] fieldNames = { "FullName", "Address" };
-        object[] fieldValues = { "John Doe", "123 Main St., Anytown" };
+            // Path where the rendered JPEG image will be saved.
+            const string outputPath = "Result.jpg";
 
-        // Execute a simple mail merge for a single record.
-        doc.MailMerge.Execute(fieldNames, fieldValues);
+            // Load the existing DOCX document.
+            Document doc = new Document(templatePath);
 
-        // Prepare JPEG save options (default quality).
-        ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg);
+            // Define the mail‑merge field names present in the template and the values to insert.
+            string[] fieldNames = { "FullName", "Company" };
+            object[] fieldValues = { "John Doe", "Acme Corp" };
 
-        // Save the merged document as a JPEG image.
-        doc.Save("MergedOutput.jpg", jpegOptions);
+            // Execute a simple mail merge for a single record.
+            doc.MailMerge.Execute(fieldNames, fieldValues);
+
+            // Configure image save options to render the document as a JPEG.
+            ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg);
+
+            // Save the merged document as a JPEG image.
+            doc.Save(outputPath, jpegOptions);
+        }
     }
 }

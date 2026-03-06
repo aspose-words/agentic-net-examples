@@ -6,15 +6,15 @@ class Program
     static void Main()
     {
         // Path to the source DOCX file.
-        string inputPath = "MyDir/Document.docx";
+        string inputFile = @"C:\Docs\Sample.docx";
 
-        // Path where the PDF will be saved. The .pdf extension tells Aspose.Words to save in PDF format.
-        string outputPath = "ArtifactsDir/Document.ConvertToPdf.pdf";
+        // Path to the destination PDF file.
+        string outputFile = @"C:\Docs\Sample.pdf";
 
         // Load the DOCX document from the file system.
-        Document doc = new Document(inputPath);
+        Document doc = new Document(inputFile);
 
-        // Save the document as PDF. The format is automatically determined from the file extension.
-        doc.Save(outputPath);
+        // Save the document as PDF. The format is inferred from the .pdf extension.
+        doc.Save(outputFile);
     }
 }

@@ -1,17 +1,27 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-// Path to the image file to be inserted.
-string imagePath = @"C:\Images\Sample.jpg";
+class Program
+{
+    static void Main()
+    {
+        // Create a new empty document.
+        Document doc = new Document();
 
-// Create a new blank document.
-Document doc = new Document();
+        // Initialize a DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-// Initialize a DocumentBuilder for the document.
-DocumentBuilder builder = new DocumentBuilder(doc);
+        // Path to the image file to be inserted.
+        string imagePath = @"C:\Images\Sample.jpg";
 
-// Insert the image inline at the current cursor position.
-builder.InsertImage(imagePath);
+        // Insert the image inline at the current cursor position.
+        Shape imageShape = builder.InsertImage(imagePath);
 
-// Save the document to a DOCX file.
-doc.Save(@"C:\Output\PictureDoc.docx");
+        // Example: set the wrap type (optional, default is inline).
+        imageShape.WrapType = WrapType.Inline;
+
+        // Save the document as a DOCX file.
+        doc.Save(@"C:\Output\ImageInserted.docx");
+    }
+}

@@ -2,39 +2,37 @@ using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;          // <-- added for Shape
-using Aspose.Words.Drawing.Charts;   // <-- for Chart, ChartSeries, ChartDataLabel
+using Aspose.Words.Drawing.Charts;   // Chart, ChartSeries, ChartDataLabel, etc.
 
 class ChartDataLabelExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the document.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 400);
+        // Insert a line chart.
+        Shape chartShape = builder.InsertChart(ChartType.Line, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Work with the first series in the chart.
+        // Work with the first series.
         ChartSeries series = chart.Series[0];
+        series.HasDataLabels = true; // Enable data labels for the series.
 
-        // Enable data labels for this series.
-        series.HasDataLabels = true;
+        // Access a specific data label (e.g., the first point).
+        ChartDataLabel dataLabel = series.DataLabels[0];
 
-        // Access a specific data label (second point, index 1).
-        ChartDataLabel dataLabel = series.DataLabels[1];
-
-        // Change the fill color of the data label.
-        dataLabel.Format.Fill.Color = Color.Blue;
-
-        // Set a custom separator string for the label.
+        // Configure the data label.
+        dataLabel.ShowValue = true;
+        dataLabel.ShowCategoryName = true;
         dataLabel.Separator = " | ";
+        dataLabel.Format.Fill.Color = Color.Green;
 
-        // Clear the label's format, reverting to defaults.
-        dataLabel.ClearFormat();
+        // Uncomment to reset the label to default formatting.
+        // dataLabel.ClearFormat();
 
-        // Save the document to a DOCX file.
+        // Save the document.
         doc.Save("ChartDataLabelExample.docx");
     }
 }

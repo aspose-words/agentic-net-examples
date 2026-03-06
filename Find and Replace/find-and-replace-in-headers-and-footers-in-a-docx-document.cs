@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class HeaderFooterReplace
+class HeaderFooterReplaceExample
 {
     static void Main()
     {
@@ -20,15 +20,15 @@ class HeaderFooterReplace
             FindWholeWordsOnly = false
         };
 
-        // Iterate through every section in the document.
+        // Iterate through all sections because each section can have its own headers/footers.
         foreach (Section section in doc.Sections)
         {
-            // Process all header types.
+            // Replace in all header types.
             ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.HeaderPrimary], findText, replaceText, options);
             ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.HeaderFirst],   findText, replaceText, options);
             ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.HeaderEven],   findText, replaceText, options);
 
-            // Process all footer types.
+            // Replace in all footer types.
             ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.FooterPrimary], findText, replaceText, options);
             ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.FooterFirst],   findText, replaceText, options);
             ReplaceInHeaderFooter(section.HeadersFooters[HeaderFooterType.FooterEven],   findText, replaceText, options);
@@ -38,14 +38,13 @@ class HeaderFooterReplace
         doc.Save("Output.docx");
     }
 
-    // Helper method that performs the replace operation on a single HeaderFooter object.
-    private static void ReplaceInHeaderFooter(HeaderFooter headerFooter, string pattern, string replacement, FindReplaceOptions options)
+    // Helper method that safely performs replace on a HeaderFooter if it exists.
+    private static void ReplaceInHeaderFooter(HeaderFooter headerFooter, string find, string replace, FindReplaceOptions options)
     {
-        // HeaderFooter may be null if the particular type is not present in the section.
-        if (headerFooter == null)
-            return;
-
-        // Perform the find‑and‑replace on the header/footer's range.
-        headerFooter.Range.Replace(pattern, replacement, options);
+        if (headerFooter != null)
+        {
+            // The Range object of the header/footer contains its text.
+            headerFooter.Range.Replace(find, replace, options);
+        }
     }
 }

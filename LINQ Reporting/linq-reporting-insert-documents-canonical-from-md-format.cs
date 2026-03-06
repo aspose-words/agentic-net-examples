@@ -1,36 +1,60 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class Program
+namespace AsposeWordsLinqReporting
 {
-    static void Main()
-    {
-        // 1. Create a template document that contains a placeholder for the inserted markdown document.
-        Document template = new Document();                     // create blank document
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Report generated on " + DateTime.Now);
-        builder.Writeln("<<doc [src.Document]>>"); // placeholder that ReportingEngine will replace
-
-        // 2. Load the source markdown file. Aspose.Words auto‑detects the .md format.
-        Document markdownDoc = new Document("source.md"); // load markdown as a Word document
-
-        // 3. Wrap the markdown document in a simple data‑source class.
-        var dataSource = new { src = new MarkdownWrapper { Document = markdownDoc } };
-
-        // 4. Populate the template using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, dataSource, "src");
-
-        // 5. Save the final document.
-        template.Save("Result.docx");
-    }
-
-    // Helper class exposing the Document property required by the <<doc [src.Document]>> tag.
-    public class MarkdownWrapper
+    // Simple holder class used as a data source for the reporting engine.
+    public class DocumentHolder
     {
         public Document Document { get; set; }
-        public MarkdownWrapper() { }
-        public MarkdownWrapper(Document doc) => Document = doc;
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // -----------------------------------------------------------------
+            // 1. Create a template document that contains LINQ Reporting syntax.
+            // -----------------------------------------------------------------
+            Document template = new Document();                     // create a blank document
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // The template uses a foreach loop over a collection named "src".
+            // For each item we insert the document referenced by src.Document.
+            builder.Writeln("<<foreach [src]>>");
+            builder.Writeln("<<doc [src.Document]>>");
+            builder.Writeln("<</foreach>>");
+
+            // ---------------------------------------------------------------
+            // 2. Load all Markdown (*.md) files from a folder into Document objects.
+            // ---------------------------------------------------------------
+            string markdownFolder = Path.Combine(Environment.CurrentDirectory, "InputMd");
+            // Ensure the folder exists; in a real scenario handle missing folder appropriately.
+            if (!Directory.Exists(markdownFolder))
+                Directory.CreateDirectory(markdownFolder);
+
+            // Load each .md file as an Aspose.Words Document (Markdown is auto‑detected).
+            List<DocumentHolder> holders = Directory.GetFiles(markdownFolder, "*.md")
+                .Select(filePath => new DocumentHolder { Document = new Document(filePath) })
+                .ToList();
+
+            // ---------------------------------------------------------------
+            // 3. Populate the template using the ReportingEngine.
+            // ---------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+
+            // The data source is the collection of DocumentHolder objects; we give it the name "src".
+            engine.BuildReport(template, holders, "src");
+
+            // ---------------------------------------------------------------
+            // 4. Save the resulting document.
+            // ---------------------------------------------------------------
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
+            template.Save(outputPath);
+        }
     }
 }

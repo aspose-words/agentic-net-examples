@@ -1,35 +1,33 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables; // Added namespace for Table class
+using Aspose.Words.Tables;
 
-class Program
+class TableJoinExample
 {
     static void Main()
     {
-        // Load the document that contains the two tables to be merged.
-        Document doc = new Document("Tables.docx");
+        // Load the source document that already contains two tables.
+        Document doc = new Document("InputDocument.docx");
 
-        // Retrieve the first table from the document's body.
+        // Get the first table from the document.
         Table firstTable = doc.FirstSection.Body.Tables[0];
 
-        // Retrieve the second table using the GetChild method.
+        // Get the second table from the document.
         Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
 
-        // Move all rows from the second table to the first table.
+        // Append all rows from the second table to the first table.
         while (secondTable.HasChildNodes)
             firstTable.Rows.Add(secondTable.FirstRow);
 
-        // Remove the now empty second table from the document.
+        // Remove the now‑empty second table container.
         secondTable.Remove();
 
-        // Configure TXT save options to preserve the visual layout of tables.
+        // Save the resulting document as plain text, preserving the table layout.
         TxtSaveOptions txtOptions = new TxtSaveOptions
         {
             PreserveTableLayout = true
         };
-
-        // Save the resulting document as a plain‑text file.
-        doc.Save("CombinedTable.txt", txtOptions);
+        doc.Save("CombinedTables.txt", txtOptions);
     }
 }

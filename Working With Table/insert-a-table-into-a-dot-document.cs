@@ -2,47 +2,43 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class InsertTableIntoDot
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to simplify table creation.
+        // Initialize a DocumentBuilder for easy content insertion.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start a new table. The method returns the created Table node.
         Table table = builder.StartTable();
 
-        // First row, first cell.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        // ---- First row ----
+        builder.InsertCell();                     // First cell of the first row.
+        builder.Write("Cell 1,1");                // Add text to the cell.
 
-        // First row, second cell.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
+        builder.InsertCell();                     // Second cell of the first row.
+        builder.Write("Cell 1,2");
+        builder.EndRow();                         // End the first row.
 
-        // End the first row.
-        builder.EndRow();
+        // ---- Second row ----
+        builder.InsertCell();                     // First cell of the second row.
+        builder.Write("Cell 2,1");
 
-        // Second row, first cell.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
+        builder.InsertCell();                     // Second cell of the second row.
+        builder.Write("Cell 2,2");
+        builder.EndRow();                         // End the second row.
 
-        // Second row, second cell.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-
-        // End the second row and the table.
-        builder.EndRow();
+        // Finish the table construction.
         builder.EndTable();
 
-        // Optionally set a title and description for the table.
+        // Optional: set alternative text for accessibility.
         table.Title = "Sample Table";
-        table.Description = "A simple 2x2 table inserted into a DOT template.";
+        table.Description = "A table inserted into a DOT template";
 
-        // Save the document as a DOT (Word template) file.
+        // Save the document as a Word template (.dot).
         doc.Save("TableTemplate.dot");
     }
 }

@@ -1,24 +1,32 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class InsertTextIntoCell
 {
     static void Main()
     {
-        // Load the existing DOCM file.
-        Document doc = new Document("Input.docm");
+        // Path to the source DOCM file.
+        string inputPath = @"C:\Docs\SourceDocument.docm";
 
-        // Attach a DocumentBuilder to the loaded document.
+        // Path where the modified DOCM will be saved.
+        string outputPath = @"C:\Docs\ModifiedDocument.docm";
+
+        // Load the existing DOCM document.
+        Document doc = new Document(inputPath);
+
+        // Create a DocumentBuilder attached to the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder's cursor to the target cell.
+        // Move the builder's cursor to the desired cell.
         // Parameters: row index, column index, row span, column span (all zero‑based).
-        builder.MoveToCell(0, 0, 0, 0);
+        // Example moves to the cell at first row, second column.
+        builder.MoveToCell(0, 1, 0, 0);
 
-        // Insert the desired text into the cell.
-        builder.Write("Hello from Aspose.Words!");
+        // Insert the desired text into the current cell.
+        builder.Write("Inserted text into the cell.");
 
-        // Save the modified document.
-        doc.Save("Output.docm");
+        // Save the document back as a DOCM file.
+        doc.Save(outputPath);
     }
 }

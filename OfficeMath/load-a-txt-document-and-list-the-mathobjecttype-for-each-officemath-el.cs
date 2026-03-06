@@ -3,21 +3,23 @@ using Aspose.Words;
 using Aspose.Words.Math;
 using Aspose.Words.Loading;
 
-class ListOfficeMathTypes
+class Program
 {
     static void Main()
     {
-        // Load a TXT document. The TxtLoadOptions can be customized if needed.
+        // Load the TXT document using TxtLoadOptions.
         var loadOptions = new TxtLoadOptions();
-        Document doc = new Document("Input.txt", loadOptions);
+        Document doc = new Document("input.txt", loadOptions);
 
-        // Retrieve all OfficeMath nodes in the document (including those inside other OfficeMath nodes).
+        // Retrieve all OfficeMath nodes in the document.
         NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
 
-        // Iterate through each OfficeMath node and output its MathObjectType.
+        // List the MathObjectType for each OfficeMath element.
+        int index = 0;
         foreach (OfficeMath officeMath in officeMathNodes)
         {
-            Console.WriteLine($"OfficeMath index {officeMath.IndexOf(officeMath)}: {officeMath.MathObjectType}");
+            Console.WriteLine($"OfficeMath #{index}: {officeMath.MathObjectType}");
+            index++;
         }
     }
 }

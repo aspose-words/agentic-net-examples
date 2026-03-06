@@ -1,54 +1,55 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class BarcodeDemo
+namespace AsposeWordsBarcodeDemo
 {
-    // Entry point required for a console application.
-    public static void Main(string[] args)
+    class Program
     {
-        Run();
-    }
+        static void Main()
+        {
+            // Load the main DOCX document.
+            Document mainDoc = new Document("Source.docx");
+            DocumentBuilder builder = new DocumentBuilder(mainDoc);
 
-    public static void Run()
-    {
-        // Load the base DOCX document.
-        Document original = new Document("Template.docx");
+            // Insert a BARCODE field that will generate a US ZIP code barcode.
+            // The field will be displayed as an image after updating fields.
+            FieldBarcode barcodeField = (FieldBarcode)builder.InsertField(FieldType.FieldBarcode, true);
+            barcodeField.PostalAddress = "12345";          // ZIP code to encode.
+            barcodeField.IsUSPostalAddress = true;        // Specify US postal address.
+            barcodeField.FacingIdentificationMark = "C";  // Optional FIM character.
+            builder.Writeln(); // Move to the next line.
 
-        // Clone the loaded document to work on a separate copy.
-        Document cloned = original.Clone();
+            // Clone the document (deep copy).
+            Document clonedDoc = (Document)mainDoc.Clone();
 
-        // Use DocumentBuilder to insert a MERGEBARCODE field at the end of the cloned document.
-        DocumentBuilder builder = new DocumentBuilder(cloned);
-        builder.MoveToDocumentEnd();
+            // Insert another document at the current cursor position.
+            Document insertDoc = new Document("Insert.docx");
+            builder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Insert the MERGEBARCODE field and configure its properties.
-        FieldMergeBarcode barcodeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
-        barcodeField.BarcodeType = "QR";                     // QR code type.
-        barcodeField.BarcodeValue = "MyQRCode";              // Data to encode.
-        barcodeField.BackgroundColor = "0xF8BD69";           // Background colour.
-        barcodeField.ForegroundColor = "0xB5413B";           // Foreground colour.
-        barcodeField.ErrorCorrectionLevel = "3";             // QR error correction.
-        barcodeField.ScalingFactor = "250";                  // Scale the symbol.
-        barcodeField.SymbolHeight = "1000";                  // Height in TWIPS.
-        barcodeField.SymbolRotation = "0";                   // No rotation.
+            // Append a third document to the end of the main document.
+            Document appendDoc = new Document("Append.docx");
+            mainDoc.AppendDocument(appendDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Force field update so the barcode image is generated.
-        cloned.UpdateFields();
+            // Update all fields so that the BARCODE field renders the barcode image.
+            mainDoc.UpdateFields();
 
-        // Load another document that will be appended to the cloned document.
-        Document toAppend = new Document("Appendix.docx");
-        cloned.AppendDocument(toAppend, ImportFormatMode.KeepSourceFormatting);
+            // Save the combined document.
+            mainDoc.Save("CombinedResult.docx");
 
-        // Split the combined document into two parts:
-        // Part 1 – pages 1 and 2 (zero‑based page indices).
-        Document part1 = cloned.ExtractPages(0, 1);
-        // Part 2 – remaining pages.
-        Document part2 = cloned.ExtractPages(2, cloned.PageCount - 1);
+            // Save the cloned document (it contains the same barcode field).
+            clonedDoc.Save("ClonedResult.docx");
 
-        // Save the resulting documents.
-        cloned.Save("Combined.docx");
-        part1.Save("Part1.docx");
-        part2.Save("Part2.docx");
+            // Split the combined document into separate pages.
+            // Each page is extracted into a new Document and saved individually.
+            for (int pageIndex = 1; pageIndex <= mainDoc.PageCount; pageIndex++)
+            {
+                // Extract a single page (pages are 1‑based).
+                Document pageDoc = mainDoc.ExtractPages(pageIndex, pageIndex);
+                string pageFileName = $"Page_{pageIndex}.docx";
+                pageDoc.Save(pageFileName);
+            }
+        }
     }
 }

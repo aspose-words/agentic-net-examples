@@ -1,26 +1,23 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Notes;
+using Aspose.Words.Saving;
 
-class RemoveNotesAndSaveAsDocm
+class RemoveNotesExample
 {
     static void Main()
     {
-        // Load the existing DOC document.
+        // Load the existing DOC file.
         Document doc = new Document("InputDocument.doc");
 
-        // Remove the footnote separator (the line that separates footnotes from the main text).
-        FootnoteSeparator footnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.FootnoteSeparator];
-        // Ensure the separator has a child node before attempting to remove it.
-        if (footnoteSeparator.FirstParagraph?.FirstChild != null)
-            footnoteSeparator.FirstParagraph.FirstChild.Remove();
-
-        // Remove the endnote separator (the line that separates endnotes from the main text).
-        FootnoteSeparator endnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.EndnoteSeparator];
-        if (endnoteSeparator.FirstParagraph?.FirstChild != null)
-            endnoteSeparator.FirstParagraph.FirstChild.Remove();
+        // Remove all footnotes and endnotes. In Aspose.Words both are represented by the Footnote node type.
+        NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
+        // Iterate backwards to avoid collection modification issues.
+        for (int i = notes.Count - 1; i >= 0; i--)
+        {
+            notes[i].Remove();
+        }
 
         // Save the modified document as a macro‑enabled DOCM file.
-        doc.Save("OutputDocument.docm");
+        doc.Save("OutputDocument.docm", SaveFormat.Docm);
     }
 }

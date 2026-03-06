@@ -1,50 +1,44 @@
+using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 class Program
 {
     static void Main()
     {
-        // Load the existing MHTML document.
-        Document doc = new Document("input.mhtml");
-
-        // Create a DocumentBuilder to edit the document.
+        // Create a new blank document.
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Position the builder where the table should be inserted.
-        builder.MoveToDocumentEnd();
-
-        // Start a new table.
+        // Start a table.
         Table table = builder.StartTable();
 
         // First row.
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
+        builder.InsertCell();               // Cell (1,1)
+        builder.Write("Cell 1,1");
+        builder.InsertCell();               // Cell (1,2)
+        builder.Write("Cell 1,2");
         builder.EndRow();
 
         // Second row.
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.InsertCell();               // Cell (2,1)
+        builder.Write("Cell 2,1");
+        builder.InsertCell();               // Cell (2,2)
+        builder.Write("Cell 2,2");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Optional: set title and description for accessibility.
-        table.Title = "Sample Table";
-        table.Description = "Demonstrates inserting a table into an MHTML document";
-
-        // Save the modified document back to MHTML.
+        // Configure save options for MHTML output.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
-            // Export table widths as relative values to keep the layout flexible.
-            TableWidthOutputMode = HtmlElementSizeOutputMode.RelativeOnly
+            // Export table widths as they are (default behavior).
+            TableWidthOutputMode = HtmlElementSizeOutputMode.All
         };
-        doc.Save("output.mhtml", saveOptions);
+
+        // Save the document as an MHTML file.
+        doc.Save("TableInMhtml.mht", saveOptions);
     }
 }

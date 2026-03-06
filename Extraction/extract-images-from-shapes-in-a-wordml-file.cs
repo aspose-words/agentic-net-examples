@@ -4,37 +4,40 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class ExtractImagesFromWordML
 {
     static void Main()
     {
-        // Path to the folder that contains the WORDML file.
-        string dataDir = @"C:\Data\";
+        // Load the WORDML (or DOCX) document.
+        Document doc = new Document("Input.docx"); // replace with your WORDML file path
 
-        // Load the WORDML document.
-        Document doc = new Document(Path.Combine(dataDir, "WordMLFile.xml"));
+        // Ensure the output directory exists.
+        string outputDir = "ExtractedImages";
+        Directory.CreateDirectory(outputDir);
 
-        // Get all shape nodes in the document (including those inside groups).
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        // Retrieve all shape nodes in the document.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
-
-        // Iterate through each shape and extract the image if it has one.
-        foreach (Shape shape in shapes.OfType<Shape>())
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
+            // Process only shapes that actually contain an image.
             if (shape.HasImage)
             {
-                // Determine the appropriate file extension for the image format.
+                // Determine the appropriate file extension based on the image type.
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
 
-                // Build the output file name.
-                string outputPath = Path.Combine(dataDir, $"ExtractedImage_{imageIndex}{extension}");
+                // Build a unique file name for each extracted image.
+                string fileName = $"Image_{imageIndex}{extension}";
+                string filePath = Path.Combine(outputDir, fileName);
 
                 // Save the image data to the file system.
-                shape.ImageData.Save(outputPath);
+                shape.ImageData.Save(filePath);
 
                 imageIndex++;
             }
         }
+
+        Console.WriteLine($"Extracted {imageIndex} image(s) to '{outputDir}'.");
     }
 }

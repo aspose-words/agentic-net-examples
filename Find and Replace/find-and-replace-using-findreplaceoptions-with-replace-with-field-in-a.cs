@@ -6,7 +6,7 @@ class Program
 {
     static void Main()
     {
-        // Load the source DOCX document.
+        // Load the DOCX document.
         Document doc = new Document("Input.docx");
 
         // Configure find/replace options with a custom callback.
@@ -15,29 +15,32 @@ class Program
             ReplacingCallback = new FieldReplacingCallback()
         };
 
-        // Replace the placeholder text with a field.
-        doc.Range.Replace("_FieldPlaceholder_", string.Empty, options);
+        // Replace the placeholder "_FullName_" with a MERGEFIELD.
+        // The replacement string is empty because the callback inserts the field manually.
+        doc.Range.Replace("_FullName_", string.Empty, options);
 
-        // Save the modified document.
+        // Save the updated document.
         doc.Save("Output.docx");
     }
-}
 
-// Callback that replaces each match with a DATE field.
-class FieldReplacingCallback : IReplacingCallback
-{
-    public ReplaceAction Replacing(ReplacingArgs args)
+    // Callback that replaces the matched text with a field.
+    private class FieldReplacingCallback : IReplacingCallback
     {
-        // The match node is a Run that contains the placeholder text.
-        // Insert the field at the position of the match.
-        DocumentBuilder builder = new DocumentBuilder((Document)args.MatchNode.Document);
-        builder.MoveTo(args.MatchNode);
-        builder.InsertField("DATE", "\\@ \"MMMM d, yyyy\"");
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // The node that contains the match is a Run (or another text node).
+            // Cast the document to Document because DocumentBuilder expects a Document, not DocumentBase.
+            DocumentBuilder builder = new DocumentBuilder((Document)args.MatchNode.Document);
+            builder.MoveTo(args.MatchNode);
 
-        // Remove the original placeholder text.
-        args.MatchNode.Remove();
+            // Insert the desired field (e.g., a MERGEFIELD named FullName).
+            builder.InsertField("MERGEFIELD FullName", "«FullName»");
 
-        // Skip the default text replacement.
-        return ReplaceAction.Skip;
+            // Remove the original placeholder text node.
+            args.MatchNode.Remove();
+
+            // Skip the default replacement because we have already performed the insertion.
+            return ReplaceAction.Skip;
+        }
     }
 }

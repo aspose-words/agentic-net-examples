@@ -7,50 +7,43 @@ class SplitTableExample
     static void Main()
     {
         // Load the existing DOC document.
-        Document doc = new Document("Input.doc");
+        Document doc = new Document("input.docx");
 
-        // Assume we want to split the first table in the document.
+        // Ensure the document contains at least one table.
+        if (doc.FirstSection.Body.Tables.Count == 0)
+            throw new InvalidOperationException("The document does not contain any tables.");
+
+        // Get the first table to split.
         Table originalTable = doc.FirstSection.Body.Tables[0];
 
-        // Define the zero‑based index of the row after which the table will be split.
-        // For example, split after the third row (index 2) – rows 0‑2 stay in the original table,
-        // rows 3‑end will be moved to a new table.
-        int splitAfterRowIndex = 2;
+        // Define the row index at which to split the table.
+        // Rows with index < splitRowIndex will stay in the original table,
+        // rows with index >= splitRowIndex will move to the new table.
+        int splitRowIndex = 2; // Example: split after the second row (zero‑based).
 
-        // Guard against invalid split positions.
-        if (splitAfterRowIndex < 0 || splitAfterRowIndex >= originalTable.Rows.Count - 1)
-            throw new ArgumentOutOfRangeException(nameof(splitAfterRowIndex), "Split index is out of range.");
+        if (splitRowIndex <= 0 || splitRowIndex >= originalTable.Rows.Count)
+            throw new ArgumentOutOfRangeException(nameof(splitRowIndex), "Split index must be within the table rows range.");
 
-        // Create a new empty table that will receive the rows after the split point.
-        Table newTable = new Table(doc);
+        // Clone the original table to create a new table that will hold the second part.
+        Table newTable = (Table)originalTable.Clone(true);
 
-        // Copy visual formatting from the original table to the new one (optional).
-        newTable.Style = originalTable.Style;
-        newTable.StyleIdentifier = originalTable.StyleIdentifier;
-        newTable.StyleName = originalTable.StyleName;
-        newTable.AllowAutoFit = originalTable.AllowAutoFit;
-        newTable.Alignment = originalTable.Alignment;
-        newTable.PreferredWidth = originalTable.PreferredWidth;
-        newTable.CellSpacing = originalTable.CellSpacing;
-        newTable.Bidi = originalTable.Bidi;
-        newTable.Title = originalTable.Title;
-        newTable.Description = originalTable.Description;
-
-        // Move rows that belong to the new table.
-        // Rows after the split index are removed from the original table and added to the new table.
-        while (originalTable.Rows.Count > splitAfterRowIndex + 1)
+        // Remove rows that belong to the second part from the original table.
+        // Iterate backwards to avoid index shifting.
+        for (int i = originalTable.Rows.Count - 1; i >= splitRowIndex; i--)
         {
-            // The row to move is always the one that follows the split index,
-            // because rows shift left as we remove them.
-            Row rowToMove = originalTable.Rows[splitAfterRowIndex + 1];
-            originalTable.Rows.Remove(rowToMove);
-            newTable.Rows.Add(rowToMove);
+            originalTable.Rows[i].Remove();
+        }
+
+        // Remove rows that belong to the first part from the new table.
+        for (int i = splitRowIndex - 1; i >= 0; i--)
+        {
+            newTable.Rows[i].Remove();
         }
 
         // Insert the new table immediately after the original table in the document tree.
         originalTable.ParentNode.InsertAfter(newTable, originalTable);
 
         // Save the modified document.
-        doc.Save("Output.doc");
+        doc.Save("output.docx");
     }
 }

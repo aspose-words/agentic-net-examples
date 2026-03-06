@@ -1,57 +1,30 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace DocumentSplitExample
+class Program
 {
-    // Custom callback to rename each HTML part generated when splitting by section breaks.
-    class SavedDocumentPartRename : IDocumentPartSavingCallback
+    static void Main()
     {
-        private readonly string _baseFileName;
-        private int _partIndex = 0;
+        // Path to the source DOCX file.
+        string inputPath = "input.docx";
 
-        public SavedDocumentPartRename(string baseFileName)
+        // Base path for the output HTML files.
+        // The first part will be saved as this name,
+        // subsequent parts will have suffixes like "-01.html", "-02.html", etc.
+        string outputPath = "output.html";
+
+        // Load the document from the DOCX file.
+        Document doc = new Document(inputPath);
+
+        // Set up HTML save options to split the document at each section break.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            _baseFileName = baseFileName;
-        }
+            DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak
+        };
 
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
-        {
-            // Generate a sequential file name for each part.
-            string partFileName = $"{Path.GetFileNameWithoutExtension(_baseFileName)}_Part{++_partIndex}{Path.GetExtension(args.DocumentPartFileName)}";
-
-            // Set the file name for the part.
-            args.DocumentPartFileName = partFileName;
-
-            // Optionally, you could provide a custom stream instead of a file name:
-            // args.DocumentPartStream = new FileStream(Path.Combine(Path.GetDirectoryName(_baseFileName), partFileName), FileMode.Create);
-        }
-    }
-
-    class Program
-    {
-        static void Main()
-        {
-            // Input DOCX file path.
-            string inputPath = @"C:\Docs\InputDocument.docx";
-
-            // Output HTML base file name (the first part will use this name, additional parts will be renamed by the callback).
-            string outputPath = @"C:\Docs\OutputDocument.html";
-
-            // Load the DOCX document.
-            Document doc = new Document(inputPath);
-
-            // Configure HTML save options to split the document at each section break.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions
-            {
-                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-                // Assign the custom callback to control part file naming.
-                DocumentPartSavingCallback = new SavedDocumentPartRename(outputPath)
-            };
-
-            // Save the document; Aspose.Words will create multiple HTML files, one per section.
-            doc.Save(outputPath, saveOptions);
-        }
+        // Save the document. Aspose.Words will create multiple HTML files
+        // according to the number of sections in the source document.
+        doc.Save(outputPath, saveOptions);
     }
 }

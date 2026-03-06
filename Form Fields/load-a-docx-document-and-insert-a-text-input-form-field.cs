@@ -2,24 +2,21 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class InsertTextInputFormField
 {
     static void Main()
     {
-        // Load an existing DOCX file.
-        Document doc = new Document("input.docx");
+        // Load an existing DOCX document.
+        Document doc = new Document("InputDocument.docx");
 
-        // Create a DocumentBuilder to modify the document.
+        // Create a DocumentBuilder for the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Position the builder at the end of the document (or any other location as needed).
-        builder.MoveToDocumentEnd();
-
-        // Insert a text input form field.
+        // Insert a text input form field at the current cursor position.
         // Parameters: name, type, format, default text, max length (0 = unlimited).
-        builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "Enter text here", 0);
+        builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "Enter your text here", 0);
 
         // Save the modified document.
-        doc.Save("output.docx");
+        doc.Save("OutputDocument.docx");
     }
 }

@@ -1,0 +1,11 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Loading rules": [
+        "Add the missing using directive for Aspose.Words.Loading.",
+        "Instantiate LoadOptions with the parameterless constructor and set the Password property (LoadOptions does not have a constructor that takes a password string)."
+      ]
+    }
+  }
+}

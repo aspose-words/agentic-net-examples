@@ -2,32 +2,35 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class PdfUaConversion
+namespace RenderPdfUaExample
 {
-    static void Main()
+    class Program
     {
-        // Load the source Word document.
-        // Replace "Input.docx" with the actual path to your document.
-        Document doc = new Document("Input.docx");
+        static void Main(string[] args)
+        {
+            // Path to the folder that contains the source document and where the PDF will be saved.
+            string dataDir = @"C:\Data\";
 
-        // Create a PdfSaveOptions object suitable for PDF output.
-        // The CreateSaveOptions method ensures we use the correct lifecycle rule.
-        SaveOptions saveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
+            // Load the source Word document.
+            Document doc = new Document(dataDir + "input.docx");
 
-        // Cast to PdfSaveOptions to access PDF‑specific properties.
-        PdfSaveOptions pdfOptions = (PdfSaveOptions)saveOptions;
+            // Create PDF save options and configure them for PDF/UA compliance.
+            PdfSaveOptions pdfOptions = new PdfSaveOptions
+            {
+                // Set the compliance level to PDF/UA‑1 (ISO 14289‑1).
+                Compliance = PdfCompliance.PdfUa1,
 
-        // Set the compliance level to PDF/UA‑2 (ISO 14289‑2:2024).
-        pdfOptions.Compliance = PdfCompliance.PdfUa2;
+                // PDF/UA requires the document title to be shown in the viewer’s title bar.
+                DisplayDocTitle = true,
 
-        // PDF/UA requires the document title to be shown in the viewer's title bar.
-        pdfOptions.DisplayDocTitle = true;
+                // Export the document structure (tags) which is mandatory for PDF/UA.
+                ExportDocumentStructure = true
+            };
 
-        // Optional: export the document structure (tags) – required for PDF/UA compliance.
-        pdfOptions.ExportDocumentStructure = true;
+            // Save the document as a PDF file with the specified options.
+            doc.Save(dataDir + "output.pdf", pdfOptions);
 
-        // Save the document as a PDF with the specified options.
-        // Replace "Output.pdf" with the desired output path.
-        doc.Save("Output.pdf", pdfOptions);
+            Console.WriteLine("PDF/UA document saved successfully to " + dataDir + "output.pdf");
+        }
     }
 }

@@ -1,49 +1,23 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
-public class DocxContentExtractor
+class Program
 {
-    /// <summary>
-    /// Loads a DOCX file and returns its plain‑text content.
-    /// </summary>
-    /// <param name="docxPath">Full path to the DOCX file.</param>
-    /// <returns>All textual content of the document as a single string.</returns>
-    public static string ExtractText(string docxPath)
+    static void Main()
     {
-        // Validate input.
-        if (string.IsNullOrEmpty(docxPath))
-            throw new ArgumentException("File path cannot be null or empty.", nameof(docxPath));
+        // Path to the DOCX file to be processed.
+        string docPath = "input.docx";
 
-        if (!File.Exists(docxPath))
-            throw new FileNotFoundException($"The file '{docxPath}' does not exist.", docxPath);
+        // Load the Word document (uses Document(string) constructor).
+        Document doc = new Document(docPath);
 
-        // Load the DOCX document using Aspose.Words.Document.
-        Document doc = new Document(docxPath);
+        // Extract plain‑text representation of the document (uses PlainTextDocument(string) constructor).
+        PlainTextDocument plainText = new PlainTextDocument(docPath);
 
-        // Document.GetText() returns the concatenated text of the whole document,
-        // including paragraph marks (\r\n). Trim the result if you do not need trailing whitespace.
-        return doc.GetText();
-    }
+        // Retrieve the concatenated text content.
+        string extractedText = plainText.Text;
 
-    // Example usage.
-    public static void Main()
-    {
-        // Path to the source DOCX file.
-        string sourcePath = @"C:\Docs\SampleDocument.docx";
-
-        try
-        {
-            // Extract the text.
-            string content = ExtractText(sourcePath);
-
-            // Output the extracted text to the console.
-            Console.WriteLine("Extracted Text:");
-            Console.WriteLine(content);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error: {ex.Message}");
-        }
+        // Display the extracted text.
+        Console.WriteLine(extractedText);
     }
 }

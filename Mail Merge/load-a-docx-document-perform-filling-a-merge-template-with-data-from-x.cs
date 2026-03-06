@@ -7,21 +7,21 @@ class Program
 {
     static void Main()
     {
-        // Load the Word template that contains MERGEFIELD tags (and optional mail‑merge regions).
+        // Load the Word template that contains MERGEFIELD tags.
         Document doc = new Document("Template.docx");
 
-        // Load XML data into a DataSet. The XML file should have a structure that matches the
-        // merge fields or regions defined in the template.
+        // Load XML data into a DataSet. The XML file should have a structure that matches the merge fields.
         DataSet dataSet = new DataSet();
         dataSet.ReadXml("Data.xml");
 
-        // Fill the template with the data from the DataSet.
-        // ExecuteWithRegions is used so that, if the template contains mail‑merge regions,
-        // they are processed correctly; otherwise Execute would also work.
+        // Perform mail merge using the DataSet. This method works with mail‑merge regions; if the template
+        // does not contain regions the whole document will be merged once.
         doc.MailMerge.ExecuteWithRegions(dataSet);
 
-        // Save the resulting document as XPS.
-        XpsSaveOptions xpsOptions = new XpsSaveOptions(); // default XPS options
+        // Prepare XPS save options (default options are sufficient for this example).
+        XpsSaveOptions xpsOptions = new XpsSaveOptions();
+
+        // Save the merged document as XPS.
         doc.Save("Result.xps", xpsOptions);
     }
 }

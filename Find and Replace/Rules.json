@@ -1,0 +1,19 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Table rules": [
+        "Add the missing using directive for Aspose.Words.Tables to access the Table class."
+      ],
+      "Range rules": [
+        "When using a custom IReplacingCallback, the replacement string passed to Range.Replace is ignored; you must return ReplaceAction.Skip after handling the replacement yourself."
+      ],
+      "Loading rules": [
+        "Cast args.MatchNode.Document (DocumentBase) to Document before creating new nodes."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Ensure the placeholder regex pattern is escaped correctly (\"\\\\[SHAPE\\\\]\")."
+      ]
+    }
+  }
+}

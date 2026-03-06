@@ -1,52 +1,90 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Fields;
 
-namespace AsposeWordsFormFieldInsert
+namespace InsertFormFieldsIntoDotx
 {
     class Program
     {
         static void Main()
         {
-            // Path to the template DOTX file (must be a Word template).
-            const string templatePath = @"C:\Docs\Template.dotx";
+            // Path to the folder where all files will be stored.
+            string dataDir = Path.Combine(Environment.CurrentDirectory, "Data");
+            Directory.CreateDirectory(dataDir);
 
-            // Paths to the source documents that contain form fields.
-            const string sourceDoc1Path = @"C:\Docs\FormFields1.docx";
-            const string sourceDoc2Path = @"C:\Docs\FormFields2.docx";
+            // -----------------------------------------------------------------
+            // 1. Create a source document that contains various form fields.
+            // -----------------------------------------------------------------
+            Document sourceDoc = new Document();
+            DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
 
-            // Load the template document (DOTX) – this creates the base document.
-            Document templateDoc = new Document(templatePath);
+            // Insert a check box form field.
+            srcBuilder.Write("Accept terms: ");
+            srcBuilder.InsertCheckBox("AcceptTerms", false, 50);
+            srcBuilder.Writeln();
 
-            // Create a DocumentBuilder for the template.
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Insert a combo box (drop‑down) form field.
+            srcBuilder.Write("Choose a color: ");
+            srcBuilder.InsertComboBox("ColorChoice", new[] { "Red", "Green", "Blue" }, 0);
+            srcBuilder.Writeln();
 
-            // Move the cursor to the end of the template where we want to insert the content.
+            // Insert a text input form field.
+            srcBuilder.Write("Enter your name: ");
+            srcBuilder.InsertTextInput("NameInput", TextFormFieldType.Regular, "", "John Doe", 100);
+            srcBuilder.Writeln();
+
+            // Save the source document to a temporary file (required for InsertDocument).
+            string sourcePath = Path.Combine(dataDir, "SourceWithFormFields.docx");
+            sourceDoc.Save(sourcePath, SaveFormat.Docx);
+
+            // -----------------------------------------------------------------
+            // 2. Load a DOTX template document.
+            //    (Assume a template file named 'Template.dotx' exists in the same folder.)
+            // -----------------------------------------------------------------
+            string templatePath = Path.Combine(dataDir, "Template.dotx");
+            // For demonstration, create a minimal DOTX if it does not exist.
+            if (!File.Exists(templatePath))
+            {
+                Document templateDoc = new Document();
+                DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
+                tmplBuilder.Writeln("=== Document Header ===");
+                tmplBuilder.Writeln();
+                tmplBuilder.Writeln("=== Content will be inserted below ===");
+                tmplBuilder.Writeln();
+                tmplBuilder.Writeln("=== Document Footer ===");
+                templateDoc.Save(templatePath, SaveFormat.Dotx);
+            }
+
+            Document template = new Document(templatePath);
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Move the cursor to the position where the source content should be inserted.
+            // Here we move to the end of the document, after the existing content.
             builder.MoveToDocumentEnd();
 
-            // Load the first source document that already contains form fields.
-            Document srcDoc1 = new Document(sourceDoc1Path);
-
-            // Insert the first document into the template.
-            // Keep the original formatting of the source document.
-            builder.InsertDocument(srcDoc1, ImportFormatMode.KeepSourceFormatting);
-
-            // Insert a page break between the inserted documents (optional).
+            // Insert a page break before the inserted content (optional).
             builder.InsertBreak(BreakType.PageBreak);
 
-            // Load the second source document that also contains form fields.
-            Document srcDoc2 = new Document(sourceDoc2Path);
+            // -----------------------------------------------------------------
+            // 3. Insert the source document that contains form fields.
+            // -----------------------------------------------------------------
+            Document docToInsert = new Document(sourcePath);
+            builder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
 
-            // Insert the second document into the template.
-            builder.InsertDocument(srcDoc2, ImportFormatMode.KeepSourceFormatting);
+            // -----------------------------------------------------------------
+            // 4. Update fields so that form fields are correctly reflected.
+            // -----------------------------------------------------------------
+            template.UpdateFields();
 
-            // Update all fields (including the inserted form fields) so that any calculated
-            // results are refreshed before saving.
-            templateDoc.UpdateFields();
+            // -----------------------------------------------------------------
+            // 5. Save the resulting document.
+            // -----------------------------------------------------------------
+            string resultPath = Path.Combine(dataDir, "ResultDocument.docx");
+            template.Save(resultPath, SaveFormat.Docx);
 
-            // Save the resulting document as a new DOTX template.
-            const string outputPath = @"C:\Docs\ResultTemplate.dotx";
-            templateDoc.Save(outputPath, SaveFormat.Dotx);
+            Console.WriteLine("Document created successfully at:");
+            Console.WriteLine(resultPath);
         }
     }
 }

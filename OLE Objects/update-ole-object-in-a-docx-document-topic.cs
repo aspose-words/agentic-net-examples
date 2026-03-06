@@ -2,69 +2,57 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class UpdateOleObjectExample
+class Program
 {
     static void Main()
     {
-        // Load an existing DOCX document that contains an OLE object.
-        Document doc = new Document("InputDocument.docx");
+        // Load an existing DOCX file that contains an OLE object.
+        string inputPath = @"C:\Docs\InputDocument.docx";
+        var doc = new Document(inputPath);
 
-        // Find the first shape in the document that holds an OLE object.
-        Shape oleShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
-        if (oleShape == null || oleShape.ShapeType != ShapeType.OleObject)
+        // Use a DocumentBuilder to navigate and edit the document.
+        var builder = new DocumentBuilder(doc);
+
+        // Locate the first shape that holds an OLE object.
+        var oleShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
+        if (oleShape == null || oleShape.OleFormat == null)
+            throw new InvalidOperationException("No OLE object found in the document.");
+
+        // ---------------------------------------------------------------------
+        // Example 1: Update OLE object properties (e.g., enable auto‑update).
+        // ---------------------------------------------------------------------
+        oleShape.OleFormat.AutoUpdate = true; // Word will refresh the linked data automatically.
+        // Note: IconCaption is read‑only in Aspose.Words and cannot be set directly.
+        // If you need a custom caption, insert a new OLE object with the desired caption.
+
+        // ---------------------------------------------------------------------
+        // Example 2: Replace the embedded OLE data with a new file.
+        // ---------------------------------------------------------------------
+        // Move the builder cursor to the existing OLE shape.
+        builder.MoveTo(oleShape);
+
+        // Insert a new OLE object (e.g., a new Excel workbook) in place of the old one.
+        // The InsertOleObject overload allows specifying an icon caption.
+        using (FileStream newFileStream = File.OpenRead(@"C:\Data\NewSpreadsheet.xlsx"))
         {
-            Console.WriteLine("No OLE object found in the document.");
-            return;
+            // "Excel.Sheet.12" is the ProgID for an Excel workbook.
+            // asIcon = false displays the content directly; set to true to show an icon.
+            // The last parameter is the icon caption (used only when asIcon is true).
+            var newOleShape = builder.InsertOleObject(newFileStream, "Excel.Sheet.12", false, null);
+
+            // Optionally copy formatting from the old shape to the new one.
+            newOleShape.Width = oleShape.Width;
+            newOleShape.Height = oleShape.Height;
         }
 
-        // Access the OleFormat of the shape to modify its properties.
-        OleFormat oleFormat = oleShape.OleFormat;
-
-        // Example 1: Enable automatic update for linked OLE objects.
-        // For embedded objects this property has no effect, but setting it is safe.
-        oleFormat.AutoUpdate = true;
-
-        // NOTE: IconCaption is a read‑only property in Aspose.Words, so it cannot be set directly.
-        // If you need a different caption, you must replace the OLE object with a new one that has the desired caption.
-
-        // Example 2: If the OLE object is an OLE Package (generic container), update its file name
-        // and display name. This demonstrates how to modify the embedded data's metadata.
-        if (oleFormat.OlePackage != null)
-        {
-            oleFormat.OlePackage.FileName = "UpdatedPackage.zip";
-            oleFormat.OlePackage.DisplayName = "Updated Package.zip";
-        }
-
-        // Example 3: Replace the embedded data of the OLE object with new content.
-        // We remove the old shape and insert a new OLE object (as an icon) using the file path.
-        // The InsertOleObject overload that accepts a stream does not exist for the "as icon" variant,
-        // therefore we use the file‑based overload.
-        string newPackagePath = "NewPackage.zip"; // Ensure this file exists on disk.
-        Node parent = oleShape.ParentNode;
+        // Remove the original OLE shape now that it has been replaced.
         oleShape.Remove();
 
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        // Move the builder to the position where the old shape was located.
-        builder.MoveTo(parent);
-
-        // Insert the new OLE object as an icon.
-        Shape newOleShape = builder.InsertOleObjectAsIcon(
-            newPackagePath,   // Path to the new package file.
-            "Package",       // ProgId for a generic package.
-            false,            // Not a linked object (embedded).
-            null,             // Use the default icon.
-            "New Package Icon"); // Custom icon caption.
-
-        // Optionally set package properties for the new OLE object.
-        if (newOleShape.OleFormat.OlePackage != null)
-        {
-            newOleShape.OleFormat.OlePackage.FileName = "NewPackage.zip";
-            newOleShape.OleFormat.OlePackage.DisplayName = "NewPackage.zip";
-        }
-
-        // Save the modified document to a new file.
-        doc.Save("UpdatedDocument.docx", SaveFormat.Docx);
+        // ---------------------------------------------------------------------
+        // Save the modified document.
+        // ---------------------------------------------------------------------
+        string outputPath = @"C:\Docs\UpdatedDocument.docx";
+        doc.Save(outputPath);
     }
 }

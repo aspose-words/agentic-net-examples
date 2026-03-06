@@ -2,30 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsExcelConversion
 {
-    static void Main()
+    class Program
     {
-        // Input Word document path (can be any supported format).
-        string inputPath = @"C:\Docs\InputDocument.docx";
-
-        // Output Excel file path (XLSX format).
-        string outputPath = @"C:\Docs\ConvertedDocument.xlsx";
-
-        // Load the document using the Document constructor (lifecycle rule).
-        Document doc = new Document(inputPath);
-
-        // Configure XlsxSaveOptions (specific to Excel output).
-        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
+        static void Main()
         {
-            // Ensure the save format is set to Xlsx (required by the options).
-            SaveFormat = SaveFormat.Xlsx,
+            // Path to the source document (any format supported by Aspose.Words).
+            string inputFile = @"C:\Docs\SourceDocument.docx";
 
-            // Example: save each section to a separate worksheet.
-            SectionMode = XlsxSectionMode.MultipleWorksheets
-        };
+            // Path where the Excel file will be saved.
+            string outputFile = @"C:\Docs\ConvertedDocument.xlsx";
 
-        // Save the document to the Excel format using the Save method (lifecycle rule).
-        doc.Save(outputPath, xlsxOptions);
+            // Load the source document using the Document constructor (lifecycle rule).
+            Document doc = new Document(inputFile);
+
+            // Optionally configure Excel-specific save options.
+            XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
+            {
+                // Ensure the format is set to Xlsx (required by the options object).
+                SaveFormat = SaveFormat.Xlsx,
+
+                // Example: save each section of the Word document to a separate worksheet.
+                SectionMode = XlsxSectionMode.MultipleWorksheets
+            };
+
+            // Save the document as an Excel file using the Save method (lifecycle rule).
+            doc.Save(outputFile, xlsxOptions);
+        }
     }
 }

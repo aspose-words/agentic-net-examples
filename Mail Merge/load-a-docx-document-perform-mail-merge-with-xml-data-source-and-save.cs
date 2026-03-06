@@ -1,31 +1,29 @@
-using System;
-using System.Data;
 using Aspose.Words;
+using System.Data;
 
-class MailMergeToXps
+class MailMergeXmlToXps
 {
     static void Main()
     {
-        // Path to the source DOCX file that contains MERGEFIELDs.
-        string docPath = @"C:\Input\Template.docx";
+        // Input and output file paths
+        string templatePath = "Template.docx";
+        string xmlDataPath = "Data.xml";
+        string resultPath = "Result.xps";
 
-        // Path to the XML file that holds the mail‑merge data.
-        string xmlPath = @"C:\Input\Data.xml";
+        // Load the DOCX template
+        Document doc = new Document(templatePath);
 
-        // Load the DOCX document.
-        Document doc = new Document(docPath);
-
-        // Load the XML data into a DataSet.  Aspose.Words can merge from a DataSet,
-        // and DataSet can read XML directly.
+        // Load XML data into a DataSet
         DataSet dataSet = new DataSet();
-        dataSet.ReadXml(xmlPath);
+        dataSet.ReadXml(xmlDataPath);
 
-        // Perform the mail merge using the first table in the DataSet.
-        // If the XML contains multiple tables you can choose the appropriate one.
-        doc.MailMerge.Execute(dataSet.Tables[0]);
+        // Execute mail merge using the first table from the DataSet
+        if (dataSet.Tables.Count > 0)
+        {
+            doc.MailMerge.Execute(dataSet.Tables[0]);
+        }
 
-        // Save the merged document as XPS.
-        string outPath = @"C:\Output\MergedDocument.xps";
-        doc.Save(outPath, SaveFormat.Xps);
+        // Save the merged document as XPS
+        doc.Save(resultPath, SaveFormat.Xps);
     }
 }

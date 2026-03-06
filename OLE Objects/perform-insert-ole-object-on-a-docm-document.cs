@@ -1,37 +1,35 @@
-using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 class InsertOleObjectExample
 {
     static void Main()
     {
-        // Path to the folder that contains the source files.
+        // Path to the folder that contains the source DOCM and the file to embed.
         string dataDir = @"C:\Data\";
 
-        // Path to the OLE source file (e.g., an Excel workbook) that will be embedded.
-        string oleFilePath = Path.Combine(dataDir, "SampleSpreadsheet.xlsx");
+        // Load an existing DOCM document.
+        Document doc = new Document(Path.Combine(dataDir, "Template.docm"));
 
-        // Create a new DOCM document.
-        Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the newly created document.
+        // Create a DocumentBuilder for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a description before the OLE object.
+        // Add a paragraph before the OLE object (optional).
         builder.Writeln("Embedded Excel spreadsheet:");
 
-        // Insert the OLE object.
-        // Parameters:
-        //   fileName   – full path to the source file.
-        //   isLinked   – false to embed the object (true would create a link).
-        //   asIcon     – false to display the object content; true would show it as an icon.
-        //   presentation – null to use the default presentation image.
-        builder.InsertOleObject(oleFilePath, false, false, null);
+        // Open the file that will be embedded as an OLE object.
+        using (FileStream excelStream = new FileStream(Path.Combine(dataDir, "Sample.xlsx"), FileMode.Open, FileAccess.Read))
+        {
+            // Insert the OLE object.
+            // Parameters:
+            //   stream      – the data stream of the file to embed.
+            //   progId      – programmatic identifier of the OLE object (Excel sheet in this case).
+            //   asIcon      – false to display the content, true to display as an icon.
+            //   presentation– null to use the default presentation image.
+            builder.InsertOleObject(excelStream, "Excel.Sheet.12", false, null);
+        }
 
-        // Save the document as a DOCM file.
-        string outputPath = Path.Combine(dataDir, "DocumentWithOleObject.docm");
-        doc.Save(outputPath);
+        // Save the modified document as a DOCM file.
+        doc.Save(Path.Combine(dataDir, "Result.docm"));
     }
 }

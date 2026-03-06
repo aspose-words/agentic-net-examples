@@ -6,41 +6,33 @@ class Program
     static void Main()
     {
         // Load the DOCX file that contains tracked changes.
-        // The Document constructor handles the loading operation.
         Document doc = new Document("Revisions.docx");
 
-        // Ensure the document actually has revisions before processing.
-        if (!doc.HasRevisions)
-        {
-            Console.WriteLine("The document does not contain any revisions.");
-            return;
-        }
-
-        // Iterate through each revision group.
-        // A RevisionGroup represents a sequential set of revisions made by the same author.
+        // Iterate over revision groups – each group represents a consecutive set of revisions
+        // made by the same author and of the same type.
         foreach (RevisionGroup group in doc.Revisions.Groups)
         {
-            // Output basic information about the group.
             Console.WriteLine($"Author: {group.Author}");
             Console.WriteLine($"Revision Type: {group.RevisionType}");
-            Console.WriteLine($"Text: {group.Text}");
-            Console.WriteLine(new string('-', 40));
+            Console.WriteLine($"Revision Text: {group.Text}");
+            Console.WriteLine();
         }
 
-        // Optionally, iterate through individual revisions for more granular details.
-        Console.WriteLine("Individual revisions:");
-        foreach (Revision rev in doc.Revisions)
+        // Iterate over individual revisions for more detailed information.
+        for (int i = 0; i < doc.Revisions.Count; i++)
         {
-            Console.WriteLine($"Author: {rev.Author}");
-            Console.WriteLine($"Date: {rev.DateTime}");
-            Console.WriteLine($"Type: {rev.RevisionType}");
-            // The ParentNode contains the node that was changed.
-            // GetText() returns the text of that node (or a description for format changes).
-            Console.WriteLine($"Changed Text: {rev.ParentNode?.GetText().Trim()}");
-            Console.WriteLine(new string('-', 40));
+            Revision rev = doc.Revisions[i];
+            Console.WriteLine($"Revision #{i + 1}");
+            Console.WriteLine($"  Author: {rev.Author}");
+            Console.WriteLine($"  Type: {rev.RevisionType}");
+            Console.WriteLine($"  Date: {rev.DateTime}");
+            // ParentNode may be null for style definition changes.
+            string text = rev.ParentNode != null ? rev.ParentNode.GetText().Trim() : "<no text>";
+            Console.WriteLine($"  Text: {text}");
+            Console.WriteLine();
         }
 
-        // Save the document unchanged (optional, demonstrates the save lifecycle rule).
+        // Save the document (optional – here we just create a copy after processing).
         doc.Save("Revisions_Processed.docx");
     }
 }

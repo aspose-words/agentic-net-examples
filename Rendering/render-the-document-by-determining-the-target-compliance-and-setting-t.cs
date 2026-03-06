@@ -1,41 +1,45 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class PdfComplianceExample
+namespace AsposeWordsPdfComplianceExample
 {
-    static void Main()
+    class Program
     {
-        // Define the directories used in the example.
-        // In a real project these could be read from configuration or passed as arguments.
-        const string MyDir = @"C:\Input\";        // Folder that contains the source document.
-        const string ArtifactsDir = @"C:\Output\"; // Folder where the resulting PDF will be saved.
+        static void Main()
+        {
+            // Input Word document path.
+            string inputPath = @"C:\Docs\Sample.docx";
 
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(ArtifactsDir);
+            // Output PDF document path.
+            string outputPath = @"C:\Docs\Sample.pdf";
 
-        // Path to the source document.
-        string inputPath = Path.Combine(MyDir, "input.docx");
+            // Desired PDF compliance level.
+            PdfCompliance targetCompliance = PdfCompliance.PdfA1b;
 
-        // Load the document using the standard Document constructor.
-        Document doc = new Document(inputPath);
+            // Render the document with the specified compliance.
+            RenderDocumentWithCompliance(inputPath, outputPath, targetCompliance);
+        }
 
-        // Determine the desired PDF compliance level.
-        // This could be based on user input, configuration, etc.
-        // For demonstration, we set it to PDF/A‑1b.
-        PdfCompliance targetCompliance = PdfCompliance.PdfA1b;
+        /// <summary>
+        /// Loads a Word document, sets the PDF compliance level, and saves it as PDF.
+        /// </summary>
+        /// <param name="inputFile">Path to the source .docx/.doc file.</param>
+        /// <param name="outputFile">Path where the PDF will be saved.</param>
+        /// <param name="compliance">The PDF compliance level to apply.</param>
+        static void RenderDocumentWithCompliance(string inputFile, string outputFile, PdfCompliance compliance)
+        {
+            // Load the document using the Document constructor (lifecycle rule).
+            Document doc = new Document(inputFile);
 
-        // Create a PdfSaveOptions instance via the provided factory method.
-        PdfSaveOptions saveOptions = (PdfSaveOptions)SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
+            // Create a PdfSaveOptions object (lifecycle rule).
+            PdfSaveOptions saveOptions = new PdfSaveOptions();
 
-        // Apply the chosen compliance level.
-        saveOptions.Compliance = targetCompliance;
+            // Set the desired compliance level (feature rule).
+            saveOptions.Compliance = compliance;
 
-        // Save the document as PDF using the configured options.
-        string outputPath = Path.Combine(ArtifactsDir, "output.pdf");
-        doc.Save(outputPath, saveOptions);
-
-        Console.WriteLine($"Document saved to: {outputPath}\nCompliance: {targetCompliance}");
+            // Save the document as PDF using the Save method with SaveOptions (lifecycle rule).
+            doc.Save(outputFile, saveOptions);
+        }
     }
 }

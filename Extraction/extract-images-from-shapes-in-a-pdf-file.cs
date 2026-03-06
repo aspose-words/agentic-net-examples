@@ -10,39 +10,42 @@ class ExtractImagesFromPdf
     static void Main()
     {
         // Path to the source PDF file.
-        string pdfPath = @"C:\Docs\sample.pdf";
+        string pdfPath = @"C:\Input\sample.pdf";
 
-        // Directory where extracted images will be saved.
-        string outputDir = @"C:\Docs\ExtractedImages\";
+        // Folder where extracted images will be saved.
+        string outputFolder = @"C:\Output\ExtractedImages";
 
         // Ensure the output directory exists.
-        Directory.CreateDirectory(outputDir);
+        Directory.CreateDirectory(outputFolder);
 
-        // Load the PDF document. Set SkipPdfImages to false to load images.
-        PdfLoadOptions loadOptions = new PdfLoadOptions
-        {
-            SkipPdfImages = false
-        };
+        // Load the PDF document. No need to skip images, so we use default options.
+        PdfLoadOptions loadOptions = new PdfLoadOptions();
         Document doc = new Document(pdfPath, loadOptions);
 
-        // Retrieve all shape nodes (which may contain images).
+        // Get all Shape nodes in the document (including those inside headers/footers).
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
+
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
+            // Process only shapes that actually contain an image.
             if (shape.HasImage)
             {
-                // Determine the appropriate file extension for the image type.
+                // Determine the appropriate file extension based on the image type.
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string fileName = Path.Combine(outputDir, $"Image_{imageIndex}{extension}");
 
-                // Save the image to the file system.
-                shape.ImageData.Save(fileName);
+                // Build the output file name.
+                string imageFileName = Path.Combine(outputFolder,
+                    $"Image_{imageIndex}{extension}");
+
+                // Save the image data to the file system.
+                shape.ImageData.Save(imageFileName);
+
                 imageIndex++;
             }
         }
 
-        Console.WriteLine($"Extracted {imageIndex} image(s) to \"{outputDir}\".");
+        Console.WriteLine($"Extracted {imageIndex} image(s) to \"{outputFolder}\".");
     }
 }

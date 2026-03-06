@@ -1,20 +1,24 @@
 using System;
 using Aspose.Words;
 
-class Program
+namespace AsposeWordsPdfToDocExample
 {
-    static void Main()
+    class Program
     {
-        // Input PDF file path
-        string pdfPath = "InputDocument.pdf";
+        static void Main()
+        {
+            // Path to the source PDF file.
+            string pdfFilePath = @"C:\Input\sample.pdf";
 
-        // Output DOC file path
-        string docPath = "ConvertedDocument.doc";
+            // Path where the converted DOC file will be saved.
+            string docFilePath = @"C:\Output\sample.doc";
 
-        // Load the PDF document using the Document constructor that accepts a file name
-        Document pdfDoc = new Document(pdfPath);
+            // Load the PDF document. The Document constructor automatically detects the format.
+            Document pdfDocument = new Document(pdfFilePath);
 
-        // Save the loaded document as a DOC file using the Save method with SaveFormat.Doc
-        pdfDoc.Save(docPath, SaveFormat.Doc);
+            // Save the document as a legacy Word .doc file.
+            // The file extension determines the save format, but we can also specify it explicitly.
+            pdfDocument.Save(docFilePath, SaveFormat.Doc);
+        }
     }
 }

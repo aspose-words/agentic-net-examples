@@ -1,30 +1,35 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-class ConvertListToPlainTextRtf
+class ListToRtfConverter
 {
     static void Main()
     {
-        // Path to the source DOC document that contains a list.
-        string sourcePath = "input.doc";
+        // Path to the source DOC file that contains the list.
+        string sourcePath = @"C:\Docs\SourceDocument.doc";
 
-        // Load the source document.
+        // Path where the resulting RTF file will be saved.
+        string outputPath = @"C:\Docs\PlainTextOutput.rtf";
+
+        // Load the original DOC document.
         Document sourceDoc = new Document(sourcePath);
 
-        // Ensure list labels are up‑to‑date before extracting plain text.
+        // Ensure that list labels are up‑to‑date before extracting plain text.
         sourceDoc.UpdateListLabels();
 
-        // Extract the document's content as plain text (lists are represented as text).
-        string plainText = sourceDoc.ToString(SaveFormat.Text);
+        // Extract the plain‑text representation of the document (including list items).
+        PlainTextDocument plainText = new PlainTextDocument(sourcePath);
+        string textContent = plainText.Text;
 
-        // Create a new blank document.
+        // Create a new blank document that will hold the plain text.
         Document rtfDoc = new Document();
 
-        // Insert the extracted plain text into the new document.
+        // Insert the extracted text into the new document.
         DocumentBuilder builder = new DocumentBuilder(rtfDoc);
-        builder.Writeln(plainText);
+        builder.Writeln(textContent);
 
-        // Save the new document as RTF.
-        rtfDoc.Save("output.rtf", SaveFormat.Rtf);
+        // Save the new document in RTF format.
+        rtfDoc.Save(outputPath, SaveFormat.Rtf);
     }
 }

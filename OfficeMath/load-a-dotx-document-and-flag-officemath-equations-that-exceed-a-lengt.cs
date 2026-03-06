@@ -1,41 +1,46 @@
 using System;
+using System.IO;
+using System.Drawing;
 using Aspose.Words;
+using Aspose.Words.Loading;
 using Aspose.Words.Math;
 using Aspose.Words.Drawing;
-using Aspose.Words.Replacing;
 
-class OfficeMathFlagger
+class FlagLongOfficeMath
 {
     static void Main()
     {
-        // Path to the DOTX template.
-        const string inputPath = @"C:\Docs\Template.dotx";
-        const string outputPath = @"C:\Docs\Template_Flagged.dotx";
+        // Path to the folder that contains the DOTX template.
+        string dataDir = @"C:\Docs";
+        string inputFile = Path.Combine(dataDir, "Template.dotx");
+        string outputFile = Path.Combine(dataDir, "Flagged.docx");
 
-        // Load the DOTX document.
-        Document doc = new Document(inputPath);
+        // Load the DOTX document with OfficeMath conversion enabled.
+        LoadOptions loadOptions = new LoadOptions();
+        loadOptions.ConvertShapeToOfficeMath = true;
+        Document doc = new Document(inputFile, loadOptions);
 
-        // Define the length threshold for flagging.
-        const int lengthThreshold = 30;
+        // Length threshold for flagging equations.
+        int lengthThreshold = 20;
 
-        // Get all OfficeMath nodes in the document.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-
-        foreach (OfficeMath math in mathNodes)
+        // Iterate through all OfficeMath nodes in the document.
+        int mathCount = doc.GetChildNodes(NodeType.OfficeMath, true).Count;
+        for (int i = 0; i < mathCount; i++)
         {
-            // Get the plain text representation of the equation.
-            string equationText = math.GetText();
+            OfficeMath officeMath = (OfficeMath)doc.GetChild(NodeType.OfficeMath, i, true);
+            string equationText = officeMath.GetText();
 
-            // If the equation exceeds the threshold, apply a visual flag.
+            // If the equation text exceeds the threshold, highlight its runs.
             if (equationText.Length > lengthThreshold)
             {
-                // Example flag: change justification to center and display type to Display.
-                math.Justification = OfficeMathJustification.Center;
-                math.DisplayType = OfficeMathDisplayType.Display;
+                foreach (Run run in officeMath.GetChildNodes(NodeType.Run, true))
+                {
+                    run.Font.HighlightColor = Color.Yellow;
+                }
             }
         }
 
         // Save the modified document.
-        doc.Save(outputPath);
+        doc.Save(outputFile);
     }
 }

@@ -5,87 +5,94 @@ using System.Net.Mail;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace Example
+public class DocumentEmailSender
 {
-    public class DocumentEmailSender
+    public void SendDocumentAsDoc(string inputFilePath,
+                                  string smtpHost,
+                                  int smtpPort,
+                                  string smtpUser,
+                                  string smtpPassword,
+                                  string fromAddress,
+                                  string toAddress,
+                                  string subject,
+                                  string body)
     {
-        /// <summary>
-        /// Loads a document, converts it to DOC format and sends it as an email attachment.
-        /// </summary>
-        public void SendDocumentAsEmail(
-            string inputFilePath,
-            string smtpHost,
-            int smtpPort,
-            string smtpUser,
-            string smtpPassword,
-            string fromAddress,
-            string toAddress,
-            string subject,
-            string body)
+        // Load the source document.
+        Document doc = new Document(inputFilePath);
+
+        // Create a temporary file for the DOC output.
+        string tempDocPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".doc");
+        doc.Save(tempDocPath, SaveFormat.Doc);
+
+        // Build the e‑mail message.
+        using (MailMessage message = new MailMessage())
         {
-            // Load the source document using Aspose.Words (lifecycle rule).
-            Document doc = new Document(inputFilePath);
+            message.From = new MailAddress(fromAddress);
+            message.To.Add(new MailAddress(toAddress));
+            message.Subject = subject;
+            message.Body = body;
+            message.IsBodyHtml = false;
 
-            // Convert the document to DOC format and write it into a memory stream.
-            using (MemoryStream docStream = new MemoryStream())
+            // Attach the converted DOC file.
+            using (Attachment attachment = new Attachment(tempDocPath))
             {
-                doc.Save(docStream, SaveFormat.Doc);
-                docStream.Position = 0; // Reset stream position for reading.
+                message.Attachments.Add(attachment);
 
-                // Prepare the e‑mail message.
-                using (MailMessage message = new MailMessage())
+                // Configure and send via SMTP.
+                using (SmtpClient client = new SmtpClient(smtpHost, smtpPort))
                 {
-                    message.From = new MailAddress(fromAddress);
-                    message.To.Add(new MailAddress(toAddress));
-                    message.Subject = subject;
-                    message.Body = body;
-
-                    // Attach the converted DOC document.
-                    string attachmentName = Path.GetFileNameWithoutExtension(inputFilePath) + ".doc";
-                    Attachment attachment = new Attachment(docStream, attachmentName, "application/msword");
-                    message.Attachments.Add(attachment);
-
-                    // Configure the SMTP client.
-                    using (SmtpClient smtpClient = new SmtpClient(smtpHost, smtpPort))
+                    client.EnableSsl = true;
+                    if (!string.IsNullOrEmpty(smtpUser))
                     {
-                        smtpClient.EnableSsl = true; // Enable SSL if required.
-                        if (!string.IsNullOrEmpty(smtpUser))
-                        {
-                            smtpClient.Credentials = new NetworkCredential(smtpUser, smtpPassword);
-                        }
-                        smtpClient.Send(message);
+                        client.Credentials = new NetworkCredential(smtpUser, smtpPassword);
                     }
+                    else
+                    {
+                        client.UseDefaultCredentials = true;
+                    }
+                    client.Send(message);
                 }
             }
         }
-    }
 
-    class Program
-    {
-        static void Main(string[] args)
+        // Delete the temporary file.
+        if (File.Exists(tempDocPath))
         {
-            // Example usage – replace with real values or supply them via command‑line arguments.
-            string inputFilePath = args.Length > 0 ? args[0] : "sample.docx";
-            string smtpHost = args.Length > 1 ? args[1] : "smtp.example.com";
-            int smtpPort = args.Length > 2 ? int.Parse(args[2]) : 587;
-            string smtpUser = args.Length > 3 ? args[3] : null;
-            string smtpPassword = args.Length > 4 ? args[4] : null;
-            string fromAddress = args.Length > 5 ? args[5] : "sender@example.com";
-            string toAddress = args.Length > 6 ? args[6] : "recipient@example.com";
-            string subject = args.Length > 7 ? args[7] : "Document attached";
-            string body = args.Length > 8 ? args[8] : "Please find the DOC document attached.";
-
-            var sender = new DocumentEmailSender();
-            sender.SendDocumentAsEmail(
-                inputFilePath,
-                smtpHost,
-                smtpPort,
-                smtpUser,
-                smtpPassword,
-                fromAddress,
-                toAddress,
-                subject,
-                body);
+            File.Delete(tempDocPath);
         }
+    }
+}
+
+public static class Program
+{
+    public static void Main(string[] args)
+    {
+        // Expected arguments:
+        // 0 – inputFilePath
+        // 1 – smtpHost
+        // 2 – smtpPort
+        // 3 – smtpUser (optional, use empty string if not needed)
+        // 4 – smtpPassword (optional)
+        // 5 – fromAddress
+        // 6 – toAddress
+        // 7 – subject
+        // 8 – body
+        if (args.Length < 9)
+        {
+            Console.WriteLine("Usage: <inputFilePath> <smtpHost> <smtpPort> <smtpUser> <smtpPassword> <fromAddress> <toAddress> <subject> <body>");
+            return;
+        }
+
+        var sender = new DocumentEmailSender();
+        sender.SendDocumentAsDoc(
+            inputFilePath: args[0],
+            smtpHost: args[1],
+            smtpPort: int.Parse(args[2]),
+            smtpUser: args[3],
+            smtpPassword: args[4],
+            fromAddress: args[5],
+            toAddress: args[6],
+            subject: args[7],
+            body: args[8]);
     }
 }

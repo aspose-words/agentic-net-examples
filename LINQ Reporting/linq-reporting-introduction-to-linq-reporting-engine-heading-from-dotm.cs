@@ -2,32 +2,39 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsReportingDemo
+namespace LinqReportingDemo
 {
+    // Simple data source class – any non‑dynamic, non‑anonymous type can be used.
+    public class ReportData
+    {
+        public string Title { get; set; }
+        public string Author { get; set; }
+        public DateTime Date { get; set; }
+    }
+
     class Program
     {
         static void Main()
         {
-            // Path to the DOTM template that contains the heading.
-            // The template should have the text "LINQ Reporting Introduction to LINQ Reporting Engine"
-            // possibly wrapped in LINQ Reporting Engine tags.
-            string templatePath = @"C:\Templates\LinqReportingTemplate.dotm";
+            // Load the DOTM template that already contains the heading
+            // "<<[data.Title]>>" (or any other template syntax you prefer).
+            Document template = new Document(@"Templates\LinqReportingTemplate.dotm");
 
-            // Load the DOTM template document.
-            Document doc = new Document(templatePath);
+            // Prepare the data source.
+            var data = new ReportData
+            {
+                Title = "LINQ Reporting Introduction to LINQ Reporting Engine",
+                Author = "Aspose.Words Team",
+                Date = DateTime.Today
+            };
 
-            // Create an instance of the ReportingEngine.
+            // Build the report using the LINQ Reporting Engine.
             ReportingEngine engine = new ReportingEngine();
+            // The second overload allows us to reference the data source object itself via the name "data".
+            engine.BuildReport(template, data, "data");
 
-            // Build the report. No external data source is required for a static heading,
-            // so we pass an empty anonymous object as the data source.
-            // The third parameter (dataSourceName) can be null because we do not reference the
-            // data source object itself in the template.
-            engine.BuildReport(doc, new { }, null);
-
-            // Save the populated document as a DOCX file.
-            string outputPath = @"C:\Output\LinqReportingResult.docx";
-            doc.Save(outputPath);
+            // Save the populated document. The format is inferred from the extension (.docx).
+            template.Save(@"Output\LinqReportingResult.docx");
         }
     }
 }

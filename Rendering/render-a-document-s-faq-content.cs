@@ -1,28 +1,47 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class RenderFaq
+class Program
 {
     static void Main()
     {
-        // Path to the source FAQ document (DOCX, DOC, etc.).
-        string inputFile = @"C:\Docs\FaqDocument.docx";
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Path where the rendered PDF will be saved.
-        string outputFile = @"C:\Docs\FaqDocument.pdf";
+        // Use DocumentBuilder to add content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Load the existing document.
-        Document doc = new Document(inputFile);
+        // Title of the FAQ.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
+        builder.Writeln("Frequently Asked Questions");
+        builder.Writeln(); // Blank line after title.
 
-        // Create PDF save options and configure DrawingML rendering.
-        // Use DrawingML to render the original shapes; change to Fallback if needed.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // Define the FAQ entries.
+        var faqs = new (string Question, string Answer)[]
         {
-            DmlRenderingMode = DmlRenderingMode.DrawingML
+            ("What is Aspose.Words?", "Aspose.Words is a .NET library for creating, editing, converting, and rendering Word documents without Microsoft Word."),
+            ("Which file formats are supported?", "DOC, DOCX, ODT, RTF, HTML, PDF, XPS, EPUB and many more."),
+            ("Can I render documents to PDF?", "Yes, using the PdfSaveOptions class you can save a document as PDF."),
+            ("How do I update fields programmatically?", "Call Document.UpdateFields() before saving the document.")
         };
 
-        // Save the document as PDF using the specified options.
-        doc.Save(outputFile, pdfOptions);
+        // Insert each FAQ entry.
+        foreach (var faq in faqs)
+        {
+            // Question as a heading.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+            builder.Writeln(faq.Question);
+
+            // Answer as normal paragraph.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln(faq.Answer);
+            builder.Writeln(); // Add spacing between entries.
+        }
+
+        // Ensure any fields are up‑to‑date.
+        doc.UpdateFields();
+
+        // Save the document.
+        doc.Save("FAQ.docx");
     }
 }

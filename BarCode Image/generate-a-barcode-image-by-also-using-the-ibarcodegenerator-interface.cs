@@ -3,55 +3,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class CustomBarcodeGenerator : IBarcodeGenerator
+namespace BarcodeConversionExample
 {
-    // Returns a simple 1x1 PNG image for any barcode request.
-    public Stream GetBarcodeImage(BarcodeParameters parameters)
+    // Simple implementation of IBarcodeGenerator that returns a tiny placeholder PNG.
+    // In a real scenario you would replace this with a proper barcode generation library.
+    public class SimpleBarcodeGenerator : IBarcodeGenerator
     {
-        return GetPlaceholderImage();
-    }
-
-    // Returns a simple 1x1 PNG image for old‑fashioned barcode fields.
-    public Stream GetOldBarcodeImage(BarcodeParameters parameters)
-    {
-        return GetPlaceholderImage();
-    }
-
-    private Stream GetPlaceholderImage()
-    {
-        // Minimal PNG (1×1 transparent pixel) byte array.
-        byte[] png = new byte[]
+        // Generates an image for DISPLAYBARCODE fields.
+        public Stream GetBarcodeImage(BarcodeParameters parameters)
         {
-            137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,
-            0,0,0,1,0,0,0,1,8,6,0,0,0,31,21,196,
-            137,0,0,0,12,73,68,65,84,8,153,99,0,1,0,0,
-            5,0,1,13,10,2,0,0,0,0,73,69,78,68,174,66,
-            96,130
-        };
-        return new MemoryStream(png);
+            return GeneratePlaceholderImage(parameters);
+        }
+
+        // Generates an image for old BARCODE fields.
+        public Stream GetOldBarcodeImage(BarcodeParameters parameters)
+        {
+            return GeneratePlaceholderImage(parameters);
+        }
+
+        private Stream GeneratePlaceholderImage(BarcodeParameters parameters)
+        {
+            // A 1x1 pixel transparent PNG (base64 encoded).
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+            byte[] pngBytes = Convert.FromBase64String(base64Png);
+            // Return a MemoryStream that is ready for reading.
+            return new MemoryStream(pngBytes);
+        }
     }
-}
 
-class Program
-{
-    static void Main()
+    class Program
     {
-        // Path to the source DOCX containing barcode fields.
-        string inputPath = "Barcodes.docx";
+        static void Main()
+        {
+            // Path to the source DOCX file that contains barcode fields.
+            string inputDocxPath = "Barcodes.docx";
 
-        // Path where the resulting PDF will be saved.
-        string outputPath = "Barcodes.pdf";
+            // Path where the resulting PDF will be saved.
+            string outputPdfPath = "Barcodes.pdf";
 
-        // Load the DOCX document.
-        Document doc = new Document(inputPath);
+            // Load the DOCX document.
+            Document doc = new Document(inputDocxPath);
 
-        // Assign the custom barcode generator to the document.
-        doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
+            // Assign the custom barcode generator to the document.
+            doc.FieldOptions.BarcodeGenerator = new SimpleBarcodeGenerator();
 
-        // Update fields so that barcode images are generated.
-        doc.UpdateFields();
+            // Update all fields so that barcode images are generated.
+            doc.UpdateFields();
 
-        // Save the document as PDF.
-        doc.Save(outputPath, SaveFormat.Pdf);
+            // Save the document as PDF. All barcode fields are now rendered as images.
+            doc.Save(outputPdfPath, SaveFormat.Pdf);
+        }
     }
 }

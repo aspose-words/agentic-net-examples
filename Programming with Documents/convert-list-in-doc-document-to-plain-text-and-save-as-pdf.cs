@@ -2,29 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ListToPlainTextPdf
+class ListToPdfConverter
 {
     static void Main()
     {
         // Path to the source DOC/DOCX file that contains the list.
-        string inputFile = @"C:\Docs\SourceListDocument.docx";
+        string sourcePath = "InputDocument.docx";
 
         // Path where the resulting PDF will be saved.
-        string outputFile = @"C:\Docs\PlainTextList.pdf";
+        string pdfPath = "ListAsPlainText.pdf";
 
-        // Load the source document as plain text. The PlainTextDocument class extracts
-        // the textual content of the file, ignoring all formatting and list labels.
-        PlainTextDocument plainTextDoc = new PlainTextDocument(inputFile);
+        // Load the document as plain text, automatically handling any format.
+        PlainTextDocument plainTextDoc = new PlainTextDocument(sourcePath);
         string extractedText = plainTextDoc.Text;
 
         // Create a new blank Word document.
         Document pdfDocument = new Document();
 
-        // Use DocumentBuilder to insert the extracted plain text into the new document.
+        // Insert the extracted plain‑text into the new document.
         DocumentBuilder builder = new DocumentBuilder(pdfDocument);
         builder.Writeln(extractedText);
 
-        // Save the new document as PDF.
-        pdfDocument.Save(outputFile, SaveFormat.Pdf);
+        // Save the document as PDF.
+        pdfDocument.Save(pdfPath, SaveFormat.Pdf);
     }
 }

@@ -3,40 +3,41 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class InsertOleObjectExample
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Initialize DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a heading for the OLE object section.
+        // Add a heading for the OLE object.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Embedded OLE Object Example");
+        builder.Writeln("Embedded OLE Object");
 
-        // Return to normal paragraph style for subsequent content.
+        // Return to normal paragraph style for the OLE insertion.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
 
-        // Path to the file that will be embedded as an OLE object (e.g., a ZIP archive).
-        string zipFilePath = @"C:\Data\sample.zip";
+        // Path to the file that will be embedded as an OLE object.
+        // Replace with an actual file path on your system.
+        string oleFilePath = @"C:\Path\To\Your\File.xlsx";
 
-        // Open the file as a stream and insert it as an OLE object displayed as an icon.
-        using (FileStream zipStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read))
+        // Optional: path to an icon image to display for the OLE object.
+        // If null, Aspose.Words will use a predefined icon.
+        string iconPath = @"C:\Path\To\Your\Icon.ico";
+
+        // Insert the OLE object as an icon (embedded, not linked).
+        // Parameters: file name, isLinked = false, asIcon = true, presentation = icon stream.
+        using (FileStream iconStream = File.OpenRead(iconPath))
         {
-            // progId "Package" indicates a generic OLE package.
-            // The third argument (true) specifies that the object should be shown as an icon.
-            // The fourth argument (null) lets Aspose.Words choose a default icon.
-            Shape oleShape = builder.InsertOleObject(zipStream, "Package", true, null);
-
-            // Set custom file name and display name for the embedded package.
-            oleShape.OleFormat.OlePackage.FileName = Path.GetFileName(zipFilePath);
-            oleShape.OleFormat.OlePackage.DisplayName = "Sample Zip Archive";
+            builder.InsertOleObject(oleFilePath, false, true, iconStream);
         }
 
-        // Save the resulting document to disk.
-        doc.Save(@"C:\Output\OleObjectDemo.docx");
+        // Save the document to a DOCX file.
+        // Replace with your desired output path.
+        string outputPath = @"C:\Path\To\Output\OleObjectDocument.docx";
+        doc.Save(outputPath);
     }
 }

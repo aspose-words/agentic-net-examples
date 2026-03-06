@@ -1,51 +1,32 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
-class LoadSystemFontsExample
+class Program
 {
     static void Main()
     {
-        // Load an existing DOCX document.
-        Document doc = new Document("InputDocument.docx");
+        // Load the DOCX document.
+        Document doc = new Document("Input.docx");
 
-        // Ensure the document has FontSettings (creates a default instance if null).
-        if (doc.FontSettings == null)
-            doc.FontSettings = new FontSettings();
+        // Retrieve all system font folders.
+        string[] systemFontFolders = SystemFontSource.GetSystemFontFolders();
 
-        // Retrieve the system font source that represents all TrueType fonts installed on the OS.
-        FontSourceBase[] sources = doc.FontSettings.GetFontsSources();
-        SystemFontSource systemFontSource = null;
+        // Create a FolderFontSource for each system folder (non‑recursive scan).
+        FontSourceBase[] folderSources = systemFontFolders
+            .Select(folder => new FolderFontSource(folder, false) as FontSourceBase)
+            .ToArray();
 
-        // Find the SystemFontSource among the existing sources.
-        foreach (FontSourceBase source in sources)
-        {
-            if (source is SystemFontSource)
-            {
-                systemFontSource = (SystemFontSource)source;
-                break;
-            }
-        }
+        // Create a new FontSettings instance and assign the folder sources.
+        FontSettings fontSettings = new FontSettings();
+        fontSettings.SetFontsSources(folderSources);
 
-        // If for some reason the system source is missing, create and add it.
-        if (systemFontSource == null)
-        {
-            systemFontSource = new SystemFontSource();
-            doc.FontSettings.SetFontsSources(new FontSourceBase[] { systemFontSource });
-        }
+        // Apply the FontSettings to the document.
+        doc.FontSettings = fontSettings;
 
-        // Example: list all available system fonts to the console.
-        foreach (PhysicalFontInfo fontInfo in systemFontSource.GetAvailableFonts())
-        {
-            Console.WriteLine($"FontFamilyName: {fontInfo.FontFamilyName}");
-            Console.WriteLine($"FullFontName  : {fontInfo.FullFontName}");
-            Console.WriteLine($"Version       : {fontInfo.Version}");
-            Console.WriteLine($"FilePath      : {fontInfo.FilePath}");
-            Console.WriteLine();
-        }
-
-        // Save the document (fonts are now loaded from system folders).
-        doc.Save("OutputDocument.docx");
+        // Save the document with the loaded fonts.
+        doc.Save("Output.docx");
     }
 }

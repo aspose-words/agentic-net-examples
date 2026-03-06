@@ -1,37 +1,37 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class Program
+class InsertGroupShapeExample
 {
     static void Main()
     {
-        // Create a new DOCM document.
-        Document doc = new Document();
+        // Load an existing DOCM document.
+        Document doc = new Document("Input.docm");
+
+        // Create a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape.
-        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 250);
-        rect.Left = 20;
-        rect.Top = 20;
-        rect.Stroke.Color = Color.Red;
+        // Insert two floating shapes that will be grouped.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rect.Left = 50;   // Position from the left edge of the page.
+        rect.Top = 50;    // Position from the top edge of the page.
+        rect.Stroke.Color = Color.Blue;
 
-        // Insert an ellipse shape.
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 200);
-        ellipse.Left = 40;
-        ellipse.Top = 50;
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        ellipse.Left = 300;
+        ellipse.Top = 100;
         ellipse.Stroke.Color = Color.Green;
 
-        // Group the two shapes into a new GroupShape node.
+        // Group the two shapes. The group shape will be inserted at the current cursor position.
         GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Example of setting additional properties on the group shape.
+        // Optionally adjust the group shape's properties.
         group.WrapType = WrapType.None;
-        group.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        group.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        group.BehindText = true;
 
-        // Save the document as a macro-enabled DOCM file.
-        doc.Save("GroupShape.docm", SaveFormat.Docm);
+        // Save the modified document as a DOCM file.
+        doc.Save("Output.docm");
     }
 }

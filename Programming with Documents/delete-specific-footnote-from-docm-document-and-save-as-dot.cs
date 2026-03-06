@@ -1,37 +1,35 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Notes;
-using Aspose.Words.Saving;
 
 class DeleteFootnoteExample
 {
     static void Main()
     {
         // Path to the source DOCM file.
-        string inputPath = @"C:\Docs\SourceDocument.docm";
+        string inputPath = "input.docm";
 
-        // Path where the resulting DOT template will be saved.
-        string outputPath = @"C:\Docs\ResultTemplate.dot";
+        // Path where the resulting DOT file will be saved.
+        string outputPath = "output.dot";
 
-        // Load the DOCM document.
+        // Load the existing DOCM document.
         Document doc = new Document(inputPath);
 
-        // OPTIONAL: Update fields so that reference marks are current.
-        doc.UpdateFields();
-        doc.UpdateActualReferenceMarks();
+        // Index of the footnote to delete (zero‑based).
+        // Adjust this value to target the specific footnote you need to remove.
+        int footnoteIndex = 0;
 
-        // Identify the footnote to delete.
-        // For example, delete the footnote with index 0 (the first footnote in the document).
-        // Adjust the index as needed or locate by custom ReferenceMark.
-        Footnote footnote = doc.GetChild(NodeType.Footnote, 0, true) as Footnote;
+        // Retrieve the footnote node. The GetChild method searches the whole document
+        // for nodes of the specified type. The third parameter 'true' enables deep search.
+        Footnote footnote = doc.GetChild(NodeType.Footnote, footnoteIndex, true) as Footnote;
 
+        // If the footnote exists, remove it from its parent.
         if (footnote != null)
         {
-            // Remove the footnote from its parent.
             footnote.Remove();
         }
 
-        // Save the modified document as a DOT template.
+        // Save the modified document as a Word template (DOT format).
         doc.Save(outputPath, SaveFormat.Dot);
     }
 }

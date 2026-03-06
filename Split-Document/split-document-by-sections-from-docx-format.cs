@@ -2,35 +2,37 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-namespace DocumentSplitBySections
+class SplitBySections
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Load the source DOCX document.
+        string inputPath = "input.docx";
+        Document sourceDoc = new Document(inputPath);
+
+        // Ensure the output directory exists.
+        string outputFolder = "OutputSections";
+        Directory.CreateDirectory(outputFolder);
+
+        // Iterate through each section in the source document.
+        for (int i = 0; i < sourceDoc.Sections.Count; i++)
         {
-            // Load the source DOCX document.
-            Document sourceDoc = new Document("input.docx");
+            // Create a new empty document.
+            Document partDoc = new Document();
 
-            // Iterate through each section in the source document.
-            for (int i = 0; i < sourceDoc.Sections.Count; i++)
-            {
-                // Create a new blank document (lifecycle rule: create).
-                Document partDoc = new Document();
+            // Remove the default empty section that the constructor adds.
+            partDoc.Sections.Clear();
 
-                // Remove any default nodes that a blank document contains.
-                partDoc.RemoveAllChildren();
+            // Import the current section from the source document into the new document.
+            Section srcSection = sourceDoc.Sections[i];
+            Node importedSection = partDoc.ImportNode(srcSection, true);
 
-                // Import the current section from the source document into the new document.
-                // ImportNode preserves formatting (importNode rule).
-                Section importedSection = (Section)partDoc.ImportNode(sourceDoc.Sections[i], true);
+            // Append the imported section to the new document.
+            partDoc.AppendChild(importedSection);
 
-                // Append the imported section to the new document.
-                partDoc.AppendChild(importedSection);
-
-                // Save the split part (lifecycle rule: save).
-                string outputPath = $"Section_{i + 1}.docx";
-                partDoc.Save(outputPath);
-            }
+            // Save the split document using a sequential file name.
+            string outputPath = Path.Combine(outputFolder, $"Section_{i + 1}.docx");
+            partDoc.Save(outputPath);
         }
     }
 }

@@ -9,18 +9,16 @@ class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add a paragraph with a placeholder.
+        // Use DocumentBuilder to add a paragraph with a placeholder token.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Greetings, _FullName_!");
+        builder.Writeln("Hello, _Name_! Welcome to _Company_.");
 
-        // Perform a find-and-replace operation on the whole document.
-        // Replace the placeholder with the actual name.
-        int replacements = doc.Range.Replace("_FullName_", "John Doe");
+        // Replace the placeholder tokens with actual values.
+        // Simple string replace (case‑insensitive, whole word not required).
+        doc.Range.Replace("_Name_", "John Doe");
+        doc.Range.Replace("_Company_", "Aspose");
 
-        // Optional: verify that a replacement was made.
-        Console.WriteLine($"Number of replacements performed: {replacements}");
-
-        // Save the resulting document to disk.
-        doc.Save("Result.docx");
+        // Save the resulting document.
+        doc.Save("ReplacedDocument.docx");
     }
 }

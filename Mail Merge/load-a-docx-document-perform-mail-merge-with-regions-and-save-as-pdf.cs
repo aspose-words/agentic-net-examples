@@ -1,61 +1,49 @@
 using System;
 using System.Data;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.MailMerging;
 
-namespace MailMergeWithRegionsToPdf
+class MailMergeWithRegionsToPdf
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Load the source DOCX document that contains mail‑merge regions.
-            // The Document constructor handles loading; no custom loading code is required.
-            Document doc = new Document("TemplateWithRegions.docx");
+        // Load the DOCX template that contains mail‑merge regions.
+        Document doc = new Document("Template.docx");
 
-            // Prepare a DataSet that matches the mail‑merge region names in the template.
-            // Each DataTable must have its TableName set to the region name.
-            DataSet data = CreateSampleDataSet();
+        // ------------------------------------------------------------
+        // Prepare a DataSet with tables that match the region names.
+        // ------------------------------------------------------------
+        DataSet dataSet = new DataSet();
 
-            // Execute the mail merge using the DataSet. This will expand the regions
-            // according to the rows in each table.
-            doc.MailMerge.ExecuteWithRegions(data);
+        // First region: Customers
+        DataTable customers = new DataTable("Customers");
+        customers.Columns.Add("CustomerName");
+        customers.Columns.Add("Address");
+        customers.Rows.Add("Thomas Hardy", "120 Hanover Sq., London");
+        customers.Rows.Add("Paolo Accorti", "Via Monte Bianco 34, Torino");
+        dataSet.Tables.Add(customers);
 
-            // Save the merged document as PDF. The Save method determines the format
-            // from the SaveFormat enum; this follows the required lifecycle rule.
-            doc.Save("MergedResult.pdf", SaveFormat.Pdf);
-        }
+        // Second (nested) region: Orders
+        DataTable orders = new DataTable("Orders");
+        orders.Columns.Add("CustomerName"); // foreign key to link with Customers
+        orders.Columns.Add("Item");
+        orders.Columns.Add("Quantity");
+        orders.Rows.Add("Thomas Hardy", "Rugby World Cup Cap", "2");
+        orders.Rows.Add("Thomas Hardy", "Rugby World Cup Ball", "1");
+        orders.Rows.Add("Paolo Accorti", "Rugby World Cup Guide", "1");
+        dataSet.Tables.Add(orders);
 
-        // Creates a sample DataSet with two tables: "Customers" and "Orders".
-        // The "Orders" table is related to "Customers" via the "CustomerID" column.
-        private static DataSet CreateSampleDataSet()
-        {
-            // Customers table – corresponds to a mail‑merge region named "Customers".
-            DataTable customers = new DataTable("Customers");
-            customers.Columns.Add("CustomerID", typeof(int));
-            customers.Columns.Add("CustomerName", typeof(string));
-            customers.Columns.Add("Address", typeof(string));
+        // Define the relationship so that Aspose.Words can repeat the inner region per parent row.
+        dataSet.Relations.Add(customers.Columns["CustomerName"], orders.Columns["CustomerName"]);
 
-            customers.Rows.Add(1, "Thomas Hardy", "120 Hanover Sq., London");
-            customers.Rows.Add(2, "Paolo Accorti", "Via Monte Bianco 34, Torino");
+        // ------------------------------------------------------------
+        // Execute mail merge with regions using the prepared DataSet.
+        // ------------------------------------------------------------
+        doc.MailMerge.ExecuteWithRegions(dataSet);
 
-            // Orders table – corresponds to a nested mail‑merge region named "Orders".
-            DataTable orders = new DataTable("Orders");
-            orders.Columns.Add("CustomerID", typeof(int));
-            orders.Columns.Add("ItemName", typeof(string));
-            orders.Columns.Add("Quantity", typeof(int));
-
-            orders.Rows.Add(1, "Rugby World Cup Cap", 2);
-            orders.Rows.Add(1, "Rugby World Cup Ball", 1);
-            orders.Rows.Add(2, "Rugby World Cup Guide", 1);
-
-            // Assemble the DataSet and define the relationship.
-            DataSet dataSet = new DataSet();
-            dataSet.Tables.Add(customers);
-            dataSet.Tables.Add(orders);
-            dataSet.Relations.Add(customers.Columns["CustomerID"], orders.Columns["CustomerID"]);
-
-            return dataSet;
-        }
+        // ------------------------------------------------------------
+        // Save the merged document as PDF.
+        // ------------------------------------------------------------
+        doc.Save("Result.pdf", SaveFormat.Pdf);
     }
 }

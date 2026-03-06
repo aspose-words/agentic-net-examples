@@ -1,9 +1,8 @@
 using System;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Notes;
+using Aspose.Words.Saving;
 
-class RemoveNotesAndConvert
+class RemoveNotesAndConvertToEpub
 {
     static void Main()
     {
@@ -11,16 +10,12 @@ class RemoveNotesAndConvert
         Document doc = new Document("InputDocument.docx");
 
         // Collect all footnote and endnote nodes in the document.
-        var notes = doc.GetChildNodes(NodeType.Footnote, true)
-                       .Cast<Footnote>()
-                       .ToList();
+        NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
 
-        // Remove each footnote and endnote from the document.
-        foreach (Footnote note in notes)
+        // Remove each note node starting from the end to avoid index shifting.
+        for (int i = notes.Count - 1; i >= 0; i--)
         {
-            // Both footnotes and endnotes are represented by the Footnote class.
-            // The FootnoteType property distinguishes them.
-            note.Remove();
+            notes[i].Remove();
         }
 
         // Save the modified document as EPUB.

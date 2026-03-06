@@ -1,23 +1,24 @@
 using System;
 using Aspose.Words;
 
-class RemoveWatermarkFromDot
+class Program
 {
     static void Main()
     {
-        // Path to the folder that contains the DOT template.
-        string dataDir = @"C:\Docs\";
+        // Paths to the source DOT file and the output file without watermark.
+        string inputPath = @"C:\Docs\Template.dot";
+        string outputPath = @"C:\Docs\Template_NoWatermark.dot";
 
         // Load the DOT document.
-        Document doc = new Document(dataDir + "Template.dot");
+        Document doc = new Document(inputPath);
 
-        // If a watermark is present, remove it.
+        // If a watermark exists, remove it.
         if (doc.Watermark.Type != WatermarkType.None)
         {
             doc.Watermark.Remove();
         }
 
-        // Save the document without the watermark.
-        doc.Save(dataDir + "Template_NoWatermark.dot");
+        // Save the modified document.
+        doc.Save(outputPath);
     }
 }

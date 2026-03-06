@@ -1,57 +1,48 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Loading;
+using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Simple data model used in the template.
-    public class Product
+    // Simple data source class containing an array.
+    public class MyDataSource
     {
-        public string Name { get; set; }
-        public double Price { get; set; }
-    }
+        // The array will be automatically treated as an IEnumerable by the ReportingEngine.
+        public string[] Names { get; set; }
 
-    // Wrapper class that contains an array of products.
-    public class ReportData
-    {
-        public Product[] Products { get; set; }
+        public MyDataSource(string[] names)
+        {
+            Names = names;
+        }
     }
 
     class Program
     {
         static void Main()
         {
-            // Load the RTF template. The template contains a LINQ Reporting tag such as:
-            // <<foreach [ds.Products]>><<[Name]>> - $<<[Price]:currency>><</foreach>>
-            // The RtfLoadOptions can be customized if needed.
-            var loadOptions = new RtfLoadOptions();
-            Document template = new Document("Template.rtf", loadOptions);
+            // Path to the input RTF template and the output document.
+            string inputRtfPath = Path.Combine(Environment.CurrentDirectory, "Template.rtf");
+            string outputDocxPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
 
-            // Prepare the data source with an array of Product objects.
-            var data = new ReportData
-            {
-                Products = new[]
-                {
-                    new Product { Name = "Apple",  Price = 0.99 },
-                    new Product { Name = "Banana", Price = 0.59 },
-                    new Product { Name = "Cherry", Price = 2.49 }
-                }
-            };
+            // Load the RTF document with default load options.
+            // RtfLoadOptions can be customized if needed (e.g., RecognizeUtf8Text).
+            RtfLoadOptions loadOptions = new RtfLoadOptions();
+            Document templateDoc = new Document(inputRtfPath, loadOptions);
 
-            // Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            // The data source name "ds" matches the name used in the template tags.
-            engine.BuildReport(template, data, "ds");
+            // Prepare the data source. The array will be converted to a collection
+            // type internally by the ReportingEngine when the template accesses it.
+            string[] nameArray = new[] { "Alice", "Bob", "Charlie" };
+            MyDataSource data = new MyDataSource(nameArray);
+
+            // Create the ReportingEngine and build the report.
+            ReportingEngine engine = new ReportingEngine();
+            // The data source name "ds" can be used inside the template as <<[ds.Names]>>
+            engine.BuildReport(templateDoc, data, "ds");
 
             // Save the populated document.
-            template.Save("Report.docx");
-
-            // Example of converting the document's SectionCollection to an array (canonical collection type).
-            Section[] sectionsArray = template.Sections.ToArray();
-
-            // Output the number of sections to verify the conversion.
-            Console.WriteLine($"Document contains {sectionsArray.Length} section(s).");
+            templateDoc.Save(outputDocxPath, SaveFormat.Docx);
         }
     }
 }

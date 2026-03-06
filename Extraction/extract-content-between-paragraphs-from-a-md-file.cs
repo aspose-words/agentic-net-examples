@@ -8,30 +8,32 @@ class Program
     static void Main()
     {
         // Path to the Markdown file.
-        string markdownPath = "input.md";
+        const string markdownPath = "input.md";
 
         // Load the Markdown document while preserving empty lines.
-        using (MemoryStream stream = new MemoryStream(File.ReadAllBytes(markdownPath)))
+        var loadOptions = new MarkdownLoadOptions { PreserveEmptyLines = true };
+        Document doc;
+        using (FileStream stream = new FileStream(markdownPath, FileMode.Open, FileAccess.Read))
         {
-            MarkdownLoadOptions loadOptions = new MarkdownLoadOptions { PreserveEmptyLines = true };
-            Document doc = new Document(stream, loadOptions);
+            doc = new Document(stream, loadOptions);
+        }
 
-            // Access the collection of paragraphs in the main body.
-            ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
+        // Access the collection of paragraphs in the main body.
+        ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
 
-            // Write each paragraph's content (without the trailing paragraph break) to an output file.
-            using (StreamWriter writer = new StreamWriter("extracted.txt"))
-            {
-                for (int i = 0; i < paragraphs.Count; i++)
-                {
-                    // Get the full text of the paragraph, then trim the paragraph break characters.
-                    string paragraphText = paragraphs[i].GetText().TrimEnd('\r', '\n');
+        // Iterate through consecutive paragraph pairs and output the text that lies between them.
+        // In Aspose.Words the "content between paragraphs" is represented by the paragraphs themselves,
+        // so we display the text of each paragraph pair.
+        for (int i = 0; i < paragraphs.Count - 1; i++)
+        {
+            // Get raw text of each paragraph (includes the paragraph break character).
+            string firstParagraph = paragraphs[i].GetText().TrimEnd('\r', '\n');
+            string secondParagraph = paragraphs[i + 1].GetText().TrimEnd('\r', '\n');
 
-                    writer.WriteLine($"Paragraph {i + 1}:");
-                    writer.WriteLine(paragraphText);
-                    writer.WriteLine(); // Separate entries with an empty line.
-                }
-            }
+            Console.WriteLine($"--- Between Paragraph {i} and {i + 1} ---");
+            Console.WriteLine($"First : {firstParagraph}");
+            Console.WriteLine($"Second: {secondParagraph}");
+            Console.WriteLine();
         }
     }
 }

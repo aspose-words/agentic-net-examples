@@ -3,17 +3,16 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ExtractBetweenNodes
+class Program
 {
     static void Main()
     {
         // Load the HTML file into an Aspose.Words document.
         Document doc = new Document("input.html");
 
-        // Locate the start and end nodes using XPath.
-        // Adjust the XPath expressions to match the actual markers in your HTML.
-        Node startNode = doc.SelectSingleNode("//p[@id='start']");
-        Node endNode   = doc.SelectSingleNode("//p[@id='end']");
+        // Locate the start and end markers. In this example we look for <div id="start"> and <div id="end">.
+        Node startNode = doc.SelectSingleNode("//div[@id='start']");
+        Node endNode = doc.SelectSingleNode("//div[@id='end']");
 
         if (startNode == null || endNode == null)
         {
@@ -21,25 +20,28 @@ class ExtractBetweenNodes
             return;
         }
 
-        // Collect the content of all nodes that appear between the start and end nodes (exclusive).
-        StringBuilder extracted = new StringBuilder();
-
-        for (Node cur = startNode.NextSibling; cur != null && cur != endNode; cur = cur.NextSibling)
+        // Verify that both nodes share the same parent (they are siblings).
+        if (startNode.ParentNode != endNode.ParentNode)
         {
-            // Export each node to its HTML representation.
-            extracted.Append(cur.ToString(SaveFormat.Html));
+            Console.WriteLine("Start and end nodes are not siblings.");
+            return;
         }
 
-        string extractedHtml = extracted.ToString();
+        // Collect the HTML representation of all nodes that lie between the start and end nodes.
+        StringBuilder sb = new StringBuilder();
+        Node current = startNode.NextSibling;
+        while (current != null && current != endNode)
+        {
+            // Export each node to raw HTML using the ToString overload.
+            sb.Append(current.ToString(SaveFormat.Html));
+            current = current.NextSibling;
+        }
 
-        // Output the extracted HTML to the console.
-        Console.WriteLine("Extracted HTML content:");
-        Console.WriteLine(extractedHtml);
+        string extractedHtml = sb.ToString();
 
-        // Save the extracted content as a separate HTML file.
-        Document tempDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(tempDoc);
-        builder.InsertHtml(extractedHtml);
-        tempDoc.Save("extracted.html", SaveFormat.Html);
+        // Save the extracted fragment to a separate HTML file.
+        System.IO.File.WriteAllText("extracted.html", extractedHtml);
+
+        Console.WriteLine("Content extracted successfully.");
     }
 }

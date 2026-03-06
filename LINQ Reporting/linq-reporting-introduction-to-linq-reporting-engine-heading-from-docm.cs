@@ -1,24 +1,24 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Data;
 
 class Program
 {
     static void Main()
     {
-        // Load the DOCM template that contains the heading for the LINQ Reporting Engine introduction.
-        Document template = new Document("ReportingEngineTemplate.docm");
+        // Create a new blank Word document.
+        Document doc = new Document();
 
-        // Create an instance of the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
+        // Use DocumentBuilder to add content to the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build the report. In this simple scenario we do not need any external data,
-        // so we pass an empty DataSet as the data source.
-        DataSet emptyDataSource = new DataSet();
-        engine.BuildReport(template, emptyDataSource);
+        // Set the paragraph style to Heading1 for a proper heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
 
-        // Save the populated document to the desired output format.
-        template.Save("ReportingEngineIntroduction.docx");
+        // Write the heading text.
+        builder.Writeln("LINQ Reporting Introduction to LINQ Reporting Engine");
+
+        // Save the document in DOCM format (Word macro-enabled document).
+        doc.Save("LINQReporting.docm");
     }
 }

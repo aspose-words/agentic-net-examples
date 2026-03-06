@@ -7,18 +7,19 @@ class Program
     static void Main()
     {
         // Load the existing DOCX document.
-        Document doc = new Document("input.docx");
+        Document doc = new Document("InputDocument.docx");
 
-        // Create a simple mail‑merge template by inserting merge fields.
-        // This demonstrates how to prepare the document for a later mail merge.
+        // -------------------------------------------------
+        // Create a simple mail‑merge template.
+        // (If the document already contains merge fields this step can be omitted.
+        //  Here we add a sample MERGEFIELD for demonstration purposes.)
+        // -------------------------------------------------
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(); // start a new paragraph
-        builder.InsertField("MERGEFIELD FirstName"); // insert first name field
-        builder.Write(" "); // space between fields
-        builder.InsertField("MERGEFIELD LastName"); // insert last name field
+        builder.MoveToDocumentEnd();
+        builder.InsertField("MERGEFIELD Name", "«Name»");
+        builder.Writeln();
 
-        // Save the first page of the document as a PNG image.
-        // The Save overload with SaveFormat renders the document to an image.
-        doc.Save("output.png", SaveFormat.Png);
+        // Save the document as a PNG image (renders the first page).
+        doc.Save("OutputImage.png", SaveFormat.Png);
     }
 }

@@ -1,35 +1,34 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Saving;
+using Aspose.Words.Fields; // Added for Field and FieldType
 
-class Program
+class RemoveTocAndConvertToTiff
 {
     static void Main()
     {
-        // Path to the source DOC file.
-        string sourcePath = @"C:\Docs\Source.doc";
+        // Path to the source DOC document.
+        const string inputPath = @"C:\Docs\SourceDocument.doc";
 
-        // Path where the resulting TIFF will be saved.
-        string resultPath = @"C:\Docs\Result.tiff";
+        // Path where the resulting TIFF image will be saved.
+        const string outputPath = @"C:\Docs\ResultImage.tiff";
 
-        // Load the existing document.
-        Document doc = new Document(sourcePath);
+        // Load the existing Word document.
+        Document doc = new Document(inputPath);
 
-        // Iterate through all fields in the document and remove any Table of Contents fields.
-        foreach (Field field in doc.Range.Fields)
+        // Remove all Table of Contents (TOC) fields.
+        // Iterate backwards to avoid collection modification issues.
+        for (int i = doc.Range.Fields.Count - 1; i >= 0; i--)
         {
+            Field field = doc.Range.Fields[i];
             if (field.Type == FieldType.FieldTOC)
                 field.Remove();
         }
 
-        // Re‑calculate layout after removing the TOC.
-        doc.UpdatePageLayout();
-
-        // Prepare image save options for TIFF output.
+        // Prepare image save options for TIFF format.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
 
-        // Save the modified document as a multi‑page TIFF image.
-        doc.Save(resultPath, saveOptions);
+        // Save the modified document as a TIFF image.
+        doc.Save(outputPath, saveOptions);
     }
 }

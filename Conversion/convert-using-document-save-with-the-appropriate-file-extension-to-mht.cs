@@ -1,23 +1,14 @@
 using System;
 using Aspose.Words;
 
-class ConvertDocmToMhtml
+class Program
 {
     static void Main()
     {
-        // Path to the source DOCM file.
-        string inputPath = @"C:\Docs\SourceDocument.docm";
+        // Load the macro-enabled DOCM document from disk.
+        Document doc = new Document("Input.docm");
 
-        // Path to the destination MHTML file.
-        string outputPath = @"C:\Docs\ConvertedDocument.mhtml";
-
-        // Load the DOCM document.
-        Document doc = new Document(inputPath);
-
-        // Save the document in MHTML format using the explicit SaveFormat.
-        doc.Save(outputPath, SaveFormat.Mhtml);
-
-        // Alternatively, you could rely on the file extension:
-        // doc.Save(outputPath);
+        // Save the document as MHTML (Web archive) using the explicit SaveFormat.
+        doc.Save("Output.mhtml", SaveFormat.Mhtml);
     }
 }

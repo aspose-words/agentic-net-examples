@@ -8,24 +8,24 @@ namespace TableJoinExample
     {
         static void Main()
         {
-            // Load the existing DOTM document that contains at least two tables.
-            Document doc = new Document("InputDocument.dotm");
+            // Load the existing DOTM document.
+            Document doc = new Document("InputTemplate.dotm");
 
-            // Retrieve the first table from the document's body.
+            // Retrieve the first table from the document's body collection.
             Table firstTable = doc.FirstSection.Body.Tables[0];
 
-            // Retrieve the second table using the GetChild method (index 1).
+            // Retrieve the second table using the GetChild method.
             Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
 
-            // Move all rows from the second table to the first table.
+            // Transfer all rows from the second table to the first table.
             while (secondTable.HasChildNodes)
                 firstTable.Rows.Add(secondTable.FirstRow);
 
-            // Remove the now‑empty second table from the document.
+            // Remove the now empty second table container.
             secondTable.Remove();
 
-            // Save the modified document.
-            doc.Save("OutputDocument.dotm");
+            // Save the document with the combined table.
+            doc.Save("CombinedTables.dotm");
         }
     }
 }

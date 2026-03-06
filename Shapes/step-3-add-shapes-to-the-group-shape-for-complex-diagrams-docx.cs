@@ -1,49 +1,67 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class AddShapesToGroupShape
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank document and a DocumentBuilder for editing.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape.
+        // Insert two basic shapes that will be grouped together.
         Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 150);
-        rect.Left = 20;               // Position relative to the page.
-        rect.Top = 20;
+        rect.Left = 50;
+        rect.Top = 50;
         rect.Stroke.Color = Color.Blue;
 
-        // Insert an ellipse shape.
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 100);
-        ellipse.Left = 250;
-        ellipse.Top = 30;
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        ellipse.Left = 300;
+        ellipse.Top = 70;
         ellipse.Stroke.Color = Color.Green;
 
         // Group the rectangle and ellipse into a single GroupShape.
         GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Create a star shape that will be added directly to the group.
+        // Add additional shapes directly to the existing group.
+        // Example: a star shape positioned relative to the group's coordinate system.
         Shape star = new Shape(doc, ShapeType.Star)
         {
             Width = 80,
             Height = 80,
-            // Position inside the group's own coordinate system.
-            Left = -40,
+            Left = -40,   // Center the star within the group.
             Top = -40,
-            FillColor = Color.Yellow
+            FillColor = Color.Yellow,
+            Stroke = { Color = Color.Orange }
         };
-
-        // Append the star to the existing group.
         group.AppendChild(star);
 
-        // Adjust the group's internal coordinate system (optional).
-        group.CoordSize = new Size(500, 500);   // Scale of the group's coordinate plane.
-        group.CoordOrigin = new Point(-250, -250); // Move origin to the centre of the group.
+        // Example: a text box shape placed near the bottom‑right corner of the group.
+        Shape textBox = new Shape(doc, ShapeType.TextBox)
+        {
+            Width = 120,
+            Height = 40,
+            // Position using the group's internal coordinate plane.
+            Left = group.CoordSize.Width + group.CoordOrigin.X - 120,
+            Top = group.CoordSize.Height + group.CoordOrigin.Y,
+            FillColor = Color.LightGray
+        };
+        // Add a paragraph with text inside the text box.
+        Paragraph para = new Paragraph(doc);
+        para.AppendChild(new Run(doc, "Complex Diagram"));
+        textBox.AppendChild(para);
+        group.AppendChild(textBox);
 
-        // Save the document containing the complex grouped shapes.
-        doc.Save("ComplexGroupShape.docx");
+        // Optionally adjust the group's internal coordinate system for better scaling.
+        group.CoordSize = new Size(1000, 1000);
+        group.CoordOrigin = new Point(0, 0);
+
+        // Insert the completed group shape into the document at the current builder position.
+        // (The group is already inserted by InsertGroupShape, so no further insertion is required.)
+
+        // Save the document to a DOCX file.
+        doc.Save("ComplexDiagramGroupShape.docx");
     }
 }

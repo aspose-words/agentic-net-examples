@@ -1,32 +1,50 @@
 using System;
+using System.Data;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Saving;
 
-class BarcodeToPdf
+class BarcodeToPdfExample
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a MERGEBARCODE field that will render a QR code.
-        // The field will generate the barcode image when fields are updated.
-        FieldMergeBarcode barcodeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
-        barcodeField.BarcodeType = "QR";                 // QR code type
-        barcodeField.BarcodeValue = "ABC123";            // Data to encode
-        barcodeField.BackgroundColor = "0xF8BD69";       // Custom background color
-        barcodeField.ForegroundColor = "0xB5413B";       // Custom foreground color
-        barcodeField.ErrorCorrectionLevel = "3";         // QR error correction level
-        barcodeField.ScalingFactor = "250";              // Scale the symbol
-        barcodeField.SymbolHeight = "1000";              // Height in TWIPS
-        barcodeField.SymbolRotation = "0";               // No rotation
+        // -------------------------------------------------
+        // Insert a MERGEBARCODE field for a QR code.
+        // -------------------------------------------------
+        FieldMergeBarcode qrField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+        qrField.BarcodeType = "QR";
+        qrField.BarcodeValue = "ABC123";
+        qrField.BackgroundColor = "0xF8BD69";
+        qrField.ForegroundColor = "0xB5413B";
+        qrField.ErrorCorrectionLevel = "3";
+        qrField.ScalingFactor = "250";
+        qrField.SymbolHeight = "1000";
+        qrField.SymbolRotation = "0";
 
-        // Force the field to be evaluated so the barcode image is generated.
+        // Add a line break between barcodes.
+        builder.Writeln();
+
+        // -------------------------------------------------
+        // Insert a MERGEBARCODE field for a CODE39 barcode.
+        // -------------------------------------------------
+        FieldMergeBarcode code39Field = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+        code39Field.BarcodeType = "CODE39";
+        code39Field.BarcodeValue = "12345ABCDE";
+        code39Field.AddStartStopChar = true;
+
+        // -------------------------------------------------
+        // Update fields so that barcode images are generated.
+        // -------------------------------------------------
         doc.UpdateFields();
 
-        // Save the document as PDF. The barcode image will be rendered in the PDF.
-        doc.Save("BarcodeOutput.pdf", SaveFormat.Pdf);
+        // -------------------------------------------------
+        // Save the document as PDF.
+        // -------------------------------------------------
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        doc.Save("BarcodesOutput.pdf", pdfOptions);
     }
 }

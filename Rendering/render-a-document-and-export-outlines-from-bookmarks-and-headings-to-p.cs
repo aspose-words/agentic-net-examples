@@ -1,35 +1,29 @@
-using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ExportOutlinesToPdf
+class Program
 {
     static void Main()
     {
-        // Path to the source Word document.
-        string inputPath = Path.Combine("MyDir", "Input.docx");
+        // Load the source document that contains headings and bookmarks.
+        Document doc = new Document("MyDir/DocumentWithBookmarksAndHeadings.docx");
 
-        // Path where the resulting PDF will be saved.
-        string outputPath = Path.Combine("ArtifactsDir", "Output.pdf");
+        // Create PDF save options to control outline generation.
+        PdfSaveOptions saveOptions = new PdfSaveOptions();
 
-        // Load the Word document.
-        Document doc = new Document(inputPath);
+        // Show the outline (navigation pane) when the PDF is opened.
+        saveOptions.PageMode = PdfPageMode.UseOutlines;
 
-        // Configure PDF save options to include outlines for bookmarks and headings.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        // Show the outline (bookmarks) pane when the PDF is opened.
-        pdfOptions.PageMode = PdfPageMode.UseOutlines;
-        // Display all Word bookmarks at the first level of the outline.
-        pdfOptions.OutlineOptions.DefaultBookmarksOutlineLevel = 1;
-        // Include headings up to level 3 in the outline (Heading1‑Heading3).
-        pdfOptions.OutlineOptions.HeadingsOutlineLevels = 3;
-        // Expand the first two outline levels automatically.
-        pdfOptions.OutlineOptions.ExpandedOutlineLevels = 2;
-        // Export bookmarks that are located in headers/footers (optional).
-        pdfOptions.HeaderFooterBookmarksExportMode = HeaderFooterBookmarksExportMode.All;
+        // Export all bookmarks at outline level 1.
+        saveOptions.OutlineOptions.DefaultBookmarksOutlineLevel = 1;
 
-        // Save the document as PDF using the configured options.
-        doc.Save(outputPath, pdfOptions);
+        // Include headings up to level 3 in the PDF outline.
+        saveOptions.OutlineOptions.HeadingsOutlineLevels = 3;
+
+        // Expand the first two outline levels by default.
+        saveOptions.OutlineOptions.ExpandedOutlineLevels = 2;
+
+        // Save the document as PDF with the configured outline options.
+        doc.Save("ArtifactsDir/DocumentWithOutlines.pdf", saveOptions);
     }
 }

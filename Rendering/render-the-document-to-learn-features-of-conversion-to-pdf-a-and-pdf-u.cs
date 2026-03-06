@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -9,48 +8,52 @@ namespace AsposeWordsPdfComplianceDemo
     {
         static void Main()
         {
-            // Input document path (replace with your actual file).
-            string inputPath = Path.Combine(@"C:\Docs", "Sample.docx");
+            // Path to the source Word document.
+            string inputPath = @"C:\Docs\SourceDocument.docx";
 
-            // Output folder (replace with your actual folder).
-            string outputFolder = @"C:\Output";
-
-            // Load the source document.
+            // Load the document from the file system.
             Document doc = new Document(inputPath);
 
-            // Create PDF save options.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-            // Set compliance to PDF/A-4 and PDF/UA-2.
-            // This combines long‑term preservation (PDF/A) with accessibility (PDF/UA).
-            pdfOptions.Compliance = PdfCompliance.PdfA4Ua2;
-
-            // Optional: ensure document structure is exported (required for PDF/A‑4 and PDF/UA‑2).
-            // The property is ignored for standards that already require it, but setting it
-            // makes the intent explicit.
-            pdfOptions.ExportDocumentStructure = true;
-
-            // Define the output file name.
-            string outputPath = Path.Combine(outputFolder, "Sample.PdfA4Ua2.pdf");
-
-            // Save the document as PDF with the specified compliance.
-            doc.Save(outputPath, pdfOptions);
-
-            // Demonstrate saving the same document as PDF/A‑1b (visual preservation only).
-            PdfSaveOptions pdfA1bOptions = new PdfSaveOptions
+            // ------------------------------------------------------------
+            // Example 1: Convert to PDF/A-4 (ISO 19005-4) with PDF/UA-2 compliance.
+            // ------------------------------------------------------------
+            PdfSaveOptions pdfA4Ua2Options = new PdfSaveOptions
             {
-                Compliance = PdfCompliance.PdfA1b
+                // PdfA4Ua2 combines PDF/A-4 and PDF/UA-2 standards.
+                Compliance = PdfCompliance.PdfA4Ua2
             };
-            string pdfA1bPath = Path.Combine(outputFolder, "Sample.PdfA1b.pdf");
-            doc.Save(pdfA1bPath, pdfA1bOptions);
 
-            // Demonstrate saving the same document as PDF/UA‑1 (accessibility only).
+            // Save the document as PDF/A-4 + PDF/UA-2.
+            string pdfA4Ua2Path = @"C:\Docs\Output_PdfA4_Ua2.pdf";
+            doc.Save(pdfA4Ua2Path, pdfA4Ua2Options);
+
+            // ------------------------------------------------------------
+            // Example 2: Convert to PDF/UA-1 (ISO 14289-1) compliance.
+            // ------------------------------------------------------------
             PdfSaveOptions pdfUa1Options = new PdfSaveOptions
             {
+                // Set compliance to PDF/UA-1.
                 Compliance = PdfCompliance.PdfUa1
             };
-            string pdfUa1Path = Path.Combine(outputFolder, "Sample.PdfUa1.pdf");
+
+            // Save the document as PDF/UA-1.
+            string pdfUa1Path = @"C:\Docs\Output_PdfUa1.pdf";
             doc.Save(pdfUa1Path, pdfUa1Options);
+
+            // ------------------------------------------------------------
+            // Example 3: Convert to PDF/A-1b (ISO 19005-1) compliance.
+            // ------------------------------------------------------------
+            PdfSaveOptions pdfA1bOptions = new PdfSaveOptions
+            {
+                // Set compliance to PDF/A-1b.
+                Compliance = PdfCompliance.PdfA1b
+            };
+
+            // Save the document as PDF/A-1b.
+            string pdfA1bPath = @"C:\Docs\Output_PdfA1b.pdf";
+            doc.Save(pdfA1bPath, pdfA1bOptions);
+
+            Console.WriteLine("Documents have been saved with the requested PDF compliance levels.");
         }
     }
 }

@@ -10,28 +10,19 @@ class InsertParagraphIntoSection
 
         // Create a new blank document that will receive the paragraph.
         Document dstDoc = new Document();
+        dstDoc.EnsureMinimum(); // Guarantees at least one section and body.
 
-        // Optionally add a new empty section to the destination document.
-        // (The blank document already contains one section, but this shows explicit usage.)
-        Section dstSection = new Section(dstDoc);
-        dstDoc.AppendChild(dstSection);
-
-        // Ensure the section has a body to hold paragraphs.
-        if (dstSection.Body == null)
-            dstSection.AppendChild(new Body(dstDoc));
-
-        // Get the paragraph you want to insert from the source document.
-        // Here we take the first paragraph of the first section.
+        // Retrieve the first (or any) paragraph from the source document.
         Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
 
-        // Import the paragraph into the destination document.
-        // This clones the node and translates styles/lists as needed.
-        Node importedParagraph = dstDoc.ImportNode(srcParagraph, true);
+        // Import the paragraph into the destination document, preserving its formatting.
+        NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
+        Paragraph importedParagraph = (Paragraph)importer.ImportNode(srcParagraph, true);
 
-        // Append the imported paragraph to the body of the target section.
-        dstSection.Body.AppendChild(importedParagraph);
+        // Append the imported paragraph to the body of the destination document's first section.
+        dstDoc.FirstSection.Body.AppendChild(importedParagraph);
 
-        // Save the resulting document as a DOTM (Word macro-enabled template).
+        // Save the resulting document as a DOTM (Word macro‑enabled template).
         dstDoc.Save("Result.dotm");
     }
 }

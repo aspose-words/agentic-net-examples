@@ -6,26 +6,18 @@ class Program
 {
     static void Main()
     {
-        // Path to the source PDF/A or PDF/UA document.
-        string inputPath = "input.pdf";
+        // Load an existing PDF/A or PDF/UA document.
+        // The Document constructor automatically detects the format.
+        Document doc = new Document("Input.pdf");
 
-        // Path where the resulting PDF will be saved.
-        string outputPath = "output.pdf";
-
-        // Load the existing PDF document.
-        Document doc = new Document(inputPath);
-
-        // Example modification: insert a new paragraph at the end of the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This text was added after loading the PDF.");
-
-        // Create a PdfSaveOptions object to specify PDF save settings.
+        // Create a PdfSaveOptions object to control PDF saving behavior.
         PdfSaveOptions saveOptions = new PdfSaveOptions();
 
-        // Set the desired PDF compliance level (e.g., PDF/A-2u). Change as needed.
+        // Set the desired PDF compliance level.
+        // Example: PDF/A-2u (preserves visual appearance and allows text extraction).
         saveOptions.Compliance = PdfCompliance.PdfA2u;
 
-        // Save the document as PDF using the specified compliance options.
-        doc.Save(outputPath, saveOptions);
+        // Save the document as a PDF using the specified compliance settings.
+        doc.Save("Output.pdf", saveOptions);
     }
 }

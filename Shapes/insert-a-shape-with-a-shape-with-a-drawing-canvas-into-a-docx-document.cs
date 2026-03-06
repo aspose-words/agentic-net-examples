@@ -2,34 +2,41 @@ using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
-class Program
+class InsertShapeWithCanvas
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a drawing canvas shape (inline) with the desired size.
-        // In recent versions of Aspose.Words the drawing canvas is represented by ShapeType.Group.
-        Shape canvas = builder.InsertShape(ShapeType.Group, 300, 200);
-        canvas.WrapType = WrapType.None;          // Make it floating (no text wrap).
-        canvas.BehindText = true;                // Place it behind the document text.
+        // Create a drawing canvas – in Aspose.Words this can be represented by a GroupShape.
+        GroupShape canvas = new GroupShape(doc);
+        // Set the canvas size and position (in points).
+        canvas.Bounds = new RectangleF(0, 0, 300, 200);
+        // Define the internal coordinate system for the canvas.
+        canvas.CoordSize = new Size(500, 500);
 
-        // Create a rectangle shape that will be placed inside the canvas.
-        Shape innerRectangle = new Shape(doc, ShapeType.Rectangle);
-        innerRectangle.Width = 100;
-        innerRectangle.Height = 50;
-        innerRectangle.Left = 20;                // Position relative to the canvas origin.
-        innerRectangle.Top = 20;
-        innerRectangle.FillColor = Color.LightBlue;
-        innerRectangle.Stroke.Color = Color.DarkBlue;
+        // Create a shape that will be placed inside the canvas.
+        Shape innerShape = new Shape(doc, ShapeType.Rectangle);
+        innerShape.Width = 150;   // width in points
+        innerShape.Height = 100;  // height in points
+        innerShape.Left = 50;     // position relative to the canvas origin
+        innerShape.Top = 30;
+        innerShape.Stroke.Color = Color.Blue;
+        innerShape.FillColor = Color.LightGray;
 
-        // Append the inner shape to the canvas so it becomes a child of the drawing canvas.
-        canvas.AppendChild(innerRectangle);
+        // Add the shape to the canvas.
+        canvas.AppendChild(innerShape);
 
-        // Save the document to a DOCX file.
-        doc.Save("DrawingCanvasShape.docx");
+        // Insert the canvas (group shape) into the document at the current cursor position.
+        builder.InsertNode(canvas);
+
+        // Save the document as DOCX with strict compliance to preserve the drawing canvas.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
+        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
+        doc.Save("ShapeWithCanvas.docx", saveOptions);
     }
 }

@@ -9,14 +9,20 @@ class Program
         // Path to the source DOCX file.
         string sourcePath = "input.docx";
 
-        // LoadOptions specifying that the document format is DOCX.
-        LoadOptions loadOptions = new LoadOptions(LoadFormat.Docx, "", "");
+        // Convert the SaveFormat.Docx enum to the corresponding LoadFormat.
+        LoadFormat docxLoadFormat = FileFormatUtil.SaveFormatToLoadFormat(SaveFormat.Docx);
 
-        // Load the document using the specified LoadOptions.
+        // Create LoadOptions and explicitly set the format to DOCX.
+        LoadOptions loadOptions = new LoadOptions
+        {
+            LoadFormat = docxLoadFormat
+        };
+
+        // Load the document using the specified DOCX load format.
         Document doc = new Document(sourcePath, loadOptions);
 
-        // Example conversion: save the loaded document as PDF.
-        string outputPath = "output.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // (Optional) Save the document to verify it was loaded correctly.
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

@@ -2,31 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class InspectTableDimensions
 {
     static void Main()
     {
         // Load the DOTM template document.
-        Document doc = new Document("Template.dotm");
+        Document doc = new Document("input.dotm");
 
-        // Retrieve all tables in the document (including those inside other nodes).
-        NodeCollection tableNodes = doc.GetChildNodes(NodeType.Table, true);
+        // Get all tables in the document (including nested ones).
+        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
 
         // Iterate through each table and output its row and column counts.
-        foreach (Table table in tableNodes)
+        for (int i = 0; i < tables.Count; i++)
         {
-            // Number of rows in the current table.
+            Table table = (Table)tables[i];
+
+            // Row count is the number of Row objects in the table.
             int rowCount = table.Rows.Count;
 
-            // Number of columns is determined by the cell count of the first row (if any rows exist).
-            int columnCount = 0;
-            if (rowCount > 0)
-                columnCount = table.Rows[0].Cells.Count;
+            // Column count is the number of cells in the first row (if any).
+            int columnCount = table.FirstRow != null ? table.FirstRow.Cells.Count : 0;
 
-            Console.WriteLine($"Table found: Rows = {rowCount}, Columns = {columnCount}");
+            Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
         }
 
-        // Save the document (optional – demonstrates the required save lifecycle step).
-        doc.Save("Output.docx");
+        // Optionally save the document after inspection (no modifications made).
+        doc.Save("output.docx");
     }
 }

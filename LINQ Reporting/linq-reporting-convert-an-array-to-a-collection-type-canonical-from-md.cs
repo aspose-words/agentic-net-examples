@@ -8,37 +8,37 @@ class Program
 {
     static void Main()
     {
-        // Create a template document with a foreach block that expects a collection named "items"
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Report:");
-        // The syntax <<foreach [items]>><<[Name]>>...<<</foreach>> iterates over each element in the collection
-        builder.Writeln("<<foreach [items]>><<[Name]>> <<</foreach>>");
-
-        // Prepare the data source as an array of objects
-        DataItem[] array = new DataItem[]
+        // Sample data defined as an array.
+        DataItem[] dataArray = new DataItem[]
         {
-            new DataItem { Name = "Alice", Age = 30 },
-            new DataItem { Name = "Bob", Age = 25 },
-            new DataItem { Name = "Charlie", Age = 35 }
+            new DataItem { Name = "Item1", Value = 10 },
+            new DataItem { Name = "Item2", Value = 20 }
         };
 
-        // Convert the array to a List<DataItem>, which is the canonical collection type recognized by ReportingEngine
-        List<DataItem> list = array.ToList();
+        // Convert the array to a List<T>, which is the canonical collection type
+        // expected by the Aspose.Words ReportingEngine.
+        List<DataItem> dataList = dataArray.ToList();
+
+        // Create a simple template document in memory.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Insert a repeatable region that iterates over the collection "ds".
+        // Inside the region we output the Name and Value fields.
+        builder.Writeln("<<foreach [ds]>><<[Name]>>: <<[Value]>>\n<</foreach>>");
 
         // Build the report using the list as the data source.
-        // The third argument ("items") must match the collection name used in the template.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, list, "items");
+        engine.BuildReport(template, dataList, "ds");
 
-        // Save the populated document.
+        // Save the generated report.
         template.Save("Report.docx");
     }
+}
 
-    // Simple POCO class used as the data source.
-    public class DataItem
-    {
-        public string Name { get; set; }
-        public int Age { get; set; }
-    }
+// Simple POCO class used as the data source.
+public class DataItem
+{
+    public string Name { get; set; }
+    public int Value { get; set; }
 }

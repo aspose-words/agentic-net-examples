@@ -6,22 +6,32 @@ class ApplyTableStyleOptions
 {
     static void Main()
     {
-        // Load the existing DOTM template.
-        Document doc = new Document("Input.dotm");
+        // Path to the source DOTM template.
+        string dataDir = @"C:\Data\";
+        string templatePath = System.IO.Path.Combine(dataDir, "Template.dotm");
+        string outputPath = System.IO.Path.Combine(dataDir, "Result.docx");
+
+        // Load the DOTM document.
+        Document doc = new Document(templatePath);
 
         // Find the first table in the document.
         Table table = doc.FirstSection.Body.Tables[0];
 
-        // Apply a built‑in table style (optional, can be omitted if the table already has a style).
+        // Ensure the table has at least one row before applying style options.
+        table.EnsureMinimum();
+
+        // Optionally set a built‑in style identifier.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Set the desired style options using the TableStyleOptions flags.
-        // Example: apply formatting to the first row, first column, and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow |
-                              TableStyleOptions.FirstColumn |
-                              TableStyleOptions.RowBands;
+        // Apply desired style options (e.g., first column, first row, and row banding).
+        table.StyleOptions = TableStyleOptions.FirstColumn |
+                             TableStyleOptions.FirstRow |
+                             TableStyleOptions.RowBands;
 
-        // Save the modified document as a DOTM file.
-        doc.Save("Output.dotm");
+        // Optionally auto‑fit the table to its contents.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+        // Save the modified document.
+        doc.Save(outputPath);
     }
 }

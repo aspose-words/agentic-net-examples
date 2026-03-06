@@ -1,4 +1,3 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -6,14 +5,12 @@ class Program
 {
     static void Main()
     {
-        // Create a new document.
+        // Create a new document and a builder to work with it.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Start a table. Insert at least one cell before applying any table formatting.
         Table table = builder.StartTable();
-
-        // Insert at least one cell before applying any table formatting.
         builder.InsertCell();
 
         // Apply a built‑in table style using its identifier.

@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -5,34 +6,34 @@ class Program
 {
     static void Main()
     {
-        // Create a new document and a builder.
+        // Folder where the output PDF will be saved.
+        string artifactsDir = @"C:\Artifacts\";
+
+        // Create a new empty document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add some text with different fonts.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add text using standard Windows fonts.
+        // Standard Windows font – will be substituted by a core PDF font.
         builder.Font.Name = "Arial";
-        builder.Writeln("This text uses Arial, a standard Windows font.");
+        builder.Writeln("Hello world!");
 
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("This text uses Times New Roman, another standard Windows font.");
-
-        // Add text using a non‑standard font.
+        // Non‑standard font – will be embedded according to the embedding mode.
         builder.Font.Name = "Courier New";
-        builder.Writeln("This text uses Courier New, a non‑standard font for this example.");
+        builder.Writeln("The quick brown fox jumps over the lazy dog.");
 
         // Configure PDF save options.
         PdfSaveOptions options = new PdfSaveOptions();
 
-        // Substitute standard fonts with core PDF Type 1 fonts.
+        // Substitute TrueType fonts Arial, Times New Roman, Courier New and Symbol
+        // with the corresponding core PDF Type 1 fonts.
         options.UseCoreFonts = true;
 
-        // Embed only non‑standard fonts (skip embedding Arial and Times New Roman).
+        // Embed only non‑standard fonts (skip embedding standard Windows fonts).
         options.FontEmbeddingMode = PdfFontEmbeddingMode.EmbedNonstandard;
 
-        // Embed full glyphs for the non‑standard font (optional).
-        options.EmbedFullFonts = true;
-
-        // Save the document as PDF with the specified options.
-        doc.Save("Output.pdf", options);
+        // Save the document as PDF using the configured options.
+        doc.Save(artifactsDir + "RenderCoreAndWindowsFonts.pdf", options);
     }
 }

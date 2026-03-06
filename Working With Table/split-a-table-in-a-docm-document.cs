@@ -2,56 +2,50 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class TableSplitter
+class Program
 {
     static void Main()
     {
-        // Load the DOCM document.
-        Document doc = new Document(@"C:\Input\Sample.docm");
+        // Load the DOCM document (uses the provided load rule).
+        Document doc = new Document("Input.docm");
 
-        // Ensure the document contains at least one table.
-        if (doc.FirstSection.Body.Tables.Count == 0)
+        // Find the first table in the document.
+        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (originalTable == null)
         {
-            Console.WriteLine("No tables found in the document.");
+            Console.WriteLine("No table found in the document.");
             return;
         }
 
-        // Get the first table to split.
-        Table originalTable = doc.FirstSection.Body.Tables[0];
-
-        // Define after which row the split should occur (0‑based index).
-        // For example, split after the second row (i.e., rows 0 and 1 stay in the original table).
-        int splitAfterRowIndex = 1;
-
-        // Validate the split index.
-        if (splitAfterRowIndex < 0 || splitAfterRowIndex >= originalTable.Rows.Count - 1)
+        // Define the row index after which the table will be split.
+        // For example, split after the second row (index 2, zero‑based).
+        int splitRowIndex = 2;
+        if (splitRowIndex <= 0 || splitRowIndex >= originalTable.Rows.Count)
         {
             Console.WriteLine("Invalid split index.");
             return;
         }
 
-        // Clone the original table's formatting but not its child rows.
-        // Clone(false) creates a shallow copy – the new table has the same properties but no rows.
+        // Create a new empty table that will hold the rows after the split.
+        // Clone the original table without its child nodes (rows) to preserve formatting.
         Table newTable = (Table)originalTable.Clone(false);
+
+        // Move rows from the original table to the new table.
+        // Continue moving the row at the split index until the original table has only the rows before the split.
+        while (originalTable.Rows.Count > splitRowIndex)
+        {
+            // Remove the row from the original table.
+            Row movingRow = originalTable.Rows[splitRowIndex];
+            originalTable.Rows.RemoveAt(splitRowIndex);
+
+            // Append the removed row to the new table.
+            newTable.Rows.Add(movingRow);
+        }
 
         // Insert the new table immediately after the original table in the document tree.
         originalTable.ParentNode.InsertAfter(newTable, originalTable);
 
-        // Move rows that belong to the new table.
-        // Rows are moved from the bottom up to preserve their original order.
-        while (originalTable.Rows.Count > splitAfterRowIndex + 1)
-        {
-            // Take the last row from the original table.
-            Row rowToMove = originalTable.LastRow;
-
-            // Detach the row from the original table.
-            originalTable.RemoveChild(rowToMove);
-
-            // Insert the row at the beginning of the new table so that the order remains correct.
-            newTable.PrependChild(rowToMove);
-        }
-
-        // Save the modified document.
-        doc.Save(@"C:\Output\Sample_Split.docm");
+        // Save the modified document (uses the provided save rule).
+        doc.Save("Output.docm");
     }
 }

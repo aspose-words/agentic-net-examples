@@ -1,27 +1,16 @@
-using System;
 using Aspose.Words;
 
-namespace AsposeWordsProtectionDemo
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Path to the source DOCX file.
-            string inputPath = @"C:\Docs\SourceDocument.docx";
+        // Load the existing DOCX file.
+        Document doc = new Document("input.docx");
 
-            // Path where the protected document will be saved.
-            string outputPath = @"C:\Docs\ProtectedDocument.docx";
+        // Protect the whole document (read‑only, no password).
+        doc.Protect(ProtectionType.ReadOnly);
 
-            // Load the existing document from the file system.
-            Document doc = new Document(inputPath);
-
-            // Apply protection to the whole document.
-            // Here we use ReadOnly protection; you can choose other ProtectionType values as needed.
-            doc.Protect(ProtectionType.ReadOnly);
-
-            // Save the protected document.
-            doc.Save(outputPath);
-        }
+        // Save the protected document.
+        doc.Save("output.docx");
     }
 }

@@ -1,35 +1,70 @@
-// Load a PDF file as an Aspose.Words document
-string pdfPath = @"C:\Input\sample.pdf";
-Aspose.Words.Document sourceDoc = new Aspose.Words.Document(pdfPath);
+using System;
+using System.IO;
+using System.Text;
+using Aspose.Words;
+using Aspose.Words.Tables;
 
-// Assume the PDF (now a Word document) contains two bookmarks named "Start" and "End"
-// that mark the beginning and the end of the region we want to extract.
-Aspose.Words.Bookmark startBookmark = sourceDoc.Range.Bookmarks["Start"];
-Aspose.Words.Bookmark endBookmark = sourceDoc.Range.Bookmarks["End"];
-
-// Validate that both bookmarks exist
-if (startBookmark == null || endBookmark == null)
-    throw new InvalidOperationException("Required bookmarks 'Start' and/or 'End' were not found.");
-
-// The content between the two bookmarks can be obtained by iterating the nodes
-// that lie after the start bookmark and before the end bookmark.
-Aspose.Words.Node startNode = startBookmark.BookmarkStart;
-Aspose.Words.Node endNode = endBookmark.BookmarkEnd;
-
-// Create a new empty document that will hold the extracted content.
-Aspose.Words.Document extractedDoc = new Aspose.Words.Document();
-Aspose.Words.DocumentBuilder builder = new Aspose.Words.DocumentBuilder(extractedDoc);
-
-// Move through the sibling nodes starting after the start bookmark.
-Aspose.Words.Node current = startNode.NextSibling;
-while (current != null && current != endNode)
+namespace ExtractBetweenNodes
 {
-    // Import the node into the new document to preserve formatting.
-    Aspose.Words.Node imported = extractedDoc.ImportNode(current, true);
-    builder.InsertNode(imported);
-    current = current.NextSibling;
-}
+    class Program
+    {
+        static void Main()
+        {
+            // Load the source PDF file as a Word document.
+            // The Document constructor handles loading and detects the PDF format.
+            Document sourceDoc = new Document("input.pdf");
 
-// Save the extracted portion as a separate DOCX file.
-string outputPath = @"C:\Output\extracted_content.docx";
-extractedDoc.Save(outputPath);
+            // Define the marker texts that indicate the start and end of the region to extract.
+            const string startMarker = "START_MARKER";
+            const string endMarker   = "END_MARKER";
+
+            // Locate the paragraphs that contain the start and end markers.
+            Paragraph startParagraph = null;
+            Paragraph endParagraph   = null;
+
+            // Iterate through all paragraphs in the main story.
+            foreach (Paragraph para in sourceDoc.FirstSection.Body.Paragraphs)
+            {
+                string paraText = para.GetText();
+
+                if (startParagraph == null && paraText.Contains(startMarker))
+                    startParagraph = para;
+
+                if (endParagraph == null && paraText.Contains(endMarker))
+                    endParagraph = para;
+
+                // Break early if both markers have been found.
+                if (startParagraph != null && endParagraph != null)
+                    break;
+            }
+
+            // Validate that both markers were found.
+            if (startParagraph == null || endParagraph == null)
+                throw new InvalidOperationException("Start or end marker not found in the document.");
+
+            // Build the extracted text by traversing nodes between the two markers.
+            StringBuilder extractedBuilder = new StringBuilder();
+
+            // Start with the node immediately after the start marker.
+            Node currentNode = startParagraph.NextSibling;
+
+            // Continue until we reach the end marker node.
+            while (currentNode != null && currentNode != endParagraph)
+            {
+                // Append the text of each node (paragraphs, tables, etc.).
+                extractedBuilder.Append(currentNode.GetText());
+                currentNode = currentNode.NextSibling;
+            }
+
+            // Create a new blank document to hold the extracted content.
+            Document extractedDoc = new Document();
+
+            // Use DocumentBuilder to insert the extracted text.
+            DocumentBuilder builder = new DocumentBuilder(extractedDoc);
+            builder.Writeln(extractedBuilder.ToString());
+
+            // Save the extracted content to a new file.
+            extractedDoc.Save("extracted.docx");
+        }
+    }
+}

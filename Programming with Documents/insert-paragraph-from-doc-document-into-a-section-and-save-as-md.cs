@@ -1,25 +1,33 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 class InsertParagraphAndSaveAsMarkdown
 {
     static void Main()
     {
-        // Load the source DOCX document that contains the paragraph to be copied.
+        // Load the source DOC document that contains the paragraph to copy.
         Document srcDoc = new Document("SourceDocument.docx");
 
-        // Retrieve the first paragraph from the source document (adjust index if needed).
-        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
-
-        // Create a new blank destination document. It already contains one empty section and body.
+        // Create a new blank destination document.
         Document dstDoc = new Document();
 
-        // Import the source paragraph into the destination document, preserving its formatting.
-        NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
-        Node importedParagraph = importer.ImportNode(srcParagraph, true);
+        // Ensure the destination document has at least one section.
+        // (A new Document already contains a default section, body, and paragraph.)
+        Section targetSection = dstDoc.FirstSection;
 
-        // Append the imported paragraph to the body of the first (and only) section.
-        dstDoc.FirstSection.Body.AppendChild(importedParagraph);
+        // Get the first paragraph from the source document.
+        // Adjust the index if you need a different paragraph.
+        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
+
+        // Import the paragraph node from the source document into the destination document.
+        NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
+        Paragraph importedParagraph = (Paragraph)importer.ImportNode(srcParagraph, true);
+
+        // Insert the imported paragraph at the end of the target section's body.
+        // Remove the original empty paragraph that was created by the blank document.
+        targetSection.Body.LastParagraph.Remove();
+        targetSection.Body.AppendChild(importedParagraph);
 
         // Save the resulting document as Markdown.
         dstDoc.Save("ResultDocument.md", SaveFormat.Markdown);

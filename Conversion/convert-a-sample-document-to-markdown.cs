@@ -6,34 +6,32 @@ namespace AsposeWordsMarkdownExample
 {
     class Program
     {
-        static void Main()
+        static void Main(string[] args)
         {
-            // Path to the source document (any format supported by Aspose.Words, e.g., DOCX).
-            string sourcePath = @"C:\Docs\SampleDocument.docx";
+            // Path to the source document (DOCX, DOC, etc.).
+            string inputPath = @"C:\Docs\SampleDocument.docx";
 
             // Path where the Markdown file will be saved.
             string outputPath = @"C:\Docs\SampleDocument.md";
 
-            // Load the source document using the Document constructor (load rule).
-            Document doc = new Document(sourcePath);
+            // Load the source document using Aspose.Words Document class.
+            Document doc = new Document(inputPath);
 
-            // Create MarkdownSaveOptions (create rule) and configure desired options.
+            // Create MarkdownSaveOptions to specify Markdown-specific settings.
             MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
             {
-                // Explicitly set the format to Markdown (save rule requirement).
+                // Ensure the format is set to Markdown (required when using this options class).
                 SaveFormat = SaveFormat.Markdown,
 
-                // Example option: export tables that cannot be represented in pure Markdown as raw HTML.
-                ExportAsHtml = MarkdownExportAsHtml.NonCompatibleTables,
+                // Example option: export empty paragraphs as empty lines.
+                EmptyParagraphExportMode = MarkdownEmptyParagraphExportMode.EmptyLine,
 
-                // Example option: preserve empty paragraphs as empty lines.
-                EmptyParagraphExportMode = MarkdownEmptyParagraphExportMode.EmptyLine
+                // Example option: export lists using Markdown syntax.
+                ListExportMode = MarkdownListExportMode.MarkdownSyntax
             };
 
-            // Save the document as Markdown using the configured options (save rule).
+            // Save the document as a Markdown file using the specified options.
             doc.Save(outputPath, saveOptions);
-
-            Console.WriteLine("Document successfully converted to Markdown.");
         }
     }
 }

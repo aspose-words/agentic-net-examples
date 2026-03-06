@@ -7,32 +7,26 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path to the file that will be embedded as an OLE object.
-        // In this example we embed a ZIP archive, but any file can be used.
-        string zipPath = "Data/cat001.zip";
+        // Load a file (e.g., a ZIP archive) that will be embedded as an OLE object.
+        // Adjust the path to point to an existing file on your system.
+        byte[] zipBytes = File.ReadAllBytes("cat001.zip");
 
-        // Read the file into a memory stream.
-        byte[] zipBytes = File.ReadAllBytes(zipPath);
-        using (MemoryStream zipStream = new MemoryStream(zipBytes))
+        // Insert the OLE object from the memory stream.
+        using (MemoryStream stream = new MemoryStream(zipBytes))
         {
-            // Insert the OLE object.
-            // Parameters:
-            //   zipStream   – stream containing the file data.
-            //   "Package"   – ProgID for a generic OLE package.
-            //   true        – display the object as an icon.
-            //   null        – no custom presentation image; a default icon will be used.
-            Shape oleShape = builder.InsertOleObject(zipStream, "Package", true, null);
+            // Insert as an icon (asIcon = true) with no custom presentation image (presentation = null).
+            Shape shape = builder.InsertOleObject(stream, "Package", true, null);
 
-            // Set the file name and display name that Word will show for the OLE package.
-            oleShape.OleFormat.OlePackage.FileName = "Package file name.zip";
-            oleShape.OleFormat.OlePackage.DisplayName = "Package display name.zip";
+            // Optionally set the file name and display name that appear when the OLE object is opened.
+            shape.OleFormat.OlePackage.FileName = "Package file name.zip";
+            shape.OleFormat.OlePackage.DisplayName = "Package display name.zip";
         }
 
-        // Save the resulting document.
-        doc.Save("Output/InsertOleObject.docx");
+        // Save the resulting document to disk.
+        doc.Save("OleObjectExample.docx");
     }
 }

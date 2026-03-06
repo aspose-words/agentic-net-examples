@@ -2,27 +2,32 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class SmartTagFindReplace
+class Program
 {
     static void Main()
     {
-        // Load the DOCX document that contains smart tags.
-        Document doc = new Document(@"C:\Docs\InputWithSmartTags.docx");
+        // Load the DOCX document that contains SmartTags.
+        Document doc = new Document("InputWithSmartTags.docx");
 
-        // Configure find/replace options to treat the content of StructuredDocumentTag (SmartTag)
-        // as plain text, allowing the replace operation to work inside smart tags.
+        // Define the text to find and its replacement.
+        string pattern = "_FullName_";          // Example placeholder inside a SmartTag.
+        string replacement = "John Doe";
+
+        // Configure FindReplaceOptions to treat the content of StructuredDocumentTag
+        // (including SmartTag) as simple text, allowing the replace operation to work
+        // across SmartTag boundaries.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            IgnoreStructuredDocumentTags = true   // Treat smart tag content as simple text.
+            IgnoreStructuredDocumentTags = true   // Important for SmartTag replacement.
         };
 
-        // Perform the find-and-replace operation.
-        // Example: replace the placeholder "_FullName_" with "John Doe".
-        int replacements = doc.Range.Replace("_FullName_", "John Doe", options);
+        // Perform the find-and-replace operation on the whole document range.
+        int replacedCount = doc.Range.Replace(pattern, replacement, options);
 
-        Console.WriteLine($"Number of replacements made: {replacements}");
+        // Optional: output how many replacements were made.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
 
         // Save the modified document.
-        doc.Save(@"C:\Docs\OutputWithSmartTagsReplaced.docx");
+        doc.Save("OutputWithSmartTagsReplaced.docx");
     }
 }

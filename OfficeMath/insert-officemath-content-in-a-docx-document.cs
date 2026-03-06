@@ -1,51 +1,42 @@
 using System;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-class InsertOfficeMathExample
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder to add content.
+        // Initialize a DocumentBuilder for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a heading before the equation.
-        builder.Writeln("Example of inserting OfficeMath:");
+        // Insert an EQ field that represents a simple equation (x = y).
+        // The field code "EQ \\x \\y" creates an equation with the characters x and y.
+        builder.InsertField("EQ \\x \\y");
 
-        // Insert an EQ field with a simple equation (e.g., a fraction a/b).
-        // The field code follows the Word EQ field syntax.
-        builder.InsertField("EQ \\x a \\y b");
+        // Locate the inserted EQ field in the document.
+        FieldEQ eqField = doc.Range.Fields.OfType<FieldEQ>().FirstOrDefault();
 
-        // Retrieve the last inserted field, which is the EQ field we just added.
-        FieldEQ fieldEQ = doc.Range.Fields
-            .OfType<FieldEQ>()
-            .LastOrDefault();
-
-        if (fieldEQ != null)
+        if (eqField != null)
         {
             // Convert the EQ field to an OfficeMath object.
-            OfficeMath officeMath = fieldEQ.AsOfficeMath();
+            OfficeMath officeMath = eqField.AsOfficeMath();
 
-            if (officeMath != null)
-            {
-                // Insert the OfficeMath node before the field start node.
-                fieldEQ.Start.ParentNode.InsertBefore(officeMath, fieldEQ.Start);
+            // Insert the OfficeMath node before the field's start node.
+            eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
 
-                // Remove the original EQ field from the document.
-                fieldEQ.Remove();
+            // Remove the original EQ field from the document.
+            eqField.Remove();
 
-                // Optionally set the display type (Display = on its own line).
-                officeMath.DisplayType = OfficeMathDisplayType.Display;
-            }
+            // Set the OfficeMath display type to appear on its own line.
+            officeMath.DisplayType = OfficeMathDisplayType.Display;
         }
 
-        // Save the document to a DOCX file.
+        // Save the resulting document with the inserted OfficeMath.
         doc.Save("OfficeMathInserted.docx");
     }
 }

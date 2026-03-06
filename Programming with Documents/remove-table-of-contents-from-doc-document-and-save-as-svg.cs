@@ -1,50 +1,46 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Fields;
+using Aspose.Words.Fields; // Added for Field and FieldType
 
-class RemoveTocAndSaveAsSvg
+class RemoveTocAndSaveSvg
 {
     static void Main()
     {
         // Path to the source DOC document.
-        string inputPath = @"C:\Docs\SourceDocument.doc";
+        string inputPath = "input.doc";
 
         // Path where the resulting SVG will be saved.
-        string outputPath = @"C:\Docs\ResultDocument.svg";
+        string outputPath = "output.svg";
 
-        // Load the existing Word document.
+        // Load the document from the file system.
         Document doc = new Document(inputPath);
 
         // Remove all Table of Contents (TOC) fields from the document.
-        // FieldType.FieldTOC identifies a TOC field.
+        // Collect fields to remove first to avoid modifying the collection while iterating.
+        var tocFields = new System.Collections.Generic.List<Field>();
         foreach (Field field in doc.Range.Fields)
         {
             if (field.Type == FieldType.FieldTOC)
-            {
-                // Remove the field and its result.
-                field.Remove();
-            }
+                tocFields.Add(field);
+        }
+        foreach (Field field in tocFields)
+        {
+            field.Remove();
         }
 
-        // Optionally clean up any empty paragraphs left after removing TOCs.
-        doc.Cleanup();
-
         // Configure SVG save options.
-        SvgSaveOptions svgOptions = new SvgSaveOptions
+        SvgSaveOptions options = new SvgSaveOptions
         {
-            // Fit the SVG to the viewport (browser window).
+            // Make the SVG fill the viewport (optional, can be omitted).
             FitToViewPort = true,
-
             // Do not draw a page border around the SVG.
             ShowPageBorder = false,
-
-            // Render text as placed glyphs (curves) for better visual fidelity.
+            // Render text as placed glyphs (curves) to avoid font issues.
             TextOutputMode = SvgTextOutputMode.UsePlacedGlyphs
         };
 
-        // Save the modified document as an SVG file.
-        doc.Save(outputPath, svgOptions);
+        // Save the modified document as an SVG file using the configured options.
+        doc.Save(outputPath, options);
     }
 }

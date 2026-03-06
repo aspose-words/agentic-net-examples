@@ -1,35 +1,37 @@
+using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Step 1: Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert two floating shapes that will later be grouped.
-        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
-        shape1.Left = 20;
-        shape1.Top = 20;
-        shape1.Stroke.Color = Color.Red;
+        // Step 2: Insert two individual shapes that will later be grouped.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rectangle.Left = 50;   // Position relative to the page.
+        rectangle.Top = 50;
+        rectangle.Stroke.Color = Color.Blue;
 
-        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
-        shape2.Left = 40;
-        shape2.Top = 50;
-        shape2.Stroke.Color = Color.Green;
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        ellipse.Left = 300;
+        ellipse.Top = 80;
+        ellipse.Stroke.Color = Color.Green;
 
-        // Create a GroupShape instance and add the previously created shapes as its children.
-        GroupShape group = new GroupShape(doc);
-        group.AppendChild(shape1);
-        group.AppendChild(shape2);
+        // Step 3: Group the shapes using the DocumentBuilder.InsertGroupShape method.
+        // This creates a GroupShape node and inserts it at the current cursor position.
+        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
 
-        // Insert the group shape into the document at the current cursor position.
-        builder.InsertNode(group);
+        // Optional: Adjust group properties (size, wrapping, etc.).
+        group.Width = 500;
+        group.Height = 300;
+        group.WrapType = WrapType.None;
 
-        // Save the document in DOCX format.
-        doc.Save("GroupShape.docx", SaveFormat.Docx);
+        // Step 4: Save the document as a DOCX file.
+        doc.Save("GroupShape.docx");
     }
 }

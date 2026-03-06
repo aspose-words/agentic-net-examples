@@ -1,62 +1,74 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using Aspose.Words.Drawing;
 using System.Drawing;
 
-class Program
+class ListFormattingExample
 {
     static void Main()
     {
-        // Create a new document and a builder to insert content.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Obtain a DocumentBuilder to insert and format content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // 1. Create a list based on a predefined template.
-        // -----------------------------------------------------------------
-        // Use the ListCollection.Add method (provided by Aspose.Words) to
-        // create a numbered list that uses uppercase letters (A., B., C., ...).
-        List list = doc.Lists.Add(ListTemplate.NumberUppercaseLetterDot);
+        // ------------------------------------------------------------
+        // 1. Create a multi‑level numbered list based on a built‑in template.
+        // ------------------------------------------------------------
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // -----------------------------------------------------------------
-        // 2. Customize the first level of the list.
-        // -----------------------------------------------------------------
+        // ------------------------------------------------------------
+        // 2. Customize the first two levels of the list.
+        // ------------------------------------------------------------
+        // Level 0 – red, large Arabic numbers.
         ListLevel level0 = list.ListLevels[0];
-        level0.Font.Color = Color.DarkBlue;          // Bullet/number color.
-        level0.Font.Size = 14;                       // Font size.
-        level0.NumberStyle = NumberStyle.UppercaseLetter;
-        level0.StartAt = 1;                          // Start numbering at A.
-        level0.NumberFormat = "%1.";                 // Format: A., B., ...
-        level0.NumberPosition = -18;                // Position of the number.
-        level0.TextPosition = 36;                    // Position of the text.
-        level0.TabPosition = 36;                     // Tab stop after the number.
+        level0.Font.Color = Color.Red;
+        level0.Font.Size = 14;
+        level0.NumberStyle = NumberStyle.Arabic;
+        level0.StartAt = 1;               // start numbering at 1
+        level0.NumberFormat = "%1.";      // default format, kept for clarity
 
-        // -----------------------------------------------------------------
-        // 3. Apply the list to paragraphs.
-        // -----------------------------------------------------------------
-        builder.Writeln("Key Advantages:");
-        builder.ListFormat.List = list;              // Attach the list to the builder.
-        builder.ListFormat.ListLevelNumber = 0;      // Use first level.
+        // Level 1 – blue, lower‑case letters.
+        ListLevel level1 = list.ListLevels[1];
+        level1.Font.Color = Color.Blue;
+        level1.Font.Size = 12;
+        level1.NumberStyle = NumberStyle.LowercaseLetter;
+        level1.StartAt = 1;
+        level1.NumberFormat = "%2)";      // e.g., a), b), ...
 
-        builder.Writeln("High performance");
-        builder.Writeln("Cross‑platform support");
-        builder.Writeln("Rich API");
+        // ------------------------------------------------------------
+        // 3. Write some paragraphs and apply the list formatting.
+        // ------------------------------------------------------------
+        builder.Writeln("Project Tasks:");
 
-        // -----------------------------------------------------------------
-        // 4. Create a sub‑list (second level) to demonstrate nesting.
-        // -----------------------------------------------------------------
-        builder.ListFormat.ListIndent();             // Increase level to 1 (second level).
-        builder.Writeln("Detailed point A");
-        builder.Writeln("Detailed point B");
-        builder.ListFormat.ListOutdent();            // Return to first level.
+        // Apply the list to subsequent paragraphs.
+        builder.ListFormat.List = list;
 
-        // -----------------------------------------------------------------
-        // 5. End list formatting.
-        // -----------------------------------------------------------------
-        builder.ListFormat.RemoveNumbers();          // Remove list formatting from subsequent paragraphs.
+        // First level items.
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("Design phase");
+        builder.Writeln("Implementation phase");
 
-        // -----------------------------------------------------------------
-        // 6. Save the document (can be printed later via reporting engine or UI).
-        // -----------------------------------------------------------------
+        // Indent to second level for sub‑tasks.
+        builder.ListFormat.ListLevelNumber = 1;
+        builder.Writeln("Write code");
+        builder.Writeln("Unit tests");
+
+        // Return to first level.
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("Testing phase");
+        builder.Writeln("Deployment phase");
+
+        // ------------------------------------------------------------
+        // 4. End the list formatting.
+        // ------------------------------------------------------------
+        builder.ListFormat.RemoveNumbers();
+
+        // ------------------------------------------------------------
+        // 5. Save the document (programmatic printing can be done later).
+        // ------------------------------------------------------------
         doc.Save("FormattedList.docx");
     }
 }

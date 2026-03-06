@@ -1,54 +1,41 @@
 using System;
 using System.Collections.Generic;
 using Aspose.Words;
+using Aspose.Words.Math; // <-- required for OfficeMath class
 using Aspose.Words.Saving;
-using Aspose.Words.Loading;
-using Aspose.Words.Math; // Added namespace for OfficeMath
 
-public class OfficeMathLatexExtractor
+class ExtractOfficeMathLatex
 {
-    /// <summary>
-    /// Loads a WORDML document and returns the LaTeX representation of each OfficeMath equation it contains.
-    /// </summary>
-    /// <param name="wordmlPath">Full path to the WORDML (.xml) document.</param>
-    /// <returns>Array of LaTeX strings, one for each OfficeMath object found.</returns>
-    public static string[] ExtractLatex(string wordmlPath)
+    static void Main()
     {
-        // Ensure that shapes containing EquationXML are converted to OfficeMath objects during loading.
-        LoadOptions loadOptions = new LoadOptions
-        {
-            ConvertShapeToOfficeMath = true
-        };
+        // Path to the WORDML (WordprocessingML) document.
+        string wordmlPath = @"C:\Docs\SampleWordML.xml";
 
         // Load the WORDML document.
-        Document doc = new Document(wordmlPath, loadOptions);
+        Document doc = new Document(wordmlPath);
+
+        // Retrieve all OfficeMath nodes in the document.
+        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
 
         // Prepare save options that export OfficeMath as LaTeX.
-        TxtSaveOptions txtOptions = new TxtSaveOptions
+        TxtSaveOptions latexOptions = new TxtSaveOptions
         {
             OfficeMathExportMode = TxtOfficeMathExportMode.Latex
         };
 
-        // Collect LaTeX strings from all OfficeMath nodes.
-        List<string> latexList = new List<string>();
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath math in mathNodes)
+        // Iterate through each OfficeMath node and extract its LaTeX representation.
+        List<string> latexEquations = new List<string>();
+        foreach (Node node in mathNodes)
         {
-            // Export the OfficeMath node to a LaTeX string using the configured options.
-            string latex = math.ToString(txtOptions);
-            latexList.Add(latex);
+            // Cast the node to OfficeMath.
+            OfficeMath math = (OfficeMath)node;
+
+            // The ToString method with TxtSaveOptions returns the LaTeX string for this node.
+            string latex = math.ToString(latexOptions);
+            latexEquations.Add(latex);
         }
 
-        return latexList.ToArray();
-    }
-
-    // Example usage.
-    public static void Main()
-    {
-        string wordmlFile = @"C:\Docs\SampleWordml.xml";
-
-        string[] latexEquations = ExtractLatex(wordmlFile);
-
+        // Output the extracted LaTeX equations.
         Console.WriteLine("Extracted LaTeX equations:");
         foreach (string eq in latexEquations)
         {

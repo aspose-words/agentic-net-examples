@@ -1,35 +1,35 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert two individual shapes that will be grouped.
-        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
-        shape1.Left = 20;
-        shape1.Top = 20;
-        shape1.Stroke.Color = Color.Red;
+        // Insert two shapes that will be grouped.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        rect.Left = 20;
+        rect.Top = 20;
+        rect.Stroke.Color = Color.Red;
 
-        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
-        shape2.Left = 40;
-        shape2.Top = 50;
-        shape2.Stroke.Color = Color.Green;
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        ellipse.Left = 40;
+        ellipse.Top = 50;
+        ellipse.Stroke.Color = Color.Green;
 
         // Group the two shapes into a new GroupShape node.
-        GroupShape group1 = builder.InsertGroupShape(shape1, shape2);
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Clone one of the original shapes (deep clone) and add it to a second group together with the first group.
-        Shape shape3 = (Shape)shape1.Clone(true);
-        GroupShape group2 = builder.InsertGroupShape(group1, shape3);
+        // Demonstrate nesting: clone one shape and group it with the existing group.
+        Shape clonedRect = (Shape)rect.Clone(true);
+        builder.InsertGroupShape(group, clonedRect);
 
-        // Save the document to a DOCX file.
-        doc.Save("Shape.CombineGroupShape.docx");
+        // Save the document.
+        doc.Save("GroupShapeExample.docx");
     }
 }

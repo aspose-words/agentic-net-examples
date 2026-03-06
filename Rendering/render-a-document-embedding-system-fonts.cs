@@ -2,27 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
-class Program
+class EmbedSystemFontsExample
 {
     static void Main()
     {
-        // Load an existing document.
-        Document doc = new Document("Input.docx");
+        // Path to the folder where the output document will be saved.
+        string outputPath = "EmbeddedSystemFonts.docx";
 
-        // Access the collection of fonts used in the document.
+        // Create a new empty document.
+        Document doc = new Document();
+
+        // Use DocumentBuilder to add some text with a system font.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "MS Mincho"; // Example of a system font (Japanese).
+        builder.Writeln("This document embeds the system font used above.");
+
+        // Access the FontInfoCollection of the document.
         FontInfoCollection fontInfos = doc.FontInfos;
 
-        // Enable embedding of TrueType fonts.
+        // Enable embedding of TrueType fonts and system fonts.
         fontInfos.EmbedTrueTypeFonts = true;
-
-        // Enable embedding of system fonts (e.g., fonts installed on the OS).
         fontInfos.EmbedSystemFonts = true;
 
-        // Optionally, embed the full fonts without subsetting.
-        // Set to true to embed only the glyphs used in the document.
+        // Optionally, decide whether to embed a subset of the fonts.
+        // Here we embed the full font to ensure the system font is fully available.
         fontInfos.SaveSubsetFonts = false;
 
-        // Save the document; the fonts will be embedded according to the settings above.
-        doc.Save("Output_Embedded.docx");
+        // Save the document; the system font will be embedded.
+        doc.Save(outputPath);
     }
 }

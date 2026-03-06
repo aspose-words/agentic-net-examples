@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ExportOutlinesToPdf
+class ExportOutlineToPdf
 {
     static void Main()
     {
@@ -15,16 +15,16 @@ class ExportOutlinesToPdf
         // Show the outline (bookmarks / headings) pane when the PDF is opened.
         saveOptions.PageMode = PdfPageMode.UseOutlines;
 
-        // Export bookmarks to the outline at level 1 (top level).
+        // Export all bookmarks at the first outline level.
         saveOptions.OutlineOptions.DefaultBookmarksOutlineLevel = 1;
 
-        // Include headings up to level 3 in the outline.
+        // Include headings up to level 3 in the PDF outline.
         saveOptions.OutlineOptions.HeadingsOutlineLevels = 3;
 
-        // Optional: create missing outline levels so that gaps in heading levels are represented.
+        // (Optional) Create missing outline levels so that gaps in heading levels are represented.
         saveOptions.OutlineOptions.CreateMissingOutlineLevels = true;
 
         // Save the document as PDF with the configured outline options.
-        doc.Save("OutputWithOutlines.pdf", saveOptions);
+        doc.Save("OutputDocument.pdf", saveOptions);
     }
 }

@@ -2,74 +2,58 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-namespace Example
+class DocumentSplitter
 {
-    public static class DocumentSplitter
+    static void Main()
     {
-        /// <summary>
-        /// Splits the specified DOCX document into separate DOCX files, one per page.
-        /// </summary>
-        /// <param name="sourceFilePath">Full path to the source DOCX file.</param>
-        /// <param name="outputDirectory">Folder where the split documents will be saved.</param>
-        public static void SplitByPages(string sourceFilePath, string outputDirectory)
+        // Path to the source DOCX file.
+        string sourcePath = @"C:\Docs\SourceDocument.docx";
+
+        // Load the source document using the Document constructor (lifecycle rule).
+        Document sourceDoc = new Document(sourcePath);
+
+        // Determine how many pages the document has.
+        int totalPages = sourceDoc.PageCount;
+
+        // Create an output directory for the split documents.
+        string outputDir = @"C:\Docs\SplitPages";
+        if (!Directory.Exists(outputDir))
+            Directory.CreateDirectory(outputDir);
+
+        // Loop through each page, extract it as a separate Document, and save it.
+        for (int pageIndex = 1; pageIndex <= totalPages; pageIndex++)
         {
-            // Ensure the output directory exists.
-            if (!Directory.Exists(outputDirectory))
-                Directory.CreateDirectory(outputDirectory);
+            // ExtractPages uses 1‑based page numbers.
+            Document pageDoc = sourceDoc.ExtractPages(pageIndex, pageIndex);
 
-            // Load the source document (lifecycle rule: load).
-            Document sourceDoc = new Document(sourceFilePath);
+            // Build the output file name.
+            string outFile = Path.Combine(outputDir, $"Page_{pageIndex}.docx");
 
-            // Iterate over each page in the source document.
-            for (int pageIndex = 0; pageIndex < sourceDoc.PageCount; pageIndex++)
-            {
-                // Extract a single page as a new Document (lifecycle rule: create via ExtractPages).
-                // Page numbers are 1‑based, so add 1 to the zero‑based index.
-                Document pageDoc = sourceDoc.ExtractPages(pageIndex + 1, pageIndex + 1);
-
-                // Build the output file name, e.g., "Document_Page_1.docx".
-                string outputFilePath = Path.Combine(
-                    outputDirectory,
-                    $"{Path.GetFileNameWithoutExtension(sourceFilePath)}_Page_{pageIndex + 1}{Path.GetExtension(sourceFilePath)}");
-
-                // Save the extracted page as a separate DOCX file (lifecycle rule: save).
-                pageDoc.Save(outputFilePath);
-            }
+            // Save the extracted page document (lifecycle rule).
+            pageDoc.Save(outFile);
         }
-    }
 
-    class Program
-    {
-        /// <summary>
-        /// Entry point required for console execution.
-        /// </summary>
-        static void Main(string[] args)
+        // Optional: split by sections instead of pages.
+        // Uncomment the following block to split by sections.
+        /*
+        string sectionOutputDir = @"C:\Docs\SplitSections";
+        if (!Directory.Exists(sectionOutputDir))
+            Directory.CreateDirectory(sectionOutputDir);
+
+        for (int secIndex = 0; secIndex < sourceDoc.Sections.Count; secIndex++)
         {
-            // Simple argument handling: first argument = source file, second argument = output folder.
-            if (args.Length < 2)
-            {
-                Console.WriteLine("Usage: DocumentSplitter <source-docx-path> <output-directory>");
-                return;
-            }
+            // Clone the whole document and then remove all sections except the current one.
+            Document sectionDoc = (Document)sourceDoc.Clone(true);
+            // Remove sections before the target.
+            for (int i = secIndex - 1; i >= 0; i--)
+                sectionDoc.Sections[i].Remove();
+            // Remove sections after the target.
+            for (int i = sectionDoc.Sections.Count - 1; i > 0; i--)
+                sectionDoc.Sections[i].Remove();
 
-            string sourcePath = args[0];
-            string outputDir = args[1];
-
-            if (!File.Exists(sourcePath))
-            {
-                Console.WriteLine($"Source file not found: {sourcePath}");
-                return;
-            }
-
-            try
-            {
-                DocumentSplitter.SplitByPages(sourcePath, outputDir);
-                Console.WriteLine($"Document split completed. Files saved to: {outputDir}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error during splitting: {ex.Message}");
-            }
+            string outFile = Path.Combine(sectionOutputDir, $"Section_{secIndex + 1}.docx");
+            sectionDoc.Save(outFile);
         }
+        */
     }
 }

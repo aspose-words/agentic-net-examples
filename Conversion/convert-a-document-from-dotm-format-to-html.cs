@@ -5,20 +5,19 @@ namespace DotmToHtmlConverter
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             // Path to the source DOTM (macro‑enabled template) file.
-            string inputFile = @"C:\Docs\Template.dotm";
+            string sourcePath = @"C:\Docs\Template.dotm";
 
             // Path where the resulting HTML file will be saved.
-            string outputFile = @"C:\Docs\Template.html";
+            string targetPath = @"C:\Docs\Template.html";
 
-            // Load the DOTM document using the Document(string) constructor.
-            Document doc = new Document(inputFile);
+            // Load the DOTM document. The Document constructor automatically detects the format.
+            Document doc = new Document(sourcePath);
 
-            // Save the loaded document in HTML format.
-            // The Save method with (string, SaveFormat) matches the provided rule.
-            doc.Save(outputFile, SaveFormat.Html);
+            // Save the document as HTML using the explicit SaveFormat enumeration.
+            doc.Save(targetPath, SaveFormat.Html);
         }
     }
 }

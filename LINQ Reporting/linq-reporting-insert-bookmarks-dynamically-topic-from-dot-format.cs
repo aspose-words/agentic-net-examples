@@ -1,75 +1,84 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsReportingDemo
+class Program
 {
-    // Simple data model representing a topic.
-    public class Topic
+    static void Main()
     {
-        // Made nullable to satisfy the non‑nullable warnings when using the default constructor.
-        public string? Name { get; set; }
-        public string? Title { get; set; }
+        // Load a DOT template that contains LINQ Reporting placeholders.
+        // The constructor Document(string) is the approved load rule.
+        Document doc = new Document("Template.dot");
+
+        // Prepare a data source – a list of topics that will be merged into the template.
+        // Each topic has a Title and Content that can be referenced in the template as <<[topics.Title]>> etc.
+        List<Topic> topics = new List<Topic>
+        {
+            new Topic { Title = "Introduction", Content = "Welcome to the report." },
+            new Topic { Title = "Analysis",     Content = "Data analysis goes here." },
+            new Topic { Title = "Conclusion",   Content = "Thanks for reading." }
+        };
+
+        // Populate the template using the LINQ Reporting Engine.
+        // BuildReport(Document, object[], string[]) is the appropriate rule for multiple data sources.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, new object[] { topics }, new string[] { "topics" });
+
+        // After the report is built, insert a bookmark for each topic.
+        // The bookmarks are created dynamically based on the topic titles.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveToDocumentEnd(); // Position the cursor at the end of the document.
+
+        foreach (Topic topic in topics)
+        {
+            // Convert the title to a valid bookmark name (letters, digits, underscore; starts with a letter).
+            string bookmarkName = MakeValidBookmarkName(topic.Title);
+
+            // Start the bookmark.
+            builder.StartBookmark(bookmarkName);
+
+            // Insert the title as a heading.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln(topic.Title);
+
+            // Insert the content as normal text.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln(topic.Content);
+
+            // End the bookmark.
+            builder.EndBookmark(bookmarkName);
+        }
+
+        // Save the final document.
+        // The Save(string) method is the approved save rule.
+        doc.Save("Report.docx");
     }
 
-    class Program
+    // Helper method to ensure the bookmark name complies with Word's naming rules.
+    static string MakeValidBookmarkName(string title)
     {
-        static void Main()
+        StringBuilder sb = new StringBuilder();
+        foreach (char ch in title)
         {
-            // 1. Prepare sample data.
-            List<Topic> topics = new List<Topic>
-            {
-                new Topic { Name = "Intro",   Title = "Introduction to Reporting" },
-                new Topic { Name = "Setup",   Title = "Setting up Aspose.Words" },
-                new Topic { Name = "Example", Title = "Dynamic Bookmark Example" }
-            };
-
-            // 2. Create a DOT (template) document in memory.
-            //    The template uses ReportingEngine syntax:
-            //    <<foreach [topic]>> – iterate over the collection named "topic".
-            //    <<bookmark [topic.Name]>> – start a bookmark whose name comes from the current item.
-            //    <<[topic.Title]>> – insert the title text.
-            //    <<endbookmark>> – close the bookmark.
-            //    <<endfor>> – end the loop.
-            Document template = new Document();                     // create a blank document
-            DocumentBuilder builder = new DocumentBuilder(template); // helper to add content
-
-            builder.Writeln("Table of Contents:");
-            builder.Writeln(); // empty line
-
-            // Begin the foreach loop.
-            builder.Writeln("<<foreach [topic]>>");
-
-            // Insert a bookmark start. The ReportingEngine will replace [topic.Name] with the actual name.
-            builder.Writeln("<<bookmark [topic.Name]>>");
-
-            // Insert the title that will be inside the bookmark.
-            builder.Writeln("<<[topic.Title]>>");
-
-            // Close the bookmark.
-            builder.Writeln("<<endbookmark>>");
-
-            // End the foreach loop.
-            builder.Writeln("<<endfor>>");
-
-            // Save the template to a DOT file (the extension does not affect processing, but mimics a template).
-            string templatePath = "Template.dot";
-            template.Save(templatePath);
-
-            // 3. Load the template document (simulating a real‑world scenario where the template is stored on disk).
-            Document loadedTemplate = new Document(templatePath);
-
-            // 4. Build the report using ReportingEngine.
-            ReportingEngine engine = new ReportingEngine();
-            // The overload expects a single data‑source name, not an array.
-            engine.BuildReport(loadedTemplate, topics, "topic");
-
-            // 5. Save the generated report.
-            string outputPath = "ReportWithBookmarks.docx";
-            loadedTemplate.Save(outputPath);
-
-            Console.WriteLine($"Report generated successfully: {outputPath}");
+            if (char.IsLetterOrDigit(ch) || ch == '_')
+                sb.Append(ch);
+            else if (char.IsWhiteSpace(ch))
+                sb.Append('_');
         }
+
+        // Ensure the name starts with a letter; prepend 'B' if necessary.
+        if (sb.Length == 0 || !char.IsLetter(sb[0]))
+            sb.Insert(0, 'B');
+
+        return sb.ToString();
+    }
+
+    // Simple POCO representing a topic in the report.
+    public class Topic
+    {
+        public string Title { get; set; }
+        public string Content { get; set; }
     }
 }

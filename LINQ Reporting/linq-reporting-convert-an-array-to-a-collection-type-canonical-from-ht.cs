@@ -1,49 +1,45 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using Aspose.Words;
+using Aspose.Words.Loading; // Needed for LoadOptions
 using Aspose.Words.Reporting;
 
 class Program
 {
     static void Main()
     {
-        // HTML template that uses LINQ Reporting Engine syntax.
-        // The <<foreach [items]>> tag expects a collection named "items".
+        // HTML template that uses LINQ Reporting syntax to iterate over a collection named "items".
         string htmlTemplate = @"
-        <html><body>
-        <<foreach [items]>>
-        <p>Name: <<[Name]>></p>
-        <<endforeach>>
-        </body></html>";
+        <html>
+        <body>
+        <<foreach [items]>><p>Item: <<[Current]>> </p><</foreach>>
+        </body>
+        </html>";
 
         // Load the HTML string into an Aspose.Words Document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertHtml(htmlTemplate);
-
-        // Create an array of data objects.
-        Person[] peopleArray = new[]
+        Document templateDoc;
+        using (MemoryStream htmlStream = new MemoryStream(Encoding.UTF8.GetBytes(htmlTemplate)))
         {
-            new Person { Name = "Alice" },
-            new Person { Name = "Bob" },
-            new Person { Name = "Charlie" }
-        };
+            // LoadOptions specifies that the source format is HTML.
+            LoadOptions loadOptions = new LoadOptions { LoadFormat = LoadFormat.Html };
+            templateDoc = new Document(htmlStream, loadOptions);
+        }
 
-        // Convert the array to a canonical collection type (List<T>) that the ReportingEngine can iterate.
-        List<Person> peopleList = new List<Person>(peopleArray);
+        // Original data source is an array.
+        string[] arrayData = new string[] { "Apple", "Banana", "Cherry" };
 
-        // Build the report using the list as the data source.
+        // Convert the array to a collection type (List<string>) which the ReportingEngine can work with.
+        List<string> collectionData = arrayData.ToList();
+
+        // Create a ReportingEngine instance and build the report.
         ReportingEngine engine = new ReportingEngine();
         // The third argument is the name used in the template to reference the collection.
-        engine.BuildReport(doc, peopleList, "items");
+        engine.BuildReport(templateDoc, collectionData, "items");
 
-        // Save the populated document.
-        doc.Save("ReportFromHtml.docx");
-    }
-
-    // Simple data class used in the report.
-    public class Person
-    {
-        public string Name { get; set; }
+        // Save the resulting document.
+        templateDoc.Save("ReportFromHtml.docx");
     }
 }

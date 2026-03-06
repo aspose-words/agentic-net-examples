@@ -1,32 +1,34 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
-class PdfToOtherFormats
+class Program
 {
     static void Main()
     {
         // Path to the source PDF file.
-        string pdfPath = "input.pdf";
+        string pdfFilePath = @"C:\Docs\SourceDocument.pdf";
 
-        // Load the PDF document.
-        Document doc = new Document(pdfPath);
+        // Load the PDF document. PdfLoadOptions can be used to control loading behavior.
+        PdfLoadOptions loadOptions = new PdfLoadOptions();
+        Document pdfDoc = new Document(pdfFilePath, loadOptions);
 
-        // Save the document as a Word template (DOT) format.
-        string dotPath = "output.dot";
-        doc.Save(dotPath, SaveFormat.Dot);
+        // -----------------------------------------------------------------
+        // Convert the loaded PDF to a Microsoft Word template (.dot) format.
+        // The SaveFormat.Dot enumeration value corresponds to the DOT format.
+        // -----------------------------------------------------------------
+        string dotOutputPath = @"C:\Docs\ConvertedDocument.dot";
+        pdfDoc.Save(dotOutputPath, SaveFormat.Dot);
 
-        // Convert the same document to additional formats.
-
-        // Save as DOCX (Office Open XML WordprocessingML).
-        doc.Save("output.docx", SaveFormat.Docx);
-
-        // Save as RTF (Rich Text Format).
-        doc.Save("output.rtf", SaveFormat.Rtf);
-
-        // Save as HTML.
-        doc.Save("output.html", SaveFormat.Html);
-
-        // Save as plain text.
-        doc.Save("output.txt", SaveFormat.Text);
+        // -----------------------------------------------------------------
+        // Additional conversions to other common formats (optional).
+        // Demonstrates how the same Document instance can be saved in
+        // different formats by specifying the appropriate SaveFormat value.
+        // -----------------------------------------------------------------
+        pdfDoc.Save(@"C:\Docs\ConvertedDocument.docx", SaveFormat.Docx); // Word 2007+ document
+        pdfDoc.Save(@"C:\Docs\ConvertedDocument.rtf", SaveFormat.Rtf);   // Rich Text Format
+        pdfDoc.Save(@"C:\Docs\ConvertedDocument.html", SaveFormat.Html); // HTML format
     }
 }

@@ -8,28 +8,25 @@ class Program
 {
     static void Main()
     {
-        // Load an existing Word document.
-        Document doc = new Document("Input.docx");
+        // Create a new document.
+        Document doc = new Document();
 
-        // Retrieve the first shape in the document (could be a Shape, GroupShape, etc.).
-        ShapeBase shape = (ShapeBase)doc.GetChild(NodeType.Shape, 0, true);
+        // Insert a rectangle shape and set its position, size, and rotation.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        shape.Left = 150;   // X position in points.
+        shape.Top = 200;    // Y position in points.
+        shape.Rotation = 30; // Rotate the shape to demonstrate actual bounds calculation.
 
-        // Get the actual bounds of the shape in points.
-        // This value does not include any rotation applied to the shape.
-        RectangleF boundsInPoints = shape.BoundsInPoints;
-
-        Console.WriteLine($"Shape BoundsInPoints: X={boundsInPoints.X}, Y={boundsInPoints.Y}, " +
-                          $"Width={boundsInPoints.Width}, Height={boundsInPoints.Height}");
-
-        // If you need the rendered bounds that take rotation into account,
-        // use the ShapeRenderer (or OfficeMathRenderer for OfficeMath nodes).
+        // Use ShapeRenderer (inherits from NodeRendererBase) to get the actual bounds,
+        // which include the effect of rotation.
         ShapeRenderer renderer = new ShapeRenderer(shape);
-        RectangleF renderedBounds = renderer.BoundsInPoints;
+        RectangleF actualBounds = renderer.BoundsInPoints;
 
-        Console.WriteLine($"Rendered BoundsInPoints (with rotation): X={renderedBounds.X}, Y={renderedBounds.Y}, " +
-                          $"Width={renderedBounds.Width}, Height={renderedBounds.Height}");
+        // Display the actual bounds.
+        Console.WriteLine($"Actual bounds (including rotation): X={actualBounds.X}, Y={actualBounds.Y}, Width={actualBounds.Width}, Height={actualBounds.Height}");
 
-        // Save the document (optional, demonstrates the save lifecycle rule).
-        doc.Save("Output.docx");
+        // Save the document (optional).
+        doc.Save("ShapeBounds.docx");
     }
 }

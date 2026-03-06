@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class SeeAlsoReferences
+class SeeAlsoReferencesDemo
 {
     static void Main()
     {
@@ -12,54 +12,52 @@ class SeeAlsoReferences
         // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // First section – create a bookmark that we will reference later.
-        // -----------------------------------------------------------------
+        // Insert first section with a heading and a bookmark.
         builder.ParagraphFormat.StyleName = "Heading 1";
-        builder.Writeln("Chapter 1: Introduction");
+        builder.StartBookmark("TopicA");
+        builder.Writeln("Topic A");
+        builder.EndBookmark("TopicA");
 
-        // Start a bookmark named "Intro".
-        builder.StartBookmark("Intro");
-        builder.Writeln("This is the introductory chapter. It contains important information.");
-        // End the bookmark.
-        builder.EndBookmark("Intro");
+        // Add some body text.
+        builder.ParagraphFormat.StyleName = "Normal";
+        builder.Writeln("This is the main content for Topic A.");
 
-        // Insert a page break to separate sections.
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // -----------------------------------------------------------------
-        // Second section – create another bookmark.
-        // -----------------------------------------------------------------
-        builder.ParagraphFormat.StyleName = "Heading 1";
-        builder.Writeln("Chapter 2: Details");
-
-        builder.StartBookmark("Details");
-        builder.Writeln("This chapter goes into the details of the topic.");
-        builder.EndBookmark("Details");
-
-        // Insert a paragraph that references the first chapter using a REF field.
-        builder.Writeln(); // Blank line.
+        // Insert a "See also" line that references Topic B and Topic C.
+        builder.Writeln(); // blank line
         builder.Write("See also: ");
 
-        // Insert a REF field that points to the "Intro" bookmark.
-        FieldRef refField = (FieldRef)builder.InsertField(FieldType.FieldRef, true);
-        refField.BookmarkName = "Intro";
-        // Optional: make the REF field a hyperlink to the bookmarked text.
-        refField.InsertHyperlink = true;
+        // Insert a REF field that points to bookmark "TopicB".
+        FieldRef refB = (FieldRef)builder.InsertField(FieldType.FieldRef, true);
+        refB.BookmarkName = "TopicB";
+        refB.InsertHyperlink = true; // make it clickable
+        builder.Write(", ");
 
-        // Finish the line.
-        builder.Writeln();
+        // Insert a REF field that points to bookmark "TopicC".
+        FieldRef refC = (FieldRef)builder.InsertField(FieldType.FieldRef, true);
+        refC.BookmarkName = "TopicC";
+        refC.InsertHyperlink = true;
 
-        // Insert another reference to the second chapter.
-        builder.Write("For more details, see: ");
-        FieldRef refField2 = (FieldRef)builder.InsertField(FieldType.FieldRef, true);
-        refField2.BookmarkName = "Details";
-        refField2.InsertHyperlink = true;
-        builder.Writeln();
+        // Add a page break before the next topics.
+        builder.InsertBreak(BreakType.PageBreak);
 
-        // -----------------------------------------------------------------
-        // Update all fields so that the REF fields display the bookmarked text.
-        // -----------------------------------------------------------------
+        // Insert Topic B.
+        builder.ParagraphFormat.StyleName = "Heading 1";
+        builder.StartBookmark("TopicB");
+        builder.Writeln("Topic B");
+        builder.EndBookmark("TopicB");
+        builder.ParagraphFormat.StyleName = "Normal";
+        builder.Writeln("Details about Topic B.");
+
+        // Insert Topic C.
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.ParagraphFormat.StyleName = "Heading 1";
+        builder.StartBookmark("TopicC");
+        builder.Writeln("Topic C");
+        builder.EndBookmark("TopicC");
+        builder.ParagraphFormat.StyleName = "Normal";
+        builder.Writeln("Details about Topic C.");
+
+        // Update all fields so that REF results are calculated.
         doc.UpdateFields();
 
         // Save the document to a file.

@@ -7,46 +7,53 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsReportingExample
 {
-    // Simple data class that matches the fields used in the template.
+    // Simple POCO that matches the fields used in the Word template.
     public class Person
     {
         public string Name { get; set; }
         public int Age { get; set; }
+        public string City { get; set; }
     }
 
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            // Paths to the input files and the output document.
-            string txtPath = @"C:\Data\people.txt";          // Example: "John Doe,30"
-            string templatePath = @"C:\Templates\ReportTemplate.docx";
-            string outputPath = @"C:\Output\ReportResult.docx";
+            // Path to the plain‑text data file (each line: Name|Age|City).
+            string txtFilePath = @"C:\Data\people.txt";
 
-            // Load the plain‑text file, split each line by a comma and project it into a list of Person objects.
-            List<Person> people = File.ReadAllLines(txtPath)
+            // Path to the Word template that contains tags like <<[person.Name]>>, <<[person.Age]>>, etc.
+            string templatePath = @"C:\Templates\PeopleReport.docx";
+
+            // Path where the generated report will be saved.
+            string outputPath = @"C:\Reports\PeopleReportResult.docx";
+
+            // Load the TXT file, parse each line with LINQ and create a list of Person objects.
+            List<Person> people = File.ReadAllLines(txtFilePath)
                 .Where(line => !string.IsNullOrWhiteSpace(line))
                 .Select(line =>
                 {
-                    string[] parts = line.Split(',');
+                    // Expected format: Name|Age|City
+                    string[] parts = line.Split('|');
                     return new Person
                     {
-                        Name = parts[0].Trim(),
-                        Age = int.Parse(parts[1].Trim())
+                        Name = parts.Length > 0 ? parts[0].Trim() : string.Empty,
+                        Age = parts.Length > 1 && int.TryParse(parts[1].Trim(), out int age) ? age : 0,
+                        City = parts.Length > 2 ? parts[2].Trim() : string.Empty
                     };
                 })
                 .ToList();
 
-            // Load the Word template document.
-            Document doc = new Document(templatePath);
+            // Load the template document (create rule is used internally by the Document constructor).
+            Document templateDoc = new Document(templatePath);
 
-            // Create the reporting engine and populate the template with the data source.
+            // Build the report using the ReportingEngine.
+            // The data source name "person" must match the tags used in the template.
             ReportingEngine engine = new ReportingEngine();
-            // The data source name ("data") must match the name used in the template tags, e.g. <<foreach [in data]>>
-            engine.BuildReport(doc, people, "data");
+            engine.BuildReport(templateDoc, people, "person");
 
-            // Save the populated document.
-            doc.Save(outputPath);
+            // Save the populated document (save rule).
+            templateDoc.Save(outputPath);
         }
     }
 }

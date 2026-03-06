@@ -2,30 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class RenderAndSavePdf
+class RenderDocumentWithMissingFonts
 {
     static void Main()
     {
-        // Path to the folder that contains the source document.
-        string inputFolder = @"C:\Docs\Input\";
-        // Path to the folder where the PDF will be saved.
-        string outputFolder = @"C:\Docs\Output\";
+        // Path to the source document (DOCX, DOC, etc.).
+        string inputPath = @"C:\Docs\SourceDocument.docx";
 
-        // Load the source Word document.
-        Document doc = new Document(inputFolder + "SourceDocument.docx");
+        // Path where the resulting PDF will be saved.
+        string outputPath = @"C:\Docs\RenderedDocument.pdf";
 
-        // Configure PDF save options to replace missing fonts with core PDF Type 1 fonts.
+        // Load the source document.
+        Document doc = new Document(inputPath);
+
+        // Configure PDF save options to replace missing fonts with core PDF Type 1 fonts.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Substitute standard TrueType fonts (Arial, Times New Roman, Courier New, Symbol)
-            // with their core PDF equivalents when the original fonts are unavailable.
+            // Substitute Arial, Times New Roman, Courier New and Symbol with core PDF fonts.
             UseCoreFonts = true,
 
-            // Optionally, embed only non‑standard fonts; standard fonts will be replaced.
+            // Embed only non‑standard fonts; standard fonts are replaced by core fonts.
             FontEmbeddingMode = PdfFontEmbeddingMode.EmbedNonstandard
         };
 
-        // Save the rendered document as PDF using the configured options.
-        doc.Save(outputFolder + "RenderedDocument.pdf", pdfOptions);
+        // Save the document as PDF using the configured options.
+        doc.Save(outputPath, pdfOptions);
     }
 }

@@ -11,24 +11,13 @@ class DocumentComparison
         Document docEdited = new Document("Edited.docx");
 
         // Ensure both documents have no revisions before comparison.
-        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
-            throw new InvalidOperationException("Both documents must be revision‑free before comparison.");
-
-        // Compare the documents, creating revisions in the original document.
-        // "JD" will be used as the author initials for the revisions.
-        docOriginal.Compare(docEdited, "JD", DateTime.Now);
-
-        // Optional: iterate through the generated revisions and output their details.
-        foreach (Revision rev in docOriginal.Revisions)
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            Console.WriteLine($"Revision type: {rev.RevisionType}, Node type: {rev.ParentNode.NodeType}");
-            Console.WriteLine($"\tChanged text: \"{rev.ParentNode.GetText()}\"");
+            // Compare the documents. The revisions will be added to docOriginal.
+            docOriginal.Compare(docEdited, "JD", DateTime.Now);
         }
 
-        // Accept all revisions to transform the original document into the edited version.
-        docOriginal.Revisions.AcceptAll();
-
-        // Save the resulting document.
-        docOriginal.Save("ComparedResult.docx");
+        // Save the result which now contains revision marks.
+        docOriginal.Save("Compared.docx");
     }
 }

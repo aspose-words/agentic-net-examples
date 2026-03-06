@@ -1,29 +1,22 @@
 using System;
 using Aspose.Words;
 
-namespace AsposeWordsDotxExample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Path to the source DOTX template file.
+        string dotxPath = "Template.dotx";
 
-            // Optionally add some content using DocumentBuilder.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Hello from a DOTX template!");
+        // Load the DOTX file into a Document object using the constructor that accepts a file name.
+        Document doc = new Document(dotxPath);
 
-            // Save the document as a DOTX (Word template) file.
-            // The Save method with (string, SaveFormat) follows the provided rule.
-            doc.Save("OutputTemplate.dotx", SaveFormat.Dotx);
+        // Example modification: add a paragraph to the loaded document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This document was loaded from a DOTX template and saved as DOCX.");
 
-            // Load the saved DOTX file back into a Document object.
-            // This uses the Document(string) constructor rule.
-            Document loadedDoc = new Document("OutputTemplate.dotx");
-
-            // Verify that the content was loaded correctly (optional).
-            Console.WriteLine(loadedDoc.GetText().Trim());
-        }
+        // Save the document in DOCX format (or any other desired format).
+        string outputPath = "Converted.docx";
+        doc.Save(outputPath, SaveFormat.Docx);
     }
 }

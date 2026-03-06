@@ -1,26 +1,30 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Math;
-using System;
 
-class Program
+class ApplyRightJustificationToOfficeMath
 {
     static void Main()
     {
-        // Load the DOCX document.
-        Document doc = new Document("Input.docx");
+        // Load the existing DOCX document.
+        string inputPath = "input.docx";
+        Document doc = new Document(inputPath);
 
-        // Retrieve all OfficeMath objects in the document.
-        NodeCollection officeMaths = doc.GetChildNodes(NodeType.OfficeMath, true);
+        // Retrieve all OfficeMath nodes in the document (including nested ones).
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
 
-        // Apply right justification to each equation.
-        foreach (OfficeMath om in officeMaths)
+        // Apply right justification to each OfficeMath equation.
+        foreach (OfficeMath officeMath in officeMathNodes)
         {
-            // Set display type to Display before changing justification.
-            om.DisplayType = OfficeMathDisplayType.Display;
-            om.Justification = OfficeMathJustification.Right;
+            // Ensure the equation is displayed on its own line before setting justification.
+            officeMath.DisplayType = OfficeMathDisplayType.Display;
+
+            // Set the justification to right.
+            officeMath.Justification = OfficeMathJustification.Right;
         }
 
-        // Save the updated document.
-        doc.Save("Output.docx");
+        // Save the modified document.
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

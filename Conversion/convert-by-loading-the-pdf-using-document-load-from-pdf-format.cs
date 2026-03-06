@@ -6,19 +6,27 @@ class Program
 {
     static void Main()
     {
-        // Path to the source PDF file.
+        // Path to the PDF file to be loaded.
         string pdfPath = "input.pdf";
 
-        // Create PDF load options (default settings).
-        PdfLoadOptions loadOptions = new PdfLoadOptions();
+        // Configure PDF load options (optional).
+        PdfLoadOptions loadOptions = new PdfLoadOptions
+        {
+            // Load images from the PDF.
+            SkipPdfImages = false,
+            // Start loading from the first page (0‑based index).
+            PageIndex = 0,
+            // Load all pages (default is MaxValue).
+            PageCount = int.MaxValue
+        };
 
-        // Load the PDF into an Aspose.Words Document object.
+        // Load the PDF document into an Aspose.Words Document object.
         Document doc = new Document(pdfPath, loadOptions);
 
         // Example usage: write the extracted text to the console.
         Console.WriteLine(doc.GetText());
 
-        // Optional: save the document in another format, e.g., DOCX.
+        // Optional: save the loaded document to another format, e.g., DOCX.
         // doc.Save("output.docx");
     }
 }

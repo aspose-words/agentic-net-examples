@@ -1,22 +1,20 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 
 class Program
 {
     static void Main()
     {
-        // Path to the source PDF file.
-        const string inputPath = "input.pdf";
+        // Path to the source document (any supported format, e.g., DOCX).
+        string sourcePath = "ExampleDocument.docx";
 
-        // Path where the converted PDF will be saved.
-        const string outputPath = "output.pdf";
+        // Path where the PDF will be saved.
+        string pdfPath = "ExampleDocument.pdf";
 
-        // Load the PDF document using PdfLoadOptions (optional, can be omitted for default loading).
-        LoadOptions loadOptions = new PdfLoadOptions();
-        Document doc = new Document(inputPath, loadOptions);
+        // Load the source document.
+        Document doc = new Document(sourcePath);
 
-        // Save the loaded document back to PDF format.
-        doc.Save(outputPath);
+        // Save the loaded document as PDF.
+        doc.Save(pdfPath, SaveFormat.Pdf);
     }
 }

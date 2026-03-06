@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -6,41 +7,38 @@ class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Associate a DocumentBuilder with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table. The builder returns the created Table object.
+        // Start a new table. The builder returns the created Table node.
         Table table = builder.StartTable();
 
         // ---- First row ----
-        // Insert first cell and add text.
-        builder.InsertCell();
-        builder.Write("Cell 1, Row 1");
+        builder.InsertCell();               // First cell of the first row.
+        builder.Write("Cell 1,1");           // Insert text into the cell.
 
-        // Insert second cell in the same row and add text.
-        builder.InsertCell();
-        builder.Write("Cell 2, Row 1");
+        builder.InsertCell();               // Second cell of the first row.
+        builder.Write("Cell 1,2");
 
-        // End the first row.
-        builder.EndRow();
+        builder.EndRow();                   // End the first row.
 
         // ---- Second row ----
-        builder.InsertCell();
-        builder.Write("Cell 1, Row 2");
+        builder.InsertCell();               // First cell of the second row.
+        builder.Write("Cell 2,1");
 
-        builder.InsertCell();
-        builder.Write("Cell 2, Row 2");
+        builder.InsertCell();               // Second cell of the second row.
+        builder.Write("Cell 2,2");
 
-        // End the second row.
-        builder.EndRow();
+        builder.EndRow();                   // End the second row.
 
         // Finish the table.
         builder.EndTable();
 
         // Save the document as a DOCX file.
-        doc.Save("TableInserted.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "TableExample.docx");
+        doc.Save(outputPath);
     }
 }

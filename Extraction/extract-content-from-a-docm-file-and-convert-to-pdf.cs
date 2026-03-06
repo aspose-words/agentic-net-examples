@@ -2,15 +2,24 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class DocmToPdfConverter
 {
     static void Main()
     {
-        // Load the macro-enabled Word document (DOCM) from the file system.
-        Document doc = new Document("input.docm");
+        // Path to the source DOCM file (macro‑enabled Word document)
+        string sourcePath = @"C:\Input\SampleDocument.docm";
 
-        // Convert and save the document as a PDF file.
-        // The SaveFormat.Pdf enum specifies the PDF output format.
-        doc.Save("output.pdf", SaveFormat.Pdf);
+        // Path where the resulting PDF will be saved
+        string outputPath = @"C:\Output\SampleDocument.pdf";
+
+        // Load the DOCM file. The Document constructor automatically detects the format.
+        Document doc = new Document(sourcePath);
+
+        // Optional: configure PDF save options (e.g., compliance level, image quality, etc.)
+        // Here we use the default options; you can customize if needed.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+
+        // Save the document as PDF. The Save method determines the format from the file extension.
+        doc.Save(outputPath, pdfOptions);
     }
 }

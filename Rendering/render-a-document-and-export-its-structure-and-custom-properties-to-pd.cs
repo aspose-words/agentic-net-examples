@@ -6,24 +6,24 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add some content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample content for PDF export.");
 
-        // Add some content so the PDF has visible text.
-        builder.Writeln("Hello world!");
+        // Add a custom document property that we want to export to the PDF.
+        doc.CustomDocumentProperties.Add("Company", "My Company");
 
-        // Add a custom document property that we want to export.
-        doc.CustomDocumentProperties.Add("Company", "My value");
+        // Rebuild the page layout to ensure accurate rendering.
+        doc.UpdatePageLayout();
 
-        // Configure PDF save options.
+        // Configure PDF save options:
+        // - ExportDocumentStructure = true makes the PDF contain a tag structure (visible in Acrobat's Tags pane).
+        // - CustomPropertiesExport = Standard stores custom properties in the PDF's /Info dictionary.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Export the document structure (tags) to make the PDF navigable via the Tags pane.
             ExportDocumentStructure = true,
-
-            // Export custom properties as XMP metadata.
-            CustomPropertiesExport = PdfCustomPropertiesExport.Metadata
+            CustomPropertiesExport = PdfCustomPropertiesExport.Standard
         };
 
         // Save the document as PDF using the configured options.

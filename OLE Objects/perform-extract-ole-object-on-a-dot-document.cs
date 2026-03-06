@@ -7,46 +7,37 @@ class ExtractOleFromDot
 {
     static void Main()
     {
-        // Path to the DOT (Word template) document.
-        string dotPath = @"C:\Docs\Template.dot";
+        // Path to the DOT template file
+        string inputPath = @"C:\Docs\Template.dot";
 
-        // Folder where extracted OLE objects will be saved.
-        string outputFolder = @"C:\Docs\ExtractedOle";
+        // Directory where extracted OLE objects will be saved
+        string outputDir = @"C:\Docs\ExtractedOle";
 
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
+        // Ensure the output directory exists
+        Directory.CreateDirectory(outputDir);
 
-        // Load the DOT document.
-        Document doc = new Document(dotPath);
+        // Load the DOT document
+        Document doc = new Document(inputPath);
 
-        // Iterate through all shapes in the document.
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        // Get all shapes in the document
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+
         int oleIndex = 0;
-
-        foreach (Shape shape in shapes)
+        foreach (Shape shape in shapeNodes)
         {
-            // Only process shapes that contain an OLE object.
-            OleFormat oleFormat = shape.OleFormat;
-            if (oleFormat == null)
+            // Only process shapes that contain an OLE object
+            OleFormat ole = shape.OleFormat;
+            if (ole == null)
                 continue;
 
-            // Skip linked OLE objects – they cannot be saved directly.
-            if (oleFormat.IsLink)
-                continue;
+            // Construct a file name using the suggested extension
+            string fileName = $"OleObject_{oleIndex}{ole.SuggestedExtension}";
+            string fullPath = Path.Combine(outputDir, fileName);
 
-            // Determine a file name for the extracted object.
-            string extension = oleFormat.SuggestedExtension ?? ".bin";
-            string fileName = $"OleObject_{oleIndex}{extension}";
-            string fullPath = Path.Combine(outputFolder, fileName);
+            // Save the OLE object directly to a file
+            ole.Save(fullPath);
 
-            // Save the OLE object data to the file.
-            oleFormat.Save(fullPath);
-
-            Console.WriteLine($"Extracted OLE object to: {fullPath}");
             oleIndex++;
         }
-
-        // Optionally, save the (unchanged) document if needed.
-        // doc.Save(@"C:\Docs\Template_Processed.dot");
     }
 }

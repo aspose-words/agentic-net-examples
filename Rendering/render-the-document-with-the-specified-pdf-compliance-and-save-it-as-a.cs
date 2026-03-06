@@ -6,16 +6,17 @@ class Program
 {
     static void Main()
     {
-        // Load the source Word document.
+        // Load the source document (replace with your actual file path).
         Document doc = new Document("Input.docx");
 
-        // Create PDF save options.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Create a PdfSaveOptions instance via the factory method (lifecycle rule).
+        PdfSaveOptions pdfOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf) as PdfSaveOptions;
 
-        // Specify the PDF compliance level (e.g., PDF/A-1b).
+        // Specify the required PDF compliance level.
+        // Change the enum value to the compliance you need (e.g., PdfA1b, PdfUa1, Pdf20, etc.).
         pdfOptions.Compliance = PdfCompliance.PdfA1b;
 
-        // Save the document as a PDF using the specified compliance.
+        // Save the document as PDF using the configured options.
         doc.Save("Output.pdf", pdfOptions);
     }
 }

@@ -5,101 +5,61 @@ using Aspose.Words.Saving;
 
 namespace DocumentSplitExample
 {
-    public class DocumentSplitter
+    class Program
     {
-        // Splits the input DOCX document into separate HTML parts using different split criteria.
-        public void SplitByCriteria(string inputPath, string outputFolder)
+        static void Main()
         {
-            // Ensure the output directory exists.
-            Directory.CreateDirectory(outputFolder);
+            // Path to the source DOCX file.
+            string inputPath = Path.Combine("Data", "SourceDocument.docx");
 
-            // Load the source document.
+            // Load the DOCX document using the Document constructor (lifecycle rule).
             Document doc = new Document(inputPath);
 
-            // Split by section breaks.
-            SaveSplit(doc, outputFolder, "Section", DocumentSplitCriteria.SectionBreak);
-
-            // Split by page breaks.
-            SaveSplit(doc, outputFolder, "Page", DocumentSplitCriteria.PageBreak);
-
-            // Split by column breaks.
-            SaveSplit(doc, outputFolder, "Column", DocumentSplitCriteria.ColumnBreak);
-
-            // Split by heading paragraphs (default heading level = 2).
-            SaveSplit(doc, outputFolder, "Heading", DocumentSplitCriteria.HeadingParagraph);
-        }
-
-        // Helper method that configures HtmlSaveOptions and saves the document using a custom callback.
-        private void SaveSplit(Document doc, string outputFolder, string prefix, DocumentSplitCriteria criteria)
-        {
-            HtmlSaveOptions options = new HtmlSaveOptions
+            // -----------------------------------------------------------------
+            // Example 1: Split the document into separate HTML files at each
+            //            section break.
+            // -----------------------------------------------------------------
+            HtmlSaveOptions sectionSplitOptions = new HtmlSaveOptions
             {
-                DocumentSplitCriteria = criteria,
-                // When splitting by headings we can limit the heading level (optional).
-                DocumentSplitHeadingLevel = criteria.HasFlag(DocumentSplitCriteria.HeadingParagraph) ? 2 : 0,
-                // Use a callback to give each part a meaningful file name.
-                DocumentPartSavingCallback = new PartRenamer(prefix, criteria, outputFolder)
+                // Split criteria – SectionBreak will cause a new HTML part for each
+                // section in the source document.
+                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak
             };
 
-            // The main file name is required but will contain only the first part.
-            string mainFile = Path.Combine(outputFolder, $"{prefix}_Full.html");
-            doc.Save(mainFile, options);
-        }
+            // Save the document. The Save method determines the format from the
+            // file extension and applies the provided HtmlSaveOptions.
+            string sectionOutputPath = Path.Combine("Output", "SectionSplit.html");
+            doc.Save(sectionOutputPath, sectionSplitOptions);
 
-        // Implements IDocumentPartSavingCallback to control the naming of each split part.
-        private class PartRenamer : IDocumentPartSavingCallback
-        {
-            private readonly string _prefix;
-            private readonly DocumentSplitCriteria _criteria;
-            private readonly string _outputFolder;
-            private int _partIndex = 0;
-
-            public PartRenamer(string prefix, DocumentSplitCriteria criteria, string outputFolder)
+            // -----------------------------------------------------------------
+            // Example 2: Split the document at heading paragraphs (Heading 1 and
+            //            Heading 2) and limit the split to heading level 2.
+            // -----------------------------------------------------------------
+            HtmlSaveOptions headingSplitOptions = new HtmlSaveOptions
             {
-                _prefix = prefix;
-                _criteria = criteria;
-                _outputFolder = outputFolder;
-            }
+                // Split at paragraphs that use heading styles.
+                DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
+                // Maximum heading level to consider for splitting (1‑9). 2 means
+                // Heading 1 and Heading 2 will trigger a split.
+                DocumentSplitHeadingLevel = 2
+            };
 
-            void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+            string headingOutputPath = Path.Combine("Output", "HeadingSplit.html");
+            doc.Save(headingOutputPath, headingSplitOptions);
+
+            // -----------------------------------------------------------------
+            // Example 3: Split the document at explicit page breaks.
+            // -----------------------------------------------------------------
+            HtmlSaveOptions pageBreakSplitOptions = new HtmlSaveOptions
             {
-                // Determine a readable part type based on the split criteria.
-                string partType = _criteria switch
-                {
-                    DocumentSplitCriteria.PageBreak => "Page",
-                    DocumentSplitCriteria.ColumnBreak => "Column",
-                    DocumentSplitCriteria.SectionBreak => "Section",
-                    DocumentSplitCriteria.HeadingParagraph => "Heading",
-                    _ => "Part"
-                };
+                DocumentSplitCriteria = DocumentSplitCriteria.PageBreak
+            };
 
-                // Build a unique file name for the part.
-                string partFileName = $"{_prefix}_Part{++_partIndex}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+            string pageBreakOutputPath = Path.Combine("Output", "PageBreakSplit.html");
+            doc.Save(pageBreakOutputPath, pageBreakSplitOptions);
 
-                // Set the file name.
-                args.DocumentPartFileName = partFileName;
-
-                // Write to a custom stream (demonstrates both approaches).
-                string fullPath = Path.Combine(_outputFolder, partFileName);
-                args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
-                // KeepDocumentPartStreamOpen remains false (default) – Aspose.Words will close the stream after writing.
-            }
-        }
-    }
-
-    // Entry point required for a console application.
-    public static class Program
-    {
-        public static void Main(string[] args)
-        {
-            // Simple argument handling – you can replace these paths with your own.
-            string inputPath = args.Length > 0 ? args[0] : @"C:\Docs\Input.docx";
-            string outputFolder = args.Length > 1 ? args[1] : @"C:\Docs\Output";
-
-            var splitter = new DocumentSplitter();
-            splitter.SplitByCriteria(inputPath, outputFolder);
-
-            Console.WriteLine($"Document split completed. Output folder: {outputFolder}");
+            // Inform the user that the operation completed.
+            Console.WriteLine("Document split and saved successfully.");
         }
     }
 }

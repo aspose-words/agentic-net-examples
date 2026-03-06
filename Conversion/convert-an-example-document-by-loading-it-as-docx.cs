@@ -1,21 +1,26 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
-class Program
+class LoadDocxExample
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\example.docx";
+        // Path to the source DOCX file that will be loaded.
+        string inputPath = @"C:\Docs\Example.docx";
 
-        // Path where the converted document will be saved (PDF in this case).
-        string outputPath = @"C:\Docs\example_converted.pdf";
+        // Path where the loaded document will be saved after processing.
+        string outputPath = @"C:\Docs\Example_Copy.docx";
 
-        // Load the DOCX document using the Document(string) constructor.
+        // Load the existing DOCX document using the Document(string) constructor.
         Document doc = new Document(inputPath);
 
-        // Save the loaded document to the desired format.
-        // The format is inferred from the file extension (.pdf).
+        // (Optional) Perform any processing on the document here.
+        // For demonstration we simply output the document's text to the console.
+        Console.WriteLine("Document text:");
+        Console.WriteLine(doc.GetText());
+
+        // Save the document to a new file using the Save(string) method.
         doc.Save(outputPath);
     }
 }

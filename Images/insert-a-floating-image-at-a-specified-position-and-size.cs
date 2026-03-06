@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -5,29 +6,27 @@ class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path to the image that will be inserted.
-        string imagePath = @"C:\Images\Sample.jpg";
-
         // Insert a floating image.
-        // Horizontal position: 100 points from the left margin.
-        // Vertical position:   150 points from the top margin.
-        // Size:                200 points wide, 150 points high.
-        // Wrap type:           Square (text wraps around the image).
+        // Position: 100 points from the left margin, 150 points from the top margin.
+        // Size: 200 points wide, 150 points high.
+        // Wrap type: Square (text wraps around the image).
         Shape imageShape = builder.InsertImage(
-            imagePath,
-            RelativeHorizontalPosition.Margin, 100,
-            RelativeVerticalPosition.Margin, 150,
-            200, 150,
-            WrapType.Square);
+            "C:\\Images\\Sample.jpg",                     // Path to the image file.
+            RelativeHorizontalPosition.Margin, 100,      // Horizontal position.
+            RelativeVerticalPosition.Margin, 150,        // Vertical position.
+            200,                                          // Width.
+            150,                                          // Height.
+            WrapType.Square);                            // Text wrap.
 
-        // Example of additional settings (optional).
-        imageShape.BehindText = false; // place the image in front of the text.
+        // Additional optional settings.
+        imageShape.BehindText = false; // Place the image in front of the text.
+        imageShape.WrapType = WrapType.Square;
 
-        // Save the document to a file.
-        doc.Save(@"C:\Output\FloatingImage.docx");
+        // Save the document to disk.
+        doc.Save("FloatingImage.docx");
     }
 }

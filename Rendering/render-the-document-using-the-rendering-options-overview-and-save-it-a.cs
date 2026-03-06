@@ -2,21 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class RenderAndSavePdf
 {
     static void Main()
     {
-        // Load the source document.
-        Document doc = new Document("input.docx");
+        // Paths to the source document and the output PDF.
+        string dataDir = @"C:\Data\";
+        string artifactsDir = @"C:\Artifacts\";
 
-        // Create PDF save options and configure rendering.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        // Enable high‑quality (slow) rendering for better visual fidelity.
+        // Load the document that we want to render.
+        Document doc = new Document(dataDir + "Rendering.docx");
+
+        // Create a PdfSaveOptions object using the factory method.
+        // This ensures we follow the provided lifecycle rules.
+        PdfSaveOptions pdfOptions = (PdfSaveOptions)SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
+
+        // Rendering options overview:
+        // Enable anti‑aliasing for smoother edges.
+        pdfOptions.UseAntiAliasing = true;
+        // Use high‑quality (slow) rendering algorithms.
         pdfOptions.UseHighQualityRendering = true;
-        // Disable memory optimization (optional, set to true for large docs).
+        // Optionally, control memory usage during saving.
         pdfOptions.MemoryOptimization = false;
 
-        // Save the document as PDF using the specified options.
-        doc.Save("output.pdf", pdfOptions);
+        // Save the rendered document as a PDF.
+        doc.Save(artifactsDir + "RenderedDocument.pdf", pdfOptions);
     }
 }

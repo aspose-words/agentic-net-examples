@@ -1,39 +1,38 @@
 using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using System.Text.RegularExpressions;
 
-class FindAndReplaceExample
+class FindReplaceExample
 {
     static void Main()
     {
-        // Define input and output file paths.
-        string inputPath = @"C:\Data\Input.docx";
-        string outputPath = @"C:\Data\Output.docx";
+        // Create a new empty document.
+        Document doc = new Document();
 
-        // Load the existing DOCX document.
-        Document doc = new Document(inputPath);
-
-        // Create a DocumentBuilder for possible additional editing (not required for replace itself).
+        // Use DocumentBuilder to add some sample text.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello _UserName_, welcome to the Aspose.Words tutorial.");
+        builder.Writeln("Please replace _UserName_ with your actual name.");
 
-        // Example: replace a placeholder token with actual text.
-        string placeholder = "_FullName_";
-        string replacement = "John Doe";
+        // Define the text to find and its replacement.
+        string findText = "_UserName_";
+        string replaceText = "John Doe";
 
-        // Perform a simple case‑insensitive find‑and‑replace across the whole document.
-        int replacedCount = doc.Range.Replace(placeholder, replacement);
+        // Simple case‑insensitive replace without extra options.
+        int count = doc.Range.Replace(findText, replaceText);
+        Console.WriteLine($"Replacements made: {count}");
 
-        // Optionally, use FindReplaceOptions for more control (e.g., case‑sensitive, whole word only).
+        // If you need more control (e.g., match whole words only), use FindReplaceOptions.
         FindReplaceOptions options = new FindReplaceOptions
         {
             MatchCase = false,               // ignore case
-            FindWholeWordsOnly = true        // replace only whole word matches
+            FindWholeWordsOnly = false       // replace even if part of a larger word
         };
-        // Replace another token using the options.
-        doc.Range.Replace("[Date]", DateTime.Today.ToString("MMMM d, yyyy"), options);
+        // Example of a second replace using the options object.
+        doc.Range.Replace("Aspose.Words", "Aspose.Words (v2)", options);
 
         // Save the modified document.
-        doc.Save(outputPath);
+        doc.Save("Result.docx");
     }
 }

@@ -1,4 +1,3 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -7,19 +6,20 @@ class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create two individual shapes that will be placed inside the group.
+        // Create a rectangle shape.
         Shape rectangle = new Shape(doc, ShapeType.Rectangle)
         {
             Width = 100,
-            Height = 100,
+            Height = 50,
             FillColor = Color.LightBlue,
             Stroke = { Color = Color.Black }
         };
 
+        // Create an ellipse shape.
         Shape ellipse = new Shape(doc, ShapeType.Ellipse)
         {
             Width = 80,
@@ -28,22 +28,18 @@ class Program
             Stroke = { Color = Color.DarkRed }
         };
 
-        // Create a GroupShape and add the shapes as its children.
+        // Create a group shape and set its bounding box.
         GroupShape group = new GroupShape(doc);
+        group.Bounds = new RectangleF(0, 0, 200, 200);
+
+        // Add the rectangle and ellipse to the group.
         group.AppendChild(rectangle);
         group.AppendChild(ellipse);
 
-        // Define the outer bounds of the group shape (position and size in points).
-        group.Bounds = new RectangleF(0, 0, 200, 200);
-
-        // Optionally configure the internal coordinate system of the group.
-        group.CoordSize = new Size(500, 500);      // Size of the coordinate space.
-        group.CoordOrigin = new Point(-250, -250); // Move the origin to the centre.
-
-        // Insert the group shape into the document at the current cursor position.
+        // Insert the group shape into the document at the current builder position.
         builder.InsertNode(group);
 
-        // Save the resulting document.
+        // Save the document to a DOCX file.
         doc.Save("GroupShape.docx");
     }
 }

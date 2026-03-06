@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 
 class Program
@@ -5,12 +6,15 @@ class Program
     static void Main()
     {
         // Load the source document.
-        Document doc = new Document("input.docx");
+        Document doc = new Document("Input.docx");
 
-        // Apply a preset margin setting (e.g., Narrow) to the first section.
-        doc.Sections[0].PageSetup.Margins = Margins.Narrow;
+        // Apply a preset margin (e.g., Narrow) to every section in the document.
+        foreach (Section section in doc.Sections)
+        {
+            section.PageSetup.Margins = Margins.Narrow;
+        }
 
-        // Save the document as PDF; the format is inferred from the .pdf extension.
-        doc.Save("output.pdf");
+        // Save the document as a PDF file.
+        doc.Save("Output.pdf");
     }
 }

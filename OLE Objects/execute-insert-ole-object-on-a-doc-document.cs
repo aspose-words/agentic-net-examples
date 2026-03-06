@@ -3,33 +3,37 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class InsertOleObjectExample
 {
     static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Define directories for input and output files.
+        string dataDir = @"C:\Data\";
+        string outputDir = @"C:\Output\";
 
         // Path to the file that will be embedded as an OLE object.
-        // Example: an Excel workbook.
-        string dataDir = @"C:\Data\";
-        string oleFilePath = Path.Combine(dataDir, "Sample.xlsx");
+        // In this example we embed an Excel spreadsheet.
+        string oleFilePath = Path.Combine(dataDir, "SampleSpreadsheet.xlsx");
 
-        // Write a caption before the OLE object.
-        builder.Writeln("Embedded Excel OLE object:");
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Open the source file as a stream and insert it as an OLE object.
-        // ProgId "Excel.Sheet" tells Word the type of the embedded object.
-        // The third argument (true) displays the object as an icon.
-        // The fourth argument (null) lets Aspose.Words choose a default icon image.
-        using (FileStream fileStream = new FileStream(oleFilePath, FileMode.Open, FileAccess.Read))
-        {
-            builder.InsertOleObject(fileStream, "Excel.Sheet", true, null);
-        }
+        // Initialize a DocumentBuilder to work with the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the document in the legacy DOC format.
-        string outPath = Path.Combine(dataDir, "OleObjectDocument.doc");
-        doc.Save(outPath);
+        // Write a description before the OLE object.
+        builder.Writeln("Embedded Excel spreadsheet:");
+
+        // Insert the OLE object.
+        // Parameters:
+        //   fileName   – full path to the source file.
+        //   isLinked   – false to embed the file (true would create a link).
+        //   asIcon     – false to display the content; true would display an icon.
+        //   presentation – null to use the default icon or preview image.
+        builder.InsertOleObject(oleFilePath, false, false, null);
+
+        // Save the resulting document.
+        string outputPath = Path.Combine(outputDir, "DocumentWithOleObject.docx");
+        doc.Save(outputPath);
     }
 }

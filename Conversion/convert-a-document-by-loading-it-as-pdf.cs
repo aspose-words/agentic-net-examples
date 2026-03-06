@@ -1,30 +1,25 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
-class PdfLoadAndConvert
+class Program
 {
     static void Main()
     {
         // Input PDF file path
-        string pdfPath = @"C:\Input\sample.pdf";
+        string inputPdfPath = "input.pdf";
 
-        // Output DOCX file path (conversion target)
-        string docxPath = @"C:\Output\sample_converted.docx";
+        // Output DOCX file path
+        string outputDocxPath = "output.docx";
 
-        // Create PdfLoadOptions – default constructor
+        // Create load options for PDF (default settings)
         PdfLoadOptions loadOptions = new PdfLoadOptions();
 
-        // Optionally configure load options (e.g., skip images, set page range)
-        // loadOptions.SkipPdfImages = false;
-        // loadOptions.PageIndex = 0;
-        // loadOptions.PageCount = int.MaxValue;
+        // Load the PDF document into an Aspose.Words Document object
+        Document doc = new Document(inputPdfPath, loadOptions);
 
-        // Load the PDF document using the PdfLoadOptions
-        Document doc = new Document(pdfPath, loadOptions);
-
-        // Save the loaded document in DOCX format (conversion)
-        doc.Save(docxPath);
+        // Save the loaded document in DOCX format
+        doc.Save(outputDocxPath, SaveFormat.Docx);
     }
 }

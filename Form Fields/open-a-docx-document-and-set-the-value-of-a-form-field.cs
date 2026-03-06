@@ -7,26 +7,30 @@ class Program
     static void Main()
     {
         // Path to the existing DOCX file.
-        const string inputPath = @"C:\Docs\InputDocument.docx";
-
-        // Path where the modified document will be saved.
-        const string outputPath = @"C:\Docs\OutputDocument.docx";
+        const string inputPath = "input.docx";
 
         // Load the document from the file system.
         Document doc = new Document(inputPath);
 
-        // Retrieve the form field by its bookmark name.
-        // Replace "MyTextInput" with the actual name of the form field you want to modify.
-        FormField formField = doc.Range.FormFields["MyTextInput"];
+        // Retrieve the form field by its bookmark/name.
+        // Replace "MyTextInput" with the actual name of your text input field.
+        FormField textField = doc.Range.FormFields["MyTextInput"];
 
-        // Ensure the field exists and is a text input field before setting its value.
-        if (formField != null && formField.Type == FieldType.FieldFormTextInput)
+        if (textField != null)
         {
-            // Set the new value for the text input form field.
-            formField.SetTextInputValue("New value for the form field");
+            // Set a new value for the text input form field.
+            textField.SetTextInputValue("New value");
+        }
+        else
+        {
+            Console.WriteLine("Form field not found.");
         }
 
-        // Save the updated document.
+        // Update all fields in the document to reflect the changes.
+        doc.UpdateFields();
+
+        // Save the modified document.
+        const string outputPath = "output.docx";
         doc.Save(outputPath);
     }
 }

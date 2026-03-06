@@ -6,13 +6,13 @@ class Program
 {
     static void Main()
     {
-        // Load the source DOC document.
+        // Load the existing DOC document.
         Document doc = new Document("Input.doc");
 
         // Update list labels so they reflect the current numbering.
         doc.UpdateListLabels();
 
-        // Set up save options to export list labels as plain text in the MHTML output.
+        // Configure save options to export list labels as plain text.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
             ExportListLabels = ExportListLabels.AsInlineText

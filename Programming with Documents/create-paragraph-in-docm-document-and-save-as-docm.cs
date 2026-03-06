@@ -1,41 +1,31 @@
 using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
-class CreateDocmParagraph
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Ensure the document has at least one section, body and paragraph.
-        // (A newly created Document already contains these nodes, but calling EnsureMinimum
-        // guarantees the structure if the document was altered earlier.)
+        // Ensure the document has at least one section and body.
         doc.EnsureMinimum();
 
-        // Access the body of the first (and only) section.
-        Body body = doc.FirstSection.Body;
+        // Create a new paragraph that belongs to the document.
+        Paragraph para = new Paragraph(doc);
+        para.ParagraphFormat.StyleName = "Heading 1";
+        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
-        // Create a new paragraph belonging to the document.
-        Paragraph paragraph = new Paragraph(doc);
-        // Set paragraph formatting (optional).
-        paragraph.ParagraphFormat.StyleName = "Heading 1";
-        paragraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        // Append the paragraph to the body of the first section.
+        doc.FirstSection.Body.AppendChild(para);
 
-        // Create a run with the desired text.
-        Run run = new Run(doc);
-        run.Text = "Hello World!";
+        // Create a run with text, set its color, and add it to the paragraph.
+        Run run = new Run(doc, "Hello World!");
         run.Font.Color = Color.Red;
-
-        // Add the run to the paragraph.
-        paragraph.AppendChild(run);
-
-        // Append the paragraph to the document body.
-        body.AppendChild(paragraph);
+        para.AppendChild(run);
 
         // Save the document as a macro‑enabled DOCM file.
-        doc.Save("Output.docm", SaveFormat.Docm);
+        doc.Save("Result.docm", SaveFormat.Docm);
     }
 }

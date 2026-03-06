@@ -1,8 +1,6 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 class Program
 {
@@ -16,24 +14,23 @@ class Program
 
         // Insert an inline rectangle shape (width: 100 points, height: 50 points).
         Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        // Set a light blue fill color for the rectangle.
-        rectangle.FillColor = Color.LightBlue;
+        rectangle.FillColor = Color.LightBlue;      // Set fill color.
+        rectangle.StrokeColor = Color.DarkBlue;     // Set outline color.
 
         // Insert a floating text box shape.
-        // Position: 150 points from the left of the page, 200 points from the top of the page.
-        // Size: 200 points wide, 100 points high. No text wrapping.
         Shape textBox = builder.InsertShape(
             ShapeType.TextBox,
-            RelativeHorizontalPosition.Page, 150,
-            RelativeVerticalPosition.Page, 200,
-            200, 100,
-            WrapType.None);
+            RelativeHorizontalPosition.Page, 100,   // Left position.
+            RelativeVerticalPosition.Page, 150,     // Top position.
+            200,                                     // Width.
+            100,                                     // Height.
+            WrapType.None);                          // No text wrapping.
 
-        // Add a paragraph with a run of text inside the text box.
-        Paragraph tbParagraph = new Paragraph(doc);
-        Run tbRun = new Run(doc, "Hello Aspose!");
-        tbParagraph.AppendChild(tbRun);
-        textBox.AppendChild(tbParagraph);
+        // Add a paragraph with text inside the text box.
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Hello Aspose!");
+        para.AppendChild(run);
+        textBox.AppendChild(para);
 
         // Save the document as a DOCX file.
         doc.Save("Shapes.docx");

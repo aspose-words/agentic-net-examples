@@ -10,48 +10,36 @@ class Program
         // Load the original DOCX document.
         Document srcDoc = new Document("Original.docx");
 
-        // Clone the original document to create an independent copy.
-        Document clonedDoc = srcDoc.Clone();
+        // Create a deep clone of the source document.
+        Document clonedDoc = srcDoc.Clone(true) as Document;
 
-        // Create a new numbered list in the cloned document and apply custom formatting.
-        List list = clonedDoc.Lists.Add(ListTemplate.NumberArabicParenthesis);
-        list.ListLevels[0].Font.Color = System.Drawing.Color.Red;
-        list.ListLevels[0].Font.Size = 12;
-        list.ListLevels[0].Alignment = ListLevelAlignment.Right;
-
-        // Add list items to the cloned document using DocumentBuilder.
+        // Insert additional content into the cloned document.
         DocumentBuilder builder = new DocumentBuilder(clonedDoc);
-        builder.Writeln("List starts:");
-        builder.ListFormat.List = list;
-        for (int i = 1; i <= 5; i++)
-        {
-            builder.Writeln($"Item {i}");
-        }
-        builder.ListFormat.RemoveNumbers(); // End list formatting.
+        builder.MoveToDocumentEnd();
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Additional content inserted into the cloned document.");
 
-        // Insert additional content at the end of the original document.
-        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.MoveToDocumentEnd();
-        srcBuilder.InsertBreak(BreakType.PageBreak);
-        srcBuilder.Writeln("Additional content inserted before appending cloned document.");
-
-        // Append the cloned document to the original, preserving source list numbering.
+        // Prepare import options to preserve list numbering from the cloned part.
         ImportFormatOptions importOptions = new ImportFormatOptions
         {
-            KeepSourceNumbering = true // Keep the numbering from the cloned document.
+            KeepSourceNumbering = true
         };
+
+        // Append the cloned document to the original document.
         srcDoc.AppendDocument(clonedDoc, ImportFormatMode.KeepSourceFormatting, importOptions);
-        srcDoc.UpdateListLabels(); // Refresh list numbers after appending.
 
-        // Split the combined document into two parts:
-        //   - First part: pages 1 to 2.
-        //   - Second part: pages 3 to the end.
-        Document firstPart = srcDoc.ExtractPages(1, 2);
-        Document secondPart = srcDoc.ExtractPages(3, srcDoc.PageCount);
+        // Update list labels so numbering is correct after the append.
+        srcDoc.UpdateListLabels();
 
-        // Save the resulting documents.
+        // Save the combined document.
         srcDoc.Save("Combined.docx");
+
+        // Split the combined document: extract the first two pages.
+        Document firstPart = srcDoc.ExtractPages(1, 2);
         firstPart.Save("Combined_Part1.docx");
+
+        // Extract the remaining pages (from page 3 to the end).
+        Document secondPart = srcDoc.ExtractPages(3, srcDoc.PageCount);
         secondPart.Save("Combined_Part2.docx");
     }
 }

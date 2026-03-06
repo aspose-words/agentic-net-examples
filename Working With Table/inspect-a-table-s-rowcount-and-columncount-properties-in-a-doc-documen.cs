@@ -2,14 +2,14 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class TableInfo
+class Program
 {
     static void Main()
     {
-        // Load an existing DOC document.
-        Document doc = new Document("Input.doc");
+        // Load the DOC document. Adjust the path as necessary.
+        Document doc = new Document("Tables.docx");
 
-        // Get the collection of tables in the first section's body.
+        // Retrieve all tables from the first section's body.
         TableCollection tables = doc.FirstSection.Body.Tables;
 
         // Iterate through each table and output its row and column counts.
@@ -20,13 +20,12 @@ class TableInfo
             // Row count is the number of Row objects in the table.
             int rowCount = table.Rows.Count;
 
-            // Column count is derived from the first row's cell count (assuming a regular table).
-            int columnCount = table.Rows.Count > 0 ? table.Rows[0].Cells.Count : 0;
+            // Column count is typically the number of cells in the first row.
+            int columnCount = 0;
+            if (rowCount > 0)
+                columnCount = table.Rows[0].Cells.Count;
 
             Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
         }
-
-        // Optionally, save the document if any modifications were made.
-        // doc.Save("Output.doc");
     }
 }

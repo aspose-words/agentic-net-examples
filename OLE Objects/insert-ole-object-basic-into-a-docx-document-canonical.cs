@@ -7,37 +7,42 @@ class InsertOleObjectExample
 {
     static void Main()
     {
-        // Path to the file that will be embedded as an OLE object.
-        // In this example we embed a ZIP archive, but any file can be used.
-        string sourceFilePath = @"C:\Temp\myfile.zip";
+        // Folder that contains the file to embed.
+        string dataDir = @"C:\Data\";          // <-- change to your folder
+        // Path where the resulting DOCX will be saved.
+        string outputPath = @"C:\Output\OleObject.docx"; // <-- change to your folder
 
-        // Path where the resulting DOCX document will be saved.
-        string outputDocPath = @"C:\Temp\output.docx";
+        // Load the file that will be embedded (e.g., a ZIP archive) into a byte array.
+        byte[] fileBytes = File.ReadAllBytes(Path.Combine(dataDir, "sample.zip"));
 
-        // Create a new blank Word document.
-        Document doc = new Document();
-
-        // Initialize a DocumentBuilder to add content to the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Load the source file into a memory stream.
-        // The stream will be passed to InsertOleObject.
-        using (MemoryStream oleStream = new MemoryStream(File.ReadAllBytes(sourceFilePath)))
+        // Create a memory stream from the file bytes.
+        using (MemoryStream fileStream = new MemoryStream(fileBytes))
         {
-            // Insert the OLE object.
-            // Parameters:
-            //   oleStream   – stream containing the file data.
-            //   "Package"   – ProgID for a generic OLE package.
-            //   true        – display the object as an icon.
-            //   null        – no custom presentation image (default icon will be used).
-            Shape oleShape = builder.InsertOleObject(oleStream, "Package", true, null);
+            // Create a new blank document.
+            Document doc = new Document();
 
-            // Optionally set the file name and display name that appear when the OLE object is opened.
-            oleShape.OleFormat.OlePackage.FileName = Path.GetFileName(sourceFilePath);
-            oleShape.OleFormat.OlePackage.DisplayName = "Embedded ZIP Archive";
+            // Initialize a DocumentBuilder to add content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Optional: add a description before the OLE object.
+            builder.Writeln("Embedded OLE Package:");
+
+            // Insert the OLE object from the stream.
+            // Parameters:
+            //   stream   – the data stream of the file.
+            //   progId   – "Package" indicates a generic OLE package.
+            //   asIcon   – true to display the object as an icon.
+            //   presentation – null to use the default icon.
+            Shape oleShape = builder.InsertOleObject(fileStream, "Package", true, null);
+
+            // Set the file name and display name that Word will show.
+            oleShape.OleFormat.OlePackage.FileName = "sample.zip";
+            oleShape.OleFormat.OlePackage.DisplayName = "Sample ZIP";
+
+            // Save the document to the specified path.
+            doc.Save(outputPath);
         }
 
-        // Save the document to the specified path.
-        doc.Save(outputDocPath);
+        Console.WriteLine("Document saved to: " + outputPath);
     }
 }

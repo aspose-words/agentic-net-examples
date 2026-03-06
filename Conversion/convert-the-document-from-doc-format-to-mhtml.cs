@@ -7,10 +7,10 @@ class Program
     static void Main()
     {
         // Path to the source DOC file.
-        string inputPath = "Input.doc";
+        string inputPath = "input.doc";
 
-        // Path to the destination MHTML file.
-        string outputPath = "Output.mht";
+        // Path where the MHTML file will be saved.
+        string outputPath = "output.mht";
 
         // Load the DOC document from the file system.
         Document doc = new Document(inputPath);

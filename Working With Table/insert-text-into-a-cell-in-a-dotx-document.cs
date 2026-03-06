@@ -6,19 +6,20 @@ class Program
 {
     static void Main()
     {
-        // Load the DOTX template.
+        // Load the DOTX template file.
         Document doc = new Document("Template.dotx");
 
-        // Create a DocumentBuilder for editing.
+        // Attach a DocumentBuilder to the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the first cell of the first table (table index 0, row 0, column 0, cell 0).
+        // Move the builder's cursor to the first cell of the first table.
+        // Parameters: tableIndex, rowIndex, columnIndex, cellIndex (all zero‑based).
         builder.MoveToCell(0, 0, 0, 0);
 
-        // Insert the desired text into the cell.
-        builder.Write("Inserted text into the cell.");
+        // Insert the desired text into the selected cell.
+        builder.Write("Hello from Aspose.Words!");
 
-        // Save the modified document.
+        // Save the modified document to a new file.
         doc.Save("Result.docx");
     }
 }

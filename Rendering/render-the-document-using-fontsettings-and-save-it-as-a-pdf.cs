@@ -1,46 +1,45 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fonts;
 using Aspose.Words.Saving;
+using Aspose.Words.Fonts;
 
-class Program
+class RenderDocumentWithFontSettings
 {
     static void Main()
     {
-        // Path to the source document (replace with actual file).
-        string inputPath = "Input.docx";
+        // Path to the source document (DOCX, etc.).
+        string inputPath = @"C:\Docs\InputDocument.docx";
 
-        // Path where the PDF will be saved.
-        string outputPath = "Output.pdf";
+        // Path where the resulting PDF will be saved.
+        string outputPath = @"C:\Docs\OutputDocument.pdf";
 
-        // Folder that contains custom fonts to be used during rendering.
-        string fontsFolder = "Fonts";
-
-        // Load the document using the Document constructor (lifecycle rule).
+        // Load the document.
         Document doc = new Document(inputPath);
 
-        // Create FontSettings and add a folder source for custom fonts.
+        // Create a FontSettings object to control font resolution.
         FontSettings fontSettings = new FontSettings();
 
-        // Preserve the default system font source and add our custom folder source.
-        FontSourceBase[] originalSources = FontSettings.DefaultInstance.GetFontsSources();
-        FontSourceBase folderSource = new FolderFontSource(fontsFolder, true);
-        fontSettings.SetFontsSources(new FontSourceBase[] { originalSources[0], folderSource });
+        // Example: add a folder that contains custom fonts.
+        // Adjust the folder path to where your fonts are located.
+        string customFontsFolder = @"C:\Docs\CustomFonts";
+        FontSourceBase folderSource = new FolderFontSource(customFontsFolder, true);
+        fontSettings.SetFontsSources(new FontSourceBase[] { folderSource });
 
-        // Assign the configured FontSettings to the document.
+        // Assign the FontSettings to the document.
         doc.FontSettings = fontSettings;
 
-        // Create PdfSaveOptions to control PDF rendering.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Create PDF save options (you can customize further if needed).
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
+            // Example: embed full fonts to avoid subsetting.
+            EmbedFullFonts = true,
 
-        // Example option: embed the full fonts into the PDF.
-        pdfOptions.EmbedFullFonts = true;
+            // Example: use high‑quality rendering.
+            UseHighQualityRendering = true
+        };
 
-        // Example option: use high‑quality rendering (slower but better visual quality).
-        pdfOptions.UseHighQualityRendering = true;
-
-        // Save the document as PDF using the Save method with options (lifecycle rule).
+        // Save the document as PDF using the specified options.
         doc.Save(outputPath, pdfOptions);
     }
 }

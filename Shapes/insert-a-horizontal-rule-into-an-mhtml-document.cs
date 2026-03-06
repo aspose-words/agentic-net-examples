@@ -18,13 +18,13 @@ class InsertHorizontalRuleMhtml
 
         // Optional: customize the appearance of the horizontal rule.
         HorizontalRuleFormat hrFormat = hrShape.HorizontalRuleFormat;
-        hrFormat.Alignment = HorizontalRuleAlignment.Center;   // Center the rule.
-        hrFormat.WidthPercent = 70;                           // 70% of the page width.
-        hrFormat.Height = 3;                                  // Height in points.
-        hrFormat.Color = Color.Blue;                          // Blue color.
-        hrFormat.NoShade = true;                              // Solid color, no 3‑D shading.
+        hrFormat.Alignment = HorizontalRuleAlignment.Center; // center the rule
+        hrFormat.WidthPercent = 70;                         // 70% of the page width
+        hrFormat.Height = 3;                                // 3 points height
+        hrFormat.Color = Color.Blue;                        // blue color
+        hrFormat.NoShade = true;                            // solid color, no 3‑D shading
 
-        // Save the document as an MHTML file.
+        // Save the document as MHTML.
         doc.Save("HorizontalRule.mhtml", SaveFormat.Mhtml);
     }
 }

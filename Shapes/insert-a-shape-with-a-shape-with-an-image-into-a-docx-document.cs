@@ -6,30 +6,26 @@ class InsertShapeWithImage
 {
     static void Main()
     {
-        // Path to the image that will be placed inside the shape.
-        string imagePath = @"C:\Images\Logo.jpg";
-
-        // Path where the resulting DOCX file will be saved.
-        string outputPath = @"C:\Output\ImageShape.docx";
+        // Path to the image file that will be placed inside the shape.
+        string imagePath = @"C:\Images\SampleImage.jpg";
 
         // Create a new, empty Word document.
         Document doc = new Document();
 
-        // Create a shape of type Image. The constructor automatically sets the markup language to VML.
+        // Create a shape of type Image and associate it with the document.
         Shape shape = new Shape(doc, ShapeType.Image);
 
         // Load the image from the file system into the shape.
         shape.ImageData.SetImage(imagePath);
 
-        // Set the desired size of the shape (in points). 1 point = 1/72 inch.
-        shape.Width = 100;   // 100 points ≈ 1.39 inches
-        shape.Height = 100;  // 100 points ≈ 1.39 inches
+        // Set the desired size of the shape (in points).
+        shape.Width = 100;
+        shape.Height = 100;
 
-        // Append the shape to the first paragraph of the document body.
-        // If the document has no paragraphs, FirstParagraph will be created automatically.
+        // Append the shape to the first paragraph of the document.
         doc.FirstSection.Body.FirstParagraph.AppendChild(shape);
 
-        // Save the document in DOCX format.
-        doc.Save(outputPath);
+        // Save the document to a DOCX file.
+        doc.Save(@"C:\Output\ImageShape.docx");
     }
 }

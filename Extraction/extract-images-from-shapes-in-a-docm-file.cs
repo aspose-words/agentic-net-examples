@@ -3,30 +3,29 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 class ExtractImagesFromDocm
 {
     static void Main()
     {
         // Path to the source DOCM file.
-        string sourcePath = @"C:\Input\DocumentWithImages.docm";
+        string docPath = @"C:\Docs\SourceDocument.docm";
 
         // Directory where extracted images will be saved.
-        string outputDir = @"C:\Output\ExtractedImages\";
+        string outputDir = @"C:\Docs\ExtractedImages";
 
         // Ensure the output directory exists.
         Directory.CreateDirectory(outputDir);
 
         // Load the DOCM document.
-        Document doc = new Document(sourcePath);
+        Document doc = new Document(docPath);
 
         // Get all shape nodes in the document (including those inside groups).
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
 
-        // Iterate through each shape and extract the image if present.
+        // Iterate through each shape and extract the image if the shape contains one.
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage)
@@ -35,11 +34,11 @@ class ExtractImagesFromDocm
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
 
                 // Build the output file name.
-                string imageFileName = $"Image_{imageIndex}{extension}";
-                string imagePath = Path.Combine(outputDir, imageFileName);
+                string imageFileName = Path.Combine(outputDir,
+                    $"ExtractedImage_{imageIndex}{extension}");
 
                 // Save the image data to the file system.
-                shape.ImageData.Save(imagePath);
+                shape.ImageData.Save(imageFileName);
 
                 imageIndex++;
             }

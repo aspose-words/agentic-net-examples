@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -5,25 +6,26 @@ class Program
 {
     static void Main()
     {
-        // Input DOCX file path
-        string inputPath = @"C:\Docs\input.docx";
+        // Path to the source DOCX file.
+        string inputPath = "input.docx";
 
-        // Output PDF file path
-        string outputPath = @"C:\Docs\output.pdf";
+        // Path where the resulting PDF will be saved.
+        string outputPath = "output.pdf";
 
-        // Load the DOCX document
+        // Load the existing DOCX document.
         Document doc = new Document(inputPath);
 
-        // Configure PDF save options to embed all fonts used in the document
+        // Configure PDF save options to embed all fonts (including missing ones).
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Embed every font (including standard Windows fonts) into the PDF
-            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll,
-            // Embed the full font files (no subsetting) to guarantee all glyphs are present
-            EmbedFullFonts = true
+            // Ensure that every font used in the document is fully embedded.
+            EmbedFullFonts = true,
+
+            // Embed all fonts, not just non‑standard ones.
+            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll
         };
 
-        // Save the document as PDF with the specified embedding options
+        // Save the document as PDF using the configured options.
         doc.Save(outputPath, pdfOptions);
     }
 }

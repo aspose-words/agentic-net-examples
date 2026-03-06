@@ -2,28 +2,33 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class FindReplaceInShapes
 {
     static void Main()
     {
-        // Load the existing DOCX file.
-        Document doc = new Document("Input.docx");
+        // Path to the source DOCX file.
+        string inputPath = @"C:\Docs\Input.docx";
 
-        // Set up find/replace options.
-        // By default IgnoreShapes = false, which means the operation will also search inside shapes.
-        // Explicitly set it for clarity.
+        // Path where the modified DOCX will be saved.
+        string outputPath = @"C:\Docs\Output.docx";
+
+        // Load the document.
+        Document doc = new Document(inputPath);
+
+        // Configure find/replace to include text that resides inside shapes.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            IgnoreShapes = false   // Do NOT ignore shapes – replace text inside them.
+            // By default this property is false, but we set it explicitly for clarity.
+            IgnoreShapes = false
         };
 
-        // Perform the replacement across the whole document range.
-        // Example: replace the placeholder "[NAME]" with "John Doe".
-        int replacementsMade = doc.Range.Replace("[NAME]", "John Doe", options);
+        // Perform the replacement.
+        int replacedCount = doc.Range.Replace("OldText", "NewText", options);
 
-        Console.WriteLine($"Replacements performed: {replacementsMade}");
+        // Output the number of replacements made.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
 
-        // Save the modified document.
-        doc.Save("Output.docx");
+        // Save the updated document.
+        doc.Save(outputPath);
     }
 }

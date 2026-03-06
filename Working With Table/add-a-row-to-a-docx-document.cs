@@ -6,33 +6,38 @@ class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document
         Document doc = new Document();
 
-        // Create a table and add it to the document body.
+        // Create a new table and add it to the document body
         Table table = new Table(doc);
         doc.FirstSection.Body.AppendChild(table);
 
-        // Ensure the table has at least one row and one cell.
+        // Ensure the table has at least one row and one cell
         table.EnsureMinimum();
 
-        // Create a new row that belongs to the same document.
+        // Add content to the initial cell so the table is not empty
+        table.FirstRow.FirstCell.FirstParagraph.AppendChild(new Run(doc, "Initial cell"));
+
+        // Create a new row that will be added to the table
         Row newRow = new Row(doc);
 
-        // Ensure the new row has at least one cell (required for a valid row).
-        newRow.EnsureMinimum();
-
-        // Append the new row to the end of the table.
+        // Append the new row to the table (after the existing rows)
         table.AppendChild(newRow);
 
-        // Add a paragraph with some text to the first cell of the new row.
-        Cell firstCell = newRow.FirstCell;
-        Paragraph paragraph = new Paragraph(doc);
-        firstCell.AppendChild(paragraph);
-        Run run = new Run(doc, "This is a newly added row.");
-        paragraph.AppendChild(run);
+        // Ensure the new row has at least one cell
+        newRow.EnsureMinimum();
 
-        // Save the document to a DOCX file.
+        // Add text to the first cell of the new row
+        newRow.FirstCell.FirstParagraph.AppendChild(new Run(doc, "New row, first cell"));
+
+        // Optionally add a second cell to the new row
+        Cell secondCell = new Cell(doc);
+        secondCell.AppendChild(new Paragraph(doc));
+        secondCell.FirstParagraph.AppendChild(new Run(doc, "New row, second cell"));
+        newRow.AppendChild(secondCell);
+
+        // Save the document to a DOCX file
         doc.Save("AddedRow.docx");
     }
 }

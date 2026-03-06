@@ -1,12 +1,13 @@
+using System;
 using Aspose.Words;
-using Aspose.Words.Drawing; // <-- added
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
 class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -17,19 +18,15 @@ class Program
         // Remove the demo data series that Aspose.Words adds by default.
         chart.Series.Clear();
 
-        // Add a custom series with categories and numeric values.
+        // Add a custom data series with categories and large numeric values.
         chart.Series.Add(
             "Sample Series",
             new[] { "A", "B", "C", "D" },
-            new double[] { 12345, 67890, 23456, 78901 });
+            new double[] { 1234567, 2345678, 3456789, 4567890 });
 
-        // ------------------------------------------------------------
-        // Format the Y‑axis tick labels.
-        // ------------------------------------------------------------
-        // Access the NumberFormat object of the Y axis and set a custom format code.
+        // Format the Y‑axis (value axis) tick labels.
+        // Set a custom number format (e.g., "#,##0") and detach it from the source cell.
         chart.AxisY.NumberFormat.FormatCode = "#,##0";
-
-        // Disable linking to the source cell so the custom format is used.
         chart.AxisY.NumberFormat.IsLinkedToSource = false;
 
         // Save the document to a DOCX file.

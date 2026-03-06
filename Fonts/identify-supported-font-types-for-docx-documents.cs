@@ -9,22 +9,23 @@ class Program
         // Load the DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Access the collection of fonts defined in the document.
+        // Get the collection of fonts defined in the document.
         FontInfoCollection fontInfos = doc.FontInfos;
 
-        Console.WriteLine($"Document contains {fontInfos.Count} font definition(s).");
+        Console.WriteLine($"The document defines {fontInfos.Count} font(s):");
 
-        // Iterate through each FontInfo and display its supported properties.
+        // Iterate through each FontInfo and display its characteristics.
         for (int i = 0; i < fontInfos.Count; i++)
         {
             FontInfo font = fontInfos[i];
 
-            Console.WriteLine($"Font #{i + 1}:");
-            Console.WriteLine($"  Name       : {font.Name}");
-            Console.WriteLine($"  IsTrueType : {font.IsTrueType}");
-            Console.WriteLine($"  Family     : {font.Family}");
-            Console.WriteLine($"  Pitch      : {font.Pitch}");
-            Console.WriteLine($"  Charset    : {font.Charset}");
+            // Determine whether the font is a TrueType/OpenType font.
+            string fontType = font.IsTrueType ? "TrueType/OpenType" : "Raster/Vector";
+
+            Console.WriteLine($"- Name   : {font.Name}");
+            Console.WriteLine($"  Family : {font.Family}");
+            Console.WriteLine($"  Type   : {fontType}");
+            Console.WriteLine($"  Pitch  : {font.Pitch}");
         }
     }
 }

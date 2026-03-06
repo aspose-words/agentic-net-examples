@@ -2,30 +2,44 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class ApplyTableStyle
+class Program
 {
     static void Main()
     {
-        // Load a Markdown document that contains at least one table.
-        Document doc = new Document("input.md");
+        // Create a new document and a builder to construct its contents.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Find the first table in the document.
-        Table table = doc.GetChild(NodeType.Table, 0, true) as Table;
-        if (table != null)
-        {
-            // Apply a built‑in table style using its identifier.
-            table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+        // Start a table. At least one cell must be inserted before any formatting.
+        Table table = builder.StartTable();
 
-            // Optionally, specify which parts of the style to apply.
-            table.StyleOptions = TableStyleOptions.FirstRow |
-                                 TableStyleOptions.FirstColumn |
-                                 TableStyleOptions.RowBands;
+        // First row – header cells.
+        builder.InsertCell();
+        builder.Writeln("Item");
+        builder.InsertCell();
+        builder.Writeln("Quantity");
+        builder.EndRow();
 
-            // Adjust column widths to fit the content.
-            table.AutoFit(AutoFitBehavior.AutoFitToContents);
-        }
+        // Second row – data cells.
+        builder.InsertCell();
+        builder.Writeln("Apples");
+        builder.InsertCell();
+        builder.Writeln("20");
+        builder.EndRow();
 
-        // Save the modified document to a Word format (DOCX).
-        doc.Save("output.docx");
+        // Finish the table.
+        builder.EndTable();
+
+        // Apply a built‑in table style using its identifier.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Optionally specify which parts of the style are applied.
+        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+
+        // Resize the table to fit its contents.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+        // Save the document.
+        doc.Save("TableWithStyle.docx");
     }
 }

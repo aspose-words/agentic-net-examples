@@ -1,22 +1,28 @@
+using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Notes;
 using Aspose.Words.Saving;
 
-class Program
+class RemoveNotesAndSaveAsPs
 {
     static void Main()
     {
-        // Load the source DOC document.
-        Document doc = new Document("Input.doc");
+        // Path to the source DOC document.
+        string dataDir = @"C:\Docs\";
+        string inputPath = Path.Combine(dataDir, "Input.docx");
 
-        // Remove the footnote separator line, if it exists.
+        // Load the document.
+        Document doc = new Document(inputPath);
+
+        // Remove the footnote separator (if it exists).
         FootnoteSeparator footnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.FootnoteSeparator];
-        if (footnoteSeparator.FirstParagraph?.FirstChild != null)
+        if (footnoteSeparator?.FirstParagraph?.FirstChild != null)
             footnoteSeparator.FirstParagraph.FirstChild.Remove();
 
-        // Remove the endnote separator line, if it exists.
+        // Remove the endnote separator (if it exists).
         FootnoteSeparator endnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.EndnoteSeparator];
-        if (endnoteSeparator.FirstParagraph?.FirstChild != null)
+        if (endnoteSeparator?.FirstParagraph?.FirstChild != null)
             endnoteSeparator.FirstParagraph.FirstChild.Remove();
 
         // Configure PostScript save options.
@@ -26,6 +32,7 @@ class Program
         };
 
         // Save the modified document as a PostScript file.
-        doc.Save("Output.ps", saveOptions);
+        string outputPath = Path.Combine(dataDir, "Output.ps");
+        doc.Save(outputPath, saveOptions);
     }
 }

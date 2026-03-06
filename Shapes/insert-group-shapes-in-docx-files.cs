@@ -1,36 +1,45 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
-class Program
+class InsertGroupShapeExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 250);
-        rectangle.Left = 20;               // Position from the left edge.
-        rectangle.Top = 20;                // Position from the top edge.
-        rectangle.Stroke.Color = Color.Red;
+        // Insert two floating shapes that will later be grouped.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rectangle.Left = 50;   // Position from the left edge of the page.
+        rectangle.Top = 50;    // Position from the top edge of the page.
+        rectangle.Stroke.Color = Color.Blue;
 
-        // Insert an ellipse shape.
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 200);
-        ellipse.Left = 40;
-        ellipse.Top = 50;
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        ellipse.Left = 120;
+        ellipse.Top = 80;
         ellipse.Stroke.Color = Color.Green;
 
-        // Group the two shapes. The group’s position and size are calculated automatically.
-        GroupShape group1 = builder.InsertGroupShape(rectangle, ellipse);
+        // Group the two shapes. The group shape will be inserted at the current cursor position.
+        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
 
-        // Clone the rectangle and create a second group that contains the first group and the clone.
-        Shape rectangleClone = (Shape)rectangle.Clone(true);
-        GroupShape group2 = builder.InsertGroupShape(group1, rectangleClone);
+        // Optionally, modify the group shape (e.g., set a background fill).
+        group.Fill.Color = Color.LightGray;
 
-        // Save the resulting document.
-        doc.Save("GroupShapes.docx");
+        // Insert another shape and group it with the previously created group shape.
+        Shape triangle = new Shape(doc, ShapeType.Triangle)
+        {
+            Width = 100,
+            Height = 100,
+            Left = 200,
+            Top = 200,
+            Fill = { Color = Color.Yellow }
+        };
+        GroupShape nestedGroup = builder.InsertGroupShape(group, triangle);
+
+        // Save the document to a DOCX file.
+        doc.Save("GroupShapeExample.docx");
     }
 }

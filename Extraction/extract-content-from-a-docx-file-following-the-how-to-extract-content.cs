@@ -1,25 +1,29 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.AI; // Only needed if AI features are used; not required here.
 
 class Program
 {
     static void Main()
     {
-        // Path to the DOCX file to be processed.
-        string sourcePath = "input.docx";
+        // Path to the source DOCX file.
+        string sourcePath = @"C:\Docs\Sample.docx";
 
-        // Load the document using the Aspose.Words Document constructor (load rule).
+        // Load the Word document using the Document constructor (load rule).
         Document doc = new Document(sourcePath);
 
-        // Extract the plain‑text representation of the document.
-        // PlainTextDocument automatically detects the format and provides the concatenated text.
-        PlainTextDocument plain = new PlainTextDocument(sourcePath);
-        string extractedText = plain.Text;
+        // Extract plain‑text representation of the document.
+        // PlainTextDocument constructor loads the file and provides the Text property.
+        PlainTextDocument plainText = new PlainTextDocument(sourcePath);
+        string extractedText = plainText.Text;
 
         // Output the extracted text to the console.
+        Console.WriteLine("Extracted Text:");
         Console.WriteLine(extractedText);
 
-        // Optionally, write the extracted text to a separate .txt file.
-        System.IO.File.WriteAllText("extracted.txt", extractedText);
+        // Optionally, save the extracted text to a .txt file.
+        string outputPath = @"C:\Docs\SampleExtracted.txt";
+        File.WriteAllText(outputPath, extractedText);
     }
 }

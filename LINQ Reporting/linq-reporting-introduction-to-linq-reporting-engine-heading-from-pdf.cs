@@ -6,18 +6,26 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Load the PDF template that contains the placeholder for the heading.
+        Document doc = new Document("Template.pdf");
 
-        // Insert a heading using the built‑in Heading1 style.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("LINQ Reporting Introduction to LINQ Reporting Engine");
+        // Simple data source with a property that matches the placeholder in the template.
+        var data = new ReportData
+        {
+            Title = "LINQ Reporting Introduction to LINQ Reporting Engine"
+        };
 
-        // If you have a PDF template you want to use, uncomment the line below.
-        // Document doc = new Document("Template.pdf");
+        // Populate the template using the LINQ Reporting Engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, data, "report");
 
-        // Save the document.
-        doc.Save("LINQReportingHeading.docx");
+        // Save the generated report as a DOCX file.
+        doc.Save("ReportOutput.docx");
+    }
+
+    // Data source class used by the reporting engine.
+    public class ReportData
+    {
+        public string Title { get; set; }
     }
 }

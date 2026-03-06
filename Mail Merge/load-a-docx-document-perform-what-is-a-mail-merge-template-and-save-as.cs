@@ -1,25 +1,23 @@
 using System;
-using System.Data;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Settings;
 
-class MailMergeToPng
+class Program
 {
     static void Main()
     {
-        // Load the existing DOCX file that contains MERGEFIELD tags.
+        // Load the DOCX file that will be used as a mail‑merge template.
         Document doc = new Document("Template.docx");
 
-        // Prepare simple mail‑merge data.
-        // The field names must match the MERGEFIELD names in the template.
-        string[] fieldNames = { "FirstName", "LastName", "Address" };
-        object[] fieldValues = { "John", "Doe", "123 Main St., Anytown" };
+        // Access the mail‑merge settings of the loaded document.
+        // This demonstrates how to work with a mail‑merge template.
+        MailMergeSettings settings = doc.MailMergeSettings;
 
-        // Execute the mail merge for a single record.
-        doc.MailMerge.Execute(fieldNames, fieldValues);
+        // Example: explicitly mark the document as not being a mail‑merge document.
+        // (Adjust as needed for your scenario.)
+        settings.MainDocumentType = MailMergeMainDocumentType.NotAMergeDocument;
 
-        // Render the first page of the merged document to a PNG image.
-        // Using the overload that specifies the format directly.
-        doc.Save("MergedResult.png", SaveFormat.Png);
+        // Render the first page of the document to a PNG image and save it.
+        doc.Save("TemplatePage.png", SaveFormat.Png);
     }
 }

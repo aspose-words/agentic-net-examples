@@ -7,59 +7,50 @@ class Program
 {
     static void Main()
     {
-        // Folder that contains the source document and the OpenOffice hyphenation dictionaries.
-        string dataDir = @"C:\Data\";
+        // Load the source DOC document.
+        string inputPath = @"C:\Docs\input.doc"; // <-- replace with your DOC file path
+        Document doc = new Document(inputPath);
 
-        // Load the DOC/DOCX document that needs hyphenation.
-        Document doc = new Document(Path.Combine(dataDir, "German text.docx"));
-
-        // Enable automatic hyphenation and configure optional parameters.
+        // Turn on automatic hyphenation for the document.
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch (720 / 20 points)
-        doc.HyphenationOptions.HyphenateCaps = true;
 
-        // Register a callback that will supply dictionaries on demand.
-        Hyphenation.Callback = new CustomHyphenationDictionaryRegister(dataDir);
+        // Register the dictionaries that will be used during layout.
+        // The streams are opened with read‑only access and will be closed by the layout engine.
+        string enUsDictionaryPath = @"C:\Hyphenation\en-US.dic"; // <-- replace with your OpenOffice dictionary
+        string deChDictionaryPath = @"C:\Hyphenation\de-CH.dic"; // <-- replace with your OpenOffice dictionary
 
-        // Save the document; during layout the callback will load the required dictionaries.
-        doc.Save(Path.Combine(dataDir, "Hyphenated.pdf"));
+        Hyphenation.RegisterDictionary("en-US", File.OpenRead(enUsDictionaryPath));
+        Hyphenation.RegisterDictionary("de-CH", File.OpenRead(deChDictionaryPath));
+
+        // Optional: set a callback to load dictionaries on demand.
+        Hyphenation.Callback = new CustomHyphenationDictionaryRegister();
+
+        // Save the hyphenated document.
+        string outputPath = @"C:\Docs\output.docx"; // <-- replace with desired output path
+        doc.Save(outputPath);
     }
-}
 
-// Callback implementation that maps language codes to OpenOffice dictionary files.
-class CustomHyphenationDictionaryRegister : IHyphenationCallback
-{
-    private readonly Dictionary<string, string> _dictionaryFiles;
-
-    public CustomHyphenationDictionaryRegister(string baseDirectory)
+    // Callback implementation that registers dictionaries when requested by the layout engine.
+    private class CustomHyphenationDictionaryRegister : IHyphenationCallback
     {
-        // Populate the map with the languages you intend to support.
-        _dictionaryFiles = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        private readonly Dictionary<string, string> _dictionaryFiles = new Dictionary<string, string>
         {
-            { "en-US", Path.Combine(baseDirectory, "hyph_en_US.dic") },
-            { "de-CH", Path.Combine(baseDirectory, "hyph_de_CH.dic") }
-            // Add more entries as needed, e.g. { "fr-FR", Path.Combine(baseDirectory, "hyph_fr_FR.dic") }
+            { "en-US", @"C:\Hyphenation\en-US.dic" },
+            { "de-CH", @"C:\Hyphenation\de-CH.dic" }
         };
-    }
 
-    // This method is called by Aspose.Words when a dictionary for a language is missing.
-    public void RequestDictionary(string language)
-    {
-        // If the dictionary is already registered, nothing to do.
-        if (Hyphenation.IsDictionaryRegistered(language))
-            return;
+        public void RequestDictionary(string language)
+        {
+            // If the dictionary is already registered, no action is needed.
+            if (Hyphenation.IsDictionaryRegistered(language))
+                return;
 
-        // Try to locate a dictionary file for the requested language.
-        if (_dictionaryFiles.TryGetValue(language, out string filePath) && File.Exists(filePath))
-        {
-            // Register the dictionary from the file.
-            Hyphenation.RegisterDictionary(language, filePath);
-        }
-        else
-        {
-            // No dictionary available – optionally register a null dictionary to suppress further callbacks.
-            Hyphenation.RegisterDictionary(language, (string)null);
+            // Register the dictionary if we have a known file for the requested language.
+            if (_dictionaryFiles.TryGetValue(language, out string filePath) && File.Exists(filePath))
+            {
+                Hyphenation.RegisterDictionary(language, File.OpenRead(filePath));
+            }
+            // If no dictionary is known for the language, the layout will proceed without hyphenation for that language.
         }
     }
 }

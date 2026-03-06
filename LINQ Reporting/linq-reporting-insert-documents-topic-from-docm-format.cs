@@ -6,20 +6,20 @@ class Program
 {
     static void Main()
     {
-        // Load the DOCM template that contains the <<doc [src.Document]>> tag.
+        // Load the DOCM template that contains the reporting tag <<doc [src.Document]>>.
         Document template = new Document("Template.docm");
 
-        // Load the document that will be inserted into the template.
-        Document source = new Document("Source.docx");
+        // Load the document that we want to insert into the template.
+        Document sourceDocument = new Document("Source.docx");
 
         // Create the reporting engine.
         ReportingEngine engine = new ReportingEngine();
 
-        // Build the report, passing the source document as a data source named "src".
-        // The template tag <<doc [src.Document]>> will be replaced with the contents of the source document.
-        engine.BuildReport(template, new object[] { source }, new[] { "src" });
+        // Build the report, passing the source document as a data source.
+        // The data source name "src" matches the tag used in the template.
+        engine.BuildReport(template, new object[] { sourceDocument }, new string[] { "src" });
 
-        // Save the merged result.
+        // Save the resulting document.
         template.Save("Result.docx");
     }
 }

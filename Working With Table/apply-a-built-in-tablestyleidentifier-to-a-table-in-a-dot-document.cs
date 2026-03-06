@@ -1,31 +1,37 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class ApplyTableStyle
+class Program
 {
     static void Main()
     {
-        // Load the DOT template.
-        Document doc = new Document("Template.dot");
+        // Create a new document (DOT template)
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Find the first table in the document.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table != null)
-        {
-            // Apply a built‑in table style using its identifier.
-            table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+        // Start building a table
+        Table table = builder.StartTable();
 
-            // Optionally, specify which parts of the style are applied.
-            table.StyleOptions = TableStyleOptions.FirstColumn |
-                                 TableStyleOptions.RowBands |
-                                 TableStyleOptions.FirstRow;
+        // Insert first row (required before setting any table formatting)
+        builder.InsertCell();
+        builder.Writeln("Header");
+        builder.EndRow();
 
-            // Adjust column widths to fit the content.
-            table.AutoFit(AutoFitBehavior.AutoFitToContents);
-        }
+        // Insert second row with sample data
+        builder.InsertCell();
+        builder.Writeln("Data");
+        builder.EndRow();
 
-        // Save the modified document.
-        doc.Save("StyledDocument.docx");
+        // Finish the table
+        builder.EndTable();
+
+        // Apply a built‑in table style using its identifier
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Optionally specify which parts of the style to apply
+        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+
+        // Save the document as a DOT (Word template) file
+        doc.Save("StyledTable.dot", SaveFormat.Dot);
     }
 }

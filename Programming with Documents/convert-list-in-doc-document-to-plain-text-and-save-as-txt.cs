@@ -1,20 +1,19 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using System.IO;
 
 class ListToPlainText
 {
     static void Main()
     {
-        // Path to the source DOC/DOCX file that contains the list.
-        string sourcePath = @"C:\Docs\SourceDocument.docx";
+        // Path to the source DOC document that contains the list.
+        string inputPath = @"C:\Docs\SourceDocument.doc";
 
-        // Path where the plain‑text file will be saved.
-        string targetPath = @"C:\Docs\ListAsText.txt";
+        // Path where the resulting plain‑text file will be saved.
+        string outputPath = @"C:\Docs\ListPlainText.txt";
 
-        // Load the Word document.
-        Document doc = new Document(sourcePath);
+        // Load the DOC document.
+        Document doc = new Document(inputPath);
 
         // Ensure that list labels are up‑to‑date before exporting.
         doc.UpdateListLabels();
@@ -22,7 +21,7 @@ class ListToPlainText
         // Configure text‑save options.
         TxtSaveOptions txtOptions = new TxtSaveOptions
         {
-            // Simplify complex list symbols to plain ASCII characters.
+            // Simplify list symbols to basic ASCII characters (e.g., "*", "1.", etc.).
             SimplifyListLabels = true,
 
             // Optional: define how list indentation is represented.
@@ -31,6 +30,6 @@ class ListToPlainText
         };
 
         // Save the document as plain text using the configured options.
-        doc.Save(targetPath, txtOptions);
+        doc.Save(outputPath, txtOptions);
     }
 }

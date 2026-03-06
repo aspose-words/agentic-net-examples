@@ -1,31 +1,34 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
+using Aspose.Words.Replacing;
 
 class OfficeMathComparison
 {
     static void Main()
     {
-        // Load the two documents to be compared.
-        Document docOriginal = new Document("Original.docx");
-        Document docEdited   = new Document("Edited.docx");
+        // Load the original and the revised documents.
+        Document originalDoc = new Document("Original.docx");
+        Document revisedDoc = new Document("Revised.docx");
 
-        // Perform the comparison. The revisions will be added to docOriginal.
+        // Set up comparison options (default options are sufficient for OfficeMath comparison).
         CompareOptions compareOptions = new CompareOptions();
-        docOriginal.Compare(docEdited, "Author", DateTime.Now, compareOptions);
 
-        // Count how many revisions affect OfficeMath nodes.
+        // Perform the comparison. The original document will receive revision marks.
+        originalDoc.Compare(revisedDoc, "Comparer", DateTime.Now, compareOptions);
+
+        // Count revisions that affect OfficeMath nodes.
         int officeMathRevisions = 0;
-        foreach (Revision rev in docOriginal.Revisions)
+        foreach (Revision rev in originalDoc.Revisions)
         {
-            if (rev.ParentNode.NodeType == NodeType.OfficeMath)
+            if (rev.ParentNode != null && rev.ParentNode.NodeType == NodeType.OfficeMath)
                 officeMathRevisions++;
         }
 
-        Console.WriteLine($"Total revisions: {docOriginal.Revisions.Count}");
-        Console.WriteLine($"OfficeMath revisions: {officeMathRevisions}");
+        // Output the result.
+        Console.WriteLine($"Number of OfficeMath revisions: {officeMathRevisions}");
 
-        // Save the document that now contains the revision marks.
-        docOriginal.Save("Compared.docx");
+        // Save the document with revisions for visual inspection.
+        originalDoc.Save("ComparisonResult.docx");
     }
 }

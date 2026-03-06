@@ -1,0 +1,77 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Barcode rules": [
+        "All FieldMergeBarcode properties are of type string; supply values as quoted strings.",
+        "BackgroundColor and ForegroundColor properties of FieldMergeBarcode are of type string; provide hex color values as strings (e.g., \"F8BD69\").",
+        "All other barcode‑related properties (ErrorCorrectionLevel, ScalingFactor, SymbolHeight, SymbolRotation) already accept string values, so no change needed.",
+        "Keep the cast to FieldMergeBarcode when inserting the field, and call doc.UpdateFields() before saving.",
+        "Removed all System.Drawing references (Bitmap, Graphics, Font, Brushes, ImageFormat) which are not required for inserting a barcode field.",
+        "Replaced any usage of FieldMergeBarcode with FieldDisplayBarcode, because the task is to generate a barcode image directly in the DOCX, not via mail‑merge.",
+        "All properties of FieldMergeBarcode are of type string; assign string literals, not integers.",
+        "Cast the result of InsertField to FieldMergeBarcode before setting its specific properties.",
+        "Remove any non‑existent Aspose.Words.BarCode namespace import – barcode support is provided via Aspose.Words.Fields.",
+        "Assign a custom IBarcodeGenerator implementation to Document.FieldOptions.BarcodeGenerator.",
+        "Create BarcodeParameters, pass them to IBarcodeGenerator.GetBarcodeImage, reset the stream position, and insert the image with DocumentBuilder.InsertImage.",
+        "If a real barcode is required, replace SimpleBarcodeGenerator with a library such as Aspose.BarCode, QRCoder, or ZXing.",
+        "If you want to generate a barcode without an external image, use DocumentBuilder.InsertBarCode together with Aspose.Words.Drawing.BarCodeParameters (optional).",
+        "All FieldMergeBarcode properties are of type string; assign string values, not Color or int.",
+        "Call Update() on the field (or doc.UpdateFields()) after setting properties to render the barcode.",
+        "Keep property names exactly as defined in Aspose.Words.Fields.FieldMergeBarcode.",
+        "Use DocumentBuilder.InsertField with FieldType.FieldMergeBarcode to create a barcode.",
+        "All FieldMergeBarcode properties accept string values; provide numbers and colors as strings.",
+        "Assign integer values to numeric/barcode properties (BackgroundColor, ForegroundColor, ErrorCorrectionLevel, ScalingFactor, SymbolHeight, SymbolRotation).",
+        "Cast the inserted field to the correct type (FieldDisplayBarcode for direct barcode insertion).",
+        "Add a reference to the Aspose.BarCode library (NuGet package Aspose.BarCode).",
+        "Use Aspose.BarCode.Generation.BarcodeGenerator to create the barcode image; Aspose.Words does not provide a built‑in generator.",
+        "Save the barcode to a MemoryStream, reset Position to 0, then insert with DocumentBuilder.InsertImage.",
+        "Remove the use of doc.FieldOptions.BarcodeGenerator, which requires a custom IBarcodeGenerator implementation.",
+        "Replace the image generation logic with a hard‑coded minimal PNG (1×1 transparent pixel) encoded as Base64. This satisfies the IBarcodeGenerator contract without external libraries.",
+        "Insert a DISPLAYBARCODE (or MERGEBARCODE) field via DocumentBuilder.InsertField.",
+        "Set barcode properties (BarcodeType, BarcodeValue, colors, etc.) on the FieldDisplayBarcode object.",
+        "Call Document.UpdateFields() to render the barcode image inside the document.",
+        "Keep the custom barcode generator implementation (IBarcodeGenerator) but simplify it to return the placeholder image.",
+        "Keep the custom barcode generator implementation simple; real barcode generation can be added later by referencing System.Drawing.Common or a barcode library.",
+        "Remove any System.Drawing references – they are not required for barcode fields.",
+        "Use FieldDisplayBarcode (or FieldMergeBarcode) from Aspose.Words.Fields to generate the barcode.",
+        "Set barcode properties via the field's string‑based properties (e.g., BackgroundColor = \"0xF8BD69\").",
+        "Save the document directly; Aspose.Words will render the barcode when the document is opened.",
+        "Added required using directives for Aspose.BarCode, System.Drawing and System.Drawing.Imaging.",
+        "Implemented CustomBarcodeGenerator using Aspose.BarCode to actually create a PNG image instead of returning an empty stream.",
+        "Applied optional barcode parameters (background, foreground, error correction, scaling, height, rotation) only when they are not null or empty."
+      ],
+      "Comment rules": [
+        "Added comments clarifying each property assignment and its purpose.",
+        "Added comments explaining each step for clarity."
+      ],
+      "Loading rules": [
+        "Use LoadOptions.Password to supply the password when opening an encrypted document; the constructor does not accept a password."
+      ],
+      "Saving/Export rules": [
+        "Save the final document as PDF using SaveFormat.Pdf.",
+        "Save the document with a .docx extension.",
+        "Keep the original document loading, field update, and PDF saving logic unchanged.",
+        "Save the document after the field has been updated."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Insert images with DocumentBuilder.InsertImage overloads that accept a file path and size.",
+        "If SmartArt is required, insert a placeholder Shape; actual SmartArt manipulation is not supported directly by Aspose.Words.",
+        "Set the image resolution via generator.Parameters.ImageResolution to control target DPI.",
+        "Remove all System.Drawing dependencies because they are not available in the default .NET SDK used by the runner.",
+        "Remove System.Drawing dependencies – they are not available in the default .NET 6+ SDK used by the runner.",
+        "Replace the drawing logic with a static placeholder PNG created from a Base64 string, returning a read‑only MemoryStream.",
+        "Preserve the original workflow: insert the generated image, save the document, then extract all images from Shape nodes.",
+        "Remove System.Drawing dependencies to avoid missing assembly errors on non‑Windows .NET runtimes.",
+        "Replace the drawing logic with a pre‑generated minimal PNG returned as a MemoryStream.",
+        "Limit the ImageType switch to values actually defined in Aspose.Words.Drawing.ImageType (Jpeg, Png, Gif, Bmp, Emf, Wmf).",
+        "Add the missing using directive for Aspose.Words.Drawing to access ImageType.",
+        "Returned a MemoryStream positioned at the beginning after saving the image.",
+        "Ensured the image stream is reset (Position = 0) before inserting into the document."
+      ],
+      "Watermark rules": [
+        "Apply a text watermark via Document.Watermark.SetText."
+      ]
+    }
+  }
+}

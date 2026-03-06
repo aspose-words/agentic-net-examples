@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -10,32 +9,31 @@ namespace RemoveTocExample
         static void Main()
         {
             // Path to the source DOC file that contains a table of contents.
-            string inputFile = @"C:\Docs\SourceDocument.doc";
+            string inputPath = "InputDocument.doc";
 
             // Path where the resulting DOC file without the TOC will be saved.
-            string outputFile = @"C:\Docs\DocumentWithoutToc.doc";
+            string outputPath = "OutputDocument.doc";
 
             // Load the existing document.
-            Document doc = new Document(inputFile);
+            Document doc = new Document(inputPath);
 
-            // Collect all TOC fields in the document.
-            List<FieldToc> tocFields = new List<FieldToc>();
-            foreach (Field field in doc.Range.Fields)
+            // Iterate over all fields in the document in reverse order.
+            // Removing items while iterating forward can skip elements,
+            // so we iterate backwards to safely remove TOC fields.
+            for (int i = doc.Range.Fields.Count - 1; i >= 0; i--)
             {
-                if (field is FieldToc toc)
+                Field field = doc.Range.Fields[i];
+
+                // Identify TOC fields by their type.
+                if (field.Type == Aspose.Words.Fields.FieldType.FieldTOC)
                 {
-                    tocFields.Add(toc);
+                    // Remove the TOC field (the field and its result).
+                    field.Remove();
                 }
             }
 
-            // Remove each TOC field from the document.
-            foreach (FieldToc toc in tocFields)
-            {
-                toc.Remove();
-            }
-
-            // Save the modified document back to DOC format.
-            doc.Save(outputFile);
+            // Save the modified document in DOC format.
+            doc.Save(outputPath, SaveFormat.Doc);
         }
     }
 }

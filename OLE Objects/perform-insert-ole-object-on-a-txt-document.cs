@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -6,27 +7,27 @@ class InsertOleIntoTxt
 {
     static void Main()
     {
-        // Load a plain‑text file into a Word document.
-        Document doc = new Document("input.txt");
+        // Load an existing TXT file into a Word document.
+        Document doc = new Document("Input.txt");
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a caption before the OLE object.
-        builder.Writeln("Embedded OLE object:");
+        // Add a description before the OLE object.
+        builder.Writeln("Embedded Excel spreadsheet:");
 
-        // Open the file that will be embedded (e.g., a ZIP archive) as a stream.
-        using (FileStream oleStream = File.Open("sample.zip", FileMode.Open))
+        // Open the file that will be embedded as an OLE object.
+        using (FileStream excelStream = new FileStream("Spreadsheet.xlsx", FileMode.Open, FileAccess.Read))
         {
-            // Optional: open an icon image to represent the OLE object.
-            using (FileStream iconStream = File.Open("icon.ico", FileMode.Open))
-            {
-                // Insert the OLE object as an icon.
-                // progId "Package" is used for generic packages.
-                // asIcon = true to display the object as an icon.
-                builder.InsertOleObject(oleStream, "Package", true, iconStream);
-            }
+            // Insert the OLE object.
+            // Parameters: stream, progId, asIcon (false = show content), presentation (null = default icon).
+            Shape oleShape = builder.InsertOleObject(excelStream, "Excel.Sheet", false, null);
+
+            // Optional: set the size of the inserted shape.
+            oleShape.Width = 400;
+            oleShape.Height = 300;
         }
 
-        // Save the resulting document (Word format) to disk.
-        doc.Save("output.docx");
+        // Save the result. OLE objects cannot be represented in plain TXT,
+        // so we save the document in a format that supports them (DOCX).
+        doc.Save("Result.docx");
     }
 }

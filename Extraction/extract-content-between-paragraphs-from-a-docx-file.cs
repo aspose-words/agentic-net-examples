@@ -3,43 +3,32 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 
-class Program
+class ExtractParagraphContent
 {
     static void Main()
     {
-        // Load the DOCX file from disk.
+        // Load the DOCX file (lifecycle: load)
         Document doc = new Document("Input.docx");
 
-        // Example: extract text that lies between paragraph index 2 (inclusive) and 5 (exclusive).
-        // Paragraph indices are zero‑based.
-        int startIndex = 2;
-        int endIndex   = 5;
+        // StringBuilder to accumulate the text that appears between paragraphs.
+        // Each paragraph's text includes its own paragraph break, so we trim it to avoid duplicate breaks.
+        StringBuilder betweenText = new StringBuilder();
 
-        // Validate the range.
-        ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
-        if (startIndex < 0 || endIndex > paragraphs.Count || startIndex >= endIndex)
+        // Iterate through all paragraphs in the main story of the document.
+        foreach (Paragraph para in doc.FirstSection.Body.Paragraphs)
         {
-            Console.WriteLine("Invalid paragraph range.");
-            return;
+            // Get the raw text of the paragraph (includes the ending paragraph break).
+            string paragraphText = para.GetText();
+
+            // Remove the trailing paragraph break to get only the content.
+            string trimmed = paragraphText.TrimEnd('\r', '\n');
+
+            // Append the trimmed content followed by a custom separator (e.g., a line).
+            betweenText.AppendLine(trimmed);
+            betweenText.AppendLine("---"); // separator indicating "between paragraphs"
         }
 
-        // Build the extracted text.
-        StringBuilder extractedBuilder = new StringBuilder();
-        for (int i = startIndex; i < endIndex; i++)
-        {
-            // GetText returns the paragraph text plus a paragraph break.
-            // Trim the trailing break to avoid duplicate empty lines.
-            extractedBuilder.Append(paragraphs[i].GetText().TrimEnd('\r', '\n'));
-            extractedBuilder.Append(Environment.NewLine);
-        }
-
-        string extractedText = extractedBuilder.ToString().TrimEnd();
-
-        // Display the result.
-        Console.WriteLine("Extracted content between paragraphs:");
-        Console.WriteLine(extractedText);
-
-        // Optionally write the extracted content to a plain‑text file.
-        File.WriteAllText("Extracted.txt", extractedText);
+        // Save the extracted content to a plain‑text file (lifecycle: save)
+        File.WriteAllText("ExtractedContent.txt", betweenText.ToString());
     }
 }

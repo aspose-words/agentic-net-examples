@@ -7,25 +7,25 @@ class Program
     static void Main()
     {
         // Create a blank Word document.
-        Document doc = new Document();
+        Document originalDoc = new Document();
 
-        // Use DocumentBuilder to add some sample text.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world! This is a sample document created with Aspose.Words.");
+        // Use DocumentBuilder to add natural language specification text.
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
+        builder.Writeln("This document contains a natural language specification.");
+        builder.Writeln("It describes the requirements, constraints, and expected outcomes for the project.");
+        builder.Writeln("All sections are written in clear, concise English.");
 
         // Save the original document.
-        doc.Save("Original.docx");
+        originalDoc.Save("OriginalSpecification.docx");
 
-        // Retrieve the API key for the AI service from environment variables.
-        string apiKey = Environment.GetEnvironmentVariable("API_KEY");
+        // Translate the document to French using a Google AI model.
+        // The GoogleAiModel constructor requires an API key (or configuration) – replace the placeholder with a valid key.
+        var aiModel = new GoogleAiModel("YOUR_GOOGLE_API_KEY");
 
-        // Create an AI model instance (Gemini Flash) and set the API key.
-        AiModel model = AiModel.Create(AiModelType.GeminiFlashLatest).WithApiKey(apiKey);
-
-        // Translate the document to French using the AI model.
-        Document translatedDoc = model.Translate(doc, Language.French);
+        // Translate the document. The Language enum defines target languages.
+        Document translatedDoc = aiModel.Translate(originalDoc, Language.French);
 
         // Save the translated document.
-        translatedDoc.Save("Translated_French.docx");
+        translatedDoc.Save("TranslatedSpecification_French.docx");
     }
 }

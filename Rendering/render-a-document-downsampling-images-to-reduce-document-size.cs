@@ -1,4 +1,4 @@
-using System.IO;
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,24 +6,22 @@ class DownsampleDocument
 {
     static void Main()
     {
-        // Paths to the source and destination files.
-        string dataDir = @"C:\Docs\";
-        string inputPath = Path.Combine(dataDir, "Input.docx");
-        string outputPath = Path.Combine(dataDir, "Output_Downsampled.pdf");
+        // Load the source Word document.
+        Document doc = new Document("MyDir/Images.docx");
 
-        // Load the Word document.
-        Document doc = new Document(inputPath);
-
-        // Create PDF save options that will be used to downsample images.
+        // Create PDF save options that include downsample settings.
         PdfSaveOptions saveOptions = new PdfSaveOptions();
 
-        // Enable downsampling and configure the target resolution (ppi) and threshold.
-        // Images with a resolution higher than the threshold will be reduced to the target resolution.
-        saveOptions.DownsampleOptions.DownsampleImages = true;   // Ensure downsampling is active.
-        saveOptions.DownsampleOptions.Resolution = 72;          // Target resolution in pixels per inch.
-        saveOptions.DownsampleOptions.ResolutionThreshold = 150; // Only downsample images >150 ppi.
+        // Enable image downsampling.
+        saveOptions.DownsampleOptions.DownsampleImages = true;
 
-        // Save the document as a PDF with the specified downsampling options.
-        doc.Save(outputPath, saveOptions);
+        // Set the target resolution for downsampled images (e.g., 72 DPI).
+        saveOptions.DownsampleOptions.Resolution = 72;
+
+        // No threshold – downsample all images that can be reduced.
+        saveOptions.DownsampleOptions.ResolutionThreshold = 0;
+
+        // Save the document as PDF with the configured downsampling.
+        doc.Save("ArtifactsDir/Downsampled.pdf", saveOptions);
     }
 }

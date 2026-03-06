@@ -1,25 +1,28 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
 using Aspose.Words.Saving;
 
-class Program
+class RestartListPerSection
 {
     static void Main()
     {
         // Load the existing DOCX document.
-        Document doc = new Document("input.docx");
+        Document doc = new Document("Input.docx");
 
-        // Set each list in the document to restart numbering at the start of every section.
+        // Enable list restart at each section for every list in the document.
         foreach (List list in doc.Lists)
         {
             list.IsRestartAtEachSection = true;
         }
 
-        // Save the document with a compliance level that supports the IsRestartAtEachSection property.
+        // Set OOXML compliance higher than Ecma376_2006 so the property is saved.
         OoxmlSaveOptions saveOptions = new OoxmlSaveOptions
         {
             Compliance = OoxmlCompliance.Iso29500_2008_Transitional
         };
-        doc.Save("output.docx", saveOptions);
+
+        // Save the modified document.
+        doc.Save("Output.docx", saveOptions);
     }
 }

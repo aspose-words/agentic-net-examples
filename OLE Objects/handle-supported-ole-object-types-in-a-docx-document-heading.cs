@@ -1,93 +1,99 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Ole;
+using Aspose.Words.Loading;
 
 class OleObjectsDemo
 {
     static void Main()
     {
-        // Define directories (adjust as needed).
-        string MyDir = @"C:\Data\";
-        string ImageDir = Path.Combine(MyDir, "Images\\");
-        string ArtifactsDir = Path.Combine(MyDir, "Output\\");
-        Directory.CreateDirectory(ArtifactsDir);
+        // Paths – adjust these to point to existing files on your machine.
+        string dataDir = @"C:\Data\";
+        string artifactsDir = @"C:\Artifacts\";
+        string excelFile = Path.Combine(dataDir, "Sample.xlsx");
+        string pptFile = Path.Combine(dataDir, "Sample.pptx");
+        string zipFile = Path.Combine(dataDir, "Sample.zip");
+        string iconFile = Path.Combine(dataDir, "Icon.ico");
 
-        // 1. Create a new blank document.
-        Document doc = new Document();
-
-        // 2. Initialize a DocumentBuilder for inserting content.
+        // -------------------------------------------------
+        // 1. Create a new blank document and a DocumentBuilder.
+        // -------------------------------------------------
+        Document doc = new Document();                     // create
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // 3. Insert a heading for the OLE objects section.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Supported OLE Objects");
+        // -------------------------------------------------
+        // 2. Insert an embedded Excel spreadsheet (normal view).
+        // -------------------------------------------------
+        builder.Writeln("Embedded Excel object:");
+        using (FileStream excelStream = File.OpenRead(excelFile))
+        {
+            // InsertOleObject(stream, progId, asIcon, presentation)
+            // progId "Excel.Sheet.12" corresponds to modern .xlsx files.
+            builder.InsertOleObject(excelStream, "Excel.Sheet.12", false, null);
+        }
 
-        // Reset style to normal for the following content.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        // -------------------------------------------------
+        // 3. Insert a PowerPoint presentation as an icon with a custom caption.
+        // -------------------------------------------------
+        builder.Writeln("\nPowerPoint object as icon:");
+        using (FileStream pptStream = File.OpenRead(pptFile))
+        {
+            // InsertOleObjectAsIcon(stream, progId, iconFile, iconCaption)
+            builder.InsertOleObjectAsIcon(pptStream, "PowerPoint.Application", iconFile, "My Presentation");
+        }
 
-        // -----------------------------------------------------------------
-        // Insert an embedded Excel spreadsheet (from a file) – displayed as content.
-        // -----------------------------------------------------------------
-        string excelPath = Path.Combine(MyDir, "Spreadsheet.xlsx");
-        builder.Writeln("Embedded Excel Spreadsheet:");
-        // The file extension is used to detect the OLE type automatically.
-        builder.InsertOleObject(excelPath, isLinked: false, asIcon: false, presentation: null);
+        // -------------------------------------------------
+        // 4. Insert a generic file (ZIP) using the OLE Package mechanism.
+        // -------------------------------------------------
+        builder.Writeln("\nZIP archive as OLE Package:");
+        byte[] zipBytes = File.ReadAllBytes(zipFile);
+        using (MemoryStream zipStream = new MemoryStream(zipBytes))
+        {
+            // progId "Package" tells Aspose.Words to treat the data as an OLE Package.
+            Shape zipShape = builder.InsertOleObject(zipStream, "Package", false, null);
+            // Set display name and file name for the package.
+            zipShape.OleFormat.OlePackage.FileName = "Archive.zip";
+            zipShape.OleFormat.OlePackage.DisplayName = "Sample Archive";
+        }
 
-        // -----------------------------------------------------------------
-        // Insert an embedded PowerPoint presentation – displayed as an icon with a custom image.
-        // -----------------------------------------------------------------
-        string pptPath = Path.Combine(MyDir, "Presentation.pptx");
-        string iconPath = Path.Combine(ImageDir, "Logo icon.ico");
-        builder.Writeln("\nEmbedded PowerPoint Presentation (as icon):");
-        builder.InsertOleObjectAsIcon(pptPath, isLinked: false, iconFile: iconPath, iconCaption: "My Presentation");
+        // -------------------------------------------------
+        // 5. Save the document.
+        // -------------------------------------------------
+        string outDoc = Path.Combine(artifactsDir, "OleObjectsDemo.docx");
+        doc.Save(outDoc);                                 // save
 
-        // -----------------------------------------------------------------
-        // Insert a generic file (ZIP archive) using the OLE Package mechanism – displayed as an icon.
-        // -----------------------------------------------------------------
-        string zipPath = Path.Combine(MyDir, "Archive.zip");
-        builder.Writeln("\nEmbedded ZIP Archive (as OLE Package icon):");
-        Shape zipShape = builder.InsertOleObjectAsIcon(zipPath, isLinked: false, iconFile: iconPath, iconCaption: "My Archive");
+        // -------------------------------------------------
+        // 6. Load the saved document (demonstrating LoadOptions usage).
+        // -------------------------------------------------
+        LoadOptions loadOptions = new LoadOptions { IgnoreOleData = false };
+        Document loadedDoc = new Document(outDoc, loadOptions); // load
 
-        // Set OLE Package properties for the ZIP file.
-        zipShape.OleFormat.OlePackage.FileName = "Archive.zip";
-        zipShape.OleFormat.OlePackage.DisplayName = "Archive.zip";
-
-        // -----------------------------------------------------------------
-        // Save the document containing the OLE objects.
-        // -----------------------------------------------------------------
-        string docPath = Path.Combine(ArtifactsDir, "SupportedOleObjects.docx");
-        doc.Save(docPath);
-
-        // -----------------------------------------------------------------
-        // Load the saved document and extract each embedded OLE object's raw data.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        // Get only Shape nodes (OLE objects are stored as Shape nodes).
+        // -------------------------------------------------
+        // 7. Extract each embedded OLE object to a separate file.
+        // -------------------------------------------------
         Shape[] oleShapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                                    .ToArray()
                                     .OfType<Shape>()
+                                    .Where(s => s.OleFormat != null)
                                     .ToArray();
 
         foreach (Shape shape in oleShapes)
         {
-            if (shape.OleFormat == null)
-                continue; // Not an OLE object.
-
             OleFormat ole = shape.OleFormat;
 
-            // Skip linked objects – they have no embedded data to extract.
-            if (ole.IsLink)
-                continue;
+            // Determine a suitable file name.
+            string suggestedExt = ole.SuggestedExtension; // e.g. ".xlsx", ".pptx", ".zip"
+            string baseName = Path.GetFileNameWithoutExtension(ole.SuggestedFileName);
+            if (string.IsNullOrEmpty(baseName))
+                baseName = "ExtractedObject";
 
-            // Determine a suitable file name using the suggested extension.
-            string suggestedExt = ole.SuggestedExtension ?? ".bin";
-            string outputFile = Path.Combine(ArtifactsDir,
-                $"Extracted_{Guid.NewGuid()}{suggestedExt}");
+            string outPath = Path.Combine(artifactsDir, baseName + suggestedExt);
 
             // Save the OLE data to the file system.
-            ole.Save(outputFile);
+            ole.Save(outPath); // save
         }
+
+        Console.WriteLine("OLE objects inserted and extracted successfully.");
     }
 }

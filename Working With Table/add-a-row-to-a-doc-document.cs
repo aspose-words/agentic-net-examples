@@ -2,37 +2,38 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AddRowExample
+class AddRowExample
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Create a new blank document
-            Document doc = new Document();
+        // Create a new blank document (lifecycle: create)
+        Document doc = new Document();
 
-            // Create a table and add it to the document body
-            Table table = new Table(doc);
-            doc.FirstSection.Body.AppendChild(table);
+        // Ensure the document has at least one section and a body
+        Section section = doc.FirstSection ?? doc.AppendChild(new Section(doc));
+        Body body = section.Body ?? section.AppendChild(new Body(doc));
 
-            // Ensure the table has at least one row and one cell so we can work with it
-            table.EnsureMinimum();
+        // Create a table if the document does not already contain one
+        Table table = new Table(doc);
+        body.AppendChild(table);
+        table.EnsureMinimum(); // guarantees at least one row and one cell
 
-            // Add a new row to the existing table
-            Row newRow = new Row(doc);
-            table.AppendChild(newRow);
+        // Create a new row that will be added to the table
+        Row newRow = new Row(doc);
+        // Ensure the new row has at least one cell before adding content
+        newRow.EnsureMinimum();
 
-            // Add a single cell to the new row
-            Cell newCell = new Cell(doc);
-            newRow.AppendChild(newCell);
+        // Add a paragraph with some text to the first cell of the new row
+        Cell firstCell = newRow.FirstCell;
+        Paragraph para = new Paragraph(doc);
+        firstCell.FirstParagraph?.RemoveAllChildren(); // clear placeholder paragraph
+        firstCell.AppendChild(para);
+        para.AppendChild(new Run(doc, "This is a newly added row."));
 
-            // Add a paragraph with some text inside the new cell
-            Paragraph para = new Paragraph(doc);
-            newCell.AppendChild(para);
-            para.AppendChild(new Run(doc, "This is a newly added row."));
+        // Append the new row to the end of the table
+        table.AppendChild(newRow);
 
-            // Save the document
-            doc.Save("AddedRow.docx");
-        }
+        // Save the document (lifecycle: save)
+        doc.Save("AddedRow.docx");
     }
 }

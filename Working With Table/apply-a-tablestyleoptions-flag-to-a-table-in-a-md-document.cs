@@ -1,23 +1,51 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class ApplyTableStyleOptions
 {
     static void Main()
     {
-        // Load the Markdown document that contains a table.
-        Document doc = new Document("input.md");
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Retrieve the first table in the document (if any).
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table != null)
-        {
-            // Apply the desired TableStyleOptions flags.
-            // Example: apply formatting to the first row and enable row banding.
-            table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-        }
+        // Initialize a DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the modified document. The output format can be any supported type (e.g., DOCX).
-        doc.Save("output.docx");
+        // Start building a table.
+        Table table = builder.StartTable();
+
+        // Insert the first row and cells (required before setting table formatting).
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
+
+        // Insert a data row.
+        builder.InsertCell();
+        builder.Write("Data 1");
+        builder.InsertCell();
+        builder.Write("Data 2");
+        builder.EndRow();
+
+        // End the table construction.
+        builder.EndTable();
+
+        // Apply a built‑in style identifier (optional, but demonstrates style usage).
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Apply the desired TableStyleOptions flags.
+        // Example: apply formatting to the first row, first column, and row banding.
+        table.StyleOptions = TableStyleOptions.FirstRow |
+                              TableStyleOptions.FirstColumn |
+                              TableStyleOptions.RowBands;
+
+        // Optionally auto‑fit the table to its contents.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+        // Save the document. Adjust the path as needed.
+        string outputPath = "TableWithStyleOptions.docx";
+        doc.Save(outputPath);
     }
 }

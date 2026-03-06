@@ -1,42 +1,41 @@
 using System;
+using System.Data;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class MailMergeRegionToPng
+class Program
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        const string sourcePath = "Template.docx";
+        // Load an existing DOCX file.
+        // The constructor automatically detects the format.
+        Document doc = new Document("Input.docx");
 
-        // Load the existing document.
-        Document doc = new Document(sourcePath);
-
-        // Create a DocumentBuilder to modify the document.
+        // Use DocumentBuilder to insert a mail‑merge region.
+        // A region is defined by a TableStart field and a matching TableEnd field.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveToDocumentStart();                     // Position at the beginning of the document.
 
-        // Define a mail‑merge region named "MyRegion".
-        // Insert the region start field.
-        builder.InsertField(" MERGEFIELD TableStart:MyRegion");
+        // Insert the start of the region named "MyRegion".
+        builder.InsertField(" MERGEFIELD TableStart:MyRegion ");
 
         // Insert a sample merge field that will be repeated inside the region.
-        builder.InsertField(" MERGEFIELD Name");
+        builder.Write("Name: ");
+        builder.InsertField(" MERGEFIELD Name ");
 
-        // Insert the region end field.
-        builder.InsertField(" MERGEFIELD TableEnd:MyRegion");
+        // Insert the end of the region.
+        builder.InsertField(" MERGEFIELD TableEnd:MyRegion ");
 
-        // Prepare image save options for PNG output.
-        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
-        {
-            // Render the first page only; change PageSet if you need a different page.
-            PageSet = new PageSet(0),
+        // (Optional) Perform a mail merge with a dummy data source so the document has content.
+        // Here we create a simple DataTable with one column "Name".
+        DataTable table = new DataTable("MyRegion");
+        table.Columns.Add("Name");
+        table.Rows.Add("Alice");
+        table.Rows.Add("Bob");
+        doc.MailMerge.ExecuteWithRegions(table);
 
-            // Optional: set resolution (dpi) for higher quality.
-            Resolution = 300
-        };
-
-        // Save the document as a PNG image.
-        const string outputPath = "Result.png";
-        doc.Save(outputPath, pngOptions);
+        // Save the resulting document as PNG images.
+        // Each page will be saved as a separate PNG file (e.g., Output.png, Output_1.png, ...).
+        doc.Save("Output.png", SaveFormat.Png);
     }
 }

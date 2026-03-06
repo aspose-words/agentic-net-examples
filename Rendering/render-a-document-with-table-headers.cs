@@ -2,57 +2,56 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class TableWithHeadersExample
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start a table.
         Table table = builder.StartTable();
 
-        // -----------------------------------------------------------------
-        // Create the header row. Set HeadingFormat = true so the row repeats
-        // at the top of each page when the table spans multiple pages.
-        // -----------------------------------------------------------------
+        // Mark the first row as a heading row that repeats on each page.
         builder.RowFormat.HeadingFormat = true;
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.CellFormat.Width = 100;
 
-        // First header cell.
+        // Header cells.
         builder.InsertCell();
-        builder.Write("Product");
-
-        // Second header cell.
+        builder.Write("ID");
         builder.InsertCell();
-        builder.Write("Price");
-
-        // End the header row.
+        builder.Write("Name");
+        builder.InsertCell();
+        builder.Write("Quantity");
         builder.EndRow();
 
-        // -----------------------------------------------------------------
-        // Add regular data rows. Disable the heading format for subsequent rows.
-        // -----------------------------------------------------------------
+        // Reset formatting for the data rows.
         builder.RowFormat.HeadingFormat = false;
+        builder.ParagraphFormat.ClearFormatting();
+        builder.CellFormat.ClearFormatting();
 
-        // Example data rows.
+        // Add sample data rows.
         for (int i = 1; i <= 30; i++)
         {
+            builder.InsertCell();
+            builder.Write(i.ToString());
+
             builder.InsertCell();
             builder.Write($"Item {i}");
 
             builder.InsertCell();
-            builder.Write($"${i * 1.99:F2}");
+            builder.Write((i * 10).ToString());
 
             builder.EndRow();
         }
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Save the document to disk.
-        doc.Save("TableWithHeaders.docx");
+        // Save the document.
+        string outputPath = "TableWithHeaders.docx";
+        doc.Save(outputPath);
     }
 }

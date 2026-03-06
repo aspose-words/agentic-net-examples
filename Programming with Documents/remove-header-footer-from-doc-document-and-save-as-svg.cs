@@ -6,14 +6,14 @@ class RemoveHeaderFooterAndSaveSvg
 {
     static void Main()
     {
-        // Path to the source DOC document.
-        string inputPath = @"C:\Docs\SourceDocument.doc";
+        // Path to the source DOC/DOCX file.
+        string inputFile = "input.docx";
 
         // Path where the resulting SVG will be saved.
-        string outputPath = @"C:\Docs\ResultDocument.svg";
+        string outputFile = "output.svg";
 
-        // Load the existing document.
-        Document doc = new Document(inputPath);
+        // Load the document from disk.
+        Document doc = new Document(inputFile);
 
         // Remove all headers and footers from every section.
         foreach (Section section in doc.Sections)
@@ -21,18 +21,20 @@ class RemoveHeaderFooterAndSaveSvg
             section.HeadersFooters.Clear();
         }
 
-        // Configure SVG save options (optional customizations).
+        // Configure SVG save options.
         SvgSaveOptions svgOptions = new SvgSaveOptions
         {
-            // Do not draw a page border around the SVG.
+            // Do not draw a page border around each SVG page.
             ShowPageBorder = false,
-            // Render text as placed glyphs (curves) to avoid selectable text.
-            TextOutputMode = SvgTextOutputMode.UsePlacedGlyphs,
-            // Fit the SVG to the viewport for easier display.
-            FitToViewPort = true
+
+            // Make the SVG fill the viewport (optional, improves display in browsers).
+            FitToViewPort = true,
+
+            // Render text as placed glyphs so that the SVG does not depend on external fonts.
+            TextOutputMode = SvgTextOutputMode.UsePlacedGlyphs
         };
 
-        // Save the document as SVG using the configured options.
-        doc.Save(outputPath, svgOptions);
+        // Save the modified document as SVG using the configured options.
+        doc.Save(outputFile, svgOptions);
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -9,28 +10,20 @@ class Program
         // Load the DOT template.
         Document doc = new Document("Template.dot");
 
-        // Create a DocumentBuilder to navigate the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Move the cursor to the first cell of the first table (row 0, column 0).
-        // Adjust the indices if the target cell is different.
-        builder.MoveToCell(0, 0, 0, 0);
-
-        // Define watermark options (font, size, color, layout, opacity).
+        // Configure text watermark options.
         TextWatermarkOptions options = new TextWatermarkOptions
         {
             FontFamily = "Arial",
             FontSize = 36,
-            Color = System.Drawing.Color.Gray,
+            Color = Color.Gray,
             Layout = WatermarkLayout.Diagonal,
-            IsSemitrasparent = false
+            IsSemitrasparent = true
         };
 
-        // Apply the text watermark to the document.
-        // Although Watermark applies to the whole document, it will be visible inside the cell.
+        // Apply the watermark to the document (appears behind all content, including table cells).
         doc.Watermark.SetText("CONFIDENTIAL", options);
 
-        // Save the modified document.
+        // Save the result.
         doc.Save("Result.docx");
     }
 }

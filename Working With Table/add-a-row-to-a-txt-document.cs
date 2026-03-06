@@ -1,40 +1,35 @@
-using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Saving;
 
-class AddRowToTxtDocument
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to construct a table.
+        // Use DocumentBuilder to construct a table with a single row.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start the table.
+        // Begin the table.
         builder.StartTable();
 
-        // ----- First row -----
-        builder.InsertCell();                     // First cell of the first row.
-        builder.Write("Cell 1");                  // Add text to the cell.
-        builder.InsertCell();                     // Second cell of the first row.
-        builder.Write("Cell 2");
-        builder.EndRow();                         // End the first row.
+        // First cell of the row.
+        builder.InsertCell();
+        builder.Write("Cell 1");
 
-        // ----- New row (the row we want to add) -----
-        builder.InsertCell();                     // First cell of the new row.
-        builder.Write("Cell 3");
-        builder.InsertCell();                     // Second cell of the new row.
-        builder.Write("Cell 4");
-        builder.EndRow();                         // End the new row.
+        // Second cell of the same row.
+        builder.InsertCell();
+        builder.Write("Cell 2");
+
+        // End the current row (adds the Row to the table).
+        builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document as plain text.
-        TxtSaveOptions txtOptions = new TxtSaveOptions(); // Default options (paragraph break = CrLf).
-        doc.Save("AddedRow.txt", txtOptions);
+        // Save the document as a plain‑text file.
+        TxtSaveOptions txtOptions = new TxtSaveOptions(); // default options
+        doc.Save("Output.txt", txtOptions);
     }
 }

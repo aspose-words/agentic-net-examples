@@ -1,0 +1,32 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Comment rules": [
+        "Handle possible null return from Comment.GetText() by using the null‑conditional operator and providing a fallback (empty string).",
+        "Keep the original comment‑extraction logic unchanged apart from null‑safety adjustments.",
+        "Remove the non‑existent namespace import `using Aspose.Words.Comments;` – the `Comment` class resides directly in `Aspose.Words`.",
+        "Remove the non‑existent namespace import `Aspose.Words.Comments`; the `Comment` class resides directly in `Aspose.Words`.",
+        "Keep the rest of the logic unchanged – it correctly iterates over comment nodes and removes them based on the optional author filter.",
+        "Remove the custom NodeCollectionExtensions – Aspose.Words already provides a NodeCollection of Comment nodes.",
+        "Use the ParentNode check to distinguish top‑level comments from replies (a reply's ParentNode is a Comment).",
+        "Use only the Aspose.Words namespace for Comment and NodeType; the Aspose.Words.Comments and Aspose.Words.Tables namespaces do not exist.",
+        "Remove the non‑existent namespace import (Aspose.Words.Comments). All comment‑related types are in the Aspose.Words namespace.",
+        "Use NodeType.Comment with Document.GetChildNodes to obtain all comment nodes.",
+        "Filter top‑level comments by checking Comment.Ancestor == null.",
+        "Access replies via Comment.Replies collection.",
+        "Remove the non‑existent `using Aspose.Words.Comments;` directive – Comment class resides in `Aspose.Words` namespace.",
+        "Keep the `using Aspose.Words;` directive to access Document, NodeCollection, NodeType, and Comment.",
+        "Do not import non‑existent namespaces such as Aspose.Words.Comments; the Comment class resides directly in Aspose.Words.",
+        "Filter comments by the Author property (case‑insensitive comparison recommended).",
+        "Call Comment.GetText() to retrieve the comment's content and trim it if needed."
+      ],
+      "Table rules": [
+        "Remove unused imports such as `Aspose.Words.Tables` unless they are needed elsewhere."
+      ],
+      "Loading rules": [
+        "No other API changes are required; the rest of the code follows the provided load rule."
+      ]
+    }
+  }
+}

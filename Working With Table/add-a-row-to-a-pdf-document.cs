@@ -2,51 +2,41 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class AddRowToPdf
 {
     static void Main()
     {
-        // Create a new Word document (will be saved as PDF later)
+        // Create a new blank Word document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to start a table
+        // Initialize a DocumentBuilder to construct the document content.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.StartTable();
 
-        // First row with two cells
+        // Start a table and add an initial row with one cell.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
+        builder.Write("Original Row, Cell 1");
         builder.EndRow();
 
-        // Add a new row manually using the Row class
-        // Get reference to the table that was just created
+        // Retrieve the table that was just created.
         Table table = (Table)builder.CurrentParagraph.ParentNode;
 
-        // Create a new Row instance belonging to the same document
+        // Create a new row that will be added to the table.
         Row newRow = new Row(doc);
 
-        // Append the new row to the table
+        // Create a cell for the new row and add a paragraph with text.
+        Cell newCell = new Cell(doc);
+        newCell.AppendChild(new Paragraph(doc));
+        newCell.FirstParagraph.AppendChild(new Run(doc, "New Row, Cell 1"));
+        newRow.AppendChild(newCell);
+
+        // Append the new row to the end of the table.
         table.AppendChild(newRow);
 
-        // Ensure the row has at least one cell before adding content
-        newRow.EnsureMinimum();
-
-        // Fill cells of the new row
-        Cell firstCell = newRow.FirstCell;
-        firstCell.FirstParagraph.AppendChild(new Run(doc, "Row 2, Cell 1"));
-
-        // Add a second cell to the new row
-        Cell secondCell = new Cell(doc);
-        newRow.AppendChild(secondCell);
-        secondCell.AppendChild(new Paragraph(doc));
-        secondCell.FirstParagraph.AppendChild(new Run(doc, "Row 2, Cell 2"));
-
-        // End the table
+        // End the table construction.
         builder.EndTable();
 
-        // Save the document as PDF
-        doc.Save("AddedRow.pdf");
+        // Save the document as a PDF file.
+        doc.Save("AddedRow.pdf", SaveFormat.Pdf);
     }
 }

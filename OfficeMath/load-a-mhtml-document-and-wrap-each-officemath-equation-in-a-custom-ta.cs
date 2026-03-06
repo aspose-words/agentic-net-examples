@@ -2,53 +2,49 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Saving;
-using Aspose.Words.Math;
+using Aspose.Words.Math; // <-- required for OfficeMath
 
-class Program
+class WrapOfficeMathInMhtml
 {
     static void Main()
     {
-        // Paths to the input MHTML file and the output file.
-        string inputPath = "input.mht";
-        string outputPath = "output.mht";
-
-        // Load the MHTML document. Enable conversion of shapes that contain EquationXML
-        // to OfficeMath objects so that all equations are represented as OfficeMath nodes.
-        HtmlLoadOptions loadOptions = new HtmlLoadOptions
+        // Load the MHTML document. Use HtmlLoadOptions to enable conversion of shapes with EquationXML to OfficeMath.
+        var loadOptions = new HtmlLoadOptions
         {
             ConvertShapeToOfficeMath = true
         };
-        Document doc = new Document(inputPath, loadOptions);
+        Document doc = new Document("input.mht", loadOptions);
 
-        // Iterate over the OfficeMath nodes in reverse order because we will modify the
-        // document tree while iterating.
+        // Get all OfficeMath nodes in the document.
         NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+
+        // Iterate backwards so that inserting nodes does not affect the collection indexing.
         for (int i = officeMathNodes.Count - 1; i >= 0; i--)
         {
-            OfficeMath om = (OfficeMath)officeMathNodes[i];
+            OfficeMath officeMath = (OfficeMath)officeMathNodes[i];
 
-            // Insert the opening custom tag before the OfficeMath node.
+            // Insert an opening custom tag before the OfficeMath node.
             DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.MoveTo(om);
-            builder.InsertHtml("<custom>");
+            builder.MoveTo(officeMath);               // insertion point is *before* the node
+            builder.InsertHtml("<my-equation>");
 
-            // Insert the closing custom tag after the OfficeMath node.
-            // If the OfficeMath node has a next sibling, move the builder there;
-            // otherwise move it to the end of the parent node.
-            Node next = om.NextSibling;
-            if (next != null)
-                builder.MoveTo(next);
+            // Insert a closing custom tag after the OfficeMath node.
+            // After the opening tag is inserted the OfficeMath node itself is unchanged, so we move to the node that follows it.
+            Node nextNode = officeMath.NextSibling;
+            if (nextNode != null)
+            {
+                builder.MoveTo(nextNode);            // insertion point is before the next sibling → after the OfficeMath node
+                builder.InsertHtml("</my-equation>");
+            }
             else
-                builder.MoveTo(om.ParentNode.LastChild);
-            builder.InsertHtml("</custom>");
+            {
+                // If the OfficeMath node is the last child, move to its parent and insert at the end of the parent.
+                builder.MoveTo(officeMath.ParentNode);
+                builder.InsertHtml("</my-equation>");
+            }
         }
 
         // Save the modified document back to MHTML.
-        // Export OfficeMath as MathML so that the equations remain visible in the HTML.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
-        {
-            OfficeMathOutputMode = HtmlOfficeMathOutputMode.MathML
-        };
-        doc.Save(outputPath, saveOptions);
+        doc.Save("output.mht", SaveFormat.Mhtml);
     }
 }

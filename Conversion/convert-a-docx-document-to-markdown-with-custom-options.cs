@@ -1,43 +1,59 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ConvertDocxToMarkdown
+namespace DocxToMarkdownExample
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\InputDocument.docx";
-
-        // Path where the resulting Markdown file will be saved.
-        string outputPath = @"C:\Docs\OutputDocument.md";
-
-        // Load the DOCX document.
-        Document doc = new Document(inputPath);
-
-        // Configure the Markdown save options.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+        static void Main()
         {
-            // Embed images directly in the Markdown file as Base64 data URIs.
-            ExportImagesAsBase64 = true,
+            // Path to the source DOCX file.
+            string inputPath = Path.Combine("Input", "SampleDocument.docx");
 
-            // Export tables that cannot be represented in pure Markdown as raw HTML.
-            ExportAsHtml = MarkdownExportAsHtml.NonCompatibleTables,
+            // Path to the output Markdown file.
+            string outputPath = Path.Combine("Output", "SampleDocument.md");
 
-            // Export OfficeMath objects as LaTeX markup.
-            OfficeMathExportMode = MarkdownOfficeMathExportMode.Latex,
+            // Load the DOCX document.
+            Document doc = new Document(inputPath);
 
-            // Export all links using reference style.
-            LinkExportMode = MarkdownLinkExportMode.Reference,
+            // Configure Markdown save options.
+            MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+            {
+                // Export images as Base64 data URIs.
+                ExportImagesAsBase64 = true,
 
-            // Set the image resolution (relevant when images are saved as separate files).
-            ImageResolution = 300,
+                // Set a custom folder for images (used when ExportImagesAsBase64 is false).
+                ImagesFolder = Path.Combine("Output", "Images"),
 
-            // Explicitly set the save format to Markdown.
-            SaveFormat = SaveFormat.Markdown
-        };
+                // Alias used in the Markdown file for image URIs.
+                ImagesFolderAlias = "http://example.com/images",
 
-        // Save the document as a Markdown file using the configured options.
-        doc.Save(outputPath, saveOptions);
+                // Export tables that cannot be represented in pure Markdown as raw HTML.
+                ExportAsHtml = MarkdownExportAsHtml.NonCompatibleTables,
+
+                // Export OfficeMath objects as LaTeX.
+                OfficeMathExportMode = MarkdownOfficeMathExportMode.Latex,
+
+                // Export links as reference blocks.
+                LinkExportMode = MarkdownLinkExportMode.Reference,
+
+                // Use pretty formatting for the generated Markdown.
+                PrettyFormat = true,
+
+                // Increase image resolution for any extracted images.
+                ImageResolution = 300,
+
+                // Ensure the save format is explicitly set to Markdown.
+                SaveFormat = SaveFormat.Markdown
+            };
+
+            // Ensure the output directory exists.
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
+
+            // Save the document as Markdown using the configured options.
+            doc.Save(outputPath, saveOptions);
+        }
     }
 }

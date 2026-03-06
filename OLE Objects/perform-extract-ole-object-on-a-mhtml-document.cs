@@ -7,45 +7,35 @@ class ExtractOleFromMhtml
 {
     static void Main()
     {
-        // Path to the source MHTML document
-        string inputPath = @"C:\Docs\source.mht";
+        // Path to the source MHTML document.
+        string sourceMhtmlPath = @"C:\Docs\source.mht";
 
-        // Directory where extracted OLE files will be saved
-        string outputDir = @"C:\Docs\ExtractedOle";
+        // Folder where extracted OLE objects will be saved.
+        string outputFolder = @"C:\Docs\ExtractedOle";
+        Directory.CreateDirectory(outputFolder);
 
-        // Ensure the output directory exists
-        Directory.CreateDirectory(outputDir);
+        // Load the MHTML document.
+        Document doc = new Document(sourceMhtmlPath);
 
-        // Load the MHTML document
-        Document doc = new Document(inputPath);
-
-        // Get all Shape nodes (OLE objects are stored in shapes)
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-
-        int oleIndex = 0;
-
-        foreach (Shape shape in shapeNodes)
+        // Iterate through all shapes in the document.
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
-            // Access the OleFormat of the shape; null if the shape is not an OLE object
+            // Check if the shape contains an OLE object.
             OleFormat ole = shape.OleFormat;
             if (ole == null)
-                continue;
+                continue; // Not an OLE object, skip.
 
-            // Skip linked OLE objects – they cannot be saved directly
-            if (ole.IsLink)
-                continue;
+            // Determine a file name for the extracted object.
+            // Use the suggested extension if available; otherwise default to .bin.
+            string extension = string.IsNullOrEmpty(ole.SuggestedExtension) ? ".bin" : ole.SuggestedExtension;
+            string fileName = $"OleObject_{Guid.NewGuid()}{extension}";
+            string outputPath = Path.Combine(outputFolder, fileName);
 
-            // Determine a suitable file extension for the embedded object
-            string extension = ole.SuggestedExtension ?? ".bin";
-
-            // Build a unique file name for each extracted OLE object
-            string outputPath = Path.Combine(outputDir, $"OleObject_{oleIndex}{extension}");
-
-            // Save the OLE object data to the file
+            // Save the OLE object data to the file.
+            // This will throw if the OLE object is a linked object; we only handle embedded objects.
             ole.Save(outputPath);
 
             Console.WriteLine($"Extracted OLE object saved to: {outputPath}");
-            oleIndex++;
         }
     }
 }

@@ -7,48 +7,37 @@ class FontSettingsExample
 {
     static void Main()
     {
-        // Define output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(artifactsDir);
-
         // Create a new blank document.
         Document doc = new Document();
 
-        // Access the document builder to insert text.
+        // Use DocumentBuilder to add text with different fonts.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "Arial";
+        builder.Writeln("This line uses the Arial font.");
 
-        // -----------------------------------------------------------------
-        // 1. Set default font for the whole document (applies to new styles).
-        // -----------------------------------------------------------------
-        doc.Styles.DefaultFont.Name = "Arial";
-        doc.Styles.DefaultFont.Size = 12;
+        // This font does not exist on the system; it will be substituted.
+        builder.Font.Name = "MissingFont";
+        builder.Writeln("This line uses a missing font and will be substituted.");
 
-        // -----------------------------------------------------------------
-        // 2. Configure font substitution rules.
-        //    If a font is missing, substitute it with the listed alternatives.
-        // -----------------------------------------------------------------
+        // Create a FontSettings object to control font resolution.
         FontSettings fontSettings = new FontSettings();
 
-        // Example: substitute the unavailable font "Amethysta" with "Arvo" then "Courier New".
+        // Optional: add a custom folder that contains additional fonts.
+        // Replace "MyFonts" with the actual path to your font directory.
+        string customFontsFolder = Path.Combine(Environment.CurrentDirectory, "MyFonts");
+        if (Directory.Exists(customFontsFolder))
+            fontSettings.SetFontsFolder(customFontsFolder, false);
+
+        // Define a substitution rule: when "MissingFont" cannot be found,
+        // use "Courier New" as the first substitute.
         fontSettings.SubstitutionSettings.TableSubstitution.SetSubstitutes(
-            "Amethysta", new[] { "Arvo", "Courier New" });
+            "MissingFont", new[] { "Courier New" });
 
         // Assign the configured FontSettings to the document.
         doc.FontSettings = fontSettings;
 
-        // -----------------------------------------------------------------
-        // 3. Write text using both available and unavailable fonts.
-        // -----------------------------------------------------------------
-        builder.Font.Name = "Arial";
-        builder.Writeln("This line uses the default Arial font.");
-
-        builder.Font.Name = "Amethysta"; // This font is likely missing.
-        builder.Writeln("This line uses Amethysta, which will be substituted.");
-
-        // -----------------------------------------------------------------
-        // 4. Save the document as DOCX.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(artifactsDir, "FontSettingsExample.docx");
+        // Save the document to a DOCX file.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "FontSettingsExample.docx");
         doc.Save(outputPath);
     }
 }

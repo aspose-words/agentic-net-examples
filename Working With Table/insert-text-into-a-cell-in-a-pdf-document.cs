@@ -1,31 +1,45 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables; // Added for Cell class
 
-class InsertTextIntoPdfCell
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a single cell.
+        // Build a simple 2x2 table.
         builder.StartTable();
-        Cell cell = builder.InsertCell();   // Insert a new cell.
-        builder.Write("Hello, PDF cell!"); // Write text into the current cell.
-        builder.EndRow();                  // End the row.
-        builder.EndTable();                // End the table.
 
-        // Save the document as PDF.
-        PdfSaveOptions saveOptions = new PdfSaveOptions
-        {
-            // Optional: set text compression to Flate for smaller file size.
-            TextCompression = PdfTextCompression.Flate
-        };
-        doc.Save("Output.pdf", saveOptions);
+        // First row.
+        builder.InsertCell();               // Cell (0,0)
+        builder.Write("Cell 0,0");
+        builder.InsertCell();               // Cell (0,1)
+        builder.Write("Cell 0,1");
+        builder.EndRow();
+
+        // Second row.
+        builder.InsertCell();               // Cell (1,0)
+        builder.Write("Cell 1,0");
+        builder.InsertCell();               // Cell (1,1)
+        builder.Write("Cell 1,1");
+        builder.EndRow();
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Move the cursor to the second row, second column (row index 1, column index 1).
+        builder.MoveToCell(tableIndex: 0, rowIndex: 1, columnIndex: 1, characterIndex: 0);
+
+        // Insert the desired text into that cell.
+        builder.Write("Inserted Text");
+
+        // Save the document as a PDF file.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        doc.Save("Output.pdf", pdfOptions);
     }
 }

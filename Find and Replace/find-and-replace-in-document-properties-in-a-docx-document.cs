@@ -2,32 +2,37 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Properties;
 
-class Program
+class ReplaceInDocumentProperties
 {
     static void Main()
     {
-        // Load the DOCX document.
-        Document doc = new Document("Input.docx");
+        // Load the existing DOCX document.
+        Document doc = new Document(@"C:\Docs\InputDocument.docx");
 
-        // Text to find and its replacement.
-        const string pattern = "_Company_";
-        const string replacement = "Contoso Ltd.";
-
-        // Replace occurrences in built‑in document properties.
-        foreach (DocumentProperty prop in doc.BuiltInDocumentProperties)
+        // Example: replace text in a built‑in property (Title).
+        string oldTitle = doc.BuiltInDocumentProperties.Title;
+        if (!string.IsNullOrEmpty(oldTitle))
         {
-            if (prop.Value is string str && str.Contains(pattern))
-                prop.Value = str.Replace(pattern, replacement);
+            // Replace all occurrences of "Draft" with "Final".
+            string newTitle = oldTitle.Replace("Draft", "Final");
+            doc.BuiltInDocumentProperties.Title = newTitle;
         }
 
-        // Replace occurrences in custom document properties.
-        foreach (DocumentProperty prop in doc.CustomDocumentProperties)
+        // Example: replace text in a custom document property named "ProjectName".
+        const string customPropName = "ProjectName";
+        if (doc.CustomDocumentProperties.Contains(customPropName))
         {
-            if (prop.Value is string str && str.Contains(pattern))
-                prop.Value = str.Replace(pattern, replacement);
+            // The value of a custom property is stored as an object; cast to string.
+            object propValueObj = doc.CustomDocumentProperties[customPropName].Value;
+            if (propValueObj is string propValueStr)
+            {
+                // Replace "Alpha" with "Beta" in the custom property value.
+                string newPropValue = propValueStr.Replace("Alpha", "Beta");
+                doc.CustomDocumentProperties[customPropName].Value = newPropValue;
+            }
         }
 
-        // Save the updated document.
-        doc.Save("Output.docx");
+        // Save the modified document.
+        doc.Save(@"C:\Docs\OutputDocument.docx");
     }
 }

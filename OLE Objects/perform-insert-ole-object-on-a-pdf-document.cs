@@ -6,33 +6,26 @@ class InsertOleObjectToPdf
 {
     static void Main()
     {
-        // Path to the folder that contains the source OLE file and where the PDF will be saved.
+        // Paths to the source OLE file and the output PDF.
         string dataDir = @"C:\Data\";
-
-        // The file to be embedded as an OLE object (e.g., an Excel spreadsheet).
-        string oleFilePath = Path.Combine(dataDir, "Spreadsheet.xlsx");
+        string oleFilePath = Path.Combine(dataDir, "Spreadsheet.xlsx"); // File to embed as OLE.
+        string outputPdfPath = Path.Combine(dataDir, "DocumentWithOle.pdf");
 
         // Create a new empty Word document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a description paragraph.
-        builder.Writeln("Embedded OLE object (Excel spreadsheet):");
+        // Insert the OLE object (embedded Excel spreadsheet) at the current cursor position.
+        // Parameters: file name, ProgID, isLinked (false = embed), asIcon (false = show content), presentation (null = default icon).
+        builder.InsertOleObject(oleFilePath, "Excel.Sheet", false, false, null);
 
-        // Insert the OLE object as an icon. 
-        // Parameters: file name, ProgID, isLinked (false = embedded), asIcon (true), presentation (null = default icon).
-        builder.InsertOleObject(oleFilePath, "Excel.Sheet", false, true, null);
-
-        // Prepare PDF save options to embed the OLE object as an attachment.
+        // Configure PDF save options to embed OLE objects as attachments.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.Annotations
         };
 
         // Save the document as a PDF file with the specified options.
-        string pdfOutputPath = Path.Combine(dataDir, "Result.pdf");
-        doc.Save(pdfOutputPath, pdfOptions);
+        doc.Save(outputPdfPath, pdfOptions);
     }
 }

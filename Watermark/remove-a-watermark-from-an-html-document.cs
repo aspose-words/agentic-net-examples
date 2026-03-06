@@ -6,23 +6,16 @@ class RemoveWatermarkFromHtml
 {
     static void Main()
     {
-        // Path to the source HTML document.
-        string inputPath = @"C:\Docs\SourceDocument.html";
+        // Load the HTML document from file.
+        Document doc = new Document("input.html");
 
-        // Path where the resulting HTML document will be saved.
-        string outputPath = @"C:\Docs\ResultDocument.html";
-
-        // Load the HTML document.
-        Document doc = new Document(inputPath);
-
-        // If a watermark is present, remove it.
+        // Remove the watermark if one is present.
         if (doc.Watermark.Type != WatermarkType.None)
         {
             doc.Watermark.Remove();
         }
 
-        // Save the document back to HTML format.
-        // The SaveFormat is inferred from the file extension, but can be specified explicitly.
-        doc.Save(outputPath, SaveFormat.Html);
+        // Save the modified document back to HTML format.
+        doc.Save("output.html", SaveFormat.Html);
     }
 }

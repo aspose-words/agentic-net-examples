@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -10,32 +11,30 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape as a floating shape.
+        // Insert a floating rectangle shape.
         Shape shape1 = builder.InsertShape(
             ShapeType.Rectangle,
-            RelativeHorizontalPosition.Page, 100,   // left
-            RelativeVerticalPosition.Page, 100,     // top
-            200, 250,                               // width, height
-            WrapType.None);
+            RelativeHorizontalPosition.Page, 100,   // left position
+            RelativeVerticalPosition.Page, 100,     // top position
+            200, 150,                               // width, height
+            WrapType.None);                         // no text wrapping
         shape1.Stroke.Color = Color.Red;
 
-        // Insert an ellipse shape as a floating shape.
+        // Insert a floating ellipse shape.
         Shape shape2 = builder.InsertShape(
             ShapeType.Ellipse,
-            RelativeHorizontalPosition.Page, 150,   // left
-            RelativeVerticalPosition.Page, 150,     // top
-            150, 200,                               // width, height
+            RelativeHorizontalPosition.Page, 150,
+            RelativeVerticalPosition.Page, 200,
+            150, 100,
             WrapType.None);
         shape2.Stroke.Color = Color.Green;
 
-        // Group the two shapes. The group’s position and size are calculated automatically.
+        // Group the two shapes. The group shape is inserted at the current cursor position.
         GroupShape group = builder.InsertGroupShape(shape1, shape2);
 
-        // Clone one of the shapes and add it to the existing group.
-        Shape shape3 = (Shape)shape1.Clone(true);
-        shape3.Stroke.Color = Color.Blue;
-        // Insert a new group that contains the previous group and the cloned shape.
-        builder.InsertGroupShape(group, shape3);
+        // Adjust group properties if needed.
+        group.WrapType = WrapType.None;
+        group.Bounds = new RectangleF(50, 50, 300, 300);
 
         // Save the document to a DOCX file.
         doc.Save("GroupShapeExample.docx");

@@ -6,10 +6,10 @@ class InsertTableIntoDotx
 {
     static void Main()
     {
-        // Load the DOTX template document.
+        // Load an existing DOTX template.
         Document doc = new Document("Template.dotx");
 
-        // Create a DocumentBuilder associated with the loaded document.
+        // Create a DocumentBuilder to simplify inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a new table.
@@ -17,32 +17,30 @@ class InsertTableIntoDotx
 
         // First row, first cell.
         builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        builder.Write("Cell 1,1");
 
         // First row, second cell.
         builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-
-        // End the first row.
+        builder.Write("Cell 1,2");
         builder.EndRow();
 
         // Second row, first cell.
         builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
+        builder.Write("Cell 2,1");
 
         // Second row, second cell.
         builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-
-        // End the second row and the table.
+        builder.Write("Cell 2,2");
         builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Optionally set a title and description for the table (useful for DOCX compliance).
+        // Optional: set table title and description (useful for accessibility).
         table.Title = "Sample Table";
-        table.Description = "A table inserted into a DOTX document.";
+        table.Description = "A simple 2x2 table inserted into a DOTX document.";
 
-        // Save the modified document. The format can be DOCX, DOTX, etc.
+        // Save the modified document as a DOCX file.
         doc.Save("Result.docx");
     }
 }

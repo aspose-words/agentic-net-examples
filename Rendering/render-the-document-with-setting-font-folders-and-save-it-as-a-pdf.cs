@@ -1,46 +1,38 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Fonts;
+using Aspose.Words.Saving;
 
-namespace AsposeWordsPdfRender
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Paths to the fonts folder, input document and output PDF.
+        string fontsFolder = @"C:\MyFonts";
+        string inputFile = @"C:\Docs\input.docx";
+        string outputFile = @"C:\Docs\output.pdf";
+
+        // Preserve the original font sources so we can restore them later.
+        FontSourceBase[] originalSources = FontSettings.DefaultInstance.GetFontsSources();
+
+        // Add a folder font source that points to the custom fonts folder.
+        FolderFontSource customSource = new FolderFontSource(fontsFolder, true);
+        FontSettings.DefaultInstance.SetFontsSources(new[] { originalSources[0], customSource });
+
+        // Load the document to be rendered.
+        Document doc = new Document(inputFile);
+
+        // Configure PDF save options (high‑quality rendering and full font embedding).
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Path to the source document (DOCX, DOC, etc.).
-            string sourceDocumentPath = @"C:\Data\MyDocument.docx";
+            UseHighQualityRendering = true,
+            EmbedFullFonts = true
+        };
 
-            // Path to the folder that contains the custom fonts required for rendering.
-            string customFontsFolder = @"C:\Data\Fonts";
+        // Save the document as a PDF using the configured options.
+        doc.Save(outputFile, pdfOptions);
 
-            // Path where the resulting PDF will be saved.
-            string outputPdfPath = @"C:\Data\RenderedDocument.pdf";
-
-            // Load the document using the provided Document constructor.
-            Document doc = new Document(sourceDocumentPath);
-
-            // Configure font sources so that Aspose.Words can locate fonts in the specified folder.
-            // Preserve any existing font sources and add the custom folder source.
-            FontSourceBase[] existingSources = FontSettings.DefaultInstance.GetFontsSources();
-            FolderFontSource folderSource = new FolderFontSource(customFontsFolder, true);
-            FontSettings.DefaultInstance.SetFontsSources(
-                new FontSourceBase[] { existingSources[0], folderSource });
-
-            // Create a PdfSaveOptions object to control PDF rendering.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions
-            {
-                // Enable high‑quality rendering for better visual fidelity.
-                UseHighQualityRendering = true,
-
-                // Embed full fonts to ensure the PDF looks the same on any system.
-                EmbedFullFonts = true
-            };
-
-            // Save the document as PDF using the provided Save method overload that accepts SaveOptions.
-            doc.Save(outputPdfPath, pdfOptions);
-        }
+        // Restore the original font sources (optional cleanup).
+        FontSettings.DefaultInstance.SetFontsSources(originalSources);
     }
 }

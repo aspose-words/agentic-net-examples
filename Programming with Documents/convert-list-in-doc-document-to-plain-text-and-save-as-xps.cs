@@ -6,20 +6,27 @@ class Program
 {
     static void Main()
     {
+        // Paths to the input DOC file and the output XPS file.
+        string inputPath = "Input.doc";
+        string outputPath = "Output.xps";
+
         // Load the original DOC document.
-        Document sourceDoc = new Document("Input.doc");
+        Document sourceDoc = new Document(inputPath);
 
-        // Extract the plain‑text representation (including list labels).
-        PlainTextDocument plainTextDoc = new PlainTextDocument("Input.doc");
-        string plainText = plainTextDoc.Text;
+        // Configure text save options to simplify list labels (plain text representation).
+        TxtSaveOptions txtOptions = new TxtSaveOptions();
+        txtOptions.SimplifyListLabels = true;
 
-        // Create a new blank document and write the extracted text into it.
-        Document textDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(textDoc);
+        // Export the document content (including lists) to a plain‑text string.
+        string plainText = sourceDoc.ToString(txtOptions);
+
+        // Create a new blank document and insert the extracted plain text.
+        Document plainDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(plainDoc);
         builder.Writeln(plainText);
 
-        // Save the new document as XPS.
+        // Save the new document as XPS using default XpsSaveOptions.
         XpsSaveOptions xpsOptions = new XpsSaveOptions();
-        textDoc.Save("Output.xps", xpsOptions);
+        plainDoc.Save(outputPath, xpsOptions);
     }
 }

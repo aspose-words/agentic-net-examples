@@ -3,48 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class ExtractOleFromDotx
+class ExtractOleObjectsFromDotx
 {
     static void Main()
     {
-        // Path to the DOTX template file
-        string inputPath = @"C:\Docs\Template.dotx";
+        // Path to the source DOTX template.
+        string sourcePath = @"C:\Input\Template.dotx";
 
-        // Directory where extracted OLE objects will be saved
-        string outputDir = @"C:\Docs\ExtractedOle";
-        Directory.CreateDirectory(outputDir);
+        // Folder where extracted OLE objects will be saved.
+        string outputFolder = @"C:\Output\OleObjects";
 
-        // Load the DOTX document
-        Document doc = new Document(inputPath);
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(outputFolder);
 
-        // Get all shapes in the document (including those inside headers/footers)
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        // Load the DOTX document.
+        Document doc = new Document(sourcePath);
 
-        int oleCounter = 0;
-        foreach (Shape shape in shapeNodes)
+        // Get a flat list of all Shape nodes in the document.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+        // Iterate through the shapes using an index so we can build unique file names.
+        for (int i = 0; i < shapes.Count; i++)
         {
-            // Access the OLE format of the shape; null if not an OLE object
+            Shape shape = (Shape)shapes[i];
+
+            // Check if the shape contains an OLE object.
             OleFormat oleFormat = shape.OleFormat;
             if (oleFormat == null)
-                continue;
+                continue; // Not an OLE object, skip.
 
-            // Skip linked OLE objects because they cannot be saved directly
-            if (oleFormat.IsLink)
-                continue;
+            // Determine a file name for the extracted object.
+            // Use the suggested extension if available; otherwise default to .bin.
+            string extension = string.IsNullOrEmpty(oleFormat.SuggestedExtension)
+                ? ".bin"
+                : oleFormat.SuggestedExtension;
 
-            // Determine a suitable file extension; fallback to .bin if not provided
-            string extension = oleFormat.SuggestedExtension ?? ".bin";
+            // Ensure the extension starts with a dot.
+            if (!extension.StartsWith("."))
+                extension = "." + extension;
 
-            // Build a unique file name for each extracted object
-            string outputPath = Path.Combine(outputDir, $"OleObject_{oleCounter}{extension}");
+            string fileName = $"OleObject_{i}{extension}";
+            string outputPath = Path.Combine(outputFolder, fileName);
 
-            // Save the OLE object data to the file
+            // Save the OLE object data directly to a file.
             oleFormat.Save(outputPath);
 
-            Console.WriteLine($"Extracted OLE object saved to: {outputPath}");
-            oleCounter++;
+            Console.WriteLine($"Extracted OLE object to: {outputPath}");
         }
 
-        Console.WriteLine("OLE extraction completed.");
+        Console.WriteLine("Extraction complete.");
     }
 }

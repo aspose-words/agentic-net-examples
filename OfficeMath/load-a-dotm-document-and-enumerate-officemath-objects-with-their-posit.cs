@@ -1,26 +1,29 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Math;
+using Aspose.Words.Tables;
 
-class Program
+class EnumerateOfficeMath
 {
     static void Main()
     {
-        // Load the DOTM document.
-        Document doc = new Document("Template.dotm");
+        // Path to the folder that contains the DOTM template.
+        string dataDir = @"C:\Docs\";
 
-        // Retrieve all OfficeMath nodes in the document (deep search).
+        // Load the DOTM document.
+        Document doc = new Document(Path.Combine(dataDir, "Template.dotm"));
+
+        // Get all OfficeMath nodes in the document (including those inside other OfficeMath nodes).
         NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
 
-        // Iterate through each OfficeMath node.
+        // Enumerate each OfficeMath node and output its type and its containing paragraph index.
         for (int i = 0; i < officeMathNodes.Count; i++)
         {
             OfficeMath officeMath = (OfficeMath)officeMathNodes[i];
 
-            // Get the paragraph that contains this OfficeMath node.
+            // Determine the index of the paragraph that contains this OfficeMath node.
             Paragraph parentParagraph = officeMath.ParentParagraph;
-
-            // Determine the paragraph's index within the document.
             int paragraphIndex = -1;
             if (parentParagraph != null)
             {
@@ -28,8 +31,10 @@ class Program
                 paragraphIndex = allParagraphs.IndexOf(parentParagraph);
             }
 
-            // Output the OfficeMath information.
             Console.WriteLine($"OfficeMath #{i}: Type = {officeMath.MathObjectType}, ParagraphIndex = {paragraphIndex}");
         }
+
+        // Optionally save the document after enumeration (preserves original format).
+        doc.Save(Path.Combine(dataDir, "Template_out.dotm"));
     }
 }

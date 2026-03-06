@@ -2,30 +2,23 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class CropImageExample
+class Program
 {
     static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
+        // Load the source document that contains an image.
+        Document doc = new Document("Images.docx");
 
-        // Initialize DocumentBuilder to work with the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Retrieve the first shape that has an image.
+        Shape imageShape = (Shape)doc.GetChildNodes(NodeType.Shape, true)[0];
 
-        // Insert an image into the document. The InsertImage method returns the Shape that contains the image.
-        // Replace "ImageDir + \"Sample.jpg\"" with the actual path to your image file.
-        Shape imageShape = builder.InsertImage(@"C:\Images\Sample.jpg");
+        // Crop 30% from each side of the image.
+        imageShape.ImageData.CropLeft = 0.3;
+        imageShape.ImageData.CropRight = 0.3;
+        imageShape.ImageData.CropTop = 0.3;
+        imageShape.ImageData.CropBottom = 0.3;
 
-        // Access the ImageData of the shape to modify cropping.
-        ImageData imgData = imageShape.ImageData;
-
-        // Crop 20% from the left, 10% from the top, 15% from the right, and 5% from the bottom.
-        imgData.CropLeft = 0.20;   // 20% removal from the left side.
-        imgData.CropTop = 0.10;    // 10% removal from the top side.
-        imgData.CropRight = 0.15;  // 15% removal from the right side.
-        imgData.CropBottom = 0.05; // 5% removal from the bottom side.
-
-        // Save the modified document to a file.
-        doc.Save(@"C:\Output\CroppedImage.docx");
+        // Save the document with the cropped image.
+        doc.Save("CroppedImage.docx");
     }
 }

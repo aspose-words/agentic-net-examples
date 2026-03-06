@@ -6,27 +6,28 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document (default minimal structure).
+        // Create a new blank DOCM document.
         Document doc = new Document();
 
-        // Add a paragraph with some text.
+        // Ensure the document has a section and a body (already present in a blank document).
+        Body body = doc.FirstSection.Body;
+
+        // Create a new paragraph belonging to the document.
         Paragraph paragraph = new Paragraph(doc);
-        paragraph.ParagraphFormat.StyleName = "Normal";
-        paragraph.AppendChild(new Run(doc, "This is a paragraph in a DOCM document."));
-        doc.FirstSection.Body.AppendChild(paragraph);
+        // Set a style for the paragraph (optional).
+        paragraph.ParagraphFormat.StyleName = "Heading 1";
 
-        // Save the document as a macro‑enabled DOCM file.
-        string docmPath = "Document.docm";
-        doc.Save(docmPath, SaveFormat.Docm);
+        // Add a run with some text to the paragraph.
+        Run run = new Run(doc, "Hello World!");
+        paragraph.AppendChild(run);
 
-        // Load the previously saved DOCM document.
-        Document loadedDoc = new Document(docmPath);
+        // Append the paragraph to the document body.
+        body.AppendChild(paragraph);
 
-        // Prepare save options to output a DOT (template) file.
-        DocSaveOptions dotOptions = new DocSaveOptions(SaveFormat.Dot);
+        // Prepare save options to output the document as a DOT template.
+        DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Dot);
 
-        // Save the loaded document as a DOT template.
-        string dotPath = "Document.dot";
-        loadedDoc.Save(dotPath, dotOptions);
+        // Save the document as a DOT file.
+        doc.Save("OutputTemplate.dot", saveOptions);
     }
 }

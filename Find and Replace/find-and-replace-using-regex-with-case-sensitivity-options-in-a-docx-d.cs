@@ -7,39 +7,37 @@ class FindReplaceWithRegex
 {
     static void Main()
     {
-        // Load an existing DOCX document.
-        Document doc = new Document("Input.docx");
+        // Path to the input DOCX file.
+        const string inputPath = @"C:\Docs\InputDocument.docx";
 
-        // Define the regular expression pattern to search for.
-        // Example: find all occurrences of the word "color" with any case.
-        Regex regexPattern = new Regex(@"\bcolor\b", RegexOptions.Compiled);
+        // Path where the modified DOCX will be saved.
+        const string outputPath = @"C:\Docs\OutputDocument.docx";
+
+        // Regular expression pattern to search for.
+        const string regexPattern = @"\b[Aa]spose\b";
 
         // Replacement text.
-        string replacement = "colour";
+        const string replacement = "Aspose.Words";
 
-        // ---------- Case‑sensitive replace ----------
-        FindReplaceOptions caseSensitiveOptions = new FindReplaceOptions
+        // Set to true for case‑sensitive search, false for case‑insensitive.
+        bool matchCase = true;
+
+        // Load the document.
+        Document doc = new Document(inputPath);
+
+        // Configure find/replace options.
+        FindReplaceOptions options = new FindReplaceOptions
         {
-            // Enable case‑sensitive matching.
-            MatchCase = true
+            MatchCase = matchCase          // Toggle case sensitivity.
         };
 
-        // Perform the replace operation with case sensitivity.
-        int replacedCaseSensitive = doc.Range.Replace(regexPattern, replacement, caseSensitiveOptions);
-        Console.WriteLine($"Case‑sensitive replacements made: {replacedCaseSensitive}");
+        // Perform the regex replace.
+        int replacementsMade = doc.Range.Replace(new Regex(regexPattern), replacement, options);
 
-        // ---------- Case‑insensitive replace ----------
-        FindReplaceOptions caseInsensitiveOptions = new FindReplaceOptions
-        {
-            // Disable case‑sensitive matching (default is false, but set explicitly for clarity).
-            MatchCase = false
-        };
+        // Optional: display how many replacements were performed.
+        Console.WriteLine($"{replacementsMade} replacement(s) made.");
 
-        // Perform the replace operation without case sensitivity.
-        int replacedCaseInsensitive = doc.Range.Replace(regexPattern, replacement, caseInsensitiveOptions);
-        Console.WriteLine($"Case‑insensitive replacements made: {replacedCaseInsensitive}");
-
-        // Save the modified document.
-        doc.Save("Output.docx");
+        // Save the updated document.
+        doc.Save(outputPath);
     }
 }

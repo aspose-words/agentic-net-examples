@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class InsertOleObjectExample
+class Program
 {
     static void Main()
     {
@@ -12,25 +12,20 @@ class InsertOleObjectExample
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Path to the file that will be embedded as an OLE object (e.g., an Excel workbook).
-        string oleFilePath = @"C:\Data\Sample.xlsx";
+        string sourceFilePath = @"C:\Data\Sample.xlsx";
 
-        // Write a description before the OLE object.
-        builder.Writeln("Embedded Excel workbook:");
-
-        // Open the source file as a stream and insert it as an OLE object.
-        using (FileStream oleStream = File.Open(oleFilePath, FileMode.Open, FileAccess.Read))
+        // Open the source file as a stream.
+        using (FileStream sourceStream = new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read))
         {
-            // progId identifies the OLE type. "Excel.Sheet" works for .xlsx files.
-            // asIcon = false inserts the full content (not just an icon).
-            // presentation = null lets Aspose use the default preview image.
-            Shape oleShape = builder.InsertOleObject(oleStream, "Excel.Sheet", false, null);
-
-            // Optionally resize the inserted OLE object.
-            oleShape.Width = 400;   // points
-            oleShape.Height = 300;  // points
+            // Insert the OLE object.
+            // progId "Excel.Sheet" identifies the OLE type.
+            // asIcon = false inserts the object as its content (not as an icon).
+            // presentation = null lets Aspose.Words use a default preview image.
+            Shape oleShape = builder.InsertOleObject(sourceStream, "Excel.Sheet", false, null);
         }
 
-        // Save the resulting document as DOCX.
-        doc.Save(@"C:\Output\OleObjectDocument.docx");
+        // Save the resulting document in DOCX format.
+        string outputPath = @"C:\Output\InsertOleObject.docx";
+        doc.Save(outputPath);
     }
 }

@@ -1,15 +1,16 @@
-using System.Drawing;
+using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
-class Program
+class InsertHorizontalRuleExample
 {
     static void Main()
     {
         // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a horizontal rule shape at the current cursor position.
@@ -17,13 +18,13 @@ class Program
 
         // Optional: customize the appearance of the horizontal rule.
         HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
-        format.Alignment = HorizontalRuleAlignment.Center; // Center the rule.
-        format.WidthPercent = 70;                         // 70% of the page width.
-        format.Height = 3;                                // Height in points.
-        format.Color = Color.Blue;                        // Blue color.
-        format.NoShade = true;                            // Solid color, no 3‑D shading.
+        format.Alignment = HorizontalRuleAlignment.Center;   // Center the rule.
+        format.WidthPercent = 70;                           // 70% of the page width.
+        format.Height = 3;                                  // Height in points.
+        format.Color = Color.Blue;                          // Blue color.
+        format.NoShade = true;                              // Solid color, no 3D shading.
 
-        // Save the document in WORDML (XML) format.
-        doc.Save("HorizontalRuleDocument.xml", SaveFormat.WordML);
+        // Save the document to a file.
+        doc.Save("HorizontalRuleDocument.docx");
     }
 }

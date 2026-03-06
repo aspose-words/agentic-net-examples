@@ -1,32 +1,22 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Notes;
 
-class RemoveNotesAndSaveHtml
+class RemoveNotesAndConvertToHtml
 {
     static void Main()
     {
-        // Load the source DOC/DOCX document.
-        Document doc = new Document("InputDocument.docx");
+        // Load the source DOC document.
+        Document doc = new Document("input.docx");
 
-        // Remove footnote separator (if present) – this effectively removes footnote content from the output.
-        FootnoteSeparator footnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.FootnoteSeparator];
-        if (footnoteSeparator?.FirstParagraph?.FirstChild != null)
-            footnoteSeparator.FirstParagraph.FirstChild.Remove();
-
-        // Remove endnote separator (if present) – this effectively removes endnote content from the output.
-        FootnoteSeparator endnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.EndnoteSeparator];
-        if (endnoteSeparator?.FirstParagraph?.FirstChild != null)
-            endnoteSeparator.FirstParagraph.FirstChild.Remove();
-
-        // Configure HTML save options – omit headers/footers for a cleaner HTML output.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
+        // Remove all footnotes and endnotes from the document.
+        NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
+        foreach (Footnote note in notes)
         {
-            ExportHeadersFootersMode = ExportHeadersFootersMode.None
-        };
+            note.Remove();
+        }
 
         // Save the modified document as HTML.
-        doc.Save("OutputDocument.html", saveOptions);
+        doc.Save("output.html", SaveFormat.Html);
     }
 }

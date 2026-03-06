@@ -1,9 +1,8 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Layout;
-using Aspose.Words.Saving;
 
-class Program
+class RenderDocumentWithLayoutOptions
 {
     static void Main()
     {
@@ -11,29 +10,30 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add visible text.
-        builder.Writeln("Visible text line 1.");
+        // Add normal text.
+        builder.Writeln("This text is visible.");
 
         // Add hidden text.
         builder.Font.Hidden = true;
         builder.Writeln("This text is hidden.");
 
-        // Add another visible line.
-        builder.Font.Hidden = false;
-        builder.Writeln("Visible text line 2.");
+        // Add another paragraph to demonstrate paragraph marks.
+        builder.Writeln("Another visible paragraph.");
 
-        // Enable layout options.
-        doc.LayoutOptions.ShowHiddenText = true;          // Render hidden text.
-        doc.LayoutOptions.ShowParagraphMarks = true;     // Show paragraph marks (pilcrow).
+        // Configure layout options.
+        // Show hidden text in the rendered output.
+        doc.LayoutOptions.ShowHiddenText = true;
 
-        // Example: customize revision appearance.
-        doc.LayoutOptions.RevisionOptions.InsertedTextColor = RevisionColor.BrightGreen;
-        doc.LayoutOptions.RevisionOptions.ShowRevisionBars = false;
+        // Show paragraph marks (pilcrow) at the end of each paragraph.
+        doc.LayoutOptions.ShowParagraphMarks = true;
 
-        // Rebuild the page layout after changing options.
+        // Example of ignoring printer metrics (optional).
+        // doc.LayoutOptions.IgnorePrinterMetrics = false;
+
+        // Rebuild the page layout so that the changes take effect.
         doc.UpdatePageLayout();
 
-        // Save the document to PDF (or any other fixed-page format).
+        // Save the document to PDF. The file name determines the format.
         doc.Save("RenderedDocument.pdf");
     }
 }

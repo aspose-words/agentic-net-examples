@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class AbbreviationExpander
 {
     static void Main()
     {
@@ -10,33 +11,32 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample paragraphs that contain abbreviations and acronyms.
-        builder.Writeln("AI is transforming many industries.");
-        builder.Writeln("NASA launched a new mission.");
-        builder.Writeln("The CPU performance has improved.");
+        // Insert sample paragraphs that contain abbreviations.
+        builder.Writeln("AI is a field of computer science.");
+        builder.Writeln("NASA launched a new satellite.");
+        builder.Writeln("UN is an international organization.");
 
-        // Define the abbreviation expansions.
-        var expansions = new (string Abbr, string Full)[]
+        // Map each abbreviation to its full expansion.
+        var expansions = new Dictionary<string, string>
         {
-            ("AI", "Artificial Intelligence (AI)"),
-            ("NASA", "National Aeronautics and Space Administration (NASA)"),
-            ("CPU", "Central Processing Unit (CPU)")
-        };
-
-        // Configure find‑replace options to match whole words only (case‑insensitive).
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            FindWholeWordsOnly = true,
-            MatchCase = false
+            { "AI",   "Artificial Intelligence (AI)" },
+            { "NASA", "National Aeronautics and Space Administration (NASA)" },
+            { "UN",   "United Nations (UN)" }
         };
 
         // Replace each abbreviation with its expanded form.
-        foreach (var (abbr, full) in expansions)
+        foreach (var kvp in expansions)
         {
-            doc.Range.Replace(abbr, full, options);
+            // Ensure only whole-word matches are replaced.
+            FindReplaceOptions options = new FindReplaceOptions
+            {
+                FindWholeWordsOnly = true
+            };
+
+            doc.Range.Replace(kvp.Key, kvp.Value, options);
         }
 
-        // Save the resulting document.
+        // Save the resulting document to disk.
         doc.Save("AbbreviationsExpanded.docx");
     }
 }

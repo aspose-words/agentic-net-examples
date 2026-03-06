@@ -1,32 +1,52 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class Program
+namespace AsposeWordsReportingExample
 {
-    static void Main()
+    // Simple class that holds a document to be inserted.
+    public class DocumentSource
     {
-        // Load the DOCM template that contains reporting tags.
-        Document template = new Document("Template.docm");
+        public Document Document { get; set; }
 
-        // Example data source – can be any non‑dynamic .NET type.
-        var dataSource = new
+        public DocumentSource(Document doc)
         {
-            Title = "Quarterly Report",
-            ReportDate = DateTime.Now,
-            Items = new[]
+            Document = doc;
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            // Load the template (DOCM) that contains <<doc [src.Document]>> tags.
+            Document template = new Document("Template.docm");
+
+            // Prepare a list of source documents to be inserted.
+            List<DocumentSource> sources = new List<DocumentSource>
             {
-                new { Name = "Product A", Quantity = 120, Price = 9.99 },
-                new { Name = "Product B", Quantity = 85,  Price = 14.50 }
+                new DocumentSource(new Document("Source1.docx")),
+                new DocumentSource(new Document("Source2.docx"))
+            };
+
+            // Convert the list to the arrays required by ReportingEngine.
+            object[] dataSources = new object[sources.Count];
+            string[] dataSourceNames = new string[sources.Count];
+
+            for (int i = 0; i < sources.Count; i++)
+            {
+                dataSources[i] = sources[i];
+                dataSourceNames[i] = "src"; // All tags use the same name in the template.
             }
-        };
 
-        // Populate the template using the ReportingEngine.
-        // The third argument ("ds") is the name used to reference the data source in the template.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, dataSource, "ds");
+            // Build the report – this will replace the <<doc [src.Document]>> tags
+            // with the contents of the corresponding source documents.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(template, dataSources, dataSourceNames);
 
-        // Save the generated report.
-        template.Save("Result.docx");
+            // Save the resulting document.
+            template.Save("Result.docx");
+        }
     }
 }

@@ -1,91 +1,58 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
-using Aspose.Words.Saving;
 
-namespace AsposeWordsMailMergeExample
+class Program
 {
-    // Custom callback to handle HTML insertion and checkbox insertion during mail merge.
-    class HtmlAndCheckBoxMerging : IFieldMergingCallback
+    static void Main()
     {
-        // Called for each merge field.
-        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
+        // Load the DOCX template.
+        Document doc = new Document("Template.docx");
+
+        // Attach a custom field merging callback to handle check boxes and HTML.
+        doc.MailMerge.FieldMergingCallback = new CustomFieldMergingCallback();
+
+        // Define the merge fields and their values.
+        string[] fieldNames = { "checkbox_Agree", "html_Description" };
+        object[] fieldValues = { true, "<b>Bold description</b><br/><i>Italic text</i>" };
+
+        // Perform a mail merge for a single record.
+        doc.MailMerge.Execute(fieldNames, fieldValues);
+
+        // Render the first page of the merged document to a PNG image.
+        doc.Save("Result.png", SaveFormat.Png);
+    }
+}
+
+// Custom callback that inserts a check box or HTML based on the field name.
+class CustomFieldMergingCallback : IFieldMergingCallback
+{
+    void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
+    {
+        // Position the builder at the current merge field.
+        DocumentBuilder builder = new DocumentBuilder(args.Document);
+        builder.MoveToMergeField(args.DocumentFieldName);
+
+        if (args.DocumentFieldName.StartsWith("checkbox_"))
         {
-            // Insert HTML when the field name starts with "html_".
-            if (args.DocumentFieldName.StartsWith("html_", StringComparison.OrdinalIgnoreCase))
-            {
-                // Move the cursor to the merge field location.
-                DocumentBuilder builder = new DocumentBuilder(args.Document);
-                builder.MoveToMergeField(args.DocumentFieldName);
-
-                // Insert the HTML content.
-                builder.InsertHtml(args.FieldValue?.ToString() ?? string.Empty);
-
-                // Suppress the default text insertion.
-                args.Text = string.Empty;
-                return;
-            }
-
-            // Insert a checkbox when the field name starts with "cb_".
-            if (args.DocumentFieldName.StartsWith("cb_", StringComparison.OrdinalIgnoreCase))
-            {
-                // Determine the checked state (default to false if parsing fails).
-                bool isChecked = false;
-                if (args.FieldValue != null && bool.TryParse(args.FieldValue.ToString(), out bool parsed))
-                    isChecked = parsed;
-
-                // Move the cursor to the merge field location.
-                DocumentBuilder builder = new DocumentBuilder(args.Document);
-                builder.MoveToMergeField(args.DocumentFieldName);
-
-                // Insert a checkbox form field.
-                // Parameters: name, isChecked, size (in points).
-                builder.InsertCheckBox(args.DocumentFieldName, isChecked, 15);
-
-                // Suppress the default text insertion.
-                args.Text = string.Empty;
-            }
+            // Insert a check box form field. The field value is expected to be a bool.
+            bool isChecked = args.FieldValue is bool b && b;
+            builder.InsertCheckBox(args.DocumentFieldName, isChecked, 0);
+            // Suppress the default text insertion.
+            args.Text = string.Empty;
         }
-
-        // Not used in this scenario, but required by the interface.
-        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args) { }
+        else if (args.DocumentFieldName.StartsWith("html_"))
+        {
+            // Insert HTML content into the document.
+            string html = args.FieldValue?.ToString() ?? string.Empty;
+            builder.InsertHtml(html);
+            args.Text = string.Empty;
+        }
+        // For other fields the default behavior will apply.
     }
 
-    class Program
+    void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
     {
-        static void Main()
-        {
-            // Path to the source DOCX template that contains MERGEFIELDs.
-            string sourceDocPath = @"C:\Docs\Template.docx";
-
-            // Path where the resulting PNG image will be saved.
-            string outputPngPath = @"C:\Docs\Result.png";
-
-            // Load the DOCX document.
-            Document doc = new Document(sourceDocPath);
-
-            // Attach the custom field merging callback.
-            doc.MailMerge.FieldMergingCallback = new HtmlAndCheckBoxMerging();
-
-            // Define merge field names and corresponding values.
-            string[] fieldNames = { "html_Title", "html_Body", "cb_Agree" };
-            object[] fieldValues =
-            {
-                // HTML content for the title field.
-                "<h1 style=\"color:#0000FF; font-family:Arial;\">Hello World!</h1>",
-
-                // HTML content for the body field.
-                "<blockquote><p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p></blockquote>",
-
-                // Boolean value for the checkbox field (true = checked).
-                true
-            };
-
-            // Perform mail merge for a single record.
-            doc.MailMerge.Execute(fieldNames, fieldValues);
-
-            // Save the merged document as a PNG image (first page rendered).
-            doc.Save(outputPngPath, SaveFormat.Png);
-        }
+        // No image handling required for this scenario.
     }
 }

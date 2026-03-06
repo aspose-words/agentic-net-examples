@@ -1,48 +1,34 @@
-using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using System.Drawing;
 
-class InsertShapesExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank DOCM document.
         Document doc = new Document();
-
-        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an inline rectangle shape (width: 150 points, height: 100 points).
-        Shape inlineRect = builder.InsertShape(ShapeType.Rectangle, 150, 100);
-        // Set a red border for the inline shape.
-        inlineRect.Stroke.Color = Color.Red;
+        // Insert an inline rectangle shape (width: 100 points, height: 50 points).
+        Shape inlineShape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        inlineShape.Fill.ForeColor = Color.LightBlue;
+        inlineShape.Stroke.Color = Color.DarkBlue;
 
-        // Insert a floating ellipse shape.
-        // Position: 100 points from the left and top of the page.
-        // Size: 200x150 points. No text wrapping.
-        Shape floatingEllipse = builder.InsertShape(
-            ShapeType.Ellipse,
-            RelativeHorizontalPosition.Page, 100,
-            RelativeVerticalPosition.Page, 100,
-            200, 150,
-            WrapType.None);
-        // Set a blue fill for the floating shape.
-        floatingEllipse.Fill.ForeColor = Color.LightBlue;
+        // Insert a floating star shape positioned relative to the page.
+        Shape floatingShape = builder.InsertShape(
+            ShapeType.Star,
+            RelativeHorizontalPosition.Page, 150,   // 150 points from the left edge of the page
+            RelativeVerticalPosition.Page, 200,     // 200 points from the top edge of the page
+            80, 80,                                 // width and height in points
+            WrapType.Square);                       // text wrapping style
+        floatingShape.Fill.ForeColor = Color.Yellow;
+        floatingShape.Stroke.Color = Color.Orange;
 
-        // Insert a text box shape.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 250, 80);
-        textBox.WrapType = WrapType.Square;
-        textBox.Fill.ForeColor = Color.LightYellow;
-        // Add a paragraph with text inside the text box.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Hello Aspose.Words!");
-        para.AppendChild(run);
-        textBox.AppendChild(para);
-
-        // Save the document as a DOCM file (macro-enabled Word document).
-        // No special compliance options are required for these primitive shapes.
-        doc.Save("ShapesInserted.docm", SaveFormat.Docm);
+        // Save the document as a macro-enabled DOCM file with ISO/IEC 29500 Transitional compliance.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
+        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
+        doc.Save("ShapesInserted.docm", saveOptions);
     }
 }

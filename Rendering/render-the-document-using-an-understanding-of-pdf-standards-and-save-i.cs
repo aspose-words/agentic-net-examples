@@ -6,23 +6,25 @@ class Program
 {
     static void Main()
     {
-        // Load the source Word document.
-        Document doc = new Document("MyDir/Document.docx");
+        // Load an existing Word document from disk.
+        // The Document constructor handles the creation and loading lifecycle.
+        Document doc = new Document("InputDocument.docx");
 
-        // Create PDF save options to control the conversion.
+        // Create a PdfSaveOptions object to control PDF rendering.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Set PDF/A-1b compliance (preserves visual appearance).
+            // Set PDF compliance to PDF/A-1b to ensure visual fidelity.
             Compliance = PdfCompliance.PdfA1b,
 
-            // Use high‑quality rendering algorithms (slower but better output).
-            UseHighQualityRendering = true,
+            // Export the document structure (tags) for better accessibility.
+            ExportDocumentStructure = true,
 
-            // Export the document structure (tags) to the PDF.
-            ExportDocumentStructure = true
+            // Use high‑quality rendering for drawing objects.
+            UseHighQualityRendering = true
         };
 
-        // Save the document as a PDF file using the specified options.
-        doc.Save("ArtifactsDir/Document.pdf", pdfOptions);
+        // Save the document as a PDF using the specified options.
+        // The Save method with (string, SaveOptions) follows the required save rule.
+        doc.Save("OutputDocument.pdf", pdfOptions);
     }
 }

@@ -1,39 +1,47 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 
-class Program
+namespace ExtractParagraphContent
 {
-    static void Main()
+    class Program
     {
-        // Load the DOT (template) file.
-        Document doc = new Document("Template.dot");
-
-        // Access the collection of paragraphs in the main body of the first section.
-        ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
-
-        // Store the plain text of each paragraph (without the trailing break characters).
-        List<string> paragraphTexts = new List<string>();
-        foreach (Paragraph para in paragraphs)
+        static void Main()
         {
-            string text = para.GetText();
-            // Trim paragraph, cell and section break characters.
-            text = text.TrimEnd('\r', '\a', '\f');
-            paragraphTexts.Add(text);
-        }
+            // Path to the DOT (Word template) file.
+            string inputPath = @"C:\Docs\Template.dot";
 
-        // Example: extract and display the content that lies between the first and last paragraph.
-        if (paragraphTexts.Count > 2)
-        {
-            Console.WriteLine("Content between first and last paragraph:");
-            for (int i = 1; i < paragraphTexts.Count - 1; i++)
+            // Load the DOT file into an Aspose.Words Document.
+            Document doc = new Document(inputPath);
+
+            // Get the collection of paragraphs from the main body of the first section.
+            ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
+
+            // Iterate through the paragraphs and extract the text between them.
+            // Here we simply output each paragraph's text (excluding the trailing paragraph break).
+            for (int i = 0; i < paragraphs.Count; i++)
             {
-                Console.WriteLine(paragraphTexts[i]);
+                // Get the full text of the paragraph, which includes the paragraph break character.
+                string paragraphTextWithBreak = paragraphs[i].GetText();
+
+                // Trim the trailing paragraph break characters (\r, \f, or \a) for clean output.
+                string cleanText = paragraphTextWithBreak.TrimEnd('\r', '\f', '\a');
+
+                Console.WriteLine($"Paragraph {i + 1}: {cleanText}");
             }
-        }
-        else
-        {
-            Console.WriteLine("The document does not contain enough paragraphs to extract intermediate content.");
+
+            // Optionally, write the extracted content to a plain text file.
+            string outputPath = @"C:\Docs\ExtractedContent.txt";
+            using (StreamWriter writer = new StreamWriter(outputPath))
+            {
+                for (int i = 0; i < paragraphs.Count; i++)
+                {
+                    string cleanText = paragraphs[i].GetText().TrimEnd('\r', '\f', '\a');
+                    writer.WriteLine(cleanText);
+                }
+            }
+
+            Console.WriteLine("Extraction complete.");
         }
     }
 }

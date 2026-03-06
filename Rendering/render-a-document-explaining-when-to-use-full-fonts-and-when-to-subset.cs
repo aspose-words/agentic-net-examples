@@ -1,47 +1,46 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Fonts;
 
-class FontEmbeddingDemo
+class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new document and add explanatory text about font embedding.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add explanatory text.
-        builder.Writeln("When to embed full fonts vs. subset fonts:");
+        builder.Writeln("Font Embedding in PDF");
         builder.Writeln();
-        builder.Writeln("• Embed full fonts (EmbedFullFonts = true) when you need to edit the resulting PDF later,");
-        builder.Writeln("  because all glyphs are available. This increases the file size.");
-        builder.Writeln("• Use font subsetting (EmbedFullFonts = false) to keep the PDF smaller,");
-        builder.Writeln("  as only the glyphs used in the document are embedded.");
+        builder.Writeln("When to embed full fonts:");
+        builder.Writeln("- You need to edit the PDF later and require all glyphs.");
+        builder.Writeln("- The document uses a custom font that may not be available on target machines.");
+        builder.Writeln();
+        builder.Writeln("When to use subsetting:");
+        builder.Writeln("- You want to keep the PDF file size small.");
+        builder.Writeln("- Only a small subset of glyphs from the font is used.");
+        builder.Writeln("- The font is large (several megabytes).");
 
-        // Ensure the document uses a custom font so that embedding can be demonstrated.
-        builder.Font.Name = "Arial";
-        builder.Writeln("Sample text using Arial.");
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("Sample text using Times New Roman.");
-
-        // Add a custom font folder to the font sources (replace with your actual fonts folder).
-        string fontsFolder = @"C:\MyFonts"; // <-- adjust path as needed
+        // Ensure the fonts used in the document are available to Aspose.Words.
+        // Assume a folder named "Fonts" exists in the current directory containing any custom fonts.
+        string fontsDir = Path.Combine(Environment.CurrentDirectory, "Fonts");
         FontSourceBase[] originalSources = FontSettings.DefaultInstance.GetFontsSources();
-        FolderFontSource customSource = new FolderFontSource(fontsFolder, true);
+        FolderFontSource customSource = new FolderFontSource(fontsDir, true);
         FontSettings.DefaultInstance.SetFontsSources(new[] { originalSources[0], customSource });
 
-        // Save PDF with full fonts embedded.
-        PdfSaveOptions fullFontOptions = new PdfSaveOptions();
-        fullFontOptions.EmbedFullFonts = true; // embed every glyph
-        doc.Save("Document_With_Full_Fonts.pdf", fullFontOptions);
+        // Save the document to PDF with subsetting (default behavior).
+        PdfSaveOptions subsetOptions = new PdfSaveOptions();
+        subsetOptions.EmbedFullFonts = false; // Subset fonts to reduce file size.
+        doc.Save("PdfWithSubsetFonts.pdf", subsetOptions);
 
-        // Save PDF with font subsetting (default behavior).
-        PdfSaveOptions subsetFontOptions = new PdfSaveOptions();
-        subsetFontOptions.EmbedFullFonts = false; // embed only used glyphs
-        doc.Save("Document_With_Subset_Fonts.pdf", subsetFontOptions);
+        // Save the same document to PDF with full fonts embedded.
+        PdfSaveOptions fullOptions = new PdfSaveOptions();
+        fullOptions.EmbedFullFonts = true; // Embed the complete font files.
+        doc.Save("PdfWithFullFonts.pdf", fullOptions);
 
-        // Restore original font sources.
+        // Restore the original font sources to avoid side effects.
         FontSettings.DefaultInstance.SetFontsSources(originalSources);
     }
 }

@@ -1,15 +1,14 @@
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Drawing;          // <-- added
 using Aspose.Words.Drawing.Charts;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -17,35 +16,30 @@ class Program
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo data that comes with a newly inserted chart.
+        // Remove the default demo series that come with the chart.
         chart.Series.Clear();
 
-        // Define categories for the X‑axis.
-        string[] categories = { "Category 1", "Category 2", "Category 3" };
+        // Define category labels for the X‑axis.
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
 
-        // Add two series with values for each category.
-        chart.Series.Add("Series A", categories, new double[] { 10.5, 20.3, 30.7 });
-        chart.Series.Add("Series B", categories, new double[] { 15.2, 25.8, 35.1 });
+        // Add two new series with values for each category.
+        chart.Series.Add("Revenue", categories, new double[] { 120.5, 150.2, 130.0, 170.3 });
+        chart.Series.Add("Profit",  categories, new double[] { 30.1, 45.3, 35.6, 55.2 });
 
-        // Iterate over the series collection using the enumerator.
-        using (IEnumerator<ChartSeries> enumerator = chart.Series.GetEnumerator())
+        // Iterate over the series collection and output each series name.
+        foreach (ChartSeries series in chart.Series)
         {
-            while (enumerator.MoveNext())
-            {
-                ChartSeries current = enumerator.Current;
-                Console.WriteLine($"Series name: {current.Name}");
-            }
+            Console.WriteLine($"Series name: {series.Name}");
         }
 
-        // Access a series by index (zero‑based). Change its fill colour.
-        ChartSeries firstSeries = chart.Series[0];
-        firstSeries.Format.Fill.ForeColor = Color.Red;
+        // Change the fill colour of the series.
+        chart.Series[0].Format.Fill.ForeColor = Color.Blue;   // Revenue series
+        chart.Series[1].Format.Fill.ForeColor = Color.Green;  // Profit series
 
-        // Remove the second series by index.
+        // Remove the second series (Profit) by its index.
         chart.Series.RemoveAt(1);
 
-        // Save the document to the file system.
-        string artifactsDir = "output/";
-        doc.Save(artifactsDir + "ChartSeriesCollectionExample.docx");
+        // Save the document containing the modified chart.
+        doc.Save("ChartSeriesDemo.docx");
     }
 }

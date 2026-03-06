@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using Aspose.Words;
 
 class ExtractBetweenNodes
@@ -6,44 +7,39 @@ class ExtractBetweenNodes
     static void Main()
     {
         // Load the source DOC file.
-        Document sourceDoc = new Document("Input.doc");
+        Document srcDoc = new Document("Input.doc");
 
-        // Assume the document contains two bookmarks that define the range to extract:
-        // "Start" marks the beginning and "End" marks the end.
-        Bookmark startBookmark = sourceDoc.Range.Bookmarks["Start"];
-        Bookmark endBookmark = sourceDoc.Range.Bookmarks["End"];
+        // Define the start and end nodes (example: first and third paragraphs).
+        Node startNode = srcDoc.SelectSingleNode("//Paragraph[1]");
+        Node endNode   = srcDoc.SelectSingleNode("//Paragraph[3]");
 
-        // Get the actual nodes that delimit the range.
-        Node startNode = startBookmark.BookmarkStart;
-        Node endNode = endBookmark.BookmarkEnd;
-
-        // Create a new blank document that will hold the extracted fragment.
-        Document fragmentDoc = new Document();
-
-        // Use NodeImporter to copy nodes from the source document to the fragment
-        // while preserving the original formatting.
-        NodeImporter importer = new NodeImporter(sourceDoc, fragmentDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // Walk through the sibling nodes that lie between the start and end bookmarks.
-        // Exclude the bookmark nodes themselves.
-        Node current = startNode.NextSibling;
-        while (current != null && current != endNode)
+        if (startNode == null || endNode == null)
         {
-            // Import the node into the fragment document.
-            Node importedNode = importer.ImportNode(current, true);
-            // Append the imported node to the body of the fragment document.
-            fragmentDoc.FirstSection.Body.AppendChild(importedNode);
-            // Move to the next sibling.
-            current = current.NextSibling;
+            Console.WriteLine("Start or end node not found.");
+            return;
         }
 
-        // The extracted text is now available via the fragment's Range.Text property.
-        string extractedText = fragmentDoc.Range.Text.Trim();
+        // Collect the text of all nodes from startNode up to and including endNode.
+        StringBuilder extractedBuilder = new StringBuilder();
+        for (Node cur = startNode; cur != null; cur = cur.NextPreOrder(srcDoc))
+        {
+            extractedBuilder.Append(cur.GetText());
+            if (cur == endNode)
+                break;
+        }
 
-        Console.WriteLine("Extracted text between bookmarks:");
-        Console.WriteLine(extractedText);
+        string extractedText = extractedBuilder.ToString();
 
-        // Optionally, save the extracted fragment as a separate DOCX file.
-        fragmentDoc.Save("ExtractedFragment.docx");
+        // Create a new document to hold the extracted content.
+        Document resultDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(resultDoc);
+
+        // Insert the extracted text into the new document.
+        builder.Writeln(extractedText);
+
+        // Save the result document.
+        resultDoc.Save("ExtractedContent.docx");
+
+        Console.WriteLine("Extraction complete. Saved to ExtractedContent.docx");
     }
 }

@@ -1,23 +1,30 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Math;
+using Aspose.Words.Loading;
 
-class ListOfficeMathEquations
+class ListOfficeMath
 {
     static void Main()
     {
-        // Load the DOCX document from the file system.
-        // Using the Document(string) constructor as defined in the provided rules.
-        Document doc = new Document("InputDocument.docx");
+        // Path to the DOCX file.
+        string filePath = "input.docx";
 
-        // Retrieve all OfficeMath nodes in the document (including those in nested structures).
-        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        // Load the document with shapes converted to OfficeMath objects.
+        LoadOptions loadOptions = new LoadOptions();
+        loadOptions.ConvertShapeToOfficeMath = true;
+        Document doc = new Document(filePath, loadOptions);
 
-        // Iterate through each OfficeMath node and output its textual representation.
-        foreach (OfficeMath officeMath in officeMathNodes)
+        // Retrieve all OfficeMath nodes in the document.
+        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+
+        Console.WriteLine($"Found {mathNodes.Count} OfficeMath equation(s):");
+
+        // List each equation's type and its plain text representation.
+        foreach (OfficeMath officeMath in mathNodes)
         {
-            // GetText() returns the equation text including its child elements.
-            Console.WriteLine(officeMath.GetText().Trim());
+            string text = officeMath.GetText().Trim();
+            Console.WriteLine($"- Type: {officeMath.MathObjectType}, Text: \"{text}\"");
         }
     }
 }

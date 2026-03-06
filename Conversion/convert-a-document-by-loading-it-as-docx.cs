@@ -1,18 +1,21 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Path to the source document (any supported format).
-        string sourcePath = @"C:\Docs\SourceDocument.docx";
+        // Path to the source document (any supported format, e.g., PDF, RTF, etc.)
+        string sourcePath = "source.pdf";
 
-        // Load the document using the Document(string) constructor.
+        // Path where the converted DOCX will be saved
+        string targetPath = "converted.docx";
+
+        // Load the source document. The constructor automatically detects the file format.
         Document doc = new Document(sourcePath);
 
         // Save the loaded document as DOCX.
-        string outputPath = @"C:\Docs\ConvertedDocument.docx";
-        doc.Save(outputPath);
+        doc.Save(targetPath, SaveFormat.Docx);
     }
 }

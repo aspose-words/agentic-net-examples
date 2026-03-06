@@ -8,33 +8,38 @@ class ExtractOleFromPdf
     static void Main()
     {
         // Path to the source PDF document.
-        string pdfPath = @"C:\Docs\source.pdf";
+        string pdfPath = @"C:\Input\sample.pdf";
 
-        // Directory where extracted OLE objects will be saved.
-        string outputDir = @"C:\Docs\ExtractedOle";
-        Directory.CreateDirectory(outputDir);
-
-        // Load the PDF document. No special load options are required for OLE extraction.
+        // Load the PDF document. Aspose.Words can import PDF files.
         Document doc = new Document(pdfPath);
 
-        // Iterate through all shapes in the document.
+        // Directory where extracted OLE objects will be saved.
+        string outputDir = @"C:\Output\OleObjects\";
+        Directory.CreateDirectory(outputDir);
+
+        // Iterate through all Shape nodes in the document.
         foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
             // Only shapes that contain an OLE object have a non‑null OleFormat.
-            OleFormat ole = shape.OleFormat;
-            if (ole == null)
+            OleFormat oleFormat = shape.OleFormat;
+            if (oleFormat == null)
                 continue;
 
-            // Determine a suitable file name using the suggested extension.
-            string extension = ole.SuggestedExtension ?? ".bin";
-            string fileName = Path.Combine(outputDir,
-                $"OleObject_{shape.GetHashCode()}{extension}");
+            // Determine a file name for the extracted object.
+            // Use the suggested extension if available; otherwise default to .bin.
+            string extension = string.IsNullOrEmpty(oleFormat.SuggestedExtension)
+                ? ".bin"
+                : oleFormat.SuggestedExtension;
+
+            // Create a unique file name based on the shape index.
+            string fileName = $"OleObject_{shape.GetHashCode()}{extension}";
+            string outputPath = Path.Combine(outputDir, fileName);
 
             // Save the embedded OLE object to the file system.
             // This uses the OleFormat.Save(string) method as required.
-            ole.Save(fileName);
-        }
+            oleFormat.Save(outputPath);
 
-        Console.WriteLine("OLE extraction completed.");
+            Console.WriteLine($"Extracted OLE object to: {outputPath}");
+        }
     }
 }

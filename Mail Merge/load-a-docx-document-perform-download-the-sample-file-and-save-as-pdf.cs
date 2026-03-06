@@ -7,25 +7,30 @@ class Program
 {
     static void Main()
     {
-        // URL of the sample DOCX file to download
-        const string docxUrl = "https://example.com/sample.docx";
+        // URL of the sample DOCX file to download.
+        const string sampleUrl = "https://example.com/sample.docx";
 
-        // Path where the resulting PDF will be saved
-        const string pdfPath = "sample.pdf";
+        // Destination path for the converted PDF file.
+        const string outputPdfPath = "ConvertedDocument.pdf";
 
-        // Download the DOCX file into a byte array
+        // Download the DOCX file into a byte array.
+        byte[] docxBytes;
         using (HttpClient httpClient = new HttpClient())
         {
-            byte[] docxBytes = httpClient.GetByteArrayAsync(docxUrl).Result;
-
-            // Load the downloaded DOCX from a memory stream using Aspose.Words Document(Stream) constructor
-            using (MemoryStream docxStream = new MemoryStream(docxBytes))
-            {
-                Document document = new Document(docxStream);
-
-                // Save the document as PDF; the format is inferred from the .pdf extension
-                document.Save(pdfPath);
-            }
+            HttpResponseMessage response = httpClient.GetAsync(sampleUrl).Result;
+            response.EnsureSuccessStatusCode();
+            docxBytes = response.Content.ReadAsByteArrayAsync().Result;
         }
+
+        // Load the downloaded DOCX from a memory stream using Aspose.Words.
+        using (MemoryStream docxStream = new MemoryStream(docxBytes))
+        {
+            Document doc = new Document(docxStream); // Load constructor (Document(Stream))
+
+            // Save the document as PDF. The format is inferred from the .pdf extension.
+            doc.Save(outputPdfPath); // Save(string) – automatic format detection
+        }
+
+        Console.WriteLine($"Document has been converted and saved to '{outputPdfPath}'.");
     }
 }

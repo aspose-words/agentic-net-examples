@@ -2,49 +2,48 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class InsertTableIntoDot
+class Program
 {
     static void Main()
     {
-        // Load the DOT template (DOT is a Word template file)
+        // Load the DOT template.
         Document doc = new Document("Template.dot");
 
-        // Create a DocumentBuilder attached to the loaded document
+        // Create a DocumentBuilder attached to the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the location where the table should be inserted.
-        // For this example we insert at the end of the first section's body.
-        builder.MoveToDocumentEnd();
+        // Position the builder at the start of the main story (the document body).
+        builder.MoveToDocumentStart();
 
-        // Start a new table
+        // Begin a new table.
         Table table = builder.StartTable();
 
-        // First row, first cell
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        // ---- First row ----
+        builder.InsertCell();                     // First cell of the first row.
+        builder.Write("Cell 1, Row 1");           // Add text to the cell.
 
-        // First row, second cell
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
+        builder.InsertCell();                     // Second cell of the first row.
+        builder.Write("Cell 2, Row 1");
 
-        // Second row, first cell
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
+        builder.EndRow();                         // End the first row.
 
-        // Second row, second cell
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
+        // ---- Second row ----
+        builder.InsertCell();                     // First cell of the second row.
+        builder.Write("Cell 1, Row 2");
 
-        // Finish the table
+        builder.InsertCell();                     // Second cell of the second row.
+        builder.Write("Cell 2, Row 2");
+
+        builder.EndRow();                         // End the second row.
+
+        // Finish the table.
         builder.EndTable();
 
-        // Optional: set table title and description (useful for DOCX compliance)
+        // Optional: set title and description for accessibility.
         table.Title = "Sample Table";
-        table.Description = "A table inserted into a DOT document.";
+        table.Description = "Demonstrates inserting a table into a DOT document.";
 
-        // Save the modified document (can be saved as DOCX, DOC, or another DOT)
-        doc.Save("Result.docx");
+        // Save the modified document.
+        doc.Save("Output.docx");
     }
 }

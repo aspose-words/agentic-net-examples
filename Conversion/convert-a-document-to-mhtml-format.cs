@@ -6,17 +6,31 @@ class Program
 {
     static void Main()
     {
-        // Load the source document. The format is detected automatically from the file extension.
-        Document doc = new Document("input.docx");
+        // Input document path – can be any format supported by Aspose.Words (DOCX, DOC, RTF, etc.).
+        string inputPath = @"C:\Docs\Source.docx";
 
-        // Save the document as MHTML (Web archive) using the built‑in SaveFormat enumeration.
-        doc.Save("output.mht", SaveFormat.Mhtml);
+        // Output path for the MHTML (Web archive) file.
+        string outputPath = @"C:\Docs\Result.mht";
 
-        // Optional: use HtmlSaveOptions for additional MHTML settings (e.g., CID URLs for resources).
-        // HtmlSaveOptions options = new HtmlSaveOptions(SaveFormat.Mhtml)
-        // {
-        //     ExportCidUrlsForMhtmlResources = true
-        // };
-        // doc.Save("output_with_cid.mht", options);
+        // Load the source document from disk.
+        Document doc = new Document(inputPath);
+
+        // Create MHTML‑specific save options.
+        // The constructor sets the SaveFormat to Mhtml.
+        HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        {
+            // When true, resources (images, CSS, fonts) are referenced by CID URLs.
+            // Set to false to use file‑name references (default behavior).
+            ExportCidUrlsForMhtmlResources = false,
+
+            // Optional: make the generated MHTML file more readable.
+            PrettyFormat = true
+        };
+
+        // Save the document as MHTML using the configured options.
+        doc.Save(outputPath, mhtmlOptions);
+
+        // Alternative one‑liner (no custom options):
+        // doc.Save(outputPath, SaveFormat.Mhtml);
     }
 }

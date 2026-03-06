@@ -1,35 +1,32 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-class InsertShapeWithChart
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a chart shape (the shape itself contains a chart).
-        // This uses the InsertChart method which returns a Shape object.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+        // Insert a chart shape (Bar chart) with a width of 400 points and a height of 300 points.
+        // The InsertChart method returns a Shape that already contains a Chart.
+        Shape chartShape = builder.InsertChart(ChartType.Bar, 400, 300);
 
-        // Access the Chart object to customize it (optional).
+        // Access the Chart object to customize its appearance and data.
         Chart chart = chartShape.Chart;
-        chart.Title.Text = "Sample Column Chart";
+        chart.Title.Text = "Sample Bar Chart";
         chart.Title.Show = true;
         chart.Title.Font.Size = 14;
-        chart.Title.Font.Color = Color.Blue;
+        chart.Title.Font.Color = System.Drawing.Color.Blue;
 
-        // Add a data series to the chart.
+        // Clear any default series and add a new series with categories and values.
         chart.Series.Clear();
         chart.Series.Add("Series 1",
-            new[] { "Q1", "Q2", "Q3", "Q4" },
-            new[] { 10.0, 20.0, 30.0, 40.0 });
+            new[] { "Category A", "Category B", "Category C" },
+            new[] { 10.0, 20.0, 30.0 });
 
         // Save the document as a DOCX file.
         doc.Save("ShapeWithChart.docx");

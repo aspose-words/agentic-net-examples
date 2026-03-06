@@ -2,38 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace RemoveHeadersFootersAndSaveMhtml
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Load the existing DOC document.
+        Document doc = new Document("Input.doc");
+
+        // Remove the content of all headers and footers in every section.
+        // The HeaderFooter objects remain, but they become empty, effectively unlinking them.
+        foreach (Section section in doc.Sections)
         {
-            // Path to the source DOC document.
-            string inputPath = @"C:\Docs\SourceDocument.doc";
-
-            // Path where the resulting MHTML file will be saved.
-            string outputPath = @"C:\Docs\ResultDocument.mht";
-
-            // Load the existing DOC document.
-            Document doc = new Document(inputPath);
-
-            // Remove all header and footer contents from each section.
-            // The HeaderFooter objects remain, but their text is cleared,
-            // causing the document to have no visible headers/footers.
-            foreach (Section section in doc.Sections)
-            {
-                section.ClearHeadersFooters();
-            }
-
-            // Configure save options for MHTML.
-            // ExportHeadersFootersMode = None ensures that no header/footer data is written.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
-            {
-                ExportHeadersFootersMode = ExportHeadersFootersMode.None
-            };
-
-            // Save the document as MHTML using the configured options.
-            doc.Save(outputPath, saveOptions);
+            section.ClearHeadersFooters();
         }
+
+        // Prepare save options for MHTML format.
+        // ExportHeadersFootersMode = None ensures that no header/footer data is written to the output.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        {
+            ExportHeadersFootersMode = ExportHeadersFootersMode.None
+        };
+
+        // Save the document as an MHTML file without headers or footers.
+        doc.Save("Output.mht", saveOptions);
     }
 }

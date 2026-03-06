@@ -1,23 +1,36 @@
 using System;
+using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Settings;
 
-class HyphenateDotx
+class Program
 {
     static void Main()
     {
         // Load the existing DOTX template.
         Document doc = new Document("Template.dotx");
 
-        // Enable automatic hyphenation for the whole document.
+        // Enable automatic hyphenation for the document.
         doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Optional: configure additional hyphenation settings.
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2; // Max consecutive hyphenated lines.
-        doc.HyphenationOptions.HyphenationZone = 720;      // 0.5 inch from right margin.
-        doc.HyphenationOptions.HyphenateCaps = true;      // Hyphenate all‑caps words.
+        // Optional: configure hyphenation behavior.
+        doc.HyphenationOptions.HyphenationZone = 720;          // 0.5 inch from the right margin.
+        doc.HyphenationOptions.HyphenateCaps = true;          // Hyphenate words in all caps.
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;    // Max consecutive hyphenated lines.
 
-        // Save the document with hyphenation applied.
-        doc.Save("HyphenatedDocument.docx");
+        // Ensure a hyphenation dictionary for the document language is registered.
+        // Here we use English (US) as an example.
+        const string language = "en-US";
+        if (!Hyphenation.IsDictionaryRegistered(language))
+        {
+            // Register the dictionary file (OpenOffice format) located alongside the executable.
+            Hyphenation.RegisterDictionary(language, "hyph_en_US.dic");
+        }
+
+        // Rebuild the layout so that hyphenation is applied.
+        doc.UpdatePageLayout();
+
+        // Save the document with hyphens inserted.
+        doc.Save("HyphenatedDocument.dotx");
     }
 }

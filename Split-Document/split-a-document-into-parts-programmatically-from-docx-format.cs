@@ -3,47 +3,58 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class SplitDocumentExample
+class Program
 {
     static void Main()
     {
-        // Load the source DOCX file.
+        // Load the source DOCX document.
         Document doc = new Document("Input.docx");
 
         // Configure HTML save options to split the document at each section break.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions();
         saveOptions.DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak;
 
-        // Assign a callback that will give each split part a custom file name.
-        saveOptions.DocumentPartSavingCallback = new PartRenamer("SplitDocument");
+        // Assign a callback that will rename each generated HTML part.
+        saveOptions.DocumentPartSavingCallback = new PartRenamer("OutputPart", saveOptions.DocumentSplitCriteria);
 
-        // Save the document. Aspose.Words will invoke the callback for each part.
+        // Save the document. Aspose.Words will create multiple HTML files according to the split criteria.
         doc.Save("Output.html", saveOptions);
     }
 
-    // Callback implementation that renames each document part.
+    // Callback implementation that controls the filenames (and streams) of the split parts.
     private class PartRenamer : IDocumentPartSavingCallback
     {
         private readonly string _baseName;
-        private int _partIndex;
+        private readonly DocumentSplitCriteria _criteria;
+        private int _counter;
 
-        public PartRenamer(string baseName)
+        public PartRenamer(string baseName, DocumentSplitCriteria criteria)
         {
             _baseName = baseName;
-            _partIndex = 0;
+            _criteria = criteria;
+            _counter = 0;
         }
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Create a unique file name for the current part.
-            string newFileName = $"{_baseName}_Part{++_partIndex}{Path.GetExtension(args.DocumentPartFileName)}";
+            // Determine a readable part type based on the split criteria.
+            string partType = _criteria switch
+            {
+                DocumentSplitCriteria.PageBreak => "Page",
+                DocumentSplitCriteria.ColumnBreak => "Column",
+                DocumentSplitCriteria.SectionBreak => "Section",
+                DocumentSplitCriteria.HeadingParagraph => "Heading",
+                _ => "Part"
+            };
 
-            // Set the new file name. Aspose.Words will write the part to this file.
+            // Build a unique filename for the part (extension is preserved).
+            string newFileName = $"{_baseName}_{++_counter}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+
+            // Set the new filename.
             args.DocumentPartFileName = newFileName;
 
-            // If you prefer to write to a custom stream, uncomment the following lines:
-            // args.DocumentPartStream = new FileStream(newFileName, FileMode.Create);
-            // args.KeepDocumentPartStreamOpen = false;
+            // Optionally provide a custom stream for the part.
+            args.DocumentPartStream = new FileStream(newFileName, FileMode.Create);
         }
     }
 }

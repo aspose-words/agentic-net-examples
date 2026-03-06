@@ -1,42 +1,39 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
-class InsertTableIntoRtf
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to simplify node insertion.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
+        // Start a new table. The builder returns the created Table node.
         Table table = builder.StartTable();
 
-        // First row – two cells.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
+        // ---- First row ----
+        builder.InsertCell();                     // First cell of the first row.
+        builder.Write("Cell 1, Row 1");           // Insert text into the cell.
+        builder.InsertCell();                     // Second cell of the first row.
+        builder.Write("Cell 2, Row 1");
+        builder.EndRow();                         // End the first row.
 
-        // Second row – two cells.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
+        // ---- Second row ----
+        builder.InsertCell();                     // First cell of the second row.
+        builder.Write("Cell 1, Row 2");
+        builder.InsertCell();                     // Second cell of the second row.
+        builder.Write("Cell 2, Row 2");
+        builder.EndRow();                         // End the second row.
 
         // Finish the table.
         builder.EndTable();
 
-        // Optionally set a title/description for accessibility.
-        table.Title = "Sample Table";
-        table.Description = "A simple 2x2 table inserted into an RTF document.";
-
-        // Save the document as RTF.
-        doc.Save("TableInRtf.rtf");
+        // Save the document as an RTF file.
+        doc.Save("TableInRtf.rtf", SaveFormat.Rtf);
     }
 }

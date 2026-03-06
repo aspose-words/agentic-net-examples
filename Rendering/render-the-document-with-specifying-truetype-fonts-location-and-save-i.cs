@@ -9,35 +9,31 @@ class RenderDocumentWithCustomFonts
 {
     static void Main()
     {
-        // Path to the source document.
-        string inputPath = @"C:\Docs\input.docx";
+        // Paths to the input document, output PDF and the folder containing TrueType fonts.
+        string inputDocPath = @"C:\Docs\input.docx";
+        string outputPdfPath = @"C:\Docs\output.pdf";
+        string trueTypeFontsFolder = @"C:\Fonts";
 
-        // Path where the resulting PDF will be saved.
-        string outputPath = @"C:\Docs\output.pdf";
+        // Load the source document.
+        Document doc = new Document(inputDocPath);
 
-        // Folder that contains the TrueType fonts to be used during rendering.
-        string trueTypeFontsFolder = @"C:\MyFonts";
-
-        // Load the document.
-        Document doc = new Document(inputPath);
-
-        // Preserve the original font sources so they can be restored later.
-        FontSourceBase[] originalFontSources = FontSettings.DefaultInstance.GetFontsSources();
+        // Preserve the original font sources.
+        FontSourceBase[] originalSources = FontSettings.DefaultInstance.GetFontsSources();
 
         // Add a folder font source that points to the TrueType fonts location.
         FolderFontSource folderSource = new FolderFontSource(trueTypeFontsFolder, true);
-        FontSettings.DefaultInstance.SetFontsSources(originalFontSources.Concat(new[] { folderSource }).ToArray());
+        FontSettings.DefaultInstance.SetFontsSources(originalSources.Concat(new[] { folderSource }).ToArray());
 
         // Configure PDF save options (e.g., embed full fonts).
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            EmbedFullFonts = true   // Embed complete fonts to ensure correct rendering.
+            EmbedFullFonts = true // Embed all glyphs of the used fonts.
         };
 
         // Save the document as PDF using the configured options.
-        doc.Save(outputPath, pdfOptions);
+        doc.Save(outputPdfPath, pdfOptions);
 
-        // Restore the original font sources to avoid side‑effects on other operations.
-        FontSettings.DefaultInstance.SetFontsSources(originalFontSources);
+        // (Optional) Restore the original font sources if further processing is needed.
+        FontSettings.DefaultInstance.SetFontsSources(originalSources);
     }
 }

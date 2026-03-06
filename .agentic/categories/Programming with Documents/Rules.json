@@ -1,0 +1,99 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Table rules": [
+        "Remove unused using directives (Aspose.Words.Drawing, Aspose.Words.Tables) that are not needed for this task."
+      ],
+      "Range rules": [
+        "Use the Document.Range.Fields collection directly – it already implements IEnumerable<Field>.",
+        "Do not use NodeType.Field – it does not exist; use doc.Range.Fields to enumerate fields."
+      ],
+      "Document merge/insert rules": [
+        "Add the missing namespace import: `using Aspose.Words.Fields;` to expose `Field` and `FieldType`.",
+        "Remove the non‑existent `Aspose.Words.Import` namespace; `NodeImporter` lives directly under `Aspose.Words`.",
+        "Use `ImportFormatMode.KeepSourceFormatting` (or another mode) when creating `NodeImporter`.",
+        "Remove the non‑existent namespace import `using Aspose.Words.Import;` – NodeImporter lives directly in `Aspose.Words`.",
+        "Import nodes with NodeImporter to preserve source formatting.",
+        "Use NodeImporter with ImportFormatMode.KeepSourceFormatting to preserve formatting."
+      ],
+      "Loading rules": [
+        "Do not use LoadOptions when they are not required; a simple Document constructor with the file path is sufficient.",
+        "Keep the document loading and TOC removal logic unchanged.",
+        "Keep existing logic for loading, modifying, and saving the document."
+      ],
+      "Saving/Export rules": [
+        "Save the document with SaveFormat.Dotm to produce a macro‑enabled template.",
+        "Save the document using SaveFormat.WordML to produce WORDML (XML) output.",
+        "Use ImageSaveOptions with SaveFormat.Png to control page rendering; set PageSet to render only the first page.",
+        "Include the Aspose.Words.Saving namespace for ImageSaveOptions and PageSet.",
+        "PsSaveOptions does not require setting SaveFormat, but setting it explicitly is harmless.",
+        "When saving to TIFF, use ImageSaveOptions to control pagination (optional but recommended).",
+        "Save the final document using SaveFormat.Epub.",
+        "Save the result with `SaveFormat.Dot` to produce a .dot template file.",
+        "Specify the save format explicitly (SaveFormat.Doc) when saving as a DOC file.",
+        "Save the document with the desired format using SaveFormat enum.",
+        "Use the correct class name MarkdownSaveOptions for saving as Markdown.",
+        "Keep the original logic: load DOC, remove TOC fields, save as MHTML.",
+        "Save the resulting document using SaveFormat.Pdf.",
+        "Use `ImageSaveOptions` with `PageSet` to render only the first page when saving to PNG.",
+        "Keep the rest of the logic unchanged – load document, remove TOC fields, and save as TIFF using ImageSaveOptions.",
+        "Save with SaveFormat.Docx to produce a DOCX file.",
+        "Specify the save format explicitly (SaveFormat.Dotm) when saving as a DOTM file.",
+        "Save the final document with a `.docm` extension to produce a macro‑enabled Word file.",
+        "When saving as a template, the `.dot` extension is sufficient; you may also explicitly pass `SaveFormat.Dot` if desired.",
+        "Save the document with the .dotm extension to produce a macro‑enabled template.",
+        "Save the final document with SaveFormat.Dotx.",
+        "Save the document using SaveFormat.Dot to produce a .dot template file.",
+        "Save the document with an .rtf extension (doc.Save(\"OutputDocument.rtf\"))."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Keep the rest of the logic unchanged – removal of nodes and image saving are valid.",
+        "Keep the existing image save logic; no changes needed for JPEG output.",
+        "Ensure the correct namespaces are imported (Aspose.Words and Aspose.Words.Drawing).",
+        "Keep the Shape type check (ShapeType.TextBox) to target only text boxes.",
+        "Ensure all required namespaces are included (System, Aspose.Words, Aspose.Words.Drawing).",
+        "Keep the required using directives (System, Aspose.Words, Aspose.Words.Drawing).",
+        "Include the required namespace Aspose.Words.Drawing for Shape and ShapeType.",
+        "Use the correct NodeType.Shape constant to retrieve shape nodes."
+      ],
+      "Layout rules": [
+        "NodeType enum contains only Footnote; there is no Endnote value.",
+        "Endnotes are represented by Footnote nodes with FootnoteType.Endnote.",
+        "Check the Footnote.FootnoteType property to distinguish footnotes from endnotes.",
+        "NodeType does not contain an Endnote member; both footnotes and endnotes are represented by NodeType.Footnote.",
+        "Remove the separate Endnote removal block and handle endnotes together with footnotes.",
+        "Use the Aspose.Words.Footnote class for both footnotes and endnotes (there is no separate Endnote class).",
+        "NodeType only contains Footnote; endnotes are identified via Footnote.FootnoteType == FootnoteType.Endnote.",
+        "Use NodeType.Footnote for both footnotes and endnotes (there is no NodeType.Endnote).",
+        "Use NodeType.Footnote only – Aspose.Words represents both footnotes and endnotes with the Footnote node type; there is no NodeType.Endnote.",
+        "Use NodeType.Footnote for both footnotes and endnotes; there is no NodeType.Endnote.",
+        "Iterate over the collection of Footnote nodes and call Remove() on each.",
+        "Import Aspose.Words.Notes to access Footnote and FootnoteType if you need to differentiate types.",
+        "No separate Endnote handling is required because endnotes are also Footnote nodes.",
+        "Add the missing namespace import: `using Aspose.Words.Notes;` to access the `Footnote` class.",
+        "Cast each node to `Footnote` before calling `Remove()`.",
+        "NodeType does not have an Endnote member – both footnotes and endnotes are retrieved with NodeType.Footnote.",
+        "Do not reference a non‑existent 'Endnote' type; use Footnote.FootnoteType to differentiate footnote vs endnote.",
+        "Remove the non‑existent `Aspose.Words.Notes` namespace; footnote classes live in `Aspose.Words`.",
+        "Footnote and endnote objects are both of type `Footnote`; removing all `NodeType.Footnote` nodes eliminates both.",
+        "Footnotes and endnotes are both instances of the Footnote class; use NodeType.Footnote to retrieve them.",
+        "Use the Aspose.Words.Notes namespace for Footnote and FootnoteSeparator types.",
+        "Do not reference NodeType.Endnote – endnotes are represented by the Footnote class with IsEndnote property, and GetChildNodes(NodeType.Footnote) returns both footnotes and endnotes.",
+        "Remove notes by iterating over doc.GetChildNodes(NodeType.Footnote, true) and calling Remove() on each Footnote instance.",
+        "Use NodeType.Footnote only – Aspose.Words does not expose a separate NodeType.Endnote.",
+        "If you also need to delete footnote separators, uncomment the optional block.",
+        "Use the correct NodeType members (Footnote and Endnote) that exist in Aspose.Words.",
+        "If required, also remove the footnote/endnote separator symbols via the FootnoteSeparators collection.",
+        "Footnote indices are zero‑based; adjust `footnoteIndex` to target the correct footnote.",
+        "Use `doc.GetChild(NodeType.Footnote, index, true)` to locate a footnote anywhere in the document.",
+        "Call `footnote.Remove()` to delete the footnote node.",
+        "Use fully qualified Aspose.Words types (`Document`, `Paragraph`, `Section`, `Node`).",
+        "Ensure the destination document has at least one section by calling `EnsureMinimum()`.",
+        "Keep the `using Aspose.Words;` directive; it provides access to Document, Paragraph, Section, NodeImporter, etc.",
+        "Use Document.EnsureMinimum() to guarantee a section and body exist before appending nodes.",
+        "Append the imported paragraph to an existing section/body rather than creating a new Section manually (simpler and avoids duplicate sections)."
+      ]
+    }
+  }
+}

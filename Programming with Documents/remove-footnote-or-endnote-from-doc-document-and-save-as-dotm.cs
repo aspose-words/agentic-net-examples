@@ -1,14 +1,25 @@
-// Load the existing DOC document
-var doc = new Aspose.Words.Document("InputDocument.doc");
+using System;
+using Aspose.Words;
+using Aspose.Words.Notes;
 
-// Collect all footnote and endnote nodes in the document
-var footnoteNodes = doc.GetChildNodes(Aspose.Words.NodeType.Footnote, true);
-
-// Remove each footnote/endnote from its parent
-foreach (Aspose.Words.Notes.Footnote footnote in footnoteNodes)
+class RemoveNotesExample
 {
-    footnote.Remove();
-}
+    static void Main()
+    {
+        // Load the existing DOC document.
+        Document doc = new Document("InputDocument.doc");
 
-// Save the modified document as a DOTM template
-doc.Save("OutputDocument.dotm", Aspose.Words.SaveFormat.Dotm);
+        // In Aspose.Words both footnotes and endnotes are represented by the Footnote node type.
+        // Collect all footnote (including endnote) nodes in the document.
+        NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
+
+        // Remove each note from its parent. Iterate backwards to avoid index shifting after removal.
+        for (int i = notes.Count - 1; i >= 0; i--)
+        {
+            notes[i].Remove();
+        }
+
+        // Save the modified document as a DOTM (Word macro‑enabled template) file.
+        doc.Save("OutputDocument.dotm", SaveFormat.Dotm);
+    }
+}

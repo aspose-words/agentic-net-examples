@@ -1,30 +1,35 @@
+using System;
 using Aspose.Words;
 
-class Program
+class InsertParagraphFromDoc
 {
     static void Main()
     {
-        // Load the source DOC file.
-        Document srcDoc = new Document("Source.doc");
-
-        // Retrieve the first paragraph from the source document.
-        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
+        // Load the source DOC document that contains the paragraph to copy.
+        Document srcDoc = new Document("SourceDocument.doc");
 
         // Create a new blank destination document.
         Document dstDoc = new Document();
-        dstDoc.EnsureMinimum(); // Guarantees at least one section and body.
 
-        // Get the target section where the paragraph will be inserted.
-        Section targetSection = dstDoc.FirstSection;
+        // Create a new section in the destination document.
+        Section newSection = new Section(dstDoc);
+        // Append the new section to the document's node collection.
+        dstDoc.AppendChild(newSection);
 
-        // Import the paragraph node from the source document into the destination document.
-        NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
-        Paragraph importedParagraph = (Paragraph)importer.ImportNode(srcParagraph, true);
+        // Ensure the new section has a body (required to hold paragraphs).
+        Body body = new Body(dstDoc);
+        newSection.AppendChild(body);
 
-        // Append the imported paragraph to the body of the target section.
-        targetSection.Body.AppendChild(importedParagraph);
+        // Get the first paragraph from the source document (adjust as needed).
+        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
+
+        // Import the paragraph into the destination document's node hierarchy.
+        Node importedParagraph = dstDoc.ImportNode(srcParagraph, true);
+
+        // Append the imported paragraph to the new section's body.
+        body.AppendChild(importedParagraph);
 
         // Save the resulting document as DOCX.
-        dstDoc.Save("Result.docx");
+        dstDoc.Save("ResultDocument.docx");
     }
 }

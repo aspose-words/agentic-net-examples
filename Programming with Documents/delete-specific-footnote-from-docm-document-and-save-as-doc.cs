@@ -6,37 +6,25 @@ class DeleteFootnoteExample
 {
     static void Main()
     {
-        // Path to the source DOCM file.
-        string sourcePath = @"C:\Docs\SourceDocument.docm";
+        // Load the DOCM document. The file extension determines the format.
+        Document doc = new Document("InputDocument.docm");
 
-        // Path for the resulting DOC file.
-        string outputPath = @"C:\Docs\ResultDocument.doc";
-
-        // Load the DOCM document. The constructor determines the format automatically.
-        Document doc = new Document(sourcePath);
-
-        // Define the reference mark of the footnote you want to delete.
-        // If you want to delete by index, you can use the footnote's position in the collection instead.
-        string targetReferenceMark = "RefMarkToDelete";
-
-        // Retrieve all footnote nodes in the document.
+        // Retrieve all footnote nodes in the document (including those inside sections).
         NodeCollection footnotes = doc.GetChildNodes(NodeType.Footnote, true);
 
-        // Iterate through the collection to find the matching footnote.
-        foreach (Footnote footnote in footnotes)
+        // Example: delete the footnote whose reference mark equals "2".
+        // Adjust the condition as needed (e.g., by index, text content, etc.).
+        foreach (Footnote fn in footnotes)
         {
-            // Check if this footnote is a regular footnote (not an endnote) and matches the reference mark.
-            if (footnote.FootnoteType == FootnoteType.Footnote && footnote.ReferenceMark == targetReferenceMark)
+            // You can also use fn.GetText() or fn.IndexOf(...) to identify the target.
+            if (fn.ReferenceMark == "2")   // replace with your own criteria
             {
-                // Remove the footnote from its parent paragraph.
-                footnote.Remove();
-                // Exit after deleting the first matching footnote.
-                break;
+                fn.Remove();               // Removes the footnote from its parent.
+                break;                     // Exit after deleting the desired footnote.
             }
         }
 
-        // Save the modified document as a DOC file.
-        // The Save method infers the format from the file extension.
-        doc.Save(outputPath);
+        // Save the modified document as a DOC file. The format is inferred from the extension.
+        doc.Save("OutputDocument.doc");
     }
 }

@@ -3,6 +3,26 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
+// Simple stub implementation of IBarcodeGenerator.
+// In a real scenario you would generate a barcode image using a barcode library.
+class CustomBarcodeGenerator : IBarcodeGenerator
+{
+    // Generates a barcode image for DISPLAYBARCODE fields.
+    public Stream GetBarcodeImage(BarcodeParameters parameters)
+    {
+        // Return an empty stream as a placeholder.
+        // Replace this with actual barcode generation logic.
+        return new MemoryStream();
+    }
+
+    // Generates a barcode image for the older BARCODE fields.
+    public Stream GetOldBarcodeImage(BarcodeParameters parameters)
+    {
+        // Return an empty stream as a placeholder.
+        return new MemoryStream();
+    }
+}
+
 class Program
 {
     static void Main()
@@ -11,54 +31,31 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Assign a custom barcode generator (implementation must be provided by the user).
+        // Assign the custom barcode generator to the document.
         doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
-        // Set up barcode parameters – this example creates a QR code.
-        BarcodeParameters parameters = new BarcodeParameters
+        // Define barcode parameters for a QR code.
+        BarcodeParameters barcodeParameters = new BarcodeParameters
         {
-            BarcodeType = "QR",
-            BarcodeValue = "ABC123",
-            BackgroundColor = "0xF8BD69",
-            ForegroundColor = "0xB5413B",
-            ErrorCorrectionLevel = "3",
-            ScalingFactor = "250",
-            SymbolHeight = "1000",
-            SymbolRotation = "0"
+            BarcodeType = "QR",                 // Type of barcode.
+            BarcodeValue = "ABC123",            // Data to encode.
+            BackgroundColor = "0xF8BD69",       // Background color (hex).
+            ForegroundColor = "0xB5413B",       // Foreground color (hex).
+            ErrorCorrectionLevel = "3",         // QR error correction level.
+            ScalingFactor = "250",              // Scaling factor (percentage).
+            SymbolHeight = "1000",              // Height in twips.
+            SymbolRotation = "0"                // Rotation (0‑3).
         };
 
-        // Generate the barcode image, optionally save it, and insert it into the document.
-        using (Stream imgStream = doc.FieldOptions.BarcodeGenerator.GetBarcodeImage(parameters))
+        // Generate the barcode image and insert it into the document.
+        using (Stream img = doc.FieldOptions.BarcodeGenerator.GetBarcodeImage(barcodeParameters))
         {
-            // Save the image to a file (optional).
-            using (FileStream file = new FileStream("QRCode.jpg", FileMode.Create))
-            {
-                imgStream.CopyTo(file);
-            }
-
-            // Reset the stream position before inserting into the document.
-            imgStream.Position = 0;
-            builder.InsertImage(imgStream);
+            // Ensure the stream is positioned at the beginning before insertion.
+            img.Position = 0;
+            builder.InsertImage(img);
         }
 
-        // Save the resulting DOCX file.
+        // Save the resulting document to a DOCX file.
         doc.Save("BarcodeDocument.docx");
-    }
-}
-
-// Minimal placeholder implementation of IBarcodeGenerator.
-// In a real scenario, this class should generate a barcode image based on the supplied parameters.
-public class CustomBarcodeGenerator : IBarcodeGenerator
-{
-    public Stream GetBarcodeImage(BarcodeParameters parameters)
-    {
-        // Return an empty stream as a placeholder.
-        return new MemoryStream();
-    }
-
-    public Stream GetOldBarcodeImage(BarcodeParameters parameters)
-    {
-        // Return an empty stream as a placeholder.
-        return new MemoryStream();
     }
 }

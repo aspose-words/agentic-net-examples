@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -7,25 +7,29 @@ class RemoveTextBoxAndSaveAsDocm
 {
     static void Main()
     {
-        // Load the existing DOC document.
-        Document doc = new Document("InputDocument.doc");
+        // Path to the source DOC file.
+        string inputPath = @"C:\Docs\input.doc";
+
+        // Path for the resulting DOCM file.
+        string outputPath = @"C:\Docs\output.docm";
+
+        // Load the existing document (lifecycle: load rule).
+        Document doc = new Document(inputPath);
 
         // Collect all shapes that are text boxes.
-        List<Shape> textBoxShapes = new List<Shape>();
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        for (int i = shapes.Count - 1; i >= 0; i--)
         {
+            Shape shape = (Shape)shapes[i];
+            // Text boxes are represented by ShapeType.TextBox.
             if (shape.ShapeType == ShapeType.TextBox)
-                textBoxShapes.Add(shape);
+            {
+                // Remove the text box from its parent node.
+                shape.Remove();
+            }
         }
 
-        // Remove each text box from its parent node.
-        foreach (Shape textBox in textBoxShapes)
-        {
-            // The shape may be inside a paragraph; removing it will keep the paragraph intact.
-            textBox.Remove();
-        }
-
-        // Save the modified document as a macro‑enabled DOCM file.
-        doc.Save("OutputDocument.docm");
+        // Save the modified document as a macro‑enabled DOCM file (lifecycle: save rule).
+        doc.Save(outputPath, SaveFormat.Docm);
     }
 }

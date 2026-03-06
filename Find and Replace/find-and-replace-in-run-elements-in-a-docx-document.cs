@@ -1,27 +1,27 @@
 using System;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class RunReplaceExample
 {
     static void Main()
     {
-        // Load the DOCX file.
-        Document doc = new Document("Input.docx");
+        // Load an existing DOCX file.
+        Document doc = new Document(@"C:\Docs\Input.docx");
 
         // Text to find and its replacement.
-        string pattern = "_FullName_";
-        string replacement = "John Doe";
+        string findText = "_FullName_";
+        string replaceText = "John Doe";
 
-        // Perform a find‑and‑replace operation on the whole document.
-        // This method works on the underlying Run nodes, replacing the text wherever it occurs.
-        int replacedCount = doc.Range.Replace(pattern, replacement);
+        // Simple replace across the whole document (includes runs).
+        // The Range.Replace method processes the document's runs internally.
+        int replacements = doc.Range.Replace(findText, replaceText);
 
-        // Optional: use FindReplaceOptions for more control (e.g., case‑sensitive, whole‑word only).
-        // FindReplaceOptions options = new FindReplaceOptions { MatchCase = true, FindWholeWordsOnly = true };
-        // int replacedCount = doc.Range.Replace(pattern, replacement, options);
+        // Output the number of replacements made (optional).
+        Console.WriteLine($"Replacements performed: {replacements}");
 
-        // Save the updated document.
-        doc.Save("Output.docx");
+        // Save the modified document.
+        doc.Save(@"C:\Docs\Output.docx");
     }
 }

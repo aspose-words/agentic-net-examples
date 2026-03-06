@@ -2,43 +2,41 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class InsertTableExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Create a DocumentBuilder which will be used to insert content.
+        // DocumentBuilder provides a convenient API for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a new table. The method returns the Table node that was created.
         Table table = builder.StartTable();
 
-        // First row, first cell.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        // ---- First row ----
+        builder.InsertCell();               // First cell of the first row.
+        builder.Write("Row 1, Cell 1");    // Add text to the cell.
 
-        // First row, second cell.
-        builder.InsertCell();
+        builder.InsertCell();               // Second cell of the first row.
         builder.Write("Row 1, Cell 2");
 
-        // End the first row.
-        builder.EndRow();
+        builder.EndRow();                   // Finish the first row.
 
-        // Second row, first cell.
-        builder.InsertCell();
+        // ---- Second row ----
+        builder.InsertCell();               // First cell of the second row.
         builder.Write("Row 2, Cell 1");
 
-        // Second row, second cell.
-        builder.InsertCell();
+        builder.InsertCell();               // Second cell of the second row.
         builder.Write("Row 2, Cell 2");
 
-        // End the second row and the table.
-        builder.EndRow();
+        builder.EndRow();                   // Finish the second row.
+
+        // End the table construction.
         builder.EndTable();
 
-        // Save the document to a DOCX file.
-        doc.Save("TableInsert.docx");
+        // Save the document as a DOCX file.
+        doc.Save("TableExample.docx");
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -6,10 +7,10 @@ class Program
 {
     static void Main()
     {
-        // Load the existing DOCX document that contains OfficeMath objects.
+        // Load the existing DOCX document that contains OfficeMath content.
         Document doc = new Document("Input.docx");
 
-        // Configure the appearance of the text watermark.
+        // Configure the text watermark appearance.
         TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
         {
             FontFamily = "Arial",
@@ -19,11 +20,10 @@ class Program
             IsSemitrasparent = true
         };
 
-        // Apply the watermark to the entire document (it will appear behind all content,
-        // including any OfficeMath equations).
+        // Apply the watermark to the document.
         doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
 
-        // Save the watermarked document.
+        // Save the modified document.
         doc.Save("Output.docx");
     }
 }

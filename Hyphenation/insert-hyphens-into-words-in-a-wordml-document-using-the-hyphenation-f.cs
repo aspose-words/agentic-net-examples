@@ -1,23 +1,32 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Settings;
 
-class HyphenateDocument
+class Program
 {
     static void Main()
     {
-        // Load the existing WORDML document.
-        Document doc = new Document("Input.docx");
+        // Load the WORDML document.
+        string inputPath = "InputDocument.xml";
+        Document doc = new Document(inputPath);
 
-        // Enable automatic hyphenation for the whole document.
+        // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
+        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch from the right margin.
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2; // Max two consecutive hyphenated lines.
 
-        // Optional: fine‑tune hyphenation behavior.
-        doc.HyphenationOptions.HyphenationZone = 720;          // 0.5 inch from the right margin.
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;    // Max two consecutive hyphenated lines.
-        doc.HyphenationOptions.HyphenateCaps = true;         // Hyphenate all‑caps words.
+        // Register a hyphenation dictionary for the document language if needed.
+        // This example uses English (US); adjust the language code and dictionary file as required.
+        const string language = "en-US";
+        const string dictionaryFile = "hyph_en_US.dic";
 
-        // Save the document with hyphens applied.
-        doc.Save("Output.docx");
+        // The Hyphenation class resides directly under the Aspose.Words namespace, not in a separate namespace.
+        if (!Aspose.Words.Hyphenation.IsDictionaryRegistered(language))
+        {
+            Aspose.Words.Hyphenation.RegisterDictionary(language, dictionaryFile);
+        }
+
+        // Save the document; hyphens will be applied during layout.
+        string outputPath = "OutputDocument.docx";
+        doc.Save(outputPath);
     }
 }

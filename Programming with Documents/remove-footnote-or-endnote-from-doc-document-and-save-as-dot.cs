@@ -1,31 +1,23 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Notes;
 
-class RemoveFootnotesAndEndnotes
+class RemoveNotesAndSaveAsTemplate
 {
     static void Main()
     {
-        // Path to the source DOC file.
-        string inputPath = "input.doc";
+        // Load the existing DOC document.
+        Document doc = new Document("InputDocument.doc");
 
-        // Path for the resulting DOT file.
-        string outputPath = "output.dot";
-
-        // Load the existing document.
-        Document doc = new Document(inputPath);
-
-        // Remove the footnote separator (if it exists).
-        FootnoteSeparator footnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.FootnoteSeparator];
-        if (footnoteSeparator?.FirstParagraph?.FirstChild != null)
-            footnoteSeparator.FirstParagraph.FirstChild.Remove();
-
-        // Remove the endnote separator (if it exists).
-        FootnoteSeparator endnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.EndnoteSeparator];
-        if (endnoteSeparator?.FirstParagraph?.FirstChild != null)
-            endnoteSeparator.FirstParagraph.FirstChild.Remove();
+        // All footnotes and endnotes are represented by the Footnote node type.
+        // Retrieve the collection and remove the nodes in reverse order to avoid
+        // collection modification issues.
+        NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
+        for (int i = notes.Count - 1; i >= 0; i--)
+        {
+            notes[i].Remove();
+        }
 
         // Save the modified document as a DOT template.
-        doc.Save(outputPath, SaveFormat.Dot);
+        doc.Save("OutputTemplate.dot", SaveFormat.Dot);
     }
 }

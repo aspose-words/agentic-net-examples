@@ -7,18 +7,19 @@ class Program
     static void Main()
     {
         // Load the source DOC document.
-        Document doc = new Document("input.doc");
+        Document doc = new Document("InputDocument.docx");
 
-        // Find all shapes in the document and remove those that are text boxes.
+        // Find all shapes in the document (including those inside headers/footers).
         NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        for (int i = shapes.Count - 1; i >= 0; i--)
+
+        // Iterate through the collection and remove any shape that is a TextBox.
+        foreach (Shape shape in shapes)
         {
-            Shape shape = (Shape)shapes[i];
             if (shape.ShapeType == ShapeType.TextBox)
                 shape.Remove();
         }
 
-        // Save the cleaned document as PDF. The format is inferred from the file extension.
-        doc.Save("output.pdf");
+        // Save the modified document as PDF.
+        doc.Save("OutputDocument.pdf", SaveFormat.Pdf);
     }
 }

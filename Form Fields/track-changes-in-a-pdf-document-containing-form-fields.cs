@@ -1,36 +1,34 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Fields;
 
-class TrackChangesInPdfWithFormFields
+class TrackChangesPdfWithFormFields
 {
     static void Main()
     {
-        // Load a Word document that already contains form fields.
+        // Load an existing Word document that contains form fields.
+        // (Assumes the file "FormFields.docx" exists in the working directory.)
         Document doc = new Document("FormFields.docx");
 
-        // Begin tracking revisions programmatically.
-        doc.StartTrackRevisions("Reviewer");
+        // Start tracking revisions programmatically.
+        // All subsequent changes will be recorded as revision changes.
+        doc.StartTrackRevisions("Automated", DateTime.Now);
 
-        // Example modification: change the result of the first form field.
-        // This change will be recorded as an insertion revision.
-        FormField firstField = doc.Range.FormFields[0];
-        firstField.Result = "Updated value";
+        // Make a sample change – add a paragraph after the first one.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveToDocumentEnd();
+        builder.Writeln("This paragraph was added while tracking revisions.");
 
-        // Stop tracking further changes.
+        // Stop tracking revisions so further edits are not recorded.
         doc.StopTrackRevisions();
 
-        // Prepare PDF save options to preserve the form fields as interactive PDF fields.
+        // Configure PDF save options to preserve the Word form fields as interactive PDF form fields.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            PreserveFormFields = true,
-            // Optional: keep the original author name on the PDF revision annotations.
-            // The PDF format does not store revision authors directly, but the
-            // appearance of tracked changes will reflect the revisions made above.
+            PreserveFormFields = true
         };
 
-        // Save the document as PDF. The tracked changes will be visible in the PDF.
-        doc.Save("TrackedFormFields.pdf", pdfOptions);
+        // Save the document as PDF with the specified options.
+        doc.Save("TrackedChanges.pdf", pdfOptions);
     }
 }

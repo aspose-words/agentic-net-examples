@@ -9,14 +9,15 @@ class Program
         // Load the source DOCX file.
         Document doc = new Document("Template.docx");
 
-        // Define the merge fields and their corresponding values.
-        string[] fieldNames = { "FullName", "Company", "Address", "City" };
-        object[] fieldValues = { "James Bond", "MI5 Headquarters", "Milbank", "London" };
+        // Define the mail‑merge field names present in the document
+        // and the corresponding values to insert.
+        string[] fieldNames = { "FirstName", "LastName", "Address" };
+        object[] fieldValues = { "John", "Doe", "123 Main St" };
 
-        // Perform a mail merge for a single record.
+        // Execute a mail merge for a single record.
         doc.MailMerge.Execute(fieldNames, fieldValues);
 
-        // Save the resulting document as a PNG image (first page rendered).
-        doc.Save("MergedOutput.png", SaveFormat.Png);
+        // Render the first page of the merged document to a PNG image.
+        doc.Save("Result.png", SaveFormat.Png);
     }
 }

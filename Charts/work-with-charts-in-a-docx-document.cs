@@ -1,8 +1,8 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
 class Program
 {
@@ -11,41 +11,35 @@ class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Column chart with a specific size.
-        // Width and height are specified in points.
+        // Insert a column chart with a width of 500 points and a height of 300 points.
         Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo data series that Aspose.Words inserts by default.
+        // Remove the automatically generated demo series.
         chart.Series.Clear();
 
-        // Define categories for the X‑axis.
-        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        // Define categories (X‑axis) and corresponding values (Y‑axis).
+        string[] categories = { "Word", "PDF", "Excel", "GoogleDocs", "Note" };
+        double[] values = { 640, 320, 280, 120, 150 };
 
-        // Add two data series to the chart.
-        chart.Series.Add("Product A", categories, new double[] { 120, 150, 170, 200 });
-        chart.Series.Add("Product B", categories, new double[] { 80, 130, 160, 190 });
+        // Add a new series to the chart.
+        chart.Series.Add("Aspose Test Series", categories, values);
 
-        // Set the chart title.
-        ChartTitle title = chart.Title;
-        title.Text = "Quarterly Sales Comparison";
-        title.Font.Size = 14;
-        title.Font.Color = Color.DarkBlue;
-        title.Show = true;          // Ensure the title is visible.
-        title.Overlay = false;      // Do not allow other elements to overlap the title.
+        // Set and format the chart title.
+        chart.Title.Text = "Document Conversion Statistics";
+        chart.Title.Font.Size = 14;
+        chart.Title.Font.Color = Color.DarkBlue;
+        chart.Title.Show = true; // Ensure the title is visible.
 
-        // Format the chart background.
-        chart.Format.Fill.Solid(Color.LightYellow);
+        // Apply a solid fill to the chart background.
+        chart.Format.Fill.Solid(Color.LightGray);
 
-        // Hide axis tick labels for a cleaner look.
+        // Hide tick labels on both axes for a cleaner look.
         chart.AxisX.TickLabels.Position = AxisTickLabelPosition.None;
         chart.AxisY.TickLabels.Position = AxisTickLabelPosition.None;
-
-        // Optionally, format the legend background.
-        chart.Legend.Format.Fill.Solid(Color.LightGray);
 
         // Save the document to a DOCX file.
         doc.Save("ChartExample.docx");

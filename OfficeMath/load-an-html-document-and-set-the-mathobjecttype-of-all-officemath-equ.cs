@@ -7,22 +7,21 @@ class Program
 {
     static void Main()
     {
-        // Load the HTML document.
+        // Load the HTML document. HtmlLoadOptions can be customized if needed.
         var loadOptions = new HtmlLoadOptions();
         Document doc = new Document("input.html", loadOptions);
 
-        // Retrieve all OfficeMath nodes in the document.
-        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-
-        // Iterate through each OfficeMath node and set its display type to Display.
-        // (MathObjectType is read‑only; setting DisplayType changes how the equation is rendered,
-        // which is the closest operation to “integral” formatting in this context.)
-        foreach (OfficeMath om in officeMathNodes)
+        // Iterate through all OfficeMath nodes in the document.
+        // The MathObjectType property is read‑only, so we cannot change it directly.
+        // Instead, we set the display format to Inline, which is the typical
+        // representation for an integral (inline) equation.
+        foreach (OfficeMath officeMath in doc.GetChildNodes(NodeType.OfficeMath, true))
         {
-            om.DisplayType = OfficeMathDisplayType.Display;
+            // Set the equation to be displayed inline.
+            officeMath.DisplayType = OfficeMathDisplayType.Inline;
         }
 
         // Save the modified document.
-        doc.Save("output.docx");
+        doc.Save("output.html");
     }
 }

@@ -6,26 +6,21 @@ class Program
 {
     static void Main()
     {
-        // Load the source DOCX file.
-        Document doc = new Document("Input.docx");
+        // Load the existing DOCX document.
+        Document doc = new Document(@"C:\Docs\Input.docx");
 
-        // Configure find/replace options.
-        // Setting IgnoreFootnotes to false (default) ensures that footnotes and endnotes are included in the search.
+        // Configure find/replace options to include footnotes and endnotes.
         FindReplaceOptions options = new FindReplaceOptions
         {
+            // The default is false, but we set it explicitly for clarity.
             IgnoreFootnotes = false
         };
 
-        // Replace the target text throughout the entire document, including footnotes and endnotes.
-        int replacementsMade = doc.Range.Replace("old text", "new text", options);
-
-        // Optional: If you need to replace only inside footnotes/endnotes, iterate their ranges.
-        // foreach (Footnote footnote in doc.GetChildNodes(NodeType.Footnote, true))
-        // {
-        //     footnote.Range.Replace("old text", "new text");
-        // }
+        // Perform the replacement across the whole document, including footnotes/endnotes.
+        int replacements = doc.Range.Replace("OldText", "NewText", options);
+        Console.WriteLine($"Replacements made: {replacements}");
 
         // Save the modified document.
-        doc.Save("Output.docx");
+        doc.Save(@"C:\Docs\Output.docx");
     }
 }

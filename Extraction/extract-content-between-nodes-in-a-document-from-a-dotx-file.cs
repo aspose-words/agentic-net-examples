@@ -2,58 +2,51 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 
-class ExtractBetweenNodes
+class Program
 {
     static void Main()
     {
-        // Load the DOTX template.
-        Document template = new Document("Template.dotx");
+        // Load the DOTX template file.
+        Document doc = new Document("Template.dotx");
 
-        // Define the bookmark names that mark the start and end of the range to extract.
-        const string startBookmarkName = "Start";
-        const string endBookmarkName = "End";
+        // Example: define the start and end nodes.
+        // Here we use the first and third paragraphs in the main body.
+        // Adjust the indices as needed for your specific document.
+        Paragraph startNode = doc.FirstSection.Body.Paragraphs[0];
+        Paragraph endNode = doc.FirstSection.Body.Paragraphs[2];
 
-        // Locate the start and end bookmark nodes.
-        BookmarkStart startBookmark = template.Range.Bookmarks[startBookmarkName]?.BookmarkStart;
-        BookmarkEnd endBookmark = template.Range.Bookmarks[endBookmarkName]?.BookmarkEnd;
-
-        if (startBookmark == null || endBookmark == null)
+        if (startNode == null || endNode == null)
         {
-            Console.WriteLine("Start or End bookmark not found.");
+            Console.WriteLine("Start or end node not found.");
             return;
         }
 
-        // Create a new empty document that will hold the extracted content.
-        Document extracted = new Document();
-        // Remove the default section/paragraph that Aspose.Words creates.
-        extracted.RemoveAllChildren();
+        // Extract the text that lies between the two nodes (exclusive).
+        string betweenText = GetTextBetweenNodes(startNode, endNode);
 
-        // Create a single section and body for the destination document.
-        Section destSection = new Section(extracted);
-        extracted.AppendChild(destSection);
-        Body destBody = new Body(extracted);
-        destSection.AppendChild(destBody);
+        Console.WriteLine("Extracted text between the nodes:");
+        Console.WriteLine(betweenText);
+    }
 
-        // Prepare a NodeImporter for efficient node copying.
-        NodeImporter importer = new NodeImporter(template, extracted, ImportFormatMode.KeepSourceFormatting);
+    // Traverses the document in pre‑order and concatenates the text of all nodes
+    // that appear after 'start' and before 'end'.
+    static string GetTextBetweenNodes(Node start, Node end)
+    {
+        // Move to the node that follows the start node.
+        Node current = start.NextPreOrder(start.Document);
+        var parts = new List<string>();
 
-        // Collect all nodes that are between the start and end bookmarks (exclusive).
-        List<Node> nodesBetween = new List<Node>();
-        Node current = startBookmark.NextSibling;
-        while (current != null && current != endBookmark)
+        // Continue until we reach the end node or the document ends.
+        while (current != null && current != end)
         {
-            nodesBetween.Add(current);
-            current = current.NextSibling;
+            // Append the textual representation of the current node.
+            parts.Add(current.GetText());
+
+            // Advance to the next node in pre‑order traversal.
+            current = current.NextPreOrder(current.Document);
         }
 
-        // Import the collected nodes into the new document.
-        foreach (Node node in nodesBetween)
-        {
-            Node importedNode = importer.ImportNode(node, true);
-            destBody.AppendChild(importedNode);
-        }
-
-        // Save the extracted content to a new DOCX file.
-        extracted.Save("ExtractedContent.docx");
+        // Combine all collected parts into a single string.
+        return string.Concat(parts);
     }
 }

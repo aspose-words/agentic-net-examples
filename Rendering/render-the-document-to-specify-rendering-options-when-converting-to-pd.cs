@@ -6,26 +6,23 @@ class Program
 {
     static void Main()
     {
-        // Load the source document.
+        // Load the source Word document.
         Document doc = new Document("Input.docx");
 
-        // Create a PdfSaveOptions object to specify rendering options.
+        // Create PDF save options and configure rendering settings.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Render the PDF with high‑quality (slower) algorithms.
-            UseHighQualityRendering = true,
-
-            // Enable anti‑aliasing for smoother graphics.
+            // Enable anti‑aliasing for smoother edges.
             UseAntiAliasing = true,
-
-            // Render all colors in grayscale.
-            ColorMode = ColorMode.Grayscale,
-
-            // Embed all fonts fully into the PDF.
-            EmbedFullFonts = true
+            // Use high‑quality rendering (slower but better visual quality).
+            UseHighQualityRendering = true,
+            // Render DrawingML shapes directly instead of fallback shapes.
+            DmlRenderingMode = DmlRenderingMode.DrawingML,
+            // Preserve document structure for accessibility.
+            ExportDocumentStructure = true
         };
 
-        // Save the document as a PDF using the configured options.
+        // Save the document as a PDF using the specified options.
         doc.Save("Output.pdf", pdfOptions);
     }
 }

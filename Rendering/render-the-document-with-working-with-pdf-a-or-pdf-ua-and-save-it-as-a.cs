@@ -2,25 +2,43 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class PdfComplianceExample
 {
     static void Main()
     {
-        // Load an existing Word document.
-        Document doc = new Document("Input.docx");
+        // Path to the source Word document.
+        string inputPath = @"C:\Data\SampleDocument.docx";
+
+        // Path where the PDF files will be saved.
+        string outputPathPdfA2u = @"C:\Output\SampleDocument_PdfA2u.pdf";
+        string outputPathPdfUa2 = @"C:\Output\SampleDocument_PdfUa2.pdf";
+
+        // Load the Word document.
+        Document doc = new Document(inputPath);
 
         // -------------------------------------------------
-        // Save the document as PDF/A-1b (preserves visual appearance).
+        // Save as PDF/A-2u (preserves visual appearance and
+        // allows Unicode text extraction).
         // -------------------------------------------------
-        PdfSaveOptions pdfAOptions = new PdfSaveOptions();
-        pdfAOptions.Compliance = PdfCompliance.PdfA1b; // Set PDF/A-1b compliance.
-        doc.Save("Output_PdfA1b.pdf", pdfAOptions);
+        PdfSaveOptions pdfA2uOptions = new PdfSaveOptions
+        {
+            // Set the compliance level to PDF/A-2u.
+            Compliance = PdfCompliance.PdfA2u
+        };
+
+        // Save the document using the configured options.
+        doc.Save(outputPathPdfA2u, pdfA2uOptions);
 
         // -------------------------------------------------
-        // Save the document as PDF/UA-1 (accessibility compliant).
+        // Save as PDF/UA-2 (accessibility compliant PDF).
         // -------------------------------------------------
-        PdfSaveOptions pdfUaOptions = new PdfSaveOptions();
-        pdfUaOptions.Compliance = PdfCompliance.PdfUa1; // Set PDF/UA-1 compliance.
-        doc.Save("Output_PdfUa1.pdf", pdfUaOptions);
+        PdfSaveOptions pdfUa2Options = new PdfSaveOptions
+        {
+            // Set the compliance level to PDF/UA-2.
+            Compliance = PdfCompliance.PdfUa2
+        };
+
+        // Save the document using the configured options.
+        doc.Save(outputPathPdfUa2, pdfUa2Options);
     }
 }

@@ -1,21 +1,17 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing;
-using Aspose.Words.Rendering;
 
-namespace AsposeWordsPdfRendering
+namespace AsposeWordsExample
 {
-    // Custom warning collector that implements IWarningCallback.
+    // Implements a warning callback to capture formatting loss warnings during rendering.
     public class HandleDocumentWarnings : IWarningCallback
     {
-        // Collection that stores all captured warnings.
         public WarningInfoCollection Warnings { get; } = new WarningInfoCollection();
 
-        // This method is called by Aspose.Words whenever a warning occurs.
         public void Warning(WarningInfo info)
         {
-            // Capture only formatting‑loss warnings (you can adjust the filter as needed).
+            // Capture only minor formatting loss warnings (e.g., unsupported metafile operations).
             if (info.WarningType == WarningType.MinorFormattingLoss)
             {
                 Console.WriteLine($"Warning: {info.Description}");
@@ -28,36 +24,36 @@ namespace AsposeWordsPdfRendering
     {
         static void Main()
         {
-            // Paths to the input DOCX file and the output PDF file.
-            string inputPath = @"C:\Docs\Input.docx";
-            string outputPath = @"C:\Docs\Output.pdf";
-
             // Load the source document.
-            Document doc = new Document(inputPath);
+            Document doc = new Document("InputDocument.docx");
 
-            // Create a PdfSaveOptions instance to control PDF rendering.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-            // Example: configure metafile rendering to use vector with fallback.
-            MetafileRenderingOptions metafileOptions = new MetafileRenderingOptions
-            {
-                RenderingMode = MetafileRenderingMode.VectorWithFallback,
-                EmulateRasterOperations = false
-            };
-            pdfOptions.MetafileRenderingOptions = metafileOptions;
-
-            // Example: enable high‑quality rendering.
-            pdfOptions.UseHighQualityRendering = true;
-
-            // Attach the warning callback before any operation that may generate warnings.
-            HandleDocumentWarnings warningCallback = new HandleDocumentWarnings();
+            // Attach the warning callback before any layout or rendering occurs.
+            var warningCallback = new HandleDocumentWarnings();
             doc.WarningCallback = warningCallback;
 
-            // Save the document as PDF using the configured options.
-            doc.Save(outputPath, pdfOptions);
+            // Create a PdfSaveOptions object using the provided factory method.
+            SaveOptions saveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
+            PdfSaveOptions pdfOptions = (PdfSaveOptions)saveOptions;
 
-            // After saving, you can inspect the collected warnings.
-            Console.WriteLine($"Total warnings captured: {warningCallback.Warnings.Count}");
+            // Example: enable memory optimization for large documents.
+            pdfOptions.MemoryOptimization = true;
+
+            // Save the document as PDF while applying the warning handling.
+            doc.Save("RenderedOutput.pdf", pdfOptions);
+
+            // Output the collected warnings, if any.
+            if (warningCallback.Warnings.Count > 0)
+            {
+                Console.WriteLine("\nCollected warnings:");
+                foreach (WarningInfo info in warningCallback.Warnings)
+                {
+                    Console.WriteLine($"- {info.Description}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("\nNo warnings were generated during rendering.");
+            }
         }
     }
 }

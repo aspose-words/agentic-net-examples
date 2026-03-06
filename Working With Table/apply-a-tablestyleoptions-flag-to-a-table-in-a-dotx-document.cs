@@ -2,31 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class ApplyTableStyleOptions
 {
     static void Main()
     {
-        // Load the DOTX template.
-        Document doc = new Document("Template.dotx");
+        // Path to the folder that contains the DOTX template.
+        string dataDir = @"C:\Data\";
 
-        // Try to get the first table in the document.
-        Table table = doc.GetChild(NodeType.Table, 0, true) as Table;
+        // Load the DOTX document.
+        Document doc = new Document(dataDir + "Template.dotx");
 
-        // If the document does not contain a table, create a simple one.
+        // Retrieve the first table in the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         if (table == null)
         {
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            table = builder.StartTable();
-            builder.InsertCell();
-            builder.Writeln("Sample cell");
-            builder.EndTable();
+            Console.WriteLine("No table found in the document.");
+            return;
         }
 
-        // Apply the desired TableStyleOptions flags.
-        // Example: apply formatting to the first row and enable row banding.
+        // Apply desired style options (example: first row and row banding).
         table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
         // Save the modified document.
-        doc.Save("Result.docx");
+        doc.Save(dataDir + "Result.docx");
     }
 }

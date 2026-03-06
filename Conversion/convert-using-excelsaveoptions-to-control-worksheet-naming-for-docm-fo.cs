@@ -2,24 +2,24 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsExample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Load an existing Word document.
-            Document doc = new Document("MyDir/input.docx");
+        // Adjust these paths to point to your actual folders.
+        string MyDir = @"C:\Docs\";
+        string ArtifactsDir = @"C:\Output\";
 
-            // Create OoxmlSaveOptions for the DOCM format.
-            // The constructor that accepts a SaveFormat ensures the correct options type is used.
-            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
+        // Load an existing Word document.
+        Document doc = new Document(MyDir + "InputDocument.docx");
 
-            // Example of setting an additional option – disable embedding the generator name.
-            saveOptions.ExportGeneratorName = false;
+        // For a macro‑enabled DOCM file we must use OoxmlSaveOptions, not ExcelSaveOptions.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docm);
 
-            // Save the document as a macro‑enabled DOCM file using the specified options.
-            doc.Save("ArtifactsDir/output.docm", saveOptions);
-        }
+        // Optional: specify a custom template to be used when the document is saved.
+        // saveOptions.DefaultTemplate = MyDir + "CustomTemplate.dotx";
+
+        // Save the document as a DOCM file with the defined options.
+        doc.Save(ArtifactsDir + "OutputDocument.docm", saveOptions);
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
 class Program
 {
@@ -9,19 +10,20 @@ class Program
         // Load the existing DOCM document.
         Document doc = new Document("Input.docm");
 
-        // Retrieve all shapes in the document (including those inside headers/footers).
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-
-        // Iterate backwards so that removal does not affect the collection indexing.
-        for (int i = shapes.Count - 1; i >= 0; i--)
+        // Iterate through all Shape nodes in the document.
+        int shapeIndex = 0;
+        Shape shape = doc.GetChild(NodeType.Shape, shapeIndex, true) as Shape;
+        while (shape != null)
         {
-            Shape shape = (Shape)shapes[i];
-            // Identify text box shapes and remove them from the document tree.
+            // If the shape is a text box, remove it from its parent.
             if (shape.ShapeType == ShapeType.TextBox)
                 shape.Remove();
+
+            shapeIndex++;
+            shape = doc.GetChild(NodeType.Shape, shapeIndex, true) as Shape;
         }
 
-        // Save the modified document as a macro‑enabled template (DOTM).
-        doc.Save("Output.dotm");
+        // Save the modified document as a DOTM template.
+        doc.Save("Output.dotm", SaveFormat.Dotm);
     }
 }

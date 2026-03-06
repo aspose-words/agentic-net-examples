@@ -1,7 +1,6 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables;
 
 class Program
 {
@@ -36,7 +35,7 @@ class Program
             PreserveTableLayout = true
         };
 
-        // Save the document as a plain‑text file.
-        doc.Save("TableInTxt.txt", txtOptions);
+        // Save the document as a plain‑text file with the table layout preserved.
+        doc.Save("TableOutput.txt", txtOptions);
     }
 }
