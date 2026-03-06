@@ -56,8 +56,8 @@ dotnet build
 
 These namespaces should not appear in generated code unless a rule explicitly allows it:
 
-- [Aspose.Words.LowCode](Aspose.Words.LowCode)
-- [Aspose.Words.Internal](Aspose.Words.Internal)
+- Aspose.Words.LowCode
+- Aspose.Words.Internal
 
 ## DO / DO NOT
 
