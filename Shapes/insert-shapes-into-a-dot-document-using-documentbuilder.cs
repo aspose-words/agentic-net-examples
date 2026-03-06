@@ -1,35 +1,46 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
-class Program
+namespace ShapeInsertionExample
 {
-    static void Main()
+    class Program
     {
-        // Create a new empty document and associate a DocumentBuilder with it.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new empty document and associate a DocumentBuilder with it.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an inline rectangle shape with a width of 100 points and a height of 50 points.
-        Shape inlineShape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        // Set visual properties for the inline shape.
-        inlineShape.Stroke.Color = Color.Blue;
-        inlineShape.Fill.ForeColor = Color.LightGray;
+            // Insert a paragraph of text before the shapes.
+            builder.Writeln("Below are some shapes inserted using DocumentBuilder:");
 
-        // Insert a floating ellipse shape positioned 100 points from the left and top of the page.
-        Shape floatingShape = builder.InsertShape(
-            ShapeType.Ellipse,
-            RelativeHorizontalPosition.Page, 100,
-            RelativeVerticalPosition.Page, 100,
-            150, // width in points
-            100, // height in points
-            WrapType.None);
-        // Set visual properties for the floating shape.
-        floatingShape.Stroke.Color = Color.Red;
-        floatingShape.Fill.ForeColor = Color.Yellow;
+            // Insert an inline rectangle shape (width: 100 points, height: 50 points).
+            Shape inlineRectangle = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+            // Optional: set a fill color for the rectangle.
+            inlineRectangle.Fill.ForeColor = System.Drawing.Color.LightBlue;
+            // Move the cursor after the shape to continue inserting content.
+            builder.Writeln();
 
-        // Save the document to a file.
-        doc.Save("ShapesDocument.docx");
+            // Insert a floating ellipse shape positioned 100 points from the left and top of the page.
+            Shape floatingEllipse = builder.InsertShape(
+                ShapeType.Ellipse,
+                RelativeHorizontalPosition.Page, 100,   // Horizontal position
+                RelativeVerticalPosition.Page, 100,     // Vertical position
+                80, 80,                                 // Width and height
+                WrapType.None);                         // No text wrapping
+
+            // Set additional properties for the floating shape.
+            floatingEllipse.Fill.ForeColor = System.Drawing.Color.LightCoral;
+            floatingEllipse.Stroke.Color = System.Drawing.Color.DarkRed;
+
+            // Insert another paragraph after the floating shape.
+            builder.Writeln();
+            builder.Writeln("Shapes have been inserted.");
+
+            // Save the document to a DOCX file.
+            doc.Save("ShapesInserted.docx", SaveFormat.Docx);
+        }
     }
 }

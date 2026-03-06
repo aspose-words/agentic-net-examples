@@ -1,33 +1,35 @@
 using System;
-using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
 class AddWatermarkToDotm
 {
     static void Main()
     {
-        // Path to the folder that contains the DOTM template.
+        // Paths to the input DOTM template and the output document.
         string dataDir = @"C:\Data\";
+        string inputPath = Path.Combine(dataDir, "Template.dotm");
+        string outputPath = Path.Combine(dataDir, "TemplateWithWatermark.dotm");
 
-        // Load the existing DOTM document.
-        Document doc = new Document(Path.Combine(dataDir, "Template.dotm"));
+        // Load the DOTM document.
+        Document doc = new Document(inputPath);
 
         // Configure text watermark options.
         TextWatermarkOptions options = new TextWatermarkOptions
         {
             FontFamily = "Arial",
-            FontSize = 48,
+            FontSize = 36,
             Color = Color.Gray,
             Layout = WatermarkLayout.Diagonal,
             IsSemitrasparent = false
         };
 
         // Add the text watermark to the document.
-        doc.Watermark.SetText("CONFIDENTIAL", options);
+        doc.Watermark.SetText("Confidential", options);
 
-        // Save the document with the watermark applied.
-        doc.Save(Path.Combine(dataDir, "Template_Watermarked.dotm"));
+        // Save the document with the watermark.
+        doc.Save(outputPath);
     }
 }

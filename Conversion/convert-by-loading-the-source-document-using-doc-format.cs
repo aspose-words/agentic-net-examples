@@ -1,23 +1,26 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsDemo
 {
-    static void Main()
+    class Program
     {
-        // Path to the source document (DOC format)
-        string sourcePath = @"C:\Docs\SourceDocument.doc";
+        static void Main()
+        {
+            // Path to the source DOC file.
+            string sourcePath = @"C:\Docs\SourceDocument.doc";
 
-        // Create LoadOptions and explicitly set the LoadFormat to DOC.
-        // This forces Aspose.Words to treat the input as a legacy Word document.
-        LoadOptions loadOptions = new LoadOptions(LoadFormat.Doc, "", "");
+            // Specify that the document to be loaded is in DOC format.
+            LoadOptions loadOptions = new LoadOptions(LoadFormat.Doc, string.Empty, string.Empty);
 
-        // Load the document using the constructor that accepts a filename and LoadOptions.
-        Document doc = new Document(sourcePath, loadOptions);
+            // Load the document using the constructor that accepts a file name and LoadOptions.
+            Document doc = new Document(sourcePath, loadOptions);
 
-        // At this point the document is loaded and can be processed.
-        // Example: output the first paragraph's text to the console.
-        Console.WriteLine(doc.FirstSection.Body.FirstParagraph.GetText().Trim());
+            // Example: save the loaded document as DOCX (optional, demonstrates saving).
+            string outputPath = @"C:\Docs\ConvertedDocument.docx";
+            doc.Save(outputPath, SaveFormat.Docx);
+        }
     }
 }

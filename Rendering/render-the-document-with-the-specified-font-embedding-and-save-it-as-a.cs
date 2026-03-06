@@ -2,32 +2,24 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class FontEmbeddingPdfExample
+class Program
 {
     static void Main()
     {
-        // Load an existing document or create a new one.
-        // Here we create a new document for demonstration.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text with custom font settings.");
+        // Load the source document.
+        Document doc = new Document("Input.docx");
 
-        // Prepare PDF save options.
-        PdfSaveOptions options = new PdfSaveOptions();
+        // Create PDF save options.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
-        // Specify the desired font embedding mode.
-        // PdfFontEmbeddingMode can be EmbedAll, EmbedNonstandard, or EmbedNone.
-        // Replace 'pdfFontEmbeddingMode' with the required enum value.
-        PdfFontEmbeddingMode pdfFontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll;
-        options.FontEmbeddingMode = pdfFontEmbeddingMode;
+        // Specify the font embedding mode.
+        // Options: EmbedAll, EmbedNonstandard, EmbedNone.
+        pdfOptions.FontEmbeddingMode = PdfFontEmbeddingMode.EmbedNonstandard;
 
-        // Optionally control whether fonts are fully embedded (no subsetting).
-        // Set to true to embed the complete font file.
-        bool embedFullFonts = false;
-        options.EmbedFullFonts = embedFullFonts;
+        // Determine whether to embed full fonts (true) or subset them (false).
+        pdfOptions.EmbedFullFonts = true;
 
-        // Save the document as PDF with the configured font embedding options.
-        string outputPath = "RenderedDocument.pdf";
-        doc.Save(outputPath, options);
+        // Save the document as a PDF using the configured options.
+        doc.Save("Output.pdf", pdfOptions);
     }
 }

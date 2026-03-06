@@ -2,20 +2,27 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class DocxToMarkdownConverter
 {
     static void Main()
     {
-        // Load the source DOCX document from the file system.
-        Document doc = new Document("input.docx");
+        // Path to the source DOCX file.
+        string sourcePath = "Document.docx";
 
-        // Create Markdown save options. This object controls how the document is exported to Markdown.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
+        // Path where the resulting Markdown file will be saved.
+        string outputPath = "Document.md";
 
-        // Explicitly set the save format to Markdown (optional, but ensures correctness).
-        saveOptions.SaveFormat = SaveFormat.Markdown;
+        // Load the DOCX document.
+        Document doc = new Document(sourcePath);
 
-        // Save the document as a Markdown file using the specified options.
-        doc.Save("output.md", saveOptions);
+        // Configure Markdown save options.
+        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
+        {
+            // Explicitly set the format to Markdown (optional, but clarifies intent).
+            SaveFormat = SaveFormat.Markdown
+        };
+
+        // Save the document as Markdown.
+        doc.Save(outputPath, saveOptions);
     }
 }

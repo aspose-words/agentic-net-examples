@@ -1,23 +1,21 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
         // Path to the source DOCX file.
-        string sourcePath = "input.docx";
+        string sourcePath = "source.docx";
 
-        // Create LoadOptions that explicitly specify the DOCX format.
-        // The constructor (LoadFormat, string, string) allows setting the format,
-        // password (empty here), and base URI (empty here).
-        LoadOptions loadOptions = new LoadOptions(LoadFormat.Docx, "", "");
+        // Path to the output file (example: PDF).
+        string outputPath = "converted.pdf";
 
-        // Open the document using the specified LoadOptions.
-        Document doc = new Document(sourcePath, loadOptions);
+        // Open the source document using the DOCX format.
+        Document document = new Document(sourcePath);
 
-        // Example conversion: save the opened document as PDF.
-        doc.Save("output.pdf", SaveFormat.Pdf);
+        // Convert and save the document to the desired format.
+        document.Save(outputPath, SaveFormat.Pdf);
     }
 }

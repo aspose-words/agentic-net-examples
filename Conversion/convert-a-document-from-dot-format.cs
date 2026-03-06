@@ -1,15 +1,23 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-class ConvertDot
+namespace AsposeWordsExamples
 {
-    static void Main()
+    class DotConversion
     {
-        // Load the DOT (Word template) file.
-        Document doc = new Document("Template.dot");
+        static void Main()
+        {
+            // Path to the folder that contains the source .dot file.
+            string inputPath = @"C:\Docs\Template.dot";
 
-        // Convert and save the document to DOCX format.
-        doc.Save("Converted.docx", SaveFormat.Docx);
+            // Load the DOT (Word template) document.
+            Document doc = new Document(inputPath);
+
+            // Path for the converted document.
+            string outputPath = @"C:\Docs\Converted.docx";
+
+            // Save the document in DOCX format.
+            doc.Save(outputPath, SaveFormat.Docx);
+        }
     }
 }

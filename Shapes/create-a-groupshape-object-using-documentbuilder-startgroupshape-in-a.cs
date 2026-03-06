@@ -1,65 +1,56 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-namespace GroupShapeExample
+class CreateGroupShapeExample
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
+        // Create a new empty document.
+        Document doc = new Document();
+
+        // Initialize DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Create a GroupShape. This object will act as a container for other shapes.
+        GroupShape group = new GroupShape(doc)
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            // Set the size of the group. The size should be large enough to contain all child shapes.
+            Width = 250,
+            Height = 120,
+            // Optional: set the position of the group relative to the page.
+            Left = 0,
+            Top = 0,
+            // Optional: make the group inline so it behaves like a regular picture.
+            WrapType = WrapType.Inline
+        };
 
-            // Initialize a DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert the group shape at the current cursor position.
+        builder.InsertNode(group);
 
-            // ---------------------------------------------------------------------
-            // NOTE: The DocumentBuilder.StartGroupShape / EndGroupShape methods are
-            // available only in recent versions of Aspose.Words (v23.5+). If you are
-            // using an older version, create the GroupShape manually as shown
-            // below.
-            // ---------------------------------------------------------------------
+        // Create a rectangle shape and add it to the group.
+        Shape rectangle = new Shape(doc, ShapeType.Rectangle)
+        {
+            Width = 100,
+            Height = 100,
+            Left = 0,
+            Top = 0,
+            Stroke = { Color = Color.Blue }
+        };
+        group.AppendChild(rectangle);
 
-            // Create a GroupShape and insert it at the builder's current position.
-            GroupShape group = new GroupShape(doc);
-            builder.InsertNode(group);
+        // Create an ellipse shape and add it to the group.
+        Shape ellipse = new Shape(doc, ShapeType.Ellipse)
+        {
+            Width = 80,
+            Height = 80,
+            Left = 120,
+            Top = 0,
+            Stroke = { Color = Color.Green }
+        };
+        group.AppendChild(ellipse);
 
-            // Move the builder's cursor inside the newly created group so that any
-            // subsequent nodes are added as children of the group.
-            builder.MoveTo(group);
-
-            // -----------------------------------------------------------------
-            // Add a rectangle shape to the group.
-            // -----------------------------------------------------------------
-            Shape rect = new Shape(doc, ShapeType.Rectangle)
-            {
-                Width = 150,
-                Height = 100,
-                FillColor = Color.LightBlue,
-                Stroke = { Color = Color.DarkBlue }
-            };
-            group.AppendChild(rect);
-
-            // -----------------------------------------------------------------
-            // Add a star shape to the group.
-            // -----------------------------------------------------------------
-            Shape star = new Shape(doc, ShapeType.Star)
-            {
-                Width = 80,
-                Height = 80,
-                FillColor = Color.Yellow,
-                Stroke = { Color = Color.Orange }
-            };
-            group.AppendChild(star);
-
-            // (Optional) Move the builder back to the document body if you need to
-            // continue adding content outside the group.
-            builder.MoveToDocumentEnd();
-
-            // Save the document as DOCX.
-            doc.Save("GroupShape_StartGroupShape.docx");
-        }
+        // Save the document to a DOCX file.
+        doc.Save("GroupShape.docx");
     }
 }

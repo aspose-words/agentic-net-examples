@@ -1,38 +1,24 @@
 using System;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Math;
-using Aspose.Words.Rendering;
-using Aspose.Words.Saving;
 
-class Program
+class RenderSmartArtWithOfficeMath
 {
     static void Main()
     {
-        // Load a DOCX that already contains SmartArt with OfficeMath objects.
-        Document doc = new Document("SmartArtWithMath.docx");
+        // Load an existing DOCX that contains SmartArt with OfficeMath objects.
+        Document doc = new Document("SmartArtOfficeMath.docx");
 
-        // Ensure that all SmartArt drawings are rendered using Aspose.Words' cold rendering engine.
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        // Iterate through all shapes in the document.
+        // The UpdateSmartArtDrawing method will refresh the pre‑rendered drawing
+        // for SmartArt shapes, invoking Aspose.Words's cold rendering engine.
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
         {
             shape.UpdateSmartArtDrawing();
         }
 
-        // Render each OfficeMath object to a separate PNG image.
-        int mathIndex = 0;
-        foreach (OfficeMath math in doc.GetChildNodes(NodeType.OfficeMath, true))
-        {
-            // Configure image rendering options (e.g., increase scale for higher resolution).
-            ImageSaveOptions imgOptions = new ImageSaveOptions(SaveFormat.Png)
-            {
-                Scale = 3 // render at three times the original size
-            };
-
-            string imagePath = $"OfficeMath_{mathIndex++}.png";
-            math.GetMathRenderer().Save(imagePath, imgOptions);
-        }
-
-        // Save the document with updated SmartArt drawings.
-        doc.Save("SmartArtWithMath_Updated.docx");
+        // Save the document. The SmartArt now contains correctly rendered OfficeMath content.
+        doc.Save("SmartArtOfficeMath_Rendered.docx");
     }
 }

@@ -2,29 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Layout;
-using Aspose.Words.Drawing;
 
-// Load the original and edited documents.
-string docsPath = @"C:\Docs\";
-Document docOriginal = new Document(docsPath + "Original.docx");
-Document docEdited   = new Document(docsPath + "Edited.docx");
-
-// Ensure both documents have no revisions before comparison.
-if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
+class Program
 {
-    // Compare the documents – revisions will be added to docOriginal.
-    docOriginal.Compare(docEdited, "Author", DateTime.Now);
+    static void Main()
+    {
+        // Load the original and edited documents.
+        Document original = new Document("Original.docx");
+        Document edited = new Document("Edited.docx");
+
+        // Compare the documents. Revisions will be added to the original document.
+        original.Compare(edited, "Author", DateTime.Now);
+
+        // Customize how revisions are displayed in the layout.
+        // For example, hide revision bars and set the view to the final (revised) version.
+        original.LayoutOptions.RevisionOptions.ShowRevisionBars = false;
+        original.RevisionsView = RevisionsView.Final;
+
+        // Create XPS save options. Enable output optimization if desired.
+        XpsSaveOptions xpsOptions = new XpsSaveOptions();
+        xpsOptions.OptimizeOutput = true;
+
+        // Save the comparison result as an XPS file.
+        original.Save("ComparisonResult.xps", xpsOptions);
+    }
 }
-
-// Show the revised version (with tracked changes) in the layout.
-docOriginal.RevisionsView = RevisionsView.Final;
-
-// Optional: customize how revisions are rendered.
-docOriginal.LayoutOptions.RevisionOptions.ShowRevisionBars = true;
-docOriginal.LayoutOptions.RevisionOptions.RevisionBarsPosition = HorizontalAlignment.Outside;
-docOriginal.LayoutOptions.RevisionOptions.InsertedTextColor = RevisionColor.BrightGreen;
-
-// Save the comparison result as XPS.
-XpsSaveOptions xpsOptions = new XpsSaveOptions();
-xpsOptions.OptimizeOutput = false; // keep original layout fidelity
-docOriginal.Save(docsPath + "ComparisonResult.xps", xpsOptions);

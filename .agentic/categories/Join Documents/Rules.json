@@ -1,0 +1,20 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Comment rules": [
+        "Add a comment clarifying why the import was removed."
+      ],
+      "Bookmark rules": [
+        "If you need to insert into an existing DOCX, replace `new Document()` with `new Document(destPath)` before adding the bookmark."
+      ],
+      "Document merge/insert rules": [
+        "Remove the non‑existent `using Aspose.Words.Import;` directive – `ImportFormatMode` resides in the `Aspose.Words` namespace.",
+        "Ensure the Aspose.Words NuGet package version is compatible (v23.5+ includes `ImportFormatMode` in the root namespace).",
+        "Keep the rest of the logic unchanged – import nodes via NodeImporter and insert them after the placeholder paragraph.",
+        "Remove the non‑existent namespace import: `using Aspose.Words.Importing;`.",
+        "Keep the three `ImportFormatMode` demonstrations unchanged – they illustrate `UseDestinationStyles`, `KeepSourceFormatting`, and `KeepDifferentStyles`."
+      ]
+    }
+  }
+}

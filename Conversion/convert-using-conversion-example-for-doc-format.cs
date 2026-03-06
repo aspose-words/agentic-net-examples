@@ -7,15 +7,14 @@ namespace AsposeWordsConversionExample
     {
         static void Main()
         {
-            // Define input and output locations.
-            // Replace these with actual paths in your environment.
-            string inputPath = @"C:\MyDir\Document.docx";
-            string outputPath = @"C:\ArtifactsDir\Document.ConvertToDoc.doc";
+            // Define input and output paths.
+            string inputPath = @"MyDir\Document.docx";          // Source document (any supported format)
+            string outputPath = @"ArtifactsDir\Document.ConvertToDoc.doc"; // Destination in DOC format
 
-            // Load the source document (DOCX) using the Document constructor.
+            // Load the source document.
             Document doc = new Document(inputPath);
 
-            // Save the document in the legacy DOC format.
+            // Save the document in the legacy Microsoft Word 97‑2007 DOC format.
             doc.Save(outputPath, SaveFormat.Doc);
         }
     }

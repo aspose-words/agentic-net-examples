@@ -2,32 +2,61 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class WordToPngConverter
+public class WordToPngConverter
 {
-    static void Main()
+    /// <summary>
+    /// Converts a single page of a Word document to a PNG image.
+    /// </summary>
+    /// <param name="inputFile">Full path to the source .doc/.docx file.</param>
+    /// <param name="outputFile">Full path where the PNG image will be saved.</param>
+    /// <param name="pageIndex">Zero‑based index of the page to render.</param>
+    public static void ConvertPageToPng(string inputFile, string outputFile, int pageIndex)
     {
-        // Path to the source Word document.
-        string inputPath = @"C:\Docs\Sample.docx";
-
-        // Path to the output PNG image.
-        // This will contain the rendered page.
-        string outputPath = @"C:\Docs\Sample_Page1.png";
-
-        // Load the Word document from the file system.
-        Document doc = new Document(inputPath);
+        // Load the document from the file system.
+        Document doc = new Document(inputFile);
 
         // Create ImageSaveOptions for PNG format.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
 
-        // Specify which page to render.
-        // PageSet uses zero‑based page index, so 0 = first page.
-        options.PageSet = new PageSet(0);
+        // Restrict rendering to the specified page.
+        options.PageSet = new PageSet(pageIndex);
 
-        // Optional: set resolution or background color if needed.
-        // options.Resolution = 300;               // 300 DPI
-        // options.PaperColor = System.Drawing.Color.Transparent;
+        // Optional: set resolution (dpi) if higher quality is required.
+        // options.Resolution = 300;
 
         // Save the selected page as a PNG image.
-        doc.Save(outputPath, options);
+        doc.Save(outputFile, options);
+    }
+}
+
+public class Program
+{
+    // Entry point required for a console application.
+    public static void Main(string[] args)
+    {
+        // Expected arguments: <inputFile> <outputFile> <pageIndex>
+        if (args.Length != 3)
+        {
+            Console.WriteLine("Usage: <inputFile> <outputFile> <pageIndex (zero‑based)>");
+            return;
+        }
+
+        string inputFile = args[0];
+        string outputFile = args[1];
+        if (!int.TryParse(args[2], out int pageIndex))
+        {
+            Console.WriteLine("Invalid page index.");
+            return;
+        }
+
+        try
+        {
+            WordToPngConverter.ConvertPageToPng(inputFile, outputFile, pageIndex);
+            Console.WriteLine($"Page {pageIndex + 1} saved to '{outputFile}'.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
     }
 }

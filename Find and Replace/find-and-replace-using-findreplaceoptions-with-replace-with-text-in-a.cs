@@ -6,25 +6,26 @@ class FindReplaceExample
 {
     static void Main()
     {
-        // Load the source DOCX document.
+        // Load an existing DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Configure find/replace options.
+        // Create a FindReplaceOptions object to customize the replace operation.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            // Perform a case‑insensitive search.
+            // Example: make the search case‑insensitive.
             MatchCase = false,
-            // Replace only whole‑word matches.
+            // Example: replace only whole words.
             FindWholeWordsOnly = true
         };
 
-        // Replace all occurrences of the placeholder with the desired text.
-        int replacementsMade = doc.Range.Replace("_FullName_", "John Doe", options);
+        // Perform the find‑and‑replace on the whole document range.
+        // Replace every occurrence of the placeholder "_FullName_" with "John Doe".
+        int replacements = doc.Range.Replace("_FullName_", "John Doe", options);
 
-        // Optionally, output the number of replacements performed.
-        Console.WriteLine($"Replacements made: {replacementsMade}");
+        // Output the number of replacements made (optional).
+        Console.WriteLine($"Replacements performed: {replacements}");
 
-        // Save the updated document.
+        // Save the modified document.
         doc.Save("Output.docx");
     }
 }

@@ -1,20 +1,25 @@
 using System;
 using Aspose.Words;
 
-class Program
+namespace AsposeWordsExample
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOCX file.
-        string inputPath = @"MyDir\Document.docx";
+        static void Main(string[] args)
+        {
+            // Path to the source document (DOCX, DOC, etc.).
+            string inputPath = @"C:\Docs\ExampleDocument.docx";
 
-        // Path where the resulting PDF will be saved.
-        string outputPath = @"ArtifactsDir\Document.ConvertToPdf.pdf";
+            // Path where the PDF will be saved.
+            string outputPath = @"C:\Docs\ExampleDocument.pdf";
 
-        // Load the existing Word document.
-        Document doc = new Document(inputPath);
+            // Load the existing document from the file system.
+            Document doc = new Document(inputPath);
 
-        // Save the document as PDF. The format is inferred from the .pdf extension.
-        doc.Save(outputPath);
+            // Save the document as PDF. The format is inferred from the .pdf extension.
+            doc.Save(outputPath);
+
+            Console.WriteLine("Document successfully converted to PDF.");
+        }
     }
 }

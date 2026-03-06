@@ -1,0 +1,34 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Images/Shapes/OLE rules": [
+        "Add the missing using directive for Aspose.Words.Drawing, which contains the Shape class.",
+        "Add `using Aspose.Words.Drawing;` because the `Shape` class resides in that namespace.",
+        "Ensure the project references the Aspose.Words.dll that contains the Drawing namespace.",
+        "Add the missing using directive for the Aspose.Words.Drawing namespace, which contains the Shape class.",
+        "Add the missing using directive for Aspose.Words.Drawing to resolve the Shape class.",
+        "Add `using Aspose.Words.Drawing;` because `Shape` resides in that namespace.",
+        "If targeting .NET 6+ and System.Drawing is not available, add the `System.Drawing.Common` NuGet package.",
+        "Include the missing using directive for Aspose.Words.Drawing to resolve the Shape class.",
+        "Add the missing using directive for Aspose.Words.Drawing to resolve the Shape type.",
+        "Add the missing `using Aspose.Words.Drawing;` directive to bring the `Shape` class into scope."
+      ],
+      "Charts rules": [
+        "Keep existing using directives for Aspose.Words.Drawing.Charts and other namespaces.",
+        "Do not change the logic of chart creation; only fix compilation issues.",
+        "Keep `using Aspose.Words.Drawing.Charts;` for `Chart`, `ChartType`, and related chart APIs.",
+        "Do not rename or remove existing code that sets up the document and chart data.",
+        "Keep the existing using for Aspose.Words.Drawing.Charts to access Chart, ChartType, etc.",
+        "Keep existing using directives for Aspose.Words.Drawing.Charts to work with Chart, ChartSeries, etc.",
+        "Keep existing using directives for Aspose.Words.Drawing.Charts and System.Drawing.",
+        "Keep the existing `using Aspose.Words.Drawing.Charts;` for chart‑related types.",
+        "Keep the Aspose.Words.Drawing.Charts namespace for chart‑related types.",
+        "Ensure the code compiles with .NET 6+ and Aspose.Words for .NET version that supports chart APIs.",
+        "Keep existing using directives for Aspose.Words and Aspose.Words.Drawing.Charts.",
+        "Keep existing `using Aspose.Words.Drawing.Charts;` for chart‑related types.",
+        "Keep the existing using for Aspose.Words.Drawing.Charts to access Chart, AxisBound, etc."
+      ]
+    }
+  }
+}

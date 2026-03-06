@@ -1,8 +1,9 @@
+using System;
 using System.Data;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class BarcodeExample
 {
     static void Main()
     {
@@ -10,11 +11,14 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a MERGEBARCODE field. The field will be populated from a data source during mail merge.
+        // Insert a MERGEBARCODE field. The field will be replaced by a DISPLAYBARCODE
+        // field for each row of the data source during mail merge.
+        // The field is set to read the value from the column "MyQRCode".
         FieldMergeBarcode mergeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
-        mergeField.BarcodeType = "QR";               // QR code type
-        mergeField.BarcodeValue = "MyQRCode";        // Column name in the data source
-        // Optional visual customizations.
+        mergeField.BarcodeType = "QR";          // QR code type
+        mergeField.BarcodeValue = "MyQRCode";   // column name in the data source
+
+        // Optional: customize appearance (background, foreground, error correction, etc.).
         mergeField.BackgroundColor = "0xF8BD69";
         mergeField.ForegroundColor = "0xB5413B";
         mergeField.ErrorCorrectionLevel = "3";
@@ -22,26 +26,19 @@ class Program
         mergeField.SymbolHeight = "1000";
         mergeField.SymbolRotation = "0";
 
-        // Add a paragraph break after the MERGEBARCODE field.
+        // Add a line break after the field so each barcode appears on its own line.
         builder.Writeln();
 
-        // Prepare a DataTable that matches the MERGEBARCODE field's BarcodeValue column.
+        // Prepare a data table that will be used for mail merge.
         DataTable table = new DataTable("Barcodes");
         table.Columns.Add("MyQRCode");
         table.Rows.Add(new object[] { "ABC123" });
         table.Rows.Add(new object[] { "DEF456" });
 
-        // Perform mail merge. Each row creates a DISPLAYBARCODE field that displays the QR code.
+        // Perform mail merge – each row creates a DISPLAYBARCODE field with the QR code.
         doc.MailMerge.Execute(table);
 
-        // Insert a DISPLAYBARCODE field directly (without mail merge) as an additional example.
-        builder.Writeln(); // separate paragraph
-        FieldDisplayBarcode displayField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        displayField.BarcodeType = "CODE39";
-        displayField.BarcodeValue = "12345ABCDE";
-        displayField.AddStartStopChar = true; // show start/stop characters
-
-        // Save the resulting DOCX document.
-        doc.Save("BarcodeDocument.docx");
+        // Save the resulting document as DOCX.
+        doc.Save("BarcodeMerge.docx");
     }
 }

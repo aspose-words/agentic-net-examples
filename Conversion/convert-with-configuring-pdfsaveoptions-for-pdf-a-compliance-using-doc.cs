@@ -8,13 +8,13 @@ class Program
         // Load the source DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Create a PdfSaveOptions object to configure PDF saving behavior.
+        // Create a PdfSaveOptions instance to customize PDF output.
         PdfSaveOptions saveOptions = new PdfSaveOptions();
 
-        // Set the PDF/A compliance level (e.g., PDF/A-1b).
+        // Configure the PDF/A compliance level (e.g., PDF/A-1b).
         saveOptions.Compliance = PdfCompliance.PdfA1b;
 
-        // Save the document as a PDF file using the configured options.
+        // Save the document as a PDF using the configured options.
         doc.Save("Output.pdf", saveOptions);
     }
 }

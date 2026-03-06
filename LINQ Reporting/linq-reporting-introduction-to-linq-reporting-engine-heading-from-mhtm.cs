@@ -1,6 +1,6 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Reporting;
 
 namespace LinqReportingExample
 {
@@ -8,20 +8,18 @@ namespace LinqReportingExample
     {
         static void Main()
         {
-            // Load the source MHTML file. Aspose.Words automatically detects the format.
-            Document doc = new Document("InputReport.mht");
+            // Load the MHTML template that contains the heading "LINQ Reporting Introduction to LINQ Reporting Engine".
+            Document template = new Document("Template.mhtml");
 
-            // Insert a heading at the beginning of the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            // Move the cursor to the start of the document.
-            builder.MoveToDocumentStart();
-            // Apply Heading 1 style.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            // Write the heading text.
-            builder.Writeln("LINQ Reporting Introduction to LINQ Reporting Engine");
+            // Create an instance of the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
 
-            // Save the modified document as a DOCX file.
-            doc.Save("OutputReport.docx");
+            // Build the report. No data source is required for a static heading,
+            // so we pass an empty object and a null data source name.
+            engine.BuildReport(template, new object(), null);
+
+            // Save the populated document to DOCX format.
+            template.Save("LinqReportingOutput.docx");
         }
     }
 }

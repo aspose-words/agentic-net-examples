@@ -2,29 +2,35 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class AddRowExample
+class Program
 {
     static void Main()
     {
-        // Load an existing Word document.
+        // Load an existing Word document
         Document doc = new Document("Input.docx");
 
-        // Get the first table in the document (assumes at least one table exists).
+        // Get the first table in the document (adjust index as needed)
         Table table = doc.FirstSection.Body.Tables[0];
 
-        // Create a new row that belongs to the same document.
+        // Create a new row belonging to the same document
         Row newRow = new Row(doc);
-
-        // Append the new row to the end of the table.
-        table.AppendChild(newRow);
-
-        // Ensure the row has at least one cell with a paragraph.
+        // Ensure the row has at least one cell (Aspose.Words creates a default cell)
         newRow.EnsureMinimum();
 
-        // Add some text to the first cell of the new row.
-        newRow.FirstCell.FirstParagraph.AppendChild(new Run(doc, "This is a newly added row."));
+        // Create a new cell with a paragraph and some text
+        Cell newCell = new Cell(doc);
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "New cell content");
+        para.AppendChild(run);
+        newCell.AppendChild(para);
 
-        // Save the modified document.
+        // Add the cell to the new row
+        newRow.AppendChild(newCell);
+
+        // Append the new row to the end of the table
+        table.AppendChild(newRow);
+
+        // Save the modified document
         doc.Save("Output.docx");
     }
 }

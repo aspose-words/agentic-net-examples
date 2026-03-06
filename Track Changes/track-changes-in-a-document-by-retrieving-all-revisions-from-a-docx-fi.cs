@@ -5,20 +5,35 @@ class Program
 {
     static void Main()
     {
-        // Load the DOCX file (load rule)
-        Document doc = new Document("Input.docx");
+        // Path to the source DOCX file that contains tracked changes.
+        string inputPath = "TrackedChanges.docx";
 
-        // Retrieve and display all revisions in the document
-        foreach (Revision rev in doc.Revisions)
+        // Load the document from the file system (load rule).
+        Document doc = new Document(inputPath);
+
+        // Output whether the document contains any revisions.
+        Console.WriteLine($"Document has revisions: {doc.HasRevisions}");
+
+        // Iterate through all revisions in the document (retrieving tracked changes).
+        foreach (Revision revision in doc.Revisions)
         {
-            Console.WriteLine($"Author: {rev.Author}");
-            Console.WriteLine($"Date: {rev.DateTime}");
-            Console.WriteLine($"Type: {rev.RevisionType}");
-            Console.WriteLine($"Text: {rev.ParentNode.GetText().Trim()}");
+            // Author who made the change.
+            Console.WriteLine($"Author: {revision.Author}");
+
+            // Date and time when the revision was created.
+            Console.WriteLine($"Date: {revision.DateTime}");
+
+            // Type of revision (Insertion, Deletion, etc.).
+            Console.WriteLine($"Type: {revision.RevisionType}");
+
+            // Text associated with the revision. Trim to remove extra whitespace.
+            Console.WriteLine($"Text: {revision.ParentNode.GetText().Trim()}");
+
             Console.WriteLine(new string('-', 40));
         }
 
-        // Save the document (save rule) – unchanged, just to satisfy lifecycle requirement
-        doc.Save("Processed.docx");
+        // Optionally, save a copy of the document (save rule).
+        string outputPath = "TrackedChanges_Copy.docx";
+        doc.Save(outputPath);
     }
 }

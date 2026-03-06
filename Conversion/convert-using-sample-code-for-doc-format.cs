@@ -4,24 +4,24 @@ using Aspose.Words.Saving;
 
 namespace AsposeWordsSample
 {
-    class Program
+    class ConvertToDoc
     {
         static void Main()
         {
-            // Define input and output paths.
-            string inputPath = @"C:\Docs\SampleInput.docx";
-            string outputPath = @"C:\Docs\ConvertedOutput.doc";
+            // Define input and output paths (replace with actual paths as needed).
+            string inputPath = @"C:\Docs\Document.docx";
+            string outputPath = @"C:\Docs\Converted\Document.ConvertToDoc.doc";
 
-            // Load an existing document (create/load lifecycle).
+            // Load the source document (DOCX, PDF, etc.) using the Document constructor.
             Document doc = new Document(inputPath);
 
-            // Create save options for the legacy DOC format.
+            // Create DocSaveOptions specifying the target format as DOC.
             DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
 
-            // Optionally set a password or other options here.
+            // Optional: set a password for the saved DOC file.
             // saveOptions.Password = "MyPassword";
 
-            // Save the document as DOC using the save options (save lifecycle).
+            // Save the document in the older DOC format using the save options.
             doc.Save(outputPath, saveOptions);
         }
     }

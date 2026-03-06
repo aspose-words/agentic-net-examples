@@ -6,14 +6,18 @@ class ProtectOfficeMath
 {
     static void Main()
     {
-        // Load the existing DOCX document that contains OfficeMath objects.
-        Document doc = new Document("InputWithOfficeMath.docx");
+        // Path to the folder that contains the input and output documents.
+        string docsPath = @"C:\Docs\";
 
-        // Apply read‑only protection to the whole document.
-        // This prevents any changes (including edits to OfficeMath) when the file is opened in Microsoft Word.
+        // Load the existing DOCX document that contains OfficeMath (equation) objects.
+        Document doc = new Document(docsPath + "Input.docx");
+
+        // Protect the entire document as read‑only.
+        // This prevents users from editing any content, including OfficeMath objects,
+        // while still allowing programmatic modifications via Aspose.Words.
         doc.Protect(ProtectionType.ReadOnly);
 
         // Save the protected document.
-        doc.Save("OutputProtected.docx");
+        doc.Save(docsPath + "Input.Protected.docx");
     }
 }

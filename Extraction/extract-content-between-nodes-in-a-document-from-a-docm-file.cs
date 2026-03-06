@@ -1,52 +1,48 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Markup;
 
-class ExtractBetweenBookmarks
+class ExtractBetweenNodes
 {
     static void Main()
     {
-        // Load the DOCM file (lifecycle rule: load)
-        Document doc = new Document("InputDocument.docm");
+        // Load the DOCM file from disk.
+        Document doc = new Document("input.docm");
 
-        // Retrieve the start and end bookmarks that define the region to extract
-        Bookmark startBookmark = doc.Range.Bookmarks["Start"];
-        Bookmark endBookmark = doc.Range.Bookmarks["End"];
-
-        if (startBookmark == null || endBookmark == null)
+        // ------------------------------------------------------------
+        // Example 1: Extract text that is enclosed in a bookmark.
+        // ------------------------------------------------------------
+        // The bookmark name "Extract" should surround the desired content.
+        // Bookmark.Text returns the concatenated text inside the bookmark.
+        string extractedText = string.Empty;
+        if (doc.Range.Bookmarks["Extract"] != null)
         {
-            Console.WriteLine("Required bookmarks not found.");
-            return;
+            extractedText = doc.Range.Bookmarks["Extract"].Text;
         }
 
-        // Get the underlying bookmark nodes
-        Node startNode = startBookmark.BookmarkStart;
-        Node endNode = endBookmark.BookmarkEnd;
+        // ------------------------------------------------------------
+        // Example 2: Extract text between two arbitrary nodes using XPath.
+        // ------------------------------------------------------------
+        // Uncomment the following block if you prefer node‑based extraction
+        // instead of using a bookmark.
+        /*
+        // Select the start and end nodes (e.g., first and third paragraphs).
+        Node startNode = doc.SelectSingleNode("//w:p[1]");
+        Node endNode   = doc.SelectSingleNode("//w:p[3]");
 
-        // Collect text from all nodes that appear after the start node and before the end node
-        StringBuilder extractedText = new StringBuilder();
-        Node current = startNode;
-
-        // Traverse the document using pre‑order traversal until we reach the end bookmark node
-        while (current != null && current != endNode)
+        // Collect text from all nodes that appear after startNode and before endNode.
+        if (startNode != null && endNode != null)
         {
-            // Append the text of the current node (including its children)
-            extractedText.Append(current.GetText());
-            current = current.NextPreOrder(doc);
+            Node curNode = startNode.NextPreOrder(doc);
+            while (curNode != null && curNode != endNode)
+            {
+                extractedText += curNode.GetText();
+                curNode = curNode.NextPreOrder(doc);
+            }
         }
+        */
 
-        // Create a new document to hold the extracted content (lifecycle rule: create)
-        Document resultDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(resultDoc);
-
-        // Write the extracted text into the new document
-        builder.Writeln(extractedText.ToString().Trim());
-
-        // Save the result (lifecycle rule: save)
-        resultDoc.Save("ExtractedContent.docx");
-
-        Console.WriteLine("Extraction complete. Saved to ExtractedContent.docx");
+        // Save the extracted content to a plain‑text file.
+        File.WriteAllText("extracted.txt", extractedText);
     }
 }

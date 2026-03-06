@@ -10,24 +10,20 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Start a new table. At least one cell must be inserted before any formatting.
         Table table = builder.StartTable();
-
-        // Insert the first cell (required before any table formatting can be applied).
         builder.InsertCell();
 
         // Apply a built‑in table style using its identifier.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Optionally specify which parts of the style should be applied.
-        table.StyleOptions = TableStyleOptions.FirstRow |
-                             TableStyleOptions.FirstColumn |
-                             TableStyleOptions.RowBands;
-
-        // Adjust the table size to fit its contents.
+        // Optionally specify which parts of the style to apply and auto‑fit the table.
+        table.StyleOptions = TableStyleOptions.FirstColumn |
+                             TableStyleOptions.RowBands |
+                             TableStyleOptions.FirstRow;
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Fill the table with sample data.
+        // Populate the table with some sample rows.
         builder.Writeln("Item");
         builder.CellFormat.RightPadding = 40;
         builder.InsertCell();

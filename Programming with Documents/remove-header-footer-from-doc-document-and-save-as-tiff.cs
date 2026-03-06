@@ -1,8 +1,9 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class RemoveHeadersFootersAndSaveAsTiff
+class RemoveHeadersFootersAndConvertToTiff
 {
     static void Main()
     {
@@ -12,23 +13,27 @@ class RemoveHeadersFootersAndSaveAsTiff
         // Path where the resulting TIFF file will be saved.
         string outputPath = @"C:\Docs\ResultImage.tiff";
 
-        // Load the Word document.
+        // Load the existing Word document.
         Document doc = new Document(inputPath);
 
-        // Remove headers and footers from the first (and only) section.
-        // This clears the content of the header/footer objects, effectively omitting them from the rendered pages.
-        doc.FirstSection.ClearHeadersFooters();
+        // Remove all header and footer contents from each section.
+        foreach (Section section in doc.Sections)
+        {
+            // Clears the text of headers/footers but keeps the objects,
+            // effectively making the document header/footer‑less.
+            section.ClearHeadersFooters();
+        }
 
-        // Configure image save options for TIFF format.
+        // Configure image save options for TIFF output.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Optional: set compression type (default is Lzw). Adjust as needed.
+            // Optional: choose compression (default is Lzw).
             // TiffCompression = TiffCompression.None,
-            // Optional: set resolution (dpi) for higher quality output.
+            // Optional: set resolution if higher quality is required.
             // Resolution = 300
         };
 
-        // Save the document as a TIFF image. Each page will be rendered to a separate frame in the TIFF file.
+        // Save the document as a TIFF image (multi‑page if the source has multiple pages).
         doc.Save(outputPath, saveOptions);
     }
 }

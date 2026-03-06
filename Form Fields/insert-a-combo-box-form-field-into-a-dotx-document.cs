@@ -5,23 +5,23 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document which will be saved as a DOTX template.
-        Document doc = new Document();
+        // Load the DOTX template.
+        Document doc = new Document("Template.dotx");
 
-        // Initialize a DocumentBuilder for the document.
+        // Initialize a DocumentBuilder for the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some introductory text before the combo box.
-        builder.Write("Select a fruit: ");
+        // Add some prompt text before the combo box.
+        builder.Write("Pick a fruit: ");
 
         // Define the items that will appear in the combo box.
         string[] items = { "Apple", "Banana", "Cherry" };
 
-        // Insert the combo box form field.
-        // Parameters: field name, array of items, index of the initially selected item.
+        // Insert the combo box form field at the current cursor position.
+        // The first item ("Apple") will be selected by default (index 0).
         builder.InsertComboBox("FruitCombo", items, 0);
 
-        // Save the document as a DOTX template.
-        doc.Save("ComboBoxTemplate.dotx", SaveFormat.Dotx);
+        // Save the modified document.
+        doc.Save("Result.docx");
     }
 }

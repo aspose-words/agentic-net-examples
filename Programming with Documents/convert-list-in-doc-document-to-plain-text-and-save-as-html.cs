@@ -2,29 +2,23 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ListToPlainTextHtml
+class Program
 {
     static void Main()
     {
-        // Path to the source DOC document that contains a list.
-        string inputPath = @"C:\Docs\SourceDocument.doc";
+        // Load the DOC document that contains the list.
+        Document doc = new Document("Input.doc");
 
-        // Path where the resulting HTML file will be saved.
-        string outputPath = @"C:\Docs\ResultDocument.html";
-
-        // Load the DOC document.
-        Document doc = new Document(inputPath);
-
-        // Ensure that list labels are up‑to‑date.
+        // Update list labels so that they are correct before exporting.
         doc.UpdateListLabels();
 
-        // Configure HTML saving options to export list labels as plain inline text.
+        // Configure HTML saving to render list labels as plain‑text (inline) rather than HTML list tags.
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions
         {
             ExportListLabels = ExportListLabels.AsInlineText
         };
 
-        // Save the document as HTML using the configured options.
-        doc.Save(outputPath, htmlOptions);
+        // Save the document as HTML. The resulting HTML will contain the list items as plain text.
+        doc.Save("Output.html", htmlOptions);
     }
 }

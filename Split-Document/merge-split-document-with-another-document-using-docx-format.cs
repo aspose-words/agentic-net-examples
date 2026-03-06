@@ -1,20 +1,21 @@
+using System;
 using Aspose.Words;
 
-class Program
+class MergeDocuments
 {
     static void Main()
     {
-        // Load the first split document.
-        Document part1 = new Document("Part1.docx");
+        // Load the first (destination) part of the split document.
+        Document destination = new Document("Part1.docx");
 
-        // Load the second document that should be merged.
-        Document part2 = new Document("Part2.docx");
+        // Load the second part that will be merged into the first.
+        Document source = new Document("Part2.docx");
 
-        // Append the second document to the end of the first one.
-        // KeepSourceFormatting preserves the original styles of part2.
-        part1.AppendDocument(part2, ImportFormatMode.KeepSourceFormatting);
+        // Append the source document to the end of the destination document.
+        // KeepSourceFormatting preserves the original formatting of the source.
+        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
 
         // Save the combined document in DOCX format.
-        part1.Save("MergedDocument.docx");
+        destination.Save("MergedDocument.docx");
     }
 }

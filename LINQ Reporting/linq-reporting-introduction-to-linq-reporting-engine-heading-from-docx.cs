@@ -4,40 +4,36 @@ using Aspose.Words.Reporting;
 
 namespace LinqReportingDemo
 {
-    // Simple data class that will be used as the data source for the report.
-    public class Person
+    // Simple POCO class that will be used as the data source for the template.
+    public class ReportData
     {
-        public string Name { get; set; }
-        public int Age { get; set; }
+        public string Heading { get; set; }
+        public string Description { get; set; }
     }
 
     class Program
     {
         static void Main()
         {
-            // 1. Create a blank Word document that will serve as the template.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Load the DOCX template that contains LINQ Reporting Engine tags.
+            // Example template content:
+            //   <<[data.Heading]>>
+            //   <<[data.Description]>>
+            Document template = new Document("LinqReportingTemplate.docx");
 
-            // Insert a heading placeholder that the LINQ Reporting Engine will replace.
-            // The syntax "<<[person.Name]>>" tells the engine to insert the Name property of the data source.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("<<[person.Name]>>");
+            // Prepare the data source object.
+            ReportData data = new ReportData
+            {
+                Heading = "LINQ Reporting Introduction",
+                Description = "This document demonstrates how to use the Aspose.Words LINQ Reporting Engine."
+            };
 
-            // Insert a normal paragraph with another placeholder.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("Age: <<[person.Age]>>");
-
-            // 2. Prepare the data source.
-            Person person = new Person { Name = "John Doe", Age = 42 };
-
-            // 3. Create the ReportingEngine and build the report.
+            // Create the reporting engine and populate the template with the data.
             ReportingEngine engine = new ReportingEngine();
-            // The second parameter is the data source object.
-            // The third parameter ("person") is the name used to reference the object inside the template.
-            engine.BuildReport(template, person, "person");
+            // The data source name ("data") matches the name used in the template tags.
+            engine.BuildReport(template, data, "data");
 
-            // 4. Save the populated document.
+            // Save the populated document.
             template.Save("LinqReportingResult.docx");
         }
     }

@@ -1,26 +1,46 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Math;
 
-class Program
+namespace OfficeMathInlineFinder
 {
-    static void Main()
+    class Program
     {
-        // Load the WORDML document.
-        // Replace the path with the actual location of your document.
-        string filePath = "Input.docx";
-        Document doc = new Document(filePath);
-
-        // Retrieve all OfficeMath nodes in the document.
-        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-
-        // Identify and output inline equations.
-        foreach (OfficeMath officeMath in officeMathNodes)
+        static void Main()
         {
-            if (officeMath.DisplayType == OfficeMathDisplayType.Inline)
+            // Path to the WORDML (or any supported) document.
+            string inputPath = "input.docx";
+
+            // Load the document using the standard constructor.
+            Document doc = new Document(inputPath);
+
+            // Retrieve all OfficeMath nodes in the document (including nested ones).
+            NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+
+            // List to hold inline OfficeMath equations.
+            List<OfficeMath> inlineEquations = new List<OfficeMath>();
+
+            // Iterate through each OfficeMath node and check its DisplayType.
+            foreach (OfficeMath om in officeMathNodes)
             {
-                // Example output: type of math object and its plain text.
-                Console.WriteLine($"Inline equation - Type: {officeMath.MathObjectType}, Text: \"{officeMath.GetText().Trim()}\"");
+                // Only top‑level OfficeMath objects have a meaningful DisplayType.
+                // Nested OfficeMath objects are always inline, but we are interested in
+                // equations whose DisplayType is explicitly set to Inline.
+                if (om.DisplayType == OfficeMathDisplayType.Inline)
+                {
+                    inlineEquations.Add(om);
+                }
+            }
+
+            // Output the results.
+            Console.WriteLine($"Total OfficeMath objects found: {officeMathNodes.Count}");
+            Console.WriteLine($"Inline OfficeMath equations found: {inlineEquations.Count}");
+
+            // Optionally, display the plain text of each inline equation.
+            for (int i = 0; i < inlineEquations.Count; i++)
+            {
+                Console.WriteLine($"Inline Equation {i + 1}: {inlineEquations[i].GetText().Trim()}");
             }
         }
     }

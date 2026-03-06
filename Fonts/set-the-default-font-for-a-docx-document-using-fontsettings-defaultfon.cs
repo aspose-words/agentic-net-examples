@@ -2,24 +2,24 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
-namespace SetDefaultFontExample
+class SetDefaultFontExample
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Create a new blank document
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Create a FontSettings object and assign it to the document
-            FontSettings fontSettings = new FontSettings();
-            doc.FontSettings = fontSettings;
+        // Set the default font that will be used when a requested font is missing.
+        // This modifies the static default FontSettings instance, which is applied to all documents
+        // that do not have their own FontSettings assigned.
+        FontSettings.DefaultInstance.SubstitutionSettings
+            .DefaultFontSubstitution.DefaultFontName = "Courier New";
 
-            // Set the default font substitution rule – this will be used as the document's default font
-            fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Courier New";
+        // Optionally, also set the document's style collection default font
+        // so that newly created styles inherit this font.
+        doc.Styles.DefaultFont.Name = "Courier New";
 
-            // Save the document as DOCX
-            doc.Save("DefaultFontDocument.docx");
-        }
+        // Save the document to a DOCX file.
+        doc.Save("DefaultFont.docx");
     }
 }

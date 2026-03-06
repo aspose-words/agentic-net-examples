@@ -1,0 +1,65 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Bookmark rules": [
+        "Maintain the bookmark‑based insertion logic; no other functional changes are required.",
+        "Replace the non‑existent BookmarkCollection.Exists call with a null‑check on the indexer (templateDoc.Range.Bookmarks[bookmarkName] == null)."
+      ],
+      "Table rules": [
+        "Locate the table with GetChild(NodeType.Table, 0, true) and cast to Table.",
+        "When removing a column, iterate over each Row and call Cells[index].Remove() after checking the cell count.",
+        "Use Cell.CellFormat.Shading to set background colour – Row does not expose a Shading property.",
+        "Guard against a missing table by using FirstOrDefault() instead of direct index access.",
+        "When using LINQ with .Where((row, index) => ...) the index must correspond to the product list after the header is skipped."
+      ],
+      "Range rules": [
+        "Keep placeholder replacement logic unchanged; Range.Replace works for plain‑text templates."
+      ],
+      "Document merge/insert rules": [
+        "Remove the non‑existent namespace import `Aspose.Words.Reporting.DataSource`.",
+        "When inserting another document, specify ImportFormatMode (e.g., KeepSourceFormatting) to control style handling.",
+        "Removed the non‑existent Aspose.Words.Import namespace; NodeImporter resides directly in Aspose.Words.",
+        "Remove the non‑existent namespace import: `using Aspose.Words.Import;` – `ImportFormatOptions` lives in `Aspose.Words`.",
+        "Remove or correct the SmartStyleBehavior assignment – ImportFormatOptions does not expose a boolean property; the import mode already controls style handling.",
+        "Keep using ImportFormatMode.KeepSourceFormatting when source styles are required, otherwise use ImportFormatMode.UseDestinationStyles."
+      ],
+      "Loading rules": [
+        "Do not import non‑existent namespaces (e.g., Aspose.Words.LoadOptions). The LoadOptions class resides directly in Aspose.Words.",
+        "Use the Document(Stream) constructor to load a WORDML string via a MemoryStream – this follows the lifecycle rule of disposing streams with using.",
+        "Add the missing namespace Aspose.Words.Loading to access LoadOptions.",
+        "Create a LoadOptions instance and pass it to the Document constructor that accepts a Stream.",
+        "Load the DOCM file with the Document constructor; macros are preserved automatically.",
+        "Use an object initializer to set LoadOptions.LoadFormat instead of passing LoadFormat to the constructor (the constructor expects a string in some versions).",
+        "Keep the using directives for Aspose.Words, Aspose.Words.Loading, and Aspose.Words.Saving.",
+        "Add the missing using directive for Aspose.Words.Loading to bring LoadOptions into scope.",
+        "Ensure the Merge method signature matches IDocumentMergerPlugin: LoadOptions[] (from Aspose.Words.Loading)."
+      ],
+      "Saving/Export rules": [
+        "Keep the rest of the logic unchanged; the MHTML save options are correct.",
+        "Use a verbatim string literal (prefixed with @) for multi‑line Markdown text.",
+        "Save the document with Document.Save(string) – the format is inferred from the file extension.",
+        "Save the document with Document.Save.",
+        "If you need to limit pages, use PageIndex and PageCount on ImageSaveOptions.",
+        "Keep using ImageSaveOptions with SaveFormat.Tiff and set Resolution/ImageSize as required.",
+        "Instantiate ImageSaveOptions with the SaveFormat.Png constructor.",
+        "Use the correct SaveFormat enum from Aspose.Words (no extra using needed beyond Aspose.Words).",
+        "Add a reference to the Aspose.Words NuGet package (dotnet add package Aspose.Words) so that Document, ImageSaveOptions, SaveFormat and MultiPageLayout are available.",
+        "Use ImageSaveOptions with SaveFormat.Tiff and set PageLayout to MultiPageLayout.TiffFrames() to produce a multi‑frame TIFF.",
+        "Use the correct property name 'MultiPageLayout' on ImageSaveOptions (not 'PageLayout').",
+        "Use ImageSaveOptions with SaveFormat.Tiff for TIFF conversion.",
+        "Save the result with doc.Save – use SaveFormat.Docm if you need to keep macros, otherwise DOCX is fine.",
+        "Save the final document with the desired format (Docx in this example).",
+        "Use the `InsertHtml(string html, HtmlInsertOptions options)` overload; `HtmlInsertOptions` resides in the `Aspose.Words` namespace."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Remove unused using directives (e.g., System.Xml, Aspose.Words.Drawing) to keep the code clean.",
+        "Keep the using directives for System.Drawing, System.Linq and Aspose.Words namespaces."
+      ],
+      "Layout rules": [
+        "Assign the layout using MultiPageLayout.TiffFrames() which creates a multi‑frame TIFF.",
+        "Keep the required namespaces: `Aspose.Words` for core types and `Aspose.Words.Saving` for `BreakType`."
+      ]
+    }
+  }
+}

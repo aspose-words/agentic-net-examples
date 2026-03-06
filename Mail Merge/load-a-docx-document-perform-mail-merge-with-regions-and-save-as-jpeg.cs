@@ -3,46 +3,41 @@ using System.Data;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace MailMergeToJpegExample
 {
-    static void Main()
+    class Program
     {
-        // Load the DOCX template that contains mail‑merge regions.
-        Document doc = new Document("Template.docx");
+        static void Main()
+        {
+            // Load the source DOCX that contains mail‑merge regions.
+            // The document must have fields like «TableStart:Employees» and «TableEnd:Employees».
+            Document doc = new Document("Template.docx");
 
-        // ------------------------------------------------------------
-        // Prepare a DataSet whose tables have the same names as the
-        // mail‑merge regions defined in the template (e.g. TableStart:Customers,
-        // TableStart:Orders).  The fields inside each region must match the
-        // column names of the corresponding table.
-        // ------------------------------------------------------------
-        DataSet data = new DataSet();
+            // Prepare a DataSet with a table whose name matches the mail‑merge region.
+            DataTable employeeTable = new DataTable("Employees");
+            employeeTable.Columns.Add("FirstName");
+            employeeTable.Columns.Add("LastName");
+            employeeTable.Columns.Add("Title");
 
-        DataTable customers = new DataTable("Customers");
-        customers.Columns.Add("FullName");
-        customers.Columns.Add("Address");
-        customers.Rows.Add("Thomas Hardy", "120 Hanover Sq., London");
-        customers.Rows.Add("Paolo Accorti", "Via Monte Bianco 34, Torino");
-        data.Tables.Add(customers);
+            // Add sample rows.
+            employeeTable.Rows.Add("John", "Doe", "Sales Manager");
+            employeeTable.Rows.Add("Jane", "Smith", "Marketing Director");
+            employeeTable.Rows.Add("Bob", "Johnson", "Developer");
 
-        DataTable orders = new DataTable("Orders");
-        orders.Columns.Add("Item");
-        orders.Columns.Add("Quantity");
-        orders.Rows.Add("Rugby World Cup Cap", "2");
-        orders.Rows.Add("Rugby World Cup Ball", "1");
-        data.Tables.Add(orders);
+            DataSet data = new DataSet();
+            data.Tables.Add(employeeTable);
 
-        // Execute the mail merge with regions.  The document will expand the
-        // regions to accommodate all rows in each table.
-        doc.MailMerge.ExecuteWithRegions(data);
+            // Execute the mail merge using the DataSet. This will expand the region
+            // for each row in the Employees table.
+            doc.MailMerge.ExecuteWithRegions(data);
 
-        // ------------------------------------------------------------
-        // Save the merged document as a JPEG image.
-        // ImageSaveOptions allows us to specify the output format and
-        // which page(s) to render.  Here we render only the first page.
-        // ------------------------------------------------------------
-        ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg);
-        jpegOptions.PageSet = new PageSet(0); // zero‑based index of the first page
-        doc.Save("MergedResult.jpg", jpegOptions);
+            // Save the merged document as a JPEG image.
+            // ImageSaveOptions allows us to specify the format and rendering options.
+            ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg);
+            // Optional: set JPEG quality (0‑100). Higher value = better quality.
+            jpegOptions.JpegQuality = 90;
+
+            doc.Save("MergedResult.jpg", jpegOptions);
+        }
     }
 }

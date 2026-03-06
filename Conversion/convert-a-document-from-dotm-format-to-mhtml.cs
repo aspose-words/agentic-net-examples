@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class ConvertDotmToMhtml
 {
     static void Main()
     {
@@ -15,7 +15,11 @@ class Program
         // Load the DOTM document.
         Document doc = new Document(inputPath);
 
-        // Save the document in MHTML format.
+        // Option 1: Directly save using the SaveFormat overload.
         doc.Save(outputPath, SaveFormat.Mhtml);
+
+        // Option 2: Use HtmlSaveOptions for more control (uncomment if needed).
+        // HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml);
+        // doc.Save(outputPath, saveOptions);
     }
 }

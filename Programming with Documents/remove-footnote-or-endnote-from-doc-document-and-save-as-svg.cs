@@ -1,39 +1,38 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Notes;
 
-class Program
+class RemoveNotesAndSaveSvg
 {
     static void Main()
     {
-        // Path to the source DOC/DOCX file.
-        string inputPath = "input.docx";
-
-        // Path where the resulting SVG will be saved.
-        string outputPath = "output.svg";
-
-        // Load the document.
+        // Load the source DOC/DOCX document.
+        // Replace with the actual path to your input file.
+        string inputPath = @"C:\Docs\Input.docx";
         Document doc = new Document(inputPath);
 
-        // Remove all footnote nodes.
-        foreach (Node footnote in doc.SelectNodes("//Footnote"))
-            footnote.Remove();
-
-        // Remove all endnote nodes.
-        foreach (Node endnote in doc.SelectNodes("//Endnote"))
-            endnote.Remove();
-
-        // Configure SVG save options.
-        SvgSaveOptions options = new SvgSaveOptions
+        // Remove all footnotes and endnotes.
+        // Footnotes and endnotes are stored as nodes of type Footnote.
+        NodeCollection noteNodes = doc.GetChildNodes(NodeType.Footnote, true);
+        foreach (Footnote note in noteNodes)
         {
-            // Render text as placed glyphs (curves) – makes the SVG selectable as an image.
+            // Remove each footnote/endnote from the document.
+            note.Remove();
+        }
+
+        // Configure SVG save options (optional settings can be adjusted).
+        SvgSaveOptions svgOptions = new SvgSaveOptions
+        {
+            // Render text as placed glyphs so the SVG contains curves instead of selectable text.
             TextOutputMode = SvgTextOutputMode.UsePlacedGlyphs,
-            // Optional: remove page border and fit the SVG to the viewport.
-            ShowPageBorder = false,
-            FitToViewPort = true
+            // Remove any JavaScript from links in the SVG.
+            RemoveJavaScriptFromLinks = true
         };
 
-        // Save the modified document as SVG.
-        doc.Save(outputPath, options);
+        // Save the modified document as an SVG file.
+        // Replace with the desired output path.
+        string outputPath = @"C:\Docs\Output.svg";
+        doc.Save(outputPath, svgOptions);
     }
 }

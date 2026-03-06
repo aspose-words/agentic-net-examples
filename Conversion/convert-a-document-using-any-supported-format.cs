@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 namespace DocumentConversionExample
@@ -7,49 +6,28 @@ namespace DocumentConversionExample
     public class Converter
     {
         /// <summary>
-        /// Converts a document from one format to another.
-        /// The input and output formats are inferred from the file extensions.
+        /// Converts a document from its current format to the specified target format.
         /// </summary>
-        /// <param name="inputPath">Full path to the source document.</param>
-        /// <param name="outputPath">Full path where the converted document will be saved.</param>
-        public void Convert(string inputPath, string outputPath)
+        /// <param name="inputFilePath">Full path to the source document.</param>
+        /// <param name="outputFilePath">Full path where the converted document will be saved.</param>
+        /// <param name="targetFormat">The Aspose.Words.SaveFormat value representing the desired output format.</param>
+        public static void Convert(string inputFilePath, string outputFilePath, SaveFormat targetFormat)
         {
             // Load the source document. The constructor automatically detects the format.
-            Document doc = new Document(inputPath);
+            Document doc = new Document(inputFilePath);
 
-            // Determine the target save format from the output file extension.
-            SaveFormat targetFormat = GetSaveFormatFromExtension(Path.GetExtension(outputPath));
-
-            // Save the document in the desired format.
-            doc.Save(outputPath, targetFormat);
+            // Save the document using the specified format.
+            doc.Save(outputFilePath, targetFormat);
         }
 
-        /// <summary>
-        /// Maps a file extension to the corresponding Aspose.Words SaveFormat value.
-        /// </summary>
-        private SaveFormat GetSaveFormatFromExtension(string extension)
+        // Example usage
+        public static void Main()
         {
-            // Ensure the extension starts with a dot and is in lower case.
-            string ext = extension.StartsWith(".") ? extension.ToLowerInvariant() : "." + extension.ToLowerInvariant();
+            // Convert a DOCX file to PDF.
+            string sourcePath = @"C:\Docs\Sample.docx";
+            string destinationPath = @"C:\Docs\Sample_Converted.pdf";
 
-            // Use Aspose.Words utility to convert the extension to a SaveFormat.
-            // This method throws if the extension is not supported.
-            return FileFormatUtil.ExtensionToSaveFormat(ext);
-        }
-    }
-
-    // Example usage
-    class Program
-    {
-        static void Main()
-        {
-            var converter = new Converter();
-
-            // Example: convert a DOCX file to PDF.
-            string inputFile = @"C:\Docs\SampleDocument.docx";
-            string outputFile = @"C:\Docs\SampleDocument.pdf";
-
-            converter.Convert(inputFile, outputFile);
+            Convert(sourcePath, destinationPath, SaveFormat.Pdf);
 
             Console.WriteLine("Conversion completed.");
         }

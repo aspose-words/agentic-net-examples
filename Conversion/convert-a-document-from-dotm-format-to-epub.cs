@@ -3,30 +3,20 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class DotmToEpubConverter
+class Program
 {
     static void Main()
     {
-        // Load the macro‑enabled template (DOTM) from disk.
-        Document doc = new Document("input.dotm");
+        // Load the source DOTM file.
+        Document doc = new Document("InputTemplate.dotm");
 
-        // Configure save options for EPUB output.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
-        {
-            // Specify that the target format is EPUB.
-            SaveFormat = SaveFormat.Epub,
+        // Prepare EPUB save options.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
+        saveOptions.SaveFormat = SaveFormat.Epub;   // Specify EPUB output.
+        saveOptions.Encoding = Encoding.UTF8;       // Use UTF‑8 encoding.
+        saveOptions.ExportDocumentProperties = true; // Optional: include document properties.
 
-            // Use UTF‑8 encoding (without BOM) for the generated EPUB.
-            Encoding = Encoding.UTF8,
-
-            // Export built‑in and custom document properties into the EPUB.
-            ExportDocumentProperties = true,
-
-            // Optional: split the EPUB into separate HTML parts at heading paragraphs.
-            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph
-        };
-
-        // Save the document as an EPUB file using the configured options.
-        doc.Save("output.epub", saveOptions);
+        // Save the document as EPUB.
+        doc.Save("OutputDocument.epub", saveOptions);
     }
 }

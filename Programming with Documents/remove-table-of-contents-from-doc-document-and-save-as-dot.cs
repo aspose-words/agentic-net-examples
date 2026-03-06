@@ -1,28 +1,30 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Saving;
 
-class RemoveTocAndSaveAsTemplate
+namespace RemoveTocExample
 {
-    static void Main()
+    class Program
     {
-        // Load the existing DOC document.
-        Document doc = new Document("input.doc");
-
-        // Iterate through all fields in the document.
-        // If a field is a Table of Contents (TOC) field, remove it.
-        foreach (Field field in doc.Range.Fields)
+        static void Main()
         {
-            if (field.Type == FieldType.FieldTOC)
-            {
-                // Cast to FieldToc to access the Remove method.
-                ((FieldToc)field).Remove();
-            }
-        }
+            // Load the existing DOC document.
+            Document doc = new Document("InputDocument.doc");
 
-        // Save the modified document as a Word template (DOT format).
-        // The file extension determines the format, but we also specify the format explicitly.
-        doc.Save("output.dot", SaveFormat.Dot);
+            // Iterate through all fields in the document.
+            // If a field is a Table of Contents (FieldToc), remove it.
+            foreach (Field field in doc.Range.Fields)
+            {
+                if (field.Type == FieldType.FieldTOC)
+                {
+                    // The Remove method returns the node after the removed field,
+                    // but we do not need the return value here.
+                    field.Remove();
+                }
+            }
+
+            // Save the modified document as a Word template (DOT format).
+            doc.Save("OutputTemplate.dot", SaveFormat.Dot);
+        }
     }
 }

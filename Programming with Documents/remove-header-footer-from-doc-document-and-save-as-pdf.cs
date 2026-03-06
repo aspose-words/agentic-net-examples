@@ -2,20 +2,24 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class RemoveHeadersFootersAndConvert
 {
     static void Main()
     {
-        // Load the source DOC/DOCX document.
-        Document doc = new Document("Input.docx");
+        // Path to the source DOC document.
+        string inputPath = @"C:\Docs\SourceDocument.docx";
 
-        // Remove all headers and footers from every section in the document.
-        foreach (Section section in doc.Sections)
-        {
-            section.ClearHeadersFooters();
-        }
+        // Path where the resulting PDF will be saved.
+        string outputPath = @"C:\Docs\ResultDocument.pdf";
 
-        // Save the resulting document as a PDF file.
-        doc.Save("Output.pdf", SaveFormat.Pdf);
+        // Load the existing Word document.
+        Document doc = new Document(inputPath);
+
+        // Remove all headers and footers from the first (and only) section.
+        // This clears the content but keeps the HeaderFooter objects, effectively unlinking them.
+        doc.FirstSection.ClearHeadersFooters();
+
+        // Save the modified document as PDF.
+        doc.Save(outputPath, SaveFormat.Pdf);
     }
 }

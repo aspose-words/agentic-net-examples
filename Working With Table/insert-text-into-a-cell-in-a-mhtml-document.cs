@@ -7,20 +7,24 @@ class InsertTextIntoMhtmlCell
     static void Main()
     {
         // Load the existing MHTML document.
-        Document doc = new Document("InputDocument.mhtml");
+        Document doc = new Document("input.mhtml");
 
-        // Create a DocumentBuilder for editing.
+        // Create a DocumentBuilder to edit the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the desired cell.
-        // Parameters: row index, column index, row span, column span (zero‑based indexes).
-        // Adjust the indices to point to the target cell in your table.
-        builder.MoveToCell(0, 0, 0, 0);
+        // Locate the first table in the document (adjust the index if needed).
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+
+        // Choose the target cell (e.g., first row, first column).
+        Cell targetCell = table.Rows[0].Cells[0];
+
+        // Move the builder's cursor to the beginning of the cell's first paragraph.
+        builder.MoveTo(targetCell.FirstParagraph);
 
         // Insert the desired text into the cell.
-        builder.Write("Hello, Aspose.Words!");
+        builder.Write("Inserted text goes here.");
 
         // Save the modified document back to MHTML format.
-        doc.Save("OutputDocument.mhtml");
+        doc.Save("output.mhtml");
     }
 }

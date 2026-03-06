@@ -1,44 +1,47 @@
 using System;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class Program
+namespace AsposeWordsLinqReporting
 {
-    static void Main()
+    // Simple class that holds a Document to be inserted via ReportingEngine.
+    public class DocumentHolder
     {
-        // Folder that contains the source PDF files.
-        string pdfFolder = @"C:\InputPdfs";
+        public Document Document { get; }
 
-        // Load each PDF as an Aspose.Words Document and wrap it in a simple class.
-        // The wrapper is needed so the ReportingEngine can reference the Document property.
-        PdfWrapper[] pdfSources = Directory.GetFiles(pdfFolder, "*.pdf")
-            .Select(path => new Document(path))               // Load PDF into a Document.
-            .Select(doc => new PdfWrapper { Document = doc }) // Wrap the Document.
-            .ToArray();
-
-        // Create a template document that defines a repeatable region.
-        // The <<foreach [src]>> tag iterates over the array passed to BuildReport.
-        // Inside the region we insert each PDF using the <<doc [src.Document]>> tag.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Combined PDFs:");
-        builder.Writeln("<<foreach [src]>>");
-        builder.Writeln("<<doc [src.Document]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Build the report by providing the array of wrappers and the data source name "src".
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, pdfSources, new[] { "src" });
-
-        // Save the merged document.
-        template.Save(@"C:\Output\Combined.docx");
+        public DocumentHolder(Document doc)
+        {
+            Document = doc;
+        }
     }
 
-    // Simple wrapper class exposing a Document property for the ReportingEngine.
-    public class PdfWrapper
+    class Program
     {
-        public Document Document { get; set; }
+        static void Main()
+        {
+            // Path to the source PDF file that will be inserted.
+            string pdfPath = @"C:\Input\Source.pdf";
+
+            // Load the PDF document. Aspose.Words can open PDF directly.
+            Document pdfDocument = new Document(pdfPath);
+
+            // Create a template Word document in memory.
+            // The template contains a ReportingEngine tag that will be replaced with the PDF document.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+            // The tag syntax: <<doc [src.Document]>>
+            builder.Writeln("<<doc [src.Document]>>");
+
+            // Wrap the PDF document in a holder object so the ReportingEngine can access it via the "Document" property.
+            DocumentHolder holder = new DocumentHolder(pdfDocument);
+
+            // Build the report – this will replace the tag with the contents of the PDF document.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(template, new object[] { holder }, new[] { "src" });
+
+            // Save the resulting document.
+            string outputPath = @"C:\Output\Result.docx";
+            template.Save(outputPath);
+        }
     }
 }

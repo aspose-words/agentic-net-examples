@@ -1,24 +1,24 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Notes;
+using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load the source DOC/DOCX document.
+        // Load the source DOC/DOCX file.
         Document doc = new Document("input.docx");
 
-        // Collect all footnote and endnote nodes in the document.
-        NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
-
-        // Remove each footnote/endnote from its parent.
-        foreach (Footnote note in notes)
+        // In Aspose.Words both footnotes and endnotes are represented by the Footnote node type.
+        // Retrieve all Footnote nodes (which includes both footnotes and endnotes) and remove them.
+        NodeCollection footnotes = doc.GetChildNodes(NodeType.Footnote, true);
+        foreach (Footnote footnote in footnotes)
         {
-            note.Remove();
+            footnote.Remove();
         }
 
-        // Save the modified document as Markdown.
+        // Save the cleaned document as Markdown.
         doc.Save("output.md", SaveFormat.Markdown);
     }
 }

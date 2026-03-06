@@ -1,15 +1,15 @@
 using System;
 using Aspose.Words;
 
-class DocmToEpubConverter
+class Program
 {
     static void Main()
     {
         // Path to the source DOCM file.
         string inputPath = @"C:\Docs\SourceDocument.docm";
 
-        // Path to the output EPUB file. The .epub extension tells Aspose.Words to save in EPUB format.
-        string outputPath = @"C:\Docs\ConvertedDocument.epub";
+        // Path to the output EPUB file. The .epub extension determines the save format.
+        string outputPath = @"C:\Docs\SourceDocument.epub";
 
         // Load the DOCM document.
         Document doc = new Document(inputPath);

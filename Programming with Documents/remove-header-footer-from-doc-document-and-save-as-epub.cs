@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
@@ -9,10 +10,10 @@ class Program
         // Load the source DOC document.
         Document doc = new Document("Input.doc");
 
-        // Prepare save options for EPUB format and disable header/footer export.
+        // Set up save options for EPUB and disable header/footer export.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Epub);
         saveOptions.ExportHeadersFootersMode = ExportHeadersFootersMode.None;
-        saveOptions.Encoding = Encoding.UTF8; // optional, ensures UTF‑8 output.
+        saveOptions.Encoding = Encoding.UTF8; // optional but ensures UTF‑8 output
 
         // Save the document as EPUB without headers and footers.
         doc.Save("Output.epub", saveOptions);

@@ -1,38 +1,51 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class InsertSmartArtShape
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a floating shape that will hold the SmartArt diagram.
-        // The shape type can be any that supports SmartArt (e.g., Group).
-        Shape smartArtShape = builder.InsertShape(ShapeType.Group, 300, 200);
-        // Position the shape on the page (optional).
-        smartArtShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        smartArtShape.RelativeVerticalPosition   = RelativeVerticalPosition.Page;
-        smartArtShape.Left  = 100; // points from the left edge of the page
-        smartArtShape.Top   = 100; // points from the top edge of the page
-        smartArtShape.WrapType = WrapType.None;
-
-        // If the shape already contains a SmartArt object, update its drawing.
-        // (When inserting a new SmartArt this call ensures the pre‑rendered drawing is generated.)
-        if (smartArtShape.HasSmartArt)
+        // Load a template document that already contains a SmartArt shape
+        string templatePath = @"C:\Templates\SmartArtTemplate.docx";
+        if (!File.Exists(templatePath))
         {
-            smartArtShape.UpdateSmartArtDrawing();
+            Console.WriteLine($"Template not found: {templatePath}");
+            return;
+        }
+        Document smartArtTemplate = new Document(templatePath);
+
+        // Find the first shape that has a SmartArt object in the template
+        Shape smartArtShape = smartArtTemplate.GetChildNodes(NodeType.Shape, true)
+            .Cast<Shape>()
+            .FirstOrDefault(s => s.HasSmartArt);
+
+        // If a SmartArt shape was found, clone it and insert it into the new document
+        if (smartArtShape != null)
+        {
+            // Clone the shape (deep clone to copy all child nodes)
+            Shape clonedShape = (Shape)smartArtShape.Clone(true);
+
+            // Ensure the SmartArt drawing is up‑to‑date (necessary when the pre‑rendered drawing is missing)
+            clonedShape.UpdateSmartArtDrawing();
+
+            // Insert the cloned SmartArt shape at the current cursor position
+            builder.InsertNode(clonedShape);
+        }
+        else
+        {
+            Console.WriteLine("No SmartArt shape found in the template.");
         }
 
-        // Save the document with OOXML compliance that supports DML shapes (required for SmartArt).
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
-        };
-        doc.Save("SmartArtShape.docx", saveOptions);
+        // Save the resulting document
+        string outputPath = @"C:\Output\DocumentWithSmartArt.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

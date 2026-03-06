@@ -7,36 +7,38 @@ class InsertOleObjectExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Path to the file that will be embedded as an OLE object.
+        string oleSourcePath = @"C:\Data\Sample.xlsx";
+
+        // Path where the resulting RTF document will be saved.
+        string outputPath = @"C:\Output\DocumentWithOle.rtf";
+
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Create a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a description before the OLE object.
-        builder.Writeln("Embedded OLE object (sample.txt):");
+        // Write a description before the OLE object.
+        builder.Writeln("Embedded Excel spreadsheet:");
 
-        // Path to the file that will be embedded as an OLE object.
-        string filePath = "sample.txt";
-
-        // Ensure the sample file exists; create it if necessary.
-        if (!File.Exists(filePath))
+        // Open the source file as a stream.
+        using (Stream oleStream = File.OpenRead(oleSourcePath))
         {
-            File.WriteAllText(filePath, "This is sample text inside the OLE package.");
+            // Insert the OLE object from the stream.
+            // Parameters:
+            //   oleStream   – stream containing the file data.
+            //   "Package"   – ProgID for generic OLE package.
+            //   true        – display as an icon.
+            //   null        – use default icon image.
+            Shape oleShape = builder.InsertOleObject(oleStream, "Package", true, null);
+
+            // Optionally set a custom file name and display name for the OLE package.
+            oleShape.OleFormat.OlePackage.FileName = Path.GetFileName(oleSourcePath);
+            oleShape.OleFormat.OlePackage.DisplayName = Path.GetFileNameWithoutExtension(oleSourcePath);
         }
 
-        // Insert the OLE object as an icon.
-        // Parameters:
-        //   filePath   – full path to the source file.
-        //   false      – embed the object (not a link).
-        //   true       – display as an icon.
-        //   null       – use the default icon provided by Aspose.Words.
-        Shape oleShape = builder.InsertOleObject(filePath, false, true, null);
-
-        // NOTE: In recent versions of Aspose.Words the IconCaption property is read‑only.
-        // If you need a custom caption, you must create a separate caption paragraph
-        // or use a custom icon image. The line below has been removed to fix the build error.
-        // oleShape.OleFormat.IconCaption = "Sample Text File";
-
         // Save the document in RTF format.
-        doc.Save("OleObjectDocument.rtf");
+        doc.Save(outputPath, SaveFormat.Rtf);
     }
 }

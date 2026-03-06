@@ -4,42 +4,38 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Load the template that contains <<doc [src.Document]>> tags.
+        Document template = new Document("Template.docx");
+
+        // Get all DOC files that should be inserted into the template.
+        string[] docFiles = Directory.GetFiles("DocsToInsert", "*.doc");
+
+        // Create a collection of wrapper objects that expose a Document property.
+        // This mirrors the example in Aspose.Words documentation.
+        var sources = docFiles.Select(f => new DocumentWrapper
         {
-            // Path to the template document that contains <<doc [src.Document]>> tags.
-            string templatePath = @"Templates\ReportTemplate.docx";
+            Document = new Document(f) // Load each source document.
+        }).ToArray();
 
-            // Load the template document.
-            Document template = new Document(templatePath);
+        // Prepare the data sources and their names for the ReportingEngine.
+        object[] dataSources = sources.Cast<object>().ToArray();
+        string[] dataSourceNames = sources.Select((s, i) => $"src{i}").ToArray();
 
-            // Directory that holds the source DOCX files to be inserted.
-            string sourceDocsDir = @"SourceDocs";
+        // Build the report – the engine will replace the <<doc>> tags with the loaded documents.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(template, dataSources, dataSourceNames);
 
-            // Load each source document using LINQ and create an array of objects.
-            Document[] sourceDocuments = Directory
-                .EnumerateFiles(sourceDocsDir, "*.docx")
-                .Select(filePath => new Document(filePath))
-                .ToArray();
+        // Save the populated document.
+        template.Save("Result.docx");
+    }
 
-            // Prepare data source names that correspond to the tags in the template.
-            // For example, the template may contain tags like <<doc [src0.Document]>>.
-            string[] dataSourceNames = sourceDocuments
-                .Select((doc, index) => $"src{index}")
-                .ToArray();
-
-            // The ReportingEngine can accept multiple data sources.
-            ReportingEngine engine = new ReportingEngine();
-
-            // Build the report – this will replace the <<doc ...>> tags with the contents of the source documents.
-            engine.BuildReport(template, sourceDocuments.Cast<object>().ToArray(), dataSourceNames);
-
-            // Save the resulting document.
-            string outputPath = @"Results\CombinedReport.docx";
-            template.Save(outputPath);
-        }
+    // Simple wrapper class required by the ReportingEngine to expose the document.
+    public class DocumentWrapper
+    {
+        public Document Document { get; set; }
     }
 }

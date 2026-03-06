@@ -2,59 +2,55 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Layout;
 using Aspose.Words.Saving;
-using Aspose.Words.Comparing;
 
 class RevisionComparisonToHtml
 {
     static void Main()
     {
-        // Paths to the original and edited documents.
+        // Paths to the source documents.
         string originalPath = @"C:\Docs\Original.docx";
         string editedPath   = @"C:\Docs\Edited.docx";
 
-        // Load the documents.
-        Document originalDoc = new Document(originalPath);
-        Document editedDoc   = new Document(editedPath);
+        // Load the original document – this will become the document that holds the revisions.
+        Document doc = new Document(originalPath);
 
-        // Ensure both documents have no revisions before comparison.
-        if (originalDoc.Revisions.Count != 0 || editedDoc.Revisions.Count != 0)
-            throw new InvalidOperationException("Documents must not contain revisions before comparison.");
+        // Load the document to compare against.
+        Document docToCompare = new Document(editedPath);
 
-        // Set up comparison options (optional – here we compare all elements).
-        CompareOptions compareOptions = new CompareOptions
-        {
-            CompareMoves = true,
-            IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
-            Target = ComparisonTargetType.Current
-        };
+        // Perform the comparison. The result (revisions) will be stored in 'doc'.
+        doc.Compare(docToCompare, "Reviewer", DateTime.Now);
 
-        // Perform the comparison. The revisions will be added to the original document.
-        originalDoc.Compare(editedDoc, "Reviewer", DateTime.Now, compareOptions);
-
+        // -----------------------------------------------------------------
         // Configure how revisions are displayed in the rendered output.
-        RevisionOptions revOptions = originalDoc.LayoutOptions.RevisionOptions;
-        revOptions.ShowOriginalRevision = true;   // Show original text instead of revised text.
-        revOptions.ShowRevisionMarks = true;     // Keep revision markup visible.
-        revOptions.ShowRevisionBars = false;     // Hide side revision bars.
-        revOptions.ShowInBalloons = ShowInBalloons.None; // Render revisions inline.
+        // -----------------------------------------------------------------
+        RevisionOptions revOptions = doc.LayoutOptions.RevisionOptions;
 
-        // Prepare HTML save options.
+        // Show the original text instead of the revised one.
+        revOptions.ShowOriginalRevision = true;
+
+        // Keep the revision markup (e.g., strike‑through, underline) visible.
+        revOptions.ShowRevisionMarks = true;
+
+        // Hide the side revision bars that appear next to lines with changes.
+        revOptions.ShowRevisionBars = false;
+
+        // Render all revisions inline (no balloons).
+        revOptions.ShowInBalloons = ShowInBalloons.None;
+
+        // -----------------------------------------------------------------
+        // Save the document as HTML with pretty formatting.
+        // -----------------------------------------------------------------
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
-            HtmlVersion = HtmlVersion.Html5, // Use HTML5 standard.
-            PrettyFormat = true            // Make the output human‑readable.
-            // Headers and footers are exported by default; no explicit property needed.
+            // Use HTML5 output.
+            HtmlVersion = HtmlVersion.Html5,
+
+            // Make the generated HTML human‑readable.
+            PrettyFormat = true
         };
 
-        // Save the comparison result as an HTML file.
+        // Save the result.
         string outputPath = @"C:\Docs\ComparisonResult.html";
-        originalDoc.Save(outputPath, htmlOptions);
+        doc.Save(outputPath, htmlOptions);
     }
 }

@@ -1,20 +1,21 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-class RemoveHeadersFootersAndSaveAsTemplate
+class Program
 {
     static void Main()
     {
-        // Load the existing DOC document.
-        Document doc = new Document("InputDocument.doc");
+        // Load the source DOC file.
+        Document doc = new Document("Input.doc");
 
-        // Clear the contents of all headers and footers in every section.
+        // Remove all header and footer contents from every section.
         foreach (Section section in doc.Sections)
         {
             section.ClearHeadersFooters();
         }
 
         // Save the modified document as a macro‑enabled template (DOTM).
-        doc.Save("OutputTemplate.dotm", SaveFormat.Dotm);
+        doc.Save("Output.dotm", SaveFormat.Dotm);
     }
 }

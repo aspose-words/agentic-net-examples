@@ -1,7 +1,8 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class GenerateBarcode
 {
     static void Main()
     {
@@ -10,22 +11,23 @@ class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a DISPLAYBARCODE field.
+        // This field will display a QR code with custom colors and scaling.
         FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
-        // Configure the barcode (example: QR code with custom colors and scaling).
-        barcodeField.BarcodeType = "QR";
-        barcodeField.BarcodeValue = "ABC123";
-        barcodeField.BackgroundColor = "0xF8BD69";
-        barcodeField.ForegroundColor = "0xB5413B";
-        barcodeField.ErrorCorrectionLevel = "3";
-        barcodeField.ScalingFactor = "250";
-        barcodeField.SymbolHeight = "1000";
-        barcodeField.SymbolRotation = "0";
+        // Set barcode properties.
+        barcodeField.BarcodeType = "QR";                 // Type of barcode.
+        barcodeField.BarcodeValue = "ABC123";            // Data to encode.
+        barcodeField.BackgroundColor = "0xF8BD69";       // Background colour (hex).
+        barcodeField.ForegroundColor = "0xB5413B";       // Foreground colour (hex).
+        barcodeField.ErrorCorrectionLevel = "3";         // QR error correction level.
+        barcodeField.ScalingFactor = "250";              // Scale the symbol to 250%.
+        barcodeField.SymbolHeight = "1000";              // Height in TWIPS (1/1440 inch).
+        barcodeField.SymbolRotation = "0";               // No rotation.
 
-        // Add a line break after the field (optional).
+        // Optional: add a line break after the field for readability.
         builder.Writeln();
 
         // Save the document in DOCX format.
-        doc.Save("DisplayBarcode.docx");
+        doc.Save("BarcodeDisplay.docx");
     }
 }

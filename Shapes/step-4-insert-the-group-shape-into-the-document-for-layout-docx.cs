@@ -1,35 +1,46 @@
-using System.Drawing;
+using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
-class Program
+namespace AsposeWordsGroupShapeExample
 {
-    static void Main()
+    class Program
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Step 1. Create a new blank document.
+            Document doc = new Document();
 
-        // Insert the first shape (a rectangle) and set its position and stroke color.
-        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
-        shape1.Left = 20;
-        shape1.Top = 20;
-        shape1.Stroke.Color = Color.Red;
+            // Step 2. Initialize a DocumentBuilder for inserting content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the second shape (an ellipse) and set its position and stroke color.
-        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
-        shape2.Left = 40;
-        shape2.Top = 50;
-        shape2.Stroke.Color = Color.Green;
+            // Step 3. Insert two individual shapes that will later be grouped.
+            // Rectangle shape.
+            Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+            rect.Left = 20;   // Position relative to the page.
+            rect.Top = 20;
+            rect.Stroke.Color = Color.Red;
 
-        // Group the two shapes. The InsertGroupShape method creates a GroupShape node,
-        // automatically calculates its position and size, and inserts it at the current cursor location.
-        GroupShape group = builder.InsertGroupShape(shape1, shape2);
+            // Ellipse shape.
+            Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+            ellipse.Left = 40;
+            ellipse.Top = 50;
+            ellipse.Stroke.Color = Color.Green;
 
-        // Example: set the group's wrap type to None so it behaves as a floating object.
-        group.WrapType = WrapType.None;
+            // Step 4. Group the previously inserted shapes.
+            // The InsertGroupShape method automatically calculates the group’s position and size.
+            GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Save the document in DOCX format.
-        doc.Save("GroupShapeLayout.docx");
+            // Optional: add a caption inside the group to demonstrate text handling.
+            Paragraph para = new Paragraph(doc);
+            Run run = new Run(doc, "Grouped Shapes");
+            para.AppendChild(run);
+            // Append the paragraph to the first child shape inside the group.
+            ((Shape)group.GetChild(NodeType.Shape, 0, true)).AppendChild(para);
+
+            // Step 5. Save the document in DOCX format.
+            doc.Save("GroupedShapes.docx");
+        }
     }
 }

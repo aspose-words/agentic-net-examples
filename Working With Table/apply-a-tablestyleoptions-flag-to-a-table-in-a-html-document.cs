@@ -6,11 +6,11 @@ class ApplyTableStyleOptions
 {
     static void Main()
     {
-        // Load an existing HTML document that contains at least one table.
+        // Load the HTML document.
         Document doc = new Document("input.html");
 
-        // Retrieve the first table in the document.
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        // Find the first table in the document.
+        Table table = doc.GetChild(NodeType.Table, 0, true) as Table;
         if (table == null)
         {
             Console.WriteLine("No table found in the document.");
@@ -18,11 +18,10 @@ class ApplyTableStyleOptions
         }
 
         // Apply desired style options to the table.
-        // Example: apply first row formatting and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-
-        // Optionally, set a built‑in style identifier to see the effect of the options.
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+        // Example: apply first row formatting, row banding, and first column formatting.
+        table.StyleOptions = TableStyleOptions.FirstRow |
+                              TableStyleOptions.RowBands |
+                              TableStyleOptions.FirstColumn;
 
         // Save the modified document.
         doc.Save("output.docx");

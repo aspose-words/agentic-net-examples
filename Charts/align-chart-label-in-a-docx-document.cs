@@ -1,13 +1,13 @@
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using System.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -17,18 +17,19 @@ class Program
 
         // Remove the demo series and add custom data.
         chart.Series.Clear();
-        chart.Series.Add("Sample Series",
-            new[] { "A", "B", "C", "D" },
+        chart.Series.Add(
+            "Sample Series",
+            new[] { "Category A", "Category B", "Category C", "Category D" },
             new double[] { 10, 20, 30, 40 });
 
-        // Align the Y‑axis tick labels to the right.
+        // Access the Y‑axis and align its tick‑label text to the right.
         ChartAxis yAxis = chart.AxisY;
-        yAxis.TickLabels.Alignment = ParagraphAlignment.Right;
+        yAxis.TickLabels.Alignment = ParagraphAlignment.Right; // Align axis tick labels.
 
-        // Optional: change the label font color to highlight the alignment.
+        // Optional: change the font color to highlight the alignment.
         yAxis.TickLabels.Font.Color = Color.Blue;
 
-        // Save the document.
-        doc.Save("AlignedChartLabel.docx");
+        // Save the resulting document.
+        doc.Save("AlignedChartLabels.docx");
     }
 }

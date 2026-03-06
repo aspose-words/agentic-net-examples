@@ -2,66 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class MarkdownExportExample
+class MarkdownExportExample
 {
-    /// <summary>
-    /// Exports a document to Markdown using specific save options.
-    /// </summary>
-    /// <param name="inputFilePath">Path to the source document.</param>
-    /// <param name="outputFilePath">Path where the Markdown file will be saved.</param>
-    public static void Export(string inputFilePath, string outputFilePath)
+    static void Main()
     {
         // Load the source document.
-        Document doc = new Document(inputFilePath);
+        Document doc = new Document("Input.docx");
 
-        // Configure Markdown save options.
-        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
-
-        // Export tables as raw HTML.
-        saveOptions.ExportAsHtml = MarkdownExportAsHtml.Tables;
-
-        // Export list items as plain text.
-        saveOptions.ListExportMode = MarkdownListExportMode.PlainText;
-
-        // Export links using reference style.
-        saveOptions.LinkExportMode = MarkdownLinkExportMode.Reference;
-
-        // Include underline formatting using "++".
-        saveOptions.ExportUnderlineFormatting = true;
-
-        // Explicitly set the save format to Markdown (optional, kept for clarity).
-        saveOptions.SaveFormat = SaveFormat.Markdown;
-
-        // Save the document as Markdown with the specified options.
-        doc.Save(outputFilePath, saveOptions);
-    }
-}
-
-public class Program
-{
-    /// <summary>
-    /// Entry point required for a console application.
-    /// Usage: dotnet run <inputFilePath> <outputFilePath>
-    /// </summary>
-    public static void Main(string[] args)
-    {
-        if (args.Length != 2)
+        // Configure the Markdown save options.
+        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
         {
-            Console.WriteLine("Usage: <program> <inputFilePath> <outputFilePath>");
-            return;
-        }
+            // Export tables as raw HTML.
+            ExportAsHtml = MarkdownExportAsHtml.Tables,
+            // Export list items using Markdown syntax.
+            ListExportMode = MarkdownListExportMode.MarkdownSyntax,
+            // Export links as reference style.
+            LinkExportMode = MarkdownLinkExportMode.Reference,
+            // Export underline formatting as "++".
+            ExportUnderlineFormatting = true,
+            // Export OfficeMath objects as LaTeX.
+            OfficeMathExportMode = MarkdownOfficeMathExportMode.Latex,
+            // Explicitly set the format to Markdown.
+            SaveFormat = SaveFormat.Markdown
+        };
 
-        string inputPath = args[0];
-        string outputPath = args[1];
-
-        try
-        {
-            MarkdownExportExample.Export(inputPath, outputPath);
-            Console.WriteLine($"Document exported successfully to '{outputPath}'.");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error during export: {ex.Message}");
-        }
+        // Save the document to a Markdown file using the configured options.
+        doc.Save("Output.md", saveOptions);
     }
 }

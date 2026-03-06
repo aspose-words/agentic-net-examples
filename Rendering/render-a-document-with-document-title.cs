@@ -1,28 +1,36 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class RenderDocumentWithTitle
 {
     static void Main()
     {
-        // Create a new blank Word document.
+        // Define output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Set the built‑in Title property – this value will be used for the PDF window title bar.
-        doc.BuiltInDocumentProperties.Title = "My Document Title";
-
-        // Add some visible content so the document is not empty.
+        // Use DocumentBuilder to add some content.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello world!");
 
-        // Configure PDF save options to display the document title in the PDF title bar.
+        // Set the built‑in document title. This value will be used for the PDF window title.
+        doc.BuiltInDocumentProperties.Title = "My Document Title";
+
+        // Create PdfSaveOptions and enable the DisplayDocTitle flag.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            DisplayDocTitle = true
+            DisplayDocTitle = true // Show the document title in the PDF title bar.
         };
 
-        // Save the document as a PDF using the specified options.
-        doc.Save("DocumentWithTitle.pdf", pdfOptions);
+        // Save the document as PDF using the options defined above.
+        string outputPath = Path.Combine(artifactsDir, "DocumentWithTitle.pdf");
+        doc.Save(outputPath, pdfOptions);
+
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

@@ -1,32 +1,33 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Replacing;
+using Aspose.Words.Math;
 
-class TrackOfficeMathChanges
+class Program
 {
     static void Main()
     {
-        // Load the original document that contains OfficeMath equations.
-        Document originalDoc = new Document("Original.docx");
+        // Load an existing DOCX document that contains OfficeMath content.
+        // The Document constructor with a file path is the provided load rule.
+        Document doc = new Document("OfficeMathInput.docx");
 
-        // Load the edited version of the document where the OfficeMath content has been changed.
-        Document editedDoc = new Document("Edited.docx");
+        // Begin tracking revisions. All subsequent node insertions or deletions
+        // will be recorded as revision changes with the specified author.
+        doc.StartTrackRevisions("Reviewer");
 
-        // Ensure that neither document already contains revisions; otherwise Compare will throw.
-        if (originalDoc.HasRevisions || editedDoc.HasRevisions)
-            throw new InvalidOperationException("Documents must not have existing revisions before comparison.");
-
-        // Compare the two documents. This will create insertion/deletion revisions for any changes,
-        // including additions, removals, or replacements of OfficeMath nodes.
-        originalDoc.Compare(editedDoc, "John Doe", DateTime.Now);
-
-        // Iterate over the generated revisions and output basic information.
-        foreach (Revision rev in originalDoc.Revisions)
+        // Locate the first OfficeMath node in the document.
+        // OfficeMath objects can only be children of Paragraph nodes.
+        OfficeMath officeMath = (OfficeMath)doc.GetChild(NodeType.OfficeMath, 0, true);
+        if (officeMath != null)
         {
-            Console.WriteLine($"Revision type: {rev.RevisionType}, Node type: {rev.ParentNode.NodeType}");
+            // Deleting the OfficeMath node creates a deletion revision.
+            // Aspose.Words tracks node deletions, which we can later accept or reject.
+            officeMath.Remove();
         }
 
-        // Save the original document now containing tracked changes.
-        originalDoc.Save("TrackedOfficeMathChanges.docx");
+        // Stop tracking further changes.
+        doc.StopTrackRevisions();
+
+        // Save the modified document. The Save method is the provided save rule.
+        doc.Save("OfficeMathTrackedChanges.docx");
     }
 }

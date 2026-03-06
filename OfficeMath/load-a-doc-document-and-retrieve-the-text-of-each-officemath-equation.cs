@@ -1,31 +1,29 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Math;
+using Aspose.Words.Loading;
 
 class Program
 {
     static void Main()
     {
-        // Path to the Word document that contains equations.
-        string filePath = "MyDir\\MathDocument.docx";
+        // Path to the input Word document.
+        const string inputPath = "input.docx";
 
-        // Load options: convert shapes that contain EquationXML to OfficeMath objects.
+        // Load the document with the option to convert EquationXML shapes to OfficeMath objects.
         LoadOptions loadOptions = new LoadOptions();
-        loadOptions.ConvertShapeToOfficeMath = true;
+        loadOptions.ConvertShapeToOfficeMath = true; // Ensure all equations are loaded as OfficeMath.
+        Document doc = new Document(inputPath, loadOptions);
 
-        // Load the document with the specified options.
-        Document doc = new Document(filePath, loadOptions);
-
-        // Retrieve all OfficeMath nodes (equations) in the document.
-        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        // Retrieve all OfficeMath nodes in the document (including those inside other nodes).
+        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
 
         // Iterate through each OfficeMath node and output its plain‑text representation.
-        for (int i = 0; i < officeMathNodes.Count; i++)
+        for (int i = 0; i < mathNodes.Count; i++)
         {
-            OfficeMath officeMath = (OfficeMath)officeMathNodes[i];
-            string equationText = officeMath.GetText(); // Gets the text of the equation.
-            Console.WriteLine($"Equation {i + 1}: {equationText.Trim()}");
+            OfficeMath officeMath = (OfficeMath)mathNodes[i];
+            string equationText = officeMath.GetText().Trim(); // Get the equation text.
+            Console.WriteLine($"Equation {i + 1}: {equationText}");
         }
     }
 }

@@ -6,19 +6,21 @@ class Program
 {
     static void Main()
     {
-        // Path to the source document.
-        string inputPath = "input.docx";
+        // Load the source document.
+        Document doc = new Document("input.docx");
 
-        // Path where the PDF will be saved.
-        string outputPath = "output.pdf";
-
-        // Load the existing document.
-        Document doc = new Document(inputPath);
-
-        // Set the desired page size (e.g., A4).
+        // Set the desired page size for the first section.
+        // Example: use the predefined A4 size.
         doc.FirstSection.PageSetup.PaperSize = PaperSize.A4;
 
-        // Save the document as a PDF file.
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // If a custom size is required, uncomment and set the dimensions in points.
+        // doc.FirstSection.PageSetup.PageWidth = 600;   // Width in points
+        // doc.FirstSection.PageSetup.PageHeight = 800;  // Height in points
+
+        // Rebuild the page layout so that the changes take effect.
+        doc.UpdatePageLayout();
+
+        // Save the document as PDF. The format is inferred from the file extension.
+        doc.Save("output.pdf");
     }
 }

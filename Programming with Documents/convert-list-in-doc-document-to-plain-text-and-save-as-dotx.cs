@@ -7,30 +7,31 @@ class ListToPlainTextTemplate
     static void Main()
     {
         // Path to the source DOC file that contains the list.
-        const string sourceDocPath = @"C:\Docs\SourceDocument.doc";
+        string sourceDocPath = "InputDocument.doc";
 
-        // Path for a temporary plain‑text file that will hold the converted list.
-        const string tempTxtPath = @"C:\Docs\TempPlainText.txt";
+        // Path where the resulting DOTX template will be saved.
+        string outputTemplatePath = "ListPlainTextTemplate.dotx";
 
-        // Path for the final DOTX template file.
-        const string outputDotxPath = @"C:\Docs\ResultTemplate.dotx";
+        // Load the existing DOC document.
+        Document sourceDocument = new Document(sourceDocPath);
 
-        // Load the original DOC document.
-        Document sourceDoc = new Document(sourceDocPath);
-
-        // Configure TxtSaveOptions to simplify list labels (plain‑text representation).
+        // Configure text save options to simplify list labels for plain‑text conversion.
         TxtSaveOptions txtOptions = new TxtSaveOptions
         {
-            SimplifyListLabels = true   // Convert complex list symbols to simple ASCII characters.
+            SimplifyListLabels = true   // Convert complex list symbols to simple ASCII equivalents.
         };
 
-        // Save the document as plain text using the configured options.
-        sourceDoc.Save(tempTxtPath, txtOptions);
+        // Export the document content to a plain‑text string using the configured options.
+        string plainText = sourceDocument.ToString(txtOptions);
 
-        // Load the generated plain‑text file back into a new Document object.
-        Document plainTextDoc = new Document(tempTxtPath);
+        // Create a new blank document that will become the DOTX template.
+        Document templateDocument = new Document();
 
-        // Save the plain‑text document as a DOTX template.
-        plainTextDoc.Save(outputDotxPath, SaveFormat.Dotx);
+        // Insert the extracted plain‑text list into the new document.
+        DocumentBuilder builder = new DocumentBuilder(templateDocument);
+        builder.Writeln(plainText);
+
+        // Save the document as a DOTX template. The format is inferred from the file extension.
+        templateDocument.Save(outputTemplatePath);
     }
 }

@@ -2,33 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class InsertParagraphAndSaveAsPng
 {
     static void Main()
     {
-        // Load the source DOC document that contains the paragraph to copy.
+        // Load the source document that contains the paragraph to be copied.
         Document srcDoc = new Document("Source.docx");
 
-        // Create a new destination document.
+        // Create a new blank destination document.
         Document dstDoc = new Document();
-        dstDoc.EnsureMinimum(); // Guarantees at least one section, body, and paragraph.
 
-        // Retrieve the first non‑empty paragraph from the source document.
-        Paragraph srcParagraph = (Paragraph)srcDoc.GetChild(NodeType.Paragraph, 0, true);
-        if (srcParagraph.IsEndOfSection && !srcParagraph.HasChildNodes)
-        {
-            // Skip the automatically added empty end‑of‑section paragraph.
-            srcParagraph = (Paragraph)srcDoc.GetChild(NodeType.Paragraph, 1, true);
-        }
+        // Ensure the destination document has at least one section.
+        // (A new Document already contains a default section, body, and paragraph.)
+        Section targetSection = dstDoc.FirstSection;
 
-        // Import the paragraph into the destination document, preserving its formatting.
-        Node importedParagraph = dstDoc.ImportNode(srcParagraph, true);
+        // Get the first paragraph from the source document.
+        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
 
-        // Insert the imported paragraph at the end of the first section's body.
-        Section firstSection = dstDoc.FirstSection;
-        firstSection.Body.InsertAfter(importedParagraph, firstSection.Body.LastParagraph);
+        // Import the paragraph node into the destination document, preserving its formatting.
+        NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
+        Node importedParagraph = importer.ImportNode(srcParagraph, true);
 
-        // Render the first page of the document to a PNG image.
+        // Append the imported paragraph to the target section's body.
+        targetSection.Body.AppendChild(importedParagraph);
+
+        // Save the resulting document as a PNG image (renders the first page).
         dstDoc.Save("Result.png", SaveFormat.Png);
     }
 }

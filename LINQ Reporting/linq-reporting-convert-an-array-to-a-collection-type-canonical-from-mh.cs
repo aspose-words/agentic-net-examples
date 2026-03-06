@@ -1,5 +1,6 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,28 +8,25 @@ class LinqReportingArrayToCollection
 {
     static void Main()
     {
-        // Load a document that is stored in MHTML format.
-        // The Document constructor handles loading from a file path.
-        Document srcDoc = new Document("Template.mht");
+        // Load the template document that is stored in MHTML format.
+        // The Document constructor automatically detects the format from the file extension.
+        Document template = new Document(@"MyDir\Template.mhtml");
 
-        // Retrieve all paragraph nodes from the source document.
-        // GetChildNodes returns a live NodeCollection.
-        NodeCollection paragraphs = srcDoc.GetChildNodes(NodeType.Paragraph, true);
+        // Original data source is an array of strings.
+        string[] nameArray = new string[] { "Alice", "Bob", "Charlie" };
 
-        // Convert the live collection to a fixed‑size array.
-        // This uses the built‑in ToArray method of NodeCollection.
-        Node[] paragraphArray = paragraphs.ToArray();
+        // Convert the array to a canonical collection type (List<string>) using LINQ.
+        // ReportingEngine works best with collection types that implement IEnumerable<T>.
+        List<string> nameList = nameArray.ToList();
 
-        // The LINQ Reporting Engine expects a data source that can be enumerated.
-        // An array implements IEnumerable, so it can be used directly.
-        // For demonstration we pass the array as the sole data source.
+        // Create the reporting engine.
         ReportingEngine engine = new ReportingEngine();
 
-        // Build the report using the original template document and the array data source.
-        // The overload with (Document, object) is used.
-        engine.BuildReport(srcDoc, paragraphArray);
+        // Build the report using the template and the collection as a data source.
+        // The third parameter is the name by which the data source will be referenced in the template.
+        engine.BuildReport(template, nameList, "Names");
 
-        // Save the populated document in DOCX format.
-        srcDoc.Save("ReportFromMhtml.docx", SaveFormat.Docx);
+        // Save the populated document to DOCX format.
+        template.Save(@"ArtifactsDir\Report.docx", SaveFormat.Docx);
     }
 }

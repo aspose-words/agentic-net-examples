@@ -6,22 +6,21 @@ class Program
 {
     static void Main()
     {
-        // Load the existing DOCM document.
+        // Load the existing DOCM file.
         Document doc = new Document("Input.docm");
 
-        // Turn on automatic hyphenation for the whole document.
+        // Enable automatic hyphenation for the document.
         doc.HyphenationOptions.AutoHyphenation = true;
 
         // Optional: configure additional hyphenation settings.
-        // Set the hyphenation zone to 0.5 inch (720 twentieths of a point).
-        doc.HyphenationOptions.HyphenationZone = 720;
-        // Allow at most two consecutive lines to end with hyphens.
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+        doc.HyphenationOptions.HyphenationZone = 720;          // 0.5 inch from the right margin.
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;    // Max two consecutive hyphenated lines.
+        doc.HyphenationOptions.HyphenateCaps = true;         // Hyphenate all‑caps words.
 
         // Rebuild the layout so that hyphenation is applied.
         doc.UpdatePageLayout();
 
-        // Save the modified document.
+        // Save the modified document back to DOCM format.
         doc.Save("Output.docm");
     }
 }

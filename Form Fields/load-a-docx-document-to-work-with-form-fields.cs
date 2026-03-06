@@ -1,35 +1,34 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.Fields; // Added for FieldType enum
 
-class LoadDocumentExample
+class Program
 {
     static void Main()
     {
-        // Path to the DOCX file that contains form fields.
-        string docPath = @"C:\Docs\SampleForm.docx";
+        // Path to the source DOCX file.
+        string inputPath = @"C:\Docs\SampleForm.docx";
 
-        // Load the existing document from the file system.
-        Document doc = new Document(docPath);
+        // Load the existing document. This uses the Document(string) constructor.
+        Document doc = new Document(inputPath);
 
-        // Iterate through all form fields in the document.
-        foreach (FormField field in doc.Range.FormFields)
+        // Access a form field by its name (e.g., a checkbox named "CheckBox1").
+        var checkBox = doc.Range.FormFields["CheckBox1"];
+        if (checkBox != null && checkBox.Type == FieldType.FieldFormCheckBox)
         {
-            // Example: Print the name and current value of each form field.
-            Console.WriteLine($"Field Name: {field.Name}");
-            Console.WriteLine($"Field Type: {field.Type}");
-            Console.WriteLine($"Field Value: {field.Result}");
-            Console.WriteLine();
+            // Set the checkbox to checked.
+            checkBox.Checked = true;
         }
 
-        // (Optional) Modify a specific form field by name.
-        FormField targetField = doc.Range.FormFields["CustomerName"];
-        if (targetField != null)
+        // Access a text input form field named "TextField1".
+        var textField = doc.Range.FormFields["TextField1"];
+        if (textField != null && textField.Type == FieldType.FieldFormTextInput)
         {
-            targetField.Result = "John Doe";
+            // Set the text value.
+            textField.Result = "Aspose.Words";
         }
 
-        // Save the modified document to a new file.
+        // Save the modified document.
         string outputPath = @"C:\Docs\SampleForm_Modified.docx";
         doc.Save(outputPath);
     }

@@ -3,71 +3,38 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsExamples
+namespace AsposeWordsConvertPagesToPng
 {
-    /// <summary>
-    /// Converts each page of a DOC/DOCX document to a separate PNG image.
-    /// </summary>
-    public class DocToPngConverter
-    {
-        /// <summary>
-        /// Converts each page of a DOC/DOCX document to a separate PNG image.
-        /// </summary>
-        /// <param name="inputFilePath">Full path to the source Word document.</param>
-        /// <param name="outputFolderPath">Folder where PNG files will be written. It will be created if it does not exist.</param>
-        public void Convert(string inputFilePath, string outputFolderPath)
-        {
-            // Ensure the output directory exists.
-            Directory.CreateDirectory(outputFolderPath);
-
-            // Load the document from the specified file.
-            Document doc = new Document(inputFilePath);
-
-            // Prepare ImageSaveOptions for PNG output.
-            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
-
-            // Iterate through all pages (PageCount is 1‑based).
-            for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
-            {
-                // Set the PageSet to the current zero‑based page index.
-                pngOptions.PageSet = new PageSet(pageIndex);
-
-                // Build the output file name, e.g. "Document_Page_1.png".
-                string outFile = Path.Combine(outputFolderPath,
-                    $"{Path.GetFileNameWithoutExtension(inputFilePath)}_Page_{pageIndex + 1}.png");
-
-                // Save the single page as a PNG image.
-                doc.Save(outFile, pngOptions);
-            }
-        }
-    }
-
     class Program
     {
-        /// <summary>
-        /// Entry point of the console application.
-        /// </summary>
-        static void Main(string[] args)
+        static void Main()
         {
-            // Simple argument handling – you can replace these paths with your own.
-            if (args.Length != 2)
-            {
-                Console.WriteLine("Usage: DocToPngConverter <input-doc-path> <output-folder-path>");
-                return;
-            }
+            // Path to the source DOC document.
+            string inputDocPath = @"C:\Docs\SourceDocument.doc";
 
-            string inputPath = args[0];
-            string outputPath = args[1];
+            // Directory where the PNG images will be saved.
+            string outputDir = @"C:\Docs\PageImages";
 
-            try
+            // Ensure the output directory exists.
+            Directory.CreateDirectory(outputDir);
+
+            // Load the DOC document.
+            Document doc = new Document(inputDocPath);
+
+            // Create ImageSaveOptions for PNG format.
+            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
+
+            // Iterate through each page in the document.
+            for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
             {
-                var converter = new DocToPngConverter();
-                converter.Convert(inputPath, outputPath);
-                Console.WriteLine($"Conversion completed. PNG files are saved to '{outputPath}'.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
+                // Set the PageSet to render only the current page (zero‑based index).
+                pngOptions.PageSet = new PageSet(pageIndex);
+
+                // Build the output file name for the current page.
+                string outputPath = Path.Combine(outputDir, $"Page_{pageIndex + 1}.png");
+
+                // Save the current page as a PNG image.
+                doc.Save(outputPath, pngOptions);
             }
         }
     }

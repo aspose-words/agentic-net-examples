@@ -1,36 +1,39 @@
 using System;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Math;
 
-class OfficeMathSummary
+class OfficeMathSummaryGenerator
 {
     static void Main()
     {
         // Load the DOT template document.
-        Document template = new Document("Template.dotx");
+        // The Document(string) constructor automatically detects the format.
+        Document templateDoc = new Document("Template.dotx");
 
-        // Create a new blank document that will hold the summary.
-        Document summary = new Document();
-        DocumentBuilder builder = new DocumentBuilder(summary);
+        // Build a textual summary of OfficeMath equation counts per section.
+        StringBuilder summaryBuilder = new StringBuilder();
+        int sectionNumber = 1;
 
-        // Header for the summary.
-        builder.Writeln("OfficeMath Equation Count per Section");
-        builder.Writeln("-------------------------------------");
-
-        // Iterate through each section of the template.
-        for (int i = 0; i < template.Sections.Count; i++)
+        foreach (Section section in templateDoc.Sections)
         {
-            // Current section.
-            var section = template.Sections[i];
+            // Count all OfficeMath nodes that belong to this section.
+            int equationCount = section.Body.GetChildNodes(NodeType.OfficeMath, true).Count;
 
-            // Count OfficeMath objects inside this section (including nested ones).
-            int mathCount = section.Body.GetChildNodes(NodeType.OfficeMath, true).Count;
-
-            // Write the count to the summary document.
-            builder.Writeln($"Section {i + 1}: {mathCount} equation(s)");
+            summaryBuilder.AppendLine($"Section {sectionNumber}: {equationCount} equation(s)");
+            sectionNumber++;
         }
 
+        // Create a new blank document to hold the summary.
+        Document summaryDoc = new Document();
+
+        // Use DocumentBuilder to write the summary text into the document.
+        DocumentBuilder builder = new DocumentBuilder(summaryDoc);
+        builder.Writeln("OfficeMath Equation Summary");
+        builder.Writeln(); // blank line
+        builder.Writeln(summaryBuilder.ToString());
+
         // Save the summary document.
-        summary.Save("OfficeMathSummary.docx");
+        summaryDoc.Save("OfficeMathSummary.docx");
     }
 }

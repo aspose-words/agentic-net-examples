@@ -5,20 +5,24 @@ using Aspose.Words;
 using Aspose.Words.Fonts;
 using Aspose.Words.Saving;
 
-class RenderDocumentToPdf
+class Program
 {
     static void Main()
     {
-        // Paths for output and custom fonts.
+        // Path to a folder that contains the custom fonts required by the document.
+        string fontsDir = @"C:\MyFonts";
+
+        // Folder where the resulting PDF will be saved.
         string artifactsDir = @"C:\Artifacts\";
-        string fontsDir = @"C:\CustomFonts\";
 
         // Ensure the output directory exists.
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a new document and add text with different fonts.
+        // Load or create the document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Example content using two different fonts.
         builder.Font.Name = "Arial";
         builder.Writeln("Hello world!");
         builder.Font.Name = "Arvo";
@@ -27,23 +31,27 @@ class RenderDocumentToPdf
         // Preserve the original font sources.
         FontSourceBase[] originalFontSources = FontSettings.DefaultInstance.GetFontsSources();
 
-        // Add a folder font source that points to the custom fonts folder.
-        FolderFontSource folderSource = new FolderFontSource(fontsDir, true);
-        FontSettings.DefaultInstance.SetFontsSources(new[] { originalFontSources[0], folderSource });
+        // Add a folder font source that points to the custom fonts directory.
+        FolderFontSource folderFontSource = new FolderFontSource(fontsDir, true);
+        FontSettings.DefaultInstance.SetFontsSources(new[] { originalFontSources[0], folderFontSource });
 
-        // (Optional) Verify that the required fonts are now available.
-        FontSourceBase[] currentSources = FontSettings.DefaultInstance.GetFontsSources();
-        bool arialAvailable = currentSources[0].GetAvailableFonts().Any(f => f.FullFontName == "Arial");
-        bool arvoAvailable = currentSources[1].GetAvailableFonts().Any(f => f.FullFontName == "Arvo");
+        // Verify that the required fonts are now available (optional).
+        FontSourceBase[] currentFontSources = FontSettings.DefaultInstance.GetFontsSources();
+        bool arialAvailable = currentFontSources.Any(src => src.GetAvailableFonts().Any(f => f.FullFontName == "Arial"));
+        bool arvoAvailable = currentFontSources.Any(src => src.GetAvailableFonts().Any(f => f.FullFontName == "Arvo"));
+        if (!arialAvailable || !arvoAvailable)
+            throw new InvalidOperationException("Required fonts are not available.");
 
-        // Create PDF save options.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        // Embed full fonts to keep all glyphs (set to false for subsetting).
-        pdfOptions.EmbedFullFonts = true;
+        // Configure PDF save options.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
+            // Set to true to embed full fonts, false to enable subsetting.
+            EmbedFullFonts = true
+        };
 
-        // Save the document as PDF using the specified options.
-        string pdfPath = Path.Combine(artifactsDir, "RenderedDocument.pdf");
-        doc.Save(pdfPath, pdfOptions);
+        // Save the document as PDF using the configured options.
+        string outputPath = Path.Combine(artifactsDir, "RenderedDocument.pdf");
+        doc.Save(outputPath, pdfOptions);
 
         // Restore the original font sources.
         FontSettings.DefaultInstance.SetFontsSources(originalFontSources);

@@ -1,27 +1,24 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 
-namespace HtmlToPdfConverter
+namespace HtmlToPdfSample
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             // Path to the source HTML file.
-            // Replace with the actual file location as needed.
-            string htmlFilePath = @"C:\Path\To\Your\Input.html";
+            string htmlFile = @"C:\Temp\sample.html";
 
             // Path where the resulting PDF will be saved.
-            // The file extension determines the output format.
-            string pdfFilePath = @"C:\Path\To\Your\Output.pdf";
+            string pdfFile = @"C:\Temp\sample.pdf";
 
-            // Load the HTML document. The Document constructor automatically detects the format.
-            Document document = new Document(htmlFilePath);
+            // Load the HTML document. HtmlLoadOptions can be omitted if default options are sufficient.
+            Document doc = new Document(htmlFile, new HtmlLoadOptions());
 
-            // Save the loaded document as PDF.
-            // The Save method overload with (string, SaveFormat) explicitly sets the target format.
-            document.Save(pdfFilePath, SaveFormat.Pdf);
+            // Save the loaded document as PDF. The SaveFormat enum specifies the output format.
+            doc.Save(pdfFile, SaveFormat.Pdf);
         }
     }
 }

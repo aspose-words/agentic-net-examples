@@ -1,60 +1,48 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+class Program
 {
-    // Simple data model containing an array.
-    public class PersonData
+    static void Main()
     {
-        // Array of anonymous objects (could be any type).
-        public Person[] Persons { get; set; }
+        // ---------- Create a new blank document ----------
+        Document doc = new Document();
 
-        public PersonData()
+        // ---------- Load a WORDML (DOCX) template ----------
+        // The template should contain LINQ Reporting tags, e.g. <<foreach [Customers]>><<[FullName]>><</foreach>>
+        doc = new Document("Template.docx");
+
+        // ---------- Sample data as an array ----------
+        Customer[] customerArray = new[]
         {
-            // Initialize the array with sample data.
-            Persons = new[]
-            {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = "Charlie", Age = 35 }
-            };
-        }
+            new Customer { FullName = "Thomas Hardy", Address = "120 Hanover Sq., London" },
+            new Customer { FullName = "Paolo Accorti", Address = "Via Monte Bianco 34, Torino" }
+        };
+
+        // ---------- Convert the array to a canonical collection type ----------
+        // ReportingEngine works with IList, IEnumerable, etc. Converting to List<T> is the canonical approach.
+        List<Customer> customerList = customerArray.ToList();
+
+        // ---------- (Optional) Demonstrate converting a collection to an array ----------
+        // For example, get all sections of the document and copy them to an array.
+        Section[] sectionsArray = doc.Sections.ToArray();
+
+        // ---------- Build the report using the collection ----------
+        ReportingEngine engine = new ReportingEngine();
+        // The third argument is the name used inside the template to reference this data source.
+        engine.BuildReport(doc, customerList, "Customers");
+
+        // ---------- Save the populated document ----------
+        doc.Save("Report.docx");
     }
 
-    // POCO representing a single record.
-    public class Person
+    // Simple POCO class used as a data source for the report.
+    public class Customer
     {
-        public string Name { get; set; }
-        public int Age { get; set; }
-    }
-
-    class Program
-    {
-        static void Main()
-        {
-            // 1. Load the WORDML (DOCX) template that contains LINQ Reporting tags.
-            //    Example tag in the template: <<foreach [ds.Persons]>><<[Name]>> (Age: <<[Age]>>)<</foreach>>
-            Document template = new Document("Template.docx");
-
-            // 2. Create the data source. The property Persons is an array.
-            //    ReportingEngine can work directly with arrays because they implement IEnumerable,
-            //    but to demonstrate conversion to a canonical collection we explicitly cast to List<T>.
-            PersonData dataSource = new PersonData();
-
-            // Convert the array to a List<Person> – this is the canonical collection type
-            // that the reporting engine will iterate over.
-            List<Person> personsList = new List<Person>(dataSource.Persons);
-
-            // 3. Build the report. We pass the list as a named data source ("ds").
-            ReportingEngine engine = new ReportingEngine();
-            // The anonymous object wrapper allows us to expose the list under a property name.
-            var wrapper = new { Persons = personsList };
-            engine.BuildReport(template, wrapper, "ds");
-
-            // 4. Save the populated document.
-            template.Save("ReportResult.docx");
-        }
+        public string FullName { get; set; }
+        public string Address { get; set; }
     }
 }

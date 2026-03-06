@@ -1,24 +1,18 @@
 using System;
 using Aspose.Words;
 
-class ProtectDocumentExample
+class Program
 {
     static void Main()
     {
-        // Path to the existing DOCX file.
-        string inputPath = "input.docx";
+        // Load the existing DOCX file.
+        Document doc = new Document("input.docx");
 
-        // Load the document from the file system.
-        Document doc = new Document(inputPath);
-
-        // Apply protection to the entire document.
-        // Here we use ReadOnly protection; other types are available in the ProtectionType enum.
+        // Protect the entire document as read‑only.
+        // This prevents any changes unless the protection is removed programmatically.
         doc.Protect(ProtectionType.ReadOnly);
 
-        // Path where the protected document will be saved.
-        string outputPath = "protected.docx";
-
         // Save the protected document.
-        doc.Save(outputPath);
+        doc.Save("protected.docx");
     }
 }

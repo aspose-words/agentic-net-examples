@@ -2,35 +2,32 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class BarcodeExample
+class BarcodeInsertion
 {
     static void Main()
     {
-        // Create a new Word document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set up barcode parameters (QR code example).
-        BarcodeParameters parameters = new BarcodeParameters
+        // Define barcode parameters (QR code in this example).
+        // ScalingFactor and SymbolHeight control the resolution/size of the generated image.
+        BarcodeParameters barcodeParameters = new BarcodeParameters
         {
             BarcodeType = "QR",
             BarcodeValue = "ABC123",
-            BackgroundColor = "0xF8BD69",
-            ForegroundColor = "0xB5413B",
-            ErrorCorrectionLevel = "3",
-            ScalingFactor = "250",
-            SymbolHeight = "1000",
-            SymbolRotation = "0"
+            ScalingFactor = "300",   // 300% scaling.
+            SymbolHeight = "1500"    // Height in twips (1/1440 inch).
         };
 
-        // Generate the barcode image using the built‑in generator.
-        using (Stream imgStream = doc.FieldOptions.BarcodeGenerator.GetBarcodeImage(parameters))
+        // Generate the barcode image using the built‑in barcode generator.
+        using (Stream barcodeImage = doc.FieldOptions.BarcodeGenerator.GetBarcodeImage(barcodeParameters))
         {
-            // Insert the generated image into the document.
-            builder.InsertImage(imgStream);
+            // Insert the generated image into the document at the current cursor position.
+            builder.InsertImage(barcodeImage);
         }
 
-        // Save the document to a DOCX file.
+        // Save the document containing the barcode image.
         doc.Save("BarcodeDocument.docx");
     }
 }

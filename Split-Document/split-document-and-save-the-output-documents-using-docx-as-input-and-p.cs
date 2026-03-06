@@ -1,35 +1,27 @@
 using System;
 using Aspose.Words;
 
-namespace DocumentSplitter
+class SplitDocxToPdf
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Path to the source DOCX file.
+        string inputPath = @"C:\Docs\SourceDocument.docx";
+
+        // Load the DOCX document.
+        Document sourceDoc = new Document(inputPath);
+
+        // Iterate through each page of the source document.
+        for (int pageIndex = 0; pageIndex < sourceDoc.PageCount; pageIndex++)
         {
-            // Input DOCX file path.
-            string inputPath = @"C:\Docs\InputDocument.docx";
+            // Extract a single page as a new Document.
+            Document pageDoc = sourceDoc.ExtractPages(pageIndex, pageIndex);
 
-            // Load the source document (DOCX).
-            Document sourceDoc = new Document(inputPath);
+            // Build the output PDF file name (e.g., SourceDocument_Page1.pdf).
+            string outputPath = $@"C:\Docs\SourceDocument_Page{pageIndex + 1}.pdf";
 
-            // Iterate through each section of the source document.
-            for (int i = 0; i < sourceDoc.Sections.Count; i++)
-            {
-                // Create a new empty document.
-                Document partDoc = new Document();
-
-                // Clone the current section (deep clone) and add it to the new document.
-                // The cloned section already contains its body, paragraphs, etc.
-                Section clonedSection = (Section)sourceDoc.Sections[i].Clone(true);
-                partDoc.AppendChild(clonedSection);
-
-                // Build an output file name for the PDF part.
-                string outputPath = $@"C:\Docs\Output_Part_{i + 1}.pdf";
-
-                // Save the part as PDF. The format is inferred from the file extension.
-                partDoc.Save(outputPath);
-            }
+            // Save the extracted page as PDF. The format is inferred from the .pdf extension.
+            pageDoc.Save(outputPath);
         }
     }
 }

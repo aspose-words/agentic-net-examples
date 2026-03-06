@@ -3,27 +3,28 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class InsertOleObjectExample
 {
     static void Main()
     {
-        // Create a new blank Word document.
+        // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder to add content to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Path to the file that will be embedded as an OLE object.
-        // The file can be any type that has an associated OLE handler (e.g., Excel, PowerPoint, etc.).
-        string oleFilePath = "Spreadsheet.xlsx";
+        string oleFilePath = @"C:\Temp\Spreadsheet.xlsx";
 
-        // Insert the OLE object:
-        //   - isLinked = false  -> embed the file data into the document.
-        //   - asIcon   = false  -> display the actual content, not an icon.
-        //   - presentation = null -> let Aspose.Words choose the default presentation.
-        builder.InsertOleObject(oleFilePath, false, false, null);
+        // Open the file as a stream.
+        using (Stream oleStream = File.Open(oleFilePath, FileMode.Open, FileAccess.Read))
+        {
+            // Insert the OLE object.
+            // progId "Package" is a generic identifier for unknown file types.
+            // asIcon = false embeds the object content directly (no icon).
+            // presentation = null lets Aspose.Words choose a default presentation.
+            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
+        }
 
-        // Save the resulting document to a DOCX file.
-        doc.Save("InsertOleObject.docx");
+        // Save the document to a DOCX file.
+        doc.Save(@"C:\Temp\OleObjectDocument.docx");
     }
 }

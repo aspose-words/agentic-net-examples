@@ -2,38 +2,47 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableInsert
+class InsertTableIntoDocm
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Path to the existing DOCM template.
-            string dataDir = @"C:\Data\";
-            string inputPath = System.IO.Path.Combine(dataDir, "Template.docm");
-            string outputPath = System.IO.Path.Combine(dataDir, "Output.docm");
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Load the DOCM document.
-            Document doc = new Document(inputPath);
+        // Initialize a DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a DocumentBuilder attached to the loaded document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Start a new table.
+        Table table = builder.StartTable();
 
-            // Insert a simple 2‑cell table at the current cursor position.
-            Table table = builder.StartTable();          // Starts a new table and returns the Table node.
-            builder.InsertCell();                        // First cell.
-            builder.Write("First cell");                 // Add text to the first cell.
-            builder.InsertCell();                        // Second cell.
-            builder.Write("Second cell");                // Add text to the second cell.
-            builder.EndRow();                            // End the first row.
-            builder.EndTable();                          // Finish the table.
+        // First row, first cell.
+        builder.InsertCell();
+        builder.Write("Cell 1, Row 1");
 
-            // Optionally set table title/description (useful for DOCX/ DOCM compliance).
-            table.Title = "Sample Table";
-            table.Description = "A table inserted programmatically into a DOCM file.";
+        // First row, second cell.
+        builder.InsertCell();
+        builder.Write("Cell 2, Row 1");
 
-            // Save the modified document as DOCM.
-            doc.Save(outputPath, SaveFormat.Docm);
-        }
+        // End the first row.
+        builder.EndRow();
+
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Write("Cell 1, Row 2");
+
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Write("Cell 2, Row 2");
+
+        // End the second row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // Optionally set table title and description (useful for accessibility).
+        table.Title = "Sample Table";
+        table.Description = "A simple 2x2 table inserted into a DOCM document.";
+
+        // Save the document as a macro-enabled DOCM file.
+        doc.Save("TableInDocument.docm", SaveFormat.Docm);
     }
 }

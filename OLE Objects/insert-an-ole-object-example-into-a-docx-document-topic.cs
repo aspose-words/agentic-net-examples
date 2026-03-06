@@ -7,29 +7,36 @@ class InsertOleObjectExample
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank Word document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder to add content.
+        // Initialize a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path to the file that will be embedded as an OLE object (e.g., a ZIP archive).
-        string zipPath = @"C:\Data\example.zip";
+        // Path to the file that will be embedded as an OLE object.
+        // Replace with the actual path to your file (e.g., a ZIP archive, Excel file, etc.).
+        string filePath = @"C:\Data\sample.zip";
 
-        // Load the file into a memory stream.
-        byte[] zipBytes = File.ReadAllBytes(zipPath);
-        using (MemoryStream zipStream = new MemoryStream(zipBytes))
+        // Read the file into a byte array.
+        byte[] fileBytes = File.ReadAllBytes(filePath);
+
+        // Insert the OLE object from a memory stream.
+        // Parameters:
+        //   stream      – the data stream of the file.
+        //   progId      – "Package" indicates a generic OLE package.
+        //   asIcon      – true to display the object as an icon.
+        //   presentation– null to use the default icon provided by Aspose.Words.
+        using (MemoryStream stream = new MemoryStream(fileBytes))
         {
-            // Insert the OLE object from the stream.
-            // Parameters: stream, progId ("Package" for generic files), asIcon (true to show as icon), presentation (null uses default icon).
-            Shape oleShape = builder.InsertOleObject(zipStream, "Package", true, null);
+            Shape oleShape = builder.InsertOleObject(stream, "Package", true, null);
 
-            // Set the OLE package's file name and display name.
-            oleShape.OleFormat.OlePackage.FileName = "example.zip";
-            oleShape.OleFormat.OlePackage.DisplayName = "Example ZIP Archive";
+            // Optionally set a custom file name and display name for the embedded package.
+            oleShape.OleFormat.OlePackage.FileName = "sample.zip";
+            oleShape.OleFormat.OlePackage.DisplayName = "Sample ZIP Archive";
         }
 
-        // Save the document as a DOCX file.
+        // Save the document to a DOCX file.
+        // Replace with your desired output path.
         doc.Save(@"C:\Output\OleObjectExample.docx");
     }
 }

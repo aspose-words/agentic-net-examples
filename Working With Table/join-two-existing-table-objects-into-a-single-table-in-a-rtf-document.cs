@@ -1,35 +1,30 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class Program
+class TableJoinExample
 {
     static void Main()
     {
-        // Load the source RTF document.
+        // Load the RTF document that contains the two tables to be combined.
         Document doc = new Document("Input.rtf");
 
-        // Retrieve the first two tables in the document.
-        // The Body.Tables collection provides direct access to tables.
+        // Retrieve the first table from the document's body collection.
         Table firstTable = doc.FirstSection.Body.Tables[0];
-        Table secondTable = doc.FirstSection.Body.Tables[1];
+
+        // Retrieve the second table using the generic GetChild method.
+        Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
 
         // Transfer all rows from the second table to the first table.
-        // While the second table still contains rows, move its first row.
         while (secondTable.HasChildNodes)
         {
-            // Extract the first row from the second table.
-            Row rowToMove = secondTable.FirstRow;
-            // Detach the row from its current parent.
-            secondTable.RemoveChild(rowToMove);
-            // Append the row to the first table.
-            firstTable.Rows.Add(rowToMove);
+            // Append the current first row of the second table to the first table.
+            firstTable.Rows.Add(secondTable.FirstRow);
         }
 
         // Remove the now empty second table from the document.
         secondTable.Remove();
 
-        // Save the modified document back to RTF format.
-        doc.Save("Output.rtf");
+        // Save the updated document back to RTF format.
+        doc.Save("Output.rtf", SaveFormat.Rtf);
     }
 }

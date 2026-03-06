@@ -2,35 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class InspectTableDimensions
+class Program
 {
     static void Main()
     {
-        // Load the WORDML (or any supported) document.
-        // Replace the path with the actual location of your document.
-        Document doc = new Document(@"C:\Docs\Input.docx");
+        // Load the WORDML (or DOCX) document.
+        Document doc = new Document("Input.docx");
 
-        // Get the collection of tables in the first section's body.
-        TableCollection tables = doc.FirstSection.Body.Tables;
-
-        // Iterate through each table and output its row and column counts.
-        for (int i = 0; i < tables.Count; i++)
+        // Iterate through all tables in the document.
+        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
-            Table table = tables[i];
-
-            // Row count is the number of Row nodes in the table.
+            // Row count is the number of Row objects in the table.
             int rowCount = table.Rows.Count;
 
-            // Column count is the number of cells in the first row.
-            // Guard against an empty table (should not happen for a valid table).
+            // Column count is the number of cells in the first row (if any rows exist).
             int columnCount = 0;
-            if (rowCount > 0 && table.FirstRow != null)
-                columnCount = table.FirstRow.Cells.Count;
+            if (rowCount > 0)
+                columnCount = table.Rows[0].Cells.Count;
 
-            Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
+            Console.WriteLine($"Table found: Rows = {rowCount}, Columns = {columnCount}");
         }
 
-        // Optionally, save the document if any modifications were made.
-        // doc.Save(@"C:\Docs\Output.docx");
+        // Optionally save the document after inspection.
+        doc.Save("Output.docx");
     }
 }

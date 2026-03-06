@@ -16,7 +16,7 @@ class Program
 
         // Customize the appearance of the horizontal rule (optional).
         HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
-        format.Alignment = HorizontalRuleAlignment.Center; // Centered on the page.
+        format.Alignment = HorizontalRuleAlignment.Center; // Center the rule.
         format.WidthPercent = 80;                         // 80% of the page width.
         format.Height = 2;                                // Height in points.
         format.Color = Color.DarkGray;                    // Rule color.

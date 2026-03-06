@@ -1,6 +1,8 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Fields; // Needed for Field and FieldType
+using Aspose.Words.Fields;
 
 class RemoveTocExample
 {
@@ -9,21 +11,14 @@ class RemoveTocExample
         // Load the existing DOC file.
         Document doc = new Document("InputDocument.doc");
 
-        // Collect all TOC fields first because removing while iterating the collection can cause enumeration issues.
-        var tocFields = new System.Collections.Generic.List<Field>();
-        foreach (Field field in doc.Range.Fields)
-        {
-            if (field.Type == FieldType.FieldTOC)
-                tocFields.Add(field);
-        }
-
-        // Remove the collected TOC fields.
-        foreach (Field toc in tocFields)
+        // Find all Table of Contents (TOC) fields and remove them.
+        // FieldToc is the correct class name in Aspose.Words.
+        foreach (FieldToc toc in doc.Range.Fields.OfType<FieldToc>().ToList())
         {
             toc.Remove();
         }
 
         // Save the modified document as DOCX.
-        doc.Save("OutputDocument.docx");
+        doc.Save("OutputDocument.docx", SaveFormat.Docx);
     }
 }

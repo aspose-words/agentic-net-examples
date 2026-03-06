@@ -3,33 +3,33 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class DocxToEpubConverter
 {
     static void Main()
     {
         // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\input.docx";
+        string inputFile = @"C:\Docs\source.docx";
 
         // Path where the resulting EPUB file will be saved.
-        string outputPath = @"C:\Docs\output.epub";
+        string outputFile = @"C:\Docs\result.epub";
 
         // Load the DOCX document.
-        Document doc = new Document(inputPath);
+        Document doc = new Document(inputFile);
 
-        // Create EPUB save options.
-        // The constructor sets the format to EPUB.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Epub);
+        // Configure save options for EPUB output.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Epub)
+        {
+            // Use UTF-8 encoding (without BOM) for the EPUB content.
+            Encoding = Encoding.UTF8,
 
-        // Use UTF‑8 encoding for the EPUB content.
-        saveOptions.Encoding = Encoding.UTF8;
+            // Export built‑in and custom document properties into the EPUB.
+            ExportDocumentProperties = true,
 
-        // Optional: export built‑in and custom document properties.
-        saveOptions.ExportDocumentProperties = true;
+            // Split the EPUB into separate HTML parts at heading paragraphs.
+            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph
+        };
 
-        // Optional: split the EPUB into separate HTML parts at heading paragraphs.
-        saveOptions.DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph;
-
-        // Save the document as an EPUB file using the configured options.
-        doc.Save(outputPath, saveOptions);
+        // Save the document as a single EPUB file using the configured options.
+        doc.Save(outputFile, saveOptions);
     }
 }

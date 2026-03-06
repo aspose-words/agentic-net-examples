@@ -1,40 +1,25 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Layout;
+using Aspose.Words.Saving;
 
-class RenderDocumentWithAlternateDescriptions
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Load an existing Word document.
+        Document doc = new Document("Input.docx");
 
-        // Use DocumentBuilder to add content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document with an image that has alternate (alt) text.");
-
-        // Insert an image and set its alternate text (description).
-        // The image file should exist at the specified path.
-        string imagePath = @"C:\Images\sample.png";
-        builder.InsertImage(imagePath);
-        // Retrieve the inserted shape (the image) and set its alternative text.
-        var shape = (Aspose.Words.Drawing.Shape)doc.GetChild(NodeType.Shape, 0, true);
-        shape.AlternativeText = "This is the alternate description for the image.";
-
-        // Configure layout options to render comments as annotations (optional).
-        // This demonstrates alternate rendering modes; not required for alt text.
+        // Render comments as annotations (alternate description) in the output PDF.
         doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
 
-        // Create PDF save options.
-        PdfSaveOptions saveOptions = new PdfSaveOptions();
+        // Use fallback shapes for DrawingML objects to provide alternate visual representations.
+        PdfSaveOptions saveOptions = new PdfSaveOptions
+        {
+            DmlRenderingMode = DmlRenderingMode.Fallback
+        };
 
-        // Ensure DrawingML shapes are rendered (default is DrawingML, but set explicitly).
-        saveOptions.DmlRenderingMode = DmlRenderingMode.DrawingML;
-
-        // Save the document to PDF. The alternate text will be embedded in the PDF
-        // and can be viewed in PDF readers that support alt text for images.
-        string outputPath = @"C:\Output\DocumentWithAltText.pdf";
-        doc.Save(outputPath, saveOptions);
+        // Save the document to PDF with the specified rendering options.
+        doc.Save("Output.pdf", saveOptions);
     }
 }

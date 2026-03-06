@@ -2,46 +2,72 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class AddShapesToGroup
+class Program
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to insert individual shapes.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 150);
-        rectangle.Left = 20;   // Position within the page.
-        rectangle.Top = 20;
-        rectangle.Stroke.Color = Color.Blue;
+        // -------------------------------------------------
+        // 1. Create a group shape manually.
+        // -------------------------------------------------
+        GroupShape group = new GroupShape(doc);
 
-        // Insert an ellipse shape.
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 200);
-        ellipse.Left = 250;
-        ellipse.Top = 30;
-        ellipse.Stroke.Color = Color.Green;
+        // Define the group’s outer bounds (position and size) in points.
+        group.Bounds = new RectangleF(50, 50, 400, 400);
 
-        // Group the two shapes. The InsertGroupShape method automatically calculates the
-        // position and size of the new GroupShape node and inserts it at the current builder position.
-        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
+        // Set the internal coordinate system of the group.
+        // By default it is 1000x1000; here we make it 500x500 for easier scaling.
+        group.CoordSize = new Size(500, 500);
+        // Move the origin to the centre of the coordinate system.
+        group.CoordOrigin = new Point(-250, -250);
 
-        // Add a third shape (a star) directly to the existing group.
+        // -------------------------------------------------
+        // 2. Add shapes to the group.
+        // -------------------------------------------------
+        // Rectangle that fills the whole group coordinate space.
+        Shape rect = new Shape(doc, ShapeType.Rectangle)
+        {
+            Width = group.CoordSize.Width,
+            Height = group.CoordSize.Height,
+            Left = group.CoordOrigin.X,
+            Top = group.CoordOrigin.Y,
+            Stroke = { Color = Color.Blue, Weight = 2.0 }
+        };
+        group.AppendChild(rect);
+
+        // Small red star positioned at the centre of the group.
         Shape star = new Shape(doc, ShapeType.Star)
         {
-            Width = 80,
-            Height = 80,
-            // Position the star relative to the group's internal coordinate system.
-            // Here we place it near the centre of the group.
-            Left = (group.Bounds.Width - 80) / 2,
-            Top = (group.Bounds.Height - 80) / 2,
+            Width = 50,
+            Height = 50,
+            Left = -25,   // centre (0,0) minus half width/height
+            Top = -25,
             FillColor = Color.Red
         };
         group.AppendChild(star);
 
-        // Save the document to a DOCX file.
-        doc.Save("AddShapesToGroup.docx");
+        // Ellipse placed near the top‑right corner of the group.
+        Shape ellipse = new Shape(doc, ShapeType.Ellipse)
+        {
+            Width = 80,
+            Height = 60,
+            Left = 200,
+            Top = -200,
+            Stroke = { Color = Color.Green, Weight = 1.5 }
+        };
+        group.AppendChild(ellipse);
+
+        // -------------------------------------------------
+        // 3. Insert the group shape into the document.
+        // -------------------------------------------------
+        builder.InsertNode(group);
+
+        // -------------------------------------------------
+        // 4. Save the document.
+        // -------------------------------------------------
+        doc.Save("GroupShapeWithChildren.docx");
     }
 }

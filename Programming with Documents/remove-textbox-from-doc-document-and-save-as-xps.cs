@@ -1,33 +1,32 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
-class Program
+class RemoveTextBoxAndSaveAsXps
 {
     static void Main()
     {
-        // Load the existing DOC/DOCX document.
-        Document doc = new Document("Input.docx");
+        // Path to the folder that contains the input document and where the output will be saved.
+        string docsPath = @"C:\Docs\";
 
-        // Find all shapes that are text boxes.
-        List<Shape> textBoxShapes = new List<Shape>();
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        // Load the existing DOC document.
+        Document doc = new Document(docsPath + "Input.docx");
+
+        // Find all shape nodes in the document (including those inside headers/footers).
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+
+        // Remove every shape that is a TextBox.
+        foreach (Shape shape in shapes)
         {
             if (shape.ShapeType == ShapeType.TextBox)
-                textBoxShapes.Add(shape);
+                shape.Remove();
         }
 
-        // Remove each identified text box from the document.
-        foreach (Shape shape in textBoxShapes)
-            shape.Remove();
-
-        // Prepare XPS save options (optional optimization).
-        XpsSaveOptions xpsOptions = new XpsSaveOptions();
-        xpsOptions.OptimizeOutput = true; // removes redundant canvases, concatenates runs, etc.
+        // Prepare XPS save options (default options are sufficient).
+        XpsSaveOptions saveOptions = new XpsSaveOptions();
 
         // Save the modified document as XPS.
-        doc.Save("Output.xps", xpsOptions);
+        doc.Save(docsPath + "Output.xps", saveOptions);
     }
 }

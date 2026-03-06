@@ -1,46 +1,49 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
-class Program
+class InsertTableIntoDotx
 {
     static void Main()
     {
-        // Load the DOTX template file.
+        // Load an existing DOTX template.
+        // Replace "Template.dotx" with the path to your DOTX file.
         Document doc = new Document("Template.dotx");
 
-        // Create a DocumentBuilder to work with the document.
+        // Create a DocumentBuilder attached to the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Position the builder where the table should be inserted.
-        // Here we move to the end of the main story (the document body).
-        builder.MoveToDocumentEnd();
-
-        // Start a new table. The method returns the created Table node.
+        // Start a new table.
         Table table = builder.StartTable();
 
-        // ---- First row ----
-        builder.InsertCell();                     // First cell of the first row.
-        builder.Write("Cell 1,1");                // Add text to the cell.
+        // First row, first cell.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 1");
 
-        builder.InsertCell();                     // Second cell of the first row.
-        builder.Write("Cell 1,2");
-        builder.EndRow();                         // Finish the first row.
+        // First row, second cell.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 2");
 
-        // ---- Second row ----
-        builder.InsertCell();                     // First cell of the second row.
-        builder.Write("Cell 2,1");
+        // End the first row.
+        builder.EndRow();
 
-        builder.InsertCell();                     // Second cell of the second row.
-        builder.Write("Cell 2,2");
-        builder.EndTable();                       // Close the table.
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 1");
 
-        // Optional: apply a built‑in style and auto‑fit the table to its contents.
-        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
 
-        // Save the modified document. The output format can be any supported type (e.g., DOCX).
-        doc.Save("Result.docx");
+        // End the table.
+        builder.EndTable();
+
+        // Optionally set a title and description for the table (useful for DOCX compliance).
+        table.Title = "Sample Table";
+        table.Description = "A simple 2x2 table inserted into a DOTX document.";
+
+        // Save the modified document back as a DOTX file.
+        // Replace "Result.dotx" with the desired output path.
+        doc.Save("Result.dotx");
     }
 }

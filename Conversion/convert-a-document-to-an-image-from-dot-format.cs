@@ -2,23 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class DotToImageConverter
 {
     static void Main()
     {
-        // Load the Word template in DOT format.
-        // The Document constructor automatically detects the format from the file extension.
-        Document doc = new Document("InputTemplate.dot");
+        // Path to the source DOT (Word template) file.
+        const string inputPath = @"C:\Docs\Template.dot";
 
-        // Create image save options for PNG format.
-        // ImageSaveOptions derives from FixedPageSaveOptions and allows us to specify
-        // rendering parameters such as resolution, page range, etc.
-        ImageSaveOptions imageOptions = new ImageSaveOptions(SaveFormat.Png);
-        // Example: render at 300 DPI for higher quality.
-        imageOptions.Resolution = 300;
+        // Path where the rendered image will be saved.
+        const string outputPath = @"C:\Docs\TemplateImage.png";
 
-        // Save the first page of the document as an image.
-        // The Save method with (string, SaveOptions) follows the required lifecycle rule.
-        doc.Save("OutputImage.png", imageOptions);
+        // Load the DOT document. The constructor automatically detects the format.
+        Document doc = new Document(inputPath);
+
+        // Configure image save options.
+        // SaveFormat.Png renders the first page of the document as a PNG image.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
+        {
+            // Optional: set resolution (dpi) for higher quality.
+            Resolution = 300
+        };
+
+        // Save the document as an image using the configured options.
+        doc.Save(outputPath, options);
     }
 }

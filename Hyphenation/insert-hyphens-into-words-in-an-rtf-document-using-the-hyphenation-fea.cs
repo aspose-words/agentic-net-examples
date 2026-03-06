@@ -1,28 +1,24 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Settings;
+using Aspose.Words;
 
-class HyphenateRtf
-{
-    static void Main()
-    {
-        // Load the source RTF document.
-        Document doc = new Document("Input.rtf");
+// Load an existing RTF document.
+string inputPath = @"C:\Docs\Input.rtf";
+Document doc = new Document(inputPath);
 
-        // Turn on automatic hyphenation for the whole document.
-        doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;   // limit consecutive hyphenated lines
-        doc.HyphenationOptions.HyphenationZone = 720;       // 0.5 inch from the right margin
-        doc.HyphenationOptions.HyphenateCaps = true;       // hyphenate all‑caps words
+// Enable automatic hyphenation for the whole document.
+doc.HyphenationOptions.AutoHyphenation = true;
+doc.HyphenationOptions.HyphenateCaps = true;          // Hyphenate words in all caps.
+doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;    // Max consecutive hyphenated lines.
+doc.HyphenationOptions.HyphenationZone = 720;        // 0.5 inch from the right margin.
 
-        // Register an English (US) hyphenation dictionary if it is not already available.
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-        {
-            // Path to the OpenOffice‑format dictionary file.
-            Hyphenation.RegisterDictionary("en-US", "hyph_en_US.dic");
-        }
+// (Optional) Insert explicit optional hyphen characters into a sample paragraph.
+// ControlChar.OptionalHyphenChar represents an optional hyphen point.
+DocumentBuilder builder = new DocumentBuilder(doc);
+builder.MoveToDocumentStart();
+builder.Write("Hy" + ControlChar.OptionalHyphenChar + "phen" + ControlChar.OptionalHyphenChar + "ation");
 
-        // Save the modified document back to RTF – hyphens will be inserted where needed.
-        doc.Save("Output.rtf");
-    }
-}
+// Save the modified document back to RTF.
+string outputPath = @"C:\Docs\Output.rtf";
+doc.Save(outputPath);

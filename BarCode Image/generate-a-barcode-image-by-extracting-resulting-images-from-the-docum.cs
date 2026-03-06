@@ -1,40 +1,87 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Fields;
 using Aspose.Words.Drawing;
 
-class BarcodeImageExtractor
+namespace BarcodeImageExtraction
 {
-    static void Main()
+    // Simple custom barcode generator that returns a minimal PNG image.
+    // This implementation avoids System.Drawing dependencies, making the code compile on all .NET platforms.
+    public class CustomBarcodeGenerator : IBarcodeGenerator
     {
-        // Path to the input DOCX that contains barcode fields.
-        string dataDir = @"C:\Data\";
-        string inputPath = Path.Combine(dataDir, "Barcodes.docx");
-
-        // Load the document (creation and loading follow the provided lifecycle rules).
-        Document doc = new Document(inputPath);
-
-        // Update all fields so that barcode fields are rendered as images.
-        doc.UpdateFields();
-
-        // Iterate through all shapes in the document and extract those that are images.
-        int imageIndex = 0;
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        // Generates an image for DISPLAYBARCODE fields.
+        public Stream GetBarcodeImage(BarcodeParameters parameters)
         {
-            if (shape.IsImage)
-            {
-                // Build a unique file name for each extracted barcode image.
-                string outputPath = Path.Combine(dataDir, $"BarcodeImage_{imageIndex}.png");
-
-                // Save the image data to the file system.
-                shape.ImageData.Save(outputPath);
-
-                imageIndex++;
-            }
+            // A 1x1 pixel transparent PNG (base64 encoded).
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+            byte[] pngBytes = Convert.FromBase64String(base64Png);
+            return new MemoryStream(pngBytes);
         }
 
-        // Optionally save the updated document (still using the provided save rule).
-        string updatedDocPath = Path.Combine(dataDir, "Barcodes_Updated.docx");
-        doc.Save(updatedDocPath);
+        // Generates an image for old‑fashioned BARCODE fields.
+        public Stream GetOldBarcodeImage(BarcodeParameters parameters)
+        {
+            // Reuse the same implementation for simplicity.
+            return GetBarcodeImage(parameters);
+        }
+    }
+
+    class Program
+    {
+        static void Main()
+        {
+            // Path to the input DOCX that contains DISPLAYBARCODE fields.
+            string inputPath = @"ArtifactsDir\InputWithBarcodes.docx";
+            // Directory where extracted images will be saved.
+            string outputDir = @"ArtifactsDir\ExtractedImages";
+
+            // Ensure the output directory exists.
+            Directory.CreateDirectory(outputDir);
+
+            // Load the document.
+            Document doc = new Document(inputPath);
+
+            // Assign the custom barcode generator so that field updates produce images.
+            doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
+
+            // Update all fields in the document – this will generate barcode images.
+            doc.UpdateFields();
+
+            // Iterate through all Shape nodes that contain images.
+            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+            int imageIndex = 0;
+
+            foreach (Shape shape in shapes)
+            {
+                if (shape.IsImage)
+                {
+                    // Get the raw image bytes.
+                    byte[] imageBytes = shape.ImageData.ImageBytes;
+
+                    // Determine the image format from the shape's image type.
+                    ImageType imageType = shape.ImageData.ImageType;
+                    string extension = imageType switch
+                    {
+                        ImageType.Jpeg => "jpg",
+                        ImageType.Png => "png",
+                        ImageType.Gif => "gif",
+                        ImageType.Bmp => "bmp",
+                        ImageType.Emf => "emf",
+                        ImageType.Wmf => "wmf",
+                        _ => "bin"
+                    };
+
+                    // Save the image to a file.
+                    string imagePath = Path.Combine(outputDir, $"BarcodeImage_{imageIndex}.{extension}");
+                    File.WriteAllBytes(imagePath, imageBytes);
+                    imageIndex++;
+                }
+            }
+
+            // Optionally, save the updated document (with generated barcode images) to a new file.
+            string updatedDocPath = @"ArtifactsDir\DocumentWithGeneratedBarcodes.docx";
+            doc.Save(updatedDocPath);
+        }
     }
 }

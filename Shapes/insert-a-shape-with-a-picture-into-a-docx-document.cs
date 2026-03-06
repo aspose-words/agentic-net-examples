@@ -6,29 +6,29 @@ class InsertShapeWithPicture
 {
     static void Main()
     {
-        // Path to the image file that will be placed inside the shape.
-        string imagePath = @"C:\Images\picture.jpg";
-
-        // Path where the resulting DOCX document will be saved.
-        string outputPath = @"C:\Output\ShapeWithImage.docx";
-
         // Create a new empty document.
         Document doc = new Document();
 
-        // Create a DocumentBuilder to work with the document.
+        // Initialize a DocumentBuilder for the document (optional for this task).
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an inline shape of type Image with desired size (in points).
-        // Width and height are set to 150 points each (approximately 2 inches).
-        Shape shape = builder.InsertShape(ShapeType.Image, 150, 150);
+        // Path to the image file that will be placed inside the shape.
+        string imagePath = @"C:\Images\SampleImage.jpg";
+
+        // Create a shape of type Image and associate it with the document.
+        Shape pictureShape = new Shape(doc, ShapeType.Image);
 
         // Load the image from the file system into the shape.
-        shape.ImageData.SetImage(imagePath);
+        pictureShape.ImageData.SetImage(imagePath);
 
-        // Optionally, set the shape's wrap type or positioning here.
-        // shape.WrapType = WrapType.Inline; // default for InsertShape
+        // Set desired dimensions for the shape (in points).
+        pictureShape.Width = 150;   // 150 points width
+        pictureShape.Height = 100;  // 100 points height
 
-        // Save the document in DOCX format.
-        doc.Save(outputPath);
+        // Append the shape to the first paragraph of the document body.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(pictureShape);
+
+        // Save the document as a DOCX file.
+        doc.Save(@"C:\Output\ShapeWithPicture.docx");
     }
 }

@@ -6,16 +6,16 @@ class Program
 {
     static void Main()
     {
-        // Input DOC file path
-        string inputPath = "Input.doc";
+        // Path to the source DOC file.
+        string inputPath = @"C:\Docs\Sample.doc";
 
-        // Desired output MHTML file path
-        string outputPath = "Output.mhtml";
+        // Path where the MHTML file will be saved.
+        string outputPath = @"C:\Docs\Sample.mhtml";
 
-        // Load the DOC document from the file system
+        // Load the DOC document. The constructor detects the format automatically.
         Document doc = new Document(inputPath);
 
-        // Save the document in MHTML format using the SaveFormat enumeration
+        // Save the document in MHTML (Web archive) format.
         doc.Save(outputPath, SaveFormat.Mhtml);
     }
 }

@@ -8,44 +8,35 @@ class Program
 {
     static void Main()
     {
-        // Load the DOTX template (create + load lifecycle)
+        // Load the DOTX template file.
         Document template = new Document("Template.dotx");
 
-        // Prepare a data source that will be referenced in the template.
-        // The template can use <<[ds.Title]>> and a foreach loop over ds.Items.
-        var dataSource = new
+        // Prepare a collection of products.
+        var products = new List<Product>
         {
-            Title = "Quarterly Report",
-            Items = GetReportItems()
+            new Product { Name = "Apple",  Price = 1.20 },
+            new Product { Name = "Banana", Price = 0.80 },
+            new Product { Name = "Cherry", Price = 2.50 }
         };
 
-        // Build the report using the ReportingEngine.
-        // The third parameter ("ds") is the name used inside the template to reference the data source.
+        // Use LINQ to filter and project the data that will be merged.
+        var dataSource = products
+            .Where(p => p.Price > 1.0)               // keep only expensive items
+            .Select(p => new { p.Name, p.Price })    // create an anonymous type
+            .ToArray();                               // convert to an array for the engine
+
+        // Build the report by merging the LINQ data source into the template.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, dataSource, "ds");
+        engine.BuildReport(template, dataSource, "Products");
 
-        // Save the populated document (save lifecycle)
-        template.Save("QuarterlyReport.docx");
+        // Save the generated document.
+        template.Save("Report.docx");
     }
 
-    // Generates a collection of items using LINQ – this mimics a typical data retrieval scenario.
-    private static List<ReportItem> GetReportItems()
-    {
-        return Enumerable.Range(1, 5)
-                         .Select(i => new ReportItem
-                         {
-                             Name = $"Product {i}",
-                             Quantity = i * 10,
-                             Price = i * 2.5m
-                         })
-                         .ToList();
-    }
-
-    // Simple POCO that matches the fields used in the template.
-    public class ReportItem
+    // Simple POCO class representing a product.
+    public class Product
     {
         public string Name { get; set; }
-        public int Quantity { get; set; }
-        public decimal Price { get; set; }
+        public double Price { get; set; }
     }
 }

@@ -1,29 +1,28 @@
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
+using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new empty Word document
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a horizontal rule shape.
+        // Insert a horizontal rule shape at the current cursor position
         Shape horizontalRule = builder.InsertHorizontalRule();
 
-        // Customize the horizontal rule's appearance (optional).
+        // Customize the appearance of the horizontal rule (optional)
         HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
-        format.Alignment = HorizontalRuleAlignment.Center;
-        format.WidthPercent = 80;   // 80% of the page width.
-        format.Height = 2;          // Height in points.
-        format.Color = Color.Black;
-        format.NoShade = true;      // Solid color without 3D shading.
+        format.Alignment = HorizontalRuleAlignment.Center; // Centered on the page
+        format.WidthPercent = 70;                         // 70% of the page width
+        format.Height = 3;                                // Height in points
+        format.Color = Color.Blue;                        // Blue color
+        format.NoShade = true;                            // Solid color, no 3‑D shading
 
-        // Save the document as a TIFF image.
+        // Save the document as a TIFF image
         doc.Save("HorizontalRule.tiff", SaveFormat.Tiff);
     }
 }

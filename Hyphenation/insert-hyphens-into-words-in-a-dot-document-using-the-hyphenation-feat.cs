@@ -10,18 +10,18 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a long paragraph that will trigger hyphenation when laid out.
+        // Write a paragraph containing long words that will be hyphenated.
         builder.Font.Size = 24;
-        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+        builder.Writeln("Antidisestablishmentarianism is a long word that often needs hyphenation when it reaches the end of a line.");
 
-        // Enable automatic hyphenation for the document.
+        // Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
-
-        // Optional: adjust hyphenation settings.
-        doc.HyphenationOptions.HyphenationZone = 720;          // 0.5 inch from the right margin.
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;    // Max two consecutive hyphenated lines.
+        // Optional: define the hyphenation zone (distance from the right margin) and the maximum
+        // number of consecutive lines that may end with a hyphen.
+        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch (720 / 1440 points)
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
 
         // Save the document as a DOT (Word template) file.
-        doc.Save("HyphenatedDocument.dot");
+        doc.Save("HyphenatedTemplate.dot");
     }
 }

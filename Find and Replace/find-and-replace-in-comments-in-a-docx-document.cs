@@ -6,19 +6,21 @@ class CommentFindReplace
 {
     static void Main()
     {
-        // Load the DOCX file.
+        // Load the DOCX document.
         Document doc = new Document("Input.docx");
 
-        // Define the text to find and its replacement.
-        const string findText = "_FullName_";
-        const string replaceText = "John Doe";
+        // Configure find/replace options (case‑insensitive in this example).
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            MatchCase = false,
+            FindWholeWordsOnly = false
+        };
 
         // Iterate through all comment nodes in the document.
         foreach (Comment comment in doc.GetChildNodes(NodeType.Comment, true))
         {
-            // Perform a simple find-and-replace within the comment's range.
-            // The Replace method is case‑insensitive by default.
-            comment.Range.Replace(findText, replaceText);
+            // Replace the target text inside the comment's range.
+            comment.Range.Replace("_FullName_", "John Doe", options);
         }
 
         // Save the modified document.

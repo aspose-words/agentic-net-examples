@@ -3,45 +3,42 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class OleExtractor
+class ExtractOleObjects
 {
     static void Main()
     {
-        // Path to the source DOCX document that contains OLE objects.
-        string sourceDocPath = @"C:\Docs\input.docx";
+        // Path to the DOCX file that contains OLE objects.
+        string inputPath = @"C:\Docs\SampleWithOle.docx";
 
-        // Folder where extracted OLE files will be saved.
-        string outputFolder = @"C:\Docs\ExtractedOle";
+        // Directory where the extracted OLE files will be saved.
+        string outputDir = @"C:\Docs\ExtractedOle";
 
         // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
+        Directory.CreateDirectory(outputDir);
 
         // Load the Word document.
-        Document doc = new Document(sourceDocPath);
+        Document doc = new Document(inputPath);
 
-        // Get all Shape nodes in the document (including those inside headers/footers).
-        var shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        // Get all Shape nodes (they may contain OLE objects).
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
-        // Iterate through each shape and extract OLE objects.
+        int oleIndex = 0;
+
         foreach (Shape shape in shapeNodes)
         {
-            // Only shapes that actually contain an OLE object have a non‑null OleFormat.
-            OleFormat oleFormat = shape.OleFormat;
-            if (oleFormat == null)
+            // Access the OleFormat of the shape; null if the shape is not an OLE object.
+            OleFormat ole = shape.OleFormat;
+            if (ole == null)
                 continue;
 
-            // Determine a suitable file name for the extracted object.
-            // Use the suggested file extension for the embedded object.
-            string extension = oleFormat.SuggestedExtension ?? ".bin";
+            // Determine a file name for the extracted object.
+            string extension = ole.SuggestedExtension ?? ".bin";
+            string outFile = Path.Combine(outputDir, $"OleObject_{oleIndex}{extension}");
 
-            // Create a unique file name based on the shape index.
-            string fileName = Path.Combine(outputFolder,
-                $"OleObject_{shape.GetHashCode()}{extension}");
+            // Save the embedded OLE object directly to a file.
+            ole.Save(outFile);
 
-            // Save the embedded OLE data directly to a file.
-            oleFormat.Save(fileName);
-
-            Console.WriteLine($"Extracted OLE object saved to: {fileName}");
+            oleIndex++;
         }
     }
 }

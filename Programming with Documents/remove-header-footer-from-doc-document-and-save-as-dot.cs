@@ -2,21 +2,16 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class RemoveHeadersFootersAndSaveAsTemplate
+class RemoveHeaderFooterAndSaveAsTemplate
 {
     static void Main()
     {
-        // Path to the source DOC file.
-        string sourcePath = @"MyDir\DocumentWithHeadersFooters.doc";
+        // Load the existing DOC document.
+        Document doc = new Document("InputDocument.doc");
 
-        // Load the existing document.
-        Document doc = new Document(sourcePath);
-
-        // Remove all headers and footers from every section.
+        // Remove all header and footer contents from each section.
         foreach (Section section in doc.Sections)
         {
-            // This clears the content of headers/footers but keeps the objects,
-            // effectively unlinking them from the previous sections.
             section.ClearHeadersFooters();
         }
 
@@ -24,7 +19,6 @@ class RemoveHeadersFootersAndSaveAsTemplate
         DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Dot);
 
         // Save the modified document as a DOT file.
-        string outputPath = @"ArtifactsDir\DocumentWithoutHeadersFooters.dot";
-        doc.Save(outputPath, saveOptions);
+        doc.Save("OutputTemplate.dot", saveOptions);
     }
 }

@@ -1,43 +1,44 @@
-using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class NestedShapesExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an outer group shape. No shapes are passed, so the group is empty initially.
+        // Insert the outermost group shape at the current cursor position.
         GroupShape outerGroup = builder.InsertGroupShape();
 
-        // Create an inner group shape manually (floating by default).
-        GroupShape innerGroup = new GroupShape(doc);
-        innerGroup.Width = 150;   // Width in points.
-        innerGroup.Height = 150;  // Height in points.
-        innerGroup.Left = 20;     // Position relative to the outer group.
-        innerGroup.Top = 20;
-        innerGroup.WrapType = WrapType.Inline; // Make it inline for simplicity.
+        // Set the size and position of the outer group shape.
+        outerGroup.Bounds = new RectangleF(100, 100, 200, 200); // left, top, width, height
 
-        // Add the inner group shape to the outer group.
-        outerGroup.AppendChild(innerGroup);
+        // -------------------------------------------------
+        // Create the middle shape – another GroupShape.
+        // -------------------------------------------------
+        GroupShape middleGroup = new GroupShape(doc);
+        middleGroup.Bounds = new RectangleF(20, 20, 150, 150); // relative to the outer group
 
-        // Create the innermost shape (a rectangle) that will be placed inside the inner group.
+        // -------------------------------------------------
+        // Create the innermost shape – a simple rectangle.
+        // -------------------------------------------------
         Shape innermostShape = new Shape(doc, ShapeType.Rectangle);
-        innermostShape.Width = 100;
-        innermostShape.Height = 100;
-        innermostShape.Left = 10;
-        innermostShape.Top = 10;
-        innermostShape.Fill.Color = Color.Yellow;
-        innermostShape.Stroke.Color = Color.Red;
+        innermostShape.Width = 80;
+        innermostShape.Height = 60;
+        innermostShape.Left = 30;   // position inside the middle group
+        innermostShape.Top = 30;
+        innermostShape.Stroke.Color = Color.Blue; // visual styling
 
-        // Add the innermost shape to the inner group.
-        innerGroup.AppendChild(innermostShape);
+        // Add the innermost shape to the middle group.
+        middleGroup.AppendChild(innermostShape);
 
-        // Save the document to a DOCX file.
+        // Add the middle group to the outermost group.
+        outerGroup.AppendChild(middleGroup);
+
+        // Save the document containing the nested shapes.
         doc.Save("NestedShapes.docx");
     }
 }

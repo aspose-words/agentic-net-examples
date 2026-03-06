@@ -1,43 +1,37 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
-class InsertHorizontalRuleToTxt
+class Program
 {
     static void Main()
     {
         // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some introductory text.
-        builder.Writeln("Document with a horizontal rule:");
-
-        // Insert the horizontal rule shape.
-        Shape hrShape = builder.InsertHorizontalRule();
+        // Insert a horizontal rule shape.
+        Shape horizontalRule = builder.InsertHorizontalRule();
 
         // Optional: customize the appearance of the horizontal rule.
-        HorizontalRuleFormat hrFormat = hrShape.HorizontalRuleFormat;
-        hrFormat.Alignment = HorizontalRuleAlignment.Center;
-        hrFormat.WidthPercent = 80;
-        hrFormat.Height = 2;
-        hrFormat.Color = System.Drawing.Color.DarkGray;
-        hrFormat.NoShade = true;
+        HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
+        format.Alignment = HorizontalRuleAlignment.Center;
+        format.WidthPercent = 80;   // 80% of the page width
+        format.Height = 2;          // 2 points height
+        format.Color = Color.Black;
+        format.NoShade = true;      // Solid color without 3D shading
 
-        // Write text after the horizontal rule.
-        builder.Writeln("Text after the horizontal rule.");
-
-        // Prepare TXT save options (optional customizations can be set here).
+        // Prepare text save options (optional customization).
         TxtSaveOptions txtOptions = new TxtSaveOptions
         {
-            // Ensure the document is saved as plain text.
-            SaveFormat = SaveFormat.Text
+            ParagraphBreak = "\r\n" // Use standard CRLF for paragraph breaks
         };
 
-        // Save the document as a .txt file.
-        doc.Save("HorizontalRuleDocument.txt", txtOptions);
+        // Save the document as a plain‑text file.
+        doc.Save("HorizontalRule.txt", txtOptions);
     }
 }

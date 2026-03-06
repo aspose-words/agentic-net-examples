@@ -1,25 +1,20 @@
 using System;
 using Aspose.Words;
 
-namespace AsposeWordsConversion
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main(string[] args)
-        {
-            // Path to the source document (any supported format, e.g., DOCX).
-            string inputFile = @"C:\Docs\SourceDocument.docx";
+        // Path to the source document (any format supported by Aspose.Words)
+        string inputPath = "input.docx";
 
-            // Path where the PDF will be saved. The .pdf extension tells Aspose.Words to save in PDF format.
-            string outputFile = @"C:\Docs\ConvertedDocument.pdf";
+        // Desired output PDF file path; the .pdf extension tells Aspose.Words to save as PDF
+        string outputPath = "output.pdf";
 
-            // Load the existing document from the file system.
-            Document doc = new Document(inputFile);
+        // Load the document from the file system
+        Document doc = new Document(inputPath);
 
-            // Save the document as PDF. The format is inferred from the file extension.
-            doc.Save(outputFile);
-
-            Console.WriteLine("Document successfully converted to PDF.");
-        }
+        // Save the loaded document as PDF
+        doc.Save(outputPath);
     }
 }

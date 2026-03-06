@@ -2,34 +2,32 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class DeleteTocAndSaveAsTemplate
+namespace DeleteTocExample
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOCM file that contains a Table of Contents.
-        string sourcePath = @"C:\Docs\SourceDocument.docm";
-
-        // Load the DOCM document using the provided Document(string) constructor.
-        Document doc = new Document(sourcePath);
-
-        // Iterate over all fields in the document.
-        // The Field.Type property identifies the kind of field.
-        // Remove every field whose type is TOC (Table of Contents).
-        foreach (Field field in doc.Range.Fields)
+        static void Main()
         {
-            if (field.Type == FieldType.FieldTOC)
+            // Load the macro‑enabled Word document (DOCM).
+            // The Document constructor handles opening the file and detecting its format.
+            Document doc = new Document("InputDocument.docm");
+
+            // Iterate over all fields in the document.
+            // FieldType.FieldTOC identifies a Table of Contents field.
+            foreach (Field field in doc.Range.Fields)
             {
-                // The Remove method deletes the field from the document.
-                field.Remove();
+                if (field.Type == FieldType.FieldTOC)
+                {
+                    // Remove the TOC field from the document.
+                    // The Remove method returns the node that follows the removed field,
+                    // but we do not need the return value here.
+                    field.Remove();
+                }
             }
+
+            // Save the modified document as a Word template (DOT).
+            // The Save method automatically selects the format based on the file extension.
+            doc.Save("OutputTemplate.dot");
         }
-
-        // Path for the resulting template file. The .dot extension tells Aspose.Words
-        // to save the document in the Microsoft Word Template format.
-        string outputPath = @"C:\Docs\ResultTemplate.dot";
-
-        // Save the modified document using the provided Save(string) method.
-        // The format is inferred from the file extension (.dot → SaveFormat.Dot).
-        doc.Save(outputPath);
     }
 }

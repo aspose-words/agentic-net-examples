@@ -1,39 +1,30 @@
-using System;
 using Aspose.Words;
-using Aspose.Words.Notes;
 using Aspose.Words.Saving;
+using System;
 
-class RemoveNotesAndSaveAsPng
+class Program
 {
     static void Main()
     {
-        // Load the existing Word document.
+        // Load the source Word document.
         Document doc = new Document("Input.docx");
 
-        // Remove all footnotes.
-        foreach (Footnote footnote in doc.GetChildNodes(NodeType.Footnote, true))
+        // All footnotes and endnotes are represented by the Footnote class.
+        // Get every Footnote node (this collection contains both footnotes and endnotes).
+        NodeCollection footnotes = doc.GetChildNodes(NodeType.Footnote, true);
+
+        // Remove nodes while iterating backwards to avoid collection modification issues.
+        for (int i = footnotes.Count - 1; i >= 0; i--)
         {
-            // Keep only footnotes (skip endnotes in this loop).
-            if (footnote.FootnoteType == FootnoteType.Footnote)
-                footnote.Remove();
+            footnotes[i].Remove();
         }
 
-        // Remove all endnotes.
-        // Endnotes are also returned by GetChildNodes(NodeType.Footnote, true) – they are just Footnote objects with type Endnote.
-        foreach (Footnote note in doc.GetChildNodes(NodeType.Footnote, true))
-        {
-            if (note.FootnoteType == FootnoteType.Endnote)
-                note.Remove();
-        }
-
-        // Configure image save options to render the document as PNG.
+        // Save the modified document as a PNG image (first page only).
         ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            // Render only the first page (optional – remove to render all pages).
+            // Render only the first page.
             PageSet = new PageSet(0)
         };
-
-        // Save the modified document as a PNG image.
-        doc.Save("Output.png", pngOptions);
+        doc.Save("Result.png", pngOptions);
     }
 }

@@ -1,36 +1,39 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class InsertDrawingCanvas
+class InsertDrawingCanvasExample
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Create a DocumentBuilder to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a floating rectangle that will act as a drawing canvas.
-        // The shape is positioned relative to the page (left:100pt, top:100pt) 
-        // and sized to 300pt width x 200pt height. No text wrapping.
-        Shape canvas = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.Page, 100,
-            RelativeVerticalPosition.Page, 100,
-            300, 200,
-            WrapType.None);
+        // Insert a group shape that will act as a drawing canvas (container for other shapes).
+        // Width and height are specified in points.
+        Shape canvas = builder.InsertShape(ShapeType.Group, 300, 200);
+        // Make the canvas floating and without text wrapping.
+        canvas.WrapType = WrapType.None;
+        // Optional: give the canvas a transparent fill so it does not obscure underlying text.
+        canvas.FillColor = Color.Transparent;
 
-        // Optional: give the canvas a name and visual styling.
-        canvas.Name = "MyDrawingCanvas";
-        canvas.Stroke.Color = Color.Black;   // border color
-        canvas.Fill.Color = Color.White;     // background color
+        // Create a rectangle shape that will be placed inside the drawing canvas.
+        Shape rectangle = new Shape(doc, ShapeType.Rectangle);
+        rectangle.Width = 100;          // Width in points.
+        rectangle.Height = 50;          // Height in points.
+        rectangle.Left = 10;            // Position relative to the canvas.
+        rectangle.Top = 10;
+        rectangle.FillColor = Color.LightBlue;
+        rectangle.Stroke.Color = Color.DarkBlue;
 
-        // Save the document using DML compliance so the shape is stored correctly.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
-        };
-        doc.Save("DrawingCanvas.docx", saveOptions);
+        // Add the rectangle as a child of the canvas.
+        canvas.AppendChild(rectangle);
+
+        // Save the document to a DOCX file.
+        doc.Save("DrawingCanvas.docx");
     }
 }

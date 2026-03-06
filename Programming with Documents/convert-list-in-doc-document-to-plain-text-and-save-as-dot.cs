@@ -2,42 +2,37 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ListToPlainTextTemplate
+class Program
 {
     static void Main()
     {
-        // Path to the source DOC file that contains the list.
-        const string sourceDocPath = @"C:\Docs\SourceList.doc";
+        // Input DOC file containing the list.
+        string inputPath = @"C:\Docs\Source.doc";
 
-        // Load the DOC document.
-        Document sourceDoc = new Document(sourceDocPath);
+        // Output DOT file that will contain the plain‑text representation.
+        string outputPath = @"C:\Docs\Result.dot";
 
-        // Ensure list labels are up‑to‑date before extracting text.
-        sourceDoc.UpdateListLabels();
+        // Load the source document.
+        Document srcDoc = new Document(inputPath);
 
-        // Save the document as plain text, simplifying list labels for readability.
-        // This uses the TxtSaveOptions rule that provides the SimplifyListLabels property.
-        const string tempTxtPath = @"C:\Docs\TempList.txt";
+        // Update list labels so they are correct before conversion.
+        srcDoc.UpdateListLabels();
+
+        // Configure text save options to simplify list labels (ASCII symbols).
         TxtSaveOptions txtOptions = new TxtSaveOptions
         {
-            SimplifyListLabels = true   // Convert complex list symbols to simple ASCII.
+            SimplifyListLabels = true
         };
-        sourceDoc.Save(tempTxtPath, txtOptions);   // Save rule.
 
-        // Load the plain‑text representation from the temporary file.
-        // PlainTextDocument constructor rule is used here.
-        PlainTextDocument plain = new PlainTextDocument(tempTxtPath);
-        string plainText = plain.Text;   // PlainTextDocument.Text property rule.
+        // Export the document to plain text using the configured options.
+        string plainText = srcDoc.ToString(txtOptions);
 
-        // Create a new blank document that will become the DOT template.
-        Document templateDoc = new Document();   // Document() constructor rule.
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Insert the extracted plain‑text list into the new document.
+        // Create a new blank document and insert the plain‑text content.
+        Document destDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(destDoc);
         builder.Writeln(plainText);
 
-        // Save the new document as a Word template (DOT) using the Save rule with SaveFormat.Dot.
-        const string outputDotPath = @"C:\Docs\ListPlainTextTemplate.dot";
-        templateDoc.Save(outputDotPath, SaveFormat.Dot);
+        // Save the new document as a Word template (DOT format).
+        destDoc.Save(outputPath, SaveFormat.Dot);
     }
 }

@@ -1,36 +1,39 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
 using Aspose.Words.Notes;
 
-class Program
+class DeleteFootnoteExample
 {
     static void Main()
     {
-        // Paths to the source and destination DOCM files.
-        string inputPath = "input.docm";
-        string outputPath = "output.docm";
+        // Path to the source DOCM file.
+        string inputPath = @"C:\Docs\SourceDocument.docm";
 
-        // Load the existing DOCM document.
+        // Path where the modified DOCM will be saved.
+        string outputPath = @"C:\Docs\ModifiedDocument.docm";
+
+        // Load the DOCM document.
         Document doc = new Document(inputPath);
 
-        // Example 1: Remove a footnote by its reference mark.
-        // (If you know the exact reference mark of the footnote you want to delete.)
-        foreach (Footnote footnote in doc.GetChildNodes(NodeType.Footnote, true))
+        // Index of the footnote to delete (0‑based). 
+        // For example, to delete the first footnote use index = 0.
+        int footnoteIndex = 0;
+
+        // Retrieve the footnote node. The GetChild method searches the whole document.
+        Footnote footnote = (Footnote)doc.GetChild(NodeType.Footnote, footnoteIndex, true);
+
+        if (footnote != null)
         {
-            if (footnote.ReferenceMark == "RefMark") // replace "RefMark" with the actual mark.
-            {
-                footnote.Remove();
-                break; // Assuming only one footnote with this mark.
-            }
+            // Remove the footnote from its parent paragraph.
+            footnote.Remove();
+
+            // After removal, update the actual reference marks so that remaining footnotes are renumbered correctly.
+            doc.UpdateFields();
+            doc.UpdateActualReferenceMarks();
         }
 
-        // Example 2: Remove a footnote by its index (zero‑based).
-        // Uncomment the following lines if you prefer to delete, for example, the first footnote.
-        //Footnote footnoteByIndex = (Footnote)doc.GetChild(NodeType.Footnote, 0, true);
-        //if (footnoteByIndex != null)
-        //    footnoteByIndex.Remove();
-
-        // Save the modified document as DOCM, preserving macros.
+        // Save the modified document as DOCM, preserving the macro-enabled format.
         doc.Save(outputPath, SaveFormat.Docm);
     }
 }

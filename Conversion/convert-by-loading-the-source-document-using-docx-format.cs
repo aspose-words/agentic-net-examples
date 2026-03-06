@@ -6,12 +6,12 @@ class Program
     static void Main()
     {
         // Path to the source DOCX file.
-        string sourcePath = "input.docx";
+        string sourcePath = @"C:\Docs\SourceDocument.docx";
 
-        // Load the document using the DOCX format constructor.
+        // Load the document. The constructor automatically detects the DOCX format.
         Document doc = new Document(sourcePath);
 
-        // Example usage: output the document's plain text to the console.
-        Console.WriteLine(doc.GetText());
+        // Example: output the detected original load format.
+        Console.WriteLine($"Original load format: {doc.OriginalLoadFormat}");
     }
 }

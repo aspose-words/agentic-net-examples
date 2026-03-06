@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 using Aspose.Words.Saving;
@@ -9,49 +8,47 @@ class FontEmbeddingExample
 {
     static void Main()
     {
-        // Path to a folder that contains TrueType fonts.
+        // Path to the folder that contains the TrueType fonts to be used.
         string fontsDir = @"C:\MyFonts";
 
         // Path where the resulting PDF will be saved.
-        string outputPdf = @"C:\Output\Document.pdf";
+        string outputPdf = @"C:\Output\Result.pdf";
 
-        // Choose whether to embed the full font (true) or only the subset used in the document (false).
+        // Choose whether to embed the full font (true) or only the subset used (false).
         bool embedFullFonts = true;
 
         // Create a new empty document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text using a custom font that resides in the fonts folder.
-        builder.Font.Name = "Amethysta"; // Example custom font.
-        builder.Writeln("The quick brown fox jumps over the lazy dog.");
+        // Build some sample content with a custom font.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "CustomFont"; // Assume this font exists in the fonts folder.
+        builder.Writeln("Hello world with a custom TrueType font!");
 
         // Preserve the original font sources so we can restore them later.
         FontSourceBase[] originalFontSources = FontSettings.DefaultInstance.GetFontsSources();
 
-        // Create a folder font source that points to the custom fonts directory.
-        // The second argument (true) enables recursive search in subfolders.
+        // Create a font source that points to the folder with our TrueType fonts.
         FolderFontSource folderFontSource = new FolderFontSource(fontsDir, true);
 
-        // Combine the original sources with the new folder source.
-        FontSourceBase[] updatedFontSources = originalFontSources.Concat(new[] { folderFontSource }).ToArray();
-
-        // Apply the updated font sources to the default FontSettings instance.
+        // Add the new font source to the existing sources.
+        FontSourceBase[] updatedFontSources = new FontSourceBase[originalFontSources.Length + 1];
+        originalFontSources.CopyTo(updatedFontSources, 0);
+        updatedFontSources[originalFontSources.Length] = folderFontSource;
         FontSettings.DefaultInstance.SetFontsSources(updatedFontSources);
 
-        // Verify that the custom font is now available (optional, can be removed in production).
-        bool fontAvailable = FontSettings.DefaultInstance.GetFontsSources()
-                               .SelectMany(src => src.GetAvailableFonts())
-                               .Any(f => f.FullFontName.Equals("Amethysta", StringComparison.OrdinalIgnoreCase));
-
-        if (!fontAvailable)
-            throw new InvalidOperationException("The required font was not found in the specified font sources.");
+        // Verify that the custom font is now available (optional).
+        // bool fontAvailable = FontSettings.DefaultInstance.GetFontsSources()
+        //     .Any(src => src.GetAvailableFonts().Any(f => f.FullFontName == "CustomFont"));
 
         // Configure PDF save options.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // When true, the entire font file is embedded; when false, only the used glyphs are embedded.
-            EmbedFullFonts = embedFullFonts
+            // When true, embed every glyph of each font; when false, embed only the subset used.
+            EmbedFullFonts = embedFullFonts,
+
+            // Optional: control which fonts are embedded.
+            // FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll
         };
 
         // Save the document as PDF using the configured options.

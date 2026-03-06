@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -5,27 +6,26 @@ class Program
 {
     static void Main()
     {
-        // Load the source DOCX file.
+        // Load the DOCX file.
         Document doc = new Document("Input.docx");
 
         // Text to find and its replacement.
-        string pattern = "_FullName_";
-        string replacement = "John Doe";
+        string findText = "_FullName_";
+        string replaceText = "John Doe";
 
-        // Configure find/replace options (case‑insensitive, whole‑word match).
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            MatchCase = false,
-            FindWholeWordsOnly = true
-        };
+        // Replace throughout the entire document (all sections).
+        int totalReplacements = doc.Range.Replace(findText, replaceText);
+        Console.WriteLine($"Total replacements made: {totalReplacements}");
 
-        // Perform the replacement in each section's body.
-        foreach (Section section in doc.Sections)
+        // Example: replace only within a specific section (e.g., the second section).
+        if (doc.Sections.Count > 1)
         {
-            section.Body.Range.Replace(pattern, replacement, options);
+            Section secondSection = doc.Sections[1];
+            int sectionReplacements = secondSection.Range.Replace(findText, replaceText);
+            Console.WriteLine($"Replacements in second section: {sectionReplacements}");
         }
 
-        // Save the updated document.
+        // Save the modified document.
         doc.Save("Output.docx");
     }
 }

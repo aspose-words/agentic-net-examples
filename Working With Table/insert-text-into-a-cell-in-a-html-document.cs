@@ -1,30 +1,45 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class InsertHtmlIntoCell
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Define a simple HTML string that contains a table.
+        string html = @"
+            <html>
+                <body>
+                    <table border='1'>
+                        <tr><td>Cell 1</td><td>Cell 2</td></tr>
+                        <tr><td>Cell 3</td><td>Cell 4</td></tr>
+                    </table>
+                </body>
+            </html>";
 
-        // Initialize a DocumentBuilder for the document.
+        // Load the HTML into an Aspose.Words Document.
+        Document doc;
+        using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(html)))
+        {
+            doc = new Document(stream);
+        }
+
+        // Create a DocumentBuilder for editing the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and insert the first cell.
-        builder.StartTable();
-        builder.InsertCell();
+        // Move the cursor to the second cell of the first row (table index 0, row 0, column 1).
+        // The characterIndex of 0 places the cursor at the start of the cell.
+        builder.MoveToCell(0, 0, 1, 0);
 
-        // Insert HTML content into the current cell.
-        // The HTML fragment will be parsed and converted to Word formatting.
-        builder.InsertHtml("<p align='center'><b>Hello, <span style='color:red;'>World</span>!</b></p>");
+        // Insert HTML content into the selected cell.
+        builder.InsertHtml("<p><b>Inserted HTML</b> into cell.</p>");
 
-        // End the row and the table.
-        builder.EndRow();
-        builder.EndTable();
+        // If you prefer plain text instead of HTML, you could use:
+        // builder.Write("Plain text inserted into cell.");
 
-        // Save the document to disk.
-        doc.Save("CellWithHtml.docx");
+        // Save the modified document to disk.
+        doc.Save("Result.docx");
     }
 }

@@ -6,29 +6,20 @@ class RenderDocumentToPdf
 {
     static void Main()
     {
-        // Path to the source Word document.
-        string inputPath = @"C:\Docs\Input.docx";
+        // Load the source Word document.
+        Document doc = new Document("InputDocument.docx");
 
-        // Path where the resulting PDF will be saved.
-        string outputPath = @"C:\Docs\Output.pdf";
+        // Create PDF save options.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
-        // Load the document (lifecycle: create/load).
-        Document doc = new Document(inputPath);
+        // Set the JPEG quality for images embedded in the PDF (0‑100).
+        // Higher values give better image quality but larger file size.
+        pdfOptions.JpegQuality = 85;
 
-        // Configure PDF save options.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            // Use JPEG compression for all images in the PDF.
-            ImageCompression = PdfImageCompression.Jpeg,
+        // Optional: use high‑quality rendering algorithms (slower but better).
+        pdfOptions.UseHighQualityRendering = true;
 
-            // Set the desired JPEG quality (0‑100). Higher values give better quality.
-            JpegQuality = 80,
-
-            // Enable high‑quality (slower) rendering algorithms for the PDF.
-            UseHighQualityRendering = true
-        };
-
-        // Save the document as PDF with the specified options (lifecycle: save).
-        doc.Save(outputPath, pdfOptions);
+        // Save the document as PDF using the configured options.
+        doc.Save("RenderedDocument.pdf", pdfOptions);
     }
 }

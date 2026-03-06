@@ -1,25 +1,30 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Notes;
+using System.Collections.Generic;
 
-class RemoveNotes
+class Program
 {
     static void Main()
     {
         // Load the source DOC document.
-        string dataDir = @"C:\Docs\";
-        Document doc = new Document(dataDir + "input.docx");
+        Document doc = new Document("Input.doc");
 
-        // Collect all footnote and endnote nodes in the document.
-        NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
+        // Collect all footnote and endnote nodes.
+        NodeCollection allNotes = doc.GetChildNodes(NodeType.Footnote, true);
+        List<Footnote> notesToRemove = new List<Footnote>();
 
-        // Remove each footnote/endnote from its parent.
-        foreach (Footnote note in notes)
+        foreach (Footnote note in allNotes)
         {
-            note.Remove();
+            // Both footnotes and endnotes are represented by the Footnote class.
+            if (note.FootnoteType == FootnoteType.Footnote || note.FootnoteType == FootnoteType.Endnote)
+                notesToRemove.Add(note);
         }
 
+        // Remove the collected notes from the document.
+        foreach (Footnote note in notesToRemove)
+            note.Remove();
+
         // Save the modified document as RTF.
-        doc.Save(dataDir + "output.rtf", SaveFormat.Rtf);
+        doc.Save("Output.rtf", SaveFormat.Rtf);
     }
 }

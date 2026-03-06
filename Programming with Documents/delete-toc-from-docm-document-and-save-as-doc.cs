@@ -6,21 +6,26 @@ class DeleteTocExample
 {
     static void Main()
     {
-        // Load the macro-enabled DOCM document.
-        Document doc = new Document("InputDocument.docm");
+        // Path to the source DOCM file that contains a Table of Contents.
+        string inputPath = @"C:\Docs\SourceDocument.docm";
 
-        // Iterate through all fields in the document.
+        // Load the DOCM document. The constructor automatically detects the format.
+        Document doc = new Document(inputPath);
+
+        // Iterate through all fields in the document and remove any TOC (FieldToc) fields.
+        // Field.Remove() deletes the field and its result from the document.
         foreach (Field field in doc.Range.Fields)
         {
-            // Identify TOC fields.
             if (field.Type == FieldType.FieldTOC)
             {
-                // Cast to FieldToc and remove it from the document.
-                ((FieldToc)field).Remove();
+                field.Remove();
             }
         }
 
-        // Save the modified document as a legacy DOC file.
-        doc.Save("OutputDocument.doc", SaveFormat.Doc);
+        // Path for the output DOC file (macro‑free Word 97‑2007 format).
+        string outputPath = @"C:\Docs\ResultDocument.doc";
+
+        // Save the modified document as DOC. The file extension determines the format.
+        doc.Save(outputPath, SaveFormat.Doc);
     }
 }

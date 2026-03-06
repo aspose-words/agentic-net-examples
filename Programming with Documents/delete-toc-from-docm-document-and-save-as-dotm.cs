@@ -2,23 +2,24 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class DeleteTocAndSaveAsTemplate
+class TocRemover
 {
     static void Main()
     {
-        // Load the existing macro‑enabled document (DOCM).
+        // Load the macro‑enabled Word document (DOCM).
         Document doc = new Document("InputDocument.docm");
 
-        // Iterate over all fields in the document and remove those that are TOC fields.
-        // Field.Type == FieldType.FieldTOC identifies a Table of Contents field.
+        // Iterate through all fields in the document and remove any Table of Contents fields.
         foreach (Field field in doc.Range.Fields)
         {
             if (field.Type == FieldType.FieldTOC)
+            {
+                // Remove the entire TOC field, including its result text.
                 field.Remove();
+            }
         }
 
         // Save the modified document as a macro‑enabled template (DOTM).
-        // The Save method infers the format from the file extension.
         doc.Save("OutputTemplate.dotm");
     }
 }

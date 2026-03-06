@@ -2,43 +2,41 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class InsertTableExample
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder which will be used to insert content.
+        // Attach a DocumentBuilder to the document – the builder provides a convenient API for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table.
-        builder.StartTable();
+        // Start a new table. The method returns the Table node that has just been created.
+        Table table = builder.StartTable();
 
-        // First row, first cell.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+        // ---- First row ----
+        builder.InsertCell();                 // First cell of the first row.
+        builder.Write("Cell 1,1");            // Insert text into the cell.
 
-        // First row, second cell.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
+        builder.InsertCell();                 // Second cell of the first row.
+        builder.Write("Cell 1,2");
 
-        // End the first row.
-        builder.EndRow();
+        builder.EndRow();                     // Finish the first row.
 
-        // Second row, first cell.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
+        // ---- Second row ----
+        builder.InsertCell();                 // First cell of the second row.
+        builder.Write("Cell 2,1");
 
-        // Second row, second cell.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
+        builder.InsertCell();                 // Second cell of the second row.
+        builder.Write("Cell 2,2");
 
-        // End the second row and the table.
-        builder.EndRow();
+        builder.EndRow();                     // Finish the second row.
+
+        // End the table construction.
         builder.EndTable();
 
         // Save the document in the legacy DOC format.
-        doc.Save("Table.doc", SaveFormat.Doc);
+        doc.Save("Table.doc");
     }
 }

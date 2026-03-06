@@ -1,39 +1,30 @@
 using System;
 using Aspose.Words;
 
-class Program
+class InsertParagraphIntoSection
 {
     static void Main()
     {
-        // Load the source DOC file that contains the paragraph to be copied.
+        // Load the source DOC document that contains the paragraph to copy.
         Document srcDoc = new Document("Source.doc");
 
-        // Create a new blank document that will become the DOT template.
+        // Create a new blank destination document.
         Document dstDoc = new Document();
+        dstDoc.EnsureMinimum(); // Guarantees at least one section, body and paragraph.
 
-        // Ensure the destination document has at least one section, body, and paragraph.
-        dstDoc.EnsureMinimum();
+        // Get the paragraph you want to insert (first paragraph of the first section as an example).
+        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
 
-        // Get the first section of the destination document.
-        Section dstSection = dstDoc.Sections[0];
-
-        // Get the body of the destination section where the paragraph will be inserted.
-        Body dstBody = dstSection.Body;
-
-        // Create a NodeImporter to handle style and list translation between documents.
+        // Import the paragraph node from the source document into the destination document.
         NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
+        Node importedParagraph = importer.ImportNode(srcParagraph, true);
 
-        // Copy each paragraph from the source document's first section into the destination body.
-        foreach (Paragraph srcParagraph in srcDoc.FirstSection.Body.Paragraphs)
-        {
-            // Import the paragraph node into the destination document.
-            Node importedParagraph = importer.ImportNode(srcParagraph, true);
+        // Insert the imported paragraph into the desired section of the destination document.
+        // Here we insert it after the last paragraph of the first section's body.
+        Section targetSection = dstDoc.FirstSection;
+        targetSection.Body.InsertAfter(importedParagraph, targetSection.Body.LastParagraph);
 
-            // Append the imported paragraph to the destination body.
-            dstBody.AppendChild(importedParagraph);
-        }
-
-        // Save the resulting document as a DOT (Word template) file.
-        dstDoc.Save("Result.dot");
+        // Save the resulting document as a Word template (.dot).
+        dstDoc.Save("Result.dot"); // Extension .dot automatically selects SaveFormat.Dot.
     }
 }

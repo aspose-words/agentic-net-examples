@@ -6,11 +6,14 @@ class InsertTableIntoDotm
 {
     static void Main()
     {
-        // Load an existing DOTM template.
+        // Load an existing DOTM (Word macro-enabled template) document.
         Document doc = new Document("Template.dotm");
 
         // Create a DocumentBuilder associated with the loaded document.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Move the cursor to the end of the document where the table will be inserted.
+        builder.MoveToDocumentEnd();
 
         // Start a new table.
         Table table = builder.StartTable();
@@ -38,11 +41,11 @@ class InsertTableIntoDotm
         builder.EndRow();
         builder.EndTable();
 
-        // Optionally set a title and description for the table.
+        // Optionally set a title and description for the table (useful for DOCX compliance).
         table.Title = "Sample Table";
         table.Description = "A table inserted into a DOTM document.";
 
-        // Save the modified document back to DOTM format.
+        // Save the modified document as a DOTM file.
         doc.Save("Result.dotm");
     }
 }

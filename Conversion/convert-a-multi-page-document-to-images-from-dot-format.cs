@@ -3,34 +3,61 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class DotToImagesConverter
+public class DotToImageConverter
 {
-    public static void Main()
+    /// <summary>
+    /// Converts each page of a multi‑page DOT (Word template) document to separate image files.
+    /// </summary>
+    /// <param name="dotFilePath">Full path to the input .dot file.</param>
+    /// <param name="outputFolder">Folder where the image files will be saved.</param>
+    public void Convert(string dotFilePath, string outputFolder)
     {
-        // Path to the source DOT file (Word template)
-        const string inputFilePath = "Template.dot";
+        // Ensure the output directory exists.
+        if (!Directory.Exists(outputFolder))
+            Directory.CreateDirectory(outputFolder);
 
-        // Directory where the resulting page images will be saved
-        const string outputDirectory = "PageImages";
-        Directory.CreateDirectory(outputDirectory);
+        // Load the DOT document. The Document constructor handles format detection.
+        Document doc = new Document(dotFilePath);
 
-        // Load the DOT document. No LoadOptions are required for a plain template.
-        Document doc = new Document(inputFilePath);
-
-        // Prepare image save options – PNG format with 300 DPI resolution.
-        ImageSaveOptions imageSaveOptions = new ImageSaveOptions(SaveFormat.Png)
-        {
-            Resolution = 300
-        };
-
-        // Export each page of the document to a separate PNG file.
+        // Iterate through all pages in the document.
         for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
         {
-            // Tell Aspose.Words which page to render.
-            imageSaveOptions.PageSet = new PageSet(pageIndex);
+            // Prepare image save options for the current page.
+            ImageSaveOptions imageOptions = new ImageSaveOptions(SaveFormat.Png)
+            {
+                // Render only the current page (zero‑based index).
+                PageSet = new PageSet(pageIndex)
+            };
 
-            string outputPath = Path.Combine(outputDirectory, $"Page_{pageIndex + 1}.png");
-            doc.Save(outputPath, imageSaveOptions);
+            // Build the output file name (e.g., "Page_1.png").
+            string outFile = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
+
+            // Save the rendered page as an image file.
+            doc.Save(outFile, imageOptions);
+        }
+    }
+}
+
+public static class Program
+{
+    /// <summary>
+    /// Entry point required for console execution.
+    /// </summary>
+    public static void Main(string[] args)
+    {
+        // Simple argument handling – if not provided, use example paths.
+        string dotPath = args.Length > 0 ? args[0] : @"C:\Docs\Template.dot";
+        string outFolder = args.Length > 1 ? args[1] : @"C:\Docs\Images";
+
+        try
+        {
+            var converter = new DotToImageConverter();
+            converter.Convert(dotPath, outFolder);
+            Console.WriteLine($"Conversion completed. Images saved to '{outFolder}'.");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error: {ex.Message}");
         }
     }
 }

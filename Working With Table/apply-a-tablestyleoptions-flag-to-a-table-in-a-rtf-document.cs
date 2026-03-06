@@ -9,34 +9,41 @@ class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to construct a simple 2x2 table.
+        // Use DocumentBuilder to construct the table.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start the table and insert the first cell (required before any formatting).
         Table table = builder.StartTable();
+        builder.InsertCell();
 
-        // First row (header).
-        builder.InsertCell();
-        builder.Writeln("Header 1");
-        builder.InsertCell();
-        builder.Writeln("Header 2");
+        // End the first (header) row.
         builder.EndRow();
 
-        // Second row (data).
-        builder.InsertCell();
-        builder.Writeln("Data 1");
-        builder.InsertCell();
-        builder.Writeln("Data 2");
-        builder.EndRow();
-
-        // End the table construction.
-        builder.EndTable();
-
-        // Optionally assign a built‑in style to the table.
+        // Apply a built‑in table style (optional, but demonstrates style usage).
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Apply specific TableStyleOptions flags (e.g., first row and row banding).
+        // Apply the desired TableStyleOptions flags to the table.
+        // Example: apply formatting to the first row and enable row banding.
         table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
-        // Save the document as an RTF file.
-        doc.Save("TableWithStyleOptions.rtf");
+        // Add a second row with two cells as sample content.
+        builder.InsertCell();
+        builder.Writeln("Item");
+        builder.InsertCell();
+        builder.Writeln("Quantity (kg)");
+        builder.EndRow();
+
+        // Add a third row with sample data.
+        builder.InsertCell();
+        builder.Writeln("Apples");
+        builder.InsertCell();
+        builder.Writeln("20");
+        builder.EndRow();
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Save the document as RTF.
+        doc.Save("TableWithStyle.rtf");
     }
 }

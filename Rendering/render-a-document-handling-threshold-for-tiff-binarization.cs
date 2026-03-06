@@ -5,26 +5,41 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to add content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading and an image to the document.
-        builder.ParagraphFormat.Style = doc.Styles["Heading 1"];
-        builder.Writeln("Hello world!");
-        builder.InsertImage("ImageDir/Logo.jpg"); // Replace with the actual image path.
+        // Add a paragraph of text.
+        builder.Writeln("Sample document for TIFF binarization.");
 
-        // Configure TIFF save options to use the Threshold binarization method.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Insert an image (replace with a valid path to an image file).
+        builder.InsertImage("Logo.jpg");
+
+        // -------------------------------------------------
+        // Save the document as TIFF using the default Threshold binarization method.
+        // -------------------------------------------------
+        ImageSaveOptions thresholdOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Use CCITT Group 3 compression (common for 1‑bpp TIFFs).
+            // Use CCITT Group 3 compression (suitable for 1‑bpp images).
             TiffCompression = TiffCompression.Ccitt3,
-            // Apply the simple threshold method for converting the image to black and white.
+            // Explicitly set the binarization method to Threshold (default).
             TiffBinarizationMethod = ImageBinarizationMethod.Threshold
-            // No additional threshold value is required for the Threshold method.
         };
 
-        // Save the document as a TIFF image using the configured options.
-        doc.Save("ArtifactsDir/ImageSaveOptions.Threshold.tiff", tiffOptions);
+        doc.Save("Threshold.tiff", thresholdOptions);
+
+        // -------------------------------------------------
+        // Save the document as TIFF using Floyd‑Steinberg dithering with a custom threshold.
+        // -------------------------------------------------
+        ImageSaveOptions ditherOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            TiffCompression = TiffCompression.Ccitt3,
+            // Use Floyd‑Steinberg dithering for binarization.
+            TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
+            // Set a custom threshold (0‑255). Higher values produce darker output.
+            ThresholdForFloydSteinbergDithering = 240
+        };
+
+        doc.Save("FloydSteinberg.tiff", ditherOptions);
     }
 }

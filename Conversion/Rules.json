@@ -1,0 +1,32 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Comment rules": [
+        "If a property or enum (e.g., EmptyParagraphExportMode) is unavailable, either upgrade the library or remove/comment the line."
+      ],
+      "Loading rules": [
+        "Add the missing using directive for Aspose.Words.Loading to access LoadOptions.",
+        "Load the document via the Document constructor which auto‑detects the input format.",
+        "Use generic LoadOptions for auto‑detecting the input format instead of MarkdownLoadOptions."
+      ],
+      "Saving/Export rules": [
+        "Use Document.Save(stream, SaveFormat) overload for in‑memory conversion.",
+        "Keep SaveFormat set to SaveFormat.Markdown.",
+        "Keep the SaveFormat set to Docm when constructing OoxmlSaveOptions.",
+        "Save using SaveFormat.Doc to produce a Word 97‑2003 .doc file.",
+        "Save each extracted page with a distinct file name.",
+        "Create ImageSaveOptions inside the loop to avoid reusing the same instance across pages.",
+        "When a specific SaveOptions class is used, you do not need to set SaveFormat manually; the class defines it.",
+        "Use the concrete PdfSaveOptions class from Aspose.Words.Saving instead of the non‑existent SaveOptions factory.",
+        "Add a using directive for Aspose.Words.Saving to make PdfSaveOptions available.",
+        "Instantiate PdfSaveOptions with `new PdfSaveOptions()` and set desired properties (e.g., UseHighQualityRendering).",
+        "Pass the PdfSaveOptions instance to Document.Save overload that accepts a SaveOptions parameter.",
+        "Use object initializer syntax for ImageSaveOptions to keep the code concise."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Create the images folder when ExportImagesAsBase64 is false to avoid runtime errors."
+      ]
+    }
+  }
+}

@@ -1,62 +1,30 @@
 using System;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class FindReplaceWithParagraph
 {
     static void Main()
     {
-        // Load the existing DOCX document.
-        Document doc = new Document("Input.docx");
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the text to be replaced (e.g., a placeholder like [PARA]).
-        const string placeholder = "[PARA]";
+        // Add a line that contains a placeholder we will replace.
+        builder.Writeln("Dear _Customer_, thank you for your purchase.");
 
-        // Set up FindReplaceOptions with a custom callback that will replace the placeholder
-        // with an entire new paragraph.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new InsertParagraphHandler("This is the inserted paragraph.")
-        };
+        // Configure find‑replace options.
+        FindReplaceOptions options = new FindReplaceOptions();
 
-        // Perform the find-and-replace operation.
-        doc.Range.Replace(placeholder, string.Empty, options);
+        // Example: apply paragraph formatting to the new paragraph that will be inserted.
+        // Here we center‑align the paragraph that replaces the placeholder.
+        options.ApplyParagraphFormat.Alignment = ParagraphAlignment.Center;
+
+        // Replace the placeholder with a name followed by a paragraph break.
+        // The meta‑character "&p" inserts a new paragraph.
+        doc.Range.Replace("_Customer_", "John Doe&p", options);
 
         // Save the modified document.
-        doc.Save("Output.docx");
-    }
-}
-
-// Custom callback that inserts a new paragraph in place of the matched text.
-class InsertParagraphHandler : IReplacingCallback
-{
-    private readonly string _newParagraphText;
-
-    public InsertParagraphHandler(string newParagraphText)
-    {
-        _newParagraphText = newParagraphText;
-    }
-
-    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
-    {
-        // The node that contains the beginning of the match is a Run.
-        // Its parent is the Paragraph that holds the placeholder.
-        Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
-
-        // Create a new paragraph with the desired text.
-        Paragraph newParagraph = new Paragraph(placeholderParagraph.Document);
-        Run run = new Run(placeholderParagraph.Document, _newParagraphText);
-        newParagraph.AppendChild(run);
-
-        // Insert the new paragraph after the placeholder paragraph.
-        CompositeNode parent = placeholderParagraph.ParentNode;
-        parent.InsertAfter(newParagraph, placeholderParagraph);
-
-        // Remove the original paragraph that contained the placeholder.
-        placeholderParagraph.Remove();
-
-        // Skip the default replacement because we have already handled it.
-        return ReplaceAction.Skip;
+        doc.Save("Result.docx");
     }
 }

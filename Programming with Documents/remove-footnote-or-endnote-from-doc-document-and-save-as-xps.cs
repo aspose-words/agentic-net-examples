@@ -7,32 +7,38 @@ class RemoveNotesAndSaveAsXps
 {
     static void Main()
     {
-        // Path to the source DOC document.
-        string inputPath = @"C:\Docs\Input.docx";
+        // Path to the folder that contains the input document.
+        string dataDir = @"C:\Docs\"; // <-- change to your folder
 
-        // Load the document from file.
-        Document doc = new Document(inputPath);
+        // Load the DOC/DOCX document.
+        Document doc = new Document(dataDir + "Input.docx");
 
-        // Collect all footnote/endnote nodes in the document.
-        NodeCollection noteNodes = doc.GetChildNodes(NodeType.Footnote, true);
-
-        // Remove each footnote and endnote.
-        foreach (Footnote note in noteNodes)
+        // ----- Remove footnote separator (if present) -----
+        // The separator is a paragraph that appears before the footnote collection.
+        FootnoteSeparator footnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.FootnoteSeparator];
+        if (footnoteSeparator?.FirstParagraph?.FirstChild != null)
         {
-            // Both footnotes and endnotes are represented by the Footnote class.
-            // The FootnoteType property tells us which kind it is.
-            if (note.FootnoteType == FootnoteType.Footnote ||
-                note.FootnoteType == FootnoteType.Endnote)
-            {
-                note.Remove();
-            }
+            // Remove the separator node.
+            footnoteSeparator.FirstParagraph.FirstChild.Remove();
         }
 
-        // Create XPS save options.
-        XpsSaveOptions xpsOptions = new XpsSaveOptions();
+        // ----- Remove endnote separator (if present) -----
+        FootnoteSeparator endnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.EndnoteSeparator];
+        if (endnoteSeparator?.FirstParagraph?.FirstChild != null)
+        {
+            // Remove the separator node.
+            endnoteSeparator.FirstParagraph.FirstChild.Remove();
+        }
 
-        // Save the modified document as XPS.
-        string outputPath = @"C:\Docs\Output.xps";
-        doc.Save(outputPath, xpsOptions);
+        // Optionally, remove all footnote and endnote nodes themselves.
+        // This loop removes each footnote/endnote from the document body.
+        foreach (Footnote footnote in doc.GetChildNodes(NodeType.Footnote, true))
+        {
+            footnote.Remove();
+        }
+
+        // Save the modified document as XPS using XpsSaveOptions.
+        XpsSaveOptions saveOptions = new XpsSaveOptions(); // default XPS format
+        doc.Save(dataDir + "Output.xps", saveOptions);
     }
 }

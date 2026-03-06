@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
@@ -8,12 +9,13 @@ class Program
         // Path to the source DOCM file.
         string sourceFile = @"C:\Docs\SourceDocument.docm";
 
-        // Load the DOCM document. The LoadOptions explicitly specify the DOCM format.
-        LoadOptions loadOptions = new LoadOptions(LoadFormat.Docm, "", "");
+        // Load the DOCM document. The constructor automatically detects the format.
+        Document doc = new Document(sourceFile);
 
-        // Create a Document object from the source file using the specified load options.
-        Document doc = new Document(sourceFile, loadOptions);
+        // Verify that the document was loaded as a DOCM file.
+        Console.WriteLine($"Original load format: {doc.OriginalLoadFormat}");
 
-        // The document is now loaded and ready for further processing.
+        // (Optional) Save the document in another format, e.g., DOCX.
+        // doc.Save(@"C:\Docs\ConvertedDocument.docx", SaveFormat.Docx);
     }
 }

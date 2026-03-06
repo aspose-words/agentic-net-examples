@@ -3,49 +3,39 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Saving;
 
-class Program
+class InsertTableIntoMhtml
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to simplify node insertion.
+        // Use DocumentBuilder to simplify inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a new table.
         Table table = builder.StartTable();
 
-        // ---- First row ----
-        builder.InsertCell();                     // First cell of the first row.
-        builder.Write("Cell 1,1");                // Add text to the cell.
+        // First row – two cells.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 2");
+        builder.EndRow();
 
-        builder.InsertCell();                     // Second cell of the first row.
-        builder.Write("Cell 1,2");
-        builder.EndRow();                         // End the first row.
+        // Second row – two cells.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
+        builder.EndTable(); // Ends the table.
 
-        // ---- Second row ----
-        builder.InsertCell();                     // First cell of the second row.
-        builder.Write("Cell 2,1");
-
-        builder.InsertCell();                     // Second cell of the second row.
-        builder.Write("Cell 2,2");
-        builder.EndRow();                         // End the second row.
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Optional: set title and description for accessibility.
+        // Optional: set a title/description for accessibility.
         table.Title = "Sample Table";
-        table.Description = "Demonstrates inserting a table into an MHTML document.";
+        table.Description = "A simple 2x2 table inserted into an MHTML document.";
 
-        // Save the document as MHTML.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
-        {
-            // Export table widths as relative percentages to keep layout flexible.
-            TableWidthOutputMode = HtmlElementSizeOutputMode.RelativeOnly
-        };
-
-        doc.Save("TableInMhtml.mht", saveOptions);
+        // Save the document as MHTML (MHT) format.
+        // SaveFormat.Mhtml ensures the output is a single MHTML file.
+        doc.Save("TableInMhtml.mht", SaveFormat.Mhtml);
     }
 }

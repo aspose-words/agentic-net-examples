@@ -2,21 +2,22 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class PdfComplianceExample
+class Program
 {
     static void Main()
     {
-        // Load an existing Word document.
+        // Load an existing Word document from disk.
         Document doc = new Document("Input.docx");
 
-        // Create PDF save options.
+        // Create a PdfSaveOptions instance to control PDF conversion.
         PdfSaveOptions saveOptions = new PdfSaveOptions();
 
-        // Set the compliance level to PDF/A-2u (ISO 19005-2) which preserves visual appearance
-        // and allows reliable text extraction. Change to any other PdfCompliance value as needed.
-        saveOptions.Compliance = PdfCompliance.PdfA2u;
+        // Set the PDF compliance level.
+        // Use PdfA1b for PDF/A‑1b compliance (visual appearance preservation).
+        // Alternatively, use PdfUa1 for PDF/UA‑1 compliance (accessibility).
+        saveOptions.Compliance = PdfCompliance.PdfA1b;
 
-        // Save the document as a PDF that conforms to the selected standard.
-        doc.Save("Output_PdfA2u.pdf", saveOptions);
+        // Save the document as a PDF file that conforms to the selected standard.
+        doc.Save("Output_PdfA1b.pdf", saveOptions);
     }
 }

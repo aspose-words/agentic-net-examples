@@ -1,4 +1,3 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,19 +9,21 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new table. Insert at least one cell before applying any table formatting.
+        // Start building a table.
         Table table = builder.StartTable();
+
+        // Insert the first cell – a table must contain at least one row before any formatting is applied.
         builder.InsertCell();
 
-        // Apply a built‑in table style using its StyleIdentifier.
+        // Apply a built‑in table style using its identifier.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Optionally specify which parts of the style to apply.
-        table.StyleOptions = TableStyleOptions.FirstColumn |
-                             TableStyleOptions.RowBands |
-                             TableStyleOptions.FirstRow;
+        // Optionally specify which parts of the style are applied.
+        table.StyleOptions = TableStyleOptions.FirstRow |
+                             TableStyleOptions.FirstColumn |
+                             TableStyleOptions.RowBands;
 
-        // Adjust the table size to fit its contents.
+        // Resize the table to fit its contents.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
         // Populate the table with sample data.
@@ -53,7 +54,7 @@ class Program
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to a DOCX file.
+        // Save the document to a file.
         doc.Save("TableWithStyle.docx");
     }
 }

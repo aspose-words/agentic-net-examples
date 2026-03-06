@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class RenderDocumentToTiff
+class RenderPagesToTiff
 {
     static void Main()
     {
@@ -12,23 +12,22 @@ class RenderDocumentToTiff
         // Path where the resulting TIFF will be saved.
         string outputPath = @"C:\Docs\Output.tiff";
 
-        // Load the document.
+        // Load the document (create/load rule).
         Document doc = new Document(inputPath);
 
         // Define the page range to render.
-        // PageRange uses zero‑based indices: this example renders pages 2‑4 (indices 1‑3).
-        PageSet pageSet = new PageSet(new PageRange(1, 3));
+        // PageRange uses zero‑based indices: 0 = first page, 2 = third page.
+        PageRange range = new PageRange(0, 2); // pages 1‑3
 
-        // Create ImageSaveOptions for TIFF format.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        // Create a PageSet from the range.
+        PageSet pageSet = new PageSet(range);
 
-        // Apply the page range.
-        tiffOptions.PageSet = pageSet;
+        // Configure image save options for TIFF format.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
+        options.PageSet = pageSet;                     // Render only the specified pages.
+        options.PageLayout = MultiPageLayout.TiffFrames(); // Each page as a separate frame.
 
-        // Render each selected page as a separate frame in a multi‑frame TIFF.
-        tiffOptions.PageLayout = MultiPageLayout.TiffFrames();
-
-        // Save the document as a TIFF using the configured options.
-        doc.Save(outputPath, tiffOptions);
+        // Save the document using the configured options (save rule).
+        doc.Save(outputPath, options);
     }
 }

@@ -2,33 +2,50 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-class Program
+class ApplyListsToDocument
 {
     static void Main()
     {
-        // Load an existing DOCX file
-        string inputPath = @"C:\Docs\Input.docx";
-        string outputPath = @"C:\Docs\Output.docx";
+        // Load an existing DOCX file.
+        Document doc = new Document(@"C:\Input\SourceDocument.docx");
 
-        Document doc = new Document(inputPath);
+        // Create a DocumentBuilder to edit the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a new numbered list based on the default template
+        // ---------- Numbered list ----------
+        // Add a new numbered list based on the default template.
         List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // Apply the list to subsequent paragraphs
+        // Apply the list to subsequent paragraphs.
         builder.ListFormat.List = numberedList;
 
-        // Add list items
+        // Add several items to the numbered list.
         for (int i = 1; i <= 5; i++)
         {
-            builder.Writeln($"Item {i}");
+            builder.Writeln($"Numbered item {i}");
         }
 
-        // End the list formatting
+        // End the numbered list.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the modified document
-        doc.Save(outputPath);
+        // Insert a paragraph break between the two lists.
+        builder.InsertBreak(BreakType.ParagraphBreak);
+
+        // ---------- Bulleted list ----------
+        // Add a new bulleted list based on the default template.
+        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+        // Apply the bulleted list.
+        builder.ListFormat.List = bulletList;
+
+        // Add several items to the bulleted list.
+        for (int i = 1; i <= 5; i++)
+        {
+            builder.Writeln($"Bullet item {i}");
+        }
+
+        // End the bulleted list.
+        builder.ListFormat.RemoveNumbers();
+
+        // Save the modified document.
+        doc.Save(@"C:\Output\DocumentWithLists.docx");
     }
 }

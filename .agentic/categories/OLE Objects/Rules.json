@@ -1,0 +1,27 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Loading rules": [
+        "Add the missing using directive for the namespace that contains RtfLoadOptions: `using Aspose.Words.Loading;`."
+      ],
+      "Saving/Export rules": [
+        "When the target format is Markdown, call Document.Save with SaveFormat.Markdown (or .md extension)."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Add required using directives for Aspose.Words and Aspose.Words.Drawing.",
+        "Use NodeType.Shape to locate the shape node.",
+        "Check ShapeType.OleObject before replacement.",
+        "Copy required formatting from the old shape to the new shape after insertion.",
+        "To set a custom caption for an OLE object, use DocumentBuilder.InsertOleObjectAsIcon overload that accepts an icon stream and a caption string.",
+        "InsertOleObjectAsIcon returns a Shape; use that Shape to access OleFormat for further modifications (ProgId, IsLocked, etc.).",
+        "Keep the OLE object embedded by passing isLinked = false.",
+        "When you need a custom caption for an OLE icon, either pass it to InsertOleObjectAsIcon or set OleFormat.OlePackage.DisplayName after insertion.",
+        "Do not call Shape.GetAncestorNode – that method does not exist. Use the index from the NodeCollection or maintain a separate counter.",
+        "Iterate over the NodeCollection returned by Document.GetChildNodes(NodeType.Shape, true) to guarantee all shapes are visited.",
+        "Keep the rest of the logic unchanged; the code already correctly iterates over Shape nodes and saves embedded OLE objects.",
+        "If you prefer not to use RtfLoadOptions, you can simply instantiate the Document with `new Document(rtfPath)`, because OLE data is preserved by default for RTF."
+      ]
+    }
+  }
+}

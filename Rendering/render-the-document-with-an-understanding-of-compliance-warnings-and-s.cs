@@ -6,29 +6,17 @@ class Program
 {
     static void Main()
     {
-        // Load the source document (replace with your actual path).
+        // Load the source document.
         Document doc = new Document("Input.docx");
 
-        // Capture any compliance‑related warnings that Aspose.Words may emit.
-        doc.WarningCallback = new WarningInfoCallback();
-
-        // Configure PDF save options with the desired compliance level.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // Configure PDF save options to use a specific compliance level.
+        // Here we choose PDF/A-1b which preserves visual appearance.
+        PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            // Example: PDF/A‑1b compliance – preserves visual appearance.
             Compliance = PdfCompliance.PdfA1b
         };
 
-        // Save the document as PDF using the configured options.
-        doc.Save("Output.pdf", pdfOptions);
-    }
-
-    // Simple implementation of IWarningCallback to output warnings to the console.
-    private class WarningInfoCallback : IWarningCallback
-    {
-        public void Warning(WarningInfo info)
-        {
-            Console.WriteLine($"Warning: {info.WarningType} - {info.Description}");
-        }
+        // Save the document as a PDF with the defined compliance settings.
+        doc.Save("Output.pdf", saveOptions);
     }
 }

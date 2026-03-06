@@ -8,16 +8,16 @@ class Program
     {
         // Create a new empty document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a couple of paragraphs.
+        // Use DocumentBuilder to add content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello world!");
         builder.Writeln("Hello again!");
 
         // Enable rendering of paragraph marks (pilcrow symbols) in the output.
         doc.LayoutOptions.ShowParagraphMarks = true;
 
-        // Save the document. PDF format will display the paragraph marks.
+        // Save the document. The format is inferred from the file extension.
         doc.Save("LayoutOptionsParagraphMarks.pdf");
     }
 }

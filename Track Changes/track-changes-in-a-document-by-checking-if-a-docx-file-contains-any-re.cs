@@ -8,12 +8,12 @@ class Program
         // Load the DOCX file.
         Document doc = new Document("input.docx");
 
-        // Check whether the document contains any tracked changes.
+        // Determine whether the document has any tracked changes.
         bool hasRevisions = doc.HasRevisions;
 
         // Output the result.
         Console.WriteLine(hasRevisions
-            ? "The document contains revisions."
-            : "The document does not contain any revisions.");
+            ? "The document contains tracked changes."
+            : "The document does not contain any tracked changes.");
     }
 }

@@ -1,41 +1,59 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
+        // Load the source DOCX document.
+        Document doc = new Document("input.docx");
+
+        // Configure HTML save options to use an external CSS file.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
-            // Path to the source DOCX file.
-            string inputDocxPath = @"C:\Docs\SourceDocument.docx";
+            CssStyleSheetType = CssStyleSheetType.External,
+            CssStyleSheetFileName = "custom.css"
+        };
 
-            // Path where the resulting HTML file will be saved.
-            string outputHtmlPath = @"C:\Docs\ResultDocument.html";
+        // Attach a callback that writes custom CSS content to the stylesheet file.
+        saveOptions.CssSavingCallback = new CustomCssSavingCallback("custom.css",
+            "/* Custom CSS */\n" +
+            "body { font-family: Arial, sans-serif; margin: 20px; }\n" +
+            "h1 { color: #2E8B57; }\n");
 
-            // Path for the external CSS file that will be generated.
-            string outputCssPath = @"C:\Docs\ResultStyles.css";
+        // Save the document as HTML using the configured options.
+        doc.Save("output.html", saveOptions);
+    }
+}
 
-            // Load the DOCX document.
-            Document doc = new Document(inputDocxPath);
+// Implements the CSS saving callback to provide custom stylesheet content.
+public class CustomCssSavingCallback : ICssSavingCallback
+{
+    private readonly string _cssFilePath;
+    private readonly string _cssContent;
 
-            // Configure HTML save options.
-            HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
-            {
-                // Export CSS to an external stylesheet.
-                CssStyleSheetType = CssStyleSheetType.External,
+    public CustomCssSavingCallback(string cssFilePath, string cssContent)
+    {
+        _cssFilePath = cssFilePath;
+        _cssContent = cssContent;
+    }
 
-                // Specify the filename for the external CSS file.
-                CssStyleSheetFileName = outputCssPath,
+    public void CssSaving(CssSavingArgs args)
+    {
+        // Create or overwrite the CSS file.
+        args.CssStream = new FileStream(_cssFilePath, FileMode.Create, FileAccess.Write);
 
-                // Optional: add a prefix to all generated CSS class names.
-                CssClassNamePrefix = "custom_"
-            };
-
-            // Save the document as HTML using the configured options.
-            doc.Save(outputHtmlPath, htmlOptions);
+        // Write the custom CSS text.
+        using (StreamWriter writer = new StreamWriter(args.CssStream, Encoding.UTF8, 1024, leaveOpen: true))
+        {
+            writer.Write(_cssContent);
         }
+
+        // Ensure the CSS is exported and the stream is closed after saving.
+        args.IsExportNeeded = true;
+        args.KeepCssStreamOpen = false;
     }
 }

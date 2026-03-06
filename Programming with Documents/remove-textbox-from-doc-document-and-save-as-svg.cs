@@ -1,34 +1,34 @@
 using System;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
-class RemoveTextBoxAndSaveAsSvg
+class Program
 {
     static void Main()
     {
-        // Load the existing DOC document.
-        Document doc = new Document("InputDocument.docx");
+        // Load the source DOC document.
+        Document doc = new Document("Input.docx");
 
         // Find all shapes that are text boxes and remove them from the document.
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true)
-                                   .OfType<Shape>()
-                                   .Where(s => s.ShapeType == ShapeType.TextBox))
-        {
-            shape.Remove();
-        }
+        var textBoxShapes = doc.GetChildNodes(NodeType.Shape, true)
+                               .Cast<Shape>()
+                               .Where(s => s.ShapeType == ShapeType.TextBox)
+                               .ToList();
 
-        // Configure SVG save options (optional settings).
+        foreach (var shape in textBoxShapes)
+            shape.Remove();
+
+        // Configure SVG save options (no page border, fit to viewport, render text as placed glyphs).
         SvgSaveOptions svgOptions = new SvgSaveOptions
         {
-            FitToViewPort = true,                     // Make SVG fill the viewport.
-            ShowPageBorder = false,                   // Do not draw a page border.
-            TextOutputMode = SvgTextOutputMode.UsePlacedGlyphs // Render text as curves.
+            FitToViewPort = true,
+            ShowPageBorder = false,
+            TextOutputMode = SvgTextOutputMode.UsePlacedGlyphs
         };
 
         // Save the modified document as an SVG file.
-        doc.Save("OutputDocument.svg", svgOptions);
+        doc.Save("Output.svg", svgOptions);
     }
 }

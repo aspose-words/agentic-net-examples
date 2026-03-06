@@ -1,33 +1,56 @@
-using Aspose.Words;
 using System;
+using Aspose.Words;
+using Aspose.Words.Tables;
 
-class Program
+class InsertTableIntoHtml
 {
     static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
+        // Path to the source HTML file.
+        const string inputHtmlPath = @"C:\Docs\source.html";
 
-        // Associate a DocumentBuilder with the document.
+        // Path where the modified HTML will be saved.
+        const string outputHtmlPath = @"C:\Docs\result.html";
+
+        // Load the existing HTML document.
+        Document doc = new Document(inputHtmlPath);
+
+        // Create a DocumentBuilder to modify the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // HTML fragment that defines a simple 2x2 table.
-        string htmlTable = @"
-            <table border='1' style='border-collapse:collapse;'>
-                <tr>
-                    <td>Row 1, Cell 1</td>
-                    <td>Row 1, Cell 2</td>
-                </tr>
-                <tr>
-                    <td>Row 2, Cell 1</td>
-                    <td>Row 2, Cell 2</td>
-                </tr>
-            </table>";
+        // Move the cursor to the end of the document so the table is appended.
+        builder.MoveToDocumentEnd();
 
-        // Insert the HTML table into the document.
-        builder.InsertHtml(htmlTable);
+        // Start a new table.
+        Table table = builder.StartTable();
 
-        // Save the resulting document.
-        doc.Save("TableInHtml.docx");
+        // First row, first cell.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 1");
+
+        // First row, second cell.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 2");
+
+        // End the first row.
+        builder.EndRow();
+
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 1");
+
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
+
+        // End the second row and the table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // Optional: adjust table formatting (example: set borders).
+        table.SetBorders(LineStyle.Single, 1.0, System.Drawing.Color.Black);
+
+        // Save the modified document back to HTML format.
+        doc.Save(outputHtmlPath, SaveFormat.Html);
     }
 }

@@ -2,30 +2,29 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class RenderWithOrientation
+class Program
 {
     static void Main()
     {
-        // Path where the PDF will be saved.
-        string outputPath = @"C:\Output\DocumentWithLandscape.pdf";
+        // Load the source Word document.
+        Document doc = new Document("Input.docx");
 
-        // Create a new blank document.
-        Document doc = new Document();
+        // Set the desired page orientation for every section in the document.
+        // Change Orientation.Landscape to Orientation.Portrait for portrait mode.
+        foreach (Section section in doc.Sections)
+        {
+            section.PageSetup.Orientation = Orientation.Landscape;
+        }
 
-        // Use DocumentBuilder to add content and set page orientation.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document is rendered in landscape orientation.");
-
-        // Set the page orientation to Landscape (wide and short).
-        builder.PageSetup.Orientation = Orientation.Landscape;
-
-        // Ensure the layout is up‑to‑date before saving.
+        // Rebuild the internal page layout after modifying the orientation.
         doc.UpdatePageLayout();
 
-        // Create PDF save options (default settings are sufficient for this task).
+        // Create PDF save options. Additional options (e.g., PageLayout) can be set here if needed.
         PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Example: display two pages side‑by‑side when the PDF is opened.
+        // pdfOptions.PageLayout = PdfPageLayout.TwoPageLeft;
 
-        // Save the document as a PDF file.
-        doc.Save(outputPath, pdfOptions);
+        // Save the document as a PDF file using the specified options.
+        doc.Save("Output.pdf", pdfOptions);
     }
 }

@@ -2,35 +2,27 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ConvertListToPlainTextAndSaveAsPs
+namespace ListToPlainTextPs
 {
-    static void Main()
+    class Program
     {
-        // Input DOC file containing the list.
-        const string inputPath = "InputDocument.doc";
-
-        // Output PS file.
-        const string outputPath = "OutputDocument.ps";
-
-        // Load the existing DOC document.
-        Document sourceDoc = new Document(inputPath);
-
-        // Convert the whole document to plain‑text representation.
-        // This includes list items as they appear in the text.
-        string plainText = sourceDoc.ToString(SaveFormat.Text);
-
-        // Create a new blank document and write the plain text into it.
-        Document plainDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(plainDoc);
-        builder.Writeln(plainText);
-
-        // Prepare PS save options (required to set the format explicitly).
-        PsSaveOptions psOptions = new PsSaveOptions
+        static void Main()
         {
-            SaveFormat = SaveFormat.Ps
-        };
+            // Path to the source DOC file that contains a list.
+            const string inputPath = @"C:\Docs\SourceDocument.doc";
 
-        // Save the plain‑text document as PostScript.
-        plainDoc.Save(outputPath, psOptions);
+            // Path to the output PostScript file.
+            const string outputPath = @"C:\Docs\ListAsPlainText.ps";
+
+            // Load the DOC document.
+            Document doc = new Document(inputPath);
+
+            // Ensure that list labels are up‑to‑date so they appear correctly in the output.
+            doc.UpdateListLabels();
+
+            // Save the document as PostScript (PS) format.
+            // Using the SaveFormat enum directly satisfies the lifecycle rule for saving.
+            doc.Save(outputPath, SaveFormat.Ps);
+        }
     }
 }

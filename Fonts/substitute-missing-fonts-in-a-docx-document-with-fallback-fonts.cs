@@ -3,60 +3,44 @@ using Aspose.Words;
 using Aspose.Words.Fonts;
 using Aspose.Words.Saving;
 
-class SubstituteMissingFonts
+class FontSubstitutionExample
 {
     static void Main()
     {
-        // Path to the source DOCX that contains missing fonts.
-        string inputPath = "MyDir\\MissingFont.docx";
+        // Paths to the input DOCX and the output file.
+        string dataDir = @"C:\Data\";
+        string inputPath = System.IO.Path.Combine(dataDir, "MissingFont.docx");
+        string outputPath = System.IO.Path.Combine(dataDir, "Result.pdf");
 
-        // Path where the processed document will be saved.
-        string outputPath = "ArtifactsDir\\Result.pdf";
-
-        // Optional: folder that contains additional fonts you want to make available.
-        // If you have custom fonts, set this to the folder that holds them.
-        string fontsFolder = "FontsDir";
-
-        // Load the document.
+        // Load the document that contains missing fonts.
         Document doc = new Document(inputPath);
 
-        // Collect font substitution warnings (optional, useful for diagnostics).
-        WarningInfoCollection warnings = new WarningInfoCollection();
-        doc.WarningCallback = warnings;
+        // Prepare a warning collector to capture font substitution warnings.
+        WarningInfoCollection warningCollector = new WarningInfoCollection();
+        doc.WarningCallback = warningCollector;
 
-        // Create a FontSettings instance and assign it to the document.
+        // Create and assign FontSettings to the document.
         FontSettings fontSettings = new FontSettings();
-
-        // If you have a custom fonts folder, add it as a font source.
-        // This step is optional; Aspose.Words already includes system fonts.
-        FolderFontSource folderSource = new FolderFontSource(fontsFolder, false);
-        fontSettings.SetFontsSources(new FontSourceBase[] { folderSource });
-
-        // Load the predefined Microsoft Office fallback scheme.
-        // This scheme defines which fonts to use for specific Unicode ranges
-        // when the original font does not contain the required glyphs.
-        FontFallbackSettings fallback = fontSettings.FallbackSettings;
-        fallback.LoadMsOfficeFallbackSettings();
-
-        // Enable font info substitution so that Aspose.Words can try to find the closest match
-        // based on font metrics before falling back to the default substitution rule.
-        fontSettings.SubstitutionSettings.FontInfoSubstitution.Enabled = true;
-
-        // Set a default font to be used when no other substitution rule can resolve the font.
-        // This is a safety net; the fallback scheme will usually handle most cases.
-        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial";
-
-        // Keep the original font metrics after substitution (preserves layout as much as possible).
-        doc.LayoutOptions.KeepOriginalFontMetrics = true;
-
-        // Apply the configured FontSettings to the document.
         doc.FontSettings = fontSettings;
 
-        // Save the document. The output format can be any supported format (PDF, DOCX, etc.).
+        // Load the predefined Microsoft Office fallback scheme.
+        // This scheme defines which fonts to use for specific Unicode ranges when the original font lacks glyphs.
+        fontSettings.FallbackSettings.LoadMsOfficeFallbackSettings();
+
+        // Set a default font to be used when no other substitution rule can resolve the missing font.
+        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial";
+
+        // Enable font‑info substitution so Aspose.Words can find the closest match based on font metrics.
+        fontSettings.SubstitutionSettings.FontInfoSubstitution.Enabled = true;
+
+        // Preserve the original font metrics after substitution (optional but often desired).
+        doc.LayoutOptions.KeepOriginalFontMetrics = true;
+
+        // Save the document. The chosen format can be PDF, DOCX, etc.
         doc.Save(outputPath);
 
-        // Output any font substitution warnings that were captured.
-        foreach (WarningInfo info in warnings)
+        // Output any font substitution warnings that were generated during processing.
+        foreach (WarningInfo info in warningCollector)
         {
             if (info.WarningType == WarningType.FontSubstitution)
                 Console.WriteLine(info.Description);

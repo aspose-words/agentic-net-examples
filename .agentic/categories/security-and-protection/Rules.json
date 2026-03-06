@@ -1,0 +1,10 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Loading rules": [
+        "Use Aspose.Words.Loading.LoadOptions.ProgressCallback to supply a custom IDocumentLoadingCallback implementation."
+      ]
+    }
+  }
+}

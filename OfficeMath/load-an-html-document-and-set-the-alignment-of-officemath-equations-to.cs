@@ -7,22 +7,17 @@ class Program
 {
     static void Main()
     {
-        // Path to the source HTML file.
-        string htmlPath = "input.html";
+        // Load the HTML document. Aspose.Words automatically detects the format.
+        Document doc = new Document("input.html");
 
-        // Load the HTML document. Enable conversion of EquationXML shapes to OfficeMath objects.
-        LoadOptions loadOptions = new LoadOptions();
-        loadOptions.ConvertShapeToOfficeMath = true;
-        Document doc = new Document(htmlPath, loadOptions);
-
-        // Iterate through all OfficeMath nodes in the document.
+        // Iterate through all OfficeMath objects in the document.
         NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
         foreach (OfficeMath officeMath in officeMathNodes)
         {
-            // The justification can be set only when the display type is Display.
+            // Ensure the equation is displayed on its own line before setting justification.
             officeMath.DisplayType = OfficeMathDisplayType.Display;
 
-            // Center each equation.
+            // Center the equation within the page.
             officeMath.Justification = OfficeMathJustification.Center;
         }
 

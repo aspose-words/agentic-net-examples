@@ -1,7 +1,9 @@
+using System;
+using System.Data;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class GenerateBarcode
 {
     static void Main()
     {
@@ -9,22 +11,34 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a BARCODE field that will render a barcode image.
-        FieldBarcode barcodeField = (FieldBarcode)builder.InsertField(FieldType.FieldBarcode, true);
+        // Insert a MERGEBARCODE field that will generate a QR code.
+        // The field is set to use the column "MyQRCode" from the mail‑merge data source.
+        FieldMergeBarcode barcodeField = (FieldMergeBarcode)builder.InsertField(FieldType.FieldMergeBarcode, true);
+        barcodeField.BarcodeType = "QR";          // QR code type.
+        barcodeField.BarcodeValue = "MyQRCode";   // Name of the data‑source column.
 
-        // Set the value to be encoded (e.g., a US ZIP code).
-        barcodeField.PostalAddress = "12345";
+        // Optional: customize QR code appearance (colors, error correction, scaling, etc.).
+        barcodeField.BackgroundColor = "0xF8BD69";
+        barcodeField.ForegroundColor = "0xB5413B";
+        barcodeField.ErrorCorrectionLevel = "3";
+        barcodeField.ScalingFactor = "250";
+        barcodeField.SymbolHeight = "1000";
+        barcodeField.SymbolRotation = "0";
 
-        // Specify that the value is a US postal address so the field knows which barcode symbology to use.
-        barcodeField.IsUSPostalAddress = true;
+        // Add a paragraph break after the field.
+        builder.Writeln();
 
-        // Optional: add a Facing Identification Mark (FIM) to the barcode.
-        barcodeField.FacingIdentificationMark = "C";
+        // Prepare mail‑merge data: a single column that holds the values to encode.
+        DataTable table = new DataTable("Barcodes");
+        table.Columns.Add("MyQRCode");
+        table.Rows.Add(new[] { "ABC123" });
+        table.Rows.Add(new[] { "DEF456" });
 
-        // Force the field to calculate its result and generate the barcode image.
-        barcodeField.Update();
+        // Execute mail merge – each row creates a page with a DISPLAYBARCODE field
+        // that renders the actual barcode image.
+        doc.MailMerge.Execute(table);
 
-        // Save the document containing the barcode.
+        // Save the resulting document.
         doc.Save("BarcodeDocument.docx");
     }
 }

@@ -1,36 +1,26 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\SourceDocument.docx";
+        // Load the DOCX file.
+        Document doc = new Document("Input.docx");
 
-        // Path where the resulting PDF will be saved.
-        string outputPath = @"C:\Docs\ResultDocument.pdf";
-
-        // Load the DOCX document.
-        Document doc = new Document(inputPath);
-
-        // Configure font substitution: use Arial as the fallback for missing fonts.
+        // Set up font substitution: use Arial when a font is missing.
         FontSettings fontSettings = new FontSettings();
         fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial";
         fontSettings.SubstitutionSettings.FontInfoSubstitution.Enabled = true;
 
-        // Preserve original font metrics after substitution.
+        // Preserve original font metrics after substitution (optional but improves layout).
         doc.LayoutOptions.KeepOriginalFontMetrics = true;
 
         // Apply the font settings to the document.
         doc.FontSettings = fontSettings;
 
-        // Create PDF save options (default settings are sufficient for this task).
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-        // Save the document as PDF, applying the font fallback settings.
-        doc.Save(outputPath, pdfOptions);
+        // Save the document as PDF. The format is inferred from the file extension.
+        doc.Save("Output.pdf");
     }
 }

@@ -10,20 +10,17 @@ class Program
         // Path to the PDF file to be processed.
         string pdfPath = "input.pdf";
 
-        // Load options for PDF. Enable conversion of EquationXML shapes to OfficeMath objects.
+        // Load options: enable conversion of shapes that contain EquationXML into OfficeMath objects.
         PdfLoadOptions loadOptions = new PdfLoadOptions();
         loadOptions.ConvertShapeToOfficeMath = true;
 
         // Load the PDF document using the provided Document constructor that accepts a file name and LoadOptions.
         Document doc = new Document(pdfPath, loadOptions);
 
-        // Retrieve all OfficeMath nodes in the document (search recursively).
-        var officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        // Retrieve all OfficeMath nodes in the document (including those nested inside other nodes).
+        int officeMathCount = doc.GetChildNodes(NodeType.OfficeMath, true).Count;
 
-        // Count the OfficeMath objects.
-        int officeMathCount = officeMathNodes.Count;
-
-        // Output the result.
+        // Output the count.
         Console.WriteLine($"Number of OfficeMath objects: {officeMathCount}");
     }
 }

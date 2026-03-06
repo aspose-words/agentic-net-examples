@@ -2,59 +2,49 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class FormatFormFields
+class Program
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\InputDocument.docx";
+        // Load the existing DOCX document from the file system.
+        Document doc = new Document("Input.docx");
 
-        // Path where the formatted document will be saved.
-        string outputPath = @"C:\Docs\FormattedDocument.docx";
-
-        // Load the existing document.
-        Document doc = new Document(inputPath);
-
-        // Optional: turn off the default gray shading for form fields.
+        // Disable the default gray shading that appears on form fields.
         doc.ShadeFormData = false;
 
-        // Iterate through all form fields in the document.
+        // Iterate through every form field in the document.
         foreach (FormField field in doc.Range.FormFields)
         {
-            // Enable the field (make it editable).
+            // Ensure the field is enabled so the user can interact with it.
             field.Enabled = true;
 
-            // Example: set a help text for each field.
+            // Provide a generic help tooltip for the field.
             field.HelpText = "Please fill out this field.";
 
-            // Apply field‑type‑specific formatting.
+            // Apply type‑specific formatting or default values.
             switch (field.Type)
             {
+                case FieldType.FieldFormTextInput:
+                    // For text input fields, set a sample placeholder text.
+                    field.Result = "Sample text";
+                    break;
+
                 case FieldType.FieldFormCheckBox:
-                    // Ensure the checkbox is unchecked by default.
+                    // For check boxes, make sure they are unchecked by default.
                     field.Checked = false;
-                    field.Default = false;
                     break;
 
                 case FieldType.FieldFormDropDown:
-                    // Select the first item in the drop‑down list.
-                    if (field.DropDownItems.Count > 0)
-                        field.DropDownSelectedIndex = 0;
-                    break;
-
-                case FieldType.FieldFormTextInput:
-                    // Set placeholder text for text input fields.
-                    field.TextInputDefault = "Enter text here";
-                    // Optionally set a maximum length.
-                    field.MaxLength = 100;
+                    // For drop‑down fields, select the first item in the list.
+                    field.DropDownSelectedIndex = 0;
                     break;
             }
         }
 
-        // Update all fields so that any changes are reflected in the document.
+        // Recalculate all fields to reflect the changes made programmatically.
         doc.UpdateFields();
 
-        // Save the modified document.
-        doc.Save(outputPath);
+        // Save the modified document to a new file.
+        doc.Save("Output.docx");
     }
 }

@@ -1,25 +1,18 @@
-using Aspose.Words;
-using Aspose.Words.Fields;
+// Create a new blank Word document (template)
+var doc = new Aspose.Words.Document();
 
-class Program
-{
-    static void Main()
-    {
-        // Create a new blank document (DOT template)
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+// Initialize a DocumentBuilder for the document
+var builder = new Aspose.Words.DocumentBuilder(doc);
 
-        // Add some introductory text
-        builder.Write("Select a fruit: ");
+// Write some prompt text before the combo box
+builder.Write("Pick a fruit: ");
 
-        // Define the items that will appear in the combo box
-        string[] items = { "Apple", "Banana", "Cherry" };
+// Define the items that will appear in the combo box
+string[] items = { "Apple", "Banana", "Cherry" };
 
-        // Insert the combo box form field at the current cursor position.
-        // The first item ("Apple") will be selected by default (index 0).
-        builder.InsertComboBox("FruitCombo", items, 0);
+// Insert the combo box form field at the current cursor position
+// Parameters: field name, array of items, index of the initially selected item
+builder.InsertComboBox("FruitComboBox", items, 0);
 
-        // Save the document as a Word template (.dot)
-        doc.Save("ComboBoxTemplate.dot");
-    }
-}
+// Save the document as a DOT (Word template) file
+doc.Save("ComboBoxTemplate.dot", Aspose.Words.SaveFormat.Dot);

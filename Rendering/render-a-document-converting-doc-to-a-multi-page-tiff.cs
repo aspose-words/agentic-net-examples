@@ -6,26 +6,20 @@ class DocToMultiPageTiff
 {
     static void Main()
     {
-        // Path to the source DOC file.
-        string inputPath = "input.doc";
+        // Load the source DOC document.
+        Document doc = new Document("input.doc");
 
-        // Path where the multi‑page TIFF will be saved.
-        string outputPath = "output.tiff";
-
-        // Load the DOC document.
-        Document doc = new Document(inputPath);
-
-        // Configure image save options for TIFF output.
+        // Create ImageSaveOptions for TIFF format.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
 
-        // Render each page as a separate frame in a multi‑frame TIFF.
+        // Use the TiffFrames layout to render each page as a separate frame
+        // in a single multi‑page TIFF file.
         saveOptions.PageLayout = MultiPageLayout.TiffFrames();
 
-        // Optional: set resolution (dpi) and compression.
-        saveOptions.Resolution = 300;                     // 300 DPI
-        saveOptions.TiffCompression = TiffCompression.Lzw; // LZW compression
+        // Optional: set compression (default is Lzw).
+        // saveOptions.TiffCompression = TiffCompression.Lzw;
 
         // Save the document as a multi‑page TIFF.
-        doc.Save(outputPath, saveOptions);
+        doc.Save("output.tiff", saveOptions);
     }
 }

@@ -1,40 +1,47 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Math;
+using Aspose.Words.Loading;
 
-class Program
+class OfficeMathInlineChecker
 {
-    static void Main()
+    // Checks whether all top‑level OfficeMath objects in a DOT document are displayed inline.
+    // Returns true if every OfficeMath node has DisplayType == Inline; otherwise false.
+    public static bool AreAllOfficeMathInline(string dotFilePath)
     {
-        // Path to the DOT (Word template) file.
-        // Replace {InputFilePath} with the actual file location.
-        string inputPath = "{InputFilePath}";
+        // Load the DOT (Word template) document.
+        // No special LoadOptions are required for this check.
+        Document doc = new Document(dotFilePath);
 
-        // Load the template document.
-        Document doc = new Document(inputPath);
-
-        // Retrieve all OfficeMath nodes in the document.
+        // Retrieve all OfficeMath nodes in the document (including nested ones).
         NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
 
-        // Assume all equations are inline until proven otherwise.
-        bool allInline = true;
+        // If there are no OfficeMath nodes, we consider the document as having no equations to verify.
+        if (mathNodes.Count == 0)
+            return true;
 
-        foreach (OfficeMath math in mathNodes)
+        // Iterate through each OfficeMath node and verify its DisplayType.
+        foreach (OfficeMath officeMath in mathNodes)
         {
-            // For top‑level OfficeMath objects the DisplayType reflects the layout.
-            // Nested OfficeMath objects are always inline, but we still check the property.
-            if (math.DisplayType != OfficeMathDisplayType.Inline)
-            {
-                allInline = false;
-                // Output details of the first non‑inline equation found.
-                Console.WriteLine($"OfficeMath at index {math.IndexOf(math)} is not inline. DisplayType = {math.DisplayType}");
-                break;
-            }
+            // For nested OfficeMath objects the DisplayType is always Inline by definition,
+            // but we still check the property for completeness.
+            if (officeMath.DisplayType != OfficeMathDisplayType.Inline)
+                return false; // Found a non‑inline equation.
         }
 
-        // Report the overall result.
+        // All equations are inline.
+        return true;
+    }
+
+    // Example usage.
+    static void Main()
+    {
+        string dotPath = @"C:\Docs\Template.dot"; // Path to the DOT file.
+
+        bool allInline = AreAllOfficeMathInline(dotPath);
+
         Console.WriteLine(allInline
             ? "All OfficeMath equations are inline."
-            : "Some OfficeMath equations are not inline.");
+            : "There are OfficeMath equations that are not inline.");
     }
 }

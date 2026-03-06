@@ -10,45 +10,29 @@ class InsertGroupShapeExample
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the first shape (a rectangle) as a floating shape.
-        Shape shape1 = builder.InsertShape(
-            ShapeType.Rectangle,          // Shape type.
-            RelativeHorizontalPosition.Page, // Horizontal reference.
-            50,                           // Left position (points).
-            RelativeVerticalPosition.Page,   // Vertical reference.
-            50,                           // Top position (points).
-            200,                          // Width (points).
-            150,                          // Height (points).
-            WrapType.None);               // No text wrapping.
-
-        // Set a red stroke for the rectangle.
+        // Insert the first shape (a rectangle) and set its position and stroke color.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        shape1.Left = 20;
+        shape1.Top = 20;
         shape1.Stroke.Color = Color.Red;
 
-        // Insert the second shape (an ellipse) as a floating shape.
-        Shape shape2 = builder.InsertShape(
-            ShapeType.Ellipse,
-            RelativeHorizontalPosition.Page,
-            300,
-            RelativeVerticalPosition.Page,
-            100,
-            150,
-            150,
-            WrapType.None);
-
-        // Set a green stroke for the ellipse.
+        // Insert the second shape (an ellipse) and set its position and stroke color.
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        shape2.Left = 40;
+        shape2.Top = 50;
         shape2.Stroke.Color = Color.Green;
 
-        // Group the two shapes. The InsertGroupShape method automatically calculates
-        // the position and size of the new GroupShape node.
+        // Group the two shapes into a new GroupShape node at the current cursor position.
         GroupShape group = builder.InsertGroupShape(shape1, shape2);
 
-        // Optional: modify the group shape (e.g., set a title).
-        group.Title = "My Group Shape";
+        // Optionally, you can add more shapes to the group after it has been created.
+        // Shape shape3 = (Shape)shape1.Clone(true);
+        // group = builder.InsertGroupShape(group, shape3);
 
-        // Save the document in DOCX format.
-        doc.Save("GroupShapeExample.docx");
+        // Save the document as a DOCX file.
+        doc.Save("GroupShape.docx");
     }
 }

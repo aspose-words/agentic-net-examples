@@ -2,38 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class FormFieldExample
 {
     static void Main()
     {
-        // Load an existing DOCX document.
+        // Load an existing DOCX document from the file system.
         Document doc = new Document("Input.docx");
+
+        // Retrieve the collection that contains all form fields in the document.
+        FormFieldCollection formFields = doc.Range.FormFields;
 
         // ----- Access a form field by index -----
         // The indexer is zero‑based; negative values count from the end.
-        FormField fieldByIndex = doc.Range.FormFields[0]; // first field
-        if (fieldByIndex != null)
+        FormField firstField = formFields[0];
+        if (firstField != null)
         {
-            Console.WriteLine($"Field at index 0: Name = \"{fieldByIndex.Name}\", Type = {fieldByIndex.Type}");
+            Console.WriteLine($"Field at index 0: Name = {firstField.Name}, Type = {firstField.Type}");
         }
 
-        // Example of using a negative index to get the last field.
-        FormField lastField = doc.Range.FormFields[-1];
-        if (lastField != null)
+        // ----- Access a form field by name (bookmark) -----
+        // The name lookup is case‑insensitive. Replace "MyCheckBox" with an actual field name.
+        FormField namedField = formFields["MyCheckBox"];
+        if (namedField != null)
         {
-            Console.WriteLine($"Last field (index -1): Name = \"{lastField.Name}\", Type = {lastField.Type}");
-        }
-
-        // ----- Access a form field by name -----
-        // The name lookup is case‑insensitive.
-        FormField fieldByName = doc.Range.FormFields["MyCheckBox"];
-        if (fieldByName != null)
-        {
-            Console.WriteLine($"Field named \"MyCheckBox\": Index = (unknown), Type = {fieldByName.Type}");
-        }
-        else
-        {
-            Console.WriteLine("Form field \"MyCheckBox\" not found.");
+            Console.WriteLine($"Field named 'MyCheckBox': Name = {namedField.Name}, Type = {namedField.Type}");
         }
 
         // Save the document if any changes were made (optional).

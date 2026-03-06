@@ -1,31 +1,30 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class Program
+class InsertHorizontalRuleExample
 {
     static void Main()
     {
-        // Create a new document (or load an existing DOCM file)
-        Document doc = new Document(); // new empty document
-        // Document doc = new Document("input.docm"); // uncomment to load an existing file
+        // Create a new blank DOCM document.
+        Document doc = new Document();
 
-        // Initialize a DocumentBuilder to work with the document
+        // Initialize DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a horizontal rule shape at the current cursor position
-        Shape horizontalRule = builder.InsertHorizontalRule();
+        // Insert a horizontal rule shape at the current cursor position.
+        Shape hrShape = builder.InsertHorizontalRule();
 
-        // Optional: customize the appearance of the horizontal rule
-        HorizontalRuleFormat format = horizontalRule.HorizontalRuleFormat;
-        format.Alignment = HorizontalRuleAlignment.Center; // center the rule
-        format.WidthPercent = 70;                         // 70% of the page width
-        format.Height = 3;                                // height in points
-        format.Color = Color.Blue;                        // rule color
-        format.NoShade = true;                            // solid color, no 3‑D shading
+        // Optional: customize the appearance of the horizontal rule.
+        HorizontalRuleFormat hrFormat = hrShape.HorizontalRuleFormat;
+        hrFormat.Alignment = HorizontalRuleAlignment.Center; // Centered on the page.
+        hrFormat.WidthPercent = 70;                         // 70% of the page width.
+        hrFormat.Height = 3;                                // Height in points.
+        hrFormat.Color = Color.Blue;                        // Blue color.
+        hrFormat.NoShade = true;                            // Solid color, no 3D shading.
 
-        // Save the document as a DOCM file
-        doc.Save("output.docm", SaveFormat.Docm);
+        // Save the document as a DOCM file.
+        doc.Save("HorizontalRuleExample.docm");
     }
 }

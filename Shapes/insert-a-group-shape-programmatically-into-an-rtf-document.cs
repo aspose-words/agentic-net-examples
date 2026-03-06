@@ -2,36 +2,36 @@ using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class Program
+class InsertGroupShapeIntoRtf
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert two floating shapes that will be grouped.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 150);
-        rectangle.Left = 50;               // Position from the left edge of the page.
-        rectangle.Top = 50;                // Position from the top edge of the page.
-        rectangle.Stroke.Color = Color.Blue;
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        rect.Left = 50;   // Position from the left edge of the page.
+        rect.Top = 50;    // Position from the top edge of the page.
+        rect.Stroke.Color = Color.Blue;
 
         Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
-        ellipse.Left = 120;
-        ellipse.Top = 80;
+        ellipse.Left = 300;
+        ellipse.Top = 100;
         ellipse.Stroke.Color = Color.Green;
 
-        // Group the shapes. The InsertGroupShape method automatically calculates the
-        // position and size of the new GroupShape and inserts it at the current cursor location.
-        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
+        // Group the two shapes. The group shape is inserted at the current cursor position.
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Example of setting additional properties on the group shape.
-        group.WrapType = WrapType.None;    // Make the group floating.
-        group.BehindText = true;           // Place it behind the document text.
+        // Optional: adjust group properties (e.g., set a name or wrap type).
+        group.Name = "MyGroupShape";
+        group.WrapType = WrapType.None;
 
         // Save the document as an RTF file.
-        doc.Save("GroupShape.rtf", SaveFormat.Rtf);
+        doc.Save("GroupShapeDocument.rtf", SaveFormat.Rtf);
     }
 }

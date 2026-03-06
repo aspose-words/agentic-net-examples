@@ -1,5 +1,5 @@
 using System;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
@@ -7,35 +7,39 @@ class ExtractBetweenNodes
 {
     static void Main()
     {
-        // Load the RTF document using RtfLoadOptions.
-        string rtfPath = "input.rtf";
+        // Path to the source RTF file.
+        const string inputPath = @"C:\Docs\source.rtf";
+
+        // Load the RTF document with default load options.
         RtfLoadOptions loadOptions = new RtfLoadOptions();
-        Document doc = new Document(rtfPath, loadOptions);
+        Document doc = new Document(inputPath, loadOptions);
 
-        // The document is expected to contain two bookmarks named "Start" and "End".
-        // These bookmarks define the region whose content we want to extract.
-        Bookmark startBookmark = doc.Range.Bookmarks["Start"];
-        Bookmark endBookmark = doc.Range.Bookmarks["End"];
+        // Retrieve the full text of the document (includes control characters).
+        string rawText = doc.GetText();
 
-        // Retrieve the underlying nodes for the bookmark start and end.
-        Node startNode = startBookmark.BookmarkStart;
-        Node endNode = endBookmark.BookmarkEnd;
+        // Normalize line breaks for easier processing.
+        string normalizedText = rawText.Replace(ControlChar.Cr.ToString(), "\n")
+                                      .Replace(ControlChar.Lf.ToString(), "\n");
 
-        // Collect the text that lies between the two bookmark nodes.
-        StringBuilder extracted = new StringBuilder();
+        // Define the markers that bound the desired content.
+        const string startMarker = "[START]";
+        const string endMarker   = "[END]";
 
-        // Walk the document in pre‑order traversal, beginning after the start node,
-        // and stop when the end node is reached.
-        Node current = startNode;
-        while ((current = current.NextPreOrder(doc)) != null && current != endNode)
+        // Locate the markers.
+        int startIndex = normalizedText.IndexOf(startMarker, StringComparison.Ordinal);
+        int endIndex   = normalizedText.IndexOf(endMarker,   StringComparison.Ordinal);
+
+        // Extract the text between the markers, if both are found.
+        string extracted = string.Empty;
+        if (startIndex != -1 && endIndex != -1 && endIndex > startIndex)
         {
-            // Append the textual representation of each node.
-            extracted.Append(current.GetText());
+            int contentStart = startIndex + startMarker.Length;
+            extracted = normalizedText.Substring(contentStart,
+                                                endIndex - contentStart).Trim();
         }
 
-        string result = extracted.ToString().Trim();
-
-        Console.WriteLine("Extracted text between bookmarks:");
-        Console.WriteLine(result);
+        // Save the extracted content to a plain‑text file.
+        const string outputPath = @"C:\Docs\extracted.txt";
+        File.WriteAllText(outputPath, extracted);
     }
 }

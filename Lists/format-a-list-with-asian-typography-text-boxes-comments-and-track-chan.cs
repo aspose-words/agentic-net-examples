@@ -6,49 +6,55 @@ class Program
 {
     static void Main()
     {
-        // Paths to the source and destination documents.
-        string inputPath = "input.docx";
-        string outputPath = "output.docx";
-
         // Load the existing DOCX document.
-        Document doc = new Document(inputPath);
+        Document doc = new Document("input.docx");
 
         // Enable tracking of revisions (track changes).
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        doc.StartTrackRevisions("Reviewer");
 
-        // Create a DocumentBuilder for editing the document.
+        // Create a DocumentBuilder to edit the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // -------------------------------------------------
-        // 1. Insert a list using an Asian font (e.g., MS Mincho).
+        // Format a list using Asian typography (e.g., Japanese font).
         // -------------------------------------------------
-        builder.Font.Name = "MS Mincho";               // Asian typography.
-        builder.ListFormat.ApplyNumberDefault();       // Start a numbered list.
-        builder.Writeln("項目一");                     // List item 1.
-        builder.Writeln("項目二");                     // List item 2.
-        builder.ListFormat.RemoveNumbers();            // End the list.
+        builder.Font.Name = "MS Mincho";   // Asian font.
+        builder.Font.Size = 12;
+
+        // Apply a default numbered list style.
+        builder.ListFormat.ApplyNumberDefault();
+
+        // Add list items.
+        builder.Writeln("項目一");
+        builder.Writeln("項目二");
+        builder.Writeln("項目三");
+
+        // Remove list formatting after the list is done.
+        builder.ListFormat.RemoveNumbers();
 
         // -------------------------------------------------
-        // 2. Insert a text box shape and add Asian text inside it.
+        // Insert a text box and write Asian text inside it.
         // -------------------------------------------------
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        // Move the cursor into the text box's first paragraph.
         builder.MoveTo(textBox.FirstParagraph);
         builder.Font.Name = "MS Mincho";
         builder.Write("テキストボックスの内容");
 
         // -------------------------------------------------
-        // 3. Add a comment to the current paragraph.
+        // Add a comment to the paragraph following the text box.
         // -------------------------------------------------
-        Comment comment = new Comment(doc, "John Doe", "JD", DateTime.Now);
+        Paragraph para = builder.CurrentParagraph;
+        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
         comment.SetText("これはコメントです。");
-        builder.CurrentParagraph.AppendChild(comment);
+        para.AppendChild(comment);
 
         // -------------------------------------------------
-        // 4. Stop tracking revisions.
+        // Stop tracking revisions.
         // -------------------------------------------------
         doc.StopTrackRevisions();
 
         // Save the modified document.
-        doc.Save(outputPath);
+        doc.Save("output.docx");
     }
 }

@@ -1,37 +1,58 @@
 using System;
-using System.Data;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class Program
+namespace AsposeWordsLinqReporting
 {
-    static void Main()
+    // Simple data container that will be used as a data source for the reporting engine.
+    public class DocumentDataSource
     {
-        // Load the DOTM template that contains reporting tags.
-        Document template = new Document("Template.dotm");
+        // The property name must match the name used in the template (e.g. <<doc [src.Document]>>).
+        public Document Document { get; set; }
 
-        // Create a simple data source (DataTable) for the report.
-        DataTable data = new DataTable("Employees");
-        data.Columns.Add("Name");
-        data.Columns.Add("Position");
-        data.Rows.Add("John Doe", "Manager");
-        data.Rows.Add("Jane Smith", "Developer");
+        public DocumentDataSource(Document doc)
+        {
+            Document = doc;
+        }
+    }
 
-        // Populate the template with data using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, data, "ds");
+    class Program
+    {
+        static void Main()
+        {
+            // Path to the DOTM template that contains a reporting tag like <<doc [src.Document]>>.
+            string templatePath = @"C:\Templates\ReportTemplate.dotm";
 
-        // Load an additional document that we want to insert into the report.
-        Document appendix = new Document("Appendix.docx");
+            // Load the DOTM template.
+            Document template = new Document(templatePath);
 
-        // Move the cursor to the end of the populated report.
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.MoveToDocumentEnd();
+            // Assume we have a folder with several source documents (DOCX) that we want to insert.
+            string sourceDocsFolder = @"C:\SourceDocs";
 
-        // Insert the appendix document, preserving its original formatting.
-        builder.InsertDocument(appendix, Aspose.Words.ImportFormatMode.KeepSourceFormatting);
+            // Use LINQ to pick the first three .docx files (or any custom logic you need).
+            List<Document> sourceDocuments = Directory
+                .EnumerateFiles(sourceDocsFolder, "*.docx")
+                .Take(3) // example: take first three files
+                .Select(file => new Document(file)) // load each file into a Document object
+                .ToList();
 
-        // Save the final merged document.
-        template.Save("Result.docx", SaveFormat.Docx);
+            // For demonstration we will insert the first document from the list.
+            // Wrap it in the data source class expected by the reporting engine.
+            DocumentDataSource dataSource = new DocumentDataSource(sourceDocuments.First());
+
+            // Create the reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+
+            // Build the report. The second parameter is the data source object,
+            // the third parameter is the name used in the template to reference the source.
+            engine.BuildReport(template, dataSource, "src");
+
+            // Save the populated report to a new file.
+            string outputPath = @"C:\Output\GeneratedReport.docx";
+            template.Save(outputPath, SaveFormat.Docx);
+        }
     }
 }

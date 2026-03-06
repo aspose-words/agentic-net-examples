@@ -1,5 +1,5 @@
 using Aspose.Words;
-using System;
+using Aspose.Words.Saving;
 
 class Program
 {
@@ -9,26 +9,26 @@ class Program
         Document doc = new Document("Input.docm");
 
         // Index of the section whose footer should be removed (0‑based).
-        int sectionIndex = 1; // change as needed
+        int targetSectionIndex = 1; // change as required
 
-        if (sectionIndex >= 0 && sectionIndex < doc.Sections.Count)
+        if (targetSectionIndex >= 0 && targetSectionIndex < doc.Sections.Count)
         {
-            Section targetSection = doc.Sections[sectionIndex];
+            Section section = doc.Sections[targetSectionIndex];
 
-            // Remove the primary footer if present.
-            HeaderFooter footer = targetSection.HeadersFooters[HeaderFooterType.FooterPrimary];
+            // Remove the primary footer, if it exists.
+            HeaderFooter footer = section.HeadersFooters[HeaderFooterType.FooterPrimary];
             footer?.Remove();
 
-            // Remove the first‑page footer if present.
-            footer = targetSection.HeadersFooters[HeaderFooterType.FooterFirst];
+            // Remove the first‑page footer, if it exists.
+            footer = section.HeadersFooters[HeaderFooterType.FooterFirst];
             footer?.Remove();
 
-            // Remove the even‑page footer if present.
-            footer = targetSection.HeadersFooters[HeaderFooterType.FooterEven];
+            // Remove the even‑page footer, if it exists.
+            footer = section.HeadersFooters[HeaderFooterType.FooterEven];
             footer?.Remove();
         }
 
         // Save the modified document as a DOTM (macro‑enabled template).
-        doc.Save("Output.dotm");
+        doc.Save("Output.dotm", SaveFormat.Dotm);
     }
 }

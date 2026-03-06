@@ -1,58 +1,64 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Fonts;
+using Aspose.Words.Themes;
+using System.Drawing;
 
 class FontDemo
 {
     static void Main()
     {
-        // ---------- Create a new blank document ----------
-        Document doc = new Document();                     // create
+        // Define a folder where the resulting document will be saved.
+        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a new empty document.
+        Document doc = new Document();
+
+        // DocumentBuilder provides a convenient way to add content and set formatting.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // ---------- Set font properties for the first line ----------
-        builder.Font.Name = "Courier New";
-        builder.Font.Size = 24;                           // points
-        builder.Font.Color = Color.Blue;
-        builder.Font.Bold = true;
-        builder.Font.Italic = true;
-        builder.Font.Underline = Underline.Double;
-        builder.Font.HighlightColor = Color.Yellow;
+        // -----------------------------------------------------------------
+        // Example 1: Basic font properties using DocumentBuilder.Font.
+        // -----------------------------------------------------------------
+        builder.Font.Name = "Courier New";          // Font family.
+        builder.Font.Size = 24;                     // Font size in points.
+        builder.Font.Bold = true;                   // Bold style.
+        builder.Font.Color = Color.Blue;            // Font color.
+        builder.Font.Underline = Underline.Dash;    // Dash underline.
+        builder.Writeln("This line uses Courier New, 24pt, bold, blue, dash underline.");
 
-        builder.Writeln("Formatted text using Font properties.");
+        // -----------------------------------------------------------------
+        // Example 2: Using theme font and theme color.
+        // -----------------------------------------------------------------
+        builder.Font.ThemeFont = ThemeFont.Major;   // Use the document's major theme font.
+        builder.Font.ThemeColor = ThemeColor.Accent5; // Use an accent color from the theme.
+        builder.Font.TintAndShade = 0.3;            // Lighten the theme color.
+        builder.Writeln("This line uses a major theme font and accent5 color with tint.");
 
-        // ---------- Change font properties for the second line ----------
-        builder.Font.Name = "Arial";
-        builder.Font.Size = 18;
-        builder.Font.Color = Color.DarkGreen;
-        builder.Font.Bold = false;
-        builder.Font.Italic = false;
-        builder.Font.Underline = Underline.None;
-        builder.Font.HighlightColor = Color.Transparent;
+        // -----------------------------------------------------------------
+        // Example 3: Change the document's theme fonts globally.
+        // -----------------------------------------------------------------
+        // These settings affect any style that references the theme fonts.
+        doc.Theme.MajorFonts.Latin = "Arial";
+        doc.Theme.MinorFonts.Latin = "Times New Roman";
 
-        builder.Writeln("Another line with different font settings.");
+        // -----------------------------------------------------------------
+        // Example 4: Directly modify a Run's Font properties.
+        // -----------------------------------------------------------------
+        Run run = new Run(doc, "Run with custom font: Verdana, 18pt, italic.");
+        run.Font.Name = "Verdana";
+        run.Font.Size = 18;
+        run.Font.Italic = true;
 
-        // ---------- Save the document ----------
-        string outPath = Path.Combine(Environment.CurrentDirectory, "FontDemo.docx");
-        doc.Save(outPath);                                 // save
+        // Insert a new paragraph and add the run to it.
+        builder.InsertParagraph();
+        builder.CurrentParagraph.AppendChild(run);
 
-        // ---------- Load the saved document ----------
-        Document loadedDoc = new Document(outPath);        // load
-
-        // ---------- Modify the font of the first run ----------
-        Paragraph firstPara = loadedDoc.FirstSection.Body.FirstParagraph;
-        if (firstPara.Runs.Count > 0)
-        {
-            Font runFont = firstPara.Runs[0].Font;
-            runFont.Name = "Times New Roman";
-            runFont.Size = 28;
-            runFont.Color = Color.Red;
-        }
-
-        // ---------- Save the modified document ----------
-        string modifiedPath = Path.Combine(Environment.CurrentDirectory, "FontDemo_Modified.docx");
-        loadedDoc.Save(modifiedPath);                     // save
+        // -----------------------------------------------------------------
+        // Save the document to the output folder.
+        // -----------------------------------------------------------------
+        string outputPath = Path.Combine(artifactsDir, "FontDemo.docx");
+        doc.Save(outputPath);
     }
 }

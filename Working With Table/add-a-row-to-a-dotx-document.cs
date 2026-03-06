@@ -2,33 +2,43 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class AddRowToDotx
+class Program
 {
     static void Main()
     {
-        // Load the existing DOTX template.
+        // Load the DOTX template.
         Document doc = new Document("Template.dotx");
 
-        // Find the first table in the document (adjust as needed for your scenario).
+        // Assume the document contains at least one table.
         Table table = doc.FirstSection.Body.Tables[0];
 
-        // Create a new row that belongs to the same document.
+        // Create a new row belonging to the same document.
         Row newRow = new Row(doc);
 
-        // Ensure the row has at least one cell.
+        // Ensure the row has at least one cell (required before adding content).
         newRow.EnsureMinimum();
 
-        // Add content to the first cell of the new row.
-        Cell firstCell = newRow.FirstCell;
-        Paragraph para = new Paragraph(doc);
-        firstCell.AppendChild(para);
-        Run run = new Run(doc, "New row added programmatically.");
-        para.AppendChild(run);
+        // Determine how many cells the existing rows have.
+        int columnCount = table.FirstRow.Cells.Count;
+
+        // Remove the automatically created cell so we can add the correct number of cells.
+        newRow.RemoveAllChildren();
+
+        // Add cells to the new row.
+        for (int i = 0; i < columnCount; i++)
+        {
+            Cell cell = new Cell(doc);
+            // Each cell must contain at least one paragraph.
+            cell.AppendChild(new Paragraph(doc));
+            // Add some sample text to the cell.
+            cell.FirstParagraph.AppendChild(new Run(doc, $"New cell {i + 1}"));
+            newRow.AppendChild(cell);
+        }
 
         // Append the new row to the end of the table.
-        table.AppendChild(newRow);
+        table.Rows.Add(newRow);
 
-        // Save the modified document back as a DOTX (or any other format you need).
-        doc.Save("ModifiedTemplate.dotx");
+        // Save the modified document.
+        doc.Save("Result.docx");
     }
 }

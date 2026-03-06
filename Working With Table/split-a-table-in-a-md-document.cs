@@ -1,69 +1,58 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
+using Aspose.Words.Saving;
 using Aspose.Words.Tables;
 
 class SplitTableInMarkdown
 {
     static void Main()
     {
-        // Path to the source Markdown document that contains a table.
-        const string inputPath = @"C:\Docs\Input.md";
+        // Load the Markdown document.
+        Document doc = new Document("input.md");
 
-        // Path where the resulting Markdown document will be saved.
-        const string outputPath = @"C:\Docs\Output.md";
-
-        // Load the Markdown document. Aspose.Words can directly load .md files.
-        Document doc = new Document(inputPath);
-
-        // Ensure the document contains at least one table.
-        if (doc.FirstSection?.Body?.Tables?.Count == 0)
-        {
-            Console.WriteLine("No tables found in the document.");
-            return;
-        }
-
-        // Get the first table to split. Adjust the index if you need a different table.
+        // Assume the document contains at least one table.
         Table originalTable = doc.FirstSection.Body.Tables[0];
 
-        // Define after which row the table should be split.
-        // For example, split after the second row (zero‑based index = 1).
-        int splitAfterRowIndex = 1;
-
-        // Validate the split index.
-        if (splitAfterRowIndex < 0 || splitAfterRowIndex >= originalTable.Rows.Count - 1)
-        {
-            Console.WriteLine("Invalid split index. The table must have at least two rows after the split point.");
-            return;
-        }
+        // Define the row index at which to split the table.
+        // Rows before this index stay in the original table,
+        // rows from this index onward move to a new table.
+        int splitRowIndex = 2; // Example: split after the first two rows.
 
         // Create a new table that will hold the rows after the split point.
         Table newTable = new Table(doc);
 
-        // Copy the formatting of the original table to the new one (optional).
-        newTable.Style = originalTable.Style;
-        newTable.Alignment = originalTable.Alignment;
-        newTable.PreferredWidth = originalTable.PreferredWidth;
-        newTable.AllowAutoFit = originalTable.AllowAutoFit;
-
-        // Move rows from the original table to the new table.
-        // Rows are moved starting from splitAfterRowIndex + 1 because the row at splitAfterRowIndex
-        // stays in the original table.
-        while (originalTable.Rows.Count > splitAfterRowIndex + 1)
+        // Collect rows to move to the new table.
+        List<Row> rowsToMove = new List<Row>();
+        for (int i = splitRowIndex; i < originalTable.Rows.Count; i++)
         {
-            // The row to move is always at position splitAfterRowIndex + 1 after each removal.
-            Row rowToMove = originalTable.Rows[splitAfterRowIndex + 1];
-
-            // Detach the row from the original table.
-            rowToMove.Remove();
-
-            // Append the detached row to the new table.
-            newTable.AppendChild(rowToMove);
+            rowsToMove.Add(originalTable.Rows[i]);
         }
 
-        // Insert the new table immediately after the original table in the document tree.
-        originalTable.ParentNode.InsertAfter(newTable, originalTable);
+        // Move each collected row from the original table to the new table.
+        foreach (Row row in rowsToMove)
+        {
+            // Remove the row from the original table.
+            originalTable.RemoveChild(row);
+            // Append the row to the new table.
+            newTable.AppendChild(row);
+        }
+
+        // Insert the new table immediately after the original table in the document.
+        // The InsertAfter method belongs to CompositeNode, so cast the parent accordingly.
+        CompositeNode parent = originalTable.ParentNode as CompositeNode;
+        if (parent != null)
+        {
+            parent.InsertAfter(newTable, originalTable);
+        }
+        else
+        {
+            // Fallback: add the new table to the document body if casting fails.
+            doc.FirstSection.Body.AppendChild(newTable);
+        }
 
         // Save the modified document back to Markdown format.
-        doc.Save(outputPath);
+        MarkdownSaveOptions saveOptions = new MarkdownSaveOptions();
+        doc.Save("output.md", saveOptions);
     }
 }

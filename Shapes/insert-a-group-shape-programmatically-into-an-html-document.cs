@@ -1,43 +1,57 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class Program
+class InsertGroupShapeIntoHtml
 {
     static void Main()
     {
-        // Create a new empty document.
-        Document doc = new Document();
+        // Load an existing HTML document.
+        Document doc = new Document("input.html");
+
+        // Create a DocumentBuilder to modify the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert initial HTML content.
-        string htmlBefore = "<p>This is an HTML paragraph before the group shape.</p>";
-        builder.InsertHtml(htmlBefore);
+        // Insert two floating shapes that will later be grouped.
+        // Shape 1: Rectangle
+        Shape rect = builder.InsertShape(
+            ShapeType.Rectangle,               // shape type
+            RelativeHorizontalPosition.Page,   // horizontal reference
+            100,                               // left position (points)
+            RelativeVerticalPosition.Page,     // vertical reference
+            100,                               // top position (points)
+            150,                               // width (points)
+            100,                               // height (points)
+            WrapType.None);                    // no text wrapping
 
-        // Insert two individual shapes that will be grouped.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 150);
-        rectangle.Left = 20;
-        rectangle.Top = 20;
-        rectangle.Stroke.Color = Color.Blue;
+        // Optional formatting.
+        rect.Stroke.Color = Color.Blue;
+        rect.Fill.Color = Color.LightBlue;
 
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
-        ellipse.Left = 250;
-        ellipse.Top = 30;
+        // Shape 2: Ellipse
+        Shape ellipse = builder.InsertShape(
+            ShapeType.Ellipse,
+            RelativeHorizontalPosition.Page,
+            300,
+            RelativeVerticalPosition.Page,
+            150,
+            120,
+            80,
+            WrapType.None);
+
         ellipse.Stroke.Color = Color.Green;
+        ellipse.Fill.Color = Color.LightGreen;
 
-        // Group the shapes. Position and size are calculated automatically.
-        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
+        // Group the two shapes. The group will be inserted at the current cursor position.
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Optional: adjust group properties.
-        group.WrapType = WrapType.None;
-        group.BehindText = true;
+        // Optionally adjust the group's position or size.
+        // For example, move the group 50 points to the right and 30 points down.
+        group.Left += 50;
+        group.Top += 30;
 
-        // Insert additional HTML after the group shape.
-        string htmlAfter = "<p>HTML after the group shape.</p>";
-        builder.InsertHtml(htmlAfter);
-
-        // Save the document as an HTML file.
-        doc.Save("GroupShape.html", SaveFormat.Html);
+        // Save the modified document back to HTML.
+        doc.Save("output.html");
     }
 }

@@ -1,42 +1,40 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing; // Added for Shape class
 
-class Program
+class PdfStandardSelector
 {
     static void Main()
     {
-        // Load the source document.
-        // Replace with the actual path to your DOCX file.
-        string inputPath = @"C:\Docs\SourceDocument.docx";
-        Document doc = new Document(inputPath);
+        // Path to the source Word document.
+        string inputPath = "input.docx";
 
-        // Decide which PDF compliance level to use.
-        // Example logic: if the document contains any images, use PDF/A-1b for archival purposes;
-        // otherwise, use the default PDF 1.7 compliance.
-        bool containsImages = false;
-        foreach (Node node in doc.GetChildNodes(NodeType.Shape, true))
-        {
-            Shape shape = (Shape)node;
-            if (shape.HasImage)
-            {
-                containsImages = true;
-                break;
-            }
-        }
+        // Path where the resulting PDF will be saved.
+        string outputPath = "output.pdf";
+
+        // Load the Word document.
+        Document doc = new Document(inputPath);
 
         // Create PDF save options.
         PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
-        // Set the compliance level based on the decision.
-        pdfOptions.Compliance = containsImages
-            ? PdfCompliance.PdfA1b   // Preserve visual appearance for documents with images.
-            : PdfCompliance.Pdf17;   // Standard PDF 1.7 for other cases.
+        // Decide which PDF compliance level to use.
+        // Example logic: if the document contains any images, use PDF/A-1b for archival purposes;
+        // otherwise, use the default PDF 1.7 compliance.
+        bool containsImages = doc.GetChildNodes(NodeType.Shape, true).Count > 0;
 
-        // Save the document as PDF using the configured options.
-        // Replace with the desired output path.
-        string outputPath = @"C:\Docs\ResultDocument.pdf";
+        if (containsImages)
+        {
+            // Preserve visual appearance for documents with images.
+            pdfOptions.Compliance = PdfCompliance.PdfA1b;
+        }
+        else
+        {
+            // Use the standard PDF 1.7 compliance.
+            pdfOptions.Compliance = PdfCompliance.Pdf17;
+        }
+
+        // Save the document as PDF using the selected compliance level.
         doc.Save(outputPath, pdfOptions);
     }
 }

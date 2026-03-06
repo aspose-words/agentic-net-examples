@@ -2,33 +2,24 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class RenderWithTrueTypeFonts
+class Program
 {
     static void Main()
     {
-        // Path to the source Word document.
-        string inputPath = @"C:\Docs\Input.docx";
+        // Load the source document (replace with your actual file path).
+        Document doc = new Document("Input.docx");
 
-        // Path where the resulting PDF will be saved.
-        string outputPath = @"C:\Docs\Output.pdf";
+        // Create PDF save options.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
 
-        // Load the document from the file system.
-        Document doc = new Document(inputPath);
+        // Ensure that TrueType fonts are not substituted with core PDF Type 1 fonts.
+        // Setting UseCoreFonts to false keeps the original TrueType fonts in the PDF.
+        pdfOptions.UseCoreFonts = false;
 
-        // Configure PDF save options.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            // Do NOT substitute TrueType fonts with core PDF Type 1 fonts.
-            UseCoreFonts = false,
-
-            // Embed all fonts (including TrueType) into the PDF.
-            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll,
-
-            // Embed the full font files (no subsetting) to preserve every glyph.
-            EmbedFullFonts = true
-        };
+        // Embed all fonts (including TrueType) into the PDF to guarantee correct rendering.
+        pdfOptions.FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll;
 
         // Save the document as PDF using the configured options.
-        doc.Save(outputPath, pdfOptions);
+        doc.Save("Output.pdf", pdfOptions);
     }
 }

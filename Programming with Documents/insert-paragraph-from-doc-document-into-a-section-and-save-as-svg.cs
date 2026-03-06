@@ -2,40 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class InsertParagraphAndSaveSvg
+class Program
 {
     static void Main()
     {
-        // Load the source document that contains the paragraph to be inserted.
+        // Load the source DOC document that contains the paragraph to copy.
         Document srcDoc = new Document("Source.docx");
 
-        // Retrieve the first paragraph from the source document.
-        // Adjust the index if you need a different paragraph.
-        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
-
-        // Create a new destination document.
+        // Create a new blank document that will receive the paragraph.
         Document dstDoc = new Document();
 
-        // Use DocumentBuilder to work with the destination document.
-        DocumentBuilder builder = new DocumentBuilder(dstDoc);
+        // Ensure the destination document has at least one section, body, and paragraph.
+        dstDoc.EnsureMinimum();
 
-        // Ensure we are at the end of the first (and only) section.
-        builder.MoveToDocumentEnd();
+        // Retrieve the first non‑empty paragraph from the source document.
+        // (Skip the automatically added empty last paragraph if present.)
+        Paragraph srcParagraph = srcDoc.FirstSection.Body.Paragraphs[0];
 
-        // Import the source paragraph into the destination document.
-        // ImportNode clones the node and resolves any references.
+        // Import the paragraph node into the destination document, preserving its formatting.
         Node importedParagraph = dstDoc.ImportNode(srcParagraph, true);
 
-        // Insert the imported paragraph at the current cursor position.
-        builder.InsertNode(importedParagraph);
-
-        // Configure SVG save options (optional: render text as placed glyphs).
-        SvgSaveOptions svgOptions = new SvgSaveOptions
-        {
-            TextOutputMode = SvgTextOutputMode.UsePlacedGlyphs
-        };
+        // Append the imported paragraph to the body of the first section in the destination document.
+        dstDoc.FirstSection.Body.AppendChild(importedParagraph);
 
         // Save the resulting document as an SVG file.
-        dstDoc.Save("Result.svg", svgOptions);
+        dstDoc.Save("Result.svg", SaveFormat.Svg);
     }
 }

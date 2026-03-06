@@ -1,71 +1,63 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Lists; // Added for ListTemplate
 
 class Program
 {
     static void Main()
     {
-        // List to keep a log of builder operations.
-        List<string> log = new List<string>();
+        // Load an existing DOCX document.
+        Document docOriginal = new Document("Original.docx");
 
-        // 1. Create a new blank document using DocumentBuilder's default constructor.
-        DocumentBuilder builder = new DocumentBuilder();
-        log.Add("Created blank document with DocumentBuilder.");
+        // -----------------------------------------------------------------
+        // Builder Overview: create a bullet list using DocumentBuilder.
+        // -----------------------------------------------------------------
+        DocumentBuilder builder = new DocumentBuilder(docOriginal);
+        // Ensure the document has a list style to use.
+        builder.ListFormat.List = docOriginal.Lists.Add(ListTemplate.BulletDefault);
+        // Add three list items.
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
+        builder.Writeln("Third item");
+        // End the list formatting.
+        builder.ListFormat.RemoveNumbers();
 
-        // 2. Insert a paragraph into the document.
-        builder.Writeln("This is the original document.");
-        log.Add("Inserted paragraph into document.");
+        // -----------------------------------------------------------------
+        // Protect the document with a password (read‑only protection).
+        // -----------------------------------------------------------------
+        docOriginal.Protect(ProtectionType.ReadOnly, "protectPwd");
 
-        // 3. Save the original document to disk.
-        string originalPath = "Original.docx";
-        builder.Document.Save(originalPath);
-        log.Add($"Saved original document to '{originalPath}'.");
+        // Save the protected document (no encryption).
+        docOriginal.Save("Protected.docx");
 
-        // 4. Load the saved document from file.
-        Document originalDoc = new Document(originalPath);
-        log.Add("Loaded original document from file.");
-
-        // 5. Apply read‑only protection with a password.
-        originalDoc.Protect(ProtectionType.ReadOnly, "SecretPwd");
-        log.Add("Applied read‑only protection with password.");
-
-        // 6. Save the protected document with encryption (password on save).
-        string protectedPath = "Protected.docx";
-        OoxmlSaveOptions protectOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+        // -----------------------------------------------------------------
+        // Save the same document with encryption (password protection on save).
+        // -----------------------------------------------------------------
+        OoxmlSaveOptions encryptOptions = new OoxmlSaveOptions(SaveFormat.Docx)
         {
-            Password = "SecretPwd"
+            Password = "encryptPwd"
         };
-        originalDoc.Save(protectedPath, protectOptions);
-        log.Add($"Saved protected (encrypted) document to '{protectedPath}'.");
+        docOriginal.Save("Encrypted.docx", encryptOptions);
 
-        // 7. Create a second document that will be compared against the original.
-        DocumentBuilder builder2 = new DocumentBuilder();
-        builder2.Writeln("This is the edited document with extra line.");
-        builder2.Writeln("Additional content.");
-        string editedPath = "Edited.docx";
-        builder2.Document.Save(editedPath);
-        log.Add($"Created and saved edited document to '{editedPath}'.");
+        // -----------------------------------------------------------------
+        // Prepare a second document to compare with.
+        // Clone the original (before protection) and make a simple edit.
+        // -----------------------------------------------------------------
+        Document docForComparison = (Document)docOriginal.Clone(true);
+        // Remove protection from the clone so we can edit it.
+        docForComparison.Unprotect();
+        // Append a new paragraph.
+        DocumentBuilder editBuilder = new DocumentBuilder(docForComparison);
+        editBuilder.Writeln("Additional paragraph added for comparison.");
 
-        // 8. Load the edited document.
-        Document editedDoc = new Document(editedPath);
-        log.Add("Loaded edited document from file.");
+        // -----------------------------------------------------------------
+        // Compare the original (protected) document with the edited one.
+        // The comparison will add revision marks to the original document.
+        // -----------------------------------------------------------------
+        docOriginal.Compare(docForComparison, "Comparer", DateTime.Now);
 
-        // 9. Compare the original (protected) document with the edited document.
-        // Revisions will be added to the original document.
-        originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
-        log.Add("Compared original document with edited document, revisions added.");
-
-        // 10. Save the comparison result.
-        string compareResultPath = "ComparisonResult.docx";
-        originalDoc.Save(compareResultPath);
-        log.Add($"Saved comparison result to '{compareResultPath}'.");
-
-        // Output the operation log.
-        foreach (string entry in log)
-        {
-            Console.WriteLine(entry);
-        }
+        // Save the document that now contains revision marks.
+        docOriginal.Save("Compared.docx");
     }
 }

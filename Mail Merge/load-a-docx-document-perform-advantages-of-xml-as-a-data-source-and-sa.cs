@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
@@ -8,26 +9,26 @@ class Program
     static void Main()
     {
         // Paths to the input DOCX template, the XML data source and the output XPS file.
-        string docPath = @"C:\Docs\Template.docx";
-        string xmlPath = @"C:\Docs\Data.xml";
-        string outPath = @"C:\Docs\Result.xps";
+        string docsPath = @"C:\Docs\";
+        string templateFile = Path.Combine(docsPath, "Template.docx");
+        string xmlDataFile = Path.Combine(docsPath, "Data.xml");
+        string outputFile = Path.Combine(docsPath, "Result.xps");
 
         // Load the DOCX document.
-        Document doc = new Document(docPath);
+        Document doc = new Document(templateFile);
 
-        // Create an XML data source from the specified file.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
+        // Create an XML data source from the XML file.
+        XmlDataSource xmlSource = new XmlDataSource(xmlDataFile);
 
         // Build the report using the XML data source.
-        // ReportingEngine is an instance class; create an instance before calling BuildReport.
+        // The third argument is the root element name in the XML that contains the data.
         ReportingEngine engine = new ReportingEngine();
-        // The third argument is the name of the root element in the XML that contains the data.
-        engine.BuildReport(doc, dataSource, "root");
+        engine.BuildReport(doc, xmlSource, "root");
 
         // Prepare XPS save options (optional – can be customized here).
-        XpsSaveOptions saveOptions = new XpsSaveOptions();
+        XpsSaveOptions xpsOptions = new XpsSaveOptions();
 
         // Save the populated document as XPS.
-        doc.Save(outPath, saveOptions);
+        doc.Save(outputFile, xpsOptions);
     }
 }

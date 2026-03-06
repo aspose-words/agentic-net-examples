@@ -6,16 +6,16 @@ class Program
 {
     static void Main()
     {
-        // Path to the source DOC file.
-        string sourcePath = @"C:\Docs\Sample.doc";
+        // Input DOC file path
+        string inputFile = @"C:\Docs\Input.doc";
 
-        // Path to the target file (converted to PDF in this example).
-        string targetPath = @"C:\Docs\Sample.pdf";
+        // Output file path – converting to DOCX format
+        string outputFile = @"C:\Docs\Output.docx";
 
-        // Load the existing DOC document. The constructor automatically detects the format.
-        Document doc = new Document(sourcePath);
+        // Load the existing DOC document (format is auto‑detected)
+        Document doc = new Document(inputFile);
 
-        // Save the document in the desired format. Here we convert to PDF.
-        doc.Save(targetPath, SaveFormat.Pdf);
+        // Save the document in the desired format (DOCX in this case)
+        doc.Save(outputFile, SaveFormat.Docx);
     }
 }

@@ -1,28 +1,24 @@
-using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Math;
+using Aspose.Words.Loading;
 
-class Program
+// Paths to the source HTML file and the destination document.
+string htmlPath = "input.html";
+string outputPath = "output.docx";
+
+// Load the HTML document. HtmlLoadOptions can be customized if needed.
+HtmlLoadOptions loadOptions = new HtmlLoadOptions();
+Document doc = new Document(htmlPath, loadOptions);
+
+// Iterate through all OfficeMath objects in the document.
+foreach (OfficeMath officeMath in doc.GetChildNodes(NodeType.OfficeMath, true))
 {
-    static void Main()
-    {
-        // Load the HTML document using HtmlLoadOptions.
-        HtmlLoadOptions loadOptions = new HtmlLoadOptions();
-        Document doc = new Document("Input.html", loadOptions);
+    // OfficeMath must be in Display mode before setting justification.
+    officeMath.DisplayType = OfficeMathDisplayType.Display;
 
-        // Iterate through all OfficeMath nodes in the document.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath officeMath in mathNodes)
-        {
-            // Ensure the equation is displayed on its own line before setting justification.
-            officeMath.DisplayType = OfficeMathDisplayType.Display;
-
-            // Apply the desired justification to the equation.
-            officeMath.Justification = OfficeMathJustification.CenterGroup;
-        }
-
-        // Save the modified document.
-        doc.Save("Output.docx");
-    }
+    // Apply the desired justification (e.g., center the equation group).
+    officeMath.Justification = OfficeMathJustification.CenterGroup;
 }
+
+// Save the modified document.
+doc.Save(outputPath);

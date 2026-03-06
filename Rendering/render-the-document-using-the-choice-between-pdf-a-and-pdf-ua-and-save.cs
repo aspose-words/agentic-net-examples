@@ -4,42 +4,32 @@ using Aspose.Words.Saving;
 
 namespace AsposeWordsPdfComplianceDemo
 {
-    public class PdfRenderer
+    class Program
     {
-        /// <summary>
-        /// Loads a Word document, applies the specified PDF compliance level (PDF/A or PDF/UA),
-        /// and saves the result as a PDF file.
-        /// </summary>
-        /// <param name="inputPath">Full path to the source .docx/.doc file.</param>
-        /// <param name="outputPath">Full path where the resulting PDF will be saved.</param>
-        /// <param name="compliance">Desired PDF compliance level (e.g., PdfCompliance.PdfA1b or PdfCompliance.PdfUa1).</param>
-        public static void RenderToPdf(string inputPath, string outputPath, PdfCompliance compliance)
+        static void Main()
         {
-            // Load the source document.
+            // Path to the source Word document.
+            string inputPath = @"C:\Docs\SourceDocument.docx";
+
+            // Path where the resulting PDF will be saved.
+            string outputPath = @"C:\Docs\ResultDocument.pdf";
+
+            // Choose the desired PDF compliance level.
+            // Options include PDF/A (e.g., PdfA1b, PdfA2u, PdfA4Ua2) or PDF/UA (e.g., PdfUa1, PdfUa2).
+            PdfCompliance compliance = PdfCompliance.PdfA1b; // Change as needed.
+
+            // Load the Word document (creation/loading rule).
             Document doc = new Document(inputPath);
 
-            // Create PDF save options and set the compliance level.
+            // Configure PDF save options (creation rule).
             PdfSaveOptions saveOptions = new PdfSaveOptions
             {
+                // Apply the selected compliance level.
                 Compliance = compliance
             };
 
-            // Save the document as PDF using the configured options.
+            // Save the document as PDF with the specified compliance (saving rule).
             doc.Save(outputPath, saveOptions);
-        }
-
-        // Example usage.
-        public static void Main()
-        {
-            string sourceDoc = @"C:\Docs\SampleDocument.docx";
-            string pdfAOutput = @"C:\Docs\SampleDocument_PdfA1b.pdf";
-            string pdfUaOutput = @"C:\Docs\SampleDocument_PdfUa1.pdf";
-
-            // Render as PDF/A-1b.
-            RenderToPdf(sourceDoc, pdfAOutput, PdfCompliance.PdfA1b);
-
-            // Render as PDF/UA-1.
-            RenderToPdf(sourceDoc, pdfUaOutput, PdfCompliance.PdfUa1);
         }
     }
 }

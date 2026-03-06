@@ -1,34 +1,20 @@
 using System;
 using Aspose.Words;
 
-namespace PdfToDocxConverter
+class PdfToDocxConverter
 {
-    public static class Converter
+    static void Main()
     {
-        /// <summary>
-        /// Converts a PDF file to DOCX format using Aspose.Words.
-        /// </summary>
-        /// <param name="pdfPath">Full path to the source PDF file.</param>
-        /// <param name="docxPath">Full path where the resulting DOCX file will be saved.</param>
-        public static void ConvertPdfToDocx(string pdfPath, string docxPath)
-        {
-            // Load the PDF document. The Document constructor automatically detects the format.
-            Document pdfDocument = new Document(pdfPath);
+        // Path to the source PDF file.
+        string pdfPath = "input.pdf";
 
-            // Save the loaded document as DOCX. The Save method determines the format from the file extension.
-            pdfDocument.Save(docxPath);
-        }
+        // Desired path for the converted DOCX file.
+        string docxPath = "output.docx";
 
-        // Example usage
-        public static void Main()
-        {
-            // Adjust these paths as needed.
-            string sourcePdf = @"C:\Input\sample.pdf";
-            string targetDocx = @"C:\Output\sample.docx";
+        // Load the PDF document. The constructor automatically detects the format.
+        Document pdfDocument = new Document(pdfPath);
 
-            ConvertPdfToDocx(sourcePdf, targetDocx);
-
-            Console.WriteLine("Conversion completed.");
-        }
+        // Save the document as DOCX. The format is inferred from the .docx extension.
+        pdfDocument.Save(docxPath);
     }
 }

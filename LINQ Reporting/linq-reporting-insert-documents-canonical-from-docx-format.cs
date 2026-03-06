@@ -1,46 +1,61 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsReportingExample
+namespace AsposeWordsLinqReporting
 {
-    // Simple data class that holds a Document instance.
-    public class DocumentTestClass
+    // Simple wrapper class used as a data source for the reporting engine.
+    public class DocumentSource
     {
         public Document Document { get; set; }
+
+        public DocumentSource(Document doc)
+        {
+            Document = doc;
+        }
     }
 
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
-            // Load the template that contains the ReportingEngine tag <<doc [src.Document]>>.
-            Document template = new Document("Template.docx");
+            // Path to the template that contains the <<doc [src.Document]>> tag.
+            string templatePath = @"C:\Docs\Template.docx";
 
-            // Load the document that we want to insert into the template.
-            Document source = new Document("Source.docx");
+            // Folder that contains the documents to be inserted.
+            string sourceFolder = @"C:\Docs\Sources";
 
-            // Prepare a collection of data sources using LINQ.
-            // In this example we have only one document, but the same approach works for many.
-            List<DocumentTestClass> dataSources = new List<DocumentTestClass>
+            // Load the template document.
+            Document template = new Document(templatePath);
+
+            // Load all DOCX files from the source folder.
+            List<DocumentSource> sources = new List<DocumentSource>();
+            foreach (string file in Directory.GetFiles(sourceFolder, "*.docx"))
             {
-                new DocumentTestClass { Document = source }
-            };
+                Document srcDoc = new Document(file);
+                sources.Add(new DocumentSource(srcDoc));
+            }
 
-            // Create the reporting engine. Options can be adjusted as needed.
-            ReportingEngine engine = new ReportingEngine
+            // Prepare arrays for the ReportingEngine overload that accepts multiple data sources.
+            object[] dataSources = new object[sources.Count];
+            string[] dataSourceNames = new string[sources.Count];
+
+            for (int i = 0; i < sources.Count; i++)
             {
-                Options = ReportBuildOptions.RemoveEmptyParagraphs
-            };
+                dataSources[i] = sources[i];
+                // The name "src" matches the tag used in the template.
+                dataSourceNames[i] = "src";
+            }
 
-            // Build the report by passing the template, the array of data sources,
-            // and the corresponding names used in the template (here "src").
-            engine.BuildReport(template, dataSources.ToArray(), new[] { "src" });
+            // Build the report – this will replace the <<doc [src.Document]>> tag with each source document.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(template, dataSources, dataSourceNames);
 
-            // Save the populated document.
-            template.Save("Result.docx");
+            // Save the resulting document.
+            string outputPath = @"C:\Docs\Result.docx";
+            template.Save(outputPath);
         }
     }
 }

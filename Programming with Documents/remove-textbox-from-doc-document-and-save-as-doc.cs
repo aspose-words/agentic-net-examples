@@ -6,23 +6,23 @@ class RemoveTextBoxExample
 {
     static void Main()
     {
-        // Load the source document (DOC or DOCX).
-        Document doc = new Document("Input.docx");
+        // Load the existing DOC document.
+        Document doc = new Document("InputDocument.doc");
 
-        // Retrieve all shape nodes (including text boxes) in the document.
+        // Get all shape nodes in the document (including those inside headers/footers).
         NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
 
-        // Iterate backwards so that removal does not affect the loop indexing.
-        for (int i = shapes.Count - 1; i >= 0; i--)
+        // Iterate through the collection and remove any shape that is a TextBox.
+        foreach (Shape shape in shapes)
         {
-            Shape shape = (Shape)shapes[i];
-
-            // Identify text box shapes and remove them.
             if (shape.ShapeType == ShapeType.TextBox)
+            {
+                // Remove the textbox shape from its parent node.
                 shape.Remove();
+            }
         }
 
-        // Save the result as a DOC file.
-        doc.Save("Output.doc");
+        // Save the modified document back to DOC format.
+        doc.Save("OutputDocument.doc");
     }
 }

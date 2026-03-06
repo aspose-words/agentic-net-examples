@@ -1,60 +1,77 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class DocumentComparisonAndFormatListing
+namespace AsposeWordsDemo
 {
-    static void Main()
+    class Program
     {
-        // Paths to the documents to compare.
-        string docPath1 = @"C:\Docs\Original.docx";
-        string docPath2 = @"C:\Docs\Edited.docx";
-
-        // Load the two documents (lifecycle: load).
-        Document originalDoc = new Document(docPath1);
-        Document editedDoc = new Document(docPath2);
-
-        // Compare the documents (produces revisions in the original document).
-        originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
-
-        // Save the comparison result (lifecycle: save).
-        string comparisonResultPath = @"C:\Docs\ComparisonResult.docx";
-        originalDoc.Save(comparisonResultPath, SaveFormat.Docx);
-
-        // --------------------------------------------------------------------
-        // List all load formats supported by Aspose.Words.
-        Console.WriteLine("Supported Load Formats:");
-        foreach (LoadFormat loadFormat in Enum.GetValues(typeof(LoadFormat)))
+        static void Main()
         {
-            // Skip the Unknown value – it represents an unsupported format.
-            if (loadFormat == LoadFormat.Unknown) continue;
+            // Paths to the documents to compare.
+            string originalPath = @"Documents\Original.docx";
+            string editedPath   = @"Documents\Edited.docx";
 
-            // Display the enum name and its integer value.
-            Console.WriteLine($"  {loadFormat} = {(int)loadFormat}");
+            // Load the original and edited documents using the Document(string) constructor.
+            Document originalDoc = new Document(originalPath);
+            Document editedDoc   = new Document(editedPath);
+
+            // Compare the documents. The revisions will be added to the original document.
+            originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
+
+            // Save the comparison result to a new DOCX file.
+            string comparisonResultPath = @"Output\ComparisonResult.docx";
+            originalDoc.Save(comparisonResultPath);
+
+            // -----------------------------------------------------------------
+            // List all load formats supported by Aspose.Words.
+            // -----------------------------------------------------------------
+            Console.WriteLine("Supported Load Formats:");
+            foreach (LoadFormat loadFormat in Enum.GetValues(typeof(LoadFormat)))
+            {
+                // Skip the 'Unknown' and 'Auto' entries for clarity.
+                if (loadFormat == LoadFormat.Unknown || loadFormat == LoadFormat.Auto)
+                    continue;
+
+                Console.WriteLine($"- {loadFormat} ({(int)loadFormat})");
+            }
+
+            // -----------------------------------------------------------------
+            // List all save formats supported by Aspose.Words.
+            // -----------------------------------------------------------------
+            Console.WriteLine("\nSupported Save Formats:");
+            foreach (SaveFormat saveFormat in Enum.GetValues(typeof(SaveFormat)))
+            {
+                // Skip the 'Unknown' entry.
+                if (saveFormat == SaveFormat.Unknown)
+                    continue;
+
+                Console.WriteLine($"- {saveFormat} ({(int)saveFormat})");
+            }
+
+            // -----------------------------------------------------------------
+            // Demonstrate saving the original DOCX document to a few other formats.
+            // -----------------------------------------------------------------
+            string outputDir = @"Output";
+
+            // Ensure the output directory exists.
+            Directory.CreateDirectory(outputDir);
+
+            // Save as PDF.
+            originalDoc.Save(Path.Combine(outputDir, "Original.pdf"), SaveFormat.Pdf);
+
+            // Save as HTML.
+            originalDoc.Save(Path.Combine(outputDir, "Original.html"), SaveFormat.Html);
+
+            // Save as plain text.
+            originalDoc.Save(Path.Combine(outputDir, "Original.txt"), SaveFormat.Text);
+
+            // Save as ODT.
+            originalDoc.Save(Path.Combine(outputDir, "Original.odt"), SaveFormat.Odt);
+
+            Console.WriteLine("\nConversion completed. Check the Output folder for generated files.");
         }
-
-        // List all save formats supported by Aspose.Words.
-        Console.WriteLine("\nSupported Save Formats:");
-        foreach (SaveFormat saveFormat in Enum.GetValues(typeof(SaveFormat)))
-        {
-            // Skip the Unknown value – it represents an invalid format.
-            if (saveFormat == SaveFormat.Unknown) continue;
-
-            // Display the enum name and its integer value.
-            Console.WriteLine($"  {saveFormat} = {(int)saveFormat}");
-        }
-
-        // --------------------------------------------------------------------
-        // Demonstrate detection of a file's format using FileFormatUtil.
-        // This shows how to discover the load format of a DOCX file.
-        FileFormatInfo formatInfo = FileFormatUtil.DetectFileFormat(comparisonResultPath);
-        Console.WriteLine($"\nDetected format of '{Path.GetFileName(comparisonResultPath)}': {formatInfo.LoadFormat}");
-
-        // Example: Convert the detected load format to a save format and save as that format.
-        SaveFormat detectedSaveFormat = FileFormatUtil.LoadFormatToSaveFormat(formatInfo.LoadFormat);
-        string convertedPath = Path.ChangeExtension(comparisonResultPath, FileFormatUtil.SaveFormatToExtension(detectedSaveFormat));
-        originalDoc.Save(convertedPath, detectedSaveFormat);
-        Console.WriteLine($"Document also saved as: {convertedPath}");
     }
 }

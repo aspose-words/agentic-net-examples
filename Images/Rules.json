@@ -1,0 +1,12 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Images/Shapes/OLE rules": [
+        "Remove any reference to the non‑existent namespace Aspose.Words.Drawing.Enums; the required enums are directly under Aspose.Words.Drawing.",
+        "Keep the using directive: using Aspose.Words.Drawing; which provides WrapType, RelativeHorizontalPosition, RelativeVerticalPosition, HorizontalAlignment, and VerticalAlignment.",
+        "All image file paths must be valid relative to the executable's working directory or use absolute paths."
+      ]
+    }
+  }
+}

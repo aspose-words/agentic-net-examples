@@ -1,38 +1,35 @@
 using System;
 using Aspose.Words;
 
-class Program
+class RevisionDemo
 {
     static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add initial content.
+        // Use DocumentBuilder to add initial content that will NOT be tracked.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Write("Original content. ");
+        builder.Write("Initial content. ");
 
-        // Start tracking revisions with a specific author and timestamp.
+        // Start tracking revisions. All subsequent changes will be recorded.
+        // Author name and current date/time are stored with each revision.
         doc.StartTrackRevisions("Alice", DateTime.Now);
 
-        // Insert new text – this will be recorded as an insertion revision.
-        builder.Write("Inserted revision text. ");
-
-        // Delete a run – this will be recorded as a deletion revision.
-        // The first run contains "Original content. ".
-        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
+        // Insert text that will appear as an insertion revision.
+        builder.Write("First revision. ");
+        builder.Writeln("Second revision line.");
 
         // Stop tracking further changes.
         doc.StopTrackRevisions();
 
-        // Add more text that will NOT be tracked.
-        builder.Write("Non‑tracked text. ");
+        // Create a deletion revision by removing the first run (the word "Initial").
+        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
 
-        // Accept all revisions – the document will contain only the final state.
-        doc.AcceptAllRevisions();
+        // Optional: accept all revisions so the document reflects the final state.
+        // doc.AcceptAllRevisions();
 
-        // Save the document to a DOCX file.
-        string outputPath = "TrackedRevisions.docx";
-        doc.Save(outputPath);
+        // Save the document with its tracked changes to a DOCX file.
+        doc.Save("TrackedChanges.docx");
     }
 }

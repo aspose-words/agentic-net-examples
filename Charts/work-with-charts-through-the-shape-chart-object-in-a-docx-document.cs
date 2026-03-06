@@ -1,53 +1,51 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using System.Drawing;
 
-class Program
+namespace AsposeWordsChartDemo
 {
-    static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Insert a column chart shape with the specified size.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
-        // Access the Chart object from the shape.
-        Chart chart = chartShape.Chart;
+            // Use DocumentBuilder to insert a column chart.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+            Chart chart = chartShape.Chart;
 
-        // Configure the chart title.
-        ChartTitle title = chart.Title;
-        title.Text = "Sales Report 2023";
-        title.Font.Size = 16;
-        title.Font.Color = Color.DarkBlue;
-        title.Show = true;          // Make sure the title is visible.
-        title.Overlay = false;      // Do not allow other elements to overlap the title.
+            // Clear the demo data series that are added by default.
+            chart.Series.Clear();
 
-        // Remove the default demo series that Aspose.Words inserts.
-        chart.Series.Clear();
+            // Add a new series with categories (X‑axis) and values (Y‑axis).
+            chart.Series.Add("Sales",
+                new[] { "Q1", "Q2", "Q3", "Q4" },
+                new double[] { 15000, 21000, 18000, 24000 });
 
-        // Add a first data series with categories and values.
-        chart.Series.Add(
-            "Q1",
-            new[] { "Jan", "Feb", "Mar" },
-            new double[] { 12000, 15000, 13000 });
+            // Set the chart title.
+            ChartTitle title = chart.Title;
+            title.Text = "Quarterly Sales";
+            title.Font.Size = 14;
+            title.Font.Color = Color.DarkBlue;
+            title.Show = true;          // Make sure the title is visible.
+            title.Overlay = false;      // Do not allow other elements to overlap the title.
 
-        // Add a second data series.
-        chart.Series.Add(
-            "Q2",
-            new[] { "Apr", "May", "Jun" },
-            new double[] { 14000, 16000, 15500 });
+            // Format the chart background.
+            chart.Format.Fill.Solid(Color.LightYellow);
 
-        // Apply a solid fill to the chart background.
-        chart.Format.Fill.Solid(Color.LightYellow);
+            // Hide axis tick labels for a cleaner look.
+            chart.AxisX.TickLabels.Position = AxisTickLabelPosition.None;
+            chart.AxisY.TickLabels.Position = AxisTickLabelPosition.None;
 
-        // Hide tick labels on both axes for a cleaner look.
-        chart.AxisX.TickLabels.Position = AxisTickLabelPosition.None;
-        chart.AxisY.TickLabels.Position = AxisTickLabelPosition.None;
+            // Change the fill color of the data series.
+            chart.Series[0].Format.Fill.Solid(Color.CornflowerBlue);
 
-        // Save the document containing the chart.
-        doc.Save("ChartExample.docx");
+            // Save the document to a DOCX file.
+            doc.Save("ChartDemo.docx");
+        }
     }
 }

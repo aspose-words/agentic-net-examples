@@ -1,40 +1,51 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
+using Aspose.Words.Drawing;
 
 class FigureCaptionExample
 {
     static void Main()
     {
-        // Create a new empty document and associate a DocumentBuilder with it.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an image that will act as the figure.
-        // Replace the path with a valid image file on your system.
-        builder.InsertImage(@"C:\Images\SampleFigure.png");
+        // Insert an image (replace with a valid path to an image file on your system).
+        // The InsertImage method returns the Shape that represents the picture.
+        Shape picture = builder.InsertImage("C:\\Images\\SampleImage.jpg");
 
-        // Insert a paragraph break after the image.
-        builder.Writeln();
+        // Add a paragraph for the figure caption.
+        builder.Writeln(); // Move to a new line after the picture.
 
-        // Build the caption: "Figure 1: Sample figure description"
+        // Write the static part of the caption.
         builder.Write("Figure ");
-        // Insert a SEQ field that numbers figures. The field result will be updated later.
-        builder.InsertField(" SEQ Figure \\* ARABIC ", "");
-        builder.Write(": Sample figure description.");
 
-        // Insert another paragraph break to separate the caption from the rest of the content.
-        builder.Writeln();
+        // Insert a SEQ field that will generate the figure number.
+        // The field code "SEQ Figure \\* ARABIC" creates a sequence named "Figure".
+        // The second argument is an empty placeholder for the field result.
+        builder.InsertField("SEQ Figure \\* ARABIC", "");
 
-        // Insert a Table of Figures field. This field will collect all SEQ Figure entries.
+        // Write the rest of the caption text.
+        builder.Write(": Sample figure caption describing the image.");
+
+        // Insert a page break before the Table of Figures.
+        builder.InsertBreak(BreakType.PageBreak);
+
+        // Insert a Table of Figures field.
+        // The field type FieldTOC is used for both TOC and Table of Figures.
         FieldToc toc = (FieldToc)builder.InsertField(FieldType.FieldTOC, true);
-        // Specify that the TOC should use the "Figure" sequence identifier.
+
+        // Configure the TOC to build a Table of Figures for the "Figure" sequence.
         toc.TableOfFiguresLabel = "Figure";
 
-        // Update all fields in the document so that the figure number and the table of figures are correct.
+        // Optionally, set the captionless label if you need a table without the label/number.
+        // toc.CaptionlessTableOfFiguresLabel = "Figure";
+
+        // Update all fields in the document so that the figure number and the Table of Figures are populated.
         doc.UpdateFields();
 
         // Save the document to disk.
-        doc.Save(@"C:\Output\FigureWithCaption.docx");
+        doc.Save("FigureCaption.docx");
     }
 }

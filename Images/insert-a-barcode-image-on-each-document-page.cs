@@ -2,37 +2,37 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class InsertBarcodeOnEachPage
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank document
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some sample content that spans multiple pages.
-        builder.Writeln("First page content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Third page content.");
-
-        // Move the builder to the primary header of the document.
-        // The header is shared by all pages in the section, so the barcode will appear on every page.
+        // Move the cursor to the primary header so the barcode will appear on every page
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Insert a DISPLAYBARCODE field and configure its properties.
-        // This field renders the barcode as an image when the document is opened in Word.
+        // Insert a DISPLAYBARCODE field. The second argument (true) tells the builder to insert the field code.
         FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
-        barcodeField.BarcodeType = "CODE39";          // Choose the barcode type.
-        barcodeField.BarcodeValue = "12345ABCDE";    // The data to encode.
-        barcodeField.AddStartStopChar = true;        // Add start/stop characters for CODE39.
 
-        // Optionally, you can set additional visual properties such as colors, scaling, etc.
-        // barcodeField.BackgroundColor = "0xFFFFFF";
-        // barcodeField.ForegroundColor = "0x000000";
+        // All properties of FieldDisplayBarcode are strings, so assign string values.
+        // Hex colour values must be supplied without the "0x" prefix.
+        barcodeField.BarcodeType = "QR";               // Type of barcode
+        barcodeField.BarcodeValue = "ABC123";          // Data encoded in the barcode
+        barcodeField.BackgroundColor = "F8BD69";       // Background colour (hex)
+        barcodeField.ForegroundColor = "B5413B";       // Foreground colour (hex)
+        barcodeField.ErrorCorrectionLevel = "3";       // QR error‑correction level (0‑3)
+        barcodeField.ScalingFactor = "250";            // Scale factor as string
+        barcodeField.SymbolHeight = "1000";            // Height in twips as string
+        barcodeField.SymbolRotation = "0";             // Rotation in degrees as string
 
-        // Save the document.
+        // Optionally add a line break after the barcode in the header
+        builder.Writeln();
+
+        // Save the document to disk
         doc.Save("BarcodeOnEachPage.docx");
     }
 }

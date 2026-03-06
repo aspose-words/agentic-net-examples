@@ -1,9 +1,8 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Loading;
 
-class FontSubstitutionExample
+class Program
 {
     static void Main()
     {
@@ -15,36 +14,35 @@ class FontSubstitutionExample
         builder.Font.Name = "MissingFont";
         builder.Writeln("This line uses a missing font and will be substituted.");
 
-        // Collect warnings that occur during loading/saving.
+        // Collect warnings generated during processing.
         WarningInfoCollection warnings = new WarningInfoCollection();
         doc.WarningCallback = warnings;
 
         // Configure font substitution settings.
         FontSettings fontSettings = new FontSettings();
 
-        // Default substitution rule – use Arial when no other substitute is found.
-        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial";
-
-        // Table substitution rule – try these fonts in order when "MissingFont" is unavailable.
+        // Table substitution: replace "MissingFont" with "Arial", then "Times New Roman".
         fontSettings.SubstitutionSettings.TableSubstitution.SetSubstitutes(
-            "MissingFont", new[] { "Times New Roman", "Courier New" });
+            "MissingFont", new[] { "Arial", "Times New Roman" });
+
+        // Default substitution rule: use "Courier New" if no other substitute is found.
+        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Courier New";
 
         // Apply the font settings to the document.
         doc.FontSettings = fontSettings;
 
-        // Save the document (triggers font substitution).
-        doc.Save("FontSubstitutionResult.docx");
+        // Save the document.
+        doc.Save("FontSubstitutionExample.docx");
 
         // Output any font substitution warnings.
         foreach (WarningInfo info in warnings)
         {
             if (info.WarningType == WarningType.FontSubstitution)
             {
-                FontSubstitutionWarningInfo fontInfo = (FontSubstitutionWarningInfo)info;
-                Console.WriteLine($"Requested font: {fontInfo.RequestedFamilyName}");
-                Console.WriteLine($"Substituted with: {fontInfo.ResolvedFont?.FullFontName}");
-                Console.WriteLine($"Reason: {fontInfo.Reason}");
-                Console.WriteLine($"Description: {fontInfo.Description}");
+                FontSubstitutionWarningInfo fsInfo = (FontSubstitutionWarningInfo)info;
+                Console.WriteLine($"Requested: {fsInfo.RequestedFamilyName}, " +
+                                  $"Resolved: {fsInfo.ResolvedFont?.FullFontName}, " +
+                                  $"Reason: {fsInfo.Reason}");
             }
         }
     }

@@ -1,30 +1,44 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
+using Aspose.Words.Saving;
 
-class Program
+class RemoveTocAndConvertToPdf
 {
     static void Main()
     {
-        // Load the source DOC document.
-        Document doc = new Document("Input.doc");
+        // Path to the source DOC document.
+        string inputPath = @"C:\Docs\SourceDocument.doc";
 
-        // Find all Table of Contents (TOC) fields in the document.
-        List<Field> tocFields = new List<Field>();
-        foreach (Field field in doc.Range.Fields)
+        // Path where the resulting PDF will be saved.
+        string outputPath = @"C:\Docs\ResultDocument.pdf";
+
+        // Load the existing Word document.
+        Document doc = new Document(inputPath);
+
+        // Remove all Table of Contents (TOC) fields from the document.
+        // Iterate backwards to safely modify the collection while removing items.
+        for (int i = doc.Range.Fields.Count - 1; i >= 0; i--)
         {
+            Field field = doc.Range.Fields[i];
             if (field.Type == FieldType.FieldTOC)
-                tocFields.Add(field);
+            {
+                // Optionally remove the whole paragraph that contains the TOC field.
+                // field.Remove(); // This removes only the field code.
+                Node parentParagraph = field.Start.ParentNode;
+                if (parentParagraph != null && parentParagraph.NodeType == NodeType.Paragraph)
+                {
+                    parentParagraph.Remove();
+                }
+                else
+                {
+                    // Fallback: just remove the field if the paragraph cannot be located.
+                    field.Remove();
+                }
+            }
         }
 
-        // Remove each TOC field from the document.
-        foreach (Field toc in tocFields)
-        {
-            toc.Remove();
-        }
-
-        // Save the resulting document as PDF.
-        doc.Save("Output.pdf");
+        // Save the modified document as PDF.
+        doc.Save(outputPath, SaveFormat.Pdf);
     }
 }

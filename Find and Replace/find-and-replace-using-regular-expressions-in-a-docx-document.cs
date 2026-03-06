@@ -3,30 +3,24 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class RegexFindReplaceExample
+class Program
 {
     static void Main()
     {
-        // Load an existing DOCX document.
+        // Load the source DOCX file.
         Document doc = new Document("Input.docx");
 
-        // Define a regular expression pattern.
-        // This example finds all occurrences of one or more digits.
-        Regex regexPattern = new Regex(@"\d+");
+        // Regular expression to find all sequences of digits.
+        Regex pattern = new Regex(@"\d+");
 
-        // Define the replacement string.
-        // "&p" inserts a paragraph break for each match.
+        // Replace each match with a paragraph break.
+        // The special meta‑character "&p" inserts a paragraph break.
         string replacement = "&p";
 
-        // Optional: configure find/replace options.
-        FindReplaceOptions options = new FindReplaceOptions();
-        // Example: make the operation case‑insensitive (default for regex).
-        options.MatchCase = false;
+        // Execute the find‑and‑replace operation.
+        int replacedCount = doc.Range.Replace(pattern, replacement);
 
-        // Perform the find‑and‑replace operation on the whole document range.
-        int replacementsMade = doc.Range.Replace(regexPattern, replacement, options);
-
-        Console.WriteLine($"Number of replacements performed: {replacementsMade}");
+        Console.WriteLine($"Number of replacements performed: {replacedCount}");
 
         // Save the modified document.
         doc.Save("Output.docx");

@@ -3,42 +3,50 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-class Program
+class FindReplaceDemo
 {
     static void Main()
     {
-        // Load the source DOCX file.
-        Document doc = new Document("Input.docx");
+        // Create a new document and add some text.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Ruby bought a ruby necklace.");
+        builder.Writeln("Jackson will meet you in Jacksonville.");
+        builder.Writeln("Numbers 1, 2, 3.");
 
         // -----------------------------------------------------------------
-        // Example 1: Simple string replace with case‑sensitive, whole‑word only.
+        // Example 1: Simple case‑sensitive replace using FindReplaceOptions.
         // -----------------------------------------------------------------
-        FindReplaceOptions stringOptions = new FindReplaceOptions
+        FindReplaceOptions optionsCase = new FindReplaceOptions
         {
-            MatchCase = true,               // Enable case‑sensitive matching.
-            FindWholeWordsOnly = true,      // Replace only whole words.
-            IgnoreFootnotes = false         // Include footnotes in the search.
+            MatchCase = true               // Enable case‑sensitive matching.
         };
-
-        // Replace every occurrence of "Apple" with "Orange".
-        int stringReplacements = doc.Range.Replace("Apple", "Orange", stringOptions);
-        Console.WriteLine($"String replacements performed: {stringReplacements}");
+        // Replace only the capitalized "Ruby".
+        doc.Range.Replace("Ruby", "Jade", optionsCase);
 
         // -----------------------------------------------------------------
-        // Example 2: Regular‑expression replace with captured groups.
+        // Example 2: Whole‑word only replace.
         // -----------------------------------------------------------------
-        FindReplaceOptions regexOptions = new FindReplaceOptions
+        FindReplaceOptions optionsWholeWord = new FindReplaceOptions
         {
-            UseSubstitutions = true,   // Enable $1, $2 … substitutions.
-            LegacyMode = false         // Required for advanced features.
+            FindWholeWordsOnly = true      // Replace only whole words.
         };
+        // Replace "Jackson" but not the "Jacksonville" part.
+        doc.Range.Replace("Jackson", "Louis", optionsWholeWord);
 
-        // Swap the order of two words (e.g., "Hello World" -> "World Hello").
-        Regex regex = new Regex(@"(\w+)\s+(\w+)");
-        int regexReplacements = doc.Range.Replace(regex, "$2 $1", regexOptions);
-        Console.WriteLine($"Regex replacements performed: {regexReplacements}");
+        // -----------------------------------------------------------------
+        // Example 3: Regular‑expression replace with substitutions.
+        // -----------------------------------------------------------------
+        FindReplaceOptions optionsRegex = new FindReplaceOptions
+        {
+            UseSubstitutions = true,       // Enable $1, $2 … substitutions.
+            LegacyMode = false             // Required for substitution support.
+        };
+        Regex regex = new Regex(@"Numbers (\d+), (\d+), (\d+)");
+        // Rearrange the numbers.
+        doc.Range.Replace(regex, @"$3, $2, $1", optionsRegex);
 
         // Save the modified document.
-        doc.Save("Output.docx");
+        doc.Save("FindReplaceResult.docx");
     }
 }

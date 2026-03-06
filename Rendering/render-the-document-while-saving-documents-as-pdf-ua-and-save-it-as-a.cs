@@ -2,27 +2,31 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class RenderToPdfUa
+class Program
 {
     static void Main()
     {
-        // Load the source document.
-        Document doc = new Document("input.docx");
+        // Load the source document (replace with your actual file path).
+        Document doc = new Document("Input.docx");
 
-        // Ensure the page layout is up‑to‑date before rendering.
+        // Rebuild the page layout to ensure accurate rendering.
         doc.UpdatePageLayout();
 
-        // Configure PDF/UA compliance options.
+        // Create PDF save options and configure PDF/UA compliance.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Set PDF/UA‑1 compliance (ISO 14289‑1).
+            // PDF/UA-1 compliance (ISO 14289-1). Use PdfUa2 for PDF/UA-2.
             Compliance = PdfCompliance.PdfUa1,
 
-            // Export document structure (tags) – required for PDF/UA.
-            ExportDocumentStructure = true
+            // Document structure is required for PDF/UA; the property is ignored for PDF/UA
+            // but setting it makes the intent explicit.
+            ExportDocumentStructure = true,
+
+            // Optional: improve rendering quality (may increase processing time).
+            UseHighQualityRendering = true
         };
 
-        // Save the document as a PDF/UA file.
-        doc.Save("output.pdf", pdfOptions);
+        // Save the document as a PDF/UA compliant file.
+        doc.Save("Output.pdf", pdfOptions);
     }
 }

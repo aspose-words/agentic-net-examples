@@ -4,59 +4,59 @@ using System.Net.Mail;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsMhtmlEmail
 {
-    static void Main()
+    class Program
     {
-        // Path to the source Word document.
-        string sourceDocPath = @"C:\Docs\SourceDocument.docx";
-
-        // Path where the MHTML file will be saved.
-        string mhtmlPath = @"C:\Docs\ConvertedDocument.mht";
-
-        // Load the Word document using the Document constructor (lifecycle rule).
-        Document doc = new Document(sourceDocPath);
-
-        // Create HtmlSaveOptions for MHTML format.
-        // The constructor with SaveFormat argument follows the provided rule.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        static void Main()
         {
-            // Use CID URLs for resources to improve compatibility with email clients.
-            ExportCidUrlsForMhtmlResources = true,
-            // Optional: make the output more readable.
-            PrettyFormat = true
-        };
+            // Path to the source Word document.
+            string sourceDocPath = @"C:\Docs\SourceDocument.docx";
 
-        // Save the document as MHTML using the Save method that accepts SaveOptions.
-        doc.Save(mhtmlPath, saveOptions);
+            // Path where the MHTML file will be saved.
+            string mhtmlPath = @"C:\Docs\ConvertedDocument.mht";
 
-        // Prepare an email with the MHTML file as an attachment.
-        using (MailMessage mail = new MailMessage())
-        {
-            mail.From = new MailAddress("sender@example.com");
-            mail.To.Add("recipient@example.com");
-            mail.Subject = "Converted Document";
-            mail.Body = "Please find the converted MHTML document attached.";
+            // Load the Word document using the provided Document constructor.
+            Document doc = new Document(sourceDocPath);
 
-            // Attach the MHTML file.
-            Attachment attachment = new Attachment(mhtmlPath, "application/octet-stream");
-            mail.Attachments.Add(attachment);
-
-            // Configure the SMTP client (adjust host, port, and credentials as needed).
-            using (SmtpClient smtp = new SmtpClient("smtp.example.com", 587))
+            // Configure save options for MHTML output.
+            // Use the HtmlSaveOptions constructor that accepts a SaveFormat.
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
             {
-                smtp.EnableSsl = true;
-                smtp.Credentials = new System.Net.NetworkCredential("smtp_user", "smtp_password");
+                // Use CID URLs for resources to improve compatibility with email clients.
+                ExportCidUrlsForMhtmlResources = true,
 
-                // Send the email.
-                smtp.Send(mail);
+                // Optional: make the output more readable.
+                PrettyFormat = true
+            };
+
+            // Save the document as MHTML using the Document.Save method that accepts SaveOptions.
+            doc.Save(mhtmlPath, saveOptions);
+
+            // Prepare an email with the MHTML file as an attachment.
+            using (MailMessage message = new MailMessage())
+            {
+                message.From = new MailAddress("sender@example.com");
+                message.To.Add("recipient@example.com");
+                message.Subject = "Converted MHTML Document";
+                message.Body = "Please find the converted MHTML document attached.";
+
+                // Attach the MHTML file.
+                Attachment attachment = new Attachment(mhtmlPath);
+                message.Attachments.Add(attachment);
+
+                // Configure the SMTP client (adjust host, port, and credentials as needed).
+                using (SmtpClient smtp = new SmtpClient("smtp.example.com", 587))
+                {
+                    smtp.EnableSsl = true;
+                    smtp.Credentials = new System.Net.NetworkCredential("username", "password");
+
+                    // Send the email.
+                    smtp.Send(message);
+                }
             }
-        }
 
-        // Clean up the temporary MHTML file if it is no longer needed.
-        if (File.Exists(mhtmlPath))
-        {
-            File.Delete(mhtmlPath);
+            Console.WriteLine("Document converted to MHTML and emailed successfully.");
         }
     }
 }

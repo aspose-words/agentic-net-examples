@@ -10,28 +10,34 @@ class StructuredDocumentTagExample
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize DocumentBuilder for the document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a plain‑text Structured Document Tag (content control) at the current cursor position.
-        // The markup level (inline) is detected automatically based on the insertion point.
-        StructuredDocumentTag sdt = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+        // Insert a paragraph to host the structured document tag.
+        builder.Writeln("Below is a checkbox content control:");
 
-        // Set placeholder text to demonstrate the tag's appearance.
-        sdt.Title = "SampleTag";
-        sdt.Tag = "SampleTag";
-        sdt.IsShowingPlaceholderText = true;
+        // Insert a checkbox StructuredDocumentTag (content control) at the current cursor position.
+        // The markup level is detected automatically (inline in this case).
+        StructuredDocumentTag checkBox = builder.InsertStructuredDocumentTag(SdtType.Checkbox);
 
-        // Write some content inside the tag.
-        builder.Writeln("Content inside the Structured Document Tag.");
+        // Set the initial state of the checkbox.
+        checkBox.Checked = true;
 
-        // Prepare PDF save options to export the document structure (tags) to the PDF.
+        // Optionally set custom symbols for checked/unchecked states.
+        checkBox.SetCheckedSymbol(0x00A9, "Times New Roman");   // ©
+        checkBox.SetUncheckedSymbol(0x00AE, "Times New Roman"); // ®
+
+        // Add some explanatory text after the checkbox.
+        builder.Writeln();
+        builder.Writeln("The document contains a structured document tag (SDT).");
+
+        // Save the document as PDF with document structure exported.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            ExportDocumentStructure = true // Enables PDF tags for accessibility.
+            ExportDocumentStructure = true // Enables tags in the PDF for accessibility.
         };
 
-        // Save the document as PDF with the specified options.
-        doc.Save("StructuredDocumentTag_Output.pdf", pdfOptions);
+        // Save the PDF to disk.
+        doc.Save("StructuredDocumentTagExample.pdf", pdfOptions);
     }
 }

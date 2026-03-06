@@ -1,44 +1,47 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class RenderTiffWithOptions
 {
     static void Main()
     {
-        // Create a new document and add some sample content.
+        // Folder where the output file will be saved.
+        string artifactsDir = "Output/";
+        System.IO.Directory.CreateDirectory(artifactsDir);
+
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("First page.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page with an image.");
-        // Replace with a valid image path as needed.
-        builder.InsertImage("ImageDir/Logo.jpg");
+        // Add some content to the document.
+        builder.Font.Name = "Times New Roman";
+        builder.Font.Size = 24;
+        builder.Writeln("Sample text for TIFF rendering with additional options.");
+        builder.InsertImage("ImageDir/Logo.jpg"); // Replace with actual image path.
 
-        // Configure ImageSaveOptions for TIFF rendering.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            // Set the resolution (dots per inch).
-            Resolution = 300,
+        // Create ImageSaveOptions for TIFF format.
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
 
-            // Define the output image size in pixels (optional).
-            ImageSize = new Size(2480, 3508), // Approx. A4 at 300 dpi.
+        // Set TIFF-specific compression.
+        tiffOptions.TiffCompression = TiffCompression.Ccitt4;
 
-            // Choose compression. Here we use CCITT4 with Floyd‑Steinberg dithering.
-            TiffCompression = TiffCompression.Ccitt4,
-            TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
-            ThresholdForFloydSteinbergDithering = 200,
+        // Configure binarization method and threshold for Floyd‑Steinberg dithering.
+        tiffOptions.TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering;
+        tiffOptions.ThresholdForFloydSteinbergDithering = 200; // Range 0‑255.
 
-            // Enable anti‑aliasing and high‑quality rendering algorithms.
-            UseAntiAliasing = true,
-            UseHighQualityRendering = true,
+        // Set resolution (both horizontal and vertical) to 300 DPI.
+        tiffOptions.Resolution = 300;
 
-            // Render each document page as a separate frame in a multi‑frame TIFF.
-            PageLayout = MultiPageLayout.TiffFrames()
-        };
+        // Optional: set background (paper) color.
+        tiffOptions.PaperColor = Color.White;
 
-        // Save the document as a TIFF file using the configured options.
-        doc.Save("ArtifactsDir/RenderedDocument.tiff", tiffOptions);
+        // Enable high‑quality rendering.
+        tiffOptions.UseAntiAliasing = true;
+        tiffOptions.UseHighQualityRendering = true;
+
+        // Save the document as a TIFF image using the configured options.
+        doc.Save(artifactsDir + "DocumentWithTiffOptions.tiff", tiffOptions);
     }
 }

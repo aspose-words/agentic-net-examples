@@ -1,17 +1,19 @@
-// Create a new DOCM document
-var doc = new Aspose.Words.Document();
+using Aspose.Words;
+using Aspose.Words.Fields;
 
-// Initialize a DocumentBuilder for the document
-var builder = new Aspose.Words.DocumentBuilder(doc);
+class Program
+{
+    static void Main()
+    {
+        // Create a new DOCM document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-// Insert a text input form field at the current cursor position
-// Parameters: name, type, format, default text, max length (0 = unlimited)
-builder.InsertTextInput(
-    name: "MyTextInput",
-    type: Aspose.Words.Fields.TextFormFieldType.Regular,
-    format: "",
-    fieldValue: "Enter your text here",
-    maxLength: 0);
+        // Insert a regular text input form field.
+        // Parameters: name, type, format, placeholder text, maxLength (0 = unlimited).
+        builder.InsertTextInput("TextInput", TextFormFieldType.Regular, "", "Enter your text here", 0);
 
-// Save the document as a macro‑enabled Word file
-doc.Save("FormWithTextInput.docm");
+        // Save the document. The .docm extension selects the macro‑enabled format.
+        doc.Save("FormField.docm");
+    }
+}

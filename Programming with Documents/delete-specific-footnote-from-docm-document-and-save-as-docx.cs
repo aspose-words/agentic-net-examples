@@ -2,39 +2,36 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Notes;
 
-class DeleteFootnoteExample
+class Program
 {
     static void Main()
     {
         // Path to the source DOCM file.
-        const string inputPath = @"C:\Docs\SourceDocument.docm";
+        string inputPath = @"C:\Docs\SourceDocument.docm";
 
         // Path where the resulting DOCX will be saved.
-        const string outputPath = @"C:\Docs\ResultDocument.docx";
+        string outputPath = @"C:\Docs\SourceDocument_NoFootnote.docx";
 
-        // Zero‑based index of the footnote to delete.
-        // Change this value to target a different footnote.
-        const int footnoteIndexToDelete = 0;
-
-        // Load the DOCM document.
+        // Load the DOCM document using the constructor that accepts a file name.
         Document doc = new Document(inputPath);
 
-        // Retrieve all footnotes in the document (including those in headers/footers).
+        // Zero‑based index of the footnote to delete.
+        // Adjust this value to target the required footnote.
+        int footnoteIndexToDelete = 1;
+
+        // Retrieve all footnotes in the document (including those in headers/footers if any).
         NodeCollection footnotes = doc.GetChildNodes(NodeType.Footnote, true);
 
-        // Ensure the requested index exists.
+        // Verify that the requested footnote exists.
         if (footnoteIndexToDelete >= 0 && footnoteIndexToDelete < footnotes.Count)
         {
             // Cast the node to a Footnote and remove it from its parent.
             Footnote footnote = (Footnote)footnotes[footnoteIndexToDelete];
             footnote.Remove();
         }
-        else
-        {
-            Console.WriteLine("Footnote index out of range.");
-        }
 
         // Save the modified document as DOCX.
-        doc.Save(outputPath, SaveFormat.Docx);
+        // The Save(string) overload automatically selects the format based on the file extension.
+        doc.Save(outputPath);
     }
 }

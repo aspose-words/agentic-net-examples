@@ -1,42 +1,45 @@
-using System;
-using Aspose.Words;
-using Aspose.Words.Drawing;
+// Load an existing DOCX document
+var doc = new Aspose.Words.Document("Input.docx");
 
-class UpdateOleObjectExample
+// Find the first paragraph that contains the heading text "My Heading"
+var headingParagraph = doc.GetChildNodes(Aspose.Words.NodeType.Paragraph, true)
+    .Cast<Aspose.Words.Paragraph>()
+    .FirstOrDefault(p => p.GetText().Trim() == "My Heading");
+
+if (headingParagraph != null)
 {
-    static void Main()
+    // Position the DocumentBuilder at the heading paragraph
+    var builder = new Aspose.Words.DocumentBuilder(doc);
+    builder.MoveTo(headingParagraph);
+
+    // Insert a new OLE object (e.g., an Excel file) after the heading.
+    // The object will be displayed as an icon with a custom caption.
+    // Use the overload that inserts from a file, specifies it as embedded (isLinked = false),
+    // displays it as an icon (asIcon = true), and provides a custom icon image.
+    using (var iconStream = System.IO.File.OpenRead(@"Images\CustomIcon.ico"))
     {
-        // Load the existing DOCX document that contains an OLE object.
-        Document doc = new Document("InputDocument.docx");
+        builder.InsertOleObject(
+            @"Data\SampleSpreadsheet.xlsx", // path to the OLE source file
+            false,                         // isLinked = false (embed the file)
+            true,                          // asIcon = true (show as icon)
+            iconStream);                   // custom icon image stream
+    }
 
-        // Find the first shape that holds an OLE object.
-        Shape oleShape = doc.GetChild(NodeType.Shape, 0, true) as Shape;
-        if (oleShape == null || oleShape.ShapeType != ShapeType.OleObject)
-        {
-            Console.WriteLine("No OLE object found in the document.");
-            return;
-        }
+    // Optionally, modify properties of the newly inserted OLE object.
+    // The newly inserted shape is the last child of the document body.
+    var oleShape = (Aspose.Words.Drawing.Shape)doc.GetChildNodes(Aspose.Words.NodeType.Shape, true)
+        .Cast<Aspose.Words.Drawing.Shape>()
+        .LastOrDefault(s => s.OleFormat != null);
 
-        // Access the OLE format of the shape.
-        OleFormat oleFormat = oleShape.OleFormat;
+    if (oleShape != null)
+    {
+        // Example: change the ProgId (if needed)
+        oleShape.OleFormat.ProgId = "Excel.Sheet.12";
 
-        // 1. Enable automatic update for linked OLE objects.
-        oleFormat.AutoUpdate = true;
-
-        // NOTE: IconCaption is a read‑only property in Aspose.Words and cannot be set directly.
-        // If you need a different caption you must replace the OLE object with a new one.
-
-        // 2. If the OLE object is a package, you can modify its displayed file name.
-        if (oleFormat.OlePackage != null)
-        {
-            oleFormat.OlePackage.FileName = "UpdatedFile.zip";
-            oleFormat.OlePackage.DisplayName = "UpdatedFile.zip";
-        }
-
-        // 3. For linked objects, you can change the source file path.
-        // oleFormat.SourceFullName = @"C:\NewPath\NewFile.xlsx";
-
-        // Save the modified document.
-        doc.Save("UpdatedDocument.docx");
+        // Example: lock the OLE object from automatic updates
+        oleShape.OleFormat.IsLocked = true;
     }
 }
+
+// Save the modified document
+doc.Save("Output.docx");

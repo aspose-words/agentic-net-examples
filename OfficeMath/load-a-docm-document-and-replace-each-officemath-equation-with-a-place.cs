@@ -2,39 +2,35 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Math;
-using Aspose.Words.Replacing;
+using Aspose.Words.BuildingBlocks;
 
 class ReplaceOfficeMathWithPlaceholder
 {
     static void Main()
     {
         // Load the DOCM document.
-        // If the document contains shapes with EquationXML that should be treated as OfficeMath,
-        // you can configure LoadOptions accordingly. Here we use default loading.
+        // The Document constructor is the prescribed way to load a file.
         Document doc = new Document("Input.docm");
 
         // Collect all OfficeMath nodes in the document.
-        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        // GetChildNodes returns a live collection; we copy it to a list to avoid modification issues while iterating.
+        List<OfficeMath> equations = new List<OfficeMath>();
+        foreach (OfficeMath om in doc.GetChildNodes(NodeType.OfficeMath, true))
+            equations.Add(om);
 
-        // Iterate over a copy of the collection because we will modify the document structure.
-        List<OfficeMath> officeMathList = new List<OfficeMath>();
-        foreach (OfficeMath om in officeMathNodes)
-            officeMathList.Add(om);
-
-        // Replace each OfficeMath node with a placeholder Run.
-        foreach (OfficeMath om in officeMathList)
+        // Replace each OfficeMath node with a placeholder text.
+        foreach (OfficeMath om in equations)
         {
-            // Create a Run containing the placeholder text.
-            Run placeholder = new Run(doc, "[Equation]");
+            // Insert a Run containing the placeholder before the OfficeMath node.
+            // The Run is created with the same document as its owner.
+            om.ParentNode.InsertBefore(new Run(doc, "[Equation]"), om);
 
-            // Insert the placeholder before the OfficeMath node.
-            om.ParentNode.InsertBefore(placeholder, om);
-
-            // Remove the original OfficeMath node.
+            // Remove the original OfficeMath node from the document.
             om.Remove();
         }
 
         // Save the modified document.
+        // The Document.Save method is the prescribed way to persist the file.
         doc.Save("Output.docx");
     }
 }

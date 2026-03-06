@@ -1,7 +1,7 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Saving;
+using Aspose.Words.Fields; // Added namespace for Field and FieldType
 
 class RemoveTocAndSaveAsMhtml
 {
@@ -10,19 +10,16 @@ class RemoveTocAndSaveAsMhtml
         // Load the existing DOC document.
         Document doc = new Document("InputDocument.doc");
 
-        // Remove all Table of Contents (TOC) fields from the document.
-        // Iterate backwards because removing a field changes the collection indexes.
-        for (int i = doc.Range.Fields.Count - 1; i >= 0; i--)
+        // Iterate through all fields in the document and remove any Table of Contents fields.
+        // FieldType.FieldTOC identifies a TOC field.
+        foreach (Field field in doc.Range.Fields)
         {
-            Field field = doc.Range.Fields[i];
             if (field.Type == FieldType.FieldTOC)
                 field.Remove();
         }
 
-        // Prepare save options for MHTML format.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml);
-
         // Save the modified document as MHTML.
-        doc.Save("OutputDocument.mhtml", saveOptions);
+        // The SaveFormat enumeration value Mhtml tells Aspose.Words to output MHTML.
+        doc.Save("OutputDocument.mhtml", SaveFormat.Mhtml);
     }
 }

@@ -6,21 +6,28 @@ class Program
 {
     static void Main()
     {
-        // Create a new document. The file will be saved as a DOTM (macro‑enabled template).
-        Document doc = new Document();
+        // Load an existing DOTM template or create a new empty document.
+        // If you have a template file, replace the constructor argument with its path.
+        Document doc = new Document(); // new empty document
+        // Document doc = new Document("ExistingTemplate.dotm");
+
+        // Create a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a prompt for the user.
-        builder.Writeln("Pick a fruit:");
+        // Add some prompt text before the combo box.
+        builder.Write("Pick a fruit: ");
 
-        // Items that will appear in the combo box.
+        // Define the items that will appear in the combo box.
         string[] items = { "Apple", "Banana", "Cherry" };
 
-        // Insert the combo box form field at the current cursor position.
-        // The first item ("Apple") will be selected by default (selectedIndex = 0).
-        builder.InsertComboBox("FruitCombo", items, 0);
+        // Insert the combo box form field.
+        // Parameters: field name, array of items, index of the initially selected item.
+        FormField comboBox = builder.InsertComboBox("FruitCombo", items, 0);
 
-        // Save the document as a DOTM file.
-        doc.Save("ComboBoxTemplate.dotm");
+        // (Optional) Set additional properties, e.g., recalculate on exit.
+        // comboBox.CalculateOnExit = true;
+
+        // Save the document as a macro‑enabled template (.dotm).
+        doc.Save("ComboBoxTemplate.dotm", SaveFormat.Dotm);
     }
 }

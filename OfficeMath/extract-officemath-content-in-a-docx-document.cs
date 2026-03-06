@@ -1,38 +1,47 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Math;
 using Aspose.Words.Saving;
+using Aspose.Words.Math;
 
 class ExtractOfficeMath
 {
     static void Main()
     {
-        // Load the DOCX document.
-        Document doc = new Document("Input.docx");
+        // Path to the source DOCX file that contains OfficeMath objects.
+        string inputPath = @"C:\Docs\SourceWithMath.docx";
 
-        // Retrieve all OfficeMath nodes in the document.
-        var officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true)
-                                 .Cast<OfficeMath>()
-                                 .ToList();
+        // Load the document using the provided Document constructor (load rule).
+        Document doc = new Document(inputPath);
 
-        // Extract plain‑text representation of each OfficeMath node.
-        using (StringWriter writer = new StringWriter())
+        // -----------------------------------------------------------------
+        // Option 1: Iterate through all OfficeMath nodes and write their
+        // plain text representation to the console.
+        // -----------------------------------------------------------------
+        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        Console.WriteLine("Extracted OfficeMath objects (plain text):");
+        foreach (OfficeMath om in mathNodes)
         {
-            foreach (var om in officeMathNodes)
-            {
-                string text = om.GetText().Trim();
-                writer.WriteLine(text);
-            }
-
-            // Save the extracted OfficeMath text to a separate file.
-            File.WriteAllText("OfficeMathExtracted.txt", writer.ToString());
+            // GetText returns the textual representation of the OfficeMath node.
+            Console.WriteLine(om.GetText().Trim());
         }
 
-        // Additionally, save the whole document with OfficeMath exported as LaTeX.
-        TxtSaveOptions txtOptions = new TxtSaveOptions();
-        txtOptions.OfficeMathExportMode = TxtOfficeMathExportMode.Latex;
-        doc.Save("OfficeMathLatex.txt", txtOptions);
+        // -----------------------------------------------------------------
+        // Option 2: Save the whole document as a plain‑text file where
+        // OfficeMath objects are exported as LaTeX. This uses the provided
+        // TxtSaveOptions and Document.Save (save rule).
+        // -----------------------------------------------------------------
+        string outputPath = @"C:\Docs\ExtractedMath.txt";
+
+        TxtSaveOptions txtOptions = new TxtSaveOptions
+        {
+            // Export OfficeMath as LaTeX markup.
+            OfficeMathExportMode = TxtOfficeMathExportMode.Latex
+        };
+
+        // Save the document as a TXT file with the specified options.
+        doc.Save(outputPath, txtOptions);
+
+        Console.WriteLine($"OfficeMath content saved to: {outputPath}");
     }
 }

@@ -1,31 +1,39 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 
-class ConvertToDocWithOptions
+class Program
 {
     static void Main()
     {
-        // Path to the source document (any format supported by Aspose.Words).
-        string inputPath = @"C:\Docs\SourceDocument.docx";
+        // Create a new document and add some text.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello World!");
 
-        // Path where the DOC file will be saved.
-        string outputPath = @"C:\Docs\ConvertedDocument.doc";
-
-        // Load the source document.
-        Document doc = new Document(inputPath);
-
-        // Create save options for the older DOC format.
-        // The constructor that accepts a SaveFormat ensures the correct format is set.
+        // Set up DOC save options (password protection and routing slip preservation).
         DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
-
-        // Optional: set a password that will protect the saved DOC file.
-        saveOptions.Password = "MyPassword";
-
-        // Optional: preserve routing slip information if present.
+        saveOptions.Password = "Secret123";
         saveOptions.SaveRoutingSlip = true;
 
-        // Save the document using the specified options.
+        // Ensure the output directory exists.
+        string outputPath = "Output/Hello.doc";
+        string? outputDir = Path.GetDirectoryName(outputPath);
+        if (!string.IsNullOrEmpty(outputDir))
+        {
+            Directory.CreateDirectory(outputDir);
+        }
+
+        // Save the document as a .doc file using the specified options.
         doc.Save(outputPath, saveOptions);
+
+        // Load the password‑protected DOC file.
+        LoadOptions loadOptions = new LoadOptions("Secret123");
+        Document loadedDoc = new Document(outputPath, loadOptions);
+
+        // Output the loaded document's text to verify successful conversion.
+        Console.WriteLine(loadedDoc.GetText().Trim());
     }
 }

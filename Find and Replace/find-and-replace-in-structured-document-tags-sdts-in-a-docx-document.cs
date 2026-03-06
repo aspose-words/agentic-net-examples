@@ -6,37 +6,27 @@ class Program
 {
     static void Main()
     {
-        // Load the DOCX document that contains Structured Document Tags (SDTs).
+        // Load the DOCX file that contains Structured Document Tags (SDTs).
         Document doc = new Document("StructuredDocumentTags.docx");
 
-        // Text to search for inside the document.
-        string findText = "Placeholder";
-        // Replacement text.
-        string replaceText = "Replaced";
+        // Define the text to search for and its replacement.
+        // This example replaces the literal string "Placeholder" with "New Text".
+        string pattern = "Placeholder";
+        string replacement = "New Text";
 
-        // -----------------------------------------------------------------
-        // 1. Replace text while treating each SDT as a separate story.
-        //    The replacement will NOT cross SDT boundaries.
-        // -----------------------------------------------------------------
+        // Configure find/replace options.
+        // Setting IgnoreStructuredDocumentTags to true treats the content of each SDT as plain text,
+        // allowing the pattern to be found even when it spans across SDT boundaries.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            // Do NOT ignore the content of SDTs.
-            IgnoreStructuredDocumentTags = false
-        };
-        doc.Range.Replace(findText, replaceText, options);
-
-        // -----------------------------------------------------------------
-        // 2. Replace text while ignoring SDT boundaries.
-        //    The content of each SDT is treated as simple text.
-        // -----------------------------------------------------------------
-        FindReplaceOptions optionsIgnore = new FindReplaceOptions
-        {
-            // Ignore the content of SDTs.
             IgnoreStructuredDocumentTags = true
         };
-        doc.Range.Replace(findText, replaceText + "_Ignore", optionsIgnore);
+
+        // Execute the replace operation on the entire document range.
+        int replacementsMade = doc.Range.Replace(pattern, replacement, options);
+        Console.WriteLine($"Replacements performed: {replacementsMade}");
 
         // Save the modified document.
-        doc.Save("StructuredDocumentTags_Updated.docx");
+        doc.Save("StructuredDocumentTags_Replaced.docx");
     }
 }

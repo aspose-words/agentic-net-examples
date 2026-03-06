@@ -1,33 +1,20 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
-{
-    static void Main()
-    {
-        // Path to the source document.
-        string inputPath = @"C:\Docs\SourceDocument.docx";
+string inputPath = @"C:\Docs\Input.docx";          // Path to the source document
+string outputPath = @"C:\Docs\OutputPdfA.pdf";    // Desired PDF/A output file
 
-        // Paths for the output files.
-        string pdfAPath = @"C:\Docs\ResultPdfA.pdf";
-        string pdfPath  = @"C:\Docs\ResultPdf.pdf";
+// Load the existing document
+Document doc = new Document(inputPath);
 
-        // Load the document.
-        Document doc = new Document(inputPath);
+// Create a save options object appropriate for PDF format
+SaveOptions saveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
 
-        // ---------- Save as PDF/A ----------
-        // Create a PdfSaveOptions instance via the factory method.
-        PdfSaveOptions pdfAOptions = (PdfSaveOptions)SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
-        // Set the compliance level to PDF/A‑1b (you can choose any PDF/A level you need).
-        pdfAOptions.Compliance = PdfCompliance.PdfA1b;
-        // Save the document using the PDF/A options.
-        doc.Save(pdfAPath, pdfAOptions);
+// Cast to PdfSaveOptions to access PDF‑specific settings
+PdfSaveOptions pdfOptions = (PdfSaveOptions)saveOptions;
 
-        // ---------- Save as regular PDF ----------
-        // Create default PDF save options (compliance defaults to PDF 1.7).
-        PdfSaveOptions pdfOptions = (PdfSaveOptions)SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
-        // Save the document as a standard PDF.
-        doc.Save(pdfPath, pdfOptions);
-    }
-}
+// Set the compliance level to PDF/A‑1b (you can choose other PDF/A levels as needed)
+pdfOptions.Compliance = PdfCompliance.PdfA1b;
+
+// Save the document as PDF/A
+doc.Save(outputPath, pdfOptions);

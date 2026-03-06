@@ -8,14 +8,14 @@ class Program
         // Path to the source DOCX file.
         string sourcePath = @"C:\Docs\SourceDocument.docx";
 
-        // Load the DOCX document using the Document constructor that accepts a file name.
+        // Load the DOCX document using Aspose.Words Document constructor.
         Document doc = new Document(sourcePath);
 
-        // Example: output the total number of characters in the document.
-        Console.WriteLine($"Document loaded. Character count: {doc.GetText().Length}");
+        // Example: output the document's plain text to the console.
+        Console.WriteLine(doc.GetText());
 
-        // Optional: save the loaded document to a new location.
-        string outputPath = @"C:\Docs\CopyDocument.docx";
-        doc.Save(outputPath);
+        // Optional: save the document to another format (e.g., PDF) using the save rule.
+        // string outputPath = @"C:\Docs\Converted.pdf";
+        // doc.Save(outputPath, SaveFormat.Pdf);
     }
 }

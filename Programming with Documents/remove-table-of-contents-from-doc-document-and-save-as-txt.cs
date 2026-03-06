@@ -1,36 +1,35 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Fields;
+using Aspose.Words.Fields; // Added namespace for Field and FieldType
 
-class RemoveTocAndSaveAsTxt
+class Program
 {
     static void Main()
     {
-        // Load the source DOC document.
-        // (Assumes the file "Input.doc" exists in the same folder as the executable.)
-        Document doc = new Document("Input.doc");
+        // Paths to the source DOC document and the destination TXT file.
+        string inputPath = "Input.docx";
+        string outputPath = "Output.txt";
 
-        // Collect all Table of Contents (TOC) fields in the document.
-        // Field.Type == FieldType.FieldTOC identifies a TOC field.
-        List<Field> tocFields = new List<Field>();
-        foreach (Field field in doc.Range.Fields)
+        // Load the Word document from disk.
+        Document doc = new Document(inputPath);
+
+        // Remove every Table of Contents (TOC) field from the document.
+        // Iterate backwards because removing a field modifies the collection.
+        for (int i = doc.Range.Fields.Count - 1; i >= 0; i--)
         {
+            Field field = doc.Range.Fields[i];
             if (field.Type == FieldType.FieldTOC)
-                tocFields.Add(field);
+                field.Remove();
         }
 
-        // Remove each TOC field from the document.
-        // Removing the field node also removes its result text.
-        foreach (Field toc in tocFields)
+        // Configure plain‑text save options (optional: omit headers/footers).
+        TxtSaveOptions txtOptions = new TxtSaveOptions
         {
-            toc.Remove();
-        }
+            ExportHeadersFootersMode = TxtExportHeadersFootersMode.None
+        };
 
-        // Save the modified document as plain text.
-        TxtSaveOptions txtOptions = new TxtSaveOptions();
-        txtOptions.SaveFormat = SaveFormat.Text; // Explicitly set the format.
-        doc.Save("Output.txt", txtOptions);
+        // Save the modified document as a .txt file.
+        doc.Save(outputPath, txtOptions);
     }
 }

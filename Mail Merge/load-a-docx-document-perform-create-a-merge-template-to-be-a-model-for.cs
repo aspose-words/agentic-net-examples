@@ -1,31 +1,44 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Saving;
 
-class MergeTemplateToPdf
+namespace MergeTemplateExample
 {
-    static void Main()
+    class Program
     {
-        // Path to the source DOCX file that will be turned into a merge template.
-        const string sourceDocxPath = @"C:\Docs\SourceDocument.docx";
+        static void Main()
+        {
+            // Path to the source DOCX file that will serve as the base for the merge template.
+            const string sourceDocPath = @"C:\Docs\SourceTemplate.docx";
 
-        // Load the existing DOCX document.
-        Document templateDoc = new Document(sourceDocxPath);
+            // Load the existing DOCX document using the Document(string) constructor (load rule).
+            Document templateDocument = new Document(sourceDocPath);
 
-        // OPTIONAL: Insert merge fields into the template if they are not already present.
-        // This demonstrates how a template can be prepared for future mail‑merge operations.
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.MoveToDocumentEnd();
-        builder.Writeln(); // Ensure we are on a new paragraph.
-        builder.InsertField("MERGEFIELD CustomerName", "<<[CustomerName]>>");
-        builder.InsertField("MERGEFIELD Address", "<<[Address]>>");
+            // -----------------------------------------------------------------
+            // Create a merge template model.
+            // Here we add a simple MERGEFIELD that can be populated later.
+            // This uses DocumentBuilder, which is a standard way to modify a document.
+            // -----------------------------------------------------------------
+            DocumentBuilder builder = new DocumentBuilder(templateDocument);
+            // Move the cursor to the end of the document (or any desired location).
+            builder.MoveToDocumentEnd();
+            // Insert a merge field named "CustomerName".
+            builder.InsertField("MERGEFIELD CustomerName ");
 
-        // Save the prepared document as a Word template (.dotx) – this can be reused for new reports.
-        const string templateDotxPath = @"C:\Docs\MergeTemplate.dotx";
-        templateDoc.Save(templateDotxPath, SaveFormat.Dotx);
+            // Optionally, you could prepare the template for reporting engine usage.
+            // For example, you could populate static parts of the template now.
+            // ReportingEngine can be used later to generate concrete documents from this template.
+            // ReportingEngine engine = new ReportingEngine();
+            // engine.BuildReport(templateDocument, new { CustomerName = "<<[CustomerName]>>" });
 
-        // Convert the same document (now a ready‑to‑use template) to PDF.
-        const string outputPdfPath = @"C:\Docs\ResultDocument.pdf";
-        templateDoc.Save(outputPdfPath, SaveFormat.Pdf);
+            // -----------------------------------------------------------------
+            // Save the prepared template as a PDF file.
+            // The Save(string, SaveFormat) overload automatically determines the format
+            // from the SaveFormat enum (save rule).
+            // -----------------------------------------------------------------
+            const string outputPdfPath = @"C:\Docs\Result.pdf";
+            templateDocument.Save(outputPdfPath, SaveFormat.Pdf);
+        }
     }
 }

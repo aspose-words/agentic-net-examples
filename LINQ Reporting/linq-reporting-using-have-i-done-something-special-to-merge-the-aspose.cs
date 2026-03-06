@@ -7,54 +7,49 @@ using Aspose.Words.Reporting;
 namespace AsposeWordsLinqReporting
 {
     // Simple data entity.
-    public class Product
+    public class Customer
     {
         public string Name { get; set; }
-        public string Category { get; set; }
-        public decimal Price { get; set; }
+        public int Age { get; set; }
+        public string City { get; set; }
     }
 
     class Program
     {
         static void Main()
         {
-            // 1. Create a list of products – this will be the source for the LINQ query.
-            List<Product> allProducts = new List<Product>
+            // 1. Prepare a collection of customers.
+            List<Customer> customers = new List<Customer>
             {
-                new Product { Name = "Apple iPhone 15", Category = "Electronics", Price = 999.99m },
-                new Product { Name = "Samsung Galaxy S24", Category = "Electronics", Price = 899.99m },
-                new Product { Name = "Dell XPS 13", Category = "Computers", Price = 1199.00m },
-                new Product { Name = "HP Envy", Category = "Computers", Price = 999.00m },
-                new Product { Name = "Sony WH‑1000XM5", Category = "Audio", Price = 349.99m }
+                new Customer { Name = "Thomas Hardy", Age = 45, City = "London" },
+                new Customer { Name = "Paolo Accorti", Age = 38, City = "Torino" },
+                new Customer { Name = "John Doe", Age = 29, City = "New York" }
             };
 
-            // 2. Use LINQ to select only the products we want to appear in the report.
-            //    For example, all electronics cheaper than $950.
-            var filteredProducts = allProducts
-                .Where(p => p.Category == "Electronics" && p.Price < 950m)
-                .Select(p => new
+            // 2. Use LINQ to project the data we need for the report.
+            //    Here we select only Name and City, and calculate a new field.
+            var reportData = customers
+                .Select(c => new
                 {
-                    // The anonymous type's property names must match the merge fields in the template.
-                    ProductName = p.Name,
-                    ProductPrice = p.Price
+                    FullName = c.Name,
+                    Location = c.City,
+                    AgeGroup = c.Age >= 40 ? "Senior" : "Junior"
                 })
                 .ToList();
 
-            // 3. Load the Word template that contains the merge fields.
-            //    The template should have a table with a repeatable region:
-            //    <<foreach [ds]>>
-            //        <<[ProductName]>>
-            //        <<[ProductPrice]:currency>>
-            //    <</foreach>>
-            Document doc = new Document("Template.docx");   // lifecycle rule: load
+            // 3. Load the Word template that contains merge tags like <<[ds.FullName]>> etc.
+            //    The template file must exist on disk; adjust the path as needed.
+            string templatePath = @"C:\Templates\CustomerReportTemplate.docx";
+            Document doc = new Document(templatePath); // lifecycle: load
 
-            // 4. Create the ReportingEngine and populate the template.
+            // 4. Build the report using Aspose.Words ReportingEngine.
+            //    The data source name "ds" must match the name used in the template tags.
             ReportingEngine engine = new ReportingEngine();
-            // The data source name "ds" must match the name used in the template tags.
-            engine.BuildReport(doc, filteredProducts, "ds"); // feature rule: use BuildReport
+            engine.BuildReport(doc, reportData, "ds"); // feature: BuildReport
 
-            // 5. Save the generated report.
-            doc.Save("FilteredProductsReport.docx");        // lifecycle rule: save
+            // 5. Save the populated document.
+            string outputPath = @"C:\Output\CustomerReport.docx";
+            doc.Save(outputPath); // lifecycle: save
         }
     }
 }

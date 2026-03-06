@@ -6,19 +6,15 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Load an existing Word document.
+        Document doc = new Document("Input.docx");
 
-        // Use DocumentBuilder to add some content with a paragraph graphic (underline).
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Underline = Underline.Single; // This creates a paragraph graphic.
-        builder.Writeln("This text will be marked as an artifact in the PDF.");
-
-        // Configure PDF save options to export paragraph graphics as artifacts.
+        // Configure PDF save options to mark paragraph graphics (e.g., underlines, emphasis) as artifacts.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            ExportDocumentStructure = true,          // Required for artifact marking to take effect.
-            ExportParagraphGraphicsToArtifact = true // Mark paragraph graphics as artifacts.
+            ExportDocumentStructure = true,               // Enable logical structure export.
+            ExportParagraphGraphicsToArtifact = true,     // Mark paragraph graphics as artifacts.
+            TextCompression = PdfTextCompression.None    // Optional: keep text uncompressed for easier inspection.
         };
 
         // Save the document as PDF using the configured options.

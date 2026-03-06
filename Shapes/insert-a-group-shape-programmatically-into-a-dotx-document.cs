@@ -1,41 +1,38 @@
-using System.Drawing;
+using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class InsertGroupShapeExample
 {
     static void Main()
     {
-        // Load an existing DOTX template (lifecycle rule: load)
+        // Load an existing DOTX template.
         Document doc = new Document("Template.dotx");
 
-        // Create a DocumentBuilder to work with the document
+        // Create a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape
-        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 150);
-        rect.Left = 50;               // position within the page
-        rect.Top = 50;
-        rect.Stroke.Color = Color.Blue;
+        // Insert the first shape (a rectangle) and set its appearance.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        shape1.Left = 20;
+        shape1.Top = 20;
+        shape1.Stroke.Color = System.Drawing.Color.Red;
 
-        // Insert an ellipse shape
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
-        ellipse.Left = 120;
-        ellipse.Top = 80;
-        ellipse.Stroke.Color = Color.Green;
+        // Insert the second shape (an ellipse) and set its appearance.
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        shape2.Left = 40;
+        shape2.Top = 50;
+        shape2.Stroke.Color = System.Drawing.Color.Green;
 
-        // Group the two shapes; the group size and position are calculated automatically
-        // (feature rule: InsertGroupShape(params ShapeBase[]))
-        GroupShape group = builder.InsertGroupShape(rect, ellipse);
+        // Group the two shapes into a new GroupShape node at the current cursor position.
+        GroupShape group = builder.InsertGroupShape(shape1, shape2);
 
-        // Optional: adjust group properties (e.g., make it floating and positioned at the page origin)
-        group.WrapType = WrapType.None;
-        group.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        group.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        group.Left = 0;
-        group.Top = 0;
+        // Optionally, you can add more shapes to the group after it has been created.
+        // Example: clone the first shape and add it to the group.
+        Shape shape3 = (Shape)shape1.Clone(true);
+        group.AppendChild(shape3);
 
-        // Save the modified document as a DOTX file (lifecycle rule: save)
-        doc.Save("Result.dotx");
+        // Save the modified document.
+        doc.Save("Result.docx");
     }
 }

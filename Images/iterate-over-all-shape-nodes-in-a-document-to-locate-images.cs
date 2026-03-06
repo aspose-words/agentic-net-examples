@@ -1,42 +1,38 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Linq;
 
 class Program
 {
     static void Main()
     {
-        // Load the document that contains shapes.
-        Document doc = new Document("Images.docx");
+        // Load the Word document.
+        Document doc = new Document("Input.docx");
 
-        // Retrieve all shape nodes in the document (including those inside groups).
+        // Retrieve all Shape nodes in the document (deep traversal).
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
-        // Counter for naming extracted images.
         int imageIndex = 0;
 
-        // Iterate through each shape and locate images.
+        // Iterate through each Shape and check if it contains an image.
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Check if the shape actually contains an image.
             if (shape.HasImage)
             {
-                // Determine a suitable file extension based on the image type.
+                // Output basic information about the image.
+                Console.WriteLine($"Image #{imageIndex}: Type={shape.ImageData.ImageType}, Size={shape.ImageData.ImageBytes?.Length ?? 0} bytes");
+
+                // Save the image to the file system (optional).
                 string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-
-                // Build a unique file name for the extracted image.
                 string fileName = $"ExtractedImage_{imageIndex}{extension}";
-
-                // Save the image data to the file system.
-                shape.ImageData.Save(Path.Combine("ExtractedImages", fileName));
+                shape.ImageData.Save(fileName);
 
                 imageIndex++;
             }
         }
 
-        // Optionally, save the (unchanged) document to a new file.
-        doc.Save("ProcessedDocument.docx");
+        Console.WriteLine($"Total images found: {imageIndex}");
     }
 }

@@ -1,38 +1,27 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank Word document.
+        // Create a blank Word document (lifecycle rule)
         Document doc = new Document();
 
-        // The default document already contains a Section, Body, and a Paragraph.
-        // Create a floating text box shape.
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.WrapType = WrapType.None;          // No text wrapping.
-        textBox.Width = 200;                       // Width in points.
-        textBox.Height = 50;                       // Height in points.
-        textBox.HorizontalAlignment = HorizontalAlignment.Center;
-        textBox.VerticalAlignment = VerticalAlignment.Top;
+        // The default document already contains a Section, Body, and Paragraph.
+        // Create a rectangle shape using the Shape constructor (rule)
+        Shape shape = new Shape(doc, ShapeType.Rectangle);
+        shape.Width = 100;               // Width in points
+        shape.Height = 50;               // Height in points
+        shape.Stroke.Color = Color.Blue; // Outline color
+        shape.Fill.ForeColor = Color.LightGray; // Fill color
 
-        // Add a paragraph inside the text box to hold text.
-        textBox.AppendChild(new Paragraph(doc));
-        Paragraph innerParagraph = textBox.FirstParagraph;
-        innerParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        // Append the shape to the first paragraph of the document
+        doc.FirstSection.Body.FirstParagraph.AppendChild(shape);
 
-        // Add a run of text to the inner paragraph.
-        Run run = new Run(doc);
-        run.Text = "Hello world!";
-        innerParagraph.AppendChild(run);
-
-        // Insert the shape into the document's first paragraph.
-        doc.FirstSection.Body.FirstParagraph.AppendChild(textBox);
-
-        // Save the document to a .docx file.
+        // Save the document to a DOCX file (lifecycle rule)
         doc.Save("ShapeManipulation.docx");
     }
 }

@@ -2,32 +2,32 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class InspectTableDimensions
+namespace TableInspectionExample
 {
-    static void Main()
+    class Program
     {
-        // Load the DOCM document.
-        Document doc = new Document("InputDocument.docm");
-
-        // Get the collection of tables in the first section's body.
-        TableCollection tables = doc.FirstSection.Body.Tables;
-
-        // Iterate through each table and output its row and column counts.
-        for (int i = 0; i < tables.Count; i++)
+        static void Main()
         {
-            Table table = tables[i];
+            // Load an existing DOCM document.
+            // Replace "Input.docm" with the path to your DOCM file.
+            Document doc = new Document("Input.docm");
 
-            // Row count is the number of Row objects in the table.
-            int rowCount = table.Rows.Count;
+            // Iterate through all tables in the document.
+            foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
+            {
+                // Row count is the number of Row objects in the table.
+                int rowCount = table.Rows.Count;
 
-            // Column count is taken from the first row's cell count.
-            // If the table has no rows, column count is zero.
-            int columnCount = table.FirstRow != null ? table.FirstRow.Cells.Count : 0;
+                // Column count is taken from the first row's cell count.
+                // If the table has no rows, column count is zero.
+                int columnCount = table.FirstRow != null ? table.FirstRow.Cells.Count : 0;
 
-            Console.WriteLine($"Table {i}: Rows = {rowCount}, Columns = {columnCount}");
+                Console.WriteLine($"Table found: Rows = {rowCount}, Columns = {columnCount}");
+            }
+
+            // Save the document (optional, as we only inspected it).
+            // Replace "Output.docm" with the desired output path.
+            doc.Save("Output.docm");
         }
-
-        // Optionally, save the document (unchanged) to verify load/save works.
-        doc.Save("OutputDocument.docm");
     }
 }

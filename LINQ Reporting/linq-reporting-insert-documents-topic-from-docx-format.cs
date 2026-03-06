@@ -1,37 +1,32 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class LinqReportingInsertDocuments
+class Program
 {
     static void Main()
     {
-        // Path to the template document that contains the <<doc [src.Document]>> tag.
-        string templatePath = @"C:\Docs\Template.docx";
+        // Load the template that contains the <<doc [src.Document]>> tags.
+        Document template = new Document("Template.docx");
 
-        // Load the template document.
-        Document template = new Document(templatePath);
-
-        // Directory that holds the source DOCX files to be inserted.
-        string sourceDocsDir = @"C:\Docs\Sources";
-
-        // Use LINQ to create an array of Document objects from all DOCX files in the directory.
-        Document[] sourceDocuments = Directory
-            .EnumerateFiles(sourceDocsDir, "*.docx")
-            .Select(file => new Document(file))
+        // Load all DOCX files from a folder, create Document objects and filter them with LINQ.
+        string sourceFolder = "Sources";
+        Document[] sourceDocs = Directory.GetFiles(sourceFolder, "*.docx")
+            .Select(path => new Document(path))               // create a Document for each file
+            .Where(doc => doc.Range.Text.Contains("InsertMe")) // example LINQ filter
             .ToArray();
 
-        // Create the reporting engine.
+        // Prepare an array of empty names – the BuildReport overload requires a name for each source.
+        string[] sourceNames = Enumerable.Repeat(string.Empty, sourceDocs.Length).ToArray();
+
+        // Use the ReportingEngine to insert the filtered documents into the template.
         ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(template, sourceDocs, sourceNames);
 
-        // Build the report, passing the source documents as a data source named "src".
-        // The template must reference the documents with the tag <<doc [src.Document]>>.
-        engine.BuildReport(template, sourceDocuments, new[] { "src" });
-
-        // Save the populated document.
-        string outputPath = @"C:\Docs\Result.docx";
-        template.Save(outputPath);
+        // Save the final document.
+        template.Save("Result.docx");
     }
 }

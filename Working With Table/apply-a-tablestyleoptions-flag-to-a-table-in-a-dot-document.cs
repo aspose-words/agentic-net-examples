@@ -6,46 +6,20 @@ class ApplyTableStyleOptions
 {
     static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Path to the folder that contains the template (.dot) file.
+        string dataDir = @"C:\Data\";
 
-        // Start building a table. At least one cell must be inserted before any formatting.
-        Table table = builder.StartTable();
-        builder.InsertCell();
+        // Load the DOT template.
+        Document doc = new Document(dataDir + "Template.dot");
 
-        // Optionally assign a built‑in style to the table.
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+        // Obtain the first table in the document (assumes at least one table exists).
+        Table table = doc.FirstSection.Body.Tables[0];
 
-        // Apply the desired style options (first column, first row, and row banding).
-        table.StyleOptions = TableStyleOptions.FirstColumn |
-                              TableStyleOptions.FirstRow |
-                              TableStyleOptions.RowBands;
+        // Apply desired style options to the table.
+        // Example: enable first row formatting and row banding.
+        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
-        // Populate the first row.
-        builder.Writeln("Item");
-        builder.InsertCell();
-        builder.Writeln("Quantity (kg)");
-        builder.EndRow();
-
-        // Populate a second row.
-        builder.InsertCell();
-        builder.Writeln("Apples");
-        builder.InsertCell();
-        builder.Writeln("20");
-        builder.EndRow();
-
-        // Populate a third row.
-        builder.InsertCell();
-        builder.Writeln("Bananas");
-        builder.InsertCell();
-        builder.Writeln("40");
-        builder.EndRow();
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document as a DOT template.
-        doc.Save("TableWithStyle.dot");
+        // Save the modified document.
+        doc.Save(dataDir + "Result.docx");
     }
 }

@@ -1,5 +1,4 @@
-using System;
-using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -9,28 +8,30 @@ class Program
     {
         // Create a new empty document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Ensure the document has at least one paragraph to host the shape.
-        // If the document is empty, Aspose.Words creates a first paragraph automatically.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
+        // Ensure the document has a paragraph to host the shape.
+        builder.Writeln();
 
-        // Create a shape of type Image. This shape will hold the picture.
-        Shape pictureShape = new Shape(doc, ShapeType.Image);
+        // Create a shape whose type is Image.
+        Shape pictureShape = new Shape(builder.Document, ShapeType.Image);
 
-        // Set the image that the shape will display.
+        // Load an image from the local file system into the shape.
         // Replace the path with the actual location of your image file.
-        string imagePath = Path.Combine(Environment.CurrentDirectory, "SampleImage.jpg");
-        pictureShape.ImageData.SetImage(imagePath);
+        pictureShape.ImageData.SetImage(@"C:\Images\SamplePicture.jpg");
 
-        // Optionally set the size of the shape (in points).
-        pictureShape.Width = 200;   // 200 points wide
+        // Set the desired size of the shape (in points).
+        pictureShape.Width = 150;   // 150 points wide
         pictureShape.Height = 150;  // 150 points high
 
-        // Append the shape to the paragraph so it becomes part of the document.
-        para.AppendChild(pictureShape);
+        // Set the shape to be inline with the surrounding text.
+        pictureShape.WrapType = WrapType.Inline;
 
-        // Save the document in DOCX format.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ShapeWithPicture.docx");
-        doc.Save(outputPath);
+        // Append the shape to the first paragraph of the document.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(pictureShape);
+
+        // Save the document as a DOCX file.
+        // Replace the path with the desired output location.
+        doc.Save(@"C:\Output\ShapeWithPicture.docx");
     }
 }

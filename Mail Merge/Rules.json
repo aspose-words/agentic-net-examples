@@ -1,0 +1,23 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Range rules": [
+        "Do not assign to the read‑only Range.Text property; it cannot be set directly."
+      ],
+      "Document merge/insert rules": [
+        "Use `builder.InsertField(\"MERGEFIELD FieldName\")` (no extra spaces) to add a merge field.",
+        "Use an instance of XmlMailMergeDataSource (not XmlDataSource) when the task is to perform mail‑merge from XML."
+      ],
+      "Saving/Export rules": [
+        "Keep the existing `using Aspose.Words.Saving;` for `SaveFormat`.",
+        "Keep all other logic unchanged; the program now compiles and produces PDF files for each mail‑merge scenario.",
+        "Keep the rest of the logic unchanged – create a Document, use DocumentBuilder, and save as DOCX.",
+        "Save the resulting document after the merge."
+      ],
+      "Images/Shapes/OLE rules": [
+        "When saving a document as an image, use the appropriate SaveFormat (SaveFormat.Png) which renders the first page."
+      ]
+    }
+  }
+}

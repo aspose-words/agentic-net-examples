@@ -1,55 +1,58 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Lists;
 using Aspose.Words.Saving;
-using Aspose.Words.Loading; // Added for LoadOptions
 
-namespace AsposeWordsDemo
+class DocumentProcessing
 {
-    class Program
+    static void Main()
     {
-        static void Main()
+        // Load the source DOCX document.
+        Document originalDoc = new Document("Original.docx");
+
+        // ---------- Builder Overview: format a numbered list ----------
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
+        // Ensure we start on a new paragraph.
+        builder.Writeln();
+
+        // Create a new list based on the default numbered template.
+        builder.ListFormat.List = originalDoc.Lists.Add(ListTemplate.NumberDefault);
+
+        // Add several list items.
+        for (int i = 1; i <= 5; i++)
         {
-            // 1. Create a new blank document.
-            Document originalDoc = new Document();
-
-            // 2. Use DocumentBuilder to format a numbered list.
-            DocumentBuilder builder = new DocumentBuilder(originalDoc);
-            builder.ListFormat.ApplyNumberDefault();          // Start a default numbered list.
-            builder.Writeln("First item");                    // List item 1.
-            builder.Writeln("Second item");                   // List item 2.
-            builder.ListFormat.RemoveNumbers();               // End the list.
-
-            // 3. Save the original document (lifecycle: create → save).
-            originalDoc.Save("Original.docx");
-
-            // 4. Clone the original document to create an edited version.
-            Document editedDoc = (Document)originalDoc.Clone(true);
-
-            // 5. Modify the edited document – add another list item.
-            DocumentBuilder editBuilder = new DocumentBuilder(editedDoc);
-            editBuilder.MoveToDocumentEnd();                  // Move cursor to the end.
-            editBuilder.Writeln("Third item");                // New list item.
-
-            // 6. Compare the original document with the edited one.
-            //    The comparison will generate revision marks in the original document.
-            originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
-
-            // 7. Save the document that now contains the comparison revisions.
-            originalDoc.Save("Compared.docx");
-
-            // 8. Protect the compared document with a password (read‑only protection).
-            originalDoc.Protect(ProtectionType.ReadOnly, "pwd123");
-
-            // 9. Save the protected (encrypted) document.
-            originalDoc.Save("Protected.docx");
-
-            // 10. Demonstrate loading an encrypted document using LoadOptions.
-            LoadOptions loadOptions = new LoadOptions { Password = "pwd123" }; // Correct usage of LoadOptions
-            Document loadedProtected = new Document("Protected.docx", loadOptions);
-
-            // 11. Verify that the loaded document can be accessed (e.g., get its text).
-            Console.WriteLine("Loaded protected document text:");
-            Console.WriteLine(loadedProtected.GetText().Trim());
+            builder.Writeln($"Item {i}");
         }
+
+        // End the list formatting.
+        builder.ListFormat.RemoveNumbers();
+
+        // ---------- Protect (read‑only) the document ----------
+        // Apply read‑only protection with a password.
+        originalDoc.Protect(ProtectionType.ReadOnly, "protectPwd");
+
+        // ---------- Encrypt the document on save ----------
+        // Use OoxmlSaveOptions to set an encryption password.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+        {
+            Password = "encryptPwd"
+        };
+        originalDoc.Save("Original_Protected_Encrypted.docx", saveOptions);
+
+        // ---------- Compare with another document ----------
+        // Load the document to compare against.
+        Document editedDoc = new Document("Edited.docx");
+
+        // Ensure both documents have no revisions before comparison.
+        if (originalDoc.Revisions.Count == 0 && editedDoc.Revisions.Count == 0)
+        {
+            originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
+        }
+
+        // Optionally accept all revisions so the original becomes identical to the edited version.
+        originalDoc.Revisions.AcceptAll();
+
+        // Save the comparison result.
+        originalDoc.Save("ComparisonResult.docx");
     }
 }

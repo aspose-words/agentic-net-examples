@@ -2,27 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsExample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Load an existing DOCX document from the file system.
-            // The Document constructor handles loading and format detection.
-            Document doc = new Document("input.docx");
+        // Path to the source DOCX file.
+        const string inputPath = @"C:\Docs\SourceDocument.docx";
 
-            // Create a DocumentBuilder tied to the loaded document.
-            // This allows us to modify the document's content.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Path where the PNG image will be saved.
+        const string outputPath = @"C:\Docs\ResultImage.png";
 
-            // Insert text at the current cursor position using the Write method.
-            // The Write method adds the specified string directly into the document.
-            builder.Write("Inserted text using the Text property.");
+        // Load the existing DOCX document.
+        Document doc = new Document(inputPath);
 
-            // Save the modified document as a PNG image.
-            // The Save method determines the format from the SaveFormat enum.
-            doc.Save("output.png", SaveFormat.Png);
-        }
+        // Ensure the document contains at least one paragraph.
+        doc.EnsureMinimum();
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+
+        // Clear any existing runs and insert new text using a Run node.
+        firstParagraph.Runs.Clear();
+        firstParagraph.AppendChild(new Run(doc, "This text was inserted using the Text property."));
+
+        // Save the modified document as a PNG image (renders the first page).
+        doc.Save(outputPath, SaveFormat.Png);
     }
 }

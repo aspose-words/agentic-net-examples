@@ -3,7 +3,7 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class InsertGroupShapeExample
+class Program
 {
     static void Main()
     {
@@ -11,31 +11,31 @@ class InsertGroupShapeExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the first shape (rectangle) and set its position and stroke.
-        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 250);
-        shape1.Left = 20;
-        shape1.Top = 20;
-        shape1.Stroke.Color = Color.Red;
+        // Insert a rectangle shape.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        rect.Left = 20;
+        rect.Top = 20;
+        rect.Stroke.Color = Color.Red;
 
-        // Insert the second shape (ellipse) and set its position and stroke.
-        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 200);
-        shape2.Left = 40;
-        shape2.Top = 50;
-        shape2.Stroke.Color = Color.Green;
+        // Insert an ellipse shape.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        ellipse.Left = 40;
+        ellipse.Top = 50;
+        ellipse.Stroke.Color = Color.Green;
 
-        // Group the two shapes. The InsertGroupShape method automatically inserts the new GroupShape
-        // at the current builder position.
-        GroupShape group = builder.InsertGroupShape(shape1, shape2);
+        // Group the rectangle and ellipse into a GroupShape.
+        GroupShape innerGroup = builder.InsertGroupShape(rect, ellipse);
 
-        // Clone the first shape and add the clone as a child of the group.
-        Shape shape3 = (Shape)shape1.Clone(true);
-        group.AppendChild(shape3);
+        // Clone the rectangle shape to create a new shape.
+        Shape clonedRect = (Shape)rect.Clone(true);
+        clonedRect.Left = 60;
+        clonedRect.Top = 60;
+        clonedRect.Stroke.Color = Color.Blue;
 
-        // (Optional) Insert the group again at the current position – this demonstrates using InsertNode.
-        // The group is already in the document, so this call will place a second copy.
-        builder.InsertNode(group.Clone(true));
+        // Group the inner group with the cloned rectangle into an outer GroupShape.
+        GroupShape outerGroup = builder.InsertGroupShape(innerGroup, clonedRect);
 
-        // Save the document to a DOCX file.
-        doc.Save("GroupShapeExample.docx");
+        // Save the document containing the nested group shape.
+        doc.Save("NestedGroupShape.docx");
     }
 }

@@ -1,77 +1,45 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
-class OfficeMathConversion
+class Program
 {
     static void Main()
     {
-        // Path to the input DOCX file that contains OfficeMath objects.
-        string inputPath = @"C:\Docs\OfficeMathDocument.docx";
+        // Path to the source DOCX that contains OfficeMath objects.
+        string inputPath = @"MyDir\Office math.docx";
 
-        // Load the document. If the source contains EquationXML shapes and you want them
-        // converted to OfficeMath objects, enable the flag on LoadOptions.
-        LoadOptions loadOptions = new LoadOptions
-        {
-            ConvertShapeToOfficeMath = true // Convert EquationXML shapes to OfficeMath.
-        };
-        Document doc = new Document(inputPath, loadOptions);
+        // Directory where the converted files will be saved.
+        string outputDir = @"ArtifactsDir\";
 
-        // -----------------------------------------------------------------
-        // Example 1: Export OfficeMath as images in HTML.
-        // -----------------------------------------------------------------
-        HtmlSaveOptions htmlImageOptions = new HtmlSaveOptions
-        {
-            OfficeMathOutputMode = HtmlOfficeMathOutputMode.Image
-        };
-        string htmlImagePath = @"C:\Docs\OfficeMath_AsImage.html";
-        doc.Save(htmlImagePath, htmlImageOptions);
-        Console.WriteLine("Saved HTML with OfficeMath as images to: " + htmlImagePath);
+        // Load the DOCX document.
+        Document doc = new Document(inputPath);
 
-        // -----------------------------------------------------------------
-        // Example 2: Export OfficeMath as MathML in HTML.
-        // -----------------------------------------------------------------
-        HtmlSaveOptions htmlMathMlOptions = new HtmlSaveOptions
+        // ------------------------------------------------------------
+        // 1. Export OfficeMath as MathML inside an HTML file.
+        // ------------------------------------------------------------
+        HtmlSaveOptions mathMlOptions = new HtmlSaveOptions
         {
             OfficeMathOutputMode = HtmlOfficeMathOutputMode.MathML
         };
-        string htmlMathMlPath = @"C:\Docs\OfficeMath_AsMathML.html";
-        doc.Save(htmlMathMlPath, htmlMathMlOptions);
-        Console.WriteLine("Saved HTML with OfficeMath as MathML to: " + htmlMathMlPath);
+        doc.Save(outputDir + "OfficeMath_MathML.html", mathMlOptions);
 
-        // -----------------------------------------------------------------
-        // Example 3: Export OfficeMath as plain text in HTML.
-        // -----------------------------------------------------------------
-        HtmlSaveOptions htmlTextOptions = new HtmlSaveOptions
+        // ------------------------------------------------------------
+        // 2. Export OfficeMath as images (PNG) inside an HTML file.
+        // ------------------------------------------------------------
+        HtmlSaveOptions imageOptions = new HtmlSaveOptions
+        {
+            OfficeMathOutputMode = HtmlOfficeMathOutputMode.Image
+        };
+        doc.Save(outputDir + "OfficeMath_Image.html", imageOptions);
+
+        // ------------------------------------------------------------
+        // 3. Export OfficeMath as plain text inside an HTML file.
+        // ------------------------------------------------------------
+        HtmlSaveOptions textOptions = new HtmlSaveOptions
         {
             OfficeMathOutputMode = HtmlOfficeMathOutputMode.Text
         };
-        string htmlTextPath = @"C:\Docs\OfficeMath_AsText.html";
-        doc.Save(htmlTextPath, htmlTextOptions);
-        Console.WriteLine("Saved HTML with OfficeMath as plain text to: " + htmlTextPath);
-
-        // -----------------------------------------------------------------
-        // Example 4: Export OfficeMath to Markdown as LaTeX.
-        // -----------------------------------------------------------------
-        MarkdownSaveOptions mdLatexOptions = new MarkdownSaveOptions
-        {
-            OfficeMathExportMode = MarkdownOfficeMathExportMode.Latex
-        };
-        string markdownLatexPath = @"C:\Docs\OfficeMath_AsLatex.md";
-        doc.Save(markdownLatexPath, mdLatexOptions);
-        Console.WriteLine("Saved Markdown with OfficeMath as LaTeX to: " + markdownLatexPath);
-
-        // -----------------------------------------------------------------
-        // Example 5: Export OfficeMath to plain text file as LaTeX.
-        // -----------------------------------------------------------------
-        TxtSaveOptions txtLatexOptions = new TxtSaveOptions
-        {
-            OfficeMathExportMode = TxtOfficeMathExportMode.Latex
-        };
-        string txtLatexPath = @"C:\Docs\OfficeMath_AsLatex.txt";
-        doc.Save(txtLatexPath, txtLatexOptions);
-        Console.WriteLine("Saved TXT with OfficeMath as LaTeX to: " + txtLatexPath);
+        doc.Save(outputDir + "OfficeMath_Text.html", textOptions);
     }
 }

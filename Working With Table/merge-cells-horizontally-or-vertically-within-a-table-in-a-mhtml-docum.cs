@@ -2,45 +2,47 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsMhtmlMerge
+namespace AsposeWordsTableMerge
 {
     class Program
     {
         static void Main()
         {
             // Load an existing MHTML document.
-            // This follows the provided "load" rule: new Document(string path).
-            string inputPath = "input.mht";
-            Document doc = new Document(inputPath);
+            // The path should point to a valid MHTML file that contains at least one table.
+            Document doc = new Document("InputDocument.mhtml");
 
-            // Ensure the document contains at least one table.
-            if (doc.FirstSection?.Body?.Tables?.Count > 0)
-            {
-                // Get the first table in the document.
-                Table table = doc.FirstSection.Body.Tables[0];
+            // Get the first table in the document.
+            Table table = doc.FirstSection.Body.Tables[0];
 
-                // Verify that the table has at least two rows and two columns
-                // to demonstrate both horizontal and vertical merging.
-                if (table.Rows.Count >= 2 && table.Rows[0].Cells.Count >= 2)
-                {
-                    // ---------- Horizontal merge (first row) ----------
-                    // The first cell becomes the start of a horizontally merged range.
-                    table.Rows[0].Cells[0].CellFormat.HorizontalMerge = CellMerge.First;
-                    // The second cell merges with the cell to its left.
-                    table.Rows[0].Cells[1].CellFormat.HorizontalMerge = CellMerge.Previous;
+            // -------------------------------------------------
+            // Horizontal merge: merge the first two cells of the first row.
+            // -------------------------------------------------
+            // Set the first cell as the start of the merged range.
+            Cell firstCell = table.Rows[0].Cells[0];
+            firstCell.CellFormat.HorizontalMerge = CellMerge.First;
+            firstCell.CellFormat.VerticalMerge = CellMerge.None; // Ensure vertical merge is not set.
 
-                    // ---------- Vertical merge (first column) ----------
-                    // The first cell becomes the start of a vertically merged range.
-                    table.Rows[0].Cells[0].CellFormat.VerticalMerge = CellMerge.First;
-                    // The cell directly below merges with the cell above it.
-                    table.Rows[1].Cells[0].CellFormat.VerticalMerge = CellMerge.Previous;
-                }
-            }
+            // Set the second cell to merge with the previous cell.
+            Cell secondCell = table.Rows[0].Cells[1];
+            secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+            secondCell.CellFormat.VerticalMerge = CellMerge.None;
 
+            // -------------------------------------------------
+            // Vertical merge: merge the first cell of the first row with the cell directly below it.
+            // -------------------------------------------------
+            // Set the top cell as the start of the vertical merge.
+            firstCell.CellFormat.VerticalMerge = CellMerge.First;
+            // The cell below (row 1, column 0) will merge with the previous cell vertically.
+            Cell belowCell = table.Rows[1].Cells[0];
+            belowCell.CellFormat.VerticalMerge = CellMerge.Previous;
+            // Ensure horizontal merge flags are cleared for these cells.
+            belowCell.CellFormat.HorizontalMerge = CellMerge.None;
+
+            // -------------------------------------------------
             // Save the modified document back to MHTML format.
-            // This follows the provided "save" rule: doc.Save(string path, SaveFormat format).
-            string outputPath = "output.mht";
-            doc.Save(outputPath, SaveFormat.Mhtml);
+            // -------------------------------------------------
+            doc.Save("MergedOutput.mhtml", SaveFormat.Mhtml);
         }
     }
 }

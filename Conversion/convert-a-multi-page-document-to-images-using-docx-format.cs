@@ -1,33 +1,43 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using System.Drawing;
 
-class Program
+class ConvertDocxToImages
 {
     static void Main()
     {
-        // Load the multi‑page DOCX document.
-        Document doc = new Document("Input.docx");
+        // Path to the source DOCX file (multi‑page document)
+        string inputPath = @"C:\Docs\MultiPageDocument.docx";
 
-        // Create image save options (PNG format in this example).
+        // Directory where the page images will be saved
+        string outputDir = @"C:\Docs\Images";
+
+        // Ensure the output directory exists
+        Directory.CreateDirectory(outputDir);
+
+        // Load the DOCX document
+        Document doc = new Document(inputPath);
+
+        // Create ImageSaveOptions for PNG format
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
-        // Optional: set desired resolution and image size.
-        options.Resolution = 300;                     // 300 DPI
-        options.ImageSize = new Size(1240, 1754);     // Approx. A4 at 300 DPI
 
-        // Iterate through all pages and save each one as a separate image file.
-        for (int i = 0; i < doc.PageCount; i++)
+        // Optional: adjust resolution or image size if required
+        // options.Resolution = 300;
+        // options.ImageSize = new Size(1240, 1754); // Example size
+
+        // Iterate through each page of the document
+        for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
         {
-            // Render the current page (zero‑based index) only.
-            options.PageSet = new PageSet(i);
+            // Specify which page to render
+            options.PageSet = new PageSet(pageIndex);
 
-            // Build the output file name.
-            string outputFile = $"Page_{i + 1}.png";
+            // Build the output file name for the current page
+            string outputPath = Path.Combine(outputDir, $"Page_{pageIndex + 1}.png");
 
-            // Save the rendered page to an image file.
-            doc.Save(outputFile, options);
+            // Save the selected page as an image
+            doc.Save(outputPath, options);
         }
     }
 }

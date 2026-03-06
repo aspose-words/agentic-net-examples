@@ -3,33 +3,34 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class InsertOleIntoDot
 {
     static void Main()
     {
-        // Create a new DOT (Word template) document.
-        Document doc = new Document();
+        // Load an existing DOT template.
+        Document doc = new Document("Template.dot");
+
+        // Create a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph to describe the OLE object.
-        builder.Writeln("Embedded ZIP package OLE object:");
+        // Write a description before the OLE object.
+        builder.Writeln("Embedded OLE package:");
 
-        // Load the file that will be embedded as an OLE package.
-        // Replace the path with the actual location of your file.
-        byte[] zipBytes = File.ReadAllBytes("cat001.zip");
-
-        using (MemoryStream zipStream = new MemoryStream(zipBytes))
+        // Open the file that will be embedded as an OLE object.
+        using (FileStream fileStream = File.Open("Data.zip", FileMode.Open, FileAccess.Read))
         {
             // Insert the OLE object from the stream.
-            // Parameters: stream, progId ("Package" for generic OLE package), asIcon = true, presentation = null.
-            Shape oleShape = builder.InsertOleObject(zipStream, "Package", true, null);
+            // progId "Package" indicates a generic OLE package.
+            // asIcon = false inserts the object as its content.
+            // presentation = null lets Aspose.Words choose a default icon if needed.
+            Shape oleShape = builder.InsertOleObject(fileStream, "Package", false, null);
 
-            // Set the file name and display name that Word will show for the OLE object.
-            oleShape.OleFormat.OlePackage.FileName = "cat001.zip";
-            oleShape.OleFormat.OlePackage.DisplayName = "cat001.zip";
+            // Optionally set the file name and display name for the OLE package.
+            oleShape.OleFormat.OlePackage.FileName = "Data.zip";
+            oleShape.OleFormat.OlePackage.DisplayName = "Data.zip";
         }
 
-        // Save the document as a DOT template.
-        doc.Save("TemplateWithOle.dot");
+        // Save the modified document. The output can be DOCX, DOC, or another DOT.
+        doc.Save("Result.docx");
     }
 }

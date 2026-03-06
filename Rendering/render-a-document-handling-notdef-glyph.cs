@@ -10,13 +10,17 @@ class Program
         // Create a new empty document.
         Document doc = new Document();
 
-        // Configure font settings to substitute missing fonts with a font that has extensive Unicode coverage.
+        // Configure font settings.
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SubstitutionSettings.DefaultFontSubstitution.Enabled = true;
-        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial Unicode MS";
 
-        // Load a predefined fallback scheme (Google Noto) to improve glyph coverage.
-        fontSettings.FallbackSettings.LoadNotoFallbackSettings();
+        // Use a font that has a large Unicode coverage as the default substitute.
+        // This font will be used when the original font is missing or lacks a glyph.
+        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial Unicode MS";
+        fontSettings.SubstitutionSettings.DefaultFontSubstitution.Enabled = true;
+
+        // Build an automatic fallback scheme that distributes available fonts across Unicode ranges.
+        // This helps replace missing glyphs (e.g., .notdef) with appropriate fallback fonts.
+        fontSettings.FallbackSettings.BuildAutomatic();
 
         // Assign the configured FontSettings to the document.
         doc.FontSettings = fontSettings;
@@ -25,17 +29,21 @@ class Program
         WarningInfoCollection warningCollector = new WarningInfoCollection();
         doc.WarningCallback = warningCollector;
 
-        // Build document content using a font that does not exist on the system.
+        // Use DocumentBuilder to add text that contains characters likely missing in the primary font.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Missing Font";
+        builder.Font.Name = "MissingFont"; // intentionally non‑existent font to trigger substitution
 
-        // Insert a character that is likely missing in most fonts (e.g., a Telugu glyph).
-        builder.Writeln("Testing missing glyph: \u0C00");
+        // Write a range of Unicode characters (Cyrillic block) that may not be present in the missing font.
+        for (int code = 0x0400; code <= 0x04FF; code++)
+        {
+            builder.Write(Char.ConvertFromUtf32(code));
+        }
+        builder.Writeln();
 
-        // Save the document to PDF. The default substitution and fallback settings will handle the .notdef glyph.
-        doc.Save("Output.pdf");
+        // Save the document to PDF (or any other format you need).
+        doc.Save("RenderedDocument.pdf", SaveFormat.Pdf);
 
-        // Output any font substitution warnings to the console.
+        // Output any font substitution warnings that occurred during processing.
         foreach (WarningInfo info in warningCollector)
         {
             if (info.WarningType == WarningType.FontSubstitution)

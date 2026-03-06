@@ -2,32 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class JoinTablesInMhtml
+class Program
 {
     static void Main()
     {
-        // Load the source MHTML document that already contains two tables.
-        string inputFile = "input.mhtml";
-        Document doc = new Document(inputFile);
+        // Load the source MHTML document that contains the two tables.
+        Document doc = new Document("input.mht");
 
-        // Get the first table from the document (index 0 in the Tables collection).
+        // Retrieve the first table from the document's body.
         Table firstTable = doc.FirstSection.Body.Tables[0];
 
-        // Get the second table using the GetChild method (the second table has index 1).
+        // Retrieve the second table using the generic GetChild method.
         Table secondTable = (Table)doc.GetChild(NodeType.Table, 1, true);
 
-        // Move all rows from the second table to the first table.
+        // Transfer all rows from the second table to the first table.
+        // The Rows.Add method automatically removes the moved row from its original table.
         while (secondTable.HasChildNodes)
         {
-            // Append the first row of the second table to the first table.
             firstTable.Rows.Add(secondTable.FirstRow);
         }
 
-        // Remove the now‑empty second table container.
+        // After all rows have been moved, remove the now‑empty second table node.
         secondTable.Remove();
 
         // Save the modified document back to MHTML format.
-        string outputFile = "output.mhtml";
-        doc.Save(outputFile, SaveFormat.Mhtml);
+        doc.Save("output.mht");
     }
 }

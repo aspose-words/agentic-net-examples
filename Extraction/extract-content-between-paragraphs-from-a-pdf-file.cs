@@ -1,51 +1,70 @@
 using System;
-using System.Text;
 using Aspose.Words;
 
-class ExtractBetweenParagraphs
+namespace ExtractContentBetweenParagraphs
 {
-    static void Main()
+    class Program
     {
-        // Load the PDF file as an Aspose.Words document.
-        Document sourceDoc = new Document("input.pdf");
-
-        // Define the range of paragraphs to extract (zero‑based indices).
-        // For example, extract content from the 3rd paragraph up to (but not including) the 6th.
-        int startParagraphIndex = 2; // third paragraph
-        int endParagraphIndex   = 5; // sixth paragraph (exclusive)
-
-        // Validate the indices against the actual paragraph count.
-        ParagraphCollection paragraphs = sourceDoc.FirstSection.Body.Paragraphs;
-        if (startParagraphIndex < 0 ||
-            endParagraphIndex > paragraphs.Count ||
-            startParagraphIndex >= endParagraphIndex)
+        static void Main(string[] args)
         {
-            throw new ArgumentOutOfRangeException("Invalid paragraph range specified.");
+            // Path to the source PDF file
+            string inputPdfPath = @"C:\Docs\source.pdf";
+
+            // Load the PDF file as an Aspose.Words document. Aspose.Words can open PDF directly.
+            Document sourceDoc = new Document(inputPdfPath);
+
+            // Get all paragraphs in the main body of the first section
+            ParagraphCollection allParagraphs = sourceDoc.FirstSection.Body.Paragraphs;
+
+            // Define the unique text that marks the start and end paragraphs
+            string startMarker = "=== Start ===";
+            string endMarker   = "=== End ===";
+
+            // Locate the indices of the start and end markers
+            int startIndex = -1;
+            int endIndex   = -1;
+
+            for (int i = 0; i < allParagraphs.Count; i++)
+            {
+                string paragraphText = allParagraphs[i].GetText();
+
+                if (startIndex == -1 && paragraphText.Contains(startMarker))
+                    startIndex = i;
+
+                if (paragraphText.Contains(endMarker))
+                    endIndex = i;
+            }
+
+            // Ensure valid indices were found and that there is content between them
+            if (startIndex != -1 && endIndex != -1 && endIndex > startIndex + 1)
+            {
+                // Create a new blank document to hold the extracted content
+                Document extractedDoc = new Document();
+
+                // Build the minimal required structure (Section -> Body)
+                Section newSection = new Section(extractedDoc);
+                extractedDoc.AppendChild(newSection);
+                Body newBody = new Body(extractedDoc);
+                newSection.AppendChild(newBody);
+
+                // Import each paragraph that lies between the markers
+                for (int i = startIndex + 1; i < endIndex; i++)
+                {
+                    // ImportNode clones the node into the target document while preserving formatting
+                    Node importedParagraph = extractedDoc.ImportNode(allParagraphs[i], true);
+                    newBody.AppendChild(importedParagraph);
+                }
+
+                // Save the extracted content to a new DOCX file (or any format supported by the extension)
+                string outputDocxPath = @"C:\Docs\extracted_content.docx";
+                extractedDoc.Save(outputDocxPath);
+                Console.WriteLine($"Extracted content saved to: {outputDocxPath}");
+            }
+            else
+            {
+                // No valid range found – handle as needed (e.g., log, throw, etc.)
+                Console.WriteLine("Unable to locate a valid start/end paragraph range.");
+            }
         }
-
-        // Gather the text of the selected paragraphs.
-        StringBuilder extractedText = new StringBuilder();
-        for (int i = startParagraphIndex; i < endParagraphIndex; i++)
-        {
-            Paragraph para = paragraphs[i];
-            extractedText.Append(para.GetText()); // GetText includes the paragraph break.
-        }
-
-        // Output the extracted content to the console.
-        Console.WriteLine(extractedText.ToString());
-
-        // Optionally, save the extracted content as a new Word document.
-        Document resultDoc = new Document(); // create a blank document
-        // Ensure the document has the minimal required nodes.
-        resultDoc.RemoveAllChildren();
-        Section section = new Section(resultDoc);
-        resultDoc.AppendChild(section);
-        Body body = new Body(resultDoc);
-        section.AppendChild(body);
-        Paragraph newPara = new Paragraph(resultDoc);
-        body.AppendChild(newPara);
-        newPara.AppendChild(new Run(resultDoc, extractedText.ToString()));
-
-        resultDoc.Save("ExtractedContent.docx");
     }
 }

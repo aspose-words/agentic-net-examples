@@ -1,0 +1,23 @@
+{
+  "WordsNet": {
+    "language": "csharp",
+    "rules": {
+      "Comment rules": [
+        "Use the correct Comment API – create a Comment, add a Run with the comment text to its first paragraph, then append the Comment to the target Paragraph.",
+        "Remove any non‑existent methods such as Comment.SetText.",
+        "Ensure the builder’s cursor is correctly positioned when inserting the text box and when adding the comment."
+      ],
+      "Saving/Export rules": [
+        "Call Document.Save after finishing list formatting; printing can be performed later with Document.Print or a UI dialog.",
+        "Keep the protection and encryption steps separate – protect the document first, then encrypt on save using `OoxmlSaveOptions.Password`."
+      ],
+      "Images/Shapes/OLE rules": [
+        "Keep only the namespaces that are actually used: System.Drawing, Aspose.Words, and Aspose.Words.Lists."
+      ],
+      "Layout rules": [
+        "Add the missing namespace import for the Footnote class: `using Aspose.Words.Notes;`.",
+        "Iterate over the NodeCollection returned by `GetChildNodes` using `foreach (Footnote footnote in footnotes)`; the collection contains Footnote objects."
+      ]
+    }
+  }
+}

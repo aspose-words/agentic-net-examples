@@ -9,32 +9,33 @@ class Program
         // Load the source Word document.
         Document doc = new Document("Input.docx");
 
-        // Create PDF save options and configure rendering settings.
+        // Configure PDF rendering options.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Render all colors as grayscale.
-            ColorMode = ColorMode.Grayscale,
-
-            // Use high‑quality (slow) rendering algorithms.
+            // Enable high‑quality (slow) rendering algorithms.
             UseHighQualityRendering = true,
 
             // Enable anti‑aliasing for smoother edges.
             UseAntiAliasing = true,
 
-            // Render DrawingML shapes themselves (not their fallback shapes).
+            // Render DrawingML shapes themselves (not fall‑backs).
             DmlRenderingMode = DmlRenderingMode.DrawingML,
 
             // Render DrawingML effects with the highest quality.
             DmlEffectsRenderingMode = DmlEffectsRenderingMode.Fine,
 
-            // Set the initial zoom factor (percentage) when the PDF is opened.
-            ZoomFactor = 100
+            // Render colors in normal mode (full color).
+            ColorMode = ColorMode.Normal,
+
+            // Configure metafile rendering to use vector rendering with bitmap fallback.
+            MetafileRenderingOptions = new MetafileRenderingOptions
+            {
+                EmulateRasterOperations = false,
+                RenderingMode = MetafileRenderingMode.VectorWithFallback
+            }
         };
 
-        // Show hidden text in the rendered PDF.
-        doc.LayoutOptions.ShowHiddenText = true;
-
-        // Save the document as PDF using the configured options.
+        // Save the document as PDF using the specified options.
         doc.Save("Output.pdf", pdfOptions);
     }
 }

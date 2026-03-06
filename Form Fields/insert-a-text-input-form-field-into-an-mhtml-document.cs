@@ -1,4 +1,3 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Fields;
@@ -11,15 +10,17 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input form field at the current cursor position.
-        // Parameters: name, type, format, placeholder text, maxLength (0 = unlimited).
-        builder.InsertTextInput("TextInput", TextFormFieldType.Regular, "", "Enter your text here", 0);
+        // Write a prompt before the form field.
+        builder.Write("Please enter your name: ");
 
-        // Configure save options for MHTML output.
+        // Insert a text input form field.
+        // Parameters: name, type, format, placeholder text, maxLength (0 = unlimited).
+        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 0);
+
+        // Configure save options to keep the form field as an HTML INPUT element.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
-            // Export the form field as an HTML <input> element (default is false, set explicitly for clarity).
-            ExportTextInputFormFieldAsText = false
+            ExportTextInputFormFieldAsText = false // default, but set explicitly for clarity.
         };
 
         // Save the document as an MHTML file.

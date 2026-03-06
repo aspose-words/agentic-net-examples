@@ -6,19 +6,27 @@ class Program
 {
     static void Main()
     {
-        // Load the existing WORDML (or DOCX) document.
-        Document doc = new Document("Input.docx");
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Retrieve the first table in the document.
-        Table table = doc.FirstSection.Body.Tables[0];
+        // Start a new table. At least one row and cell are required.
+        Table table = builder.StartTable();
 
-        // Align the table to the center of the page.
+        // Insert a single cell with placeholder text.
+        builder.InsertCell();
+        builder.Write("Sample text");
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Center the table on the page.
         table.Alignment = TableAlignment.Center;
 
-        // Set the table width to 100 % of the page width.
+        // Set the table width to 100% of the page width.
         table.PreferredWidth = PreferredWidth.FromPercent(100);
 
-        // Save the modified document back to WORDML format.
-        doc.Save("Output.xml", SaveFormat.WordML);
+        // Save the document in WORDML (XML) format.
+        doc.Save("TableCentered100Percent.xml", SaveFormat.WordML);
     }
 }

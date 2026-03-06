@@ -6,36 +6,37 @@ class SplitTableExample
 {
     static void Main()
     {
-        // Load the source document that contains the table to be split.
-        Document doc = new Document("Input.docx");
+        // Load the existing DOC/DOT document.
+        Document doc = new Document("InputDocument.dot");
 
-        // Locate the first table in the document.
-        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (originalTable == null)
-            throw new InvalidOperationException("No table found in the document.");
+        // Assume we want to split the first table in the document.
+        Table originalTable = doc.FirstSection.Body.Tables[0];
 
         // Define the row index after which the table will be split.
-        // Rows are zero‑based; this example splits after the second row (index 1).
+        // For example, split after the second row (zero‑based index = 1).
         int splitAfterRowIndex = 1;
 
-        // Validate the split index.
-        if (splitAfterRowIndex < 0 || splitAfterRowIndex >= originalTable.Rows.Count - 1)
-            throw new ArgumentOutOfRangeException(nameof(splitAfterRowIndex), "Invalid split row index.");
+        // If the table has fewer rows than the split point, nothing to do.
+        if (originalTable.Rows.Count <= splitAfterRowIndex + 1)
+        {
+            doc.Save("OutputDocument.docx");
+            return;
+        }
 
-        // Clone the original table structure without its child rows.
+        // Create a shallow clone of the original table (no rows, cells, etc.).
         Table newTable = (Table)originalTable.Clone(false);
-        // Remove any rows that were cloned by default (should be none, but ensure a clean table).
-        newTable.RemoveAllChildren();
 
-        // Move rows that belong to the second part into the new table.
-        // The rows to move start at splitAfterRowIndex + 1.
+        // Move all rows that come after the split point to the new table.
+        // Rows are zero‑based; the row at splitAfterRowIndex stays in the original table.
         while (originalTable.Rows.Count > splitAfterRowIndex + 1)
         {
-            // Remove the row from the original table.
+            // The row that now occupies the position after the split point.
             Row movingRow = originalTable.Rows[splitAfterRowIndex + 1];
+
+            // Detach the row from the original table.
             movingRow.Remove();
 
-            // Append the removed row to the new table.
+            // Append the detached row to the new table.
             newTable.Rows.Add(movingRow);
         }
 
@@ -43,6 +44,6 @@ class SplitTableExample
         originalTable.ParentNode.InsertAfter(newTable, originalTable);
 
         // Save the modified document.
-        doc.Save("Output.docx");
+        doc.Save("OutputDocument.docx");
     }
 }

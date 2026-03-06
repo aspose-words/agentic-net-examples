@@ -1,32 +1,28 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using System.Drawing;
 
-class ApplyFontToRuns
+class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Ensure the document has at least one paragraph to work with.
+        // Get the first paragraph of the document (it exists by default).
         Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
         // Create a run of text.
-        Run run = new Run(doc, "Hello world! This text will use a custom font.");
+        Run run = new Run(doc, "Hello world!");
 
-        // Apply a specific font to the run via the Font.Name property.
-        run.Font.Name = "Courier New";
+        // Apply a specific font to the run.
+        run.Font.Name = "Courier New";   // Set the font name.
+        run.Font.Size = 24;              // Optional: set the font size.
 
-        // Optionally, set additional font properties (size, color, etc.).
-        run.Font.Size = 24;
-        run.Font.Color = Color.Blue;
-
-        // Append the run to the paragraph.
+        // Add the run to the paragraph.
         paragraph.AppendChild(run);
 
         // Save the document to a DOCX file.
-        doc.Save("AppliedFont.docx");
+        doc.Save("Output.docx");
     }
 }

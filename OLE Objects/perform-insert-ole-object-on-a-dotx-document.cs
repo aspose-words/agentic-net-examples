@@ -3,39 +3,35 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class InsertOleIntoDotx
+class InsertOleObjectIntoDotx
 {
     static void Main()
     {
-        // Paths to the template, OLE source file and optional icon image.
-        string dataDir = @"C:\Data\";
-        string templatePath = Path.Combine(dataDir, "Template.dotx");
-        string oleFilePath = Path.Combine(dataDir, "Spreadsheet.xlsx");
-        string iconPath = Path.Combine(dataDir, "Icon.png");
-        string outputPath = Path.Combine(dataDir, "Result.docx");
+        // Path to the DOTX template file.
+        string templatePath = @"C:\Docs\Template.dotx";
 
-        // Load the DOTX template.
+        // Load the DOTX document.
         Document doc = new Document(templatePath);
 
         // Create a DocumentBuilder to work with the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a caption before the OLE object.
-        builder.Writeln("Embedded Excel spreadsheet:");
+        // Insert a paragraph to separate the OLE object from existing content.
+        builder.Writeln("Embedded Excel Spreadsheet:");
+
+        // Path to the file that will be embedded as an OLE object.
+        string oleFilePath = @"C:\Docs\SampleData.xlsx";
 
         // Insert the OLE object.
         // Parameters:
-        //   oleFilePath – path to the file to embed.
-        //   isLinked    – false for an embedded object.
-        //   asIcon      – false to display the content, true to display as an icon.
-        //   presentation– stream with a custom icon image (optional).
-        using (FileStream iconStream = File.OpenRead(iconPath))
-        {
-            // Here we embed the Excel file and display it as an icon using a custom image.
-            builder.InsertOleObject(oleFilePath, false, true, iconStream);
-        }
+        //   fileName   – full path to the file to embed.
+        //   isLinked   – false to embed (not link) the object.
+        //   asIcon     – false to display the object content (set true to show as an icon).
+        //   presentation – null to use the default presentation image.
+        builder.InsertOleObject(oleFilePath, false, false, null);
 
-        // Save the modified document.
+        // Save the resulting document as a regular DOCX file.
+        string outputPath = @"C:\Docs\Result.docx";
         doc.Save(outputPath);
     }
 }

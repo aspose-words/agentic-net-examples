@@ -1,30 +1,28 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
-class RemoveTextBoxAndSaveAsTemplate
+class Program
 {
     static void Main()
     {
-        // Load the macro‑enabled DOCM document.
-        // The Document(string) constructor is the approved way to create a Document from a file.
-        Document doc = new Document(@"C:\Input\SourceDocument.docm");
+        // Load the macro‑enabled DOCM file.
+        Document doc = new Document("Input.docm");
 
-        // Find all Shape nodes in the document (including those inside headers/footers).
-        // GetChildNodes(NodeType.Shape, true) returns a live collection of all shapes.
+        // Collect all shapes in the document (including those inside headers/footers).
         NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
 
-        // Iterate over the collection and remove any shape that is a text box.
-        // ShapeType.TextBox identifies a text box shape.
-        foreach (Shape shape in shapes)
+        // Iterate backwards so that removal does not affect the index order.
+        for (int i = shapes.Count - 1; i >= 0; i--)
         {
+            Shape shape = (Shape)shapes[i];
+            // Remove only shapes that are text boxes.
             if (shape.ShapeType == ShapeType.TextBox)
-                shape.Remove(); // Remove the text box from its parent.
+                shape.Remove();
         }
 
         // Save the modified document as a DOT template.
-        // Using Save(string, SaveFormat) ensures the format is explicitly set to DOT.
-        doc.Save(@"C:\Output\ResultTemplate.dot", SaveFormat.Dot);
+        doc.Save("Output.dot", SaveFormat.Dot);
     }
 }

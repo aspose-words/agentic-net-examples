@@ -1,33 +1,34 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class PdfRenderExample
 {
     static void Main()
     {
-        // Load the source document.
-        Document doc = new Document("Input.docx");
+        // Load an existing Word document.
+        Document doc = new Document("InputDocument.docx");
 
-        // Configure PDF save options.
+        // Create PdfSaveOptions to customize PDF output.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Image quality for JPEG images embedded in the PDF (0‑100).
+            // Set image quality for JPEG images embedded in the PDF (0‑100).
             JpegQuality = 90,
 
-            // Render text with anti‑aliasing and high‑quality algorithms.
+            // Enable anti‑aliasing for smoother text rendering.
             UseAntiAliasing = true,
+
+            // Use high‑quality rendering algorithms (slower but better visual quality).
             UseHighQualityRendering = true,
 
-            // Embed all fonts used in the document into the PDF.
-            // In older Aspose.Words versions the FontEmbeddingMode enum may not exist;
-            // use the boolean property EmbedFullFonts instead.
+            // Embed all fonts fully into the PDF to preserve appearance.
             EmbedFullFonts = true,
 
-            // Set PDF/A‑1b compliance (preserves visual appearance).
+            // Set the PDF compliance level (e.g., PDF/A‑1b for archival).
             Compliance = PdfCompliance.PdfA1b
         };
 
         // Save the document as a PDF using the configured options.
-        doc.Save("Output.pdf", pdfOptions);
+        doc.Save("RenderedOutput.pdf", pdfOptions);
     }
 }

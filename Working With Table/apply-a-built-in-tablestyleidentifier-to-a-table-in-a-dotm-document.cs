@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -7,45 +6,40 @@ class Program
 {
     static void Main()
     {
-        // Load an existing DOTM template
-        string dataDir = @"C:\Data\";
-        string inputPath = Path.Combine(dataDir, "Template.dotm");
-        Document doc = new Document(inputPath);
+        // Load an existing DOTM template.
+        Document doc = new Document("Template.dotm");
 
-        // Use DocumentBuilder to insert a new table
+        // Create a DocumentBuilder to edit the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a new table.
         Table table = builder.StartTable();
 
-        // Insert header row
+        // Insert the first cell (required before any table formatting).
         builder.InsertCell();
-        builder.Writeln("Header 1");
-        builder.InsertCell();
-        builder.Writeln("Header 2");
+        builder.Writeln("Header");
         builder.EndRow();
 
-        // Insert data row
+        // Insert a second row with sample data.
         builder.InsertCell();
-        builder.Writeln("Value 1");
-        builder.InsertCell();
-        builder.Writeln("Value 2");
+        builder.Writeln("Data 1");
         builder.EndRow();
 
-        // Finish table construction
-        builder.EndTable();
-
-        // Apply a built‑in table style by its identifier
+        // Apply a built‑in table style using the StyleIdentifier property.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Enable specific style features (first row, first column, row banding)
+        // Optionally specify which parts of the style are applied.
         table.StyleOptions = TableStyleOptions.FirstRow |
                              TableStyleOptions.FirstColumn |
                              TableStyleOptions.RowBands;
 
-        // Adjust column widths to fit the content
+        // Adjust the table width to fit its contents.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Save the modified document as a DOTM file
-        string outputPath = Path.Combine(dataDir, "StyledTable.dotm");
-        doc.Save(outputPath);
+        // Finish the table.
+        builder.EndTable();
+
+        // Save the modified document as a DOTM file.
+        doc.Save("Result.dotm");
     }
 }

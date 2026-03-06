@@ -1,26 +1,33 @@
+using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
 using Aspose.Words.Saving;
 
-class Program
+class InsertTextIntoCellInTxt
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 1x1 table.
-        builder.StartTable();          // Begin the table.
-        builder.InsertCell();          // Insert the first (and only) cell.
-        builder.Write("Text inside the cell."); // Insert the desired text into the cell.
-        builder.EndRow();              // End the row.
-        builder.EndTable();            // End the table.
+        // Start a table and add a single cell.
+        builder.StartTable();
+        builder.InsertCell();               // Insert first (and only) cell.
+        builder.Write("Hello, World!");     // Insert the desired text into the cell.
+        builder.EndRow();                   // End the row.
+        builder.EndTable();                 // End the table.
 
-        // Save the document as plain‑text, preserving the table layout.
+        // Configure TXT save options if needed (e.g., custom paragraph break).
         TxtSaveOptions txtOptions = new TxtSaveOptions
         {
-            PreserveTableLayout = true
+            // Example: keep default settings or customize as required.
+            // ParagraphBreak = "\r\n"
         };
-        doc.Save("CellInTxt.txt", txtOptions);
+
+        // Save the document as a plain‑text file.
+        doc.Save("CellText.txt", txtOptions);
     }
 }

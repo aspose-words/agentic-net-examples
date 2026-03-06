@@ -2,49 +2,60 @@ using System;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Words.Tables; // Added for Table class
 
-class FindReplaceDemo
+class FindAndReplaceDemo
 {
     static void Main()
     {
-        // Load the DOCX document (lifecycle rule: load)
+        // Load an existing DOCX document.
+        // (Assumes the file "Input.docx" exists in the same folder as the executable.)
         Document doc = new Document("Input.docx");
 
-        // Example 1: Simple string replace throughout the whole document (case‑insensitive)
-        // Replaces all occurrences of the placeholder "_FullName_" with "John Doe".
-        int count1 = doc.Range.Replace("_FullName_", "John Doe");
-        Console.WriteLine($"Simple replace made {count1} replacements.");
+        // -----------------------------------------------------------------
+        // 1. Simple find-and-replace across the whole document.
+        // Replace the placeholder "_FullName_" with the actual name.
+        // The method returns the number of replacements performed.
+        // -----------------------------------------------------------------
+        int countSimple = doc.Range.Replace("_FullName_", "John Doe");
+        Console.WriteLine($"Simple replace count: {countSimple}");
 
-        // Example 2: Replace with additional options (match whole words only, case‑sensitive)
+        // -----------------------------------------------------------------
+        // 2. Find-and-replace with additional options.
+        // Example: replace "Ruby" with "Jade" respecting case sensitivity.
+        // -----------------------------------------------------------------
         FindReplaceOptions options = new FindReplaceOptions
         {
-            MatchCase = true,
-            FindWholeWordsOnly = true
+            MatchCase = true   // Set to false to ignore case.
         };
-        // Replace the word "Ruby" only when it appears as a whole word and with exact case.
-        int count2 = doc.Range.Replace("Ruby", "Jade", options);
-        Console.WriteLine($"Options replace made {count2} replacements.");
+        int countWithOptions = doc.Range.Replace("Ruby", "Jade", options);
+        Console.WriteLine($"Replace with options count: {countWithOptions}");
 
-        // Example 3: Regular‑expression replace with a callback to log each replacement.
-        FindReplaceOptions regexOptions = new FindReplaceOptions(new ReplacementLogger());
-        Regex regex = new Regex(@"\b(\d{4})\b"); // Find any four‑digit number.
-        // Replace each year with "2026" while logging the original value.
-        int count3 = doc.Range.Replace(regex, "2026", regexOptions);
-        Console.WriteLine($"Regex replace made {count3} replacements.");
+        // -----------------------------------------------------------------
+        // 3. Find-and-replace using a regular expression.
+        // Replace every number with a paragraph break.
+        // -----------------------------------------------------------------
+        int countRegex = doc.Range.Replace(new Regex(@"\d+"), "&p");
+        Console.WriteLine($"Regex replace count: {countRegex}");
 
-        // Save the modified document (lifecycle rule: save)
-        doc.Save("Output.docx");
-    }
-
-    // Callback implementation that logs each replacement.
-    private class ReplacementLogger : IReplacingCallback
-    {
-        public ReplaceAction Replacing(ReplacingArgs args)
+        // -----------------------------------------------------------------
+        // 4. Find-and-replace within a specific node (e.g., a table).
+        // This demonstrates how to target a sub‑range instead of the whole document.
+        // -----------------------------------------------------------------
+        // Ensure the document contains at least one table.
+        if (doc.FirstSection.Body.Tables.Count > 0)
         {
-            Console.WriteLine($"Replacing \"{args.Match.Value}\" with \"{args.Replacement}\" " +
-                              $"at offset {args.MatchOffset} in node type {args.MatchNode.NodeType}.");
-            // Perform the default replacement.
-            return ReplaceAction.Replace;
+            Table table = doc.FirstSection.Body.Tables[0];
+
+            // Replace "Carrots" with "Eggs" only inside the table.
+            int tableReplaceCount = table.Range.Replace("Carrots", "Eggs", options);
+            Console.WriteLine($"Table replace count: {tableReplaceCount}");
         }
+
+        // -----------------------------------------------------------------
+        // 5. Save the modified document.
+        // -----------------------------------------------------------------
+        doc.Save("Output.docx");
+        Console.WriteLine("Document saved as Output.docx");
     }
 }

@@ -2,34 +2,34 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ConvertListToPlainTextAndSaveAsDotm
+class ListToPlainTextToDotm
 {
     static void Main()
     {
-        // Path to the source DOC file containing the list.
-        string sourceDocPath = @"C:\Docs\SourceDocument.doc";
+        // Path to the source DOC file that contains the list.
+        string sourceDocPath = @"C:\Docs\SourceList.doc";
 
-        // Path to the destination DOTM file.
-        string destinationDotmPath = @"C:\Docs\ResultDocument.dotm";
+        // Load the source document.
+        Document sourceDoc = new Document(sourceDocPath);
 
-        // Load the existing DOC document.
-        Document doc = new Document(sourceDocPath);
+        // Ensure that list labels are up‑to‑date (optional, but useful if the document
+        // was edited programmatically before this step).
+        sourceDoc.UpdateListLabels();
 
-        // Ensure that list labels are up‑to‑date.
-        doc.UpdateListLabels();
+        // Extract the plain‑text representation of the entire document,
+        // which includes the list items rendered as simple text.
+        PlainTextDocument plainText = new PlainTextDocument(sourceDocPath);
+        string listAsText = plainText.Text;
 
-        // OPTIONAL: If you need to simplify complex list labels when exporting to plain text,
-        // you could save the document to a temporary text file using TxtSaveOptions.
-        // Here we demonstrate the option, but the final output is saved as DOTM.
-        TxtSaveOptions txtOptions = new TxtSaveOptions
-        {
-            SimplifyListLabels = true // Convert complex list symbols to simple ASCII equivalents.
-        };
-        // Save to a temporary .txt (not required for DOTM output, shown for completeness).
-        // string tempTxtPath = @"C:\Docs\TempPlainText.txt";
-        // doc.Save(tempTxtPath, txtOptions);
+        // Create a new (blank) document that will become the DOTM template.
+        Document dotmDoc = new Document();
 
-        // Save the document as a macro‑enabled template (DOTM).
-        doc.Save(destinationDotmPath, SaveFormat.Dotm);
+        // Insert the extracted plain‑text into the new document.
+        DocumentBuilder builder = new DocumentBuilder(dotmDoc);
+        builder.Writeln(listAsText);
+
+        // Save the result as a macro‑enabled Word template (DOTM).
+        string outputDotmPath = @"C:\Docs\ListPlainTextTemplate.dotm";
+        dotmDoc.Save(outputDotmPath, SaveFormat.Dotm);
     }
 }

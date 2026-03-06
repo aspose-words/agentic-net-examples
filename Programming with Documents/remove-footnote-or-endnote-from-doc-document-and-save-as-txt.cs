@@ -1,31 +1,35 @@
 using System;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Notes; // Added correct namespace for Footnote
+using Aspose.Words.Notes;
 
 class RemoveNotesAndSaveAsTxt
 {
     static void Main()
     {
-        // Load the source DOCX document.
-        Document doc = new Document("Input.docx");
+        // Path to the folder that contains the input document.
+        string dataDir = @"C:\Docs\";
 
-        // Remove all footnotes and endnotes.
-        // Get all footnote nodes (both footnotes and endnotes are represented by the Footnote class).
+        // Load the existing Word document.
+        Document doc = new Document(dataDir + "Input.docx");
+
+        // Collect all footnote and endnote nodes in the document.
+        // Both footnotes and endnotes are represented by the Footnote class.
         NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
-        foreach (Footnote note in notes.Cast<Footnote>())
+
+        // Remove each footnote/endnote from its parent.
+        foreach (Footnote note in notes)
         {
             note.Remove();
         }
 
         // Configure text save options (optional: exclude headers/footers).
-        TxtSaveOptions txtOptions = new TxtSaveOptions
+        TxtSaveOptions saveOptions = new TxtSaveOptions
         {
             ExportHeadersFootersMode = TxtExportHeadersFootersMode.None
         };
 
         // Save the modified document as plain text.
-        doc.Save("Output.txt", txtOptions);
+        doc.Save(dataDir + "Output.txt", saveOptions);
     }
 }

@@ -1,8 +1,8 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Math;
-using Aspose.Words.Rendering;
 using Aspose.Words.Saving;
+using Aspose.Words.Rendering;
 
 class Program
 {
@@ -16,22 +16,31 @@ class Program
         OfficeMath officeMath = (OfficeMath)doc.GetChild(NodeType.OfficeMath, 0, true);
         if (officeMath == null)
         {
-            Console.WriteLine("No OfficeMath object found in the document.");
+            Console.WriteLine("No OfficeMath objects were found in the document.");
             return;
         }
 
-        // Create ImageSaveOptions to control how the OfficeMath object is rendered.
-        // Here we render the equation as a PNG image and increase the scale for better resolution.
-        ImageSaveOptions imgOptions = new ImageSaveOptions(SaveFormat.Png)
+        // Create rendering options for the image.
+        // Here we use PNG format and increase the scale to render a larger image.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
         {
             Scale = 5 // Render the equation five times its original size.
         };
 
         // Render the OfficeMath object to an image file.
-        // GetMathRenderer creates an OfficeMathRenderer that can save the equation as an image.
-        officeMath.GetMathRenderer().Save("RenderedOfficeMath.png", imgOptions);
+        // The GetMathRenderer method returns an OfficeMathRenderer that can save the equation.
+        officeMath.GetMathRenderer().Save("RenderedOfficeMath.png", saveOptions);
 
-        // Optionally, save the original document (or a modified version) back to DOCX.
-        doc.Save("OfficeMath_Output.docx");
+        Console.WriteLine("OfficeMath has been rendered to 'RenderedOfficeMath.png'.");
+
+        // OPTIONAL: Export the whole document to HTML with OfficeMath as MathML.
+        // This demonstrates another way to render OfficeMath when saving the document.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
+        {
+            OfficeMathOutputMode = HtmlOfficeMathOutputMode.MathML
+        };
+        doc.Save("OfficeMath_AsMathML.html", htmlOptions);
+
+        Console.WriteLine("Document saved as HTML with OfficeMath rendered as MathML.");
     }
 }

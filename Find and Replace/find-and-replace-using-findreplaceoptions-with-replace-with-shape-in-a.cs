@@ -1,48 +1,51 @@
+using System;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Replacing;
-using System.Text.RegularExpressions;
 
 class Program
 {
     static void Main()
     {
-        // Load the DOCX document.
+        // Load the source DOCX file.
         Document doc = new Document("Input.docx");
 
-        // Configure find/replace to use a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new ShapeReplacingCallback();
+        // Configure find/replace to use a custom callback that inserts a shape.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new ShapeReplacingHandler()
+        };
 
-        // Replace the placeholder "[SHAPE]" with a rectangle shape.
-        // The replacement string is empty because the callback inserts the shape.
+        // Replace every occurrence of the placeholder [SHAPE] with a rectangle shape.
         doc.Range.Replace(new Regex(@"\[SHAPE\]"), string.Empty, options);
 
         // Save the modified document.
         doc.Save("Output.docx");
     }
-}
 
-// Callback that replaces each found placeholder with a shape.
-class ShapeReplacingCallback : IReplacingCallback
-{
-    public ReplaceAction Replacing(ReplacingArgs args)
+    // Callback that inserts a shape at the location of each match.
+    private class ShapeReplacingHandler : IReplacingCallback
     {
-        // Obtain the document containing the match. The Document property returns DocumentBase,
-        // so we need to cast it to Document.
-        Document doc = (Document)args.MatchNode.Document;
+        public ReplaceAction Replacing(ReplacingArgs args)
+        {
+            // The match is inside a Run node; get its parent paragraph (optional, only needed if you want to move the builder to the paragraph).
+            Paragraph paragraph = (Paragraph)args.MatchNode.ParentNode;
 
-        // Position the builder at the match node.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.MoveTo(args.MatchNode);
+            // Create a DocumentBuilder for the document. Cast DocumentBase to Document because the constructor expects a Document instance.
+            DocumentBuilder builder = new DocumentBuilder((Document)args.MatchNode.Document);
 
-        // Insert a rectangle shape (100x50 points).
-        builder.InsertShape(ShapeType.Rectangle, 100, 50);
+            // Move the builder to the position of the matched node (the placeholder text).
+            builder.MoveTo(args.MatchNode);
 
-        // Remove the original placeholder text node.
-        args.MatchNode.Remove();
+            // Insert a rectangle shape (adjust type and size as required).
+            builder.InsertShape(ShapeType.Rectangle, 100, 50);
 
-        // Skip the default replacement since we handled it.
-        return ReplaceAction.Skip;
+            // Remove the original matched text node.
+            args.MatchNode.Remove();
+
+            // Skip the default text replacement because we have already handled the match.
+            return ReplaceAction.Skip;
+        }
     }
 }

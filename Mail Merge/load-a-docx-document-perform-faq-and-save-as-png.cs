@@ -1,39 +1,25 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Replacing;
+using Aspose.Words.Replacing; // Added for FindReplaceOptions
 
 class Program
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        const string inputFile = @"C:\Docs\SourceDocument.docx";
+        // Load the DOCX document from the file system.
+        Document doc = new Document("input.docx");
 
-        // Path where the PNG image will be saved.
-        const string outputFile = @"C:\Docs\SourceDocument.png";
-
-        // Load the DOCX document.
-        Document doc = new Document(inputFile);
-
-        // ----- FAQ processing (example: replace a placeholder with an answer) -----
+        // Example FAQ processing: replace a placeholder with actual text.
         // This demonstrates a simple find‑and‑replace operation.
-        // Adjust the search pattern and replacement text as needed for your FAQ logic.
-        const string placeholder = "?question?";
-        const string answer = "This is the answer to the frequently asked question.";
-        doc.Range.Replace(placeholder, answer, new FindReplaceOptions());
+        doc.Range.Replace("{{FAQ}}", "Frequently Asked Questions:", new FindReplaceOptions());
 
-        // Configure image save options to render the first page as a PNG.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
-        {
-            // Render only the first page (zero‑based index).
-            PageSet = new PageSet(0),
+        // Configure image save options to render the document as PNG.
+        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
+        // Render the first page only (zero‑based index). Remove or modify PageSet to render other pages.
+        pngOptions.PageSet = new PageSet(0);
 
-            // Optional: increase resolution for higher quality output.
-            Resolution = 300
-        };
-
-        // Save the document as a PNG image.
-        doc.Save(outputFile, saveOptions);
+        // Save the rendered page as a PNG image.
+        doc.Save("output.png", pngOptions);
     }
 }

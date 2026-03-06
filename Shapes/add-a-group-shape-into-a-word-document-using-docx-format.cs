@@ -1,43 +1,34 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
+using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Create a new blank document
+        // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert two floating shapes that will later be grouped
-        Shape shape1 = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.Page, 100,
-            RelativeVerticalPosition.Page, 100,
-            150, 100,
-            WrapType.None);
-        shape1.Stroke.Color = Color.Blue;
+        // Insert two floating shapes that will be grouped.
+        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, 200, 150);
+        shape1.Left = 50;   // Position relative to the page.
+        shape1.Top = 50;
+        shape1.Stroke.Color = System.Drawing.Color.Blue;
 
-        Shape shape2 = builder.InsertShape(
-            ShapeType.Ellipse,
-            RelativeHorizontalPosition.Page, 200,
-            RelativeVerticalPosition.Page, 200,
-            150, 100,
-            WrapType.None);
-        shape2.Stroke.Color = Color.Green;
+        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, 150, 150);
+        shape2.Left = 300;
+        shape2.Top = 100;
+        shape2.Stroke.Color = System.Drawing.Color.Green;
 
-        // Group the two shapes into a new GroupShape node and insert it at the current cursor position
-        GroupShape group = builder.InsertGroupShape(new Shape[] { shape1, shape2 });
+        // Group the two shapes into a new GroupShape node and insert it at the current cursor position.
+        GroupShape group = builder.InsertGroupShape(shape1, shape2);
 
-        // Optionally adjust the group's properties (size, position, etc.)
-        group.Bounds = new RectangleF(80, 80, 300, 300);
-        group.CoordSize = new Size(1000, 1000);
+        // Optionally adjust the group's properties (e.g., set a title).
+        group.Title = "My Group Shape";
 
-        // Save the document in DOCX format
-        doc.Save("GroupShapeExample.docx");
+        // Save the document in DOCX format.
+        doc.Save("GroupShape.docx", SaveFormat.Docx);
     }
 }

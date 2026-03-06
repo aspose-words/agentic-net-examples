@@ -1,3 +1,4 @@
+using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -5,27 +6,25 @@ class Program
 {
     static void Main()
     {
-        // Create a new document.
-        Document doc = new Document();
+        // Load an existing DOC/DOCX document.
+        Document doc = new Document("Input.docx");
 
-        // Ensure the document has a body to work with.
-        doc.FirstSection.Body.EnsureMinimum();
+        // Retrieve the first table in the document.
+        Table table = doc.FirstSection.Body.Tables[0];
 
-        // Create a table and add it to the document.
-        Table table = new Table(doc);
-        doc.FirstSection.Body.AppendChild(table);
-
-        // Create a new row and append it to the table.
+        // Create a new row that belongs to the same document.
         Row newRow = new Row(doc);
-        table.AppendChild(newRow);
 
-        // Ensure the row contains at least one cell.
+        // Ensure the row has at least one cell (creates a cell with an empty paragraph).
         newRow.EnsureMinimum();
 
         // Add some text to the first cell of the new row.
-        newRow.FirstCell.FirstParagraph.AppendChild(new Run(doc, "New row added"));
+        newRow.FirstCell.FirstParagraph.AppendChild(new Run(doc, "New row text"));
 
-        // Save the document.
-        doc.Save("AddedRow.docx");
+        // Append the new row to the end of the table.
+        table.AppendChild(newRow);
+
+        // Save the modified document.
+        doc.Save("Output.docx");
     }
 }

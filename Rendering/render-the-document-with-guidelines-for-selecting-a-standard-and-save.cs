@@ -1,4 +1,4 @@
-using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,21 +6,20 @@ class Program
 {
     static void Main()
     {
-        // Path to the source document that contains the guidelines.
-        string inputPath = "Guidelines.docx";
+        // Path to the folder that contains the source document.
+        string dataDir = @"C:\Data\";
 
-        // Path where the resulting PDF will be saved.
-        string outputPath = "Guidelines.pdf";
+        // Load the existing Word document that contains the guidelines.
+        Document doc = new Document(Path.Combine(dataDir, "Guidelines.docx"));
 
-        // Load the existing Word document.
-        Document doc = new Document(inputPath);
+        // Create PDF save options and specify the desired PDF standard compliance.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
+            // Example: comply with PDF/A-1b (ISO 19005-1) to preserve visual appearance.
+            Compliance = PdfCompliance.PdfA1b
+        };
 
-        // Create PDF save options and set the desired PDF compliance level.
-        // Here we choose PDF/A-1b which preserves visual appearance.
-        PdfSaveOptions saveOptions = new PdfSaveOptions();
-        saveOptions.Compliance = PdfCompliance.PdfA1b;
-
-        // Save the document as a PDF using the specified options.
-        doc.Save(outputPath, saveOptions);
+        // Save the document as a PDF using the configured options.
+        doc.Save(Path.Combine(dataDir, "Guidelines.pdf"), pdfOptions);
     }
 }

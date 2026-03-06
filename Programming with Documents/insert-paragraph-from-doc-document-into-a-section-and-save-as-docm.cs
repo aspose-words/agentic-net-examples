@@ -5,28 +5,27 @@ class Program
 {
     static void Main()
     {
-        // Load the source DOC file that contains the paragraph to copy.
-        Document srcDoc = new Document("Source.doc");
-
-        // Retrieve the paragraph you want to insert.
-        // Here we take the first paragraph of the first section.
-        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
+        // Load the source DOC file that contains the paragraph to be copied.
+        Document srcDoc = new Document("SourceDocument.doc");
 
         // Create a new blank document that will receive the paragraph.
         Document dstDoc = new Document();
-        dstDoc.EnsureMinimum(); // Ensure the document has at least one section, body and paragraph.
+        dstDoc.EnsureMinimum(); // Guarantees at least one section.
 
-        // Get the target section where the paragraph will be inserted.
-        Section dstSection = dstDoc.FirstSection;
+        // Get the first paragraph from the source document (adjust index if needed).
+        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
 
-        // Import the paragraph node into the destination document.
-        // The import copies the node and resolves any style or list conflicts.
-        Node importedParagraph = dstDoc.ImportNode(srcParagraph, true, ImportFormatMode.KeepSourceFormatting);
+        // Import the paragraph into the destination document.
+        // This handles style, list and other formatting translation.
+        NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
+        Node importedParagraph = importer.ImportNode(srcParagraph, true);
 
-        // Append the imported paragraph to the end of the target section's body.
-        dstSection.Body.AppendChild(importedParagraph);
+        // Insert the imported paragraph into a specific section of the destination document.
+        // Here we use the first (and only) section, but any section from dstDoc.Sections can be used.
+        Section targetSection = dstDoc.FirstSection;
+        targetSection.Body.AppendChild(importedParagraph);
 
-        // Save the resulting document as a macro‑enabled DOCM file.
-        dstDoc.Save("Result.docm", SaveFormat.Docm);
+        // Save the resulting document as a DOCM file.
+        dstDoc.Save("ResultDocument.docm");
     }
 }

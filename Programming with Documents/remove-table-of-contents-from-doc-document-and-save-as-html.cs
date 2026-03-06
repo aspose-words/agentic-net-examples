@@ -1,46 +1,38 @@
 using System;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Fields; // Added namespace for Field and FieldType
+using Aspose.Words.Fields; // Added for Field and FieldType
 
 class RemoveTocAndSaveHtml
 {
     static void Main()
     {
-        // Path to the source DOC document.
-        string inputPath = @"C:\Docs\SourceDocument.docx";
+        // Load the existing DOC/DOCX document.
+        Document doc = new Document("input.docx");
 
-        // Path where the resulting HTML file will be saved.
-        string outputPath = @"C:\Docs\ResultDocument.html";
-
-        // Load the existing Word document.
-        Document doc = new Document(inputPath);
-
-        // Find all Table of Contents (TOC) fields and remove them.
-        // Collect the fields first to avoid modifying the collection while iterating.
-        var tocFields = doc.Range.Fields
-            .Where(f => f.Type == FieldType.FieldTOC)
-            .ToList();
-
-        foreach (Field toc in tocFields)
+        // Iterate over all fields in the document.
+        // If a field is a Table of Contents (FieldToc), remove it from the document.
+        foreach (Field field in doc.Range.Fields)
         {
-            // Remove the entire field (start, separator, end) from the document.
-            toc.Remove();
+            if (field.Type == FieldType.FieldTOC)
+            {
+                // Remove the entire field node (including start, separator, and end).
+                field.Remove();
+                // No need to continue; there is typically only one TOC.
+                break;
+            }
         }
 
         // Prepare HTML save options.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
-            // Ensure that page numbers are not exported for any remaining TOC entries.
+            // Ensure page numbers are not exported (default is false, set explicitly for clarity).
             ExportTocPageNumbers = false,
-
-            // Optional: omit headers and footers if they are not needed.
+            // Omit headers and footers to keep the HTML clean (optional).
             ExportHeadersFootersMode = ExportHeadersFootersMode.None
         };
 
         // Save the modified document as HTML.
-        doc.Save(outputPath, saveOptions);
+        doc.Save("output.html", saveOptions);
     }
 }

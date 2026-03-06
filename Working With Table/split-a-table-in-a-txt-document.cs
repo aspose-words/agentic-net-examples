@@ -1,48 +1,51 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables; // <-- added namespace for Table, Row, etc.
+using Aspose.Words.Tables;
 
 class SplitTableToTxt
 {
     static void Main()
     {
-        // Load the source document (must contain at least one table).
-        Document srcDoc = new Document("TableSource.docx");
+        // Load the source document that contains a table.
+        Document srcDoc = new Document("SourceWithTable.docx");
 
-        // Create a new empty document that will hold the split tables.
-        Document dstDoc = new Document();
-        // Ensure the document has a section and a body.
-        dstDoc.EnsureMinimum();
+        // Get the first table in the document.
+        Table srcTable = srcDoc.FirstSection.Body.Tables[0];
 
-        // Iterate over all tables in the source document.
-        foreach (Table srcTable in srcDoc.GetChildNodes(NodeType.Table, true))
+        // Iterate through each row of the source table.
+        for (int rowIndex = 0; rowIndex < srcTable.Rows.Count; rowIndex++)
         {
-            // For each row in the source table create a new table that contains only that row.
-            foreach (Row srcRow in srcTable.Rows)
+            // Create a new empty document for the current row.
+            Document rowDoc = new Document();
+            // Ensure the document has at least one section and one paragraph.
+            rowDoc.EnsureMinimum();
+
+            // Create a new table and add it to the document body.
+            Table newTable = new Table(rowDoc);
+            rowDoc.FirstSection.Body.AppendChild(newTable);
+
+            // Clone the current row (including its cells and contents) and add it to the new table.
+            Row clonedRow = (Row)srcTable.Rows[rowIndex].Clone(true);
+            newTable.AppendChild(clonedRow);
+
+            // Optional: adjust table formatting if needed.
+            newTable.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+            // Prepare TXT save options – preserve the table layout for readability.
+            TxtSaveOptions txtOptions = new TxtSaveOptions
             {
-                // Clone the row (deep copy) so that it can be moved to a new table.
-                Row clonedRow = (Row)srcRow.Clone(true);
+                PreserveTableLayout = true,
+                // Force page breaks to be kept as '\f' characters (optional).
+                ForcePageBreaks = false
+            };
 
-                // Create a new table and add the cloned row.
-                Table newTable = new Table(dstDoc);
-                newTable.AppendChild(clonedRow);
+            // Build the output file name, e.g., Row_1.txt, Row_2.txt, etc.
+            string outFileName = $"TableRow_{rowIndex + 1}.txt";
 
-                // Append the new table to the destination document body.
-                dstDoc.FirstSection.Body.AppendChild(newTable);
-
-                // Add an empty paragraph after each table to separate them in the text output.
-                dstDoc.FirstSection.Body.AppendChild(new Paragraph(dstDoc));
-            }
+            // Save the document containing only the single row as a plain‑text file.
+            rowDoc.Save(outFileName, txtOptions);
         }
-
-        // Configure TXT save options to preserve the visual layout of tables.
-        TxtSaveOptions txtOptions = new TxtSaveOptions
-        {
-            PreserveTableLayout = true // Apply whitespace padding so the table shape is kept.
-        };
-
-        // Save the resulting document as plain‑text.
-        dstDoc.Save("SplitTables.txt", txtOptions);
     }
 }

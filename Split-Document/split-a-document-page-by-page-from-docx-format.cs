@@ -1,26 +1,26 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 class SplitDocumentByPages
 {
     static void Main()
     {
         // Load the source DOCX document.
-        Document sourceDoc = new Document("InputDocument.docx");
+        string sourcePath = "InputDocument.docx";
+        Document sourceDoc = new Document(sourcePath);
 
         // Determine the total number of pages in the document.
         int totalPages = sourceDoc.PageCount;
 
-        // Iterate through each page and extract it as a separate document.
+        // Extract each page individually and save it as a separate DOCX file.
         for (int pageIndex = 0; pageIndex < totalPages; pageIndex++)
         {
             // Extract a single page (zero‑based index, count = 1).
             Document singlePageDoc = sourceDoc.ExtractPages(pageIndex, 1);
 
-            // Save the extracted page to a new DOCX file.
-            string outputFileName = $"Page_{pageIndex + 1}.docx";
-            singlePageDoc.Save(outputFileName);
+            // Save the extracted page. File name includes the page number (1‑based for readability).
+            string outputPath = $"Page_{pageIndex + 1}.docx";
+            singlePageDoc.Save(outputPath);
         }
     }
 }

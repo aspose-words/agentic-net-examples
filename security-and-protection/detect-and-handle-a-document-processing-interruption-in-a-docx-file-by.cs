@@ -2,96 +2,88 @@ using System;
 using System.IO;
 using System.Threading;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 
-namespace AsposeWordsCancellationDemo
+// Callback that monitors a CancellationToken during document loading.
+class CancellationTokenLoadingCallback : IDocumentLoadingCallback
 {
-    // Callback that checks a CancellationToken during document saving.
-    public class CancellationSavingCallback : IDocumentSavingCallback
+    private readonly CancellationToken _token;
+
+    public CancellationTokenLoadingCallback(CancellationToken token)
     {
-        private readonly CancellationToken _cancellationToken;
-
-        public CancellationSavingCallback(CancellationToken cancellationToken)
-        {
-            _cancellationToken = cancellationToken;
-        }
-
-        // Called repeatedly while the document is being saved.
-        public void Notify(DocumentSavingArgs args)
-        {
-            if (_cancellationToken.IsCancellationRequested)
-                throw new OperationCanceledException(
-                    $"Saving cancelled. EstimatedProgress = {args.EstimatedProgress}");
-        }
+        _token = token;
     }
 
-    // Callback that checks a CancellationToken during document loading.
-    public class CancellationLoadingCallback : IDocumentLoadingCallback
+    // Called periodically by Aspose.Words while loading.
+    public void Notify(DocumentLoadingArgs args)
     {
-        private readonly CancellationToken _cancellationToken;
+        // If cancellation is requested, abort loading.
+        if (_token.IsCancellationRequested)
+            throw new OperationCanceledException($"Loading canceled at progress {args.EstimatedProgress}%");
+    }
+}
 
-        public CancellationLoadingCallback(CancellationToken cancellationToken)
-        {
-            _cancellationToken = cancellationToken;
-        }
+// Callback that monitors a CancellationToken during document saving.
+class CancellationTokenSavingCallback : IDocumentSavingCallback
+{
+    private readonly CancellationToken _token;
 
-        // Called repeatedly while the document is being loaded.
-        public void Notify(DocumentLoadingArgs args)
-        {
-            if (_cancellationToken.IsCancellationRequested)
-                throw new OperationCanceledException(
-                    $"Loading cancelled. EstimatedProgress = {args.EstimatedProgress}");
-        }
+    public CancellationTokenSavingCallback(CancellationToken token)
+    {
+        _token = token;
     }
 
-    class Program
+    // Called periodically by Aspose.Words while saving.
+    public void Notify(DocumentSavingArgs args)
     {
-        static void Main()
+        // If cancellation is requested, abort saving.
+        if (_token.IsCancellationRequested)
+            throw new OperationCanceledException($"Saving canceled at progress {args.EstimatedProgress}%");
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        // Create a token source that can be cancelled from another thread or timer.
+        var cts = new CancellationTokenSource();
+
+        // Example: automatically cancel after 200 ms (replace with real cancellation logic).
+        var timer = new System.Timers.Timer(200);
+        timer.Elapsed += (s, e) => { cts.Cancel(); timer.Stop(); };
+        timer.Start();
+
+        try
         {
-            // Path to the source DOCX file.
-            const string inputPath = @"C:\Docs\Input.docx";
-            // Path where the processed DOCX will be saved.
-            const string outputPath = @"C:\Docs\Output.docx";
-
-            // Create a CancellationTokenSource that will request cancellation after a short delay.
-            using var cts = new CancellationTokenSource();
-            // For demonstration, cancel after 200 milliseconds.
-            cts.CancelAfter(200);
-            CancellationToken token = cts.Token;
-
-            try
+            // Load the DOCX file with a progress callback that checks the token.
+            var loadOptions = new LoadOptions
             {
-                // Load the document with a loading progress callback that respects the token.
-                LoadOptions loadOptions = new LoadOptions
-                {
-                    ProgressCallback = new CancellationLoadingCallback(token)
-                };
-                Document doc = new Document(inputPath, loadOptions);
+                ProgressCallback = new CancellationTokenLoadingCallback(cts.Token)
+            };
+            Document doc = new Document("Input.docx", loadOptions);
 
-                // Perform any processing on the document here.
-                // (No custom processing required for this demo.)
+            // Perform any document processing here.
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("Processing completed.");
 
-                // Prepare save options with a saving progress callback that respects the token.
-                OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-                {
-                    ProgressCallback = new CancellationSavingCallback(token)
-                };
-
-                // Save the document; the callbacks will throw if cancellation is requested.
-                doc.Save(outputPath, saveOptions);
-                Console.WriteLine("Document saved successfully.");
-            }
-            catch (OperationCanceledException ex)
+            // Save the document with a progress callback that checks the token.
+            var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
             {
-                // Handle the interruption gracefully.
-                Console.WriteLine($"Operation was cancelled: {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                // Handle other possible exceptions (e.g., file not found, corrupted file).
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
+                ProgressCallback = new CancellationTokenSavingCallback(cts.Token)
+            };
+            doc.Save("Output.docx", saveOptions);
+        }
+        catch (OperationCanceledException ex)
+        {
+            // Handle the cancellation gracefully.
+            Console.WriteLine($"Operation was canceled: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            // Handle other unexpected errors.
+            Console.WriteLine($"Error: {ex.Message}");
         }
     }
 }

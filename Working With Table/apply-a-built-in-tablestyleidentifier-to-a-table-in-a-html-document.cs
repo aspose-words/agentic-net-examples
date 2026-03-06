@@ -12,14 +12,14 @@ class Program
         Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
         if (table != null)
         {
-            // Apply a built‑in table style using its identifier.
+            // Apply a built‑in table style identifier (e.g., TableGrid).
             table.StyleIdentifier = StyleIdentifier.TableGrid;
 
-            // Optionally specify which parts of the style are applied.
+            // Optionally specify which parts of the style to apply.
             table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
         }
 
-        // Save the document with the applied style.
+        // Save the modified document.
         doc.Save("output.docx");
     }
 }

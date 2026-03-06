@@ -2,9 +2,8 @@ using System;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-class InsertSmartArt
+class InsertSmartArtExample
 {
     static void Main()
     {
@@ -13,13 +12,13 @@ class InsertSmartArt
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Load a template document that already contains a SmartArt shape.
-        // The template should be prepared beforehand and placed in the same folder as the executable.
-        Document smartArtTemplate = new Document("SmartArtTemplate.docx");
+        // The template should be placed in the same folder as the executable or provide a full path.
+        Document template = new Document("SmartArtTemplate.docx");
 
         // Find the first shape that has a SmartArt object.
-        Shape smartArtShape = smartArtTemplate.GetChildNodes(NodeType.Shape, true)
-            .Cast<Shape>()
-            .FirstOrDefault(s => s.HasSmartArt);
+        Shape smartArtShape = template.GetChildNodes(NodeType.Shape, true)
+                                      .Cast<Shape>()
+                                      .FirstOrDefault(s => s.HasSmartArt);
 
         if (smartArtShape != null)
         {
@@ -28,17 +27,16 @@ class InsertSmartArt
 
             // Insert the cloned shape at the current cursor position.
             builder.InsertNode(clonedSmartArt);
+
+            // Ensure the SmartArt drawing is rendered correctly.
+            clonedSmartArt.UpdateSmartArtDrawing();
         }
         else
         {
             Console.WriteLine("No SmartArt shape found in the template document.");
         }
 
-        // Save the document with OOXML compliance that supports DML (required for SmartArt).
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
-        };
-        doc.Save("SmartArtInserted.docx", saveOptions);
+        // Save the resulting document.
+        doc.Save("SmartArtInserted.docx", SaveFormat.Docx);
     }
 }

@@ -7,37 +7,40 @@ class DocumentSplitter
 {
     static void Main()
     {
-        // Load the source DOCX document from the file system.
+        // Load the source DOCX document.
+        // Uses the Document(string) constructor as defined in the API.
         Document doc = new Document("InputDocument.docx");
 
-        // Configure HTML save options to split the document by section.
+        // Prepare HTML save options to split the document by section.
         HtmlSaveOptions options = new HtmlSaveOptions
         {
             DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
             // Assign a custom callback to control the naming of each split part.
-            DocumentPartSavingCallback = new SavedDocumentPartRename("SplitDocument.html", DocumentSplitCriteria.SectionBreak)
+            DocumentPartSavingCallback = new SavedDocumentPartRename("SplitOutput", DocumentSplitCriteria.SectionBreak)
         };
 
-        // Save the document; Aspose.Words will create multiple HTML files according to the split criteria.
-        doc.Save("SplitDocument.html", options);
+        // Save the document. The save operation will produce multiple HTML files,
+        // one for each section, using the logic defined in SavedDocumentPartRename.
+        doc.Save("SplitOutput.html", options);
     }
 
-    // Callback that renames each split part generated during the save operation.
+    // Callback class that renames each split part of the document.
     private class SavedDocumentPartRename : IDocumentPartSavingCallback
     {
         private readonly string _baseFileName;
         private readonly DocumentSplitCriteria _splitCriteria;
-        private int _partIndex = 0;
+        private int _partIndex;
 
         public SavedDocumentPartRename(string baseFileName, DocumentSplitCriteria splitCriteria)
         {
             _baseFileName = baseFileName;
             _splitCriteria = splitCriteria;
+            _partIndex = 0;
         }
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Determine a readable part type name based on the split criteria.
+            // Determine a readable part type name.
             string partType = _splitCriteria switch
             {
                 DocumentSplitCriteria.PageBreak => "Page",
@@ -48,9 +51,9 @@ class DocumentSplitter
             };
 
             // Build a unique filename for the current part.
-            string partFileName = $"{Path.GetFileNameWithoutExtension(_baseFileName)}_Part{++_partIndex}_{partType}{Path.GetExtension(_baseFileName)}";
+            string partFileName = $"{_baseFileName}_Part{++_partIndex}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
 
-            // Set the filename for the part; Aspose.Words will write to this file.
+            // Set the filename for the output part.
             args.DocumentPartFileName = partFileName;
 
             // Optionally, you could provide a custom stream instead:

@@ -1,31 +1,25 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Notes;
+using Aspose.Words.Notes; // Needed for Footnote class
 
 class Program
 {
     static void Main()
     {
-        // Path to the source DOC file.
-        string inputPath = "input.doc";
+        // Load the source DOC document.
+        Document doc = new Document("Input.doc");
 
-        // Path for the resulting PDF file.
-        string outputPath = "output.pdf";
-
-        // Load the Word document.
-        Document doc = new Document(inputPath);
-
-        // Remove all footnotes and endnotes.
-        // In Aspose.Words both footnotes and endnotes are represented by the Footnote class.
-        // They are retrieved using NodeType.Footnote and distinguished by the FootnoteType property.
+        // Collect all footnote and endnote nodes in the document.
         NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
-        foreach (Footnote note in notes)
+
+        // Remove each footnote/endnote from its parent. Iterate backwards to avoid collection modification issues.
+        for (int i = notes.Count - 1; i >= 0; i--)
         {
-            // Remove regardless of whether it is a footnote or an endnote.
+            Footnote note = (Footnote)notes[i];
             note.Remove();
         }
 
-        // Save the modified document as PDF.
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Save the resulting document as PDF.
+        doc.Save("Output.pdf");
     }
 }

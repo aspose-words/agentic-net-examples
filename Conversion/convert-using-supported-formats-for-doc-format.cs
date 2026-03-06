@@ -2,18 +2,24 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+namespace AsposeWordsExamples
 {
-    static void Main()
+    class ConvertToDoc
     {
-        // Load an existing document. Aspose.Words automatically detects the format.
-        Document doc = new Document("Input.docx");
+        static void Main()
+        {
+            // Load an existing document (any supported format, e.g., DOCX).
+            Document doc = new Document("InputDocument.docx");
 
-        // Convert and save the document to the legacy DOC format using the SaveFormat enum.
-        doc.Save("Output.doc", SaveFormat.Doc);
+            // Option 1: Save directly using the SaveFormat enumeration.
+            doc.Save("OutputDocument.doc", SaveFormat.Doc);
 
-        // The same conversion can be performed with explicit save options.
-        DocSaveOptions options = new DocSaveOptions(SaveFormat.Doc);
-        doc.Save("OutputWithOptions.doc", options);
+            // Option 2: Use DocSaveOptions for additional control (e.g., password protection).
+            DocSaveOptions options = new DocSaveOptions(SaveFormat.Doc);
+            options.Password = "MyPassword";               // Optional: set a password.
+            options.SaveRoutingSlip = true;                // Optional: preserve routing slip if present.
+
+            doc.Save("OutputDocument_WithOptions.doc", options);
+        }
     }
 }

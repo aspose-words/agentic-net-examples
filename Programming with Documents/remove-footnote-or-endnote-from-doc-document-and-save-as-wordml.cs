@@ -1,6 +1,6 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Notes;
+using Aspose.Words.Saving;
 
 class RemoveFootnotesAndEndnotes
 {
@@ -9,13 +9,13 @@ class RemoveFootnotesAndEndnotes
         // Load the source DOC document.
         Document doc = new Document("Input.doc");
 
-        // Collect all footnote and endnote nodes in the document.
-        NodeCollection notes = doc.GetChildNodes(NodeType.Footnote, true);
-
-        // Remove each footnote/endnote from its parent.
-        foreach (Footnote note in notes)
+        // Remove all footnotes and endnotes.
+        // Iterate backwards to avoid modifying the collection while iterating.
+        NodeCollection footnotes = doc.GetChildNodes(NodeType.Footnote, true);
+        for (int i = footnotes.Count - 1; i >= 0; i--)
         {
-            note.Remove();
+            // Each node in this collection is a Footnote (which may represent a footnote or an endnote).
+            footnotes[i].Remove();
         }
 
         // Save the modified document as WORDML (XML) format.

@@ -6,23 +6,21 @@ class RemoveHeadersFootersAndSaveAsTxt
 {
     static void Main()
     {
-        // Path to the source DOC document.
+        // Path to the source Word document.
         string inputPath = @"C:\Docs\SourceDocument.docx";
 
-        // Path for the resulting TXT file.
-        string outputPath = @"C:\Docs\ResultDocument.txt";
+        // Path where the plain‑text file will be saved.
+        string outputPath = @"C:\Docs\Result.txt";
 
-        // Load the existing Word document.
+        // Load the document from the file system.
         Document doc = new Document(inputPath);
 
-        // Remove all header and footer contents from each section.
-        foreach (Section section in doc.Sections)
-        {
-            // Clears the text inside headers/footers but keeps the objects.
-            section.ClearHeadersFooters();
-        }
+        // Optionally clear the header/footer contents of the first (and only) section.
+        // This step is not strictly required if we set ExportHeadersFootersMode to None,
+        // but it demonstrates how to remove the content programmatically.
+        doc.FirstSection.ClearHeadersFooters();
 
-        // Configure TXT save options to ensure no headers/footers are exported.
+        // Configure text save options to exclude headers and footers.
         TxtSaveOptions txtOptions = new TxtSaveOptions
         {
             ExportHeadersFootersMode = TxtExportHeadersFootersMode.None

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -7,23 +6,20 @@ class Program
 {
     static void Main()
     {
-        // Load the existing DOCM file.
+        // Load the existing DOCM document.
         Document doc = new Document("Input.docm");
 
-        // Collect all shapes that are text boxes.
-        NodeCollection allShapes = doc.GetChildNodes(NodeType.Shape, true);
-        List<Shape> textBoxShapes = new List<Shape>();
-        foreach (Shape shape in allShapes)
+        // Retrieve all shape nodes in the document (including those inside headers/footers).
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+
+        // Iterate through the shapes and remove those that are text boxes.
+        foreach (Shape shape in shapeNodes)
         {
             if (shape.ShapeType == ShapeType.TextBox)
-                textBoxShapes.Add(shape);
+                shape.Remove(); // Removes the shape from its parent node.
         }
 
-        // Remove each text box from the document.
-        foreach (Shape tb in textBoxShapes)
-            tb.Remove();
-
-        // Save the modified document back as DOCM.
+        // Save the modified document back as a DOCM file.
         doc.Save("Output.docm");
     }
 }

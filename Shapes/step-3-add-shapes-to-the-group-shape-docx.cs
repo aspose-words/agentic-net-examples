@@ -11,38 +11,31 @@ class AddShapesToGroupShape
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert two floating shapes that will later be grouped.
-        Shape rect = builder.InsertShape(ShapeType.Rectangle, RelativeHorizontalPosition.Page, 100,
-                                         RelativeVerticalPosition.Page, 100, 200, 150, WrapType.None);
-        rect.Stroke.Color = Color.Blue;
+        // Insert the first shape (rectangle) and set its position and stroke color.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        rect.Left = 20;
+        rect.Top = 20;
+        rect.Stroke.Color = Color.Red;
 
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, RelativeHorizontalPosition.Page, 350,
-                                            RelativeVerticalPosition.Page, 150, 150, 150, WrapType.None);
+        // Insert the second shape (ellipse) and set its position and stroke color.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        ellipse.Left = 40;
+        ellipse.Top = 50;
         ellipse.Stroke.Color = Color.Green;
 
-        // Group the two shapes. The InsertGroupShape method automatically calculates the group's position and size.
+        // Group the two shapes. The group shape's position and size are calculated automatically.
         GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Create an additional shape (a star) that will be added to the existing group.
-        Shape star = new Shape(doc, ShapeType.Star)
-        {
-            Width = 80,
-            Height = 80,
-            // Position the star relative to the group's internal coordinate system.
-            // Here we place it near the centre of the group.
-            Left = -40,
-            Top = -40,
-            FillColor = Color.Yellow,
-            Stroke = { Color = Color.Orange }
-        };
+        // Insert an additional shape (triangle) that we will add to the existing group.
+        Shape triangle = builder.InsertShape(ShapeType.Triangle, 100, 100);
+        triangle.Left = 60;
+        triangle.Top = 60;
+        triangle.Stroke.Color = Color.Blue;
 
-        // Append the new shape to the group.
-        group.AppendChild(star);
+        // Append the new shape to the previously created group.
+        group.AppendChild(triangle);
 
-        // Insert the group shape into the document at the current builder position.
-        builder.InsertNode(group);
-
-        // Save the document.
-        doc.Save("AddShapesToGroupShape.docx");
+        // Save the document containing the grouped shapes.
+        doc.Save("GroupShapeAdded.docx");
     }
 }

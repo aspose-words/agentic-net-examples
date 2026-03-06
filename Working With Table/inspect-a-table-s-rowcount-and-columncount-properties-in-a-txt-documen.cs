@@ -7,22 +7,23 @@ class Program
 {
     static void Main()
     {
-        // Load the TXT document using default TxtLoadOptions.
-        Document doc = new Document("input.txt", new TxtLoadOptions());
+        // Load a plain‑text document. TxtLoadOptions allows us to specify TXT‑specific settings.
+        var loadOptions = new TxtLoadOptions();
+        Document doc = new Document("input.txt", loadOptions);
 
         // Iterate through all tables in the document.
-        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
+        foreach (Table table in doc.FirstSection.Body.Tables)
         {
-            // Number of rows in the table.
+            // Row count is the number of Row objects in the table.
             int rowCount = table.Rows.Count;
 
-            // Number of columns in the table (based on the first row).
-            int columnCount = table.FirstRow != null ? table.FirstRow.Cells.Count : 0;
+            // Column count is the number of cells in the first row (if the table has at least one row).
+            int columnCount = table.FirstRow != null ? table.FirstRow.Count : 0;
 
             Console.WriteLine($"Table found: {rowCount} rows x {columnCount} columns");
         }
 
-        // Optionally save the document after inspection.
+        // Save the document (required by the lifecycle rule).
         doc.Save("output.docx");
     }
 }

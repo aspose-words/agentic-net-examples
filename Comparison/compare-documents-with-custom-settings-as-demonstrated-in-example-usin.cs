@@ -2,42 +2,42 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-class Program
+class CompareDocuments
 {
     static void Main()
     {
-        // Paths to the source documents and the output folder.
-        string dataDir = @"C:\Data\";
-        string artifactsDir = @"C:\Artifacts\";
+        // Load the original and edited documents from disk.
+        Document docOriginal = new Document("Original.docx");
+        Document docEdited   = new Document("Edited.docx");
 
-        // Load the original document.
-        Document docOriginal = new Document(dataDir + "Original.docx");
-
-        // Load the edited document that we want to compare against.
-        Document docEdited = new Document(dataDir + "Edited.docx");
-
-        // Ensure both documents have no revisions before comparison.
-        if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
-            throw new InvalidOperationException("Both documents must be revision‑free before comparison.");
-
-        // Configure custom comparison options.
-        CompareOptions compareOptions = new CompareOptions
+        // Ensure both documents have no revisions before starting the comparison.
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            // Example: ignore formatting changes and comments.
-            IgnoreFormatting = true,
-            IgnoreComments = true,
-            // Track changes at the word level.
-            Granularity = Granularity.WordLevel,
-            // Use the edited document as the base for comparison.
-            Target = ComparisonTargetType.New,
-            // Do not compare moved text.
-            CompareMoves = false
-        };
+            // Configure comparison options.
+            CompareOptions compareOptions = new CompareOptions
+            {
+                CompareMoves               = false,
+                IgnoreFormatting           = false,
+                IgnoreCaseChanges          = false,
+                IgnoreComments             = false,
+                IgnoreTables               = false,
+                IgnoreFields               = false,
+                IgnoreFootnotes            = false,
+                IgnoreTextboxes            = false,
+                IgnoreHeadersAndFooters    = false,
+                Target                     = ComparisonTargetType.New,
+                Granularity                = Granularity.WordLevel
+            };
 
-        // Perform the comparison. Revisions will be added to docOriginal.
-        docOriginal.Compare(docEdited, "Reviewer", DateTime.Now, compareOptions);
+            // Advanced options – ignore differences that are not relevant for the comparison.
+            compareOptions.AdvancedOptions.IgnoreDmlUniqueId = true;
+            compareOptions.AdvancedOptions.IgnoreStoreItemId = true;
 
-        // Save the resulting document that contains the tracked changes.
-        docOriginal.Save(artifactsDir + "ComparisonResult.docx");
+            // Perform the comparison. The original document will receive revision marks.
+            docOriginal.Compare(docEdited, "Author", DateTime.Now, compareOptions);
+        }
+
+        // Save the document that now contains the revision tracking information.
+        docOriginal.Save("ComparisonResult.docx");
     }
 }

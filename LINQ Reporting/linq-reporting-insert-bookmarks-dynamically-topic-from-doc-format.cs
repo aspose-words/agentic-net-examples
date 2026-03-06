@@ -3,75 +3,69 @@ using System.Collections.Generic;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
 namespace AsposeWordsBookmarkDemo
 {
     // Simple data model representing a topic.
     public class Topic
     {
-        public string Title { get; set; }
-        public string Content { get; set; }
-
-        // Constructor to satisfy non‑nullable warnings.
-        public Topic(string title, string content)
-        {
-            Title = title;
-            Content = content;
-        }
+        public string Name { get; set; }      // Bookmark name.
+        public string Content { get; set; }   // Text to place inside the bookmark.
     }
 
     public class Program
     {
-        // Entry point.
         public static void Main()
         {
-            // Load the DOCX template that contains the reporting placeholders.
-            Document template = new Document("Template.docx");
+            // Load the DOC template that may contain other merge fields.
+            Document doc = new Document("Template.docx");
 
-            // Sample data source – a list of topics.
-            List<Topic> topics = new List<Topic>
-            {
-                new Topic("Introduction", "Welcome to the introduction."),
-                new Topic("Usage", "How to use the product."),
-                new Topic("Conclusion", "Final thoughts.")
-            };
+            // Example data source – could be retrieved from a database or any LINQ query.
+            List<Topic> topics = GetTopicsFromDataSource();
 
-            // Build the report using Aspose.Words ReportingEngine.
+            // If the template contains other merge fields, populate them using ReportingEngine.
             ReportingEngine engine = new ReportingEngine();
-            // The template can reference the data source as "topics".
-            engine.BuildReport(template, topics, "topics");
+            // Assuming the template has a placeholder for a title field.
+            var reportData = new { Title = "Dynamic Topics Report" };
+            engine.BuildReport(doc, reportData, "data");
 
-            // After the report is built, insert bookmarks for each topic.
-            // Use LINQ to enumerate the topics together with their index.
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Insert bookmarks dynamically at the end of the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Get all paragraphs in the document (including those inside tables, headers, etc.).
-            var allParagraphs = template.GetChildNodes(NodeType.Paragraph, true)
-                                         .Cast<Paragraph>()
-                                         .ToList();
-
-            foreach (var item in topics.Select((t, i) => new { Topic = t, Index = i }))
+            foreach (Topic topic in topics)
             {
-                // Find the paragraph that contains the topic title.
-                Paragraph titleParagraph = allParagraphs
-                    .FirstOrDefault(p => p.GetText().Trim().Contains(item.Topic.Title));
+                // Start a new paragraph for each topic.
+                builder.Writeln();
 
-                if (titleParagraph != null)
-                {
-                    // Move the builder cursor to the found paragraph.
-                    builder.MoveTo(titleParagraph);
-
-                    // Insert a bookmark that spans the whole paragraph.
-                    string bookmarkName = $"Topic_{item.Index + 1}";
-                    builder.StartBookmark(bookmarkName);
-                    // The cursor is already positioned at the start of the paragraph; the bookmark will cover it.
-                    builder.EndBookmark(bookmarkName);
-                }
+                // Insert a bookmark with the topic name.
+                builder.StartBookmark(topic.Name);
+                builder.Write(topic.Content);
+                builder.EndBookmark(topic.Name);
             }
 
-            // Save the final document.
-            template.Save("ReportWithBookmarks.docx");
+            // Save the resulting document.
+            doc.Save("Result.docx");
+        }
+
+        // Mock method that returns a list of topics using LINQ.
+        private static List<Topic> GetTopicsFromDataSource()
+        {
+            // Sample raw data.
+            var rawData = new[]
+            {
+                new { Id = 1, Title = "Introduction", Body = "This is the introduction." },
+                new { Id = 2, Title = "Usage", Body = "Details on how to use the product." },
+                new { Id = 3, Title = "Conclusion", Body = "Final thoughts and summary." }
+            };
+
+            // LINQ projection to the Topic model.
+            return rawData
+                .Select(item => new Topic
+                {
+                    Name = $"Bookmark_{item.Id}",   // Ensure unique bookmark names.
+                    Content = $"{item.Title}: {item.Body}"
+                })
+                .ToList();
         }
     }
 }

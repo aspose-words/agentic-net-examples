@@ -6,21 +6,25 @@ class Program
 {
     static void Main()
     {
-        // Load the source document (replace with your actual file path).
-        Document doc = new Document("Input.docx");
+        // Path to the source document (replace with actual path as needed)
+        string sourcePath = @"MyDir\PdfAConversionOverview.docx";
 
-        // Create a SaveOptions object suitable for PDF format.
-        // The factory method returns a SaveOptions instance; cast it to PdfSaveOptions.
+        // Path where the PDF/A compliant PDF will be saved (replace with actual path as needed)
+        string outputPath = @"ArtifactsDir\PdfAConversionOverview.pdf";
+
+        // Load the existing Word document
+        Document doc = new Document(sourcePath);
+
+        // Create a SaveOptions object suitable for PDF format
         SaveOptions saveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
+
+        // Cast to PdfSaveOptions to access PDF-specific properties
         PdfSaveOptions pdfOptions = (PdfSaveOptions)saveOptions;
 
-        // Set the PDF/A compliance level (e.g., PDF/A-1b) to ensure archival quality.
+        // Set the compliance level to PDF/A-1b (preserves visual appearance)
         pdfOptions.Compliance = PdfCompliance.PdfA1b;
 
-        // Export the document structure, which is required for PDF/A compliance.
-        pdfOptions.ExportDocumentStructure = true;
-
-        // Save the document as a PDF file using the configured options.
-        doc.Save("Output.pdf", pdfOptions);
+        // Save the document as a PDF/A compliant PDF
+        doc.Save(outputPath, pdfOptions);
     }
 }

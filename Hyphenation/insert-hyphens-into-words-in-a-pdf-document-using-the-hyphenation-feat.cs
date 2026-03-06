@@ -1,40 +1,22 @@
-using System;
-using System.IO;
-using Aspose.Words;
-using Aspose.Words.Saving;
-using Aspose.Words.Settings;
+// Path to the folder where the output PDF will be saved.
+string outputPath = @"C:\Temp\HyphenatedDocument.pdf";
 
-class HyphenatePdf
-{
-    static void Main()
-    {
-        // Paths to the source PDF and the resulting PDF.
-        string inputPath = @"C:\Docs\input.pdf";
-        string outputPath = @"C:\Docs\output.pdf";
+// Create a new empty document.
+Aspose.Words.Document doc = new Aspose.Words.Document();
+Aspose.Words.DocumentBuilder builder = new Aspose.Words.DocumentBuilder(doc);
 
-        // Load the existing PDF document.
-        Document doc = new Document(inputPath);
+// Add some long text that will require hyphenation when wrapped.
+builder.Font.Size = 12;
+builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
+                "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.");
 
-        // Ensure an English hyphenation dictionary is registered.
-        // If the dictionary file is not present, the code will throw.
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-        {
-            using (FileStream stream = new FileStream(@"C:\Hyphenation\hyph_en_US.dic", FileMode.Open, FileAccess.Read))
-            {
-                Hyphenation.RegisterDictionary("en-US", stream);
-            }
-        }
+// Enable automatic hyphenation for the whole document.
+doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Enable automatic hyphenation for the document.
-        doc.HyphenationOptions.AutoHyphenation = true;
-        // Optional: set how close to the right margin hyphenation is allowed (0.5 inch).
-        doc.HyphenationOptions.HyphenationZone = 720; // 720 = 0.5 inch (1/20 pt units)
-        // Optional: limit consecutive hyphenated lines.
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        // Optional: hyphenate words written in all caps.
-        doc.HyphenationOptions.HyphenateCaps = true;
+// Optional: fine‑tune hyphenation behavior.
+doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;   // Max two consecutive hyphenated lines.
+doc.HyphenationOptions.HyphenationZone = 720;       // 0.5 inch from the right margin.
+doc.HyphenationOptions.HyphenateCaps = true;       // Hyphenate words in all caps.
 
-        // Save the document as PDF – hyphenation will be applied during layout.
-        doc.Save(outputPath, SaveFormat.Pdf);
-    }
-}
+// Save the document as PDF – hyphens will be inserted where needed.
+doc.Save(outputPath, Aspose.Words.SaveFormat.Pdf);

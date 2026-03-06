@@ -2,27 +2,24 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class ConvertWithDocxSaveOptions
+class ConvertToDocxWithOptions
 {
     static void Main()
     {
-        // Path to the source document.
-        string inputPath = @"MyDir\SourceDocument.docx";
+        // Paths to the source and destination files.
+        string inputFile = @"C:\Data\SourceDocument.docx";
+        string outputFile = @"C:\Data\ConvertedDocument.docx";
 
-        // Load the document.
-        Document doc = new Document(inputPath);
+        // Load the existing document.
+        Document doc = new Document(inputFile);
 
-        // Create a save options object suitable for DOCX format.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions();
+        // Create a SaveOptions object suitable for the DOCX format.
+        SaveOptions saveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Docx);
 
-        // Configure the save options – for example, enforce strict OOXML compliance.
-        saveOptions.SaveFormat = SaveFormat.Docx;
-        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Strict;
-
-        // Path to the output document.
-        string outputPath = @"ArtifactsDir\ConvertedDocument.docx";
+        // Example configuration: enable pretty formatting of the output XML.
+        saveOptions.PrettyFormat = true;
 
         // Save the document using the configured options.
-        doc.Save(outputPath, saveOptions);
+        doc.Save(outputFile, saveOptions);
     }
 }

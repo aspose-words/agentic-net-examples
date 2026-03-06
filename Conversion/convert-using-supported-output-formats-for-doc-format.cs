@@ -2,23 +2,32 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class ConvertToDoc
 {
     static void Main()
     {
-        // Load an existing document. The format is detected automatically (e.g., DOCX, PDF, etc.).
-        Document doc = new Document("Input.docx");
+        // Path to the source document (can be any supported format).
+        string inputPath = @"C:\Input\SourceDocument.docx";
 
-        // Save the document in the legacy Microsoft Word 97‑2007 DOC format using the SaveFormat enum.
-        doc.Save("Output.doc", SaveFormat.Doc);
+        // Path where the converted DOC file will be saved.
+        string outputPathSimple = @"C:\Output\ConvertedSimple.doc";
+        string outputPathWithOptions = @"C:\Output\ConvertedWithOptions.doc";
 
-        // Alternatively, use DocSaveOptions to specify additional save settings such as a password
-        // and whether to preserve the routing slip when saving to the DOC format.
+        // Load the document using the Document constructor (load rule).
+        Document doc = new Document(inputPath);
+
+        // -----------------------------------------------------------------
+        // Simple conversion: save directly to DOC format using SaveFormat.
+        // -----------------------------------------------------------------
+        doc.Save(outputPathSimple, SaveFormat.Doc);
+
+        // -----------------------------------------------------------------
+        // Conversion with save options: use DocSaveOptions for the DOC format.
+        // -----------------------------------------------------------------
         DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
-        saveOptions.Password = "MyPassword";      // Protect the document with a password.
-        saveOptions.SaveRoutingSlip = true;       // Preserve any routing slip data.
+        // Example of setting an optional password (uncomment if needed).
+        // saveOptions.Password = "MyPassword";
 
-        // Save the document with the specified options.
-        doc.Save("OutputWithOptions.doc", saveOptions);
+        doc.Save(outputPathWithOptions, saveOptions);
     }
 }

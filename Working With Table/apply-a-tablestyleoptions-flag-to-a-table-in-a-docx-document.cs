@@ -9,38 +9,56 @@ class ApplyTableStyleOptions
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to construct a table.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a new table.
         Table table = builder.StartTable();
 
-        // Insert at least one cell/row before applying any table formatting.
+        // Insert the first cell (required before any formatting).
         builder.InsertCell();
-        builder.Writeln("Header 1");
-        builder.InsertCell();
-        builder.Writeln("Header 2");
-        builder.EndRow();
-
-        // Add a data row.
-        builder.InsertCell();
-        builder.Writeln("Data 1");
-        builder.InsertCell();
-        builder.Writeln("Data 2");
-        builder.EndRow();
-
-        // End the table construction.
-        builder.EndTable();
 
         // Apply a built‑in table style.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Apply specific style options using the TableStyleOptions flags.
-        // Here we enable the first row formatting and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+        // Apply desired style options (first column, first row, row banding).
+        table.StyleOptions = TableStyleOptions.FirstColumn |
+                             TableStyleOptions.FirstRow |
+                             TableStyleOptions.RowBands;
 
-        // Optionally auto‑fit the table to its contents.
+        // Auto‑fit the table to its contents.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Save the document to a DOCX file.
-        doc.Save("TableWithStyleOptions.docx");
+        // Populate the table with sample data.
+        builder.Writeln("Item");
+        builder.CellFormat.RightPadding = 40;
+        builder.InsertCell();
+        builder.Writeln("Quantity (kg)");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("Apples");
+        builder.InsertCell();
+        builder.Writeln("20");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("Bananas");
+        builder.InsertCell();
+        builder.Writeln("40");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("Carrots");
+        builder.InsertCell();
+        builder.Writeln("50");
+        builder.EndRow();
+
+        // End the table.
+        builder.EndTable();
+
+        // Save the document.
+        string outputPath = "ApplyTableStyleOptions.docx";
+        doc.Save(outputPath);
     }
 }

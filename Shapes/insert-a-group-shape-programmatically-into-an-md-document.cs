@@ -3,33 +3,37 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-class Program
+class InsertGroupShapeExample
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Create a DocumentBuilder which will be used to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert two floating shapes that will be grouped.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 150);
-        rectangle.Left = 50;               // Position from the left edge of the page.
-        rectangle.Top = 50;                // Position from the top edge of the page.
-        rectangle.Stroke.Color = Color.Blue;
+        // Insert the first shape (a rectangle) and set its position and stroke color.
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        rect.Left = 20;   // distance from the left edge of the page
+        rect.Top = 20;    // distance from the top edge of the page
+        rect.Stroke.Color = Color.Red;
 
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
-        ellipse.Left = 120;
-        ellipse.Top = 80;
+        // Insert the second shape (an ellipse) and set its position and stroke color.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        ellipse.Left = 40;
+        ellipse.Top = 50;
         ellipse.Stroke.Color = Color.Green;
 
-        // Group the two shapes. The group shape is inserted at the current cursor position.
-        GroupShape group = builder.InsertGroupShape(rectangle, ellipse);
+        // Group the two shapes into a single GroupShape node.
+        // The InsertGroupShape method automatically calculates the group's bounds.
+        GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Optional: adjust group properties (e.g., make it float behind text).
-        group.WrapType = WrapType.None;
-        group.BehindText = true;
+        // Optionally, add a third shape to the group by cloning one of the existing shapes.
+        Shape clonedRect = (Shape)rect.Clone(true);
+        GroupShape extendedGroup = builder.InsertGroupShape(group, clonedRect);
 
-        // Save the document as a Markdown file.
-        doc.Save("GroupShape.md", SaveFormat.Markdown);
+        // Save the document to disk.
+        doc.Save("GroupShapeExample.docx");
     }
 }

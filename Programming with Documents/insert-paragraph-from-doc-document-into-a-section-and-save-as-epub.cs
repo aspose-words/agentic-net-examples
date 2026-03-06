@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,43 +6,35 @@ class InsertParagraphAndSaveEpub
 {
     static void Main()
     {
-        // Paths to the source DOC file and the output EPUB file.
-        string sourceDocPath = @"C:\Input\SourceDocument.docx";
-        string outputEpubPath = @"C:\Output\Result.epub";
-
         // Load the source document that contains the paragraph to be inserted.
-        Document srcDoc = new Document(sourceDocPath);
+        Document srcDoc = new Document("Source.doc");
 
-        // Create a new blank destination document.
+        // Create a new (blank) destination document.
         Document dstDoc = new Document();
 
-        // Ensure the destination document has at least one section.
-        // (A new Document already contains a default section with a body and a paragraph.)
-        Section dstSection = dstDoc.FirstSection;
-
-        // Get the paragraph we want to copy from the source document.
-        // For example, take the first paragraph of the first section.
+        // Obtain the first (or any) paragraph from the source document.
         Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
 
-        // Prepare a NodeImporter to import nodes from srcDoc into dstDoc.
+        // Prepare a NodeImporter to copy nodes from the source to the destination document,
+        // preserving the source formatting.
         NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Import the paragraph node (deep clone) so it can be inserted into the destination.
+        // Import the paragraph node into the destination document.
         Node importedParagraph = importer.ImportNode(srcParagraph, true);
 
-        // Append the imported paragraph to the body of the target section.
-        dstSection.Body.AppendChild(importedParagraph);
+        // Insert the imported paragraph at the end of the first section of the destination document.
+        Section targetSection = dstDoc.Sections[0];
+        Paragraph lastParagraph = targetSection.Body.LastParagraph;
+        targetSection.Body.InsertAfter(importedParagraph, lastParagraph);
 
-        // Configure EPUB save options (optional: set encoding, split criteria, export properties).
-        HtmlSaveOptions epubSaveOptions = new HtmlSaveOptions
+        // Configure save options for EPUB output.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
             SaveFormat = SaveFormat.Epub,
-            Encoding = System.Text.Encoding.UTF8,
-            DocumentSplitCriteria = DocumentSplitCriteria.None,
-            ExportDocumentProperties = true
+            // Optional: set encoding, split criteria, etc., as needed.
         };
 
-        // Save the destination document as an EPUB file.
-        dstDoc.Save(outputEpubPath, epubSaveOptions);
+        // Save the resulting document as an EPUB file.
+        dstDoc.Save("Result.epub", saveOptions);
     }
 }

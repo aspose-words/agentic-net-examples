@@ -1,20 +1,18 @@
 using System;
 using Aspose.Words;
 
-class Program
+class ConvertToDoc
 {
     static void Main()
     {
         // Path to the source document (any supported format, e.g., .docx)
-        string sourcePath = @"C:\Docs\SourceDocument.docx";
+        string sourcePath = "input.docx";
 
-        // Path where the converted DOC format will be saved
-        string targetPath = @"C:\Docs\ConvertedDocument.doc";
-
-        // Load the source document. The constructor automatically detects the format.
+        // Open the source document. The constructor automatically detects the format.
         Document doc = new Document(sourcePath);
 
-        // Save the document in Microsoft Word 97‑2007 DOC format.
-        doc.Save(targetPath, SaveFormat.Doc);
+        // Save the opened document in the legacy DOC format.
+        string outputPath = "output.doc";
+        doc.Save(outputPath, SaveFormat.Doc);
     }
 }

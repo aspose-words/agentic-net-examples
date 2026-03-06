@@ -7,27 +7,28 @@ class InsertOleIntoDot
 {
     static void Main()
     {
-        // Create a new empty document (DOT template)
-        Document doc = new Document();
+        // Paths to the template, the file to embed, and the output document.
+        string dataDir = @"C:\Data\";
+        string templatePath = Path.Combine(dataDir, "Template.dot");
+        string oleFilePath = Path.Combine(dataDir, "cat001.zip"); // any file to embed
+        string outputPath = Path.Combine(dataDir, "Result.dot");
 
-        // Initialize a DocumentBuilder to work with the document
+        // Load the existing DOT template.
+        Document doc = new Document(templatePath);
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path to the file that will be embedded as an OLE object
-        string oleFilePath = @"C:\Data\SamplePackage.zip";
+        // Insert an embedded OLE object (Package) from a stream.
+        // Parameters: stream, progId ("Package" for generic files), asIcon = false, presentation = null.
+        using (FileStream oleStream = new FileStream(oleFilePath, FileMode.Open, FileAccess.Read))
+        {
+            Shape oleShape = builder.InsertOleObject(oleStream, "Package", false, null);
 
-        // Path to a custom icon (ICO) that will represent the OLE object in the document
-        string iconPath = @"C:\Images\PackageIcon.ico";
+            // Optional: set the file name and display name that Word will show.
+            oleShape.OleFormat.OlePackage.FileName = Path.GetFileName(oleFilePath);
+            oleShape.OleFormat.OlePackage.DisplayName = "Sample ZIP";
+        }
 
-        // Insert the OLE object as an icon. The object is embedded (isLinked = false).
-        // The icon caption will be the file name by default.
-        builder.InsertOleObjectAsIcon(oleFilePath, false, iconPath, null);
-
-        // Optionally add a paragraph after the OLE object
-        builder.InsertParagraph();
-
-        // Save the document as a DOT template
-        string outputPath = @"C:\Output\TemplateWithOle.dot";
+        // Save the modified document back as a DOT file.
         doc.Save(outputPath, SaveFormat.Dot);
     }
 }

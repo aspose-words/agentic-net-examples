@@ -3,62 +3,72 @@ using System.Data;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class MailMergeToPng
+namespace MailMergeToPngExample
 {
-    static void Main()
+    class Program
     {
-        // Load the DOCX template that contains mail‑merge regions.
-        // The constructor overload that takes a file name follows the provided load rule.
-        Document doc = new Document("Template.docx");
+        static void Main()
+        {
+            // Path to the source DOCX file that contains mail‑merge regions.
+            const string inputPath = @"C:\Docs\TemplateWithRegions.docx";
 
-        // -----------------------------------------------------------------
-        // Prepare a DataSet with tables whose names match the region names
-        // defined in the template (e.g. TableStart:Customers, TableStart:Orders).
-        // -----------------------------------------------------------------
-        DataSet dataSet = new DataSet();
+            // Load the existing document. This uses the provided Document(string) constructor.
+            Document doc = new Document(inputPath);
 
-        // ----- Customers table (outer region) -----
-        DataTable customers = new DataTable("Customers");
-        customers.Columns.Add("CustomerID", typeof(int));
-        customers.Columns.Add("FullName", typeof(string));
-        customers.Columns.Add("Address", typeof(string));
+            // Prepare a DataSet whose table name matches the mail‑merge region name in the document.
+            // For example, the document contains fields:
+            //   MERGEFIELD TableStart:Employees
+            //   MERGEFIELD FirstName
+            //   MERGEFIELD LastName
+            //   MERGEFIELD TableEnd:Employees
+            DataSet data = CreateSampleDataSet();
 
-        customers.Rows.Add(1, "Thomas Hardy", "120 Hanover Sq., London");
-        customers.Rows.Add(2, "Paolo Accorti", "Via Monte Bianco 34, Torino");
+            // Execute the mail merge with regions. This uses the MailMerge.ExecuteWithRegions(DataSet) method.
+            doc.MailMerge.ExecuteWithRegions(data);
 
-        dataSet.Tables.Add(customers);
+            // Configure image save options to render each page as a PNG image.
+            // The ImageSaveOptions class is part of the provided Save overloads.
+            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
+            {
+                // Render all pages; each page will be saved as a separate PNG file.
+                // The {0} placeholder in the file name will be replaced with the page number (1‑based).
+                // If you want a single image of the first page only, set PageSet = new PageSet(0);
+                // Here we keep the default to render all pages.
+                // You can also adjust resolution, size, etc., if required.
+                Resolution = 300
+            };
 
-        // ----- Orders table (nested region) -----
-        DataTable orders = new DataTable("Orders");
-        orders.Columns.Add("CustomerID", typeof(int));
-        orders.Columns.Add("ItemName", typeof(string));
-        orders.Columns.Add("Quantity", typeof(int));
+            // Save the document as PNG images. The file name pattern includes a page number placeholder.
+            // This uses the Document.Save(string, SaveOptions) overload.
+            const string outputPattern = @"C:\Docs\ResultPage_{0}.png";
+            doc.Save(outputPattern, pngOptions);
 
-        orders.Rows.Add(1, "Rugby World Cup Cap", 2);
-        orders.Rows.Add(1, "Rugby World Cup Ball", 1);
-        orders.Rows.Add(2, "Rugby World Cup Guide", 1);
+            // If you prefer to save only the first page as a single PNG, uncomment the following:
+            // pngOptions.PageSet = new PageSet(0);
+            // doc.Save(@"C:\Docs\ResultFirstPage.png", pngOptions);
+        }
 
-        dataSet.Tables.Add(orders);
+        /// <summary>
+        /// Creates a sample DataSet with a single DataTable named "Employees".
+        /// The table columns correspond to the merge fields inside the region.
+        /// </summary>
+        private static DataSet CreateSampleDataSet()
+        {
+            // Define the table that matches the region name.
+            DataTable employees = new DataTable("Employees");
+            employees.Columns.Add("FirstName", typeof(string));
+            employees.Columns.Add("LastName", typeof(string));
 
-        // Define the relationship between the two tables so that the nested region
-        // (Orders) can be linked to its parent (Customers) by CustomerID.
-        dataSet.Relations.Add(customers.Columns["CustomerID"], orders.Columns["CustomerID"]);
+            // Add sample rows.
+            employees.Rows.Add("John", "Doe");
+            employees.Rows.Add("Jane", "Smith");
+            employees.Rows.Add("Bob", "Johnson");
 
-        // -----------------------------------------------------------------
-        // Execute the mail merge using the DataSet.
-        // The ExecuteWithRegions method is the rule‑based way to merge data
-        // into repeatable regions.
-        // -----------------------------------------------------------------
-        doc.MailMerge.ExecuteWithRegions(dataSet);
+            // Assemble the DataSet.
+            DataSet ds = new DataSet();
+            ds.Tables.Add(employees);
 
-        // -----------------------------------------------------------------
-        // Save the merged document as PNG.
-        // Use ImageSaveOptions with SaveFormat.Png and the Save(string, SaveOptions) overload.
-        // -----------------------------------------------------------------
-        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
-        // Optional: render only the first page (remove the line to render all pages).
-        // pngOptions.PageSet = new PageSet(0);
-
-        doc.Save("MergedResult.png", pngOptions);
+            return ds;
+        }
     }
 }

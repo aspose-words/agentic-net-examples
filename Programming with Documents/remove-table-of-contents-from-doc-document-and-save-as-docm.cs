@@ -1,41 +1,28 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class RemoveTocAndSaveAsDocm
+class RemoveTocExample
 {
     static void Main()
     {
         // Path to the source DOC file.
-        const string inputFile = @"C:\Docs\SourceDocument.doc";
+        string inputPath = @"C:\Docs\SourceDocument.doc";
 
-        // Path where the resulting DOCM file will be saved.
-        const string outputFile = @"C:\Docs\ResultDocument.docm";
+        // Path for the resulting DOCM file (macro‑enabled format).
+        string outputPath = @"C:\Docs\SourceDocument_NoToc.docm";
 
-        // Load the existing document (lifecycle rule: load).
-        Document doc = new Document(inputFile);
+        // Load the existing document.
+        Document doc = new Document(inputPath);
 
-        // Collect all Table of Contents (TOC) fields in the document.
-        List<Field> tocFields = new List<Field>();
+        // Iterate through all fields in the document and remove any Table of Contents fields.
         foreach (Field field in doc.Range.Fields)
         {
-            // FieldType.FieldTOC identifies a TOC field.
             if (field.Type == FieldType.FieldTOC)
-                tocFields.Add(field);
+                field.Remove();
         }
 
-        // Remove each TOC field from the document.
-        foreach (Field toc in tocFields)
-        {
-            // The Remove method deletes the field node and its result.
-            toc.Remove();
-        }
-
-        // Optionally update remaining fields after removal.
-        doc.UpdateFields();
-
-        // Save the modified document as a macro‑enabled DOCM file (lifecycle rule: save).
-        doc.Save(outputFile, SaveFormat.Docm);
+        // Save the modified document as a DOCM file.
+        doc.Save(outputPath);
     }
 }

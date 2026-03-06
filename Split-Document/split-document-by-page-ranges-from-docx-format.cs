@@ -1,56 +1,64 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
-public class DocumentSplitter
+namespace DocumentSplitter
 {
-    /// <summary>
-    /// Splits the source DOCX into separate documents based on the supplied page ranges.
-    /// </summary>
-    /// <param name="sourcePath">Full path to the source DOCX file.</param>
-    /// <param name="outputFolder">Folder where the split documents will be saved.</param>
-    /// <param name="ranges">List of tuples where Item1 is the zero‑based start page index and Item2 is the number of pages to extract.</param>
-    public static void SplitByPageRanges(string sourcePath, string outputFolder, List<(int start, int count)> ranges)
+    public class Splitter
     {
-        // Load the source document (lifecycle rule: load)
-        Document sourceDoc = new Document(sourcePath);
-
-        // Ensure the output folder ends with a directory separator
-        if (!outputFolder.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
-            outputFolder += System.IO.Path.DirectorySeparatorChar;
-
-        // Iterate over each range and extract the corresponding pages
-        for (int i = 0; i < ranges.Count; i++)
+        /// <summary>
+        /// Splits a DOCX document into separate files based on the supplied page ranges.
+        /// Each range is defined by a zero‑based start page index and the number of pages to extract.
+        /// </summary>
+        /// <param name="sourcePath">Full path to the source DOCX file.</param>
+        /// <param name="outputDir">Directory where the split documents will be saved.</param>
+        /// <param name="pageRanges">
+        /// An array of integer pairs: [startIndex, count].
+        /// Example: new int[][] { new[] {0, 2}, new[] {2, 3} } extracts pages 1‑2 and 3‑5.
+        /// </param>
+        public static void SplitDocument(string sourcePath, string outputDir, int[][] pageRanges)
         {
-            var (start, count) = ranges[i];
+            // Ensure the output directory exists.
+            if (!Directory.Exists(outputDir))
+                Directory.CreateDirectory(outputDir);
 
-            // ExtractPages uses zero‑based page index (feature rule)
-            Document part = sourceDoc.ExtractPages(start, count);
+            // Load the source document using the Document constructor (lifecycle rule).
+            Document sourceDoc = new Document(sourcePath);
 
-            // Build a file name like "Part_1.docx", "Part_2.docx", etc.
-            string partPath = System.IO.Path.Combine(outputFolder, $"Part_{i + 1}.docx");
+            // Iterate over each requested range.
+            for (int i = 0; i < pageRanges.Length; i++)
+            {
+                int startIndex = pageRanges[i][0]; // zero‑based page index
+                int count = pageRanges[i][1];      // number of pages to extract
 
-            // Save the extracted part (lifecycle rule: save)
-            part.Save(partPath);
+                // Extract the specified pages. This uses the Document.ExtractPages method (feature rule).
+                Document part = sourceDoc.ExtractPages(startIndex, count);
+
+                // Build a file name that reflects the range (e.g., "Part_1_2.docx" for pages 1‑2).
+                string partFileName = Path.Combine(
+                    outputDir,
+                    $"Part_{startIndex + 1}_{startIndex + count}.docx");
+
+                // Save the extracted part using the Document.Save method (lifecycle rule).
+                part.Save(partFileName);
+            }
         }
-    }
 
-    // Example usage
-    public static void Main()
-    {
-        string source = @"C:\Docs\SourceDocument.docx";
-        string output = @"C:\Docs\SplitParts";
-
-        // Define page ranges: pages 1‑2, pages 3‑4, and page 5 alone.
-        // Note: page indices are zero‑based, so page 1 is index 0.
-        var ranges = new List<(int start, int count)>
+        // Example usage.
+        public static void Main()
         {
-            (0, 2), // pages 1‑2
-            (2, 2), // pages 3‑4
-            (4, 1)  // page 5
-        };
+            string source = @"C:\Docs\SourceDocument.docx";
+            string output = @"C:\Docs\SplitParts";
 
-        SplitByPageRanges(source, output, ranges);
+            // Define page ranges: pages 1‑2, 3‑5, and 6‑6.
+            int[][] ranges = new int[][]
+            {
+                new[] {0, 2}, // pages 1‑2
+                new[] {2, 3}, // pages 3‑5
+                new[] {5, 1}  // page 6
+            };
+
+            SplitDocument(source, output, ranges);
+        }
     }
 }

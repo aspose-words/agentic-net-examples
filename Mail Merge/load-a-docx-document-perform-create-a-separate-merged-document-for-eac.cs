@@ -7,41 +7,33 @@ class MailMergeToPng
 {
     static void Main()
     {
-        // Path to the mail‑merge template document (must contain MERGEFIELDs).
-        const string templatePath = "Template.docx";
+        // Path to the mail‑merge template (must contain MERGEFIELDs).
+        const string templatePath = @"C:\Templates\ReportTemplate.docx";
 
         // Load the template document.
         Document template = new Document(templatePath);
 
-        // Prepare a data source – a DataTable with one row per merged document.
-        DataTable data = new DataTable("Customers");
-        data.Columns.Add("Name");
-        data.Columns.Add("Address");
-        data.Rows.Add("John Doe", "123 Main St, Anytown");
-        data.Rows.Add("Jane Smith", "456 Oak Ave, Othertown");
-        data.Rows.Add("Bob Johnson", "789 Pine Rd, Sometown");
+        // Prepare a data source – a DataTable with two rows as an example.
+        DataTable data = new DataTable("ReportData");
+        data.Columns.Add("Title");
+        data.Columns.Add("Value");
+        data.Rows.Add("First", 123);
+        data.Rows.Add("Second", 456);
 
-        // Iterate over each data row, create a merged document and save it as PNG.
+        // Iterate over each row, create a merged document and save it as PNG.
         for (int i = 0; i < data.Rows.Count; i++)
         {
-            // Clone the template so that each iteration works with a fresh copy.
-            Document mergedDoc = (Document)template.Clone(true);
+            // Clone the template to keep the original unchanged.
+            Document merged = (Document)template.Clone(true);
 
             // Execute mail merge for the current row only.
-            mergedDoc.MailMerge.Execute(data.Rows[i]);
+            merged.MailMerge.Execute(data.Rows[i]);
 
-            // Define the output PNG file name.
-            string outputPath = $"MergedDocument_{i + 1}.png";
+            // Define the output file name.
+            string outputPath = $@"C:\Output\MergedDocument_{i + 1}.png";
 
-            // Configure image save options – render the first page as PNG.
-            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
-            {
-                // Render only the first page (zero‑based index).
-                PageSet = new PageSet(0)
-            };
-
-            // Save the merged document page as a PNG image.
-            mergedDoc.Save(outputPath, pngOptions);
+            // Save the merged document as a PNG image (first page rendered).
+            merged.Save(outputPath, SaveFormat.Png);
         }
     }
 }

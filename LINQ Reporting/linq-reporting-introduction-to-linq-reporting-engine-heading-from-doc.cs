@@ -2,48 +2,26 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+class Program
 {
-    // Simple data class to be used as a data source for the report.
-    public class ReportData
+    static void Main()
     {
-        public string Title { get; set; }
-        public string Description { get; set; }
-    }
+        // Create a new blank Word document.
+        Document doc = new Document();
 
-    class Program
-    {
-        static void Main()
-        {
-            // Create a new blank Word document.
-            Document doc = new Document();
+        // Use DocumentBuilder to add content to the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Use DocumentBuilder to add a heading to the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            // Set the paragraph style to Heading 1.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            // Write the heading text.
-            builder.Writeln("LINQ Reporting Introduction to LINQ Reporting Engine");
+        // Set the paragraph style to Heading1 and write the required heading text.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("LINQ Reporting Introduction to LINQ Reporting Engine");
 
-            // Add a placeholder for the report data using LINQ Reporting syntax.
-            // The placeholder will be replaced by the ReportingEngine.
-            builder.Writeln("<<[data.Title]>>");
-            builder.Writeln("<<[data.Description]>>");
+        // Demonstrate the LINQ Reporting Engine – build the report with an empty data source.
+        ReportingEngine engine = new ReportingEngine();
+        // The BuildReport method returns true if parsing succeeds.
+        engine.BuildReport(doc, new object());
 
-            // Prepare the data source.
-            ReportData data = new ReportData
-            {
-                Title = "Welcome to LINQ Reporting",
-                Description = "This document demonstrates how to use Aspose.Words LINQ Reporting Engine."
-            };
-
-            // Build the report by populating the template with the data source.
-            ReportingEngine engine = new ReportingEngine();
-            // The data source name "data" matches the placeholder used in the template.
-            engine.BuildReport(doc, data, "data");
-
-            // Save the resulting document to a file.
-            doc.Save("LinqReportingIntroduction.docx");
-        }
+        // Save the resulting document to disk.
+        doc.Save("LINQReportingHeading.docx");
     }
 }

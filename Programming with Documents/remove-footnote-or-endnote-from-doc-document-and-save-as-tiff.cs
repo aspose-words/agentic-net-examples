@@ -1,47 +1,31 @@
-using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Notes;
+using Aspose.Words.Saving;
 
-class RemoveNotesAndConvertToTiff
+class Program
 {
     static void Main()
     {
-        // Path to the source DOC/DOCX file that contains footnotes/endnotes.
-        string inputPath = @"C:\Docs\SourceDocument.docx";
+        // Load the source DOC document.
+        Document doc = new Document("input.docx");
 
-        // Path where the resulting TIFF image will be saved.
-        string outputPath = @"C:\Docs\ResultImage.tiff";
-
-        // Load the document.
-        Document doc = new Document(inputPath);
-
-        // Remove all footnotes.
-        NodeCollection footnotes = doc.GetChildNodes(NodeType.Footnote, true);
-        foreach (Footnote footnote in footnotes)
+        // Remove all footnotes and endnotes.
+        // Footnote nodes include both footnotes and endnotes.
+        var footnoteNodes = doc.GetChildNodes(NodeType.Footnote, true);
+        for (int i = footnoteNodes.Count - 1; i >= 0; i--)
         {
-            // Only remove footnotes (skip endnotes if you want to keep them).
-            if (footnote.FootnoteType == FootnoteType.Footnote)
-                footnote.Remove();
+            Footnote footnote = (Footnote)footnoteNodes[i];
+            footnote.Remove();
         }
 
-        // Remove all endnotes.
-        NodeCollection endnotes = doc.GetChildNodes(NodeType.Footnote, true);
-        foreach (Footnote endnote in endnotes)
-        {
-            if (endnote.FootnoteType == FootnoteType.Endnote)
-                endnote.Remove();
-        }
+        // Optionally remove footnote and endnote separators.
+        FootnoteSeparator footnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.FootnoteSeparator];
+        footnoteSeparator?.FirstParagraph?.FirstChild?.Remove();
 
-        // Configure image save options for TIFF format.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            // Optional: set compression, resolution, etc.
-            TiffCompression = TiffCompression.Lzw,
-            Resolution = 300
-        };
+        FootnoteSeparator endnoteSeparator = doc.FootnoteSeparators[FootnoteSeparatorType.EndnoteSeparator];
+        endnoteSeparator?.FirstParagraph?.FirstChild?.Remove();
 
         // Save the modified document as a TIFF image.
-        doc.Save(outputPath, saveOptions);
+        doc.Save("output.tiff", SaveFormat.Tiff);
     }
 }

@@ -6,30 +6,26 @@ class AddRowToDocm
 {
     static void Main()
     {
-        // Load an existing DOCM document.
-        Document doc = new Document("InputDocument.docm");
+        // Load the existing DOCM document.
+        Document doc = new Document("input.docm");
 
-        // Assume the document contains at least one table.
-        // Get the first table in the first section.
+        // Get the first table in the document (adjust index if needed).
         Table table = doc.FirstSection.Body.Tables[0];
 
-        // Create a new row belonging to the same document.
+        // Create a new row that belongs to the same document.
         Row newRow = new Row(doc);
 
-        // Ensure the new row has at least one cell.
+        // Append the new row to the end of the table.
+        table.AppendChild(newRow);
+
+        // Ensure the row has at least one cell.
         newRow.EnsureMinimum();
 
-        // Add content to the first cell of the new row.
+        // Add some text to the first cell of the new row.
         Cell firstCell = newRow.FirstCell;
-        Paragraph para = new Paragraph(doc);
-        firstCell.FirstParagraph?.Remove(); // Remove the empty paragraph created by EnsureMinimum.
-        firstCell.AppendChild(para);
-        para.AppendChild(new Run(doc, "New row added programmatically."));
-
-        // Insert the new row after the last existing row of the table.
-        table.LastRow.InsertAfter(newRow, table.LastRow);
+        firstCell.FirstParagraph.AppendChild(new Run(doc, "Text in the new row"));
 
         // Save the modified document as a DOCM file.
-        doc.Save("OutputDocument.docm");
+        doc.Save("output.docm");
     }
 }

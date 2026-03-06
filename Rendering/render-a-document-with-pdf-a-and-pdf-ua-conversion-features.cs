@@ -2,24 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class Program
+class PdfComplianceExample
 {
     static void Main()
     {
-        // Load the source Word document.
-        Document doc = new Document("Input.docx");
+        // Create a new document and add some sample content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This document will be saved as PDF/A-4 and PDF/UA-2 compliant.");
 
-        // Prepare PDF save options for PDF/A‑4 combined with PDF/UA‑2 compliance.
-        PdfSaveOptions saveOptions = new PdfSaveOptions
-        {
-            // PDF/A‑4 + PDF/UA‑2 ensures long‑term visual fidelity and accessibility.
-            Compliance = PdfCompliance.PdfA4Ua2,
+        // -------------------------------------------------
+        // Save as PDF/A-4 (ISO 19005-4) – visual preservation.
+        // -------------------------------------------------
+        PdfSaveOptions pdfA4Options = new PdfSaveOptions();
+        pdfA4Options.Compliance = PdfCompliance.PdfA4; // Set compliance level to PDF/A-4.
+        // No need to force document structure for PDF/A-4, default settings are sufficient.
+        doc.Save("Output_PdfA4.pdf", pdfA4Options);
 
-            // Exporting the document structure is required for PDF/UA compliance.
-            ExportDocumentStructure = true
-        };
-
-        // Save the document as a PDF using the configured options.
-        doc.Save("Output.pdf", saveOptions);
+        // ---------------------------------------------------------------
+        // Save as PDF/A-4 + PDF/UA-2 (ISO 19005-4 + ISO 14289-2) – accessibility.
+        // ---------------------------------------------------------------
+        PdfSaveOptions pdfA4Ua2Options = new PdfSaveOptions();
+        pdfA4Ua2Options.Compliance = PdfCompliance.PdfA4Ua2; // Set compliance to PDF/A-4 + PDF/UA-2.
+        // PDF/UA requires document structure (tags) to be exported.
+        pdfA4Ua2Options.ExportDocumentStructure = true;
+        doc.Save("Output_PdfA4Ua2.pdf", pdfA4Ua2Options);
     }
 }

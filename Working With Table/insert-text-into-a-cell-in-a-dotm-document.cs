@@ -5,12 +5,12 @@ var doc = new Aspose.Words.Document("Template.dotm");
 var builder = new Aspose.Words.DocumentBuilder(doc);
 
 // Move the cursor to the desired cell.
-// Parameters: table index, row index, cell index, column index (for merged cells).
-// Here we target the first table, first row, first cell.
+ // Parameters: tableIndex, rowIndex, columnIndex, cellIndex
+ // Adjust the indices as needed for your document.
 builder.MoveToCell(0, 0, 0, 0);
 
-// Insert the desired text into the cell
-builder.Write("Inserted text into the cell");
+// Insert the text into the cell
+builder.Write("Inserted text");
 
-// Save the modified document (can be saved as DOTM or another format)
+// Save the modified document
 doc.Save("Result.dotm");

@@ -2,47 +2,28 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-class Program
+class SetFormFieldValue
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = "input.docx";
+        // Path to the folder that contains the input document.
+        string docsPath = @"C:\Docs\";
 
-        // Path where the modified document will be saved.
-        string outputPath = "output.docx";
+        // Load the existing DOCX file.
+        Document doc = new Document(docsPath + "input.docx");
 
-        // Name of the form field to modify (bookmark name of the field).
-        string fieldName = "MyTextInput";
+        // Retrieve the form field by its bookmark name (the name given when the field was inserted).
+        // Replace "MyTextInput" with the actual name of your form field.
+        FormField formField = doc.Range.FormFields["MyTextInput"];
 
-        // New value to assign to the form field.
-        string newValue = "New value";
-
-        // Load the existing document from the file system.
-        Document doc = new Document(inputPath);
-
-        // Retrieve the form field by its bookmark name.
-        FormField formField = doc.Range.FormFields[fieldName];
-
-        if (formField != null)
+        // Ensure the field exists and is a text input field before setting its value.
+        if (formField != null && formField.Type == FieldType.FieldFormTextInput)
         {
-            // If the field is a text input, use SetTextInputValue to apply formatting.
-            if (formField.Type == FieldType.FieldFormTextInput)
-            {
-                formField.SetTextInputValue(newValue);
-            }
-            else
-            {
-                // For other field types (e.g., checkbox, dropdown) set the result directly.
-                formField.Result = newValue;
-            }
-        }
-        else
-        {
-            Console.WriteLine($"Form field \"{fieldName}\" not found.");
+            // Set the new value for the text input form field.
+            formField.SetTextInputValue("New value for the field");
         }
 
         // Save the modified document.
-        doc.Save(outputPath);
+        doc.Save(docsPath + "output.docx");
     }
 }

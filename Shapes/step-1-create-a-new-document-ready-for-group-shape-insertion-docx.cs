@@ -6,16 +6,16 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new blank document (uses the Document constructor rule)
         Document doc = new Document();
 
-        // Use DocumentBuilder to work with the document.
+        // Initialize a DocumentBuilder for the document (allows content insertion)
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will serve as the insertion point for a future group shape.
-        builder.Writeln("Insert group shape here.");
+        // Add a placeholder paragraph where a group shape can be inserted later
+        builder.Writeln("Placeholder for group shape insertion:");
 
-        // Save the document in DOCX format.
+        // Save the document as a DOCX file (uses the Document.Save rule)
         doc.Save("GroupShapeReady.docx");
     }
 }

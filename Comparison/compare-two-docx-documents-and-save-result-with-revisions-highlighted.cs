@@ -1,23 +1,30 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Comparing;
 
-class CompareDocsToHtml
+class DocumentComparison
 {
     static void Main()
     {
-        // Load the original and edited DOCX files.
-        Document original = new Document("Original.docx");
-        Document edited = new Document("Edited.docx");
+        // Paths to the source documents and the output HTML file.
+        string originalPath = "Original.docx";
+        string editedPath   = "Edited.docx";
+        string resultPath   = "ComparisonResult.html";
+
+        // Load the two documents that will be compared.
+        Document docOriginal = new Document(originalPath);
+        Document docEdited   = new Document(editedPath);
 
         // Ensure both documents have no existing revisions before comparison.
-        if (original.Revisions.Count == 0 && edited.Revisions.Count == 0)
+        if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
         {
-            // Perform the comparison. Revisions are added to the original document.
-            original.Compare(edited, "Comparer", DateTime.Now);
+            // Compare the documents. The revisions (insertions/deletions) will be added to docOriginal.
+            docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
         }
 
-        // Save the result as HTML; revisions will be highlighted in the output.
-        original.Save("ComparisonResult.html", SaveFormat.Html);
+        // Save the resulting document as HTML.
+        // The .html extension automatically selects the HTML save format.
+        // Revisions are exported as <ins> and <del> tags in the HTML output.
+        docOriginal.Save(resultPath);
     }
 }

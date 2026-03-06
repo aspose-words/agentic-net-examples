@@ -5,11 +5,16 @@ class Program
 {
     static void Main()
     {
-        // Load the macro-enabled DOCM document from the file system.
-        Document doc = new Document("input.docm");
+        // Path to the source DOCM file.
+        string inputPath = "input.docm";
 
-        // Save the loaded document in Markdown format.
-        // The SaveFormat enumeration value 'Markdown' specifies the target format.
-        doc.Save("output.md", SaveFormat.Markdown);
+        // Path where the Markdown file will be saved.
+        string outputPath = "output.md";
+
+        // Load the DOCM document using the Document(string) constructor.
+        Document doc = new Document(inputPath);
+
+        // Save the document in Markdown format. The Save method determines the format from the SaveFormat enum.
+        doc.Save(outputPath, SaveFormat.Markdown);
     }
 }

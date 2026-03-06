@@ -1,31 +1,27 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing;
 
-class DocxToImageConverter
+class Program
 {
     static void Main()
     {
-        // Path to the folder that contains the input DOCX file.
-        string docsFolder = @"C:\Docs\";
+        // Path to the source DOCX file.
+        string inputPath = "Input.docx";
 
-        // Input DOCX file name.
-        string inputFile = "input.docx";
+        // Path where the rendered image will be saved.
+        string outputPath = "Output.png";
 
-        // Output image file name (PNG format in this example).
-        string outputFile = "output.png";
+        // Load the DOCX document from the file system.
+        Document doc = new Document(inputPath);
 
-        // Load the DOCX document.
-        Document doc = new Document(docsFolder + inputFile);
-
-        // Create ImageSaveOptions to specify image format and rendering options.
+        // Create image save options for PNG format.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
+        // Example: set a higher resolution for better quality.
+        options.Resolution = 300; // DPI
 
-        // Render only the first page (zero‑based index). Remove this line to render all pages.
-        options.PageSet = new PageSet(0);
-
-        // Save the document as an image.
-        doc.Save(docsFolder + outputFile, options);
+        // Save the first page of the document as an image.
+        // When saving to an image format Aspose.Words renders only the first page.
+        doc.Save(outputPath, options);
     }
 }

@@ -12,19 +12,16 @@ class Program
         Document doc = new Document("input.rtf", loadOptions);
 
         // Retrieve all OfficeMath nodes in the document.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
 
         int summationCount = 0;
-        foreach (Node node in mathNodes)
+        foreach (OfficeMath officeMath in officeMathNodes)
         {
-            OfficeMath officeMath = (OfficeMath)node;
-
-            // The Unicode character for the summation symbol is U+2211 (∑).
-            // Count the equation if its text contains this symbol.
+            // The summation symbol is Unicode U+2211 (∑).
             if (officeMath.GetText().Contains("\u2211"))
                 summationCount++;
         }
 
-        Console.WriteLine($"OfficeMath equations containing a summation symbol: {summationCount}");
+        Console.WriteLine($"OfficeMath equations containing summation symbols: {summationCount}");
     }
 }

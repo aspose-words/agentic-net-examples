@@ -7,29 +7,30 @@ class Program
 {
     static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a rectangle shape.
-        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 150);
-        rect.Left = 50;               // Position from the left edge of the page.
-        rect.Top = 50;                // Position from the top edge of the page.
-        rect.Stroke.Color = Color.Blue;
+        Shape rect = builder.InsertShape(ShapeType.Rectangle, 200, 250);
+        rect.Left = 20;               // Position from the left edge.
+        rect.Top = 20;                // Position from the top edge.
+        rect.Stroke.Color = Color.Red;
 
         // Insert an ellipse shape.
-        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 150);
-        ellipse.Left = 100;
-        ellipse.Top = 100;
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 150, 200);
+        ellipse.Left = 40;
+        ellipse.Top = 50;
         ellipse.Stroke.Color = Color.Green;
 
         // Group the two shapes into a single GroupShape node.
         GroupShape group = builder.InsertGroupShape(rect, ellipse);
 
-        // Optionally adjust the group's bounding box.
-        group.Bounds = new RectangleF(0, 0, 300, 300);
+        // Optional: adjust the size of the group shape.
+        group.Width = 300;
+        group.Height = 300;
 
-        // Save the document as a PNG image (each page becomes a separate PNG file).
+        // Save the document as a PNG image.
         doc.Save("GroupShape.png", SaveFormat.Png);
     }
 }

@@ -2,32 +2,30 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class InsertDocumentViaReportingEngine
+class Program
 {
     static void Main()
     {
-        // 1. Create a template document that contains a reporting tag.
-        // The tag <<doc [src.Document]>> tells the ReportingEngine to insert the document
-        // referenced by the data source named "src".
+        // 1. Create a template document that contains a placeholder for another document.
         Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Report start");
-        builder.Writeln("<<doc [src.Document]>>"); // placeholder for the inserted document
-        builder.Writeln("Report end");
+        DocumentBuilder templateBuilder = new DocumentBuilder(template);
+        // The LINQ Reporting Engine uses the syntax <<doc [src.Document]>> to insert a document.
+        templateBuilder.Writeln("<<doc [src.Document]>>");
 
-        // 2. Create the document that will be inserted.
+        // 2. Create the document that will be inserted into the template.
         Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("This is the content of the inserted document.");
-        srcBuilder.Writeln("It can contain multiple paragraphs, tables, images, etc.");
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This is the content of the inserted document.");
 
-        // 3. Build the report.
-        // The ReportingEngine receives the template and an array of data sources.
-        // The source document is passed as a data source with the name "src".
+        // 3. Wrap the source document in an anonymous object that will be used as a data source.
+        var dataSource = new { Document = sourceDoc };
+
+        // 4. Populate the template using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, new object[] { sourceDoc }, new string[] { "src" });
+        // The third argument ("src") is the name used in the template to reference the data source.
+        engine.BuildReport(template, dataSource, "src");
 
-        // 4. Save the resulting document.
-        template.Save("ReportWithInsertedDocument.docx");
+        // 5. Save the final document.
+        template.Save("Result.docx");
     }
 }

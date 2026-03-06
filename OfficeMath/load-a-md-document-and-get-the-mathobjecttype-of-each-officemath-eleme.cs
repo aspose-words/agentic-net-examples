@@ -1,41 +1,23 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Math;
-using Aspose.Words.Loading;
-
-class OfficeMathTypeCollector : DocumentVisitor
-{
-    // Stores the MathObjectType of each visited OfficeMath node.
-    public readonly List<MathObjectType> Types = new List<MathObjectType>();
-
-    // Called when an OfficeMath node is encountered.
-    public override VisitorAction VisitOfficeMathStart(OfficeMath officeMath)
-    {
-        Types.Add(officeMath.MathObjectType);
-        return VisitorAction.Continue;
-    }
-}
 
 class Program
 {
     static void Main()
     {
-        // Path to the Markdown document.
-        const string inputPath = "input.md";
+        // Load the Markdown document.
+        // Aspose.Words can directly load .md files.
+        Document doc = new Document("input.md");
 
-        // Load the document. LoadOptions can be customized if needed.
-        LoadOptions loadOptions = new LoadOptions();
-        Document doc = new Document(inputPath, loadOptions);
+        // Retrieve all OfficeMath nodes in the document (including nested ones).
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
 
-        // Traverse the document and collect MathObjectTypes.
-        OfficeMathTypeCollector collector = new OfficeMathTypeCollector();
-        doc.Accept(collector);
-
-        // Output the collected MathObjectTypes.
-        foreach (MathObjectType type in collector.Types)
+        // Iterate through each OfficeMath node and output its MathObjectType.
+        for (int i = 0; i < officeMathNodes.Count; i++)
         {
-            Console.WriteLine(type);
+            OfficeMath officeMath = (OfficeMath)officeMathNodes[i];
+            Console.WriteLine($"OfficeMath #{i}: {officeMath.MathObjectType}");
         }
     }
 }

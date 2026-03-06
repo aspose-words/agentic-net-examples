@@ -6,22 +6,23 @@ class Program
 {
     static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some explanatory text.
-        builder.Writeln("Please check the box below:");
+        // Write some explanatory text before the checkbox.
+        builder.Writeln("Please tick the box below:");
 
         // Insert a checkbox form field at the current cursor position.
-        // Parameters: name, defaultValue, checkedValue, size (0 = automatic size).
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, false, 0);
+        // Parameters: name, defaultValue (unchecked), size (0 = auto).
+        builder.InsertCheckBox("MyCheckBox", false, 0);
 
-        // Set the checkbox to have an explicit size (optional).
-        checkBox.IsCheckBoxExactSize = true;
-        checkBox.CheckBoxSize = 12; // size in points
+        // Add a paragraph break after the checkbox for readability.
+        builder.InsertParagraph();
 
         // Save the document in RTF format.
-        doc.Save("CheckboxDocument.rtf", SaveFormat.Rtf);
+        doc.Save("CheckboxFormField.rtf");
     }
 }

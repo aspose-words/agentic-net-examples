@@ -3,35 +3,20 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class BatchDocConverter
+class BatchConversion
 {
     static void Main()
     {
-        // Folder containing source documents of various formats.
-        string inputFolder = @"C:\Input";
+        // Load the source document. Aspose.Words automatically detects the format.
+        Document doc = new Document("input.docx");
 
-        // Folder where the converted DOC files will be saved.
-        string outputFolder = @"C:\Output";
+        // Create save options for the legacy DOC format.
+        DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
 
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
+        // Optionally set additional options, e.g., a password.
+        // saveOptions.Password = "MyPassword";
 
-        // Iterate over each file in the input folder.
-        foreach (string sourcePath in Directory.GetFiles(inputFolder))
-        {
-            // Load the source document (auto-detects format).
-            Document doc = new Document(sourcePath);
-
-            // Create save options for the legacy DOC format.
-            DocSaveOptions saveOptions = new DocSaveOptions(SaveFormat.Doc);
-
-            // Construct the output file name with a .doc extension.
-            string targetPath = Path.Combine(
-                outputFolder,
-                Path.GetFileNameWithoutExtension(sourcePath) + ".doc");
-
-            // Save the document as DOC using the specified options.
-            doc.Save(targetPath, saveOptions);
-        }
+        // Save the document in DOC format using the specified options.
+        doc.Save("output.doc", saveOptions);
     }
 }

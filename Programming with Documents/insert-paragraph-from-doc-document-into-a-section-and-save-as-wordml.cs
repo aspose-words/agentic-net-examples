@@ -2,34 +2,36 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-class InsertParagraphExample
+class InsertParagraphIntoSection
 {
     static void Main()
     {
-        // Load the source document that contains the paragraph to be inserted.
+        // Load the source DOC document that contains the paragraph to be copied.
         Document srcDoc = new Document("Source.doc");
 
-        // Create a new destination document.
+        // Retrieve the paragraph you want to insert.
+        // Here we take the first paragraph of the first section.
+        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
+
+        // Create a new (empty) destination document.
         Document dstDoc = new Document();
 
         // Create a new section in the destination document.
-        Section dstSection = new Section(dstDoc);
-        dstDoc.AppendChild(dstSection);
+        Section newSection = new Section(dstDoc);
+        dstDoc.AppendChild(newSection);
 
-        // Ensure the section has a body (required for a valid section).
-        dstSection.EnsureMinimum();
+        // Ensure the section has a body (and at least one paragraph) so we can add content.
+        newSection.EnsureMinimum();
 
-        // Get the first paragraph from the source document.
-        Paragraph srcParagraph = srcDoc.FirstSection.Body.FirstParagraph;
-
-        // Import the paragraph into the destination document.
+        // Import the source paragraph into the destination document.
+        // NodeImporter handles style and list translation between documents.
         NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
-        Node importedParagraph = importer.ImportNode(srcParagraph, true);
+        Paragraph importedParagraph = (Paragraph)importer.ImportNode(srcParagraph, true);
 
-        // Append the imported paragraph to the body of the destination section.
-        dstSection.Body.AppendChild(importedParagraph);
+        // Append the imported paragraph to the body of the new section.
+        newSection.Body.AppendChild(importedParagraph);
 
-        // Save the resulting document in WORDML (XML) format.
+        // Save the resulting document as WORDML (XML) format.
         dstDoc.Save("Result.xml", SaveFormat.WordML);
     }
 }

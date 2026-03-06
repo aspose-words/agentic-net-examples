@@ -7,29 +7,31 @@ class Program
 {
     static void Main()
     {
-        // Input PDF/A file path
-        string inputPath = @"C:\Docs\InputPdfA.pdf";
+        // Path to the source PDF/A document.
+        string inputPath = "InputPdfA.pdf";
 
-        // Output PDF file path
-        string outputPath = @"C:\Docs\Output.pdf";
+        // Path where the rendered PDF will be saved.
+        string outputPath = "RenderedOutput.pdf";
 
-        // Load the PDF/A document with default load options
+        // Load the PDF/A document using PdfLoadOptions.
         PdfLoadOptions loadOptions = new PdfLoadOptions();
-        // Ensure images are not skipped during loading
-        loadOptions.SkipPdfImages = false;
-
-        // Load the document
         Document doc = new Document(inputPath, loadOptions);
 
-        // Rebuild the page layout to guarantee correct rendering
+        // Rebuild the page layout to ensure correct rendering.
         doc.UpdatePageLayout();
 
-        // Configure PDF save options (default PDF format)
-        PdfSaveOptions saveOptions = new PdfSaveOptions();
-        // Example: to save as PDF/A-2u uncomment the following line
-        // saveOptions.Compliance = PdfCompliance.PdfA2u;
+        // Create save options appropriate for PDF format.
+        SaveOptions saveOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
 
-        // Save the rendered document as PDF
+        // Configure PDF save options (optional high‑quality rendering).
+        if (saveOptions is PdfSaveOptions pdfOptions)
+        {
+            pdfOptions.UseHighQualityRendering = true;
+            // Save as a regular PDF (PDF 1.7 compliance).
+            pdfOptions.Compliance = PdfCompliance.Pdf17;
+        }
+
+        // Save the rendered document as PDF.
         doc.Save(outputPath, saveOptions);
     }
 }

@@ -6,26 +6,26 @@ class InsertTextIntoCell
 {
     static void Main()
     {
-        // Path to the folder that contains the template DOT file.
-        string dataDir = @"C:\Data\";
-        string templatePath = dataDir + "Template.dot";
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Load the DOT template document.
-        Document doc = new Document(templatePath);
-
-        // Create a DocumentBuilder for the loaded document.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the first cell of the first table.
-        // Parameters: tableIndex, rowIndex, columnIndex, cellIndex.
-        // Here we target the cell at row 0, column 0 of the first table.
-        builder.MoveToCell(0, 0, 0, 0);
+        // Start a table. The first call to InsertCell also creates the first row.
+        builder.StartTable();
 
-        // Insert the desired text into the cell.
-        builder.Write("Inserted text into the cell.");
+        // Insert the first cell of the first row.
+        Cell cell = builder.InsertCell();
 
-        // Save the modified document. You can save as DOCX or any other supported format.
-        string outputPath = dataDir + "Result.docx";
-        doc.Save(outputPath);
+        // Write the desired text into the current cell.
+        builder.Write("Hello, this is text inside the cell.");
+
+        // End the row and the table (optional if only one cell is needed).
+        builder.EndRow();
+        builder.EndTable();
+
+        // Save the document as a DOT template (Word 97-2003 template).
+        doc.Save("OutputTemplate.dot");
     }
 }

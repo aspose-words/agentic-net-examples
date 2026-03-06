@@ -1,27 +1,32 @@
-using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-class ApplyTableStyleOptions
+class Program
 {
     static void Main()
     {
-        // Load an existing DOCM document.
-        Document doc = new Document("InputDocument.docm");
+        // Create a new document.
+        Document doc = new Document();
 
-        // Retrieve the first table in the document (if any).
-        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
-        if (table == null)
-        {
-            Console.WriteLine("No table found in the document.");
-            return;
-        }
+        // Use DocumentBuilder to construct a table.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        Table table = builder.StartTable();
 
-        // Apply desired style options to the table.
-        // Example: apply first row formatting and row banding.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+        // Insert at least one cell and some content – a table must have a row before formatting.
+        builder.InsertCell();
+        builder.Write("Sample cell");
+        builder.EndRow();
 
-        // Save the modified document as DOCM.
-        doc.Save("OutputDocument.docm");
+        // Optionally assign a built‑in style to the table.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+
+        // Apply the desired TableStyleOptions flags.
+        // Here we combine FirstColumn, RowBands and FirstRow as an example.
+        table.StyleOptions = TableStyleOptions.FirstColumn |
+                             TableStyleOptions.RowBands |
+                             TableStyleOptions.FirstRow;
+
+        // Save the document as a DOCM file.
+        doc.Save("TableWithStyleOptions.docm");
     }
 }
