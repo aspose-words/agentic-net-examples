@@ -1,0 +1,35 @@
+{
+  "product": "Aspose.Words",
+  "platform": "net",
+  "framework": "net8.0",
+  "package_version": "26.2.0",
+  "total_examples": 1,
+  "total_categories": 1,
+  "last_updated": "2026-03-15",
+  "categories": [
+    {
+      "name": "barcode-image",
+      "file_count": 1,
+      "files": [
+        "generate-barcode-image-by-inserting-a-barcode-into-a-document-or-loadi.cs"
+      ],
+      "required_namespaces": [
+        "System",
+        "System.IO",
+        "Aspose.Words",
+        "Aspose.Words.Fields"
+      ],
+      "key_apis": [
+        "Document",
+        "DocumentBuilder",
+        "Aspose",
+        "FieldType",
+        "Template",
+        "System",
+        "Words",
+        "DisplayBarcode",
+        "LoadedWithBarcode"
+      ]
+    }
+  ]
+}
