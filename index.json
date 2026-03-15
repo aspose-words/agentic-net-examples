@@ -1,0 +1,41 @@
+{
+  "product": "Aspose.Words",
+  "platform": "net",
+  "framework": "net8.0",
+  "package_version": "26.2.0",
+  "total_examples": 5,
+  "total_categories": 1,
+  "last_updated": "2026-03-15",
+  "categories": [
+    {
+      "name": "barcode-image",
+      "file_count": 5,
+      "files": [
+        "configure-barcode-height-width-via-field-switches-displaybarcode-field-definition.cs",
+        "documentbuilder-insert-displaybarcode-field-datamatrix-barcode-type-switch.cs",
+        "macro-insert-displaybarcode-fields-predefined-switches-various-barcode-types.cs",
+        "new-document-insert-displaybarcode-field-then-document-as-docx.cs",
+        "reusable-method-insert-displaybarcode-field-customizable-height-width-type-switches.cs"
+      ],
+      "required_namespaces": [
+        "Aspose.Words",
+        "Aspose.Words.Fields",
+        "System"
+      ],
+      "key_apis": [
+        "Document",
+        "DocumentBuilder",
+        "Aspose",
+        "Words",
+        "FieldType",
+        "DisplayBarcodeHeightWidth",
+        "DisplayBarcodeDataMatrix",
+        "DisplayBarcodeMacro",
+        "DOCX",
+        "DisplayBarcode",
+        "BarcodeHelper",
+        "DisplayBarcodes"
+      ]
+    }
+  ]
+}
