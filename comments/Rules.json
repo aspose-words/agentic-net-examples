@@ -1,0 +1,32 @@
+{
+  "rules": {
+    "CS0234: Missing Aspose.Words.Comments namespace": {
+      "error": "The type or namespace name 'Comments' does not exist in the namespace 'Aspose.Words' (are you missing an assembly reference?)",
+      "fix": "The Comment class is defined directly in the Aspose.Words namespace; there is no separate Aspose.Words.Comments namespace. Remove the erroneous using directive and rely on Aspose.Words only.",
+      "code": "using Aspose.Words; // correct\n// using Aspose.Words.Comments; // removed",
+      "note": "Aspose.Words 23.x and later expose Comment, CommentRangeStart, etc., directly under Aspose.Words. Adding a non‑existent namespace causes a compile‑time error.",
+      "platform_limitation": false,
+      "works_on": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "fails_on": [],
+      "workarounds": []
+    },
+    "CS8625: Null literal to non‑nullable reference type": {
+      "error": "Cannot convert null literal to non‑nullable reference type for the parameter 'author'.",
+      "fix": "Mark the author parameter as nullable (string?) and keep the default value null. Adjust the null‑check accordingly.",
+      "code": "public static List<string> ExtractComments(string docxPath, string? author = null)",
+      "note": "With C# 8+ nullable reference types enabled, a plain string cannot be assigned null. Declaring it as string? tells the compiler the value may be null.",
+      "platform_limitation": false,
+      "works_on": [
+        "Windows",
+        "macOS",
+        "Linux"
+      ],
+      "fails_on": [],
+      "workarounds": []
+    }
+  }
+}
