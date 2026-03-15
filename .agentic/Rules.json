@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "General common rules": [
+      "Make the author parameter nullable (string?) to avoid CS8625 warning when passing null.",
+      "Keep the Document constructor usage as per the lifecycle rule."
+    ]
+  }
+}
