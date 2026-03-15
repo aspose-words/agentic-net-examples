@@ -1,0 +1,34 @@
+{
+  "product": "Aspose.Words",
+  "platform": "net",
+  "framework": "net8.0",
+  "package_version": "26.2.0",
+  "total_examples": 1,
+  "total_categories": 1,
+  "last_updated": "2026-03-15",
+  "categories": [
+    {
+      "name": "comments",
+      "file_count": 1,
+      "files": [
+        "comments-extract-all-comments-document-only-those-made-particular-author-docx-file.cs"
+      ],
+      "required_namespaces": [
+        "System",
+        "System.Collections.Generic",
+        "Aspose.Words",
+        "Aspose.Words.Drawing"
+      ],
+      "key_apis": [
+        "Document",
+        "Aspose",
+        "NodeType",
+        "System",
+        "Collections",
+        "Words",
+        "InputDocument",
+        "StringComparison"
+      ]
+    }
+  ]
+}
