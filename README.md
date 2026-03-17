@@ -19,6 +19,7 @@ Top-level folders are categories. Examples are stored **directly inside category
 ### Categories
 
 - `working-with-table/`
+- `comments/`
 
 ## How to build
 
