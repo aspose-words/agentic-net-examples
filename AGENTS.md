@@ -57,6 +57,9 @@ This repository contains **29** working code examples demonstrating Aspose.Words
 
 ## Category Details
 
+### range
+- Examples: 29
+- Guide: [AGENTS.md](./range/AGENTS.md)
 ### rendering
 - Examples: 63
 - Guide: [AGENTS.md](./rendering/AGENTS.md)
