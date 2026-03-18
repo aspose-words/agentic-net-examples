@@ -18,6 +18,7 @@ Top-level folders are categories. Examples are stored **directly inside category
 
 ### Categories
 
+- `linq-reporting/`
 - `lists/`
 - `mail-merge/`
 - `officemath/`

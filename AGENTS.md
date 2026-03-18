@@ -21,6 +21,10 @@ When working in this repository:
 
 ## Repository Overview
 
+This repository contains **395** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 395
 This repository contains **30** working code examples demonstrating Aspose.Words for .NET capabilities.
 
 **Statistics** (as of 2026-03-16):
@@ -69,6 +73,9 @@ This repository contains **29** working code examples demonstrating Aspose.Words
 
 ## Category Details
 
+### linq-reporting
+- Examples: 395
+- Guide: [AGENTS.md](./linq-reporting/AGENTS.md)
 ### lists
 - Examples: 30
 - Guide: [AGENTS.md](./lists/AGENTS.md)
