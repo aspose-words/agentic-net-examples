@@ -89,6 +89,9 @@ This repository contains **29** working code examples demonstrating Aspose.Words
 
 ## Category Details
 
+### content-control
+- Examples: 34
+- Guide: [AGENTS.md](./content-control/AGENTS.md)
 ### conversion
 - Examples: 100
 - Guide: [AGENTS.md](./conversion/AGENTS.md)
