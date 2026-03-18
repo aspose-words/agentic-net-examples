@@ -19,6 +19,27 @@ Top-level folders are categories. Examples are stored **directly inside category
 ### Categories
 
 - `fonts/`
+- `form-fields/`
+- `hyphenation/`
+- `images/`
+- `join-documents/`
+- `linq-reporting/`
+- `lists/`
+- `mail-merge/`
+- `officemath/`
+- `ole-objects/`
+- `paragraphs/`
+- `programming-with-documents/`
+- `range/`
+- `rendering/`
+- `security-and-protection/`
+- `shapes/`
+- `split-document/`
+- `track-changes/`
+- `vba-macros/`
+- `watermark/`
+- `working-with-table/`
+- `comments/`
 
 ## How to build
 
