@@ -25,6 +25,42 @@ This repository contains **34** working code examples demonstrating Aspose.Words
 
 **Statistics** (as of 2026-03-16):
 - Total Examples: 34
+This repository contains **107** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 107
+This repository contains **63** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 63
+This repository contains **27** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 27
+This repository contains **35** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 35
+This repository contains **40** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 40
+This repository contains **33** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 33
+This repository contains **32** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 32
+This repository contains **190** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 190
+This repository contains **29** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 29
 - Categories: 1
 
 ## Category Details
@@ -32,6 +68,39 @@ This repository contains **34** working code examples demonstrating Aspose.Words
 ### paragraphs
 - Examples: 34
 - Guide: [AGENTS.md](./paragraphs/AGENTS.md)
+### programming-with-documents
+- Examples: 107
+- Guide: [AGENTS.md](./programming-with-documents/AGENTS.md)
+### range
+- Examples: 29
+- Guide: [AGENTS.md](./range/AGENTS.md)
+### rendering
+- Examples: 63
+- Guide: [AGENTS.md](./rendering/AGENTS.md)
+### security-and-protection
+- Examples: 27
+- Guide: [AGENTS.md](./security-and-protection/AGENTS.md)
+### shapes
+- Examples: 35
+- Guide: [AGENTS.md](./shapes/AGENTS.md)
+### split-document
+- Examples: 29
+- Guide: [AGENTS.md](./split-document/AGENTS.md)
+### track-changes
+- Examples: 40
+- Guide: [AGENTS.md](./track-changes/AGENTS.md)
+### vba-macros
+- Examples: 33
+- Guide: [AGENTS.md](./vba-macros/AGENTS.md)
+### watermark
+- Examples: 32
+- Guide: [AGENTS.md](./watermark/AGENTS.md)
+### working-with-table
+- Examples: 190
+- Guide: [AGENTS.md](./working-with-table/AGENTS.md)
+### comments
+- Examples: 29
+- Guide: [AGENTS.md](./comments/AGENTS.md)
 
 ## Boundaries
 
