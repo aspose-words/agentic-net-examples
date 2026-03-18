@@ -81,6 +81,9 @@ This repository contains **29** working code examples demonstrating Aspose.Words
 
 ## Category Details
 
+### fonts
+- Examples: 35
+- Guide: [AGENTS.md](./fonts/AGENTS.md)
 ### form-fields
 - Examples: 30
 - Guide: [AGENTS.md](./form-fields/AGENTS.md)
