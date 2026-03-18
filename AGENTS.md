@@ -21,6 +21,10 @@ When working in this repository:
 
 ## Repository Overview
 
+This repository contains **34** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 34
 This repository contains **107** working code examples demonstrating Aspose.Words for .NET capabilities.
 
 **Statistics** (as of 2026-03-16):
@@ -61,6 +65,9 @@ This repository contains **29** working code examples demonstrating Aspose.Words
 
 ## Category Details
 
+### paragraphs
+- Examples: 34
+- Guide: [AGENTS.md](./paragraphs/AGENTS.md)
 ### programming-with-documents
 - Examples: 107
 - Guide: [AGENTS.md](./programming-with-documents/AGENTS.md)

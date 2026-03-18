@@ -18,6 +18,7 @@ Top-level folders are categories. Examples are stored **directly inside category
 
 ### Categories
 
+- `paragraphs/`
 - `programming-with-documents/`
 - `range/`
 - `rendering/`
