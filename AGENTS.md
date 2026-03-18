@@ -3,7 +3,7 @@ name: aspose-words-examples
 description: AI-friendly C# code examples for Aspose.Words for .NET
 language: csharp
 framework: net8.0
-package: Aspose.Words
+package: Aspose.Words 26.3.0
 ---
 
 # Aspose.Words for .NET Examples
@@ -21,169 +21,129 @@ When working in this repository:
 
 ## Repository Overview
 
-This repository contains **26** working code examples demonstrating Aspose.Words for .NET capabilities.
+This repository contains **1701** working code examples demonstrating Aspose.Words for .NET capabilities.
 
 **Statistics** (as of 2026-03-16):
-- Total Examples: 26
-This repository contains **31** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 31
-This repository contains **100** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 100
-This repository contains **62** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 62
-This repository contains **39** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 39
-This repository contains **88** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 88
-This repository contains **395** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 395
-This repository contains **30** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 30
-This repository contains **34** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 34
-This repository contains **107** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 107
-This repository contains **63** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 63
-This repository contains **27** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 27
-This repository contains **35** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 35
-This repository contains **40** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 40
-This repository contains **33** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 33
-This repository contains **32** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 32
-This repository contains **190** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 190
-This repository contains **29** working code examples demonstrating Aspose.Words for .NET capabilities.
-
-**Statistics** (as of 2026-03-16):
-- Total Examples: 29
-- Categories: 1
+- Total Examples: 1701
+- Categories: 29
 
 ## Category Details
 
 ### barcode-image
 - Examples: 26
 - Guide: [AGENTS.md](./barcode-image/AGENTS.md)
+
 ### charts
 - Examples: 31
 - Guide: [AGENTS.md](./charts/AGENTS.md)
-### comparison
-- Examples: 30
-- Guide: [AGENTS.md](./comparison/AGENTS.md)
-### content-control
-- Examples: 34
-- Guide: [AGENTS.md](./content-control/AGENTS.md)
-### conversion
-- Examples: 100
-- Guide: [AGENTS.md](./conversion/AGENTS.md)
-### extraction
-- Examples: 30
-- Guide: [AGENTS.md](./extraction/AGENTS.md)
-### find-and-replace
-- Examples: 62
-- Guide: [AGENTS.md](./find-and-replace/AGENTS.md)
-### fonts
-- Examples: 35
-- Guide: [AGENTS.md](./fonts/AGENTS.md)
-### form-fields
-- Examples: 30
-- Guide: [AGENTS.md](./form-fields/AGENTS.md)
-### hyphenation
-- Examples: 39
-- Guide: [AGENTS.md](./hyphenation/AGENTS.md)
-### images
-- Examples: 88
-- Guide: [AGENTS.md](./images/AGENTS.md)
-### join-documents
-- Examples: 34
-- Guide: [AGENTS.md](./join-documents/AGENTS.md)
-### linq-reporting
-- Examples: 395
-- Guide: [AGENTS.md](./linq-reporting/AGENTS.md)
-### lists
-- Examples: 30
-- Guide: [AGENTS.md](./lists/AGENTS.md)
-### mail-merge
-- Examples: 30
-- Guide: [AGENTS.md](./mail-merge/AGENTS.md)
-### officemath
-- Examples: 30
-- Guide: [AGENTS.md](./officemath/AGENTS.md)
-### ole-objects
-- Examples: 29
-- Guide: [AGENTS.md](./ole-objects/AGENTS.md)
-### paragraphs
-- Examples: 34
-- Guide: [AGENTS.md](./paragraphs/AGENTS.md)
-### programming-with-documents
-- Examples: 107
-- Guide: [AGENTS.md](./programming-with-documents/AGENTS.md)
-### range
-- Examples: 29
-- Guide: [AGENTS.md](./range/AGENTS.md)
-### rendering
-- Examples: 63
-- Guide: [AGENTS.md](./rendering/AGENTS.md)
-### security-and-protection
-- Examples: 27
-- Guide: [AGENTS.md](./security-and-protection/AGENTS.md)
-### shapes
-- Examples: 35
-- Guide: [AGENTS.md](./shapes/AGENTS.md)
-### split-document
-- Examples: 29
-- Guide: [AGENTS.md](./split-document/AGENTS.md)
-### track-changes
-- Examples: 40
-- Guide: [AGENTS.md](./track-changes/AGENTS.md)
-### vba-macros
-- Examples: 33
-- Guide: [AGENTS.md](./vba-macros/AGENTS.md)
-### watermark
-- Examples: 32
-- Guide: [AGENTS.md](./watermark/AGENTS.md)
-### working-with-table
-- Examples: 190
-- Guide: [AGENTS.md](./working-with-table/AGENTS.md)
+
 ### comments
 - Examples: 29
 - Guide: [AGENTS.md](./comments/AGENTS.md)
+
+### comparison
+- Examples: 30
+- Guide: [AGENTS.md](./comparison/AGENTS.md)
+
+### content-control
+- Examples: 34
+- Guide: [AGENTS.md](./content-control/AGENTS.md)
+
+### conversion
+- Examples: 100
+- Guide: [AGENTS.md](./conversion/AGENTS.md)
+
+### extraction
+- Examples: 30
+- Guide: [AGENTS.md](./extraction/AGENTS.md)
+
+### find-and-replace
+- Examples: 62
+- Guide: [AGENTS.md](./find-and-replace/AGENTS.md)
+
+### fonts
+- Examples: 35
+- Guide: [AGENTS.md](./fonts/AGENTS.md)
+
+### form-fields
+- Examples: 30
+- Guide: [AGENTS.md](./form-fields/AGENTS.md)
+
+### hyphenation
+- Examples: 39
+- Guide: [AGENTS.md](./hyphenation/AGENTS.md)
+
+### images
+- Examples: 88
+- Guide: [AGENTS.md](./images/AGENTS.md)
+
+### join-documents
+- Examples: 34
+- Guide: [AGENTS.md](./join-documents/AGENTS.md)
+
+### linq-reporting
+- Examples: 395
+- Guide: [AGENTS.md](./linq-reporting/AGENTS.md)
+
+### lists
+- Examples: 30
+- Guide: [AGENTS.md](./lists/AGENTS.md)
+
+### mail-merge
+- Examples: 30
+- Guide: [AGENTS.md](./mail-merge/AGENTS.md)
+
+### officemath
+- Examples: 30
+- Guide: [AGENTS.md](./officemath/AGENTS.md)
+
+### ole-objects
+- Examples: 29
+- Guide: [AGENTS.md](./ole-objects/AGENTS.md)
+
+### paragraphs
+- Examples: 34
+- Guide: [AGENTS.md](./paragraphs/AGENTS.md)
+
+### programming-with-documents
+- Examples: 107
+- Guide: [AGENTS.md](./programming-with-documents/AGENTS.md)
+
+### range
+- Examples: 29
+- Guide: [AGENTS.md](./range/AGENTS.md)
+
+### rendering
+- Examples: 63
+- Guide: [AGENTS.md](./rendering/AGENTS.md)
+
+### security-and-protection
+- Examples: 27
+- Guide: [AGENTS.md](./security-and-protection/AGENTS.md)
+
+### shapes
+- Examples: 35
+- Guide: [AGENTS.md](./shapes/AGENTS.md)
+
+### split-document
+- Examples: 29
+- Guide: [AGENTS.md](./split-document/AGENTS.md)
+
+### track-changes
+- Examples: 40
+- Guide: [AGENTS.md](./track-changes/AGENTS.md)
+
+### vba-macros
+- Examples: 33
+- Guide: [AGENTS.md](./vba-macros/AGENTS.md)
+
+### watermark
+- Examples: 32
+- Guide: [AGENTS.md](./watermark/AGENTS.md)
+
+### working-with-table
+- Examples: 190
+- Guide: [AGENTS.md](./working-with-table/AGENTS.md)
 
 ## Boundaries
 
@@ -210,7 +170,83 @@ These rules are mandatory for every example.
 
 ## Common Mistakes (Anti-Patterns)
 
-No learned anti-patterns yet.
+### CS0246: Shape type not found
+Add the missing using directive for the Aspose.Words.Drawing namespace, which defines the Shape class used by DocumentBuilder.InsertChart. The Chart class lives in Aspose.Words.Drawing.Charts, which was already imported.
+
+```csharp
+using Aspose.Words.Drawing; // required for Shape
+// existing using Aspose.Words.Drawing.Charts; stays unchanged
+```
+
+Shape is part of Aspose.Words.Drawing, not Aspose.Words.Drawing.Charts. Without the directive the compiler cannot resolve the type. This fix works with Aspose.Words for .NET 23.10+ on all supported platforms.
+
+### Missing static Main entry point
+Added a Program class with a static Main method that serves as the application entry point. The Main method demonstrates how to load two DOCX files into byte arrays, invoke the RevisionReportGenerator, and output the generated report to the console. This satisfies the compiler requirement for an executable project.
+
+```csharp
+class Program
+{
+    static void Main(string[] args)
+    {
+        // usage example
+    }
+}
+```
+
+The original file only defined a helper class; a console application must expose a static Main method. No changes to Aspose.Words APIs were required.
+
+### CS0246: Missing Shape type
+Add a reference to the Aspose.Words.Drawing namespace, which contains the Shape class used for chart manipulation. If you do not need to manipulate the chart programmatically, you can simply remove the Shape‑related code.
+
+```csharp
+using Aspose.Words.Drawing; // <-- added
+// ... later, if needed:
+Shape chartShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
+```
+
+Shape is part of Aspose.Words.Drawing. The project must reference the Aspose.Words NuGet package (which includes this namespace).
+
+### CS5001: Missing static Main method
+Added a public static Main(string[] args) method. This satisfies the compiler requirement for an executable entry point.
+
+```csharp
+public static void Main(string[] args)
+{
+    if (args.Length != 2)
+    {
+        Console.WriteLine("Usage: DocxToHtmlConverter <input.docx> <output.html>");
+        return;
+    }
+    ConvertComplexTablesToHtml(args[0], args[1]);
+}
+```
+
+Console applications compiled with `dotnet build` need a static Main method. Adding it makes the example runnable from the command line. No change to Aspose.Words API is required.
+
+### BookmarkCollection.Exists method not found
+Replace the non‑existent Exists call with the indexer accessor. The BookmarkCollection indexer returns null when a bookmark is missing, so a simple null‑check is sufficient.
+
+```csharp
+Bookmark startBookmark = sourceDoc.Range.Bookmarks[startBookmarkName];
+Bookmark endBookmark = sourceDoc.Range.Bookmarks[endBookmarkName];
+if (startBookmark == null || endBookmark == null) continue;
+```
+
+Aspose.Words for .NET removed the Exists method in recent versions. Using the indexer is the recommended, version‑agnostic way to test for a bookmark's presence.
+
+### CS0246: Missing using directive or assembly reference for Aspose.Words types
+Add the Aspose.Words namespace with a using directive and ensure the Aspose.Words NuGet package (or DLL) is referenced by the project. The types Document and DocumentBuilder are defined in the Aspose.Words assembly.
+
+```csharp
+using Aspose.Words; // add this at the top of the file
+
+// In the .csproj file add:
+<ItemGroup>
+  <PackageReference Include="Aspose.Words" Version="26.3.0" />
+</ItemGroup>
+```
+
+Without the using directive the compiler cannot resolve the types. Adding the NuGet package also supplies the required assembly at runtime. 
 
 ## Domain Knowledge
 
