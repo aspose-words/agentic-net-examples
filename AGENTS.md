@@ -21,6 +21,10 @@ When working in this repository:
 
 ## Repository Overview
 
+This repository contains **62** working code examples demonstrating Aspose.Words for .NET capabilities.
+
+**Statistics** (as of 2026-03-16):
+- Total Examples: 62
 This repository contains **39** working code examples demonstrating Aspose.Words for .NET capabilities.
 
 **Statistics** (as of 2026-03-16):
@@ -81,6 +85,9 @@ This repository contains **29** working code examples demonstrating Aspose.Words
 
 ## Category Details
 
+### find-and-replace
+- Examples: 62
+- Guide: [AGENTS.md](./find-and-replace/AGENTS.md)
 ### fonts
 - Examples: 35
 - Guide: [AGENTS.md](./fonts/AGENTS.md)
