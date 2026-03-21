@@ -7,9 +7,29 @@ class Program
 {
     static void Main()
     {
-        // Load the source XML file.
+        // Sample XML data embedded in the source code.
+        const string xmlContent = @"
+<Root>
+    <Item type='A'>
+        <Title>First A Item</Title>
+        <Detail>Details for first A</Detail>
+    </Item>
+    <Item type='B'>
+        <Title>First B Item</Title>
+    </Item>
+    <Item type='A'>
+        <Title>Second A Item</Title>
+        <SubItems>
+            <Item type='A'>
+                <Title>Nested A Item</Title>
+            </Item>
+        </SubItems>
+    </Item>
+</Root>";
+
+        // Load the XML from the string.
         XmlDocument xml = new XmlDocument();
-        xml.Load("Data.xml"); // Path to your XML data.
+        xml.LoadXml(xmlContent);
 
         // Select only the nodes that satisfy the filter criteria.
         // Example: select <Item> elements with attribute type='A'.
@@ -36,7 +56,7 @@ class Program
             builder.ListFormat.ListLevelNumber = level;
 
             // Write the desired content of the node.
-            // Here we prefer a <Title> child element; otherwise fall back to the node's inner text.
+            // Prefer a <Title> child element; otherwise fall back to the node's inner text.
             string text = node.SelectSingleNode("Title")?.InnerText ?? node.InnerText;
             builder.Writeln(text);
         }

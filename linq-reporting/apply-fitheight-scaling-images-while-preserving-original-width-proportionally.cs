@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -8,8 +9,10 @@ namespace ImageFitHeightExample
     {
         static void Main()
         {
-            // Path to the source image file.
-            string imagePath = ImageDir + "Logo.jpg";
+            // Create a tiny PNG image (1x1 pixel) in memory.
+            byte[] imageBytes = Convert.FromBase64String(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+            using var imageStream = new MemoryStream(imageBytes);
 
             // Desired height for the image shape (in points; 1 point = 1/72 inch).
             double fitHeight = 200.0;
@@ -18,8 +21,8 @@ namespace ImageFitHeightExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert the image as a shape.
-            Shape shape = builder.InsertImage(imagePath);
+            // Insert the image as a shape from the memory stream.
+            Shape shape = builder.InsertImage(imageStream);
 
             // Retrieve the original image dimensions (in points).
             ImageSize originalSize = shape.ImageData.ImageSize;
@@ -35,12 +38,14 @@ namespace ImageFitHeightExample
             // Ensure the image data fits the new shape dimensions.
             shape.ImageData.FitImageToShape();
 
+            // Ensure the output directory exists.
+            Directory.CreateDirectory(ArtifactsDir);
+
             // Save the document.
-            doc.Save(ArtifactsDir + "Image.FitHeight.docx");
+            doc.Save(Path.Combine(ArtifactsDir, "Image.FitHeight.docx"));
         }
 
-        // Placeholder properties for the example; replace with actual paths in real code.
-        private static string ImageDir => @"C:\Images\";
-        private static string ArtifactsDir => @"C:\Output\";
+        // Output directory for the generated document.
+        private static string ArtifactsDir => Path.Combine(Path.GetTempPath(), "AsposeOutput");
     }
 }

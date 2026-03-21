@@ -10,17 +10,38 @@ namespace AsposeWordsAppendAndConvert
     {
         static void Main()
         {
-            // Folder that contains the source DOCX files.
-            string sourceFolder = @"C:\Docs\Input";
+            // Base directory of the application.
+            string baseDir = AppContext.BaseDirectory;
 
-            // Destination file path for the combined PDF.
-            string outputPdfPath = @"C:\Docs\Output\Combined.pdf";
+            // Folder that contains the source DOCX files.
+            string sourceFolder = Path.Combine(baseDir, "Input");
+
+            // Destination folder for the combined PDF.
+            string outputFolder = Path.Combine(baseDir, "Output");
+            string outputPdfPath = Path.Combine(outputFolder, "Combined.pdf");
+
+            // Ensure the input and output directories exist.
+            Directory.CreateDirectory(sourceFolder);
+            Directory.CreateDirectory(outputFolder);
+
+            // If there are no DOCX files, create a few sample documents.
+            string[] existingDocs = Directory.GetFiles(sourceFolder, "*.docx");
+            if (existingDocs.Length == 0)
+            {
+                for (int i = 1; i <= 3; i++)
+                {
+                    Document sample = new Document();
+                    DocumentBuilder builder = new DocumentBuilder(sample);
+                    builder.Writeln($"Sample document {i}");
+                    string samplePath = Path.Combine(sourceFolder, $"Sample{i}.docx");
+                    sample.Save(samplePath);
+                }
+            }
 
             // Collect all DOCX files from the source folder.
             List<string> docxFiles = new List<string>(Directory.GetFiles(sourceFolder, "*.docx"));
 
             // Define a list of ImportFormatMode values to apply to each file.
-            // For demonstration we cycle through the three available modes.
             ImportFormatMode[] importModes = new ImportFormatMode[]
             {
                 ImportFormatMode.UseDestinationStyles,
@@ -34,27 +55,21 @@ namespace AsposeWordsAppendAndConvert
             // Loop through each source file and append it using the corresponding mode.
             for (int i = 0; i < docxFiles.Count; i++)
             {
-                // Load the source document.
                 Document srcDoc = new Document(docxFiles[i]);
-
-                // Choose the import mode for this iteration.
-                // If there are more files than modes, wrap around the mode array.
                 ImportFormatMode mode = importModes[i % importModes.Length];
-
-                // Append the source document to the destination document.
-                // The AppendDocument method respects the chosen ImportFormatMode.
                 dstDoc.AppendDocument(srcDoc, mode);
             }
 
             // Optional: configure PDF save options (e.g., compliance level).
             PdfSaveOptions pdfOptions = new PdfSaveOptions
             {
-                // Example: set PDF/A-1b compliance.
                 Compliance = PdfCompliance.PdfA1b
             };
 
             // Save the combined document as a PDF.
             dstDoc.Save(outputPdfPath, pdfOptions);
+
+            Console.WriteLine($"Combined PDF saved to: {outputPdfPath}");
         }
     }
 }

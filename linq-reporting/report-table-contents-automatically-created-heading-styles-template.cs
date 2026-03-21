@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -17,17 +18,14 @@ namespace ReportGeneration
         // updates fields and saves the final document.
         public void GenerateReport(string templatePath, string outputPath, ReportData data)
         {
-            // Load the template document (create/load lifecycle rule).
+            // Load the template document.
             Document doc = new Document(templatePath);
 
-            // Populate the template with the provided data using the reporting engine
-            // (feature rule: BuildReport).
+            // Populate the template with the provided data using the reporting engine.
             ReportingEngine engine = new ReportingEngine();
             engine.BuildReport(doc, data);
 
             // Insert a Table of Contents at the beginning of the document.
-            // The switches configure the TOC to include heading levels 1‑3,
-            // make entries hyperlinks, and use the default formatting.
             DocumentBuilder builder = new DocumentBuilder(doc);
             builder.MoveToDocumentStart();
             builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
@@ -36,19 +34,46 @@ namespace ReportGeneration
             // Update all fields (including the TOC) so that page numbers are correct.
             doc.UpdateFields();
 
-            // Save the final report (save lifecycle rule).
+            // Ensure the output directory exists.
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+
+            // Save the final report.
             doc.Save(outputPath);
         }
     }
 
-    // Example usage.
     class Program
     {
         static void Main()
         {
-            // Paths to the template and the output document.
-            string templatePath = @"C:\Templates\ReportTemplate.docx";
-            string outputPath = @"C:\Reports\GeneratedReport.docx";
+            // Determine paths relative to the current directory.
+            string baseDir = AppContext.BaseDirectory;
+            string templatePath = Path.Combine(baseDir, "ReportTemplate.docx");
+            string outputPath = Path.Combine(baseDir, "GeneratedReport.docx");
+
+            // Create a simple template if it does not exist.
+            if (!File.Exists(templatePath))
+            {
+                Document templateDoc = new Document();
+                DocumentBuilder tb = new DocumentBuilder(templateDoc);
+
+                // Title placeholder.
+                tb.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+                tb.Write("{{Title}}");
+                tb.InsertParagraph();
+
+                // Section placeholders using a repeating region.
+                tb.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+                tb.Write("{{#Sections}}");
+                tb.InsertParagraph();
+                tb.Write("{{.}}");
+                tb.InsertParagraph();
+                tb.Write("{{/Sections}}");
+                tb.InsertParagraph();
+
+                // Save the template.
+                templateDoc.Save(templatePath);
+            }
 
             // Sample data to populate the template.
             ReportData data = new ReportData
@@ -67,7 +92,7 @@ namespace ReportGeneration
             ReportGenerator generator = new ReportGenerator();
             generator.GenerateReport(templatePath, outputPath, data);
 
-            Console.WriteLine("Report generated successfully.");
+            Console.WriteLine($"Report generated successfully at: {outputPath}");
         }
     }
 }

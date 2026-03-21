@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
@@ -9,14 +10,19 @@ class ExtractAudioWaveformImages
 {
     static void Main()
     {
-        // Path to the source DOCX file that contains audio waveform visualizations.
-        string sourceDocPath = @"C:\Input\AudioDocument.docx";
-
-        // Folder where extracted PNG images will be saved.
-        string outputFolder = @"C:\Output\WaveformImages";
+        // Use paths relative to the current working directory.
+        string sourceDocPath = Path.Combine(Directory.GetCurrentDirectory(), "AudioDocument.docx");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "WaveformImages");
 
         // Ensure the output directory exists.
         Directory.CreateDirectory(outputFolder);
+
+        // If the source document does not exist, create a minimal placeholder document.
+        if (!File.Exists(sourceDocPath))
+        {
+            var placeholderDoc = new Document();
+            placeholderDoc.Save(sourceDocPath);
+        }
 
         // Load the Word document.
         Document doc = new Document(sourceDocPath);

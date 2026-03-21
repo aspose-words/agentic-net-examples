@@ -9,14 +9,22 @@ class Program
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string sourceDocPath = @"C:\Docs\SourceDocument.docx";
+        // Path to the source DOCX file (use a relative path so the example can run anywhere).
+        string sourceDocPath = Path.Combine(AppContext.BaseDirectory, "SourceDocument.docx");
 
-        // Folder where extracted images will be saved.
-        string outputFolder = @"C:\Docs\ExtractedImages";
+        // Folder where extracted images will be saved (also relative).
+        string outputFolder = Path.Combine(AppContext.BaseDirectory, "ExtractedImages");
 
         // Ensure the output folder exists.
         Directory.CreateDirectory(outputFolder);
+
+        // Verify that the source document exists.
+        if (!File.Exists(sourceDocPath))
+        {
+            Console.WriteLine($"Source document not found: {sourceDocPath}");
+            Console.WriteLine("Place a DOCX file named 'SourceDocument.docx' in the executable directory and rerun.");
+            return;
+        }
 
         // Load the DOCX document.
         Document doc = new Document(sourceDocPath);
@@ -33,7 +41,7 @@ class Program
             {
                 xDoc = XDocument.Parse(xmlContent);
             }
-            catch (Exception)
+            catch
             {
                 // Skip parts that are not well‑formed XML.
                 continue;
@@ -78,5 +86,7 @@ class Program
                 }
             }
         }
+
+        Console.WriteLine("Processing completed.");
     }
 }

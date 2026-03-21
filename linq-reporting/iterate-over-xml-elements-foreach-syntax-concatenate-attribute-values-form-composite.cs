@@ -1,23 +1,26 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Aspose.Words;
 
 class Program
 {
     static void Main()
     {
-        // Path to the source XML file.
-        string xmlPath = "input.xml";
+        // Sample XML content.
+        string xmlContent = @"
+            <Root>
+                <Item Id='1' Name='Alpha' />
+                <Item Id='2' Name='Beta' />
+                <Item Id='3' Name='Gamma' />
+            </Root>";
 
-        // Load the XML document using LINQ to XML.
-        XDocument xdoc = XDocument.Load(xmlPath);
+        // Load the XML document from the string.
+        XDocument xdoc = XDocument.Parse(xmlContent);
 
         // This will hold the concatenated attribute values.
         string composite = string.Empty;
 
-        // Iterate over each <Item> element (replace "Item" with your element name).
+        // Iterate over each <Item> element.
         foreach (XElement element in xdoc.Descendants("Item"))
         {
             // Concatenate all attribute values of the current element.
@@ -27,15 +30,8 @@ class Program
             composite = string.IsNullOrEmpty(composite) ? attrs : composite + "|" + attrs;
         }
 
-        // Create a new Word document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the resulting composite string into the document.
-        builder.Writeln("Composite attribute string:");
-        builder.Writeln(composite);
-
-        // Save the document to disk.
-        doc.Save("Output.docx");
+        // Output the resulting composite string.
+        Console.WriteLine("Composite attribute string:");
+        Console.WriteLine(composite);
     }
 }

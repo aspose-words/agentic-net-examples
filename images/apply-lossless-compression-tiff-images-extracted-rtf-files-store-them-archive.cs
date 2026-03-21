@@ -8,11 +8,24 @@ class RtfTiffArchiveExample
 {
     static void Main()
     {
+        // Create temporary directories for input and output.
+        string tempDir = Path.Combine(Path.GetTempPath(), "RtfTiffArchiveExample");
+        Directory.CreateDirectory(tempDir);
+
         // Path to the source RTF file.
-        const string rtfPath = @"C:\Input\sample.rtf";
+        string rtfPath = Path.Combine(tempDir, "sample.rtf");
+
+        // Write a simple RTF document if it does not exist.
+        if (!File.Exists(rtfPath))
+        {
+            const string rtfContent = @"{\rtf1\ansi\deff0{\fonttbl{\f0\fswiss Helvetica;}}\n" +
+                                      @"\f0\fs24 This is a sample RTF document with an image.\n" +
+                                      @"\pard\par}";
+            File.WriteAllText(rtfPath, rtfContent);
+        }
 
         // Path to the resulting ZIP archive.
-        const string zipPath = @"C:\Output\images.zip";
+        string zipPath = Path.Combine(tempDir, "images.zip");
 
         // Load the RTF document.
         Document doc = new Document(rtfPath);
@@ -20,10 +33,7 @@ class RtfTiffArchiveExample
         // Configure image save options for TIFF with lossless LZW compression.
         ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // LZW is a lossless compression scheme (default), set explicitly for clarity.
             TiffCompression = TiffCompression.Lzw,
-
-            // Render each page as a separate frame in a multi‑page TIFF.
             PageLayout = MultiPageLayout.TiffFrames()
         };
 
@@ -37,11 +47,10 @@ class RtfTiffArchiveExample
             // Open the entry stream and save the document as a TIFF directly into it.
             using (Stream entryStream = tiffEntry.Open())
             {
-                // Save the document using the configured TIFF options.
                 doc.Save(entryStream, tiffOptions);
             }
         }
 
-        Console.WriteLine("TIFF images extracted from RTF and stored in archive successfully.");
+        Console.WriteLine($"TIFF images extracted from RTF and stored in archive successfully at: {zipPath}");
     }
 }

@@ -11,14 +11,14 @@ namespace BatchImageExtractionAndPdfReport
     {
         static void Main()
         {
-            // Folder that contains the source DOC/DOCX files.
-            string sourceFolder = @"C:\Docs\Input";
-            // Folder where extracted images will be saved.
-            string imagesFolder = @"C:\Docs\ExtractedImages";
-            // Path for the final consolidated PDF report.
-            string pdfReportPath = @"C:\Docs\ConsolidatedReport.pdf";
+            // Use folders relative to the executable so they always exist.
+            string baseFolder = AppContext.BaseDirectory;
+            string sourceFolder = Path.Combine(baseFolder, "Input");
+            string imagesFolder = Path.Combine(baseFolder, "ExtractedImages");
+            string pdfReportPath = Path.Combine(baseFolder, "ConsolidatedReport.pdf");
 
-            // Ensure the images output folder exists.
+            // Ensure the required folders exist.
+            Directory.CreateDirectory(sourceFolder);
             if (Directory.Exists(imagesFolder))
                 Directory.Delete(imagesFolder, true);
             Directory.CreateDirectory(imagesFolder);
@@ -64,6 +64,8 @@ namespace BatchImageExtractionAndPdfReport
 
             // Save the consolidated report as a PDF file.
             reportDoc.Save(pdfReportPath, SaveFormat.Pdf);
+
+            Console.WriteLine($"Report generated at: {pdfReportPath}");
         }
     }
 }

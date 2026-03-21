@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Aspose.Words.Saving;
 
 class TagValidatorVisitor : DocumentVisitor
 {
@@ -80,18 +81,20 @@ class Program
 {
     static void Main()
     {
-        // Load the document (adjust the path as needed)
-        Document doc = new Document("input.docx");
-
-        // Ensure the document has the minimal required nodes
+        // Create a new empty document with minimal structure.
+        Document doc = new Document();
         doc.EnsureMinimum();
 
-        // Validate that every opening tag has a matching closing tag
+        // Optionally add some content to avoid completely empty documents.
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample document for tag validation.");
+
+        // Validate that every opening tag has a matching closing tag.
         var validator = new TagValidatorVisitor();
         doc.Accept(validator);
         validator.Verify();
 
-        // Render the validated document (e.g., to PDF)
-        doc.Save("output.pdf", SaveFormat.Pdf);
+        // Save the validated document. Using DOCX format avoids PDF rendering dependencies.
+        doc.Save("output.docx", SaveFormat.Docx);
     }
 }

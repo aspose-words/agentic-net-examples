@@ -7,14 +7,22 @@ class Extract3DModelThumbnails
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string sourceDocx = @"C:\Docs\SourceDocument.docx";
+        // Path to the source DOCX file (relative to the executable's folder).
+        string sourceDocx = Path.Combine(AppContext.BaseDirectory, "SourceDocument.docx");
+
+        // Verify that the source file exists.
+        if (!File.Exists(sourceDocx))
+        {
+            Console.WriteLine($"Source file not found: {sourceDocx}");
+            Console.WriteLine("Place a DOCX file named 'SourceDocument.docx' in the executable directory and rerun the program.");
+            return;
+        }
 
         // Folder where extracted PNG thumbnails will be saved.
-        string outputFolder = @"C:\Docs\Thumbnails";
+        string outputFolder = Path.Combine(AppContext.BaseDirectory, "Thumbnails");
         Directory.CreateDirectory(outputFolder);
 
-        // Load the DOCX document (lifecycle rule: load).
+        // Load the DOCX document.
         Document doc = new Document(sourceDocx);
 
         // Retrieve all Shape nodes in the document (including those inside headers/footers).
@@ -32,10 +40,8 @@ class Extract3DModelThumbnails
                 // Build a unique file name for each extracted thumbnail.
                 string pngPath = Path.Combine(outputFolder, $"Thumbnail_{thumbnailIndex}.png");
 
-                // Save the image data as PNG (lifecycle rule: save).
-                // The file extension determines the output format.
+                // Save the image data as PNG. The file extension determines the output format.
                 shape.ImageData.Save(pngPath);
-
                 thumbnailIndex++;
             }
         }

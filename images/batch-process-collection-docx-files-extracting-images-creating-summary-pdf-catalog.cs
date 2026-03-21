@@ -23,6 +23,13 @@ namespace AsposeWordsBatchProcessing
         /// <param name="catalogPdfPath">Full file name of the resulting PDF catalog.</param>
         public static void Generate(string inputFolder, string imagesFolder, string catalogPdfPath)
         {
+            // Ensure the input folder exists.
+            if (!Directory.Exists(inputFolder))
+            {
+                Console.WriteLine($"Input folder \"{inputFolder}\" does not exist. No files will be processed.");
+                return;
+            }
+
             // Ensure the images output directory exists.
             if (!Directory.Exists(imagesFolder))
                 Directory.CreateDirectory(imagesFolder);
@@ -33,7 +40,7 @@ namespace AsposeWordsBatchProcessing
             // Load each DOCX file, extract its images, and store the mapping.
             foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
             {
-                // Load the source document (lifecycle: load).
+                // Load the source document.
                 Document sourceDoc = new Document(docxPath);
 
                 // Retrieve all Shape nodes (including images) from the document.
@@ -54,7 +61,7 @@ namespace AsposeWordsBatchProcessing
                     string imageFileName = $"{sourceFileName}_img{imageIndex}{extension}";
                     string imageFullPath = Path.Combine(imagesFolder, imageFileName);
 
-                    // Save the image data to disk (lifecycle: save).
+                    // Save the image data to disk.
                     shape.ImageData.Save(imageFullPath);
 
                     // Record the entry for later inclusion in the PDF catalog.
@@ -64,12 +71,12 @@ namespace AsposeWordsBatchProcessing
                 }
             }
 
-            // Create a new blank document that will become the PDF catalog (lifecycle: create).
+            // Create a new blank document that will become the PDF catalog.
             Document catalogDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(catalogDoc);
 
-            // Optional: add a title page.
-            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center; // Fixed enum
+            // Title page.
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
             builder.Font.Size = 24;
             builder.Font.Bold = true;
             builder.Writeln("Image Catalog");
@@ -81,39 +88,42 @@ namespace AsposeWordsBatchProcessing
             // Insert each extracted image with a caption indicating its source document.
             foreach (var entry in catalogEntries)
             {
-                // Caption.
-                builder.ParagraphFormat.Alignment = ParagraphAlignment.Left; // Fixed enum
+                builder.ParagraphFormat.Alignment = ParagraphAlignment.Left;
                 builder.Font.Size = 12;
                 builder.Font.Bold = true;
                 builder.Writeln($"Source Document: {entry.SourceDocument}");
 
-                // Insert the image.
                 builder.InsertImage(entry.ImagePath);
-
-                // Add a small spacing after each image.
                 builder.Writeln();
                 builder.InsertBreak(BreakType.PageBreak);
             }
 
-            // Save the catalog as PDF using the built‑in Save method (lifecycle: save).
-            // PdfSaveOptions can be used if additional PDF settings are required.
+            // Save the catalog as PDF.
             PdfSaveOptions pdfOptions = new PdfSaveOptions
             {
-                // Example: set compliance level; adjust as needed.
                 Compliance = PdfCompliance.Pdf17
             };
             catalogDoc.Save(catalogPdfPath, pdfOptions);
         }
     }
 
-    // Example usage.
     class Program
     {
         static void Main()
         {
-            string inputFolder = @"C:\Docs\Input";          // Folder with DOCX files.
-            string imagesFolder = @"C:\Docs\ExtractedImages"; // Where images will be saved.
-            string catalogPdf = @"C:\Docs\ImageCatalog.pdf"; // Output PDF catalog.
+            // Use paths relative to the executable's working directory.
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            string inputFolder = Path.Combine(baseDir, "Input");
+            string imagesFolder = Path.Combine(baseDir, "ExtractedImages");
+            string catalogPdf = Path.Combine(baseDir, "ImageCatalog.pdf");
+
+            // Ensure the required directories exist.
+            Directory.CreateDirectory(inputFolder);
+            Directory.CreateDirectory(imagesFolder);
+
+            Console.WriteLine($"Input folder: {inputFolder}");
+            Console.WriteLine($"Images folder: {imagesFolder}");
+            Console.WriteLine($"Catalog PDF will be saved to: {catalogPdf}");
 
             ImageCatalogGenerator.Generate(inputFolder, imagesFolder, catalogPdf);
 

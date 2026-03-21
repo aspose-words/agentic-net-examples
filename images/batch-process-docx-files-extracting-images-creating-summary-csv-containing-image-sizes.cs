@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -11,15 +10,27 @@ namespace AsposeWordsImageExtractor
     {
         static void Main(string[] args)
         {
-            // Input folder containing DOCX files.
-            string inputFolder = @"C:\Docs\Input";
-            // Output folder where extracted images will be saved.
-            string imagesOutputFolder = @"C:\Docs\ExtractedImages";
-            // Path to the summary CSV file.
-            string csvSummaryPath = @"C:\Docs\ImageSummary.csv";
+            // Base directory for the demo (located next to the executable).
+            string baseDir = AppContext.BaseDirectory;
 
-            // Ensure the images output folder exists.
+            // Input folder containing DOCX files.
+            string inputFolder = Path.Combine(baseDir, "Input");
+            // Output folder where extracted images will be saved.
+            string imagesOutputFolder = Path.Combine(baseDir, "ExtractedImages");
+            // Path to the summary CSV file.
+            string csvSummaryPath = Path.Combine(baseDir, "ImageSummary.csv");
+
+            // Ensure the required folders exist.
+            Directory.CreateDirectory(inputFolder);
             Directory.CreateDirectory(imagesOutputFolder);
+
+            // If there are no DOCX files, inform the user and exit gracefully.
+            var docxFiles = Directory.GetFiles(inputFolder, "*.docx");
+            if (docxFiles.Length == 0)
+            {
+                Console.WriteLine($"No DOCX files found in '{inputFolder}'. Place files there and rerun the program.");
+                return;
+            }
 
             // Prepare CSV writer.
             using (var csvWriter = new StreamWriter(csvSummaryPath, false))
@@ -28,13 +39,13 @@ namespace AsposeWordsImageExtractor
                 csvWriter.WriteLine("Document,ImageFile,WidthPoints,HeightPoints,SizeBytes");
 
                 // Process each DOCX file in the input folder.
-                foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
+                foreach (string docxPath in docxFiles)
                 {
-                    // Load the document using the provided constructor.
+                    // Load the document.
                     Document doc = new Document(docxPath);
 
                     // Retrieve all Shape nodes (including those inside headers/footers).
-                    NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+                    var shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
                     int imageIndex = 0;
                     foreach (Shape shape in shapeNodes.OfType<Shape>())
@@ -51,7 +62,7 @@ namespace AsposeWordsImageExtractor
                         // Save the image to the file system.
                         shape.ImageData.Save(imageFullPath);
 
-                        // Determine image size in bytes (using the saved file).
+                        // Determine image size in bytes.
                         long sizeBytes = new FileInfo(imageFullPath).Length;
 
                         // Write a line to the CSV summary.
@@ -63,6 +74,8 @@ namespace AsposeWordsImageExtractor
             }
 
             Console.WriteLine("Image extraction and CSV summary completed.");
+            Console.WriteLine($"Images saved to: {imagesOutputFolder}");
+            Console.WriteLine($"CSV summary saved to: {csvSummaryPath}");
         }
     }
 }

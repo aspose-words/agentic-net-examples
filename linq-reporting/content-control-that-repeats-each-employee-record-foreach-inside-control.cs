@@ -17,8 +17,8 @@ class RepeatingSectionExample
             SdtType.RepeatingSection,   // The control type that repeats.
             MarkupLevel.Block);         // Block‑level so it can contain paragraphs/tables.
 
-        // Insert the content control into the document.
-        builder.InsertNode(repeatingSection);
+        // Append the content control directly to the document body.
+        doc.FirstSection.Body.AppendChild(repeatingSection);
 
         // Create a paragraph that will hold the ReportingEngine tags.
         Paragraph innerParagraph = new Paragraph(doc);

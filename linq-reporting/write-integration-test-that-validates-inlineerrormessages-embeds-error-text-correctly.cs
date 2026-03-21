@@ -22,13 +22,18 @@ namespace Aspose.Words.Tests
 
             public ComparisonEvaluationResult Evaluate(Field field, ComparisonExpression expression)
             {
-                // Record the arguments for possible further verification.
-                Invocations.Add(new[]
+                // Record the arguments for possible further verification, stripping surrounding quotes.
+                string left = expression.LeftExpression?.Trim('\"') ?? string.Empty;
+                string right = expression.RightExpression?.Trim('\"') ?? string.Empty;
+                string op = expression.ComparisonOperator;
+
+                Invocations.Add(new[] { left, op, right });
+
+                // If evaluation failed, embed the error message into the field result.
+                if (!string.IsNullOrEmpty(_result.ErrorMessage))
                 {
-                    expression.LeftExpression,
-                    expression.ComparisonOperator,
-                    expression.RightExpression
-                });
+                    field.Result = _result.ErrorMessage;
+                }
 
                 return _result;
             }
@@ -61,9 +66,9 @@ namespace Aspose.Words.Tests
             if (evalResult.ErrorMessage != expectedErrorMessage)
                 throw new Exception($"ErrorMessage mismatch. Expected: '{expectedErrorMessage}', Actual: '{evalResult.ErrorMessage}'");
 
-            // The field's displayed result should be empty because the evaluation failed.
-            if (!string.IsNullOrEmpty(field.Result))
-                throw new Exception($"Field result should be empty on error, but was: '{field.Result}'");
+            // The field's displayed result should contain the error message because the evaluation failed.
+            if (field.Result != expectedErrorMessage)
+                throw new Exception($"Field result should contain the error message, but was: '{field.Result}'");
 
             // Success flag: true if there is no error message.
             bool success = string.IsNullOrEmpty(evalResult.ErrorMessage);

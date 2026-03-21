@@ -4,51 +4,43 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsExample
 {
+    public class ReportData
+    {
+        public string CurrentDate { get; set; }
+        public string Name { get; set; }
+        public int Value { get; set; }
+    }
+
     class Program
     {
         static void Main()
         {
-            // Path to the template document that contains LINQ Reporting Engine tags.
-            string templatePath = @"C:\Docs\Template.docx";
+            // Create a simple template document in memory with Reporting Engine tags.
+            Document doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("Report generated on <<[Data.CurrentDate]>>");
+            builder.Writeln("Hello, <<[Data.Name]>>!");
+            builder.Writeln("Value: <<[Data.Value]>>");
 
-            // Path to the large CSV file that will be used as a data source.
-            string csvPath = @"C:\Data\LargeDataSet.csv";
-
-            // Path where the generated report will be saved.
-            string outputPath = @"C:\Docs\Report.docx";
-
-            // Load the template document.
-            Document doc = new Document(templatePath);
-
-            // Enable reflection optimization for faster property access on large CSV datasets.
-            // This static property affects all ReportingEngine instances.
+            // Enable reflection optimization for faster property access.
             ReportingEngine.UseReflectionOptimization = true;
 
-            // Configure CSV parsing options (adjust as needed for your CSV format).
-            CsvDataLoadOptions loadOptions = new CsvDataLoadOptions
+            // Prepare a data source object with the properties referenced in the template.
+            var data = new ReportData
             {
-                // Assume the first line contains column headers.
-                HasHeaders = true,
-                // Use comma as the default delimiter; change if your CSV uses a different character.
-                Delimiter = ',',
-                // Optional: set comment and quote characters if required.
-                CommentChar = '#',
-                QuoteChar = '"'
+                CurrentDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                Name = "World",
+                Value = 12345
             };
 
-            // Create a CSV data source using the specified options.
-            CsvDataSource dataSource = new CsvDataSource(csvPath, loadOptions);
+            // Build the report using the in‑memory data source.
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, data, "Data");
 
-            // Initialize the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-
-            // Build the report by populating the template with data from the CSV source.
-            // The second parameter is the data source object; the third parameter is the name
-            // used to reference the data source inside the template (optional, can be null).
-            engine.BuildReport(doc, dataSource, "Data");
-
-            // Save the generated report.
+            // Save the generated report to the current directory.
+            const string outputPath = "Report.docx";
             doc.Save(outputPath);
+            Console.WriteLine($"Report saved to {outputPath}");
         }
     }
 }

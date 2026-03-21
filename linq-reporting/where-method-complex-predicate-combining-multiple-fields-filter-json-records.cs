@@ -1,12 +1,5 @@
-// Load a Word template that contains a Reporting Engine expression using LINQ Where.
-// Example template syntax (inside the document):
-//   {{persons.Where(p => p.Age > 30 && p.City == "London")}}
-//
-// The code below prepares the JSON data source, configures parsing options,
-// and builds the report. The filtering is performed entirely by the
-// template expression; the C# code only supplies the raw JSON data.
-
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -14,44 +7,49 @@ class JsonWhereExample
 {
     static void Main()
     {
-        // Path to the Word template that contains the {{persons.Where(...)}}
-        // expression. The template must have a mail‑merge region or a table that
-        // iterates over the collection named "persons".
-        string templatePath = @"C:\Docs\ReportTemplate.docx";
+        // ---------- Prepare temporary files ----------
+        string tempDir = Path.GetTempPath();
 
-        // Path to the JSON file that holds an array of person objects.
-        // Example JSON:
-        // [
-        //   { "Name": "John", "Age": 45, "City": "London" },
-        //   { "Name": "Anna", "Age": 28, "City": "Paris" },
-        //   ...
-        // ]
-        string jsonPath = @"C:\Data\people.json";
+        // JSON data source
+        string jsonPath = Path.Combine(tempDir, "people.json");
+        string jsonContent = @"[
+            { ""Name"": ""John"",  ""Age"": 45, ""City"": ""London"" },
+            { ""Name"": ""Anna"",  ""Age"": 28, ""City"": ""Paris"" },
+            { ""Name"": ""Mike"",  ""Age"": 34, ""City"": ""London"" },
+            { ""Name"": ""Laura"", ""Age"": 22, ""City"": ""Berlin"" }
+        ]";
+        File.WriteAllText(jsonPath, jsonContent);
 
-        // Load the template document.
+        // Word template containing the Reporting Engine expression
+        string templatePath = Path.Combine(tempDir, "ReportTemplate.docx");
+        Document templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        // The expression filters persons where Age > 30 and City == "London",
+        // then joins their names with commas.
+        builder.Writeln("{{persons.Where(p => p.Age > 30 && p.City == \"London\").Select(p => p.Name).Join(\", \")}}");
+        templateDoc.Save(templatePath);
+
+        // ---------- Load the template ----------
         Document doc = new Document(templatePath);
 
-        // Configure JSON parsing options if needed (e.g., preserve spaces,
-        // custom date formats, or loose/simple value parsing).
+        // ---------- Configure JSON parsing ----------
         JsonDataLoadOptions loadOptions = new JsonDataLoadOptions
         {
-            // Loose mode interprets numeric strings as numbers, which is
-            // convenient for numeric comparisons inside the Where predicate.
             SimpleValueParseMode = JsonSimpleValueParseMode.Loose,
             PreserveSpaces = true
         };
 
-        // Create the JSON data source. The root object name used in the template
-        // ("persons") must match the name supplied to BuildReport.
+        // ---------- Create the JSON data source ----------
         JsonDataSource jsonData = new JsonDataSource(jsonPath, loadOptions);
 
-        // Build the report. The ReportingEngine evaluates the Where clause at
-        // runtime, selecting only those records where Age > 30 AND City == "London".
+        // ---------- Build the report ----------
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, jsonData, "persons");
 
-        // Save the generated document.
-        string outputPath = @"C:\Docs\FilteredReport.docx";
+        // ---------- Save the generated document ----------
+        string outputPath = Path.Combine(tempDir, "FilteredReport.docx");
         doc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

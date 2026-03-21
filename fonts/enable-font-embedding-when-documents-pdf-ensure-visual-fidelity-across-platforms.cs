@@ -6,19 +6,17 @@ class Program
 {
     static void Main()
     {
-        // Load the source Word document.
-        Document doc = new Document("Input.docx");
+        // Create a new Word document and add some sample content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, world! This PDF has all fonts embedded.");
 
-        // Create PDF save options.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-        // Ensure that all fonts used in the document are embedded in the PDF.
-        // EmbedAll is the default, but we set it explicitly for clarity.
-        pdfOptions.FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll;
-
-        // Embed the complete font files (no subsetting) so that every glyph is available.
-        // This increases file size but guarantees visual fidelity on any platform.
-        pdfOptions.EmbedFullFonts = true;
+        // Configure PDF save options to embed all fonts fully.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
+            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll,
+            EmbedFullFonts = true
+        };
 
         // Save the document as PDF using the configured options.
         doc.Save("Output.pdf", pdfOptions);

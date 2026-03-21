@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,17 +7,20 @@ class Program
 {
     static void Main()
     {
-        // Load the Word template that contains a table with reporting tags.
-        // The template should define a repeatable region that iterates over the JSON data,
-        // e.g. <<foreach [data]>> for rows and <<[ColumnNames]>> for header cells.
-        Document template = new Document("Template.docx");
+        // Prepare JSON data in a temporary file.
+        string json = @"{ ""Name"": ""John Doe"" }";
+        string jsonPath = Path.Combine(Path.GetTempPath(), "data.json");
+        File.WriteAllText(jsonPath, json);
 
-        // Create a JSON data source from a file.
-        // The constructor JsonDataSource(string) uses default parsing options.
-        JsonDataSource jsonSource = new JsonDataSource("data.json");
+        // Create a simple Word template in memory with a reporting tag.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Hello <<[data.Name]>>!");
 
-        // Build the report by merging the JSON data into the template.
-        // The third argument is the name used inside the template to reference the data source.
+        // Load the JSON data source from the temporary file.
+        JsonDataSource jsonSource = new JsonDataSource(jsonPath);
+
+        // Build the report using the data source name "data".
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(template, jsonSource, "data");
 

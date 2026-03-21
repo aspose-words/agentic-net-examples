@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Aspose.Words;
-using Aspose.Words.Reporting;
 
 public class ParallelReportGenerator
 {
@@ -20,7 +18,6 @@ public class ParallelReportGenerator
         if (dataSources.Count != outputPaths.Count)
             throw new ArgumentException("The number of data sources must match the number of output paths.");
 
-        // If explicit data source names are not provided, use nulls.
         var names = dataSourceNames ?? new List<string>(new string[dataSources.Count]);
 
         var tasks = new List<Task>();
@@ -28,39 +25,56 @@ public class ParallelReportGenerator
         for (int i = 0; i < dataSources.Count; i++)
         {
             int index = i; // Capture loop variable for the lambda.
-            tasks.Add(Task.Run(() =>
+            tasks.Add(Task.Run(async () =>
             {
-                // Load the template document.
-                Document template = new Document(templatePath);
+                // Load the template (simple text file).
+                string template = await File.ReadAllTextAsync(templatePath);
 
-                // Create a ReportingEngine instance.
-                ReportingEngine engine = new ReportingEngine();
+                // Prepare data for replacement.
+                var data = dataSources[index];
+                var name = names[index] ?? $"DataSource{index + 1}";
 
-                // Build the report using the overload that accepts a data source name.
-                // If the name is null or empty, the engine will treat it as omitted.
-                engine.BuildReport(template, dataSources[index], names[index]);
+                // Very simple placeholder replacement using reflection.
+                foreach (var prop in data.GetType().GetProperties())
+                {
+                    string placeholder = $"{{{{{prop.Name}}}}}";
+                    string value = prop.GetValue(data)?.ToString() ?? string.Empty;
+                    template = template.Replace(placeholder, value);
+                }
+
+                // Also replace a placeholder for the data source name if present.
+                template = template.Replace("{{DataSourceName}}", name);
+
+                // Ensure the output directory exists.
+                string outputDir = Path.GetDirectoryName(outputPaths[index])!;
+                Directory.CreateDirectory(outputDir);
 
                 // Save the generated report.
-                template.Save(outputPaths[index]);
+                await File.WriteAllTextAsync(outputPaths[index], template);
             }));
         }
 
-        // Await all report generation tasks.
         await Task.WhenAll(tasks);
     }
 
     // Example usage.
-    public static async Task Main()
+    public static async Task Main(string[] args)
     {
-        // Path to the Word template containing LINQ Reporting Engine tags.
-        string templatePath = @"C:\Templates\ReportTemplate.docx";
+        // Create a temporary folder for the demo.
+        string baseDir = Path.Combine(Path.GetTempPath(), "ParallelReportDemo");
+        Directory.CreateDirectory(baseDir);
 
-        // Example data sources – could be any supported type (e.g., DataSet, custom POCO, JsonDataSource, etc.).
+        // Path to the simple text template containing placeholders.
+        string templatePath = Path.Combine(baseDir, "ReportTemplate.txt");
+        await File.WriteAllTextAsync(templatePath,
+            "Report for {{DataSourceName}}\nTitle: {{Title}}\nAmount: {{Amount}}\nGenerated on {{Date}}");
+
+        // Example data sources – could be any supported type (e.g., custom POCO, anonymous type, etc.).
         var dataSources = new List<object>
         {
-            new { Title = "Quarter 1", Amount = 12345.67 },
-            new { Title = "Quarter 2", Amount = 23456.78 },
-            new { Title = "Quarter 3", Amount = 34567.89 }
+            new { Title = "Quarter 1", Amount = 12345.67, Date = DateTime.Now.ToShortDateString() },
+            new { Title = "Quarter 2", Amount = 23456.78, Date = DateTime.Now.ToShortDateString() },
+            new { Title = "Quarter 3", Amount = 34567.89, Date = DateTime.Now.ToShortDateString() }
         };
 
         // Optional names to reference the data sources inside the template.
@@ -69,12 +83,14 @@ public class ParallelReportGenerator
         // Output file paths for each generated report.
         var outputPaths = new List<string>
         {
-            @"C:\Reports\Report_Q1.docx",
-            @"C:\Reports\Report_Q2.docx",
-            @"C:\Reports\Report_Q3.docx"
+            Path.Combine(baseDir, "Report_Q1.txt"),
+            Path.Combine(baseDir, "Report_Q2.txt"),
+            Path.Combine(baseDir, "Report_Q3.txt")
         };
 
         // Generate all reports in parallel.
         await GenerateReportsAsync(templatePath, dataSources, dataSourceNames, outputPaths);
+
+        Console.WriteLine("Reports generated in: " + baseDir);
     }
 }

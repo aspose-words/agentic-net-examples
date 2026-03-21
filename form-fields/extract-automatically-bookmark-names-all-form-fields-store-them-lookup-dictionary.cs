@@ -7,8 +7,11 @@ class ExtractFormFieldBookmarks
 {
     static void Main()
     {
-        // Load an existing Word document that contains form fields.
-        Document doc = new Document("InputDocument.docx");
+        // Create a new document and add a form field programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert a text input form field. Aspose.Words will automatically create a bookmark for it.
+        builder.InsertTextInput("MyField", TextFormFieldType.Regular, "", "Default value", 0);
 
         // Get the collection of all form fields in the document.
         FormFieldCollection formFields = doc.Range.FormFields;
@@ -36,7 +39,7 @@ class ExtractFormFieldBookmarks
             Console.WriteLine($"Bookmark: {kvp.Key}, Field Type: {kvp.Value.Type}");
         }
 
-        // Optionally, save the document after any modifications (none in this example).
+        // Save the document (optional, just to demonstrate that the document is valid).
         doc.Save("OutputDocument.docx");
     }
 }

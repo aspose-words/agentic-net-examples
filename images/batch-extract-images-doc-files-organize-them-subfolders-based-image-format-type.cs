@@ -11,12 +11,12 @@ namespace ImageExtractionBatch
         static void Main()
         {
             // Folder that contains the source DOC/DOCX files.
-            string inputFolder = @"C:\InputDocs";
+            // Use a folder relative to the executable so it always exists.
+            string inputFolder = Path.Combine(AppContext.BaseDirectory, "InputDocs");
+            Directory.CreateDirectory(inputFolder);
 
             // Root folder where extracted images will be saved.
-            string outputRoot = @"C:\ExtractedImages";
-
-            // Ensure the output root folder exists.
+            string outputRoot = Path.Combine(AppContext.BaseDirectory, "ExtractedImages");
             Directory.CreateDirectory(outputRoot);
 
             // Process each Word document in the input folder.

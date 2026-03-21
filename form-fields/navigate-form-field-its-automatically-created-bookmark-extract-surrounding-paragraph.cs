@@ -6,34 +6,57 @@ class ExtractParagraphAroundFormField
 {
     static void Main()
     {
-        // Load an existing document that contains form fields.
-        Document doc = new Document("Input.docx");
+        // Create a document with a form field if an input file is not present.
+        Document doc;
+        const string inputPath = "Input.docx";
 
-        // Create a DocumentBuilder for navigation and editing.
+        if (System.IO.File.Exists(inputPath))
+        {
+            doc = new Document(inputPath);
+        }
+        else
+        {
+            doc = new Document();
+            DocumentBuilder tempBuilder = new DocumentBuilder(doc);
+            tempBuilder.Writeln("Paragraph before the form field.");
+            // Insert a checkbox form field; this automatically creates a bookmark with the same name.
+            FormField formField = tempBuilder.InsertCheckBox("MyCheckBox", false, 0);
+            tempBuilder.Writeln("Paragraph after the form field.");
+        }
+
+        // Ensure the document actually contains at least one form field.
+        if (doc.Range.FormFields.Count == 0)
+        {
+            Console.WriteLine("No form fields found in the document.");
+            return;
+        }
+
+        // Use the first form field.
+        FormField targetField = doc.Range.FormFields[0];
+        string bookmarkName = targetField.Name;
+
+        // Navigate to the bookmark that was automatically created for the form field.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        if (!builder.MoveToBookmark(bookmarkName))
+        {
+            Console.WriteLine($"Bookmark '{bookmarkName}' not found.");
+            return;
+        }
 
-        // Choose the form field you want to work with.
-        // Here we use the first form field in the collection.
-        FormField formField = doc.Range.FormFields[0];
-
-        // Each form field automatically creates a bookmark with the same name as the field.
-        string bookmarkName = formField.Name;
-
-        // Move the builder's cursor to the start of that bookmark.
-        // The cursor will be positioned just after the bookmark start node.
-        builder.MoveToBookmark(bookmarkName);
-
-        // The paragraph that contains the bookmark (and thus the form field) is now the current paragraph.
+        // The current paragraph now contains the form field.
         Paragraph surroundingParagraph = builder.CurrentParagraph;
+        if (surroundingParagraph == null)
+        {
+            Console.WriteLine("Unable to locate the surrounding paragraph.");
+            return;
+        }
 
-        // Extract the full text of the paragraph.
         string paragraphText = surroundingParagraph.GetText();
 
-        // Output the extracted text.
         Console.WriteLine("Paragraph containing the form field:");
         Console.WriteLine(paragraphText.Trim());
 
-        // Optionally, save the document after any modifications.
+        // Save the document (optional).
         doc.Save("Output.docx");
     }
 }

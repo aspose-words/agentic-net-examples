@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -6,18 +7,16 @@ class ChangeCheckBoxSize
 {
     static void Main()
     {
-        // Path to the source document that already contains a checkbox form field.
-        const string inputPath = @"C:\Docs\Input.docx";
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path where the modified document will be saved.
-        const string outputPath = @"C:\Docs\Output.docx";
+        // Insert a checkbox form field with a known name.
+        const string checkBoxName = "MyCheckBox";
+        builder.InsertCheckBox(checkBoxName, false, true, 0);
 
-        // Load the existing document.
-        Document doc = new Document(inputPath);
-
-        // Retrieve the checkbox form field by its bookmark/name.
-        // Replace "MyCheckBox" with the actual name of your checkbox.
-        FormField checkBox = doc.Range.FormFields["MyCheckBox"];
+        // Retrieve the checkbox form field by its name.
+        FormField checkBox = doc.Range.FormFields[checkBoxName];
 
         // Ensure the field exists and is a checkbox.
         if (checkBox != null && checkBox.Type == FieldType.FieldFormCheckBox)
@@ -33,7 +32,11 @@ class ChangeCheckBoxSize
             Console.WriteLine("Checkbox form field not found or is not a checkbox.");
         }
 
+        // Define output path in the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Output.docx");
+
         // Save the modified document.
         doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

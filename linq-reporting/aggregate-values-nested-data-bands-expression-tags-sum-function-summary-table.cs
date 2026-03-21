@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables; // <-- added namespace for Table
+using Aspose.Words.Tables;
 
 namespace AsposeWordsNestedAggregation
 {
@@ -18,6 +19,9 @@ namespace AsposeWordsNestedAggregation
 
         public string Name { get; set; }
         public List<Order> Orders { get; set; }
+
+        // Helper property for the total quantity of all orders.
+        public double TotalQuantity => Orders.Sum(o => o.Quantity);
     }
 
     // Simple data entity representing an order line.
@@ -52,7 +56,7 @@ namespace AsposeWordsNestedAggregation
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             // Create a table that will hold the customer and order data.
-            Table table = builder.StartTable(); // Table type now resolved via Aspose.Words.Tables
+            Table table = builder.StartTable();
 
             // Header row.
             builder.InsertCell();
@@ -67,7 +71,7 @@ namespace AsposeWordsNestedAggregation
             builder.InsertCell();
             builder.InsertField(" MERGEFIELD TableStart:Customers ");
             builder.InsertField(" MERGEFIELD Name "); // Customer name.
-            builder.InsertCell(); // Empty cell for inner region start.
+            builder.InsertCell(); // Cell for inner region start.
 
             // ----- Begin inner region: Orders -----
             builder.InsertField(" MERGEFIELD TableStart:Orders ");
@@ -75,14 +79,13 @@ namespace AsposeWordsNestedAggregation
             builder.InsertCell();
             builder.InsertField(" MERGEFIELD Quantity "); // Order quantity.
             builder.InsertField(" MERGEFIELD TableEnd:Orders ");
-            // End of inner region.
+            builder.EndRow(); // End the row that repeats for each order.
 
             // Row that will display the sum of quantities for the current customer.
             builder.InsertCell();
             builder.Write("Total:");
             builder.InsertCell();
-            // Expression tag that the ReportingEngine will evaluate: sum of Quantity in the current Orders band.
-            builder.Write("<<[Orders.Quantity]:sum>>");
+            builder.InsertField(" MERGEFIELD TotalQuantity "); // Sum for current customer.
             builder.EndRow();
 
             // ----- End outer region: Customers -----
@@ -106,7 +109,6 @@ namespace AsposeWordsNestedAggregation
 
             // 3. Use ReportingEngine to populate the template.
             ReportingEngine engine = new ReportingEngine();
-            // The data source name must match the outer region name ("Customers").
             engine.BuildReport(doc, customers, "Customers");
 
             // 4. Save the resulting document.

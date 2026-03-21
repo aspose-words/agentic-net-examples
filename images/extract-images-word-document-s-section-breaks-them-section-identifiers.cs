@@ -9,48 +9,44 @@ class ExtractImagesBySection
 {
     static void Main()
     {
-        // Path to the source Word document.
-        string inputPath = @"C:\Docs\InputDocument.docx";
-
         // Directory where extracted images will be saved.
-        string outputDir = @"C:\Docs\ExtractedImages";
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "ExtractedImages");
+        Directory.CreateDirectory(outputDir);
 
-        // Ensure the output directory exists.
-        if (!Directory.Exists(outputDir))
-            Directory.CreateDirectory(outputDir);
+        // Create a sample document with one section and an image.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample document with an image:");
 
-        // Load the document (lifecycle rule: use the Document constructor for loading).
-        Document doc = new Document(inputPath);
+        // Add an image from a base64 string (a tiny red dot PNG).
+        const string base64Png = 
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YkK6V8AAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        using (MemoryStream ms = new MemoryStream(imageBytes))
+        {
+            builder.InsertImage(ms);
+        }
 
         // Iterate through each section in the document.
         for (int secIdx = 0; secIdx < doc.Sections.Count; secIdx++)
         {
-            // Get the current section.
             Section section = doc.Sections[secIdx];
-
-            // Collect all Shape nodes within the section (including nested shapes).
             NodeCollection shapes = section.GetChildNodes(NodeType.Shape, true);
-
             int imageIdx = 0;
 
-            // Process each shape that contains an image.
             foreach (Shape shape in shapes.OfType<Shape>())
             {
                 if (shape.HasImage)
                 {
-                    // Build a unique file name that includes the section index and image index.
                     string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
                     string fileName = $"Section_{secIdx + 1}_Image_{++imageIdx}{extension}";
                     string fullPath = Path.Combine(outputDir, fileName);
-
-                    // Save the image data to the file system (lifecycle rule: use ImageData.Save).
                     shape.ImageData.Save(fullPath);
                 }
             }
         }
 
-        // Optionally, save the (unchanged) document to a new file if needed.
-        // This demonstrates the save lifecycle rule.
+        // Save the (unchanged) document to the output directory.
         string outputDocPath = Path.Combine(outputDir, "ProcessedDocument.docx");
         doc.Save(outputDocPath);
     }

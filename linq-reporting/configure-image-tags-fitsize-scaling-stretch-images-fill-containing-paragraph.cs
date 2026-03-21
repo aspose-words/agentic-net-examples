@@ -8,9 +8,17 @@ class ImageFitSizeExample
 {
     static void Main()
     {
-        // Path to the folder that contains the source image.
-        string imageDir = @"C:\Images\";               // <-- adjust as needed
-        string imageFile = Path.Combine(imageDir, "sample.jpg");
+        // Create a temporary image file (a tiny red dot PNG).
+        string tempDir = Path.GetTempPath();
+        string imageFile = Path.Combine(tempDir, "sample.png");
+        if (!File.Exists(imageFile))
+        {
+            // PNG data for a 1x1 red pixel.
+            const string base64Png = 
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
+            byte[] pngBytes = Convert.FromBase64String(base64Png);
+            File.WriteAllBytes(imageFile, pngBytes);
+        }
 
         // Create a new blank document.
         Document doc = new Document();
@@ -31,22 +39,18 @@ class ImageFitSizeExample
         // Fit the image data to the new shape size, stretching it if necessary.
         imageShape.ImageData.FitImageToShape();
 
-        // Optional: set the height to match the shape's new width while preserving aspect ratio.
-        // If you want the image to completely fill the paragraph height as well,
-        // you could assign a fixed height here instead.
-        // imageShape.Height = imageShape.ImageData.ImageSize.HeightPoints *
-        //                     (imageShape.Width / imageShape.ImageData.ImageSize.WidthPoints);
-
         // Ensure the image is treated as an inline shape (no text wrapping).
         imageShape.WrapType = WrapType.Inline;
 
         // Save the document to HTML with scaling of images to the shape size.
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions
         {
-            ScaleImageToShapeSize = true   // Scale images during export so they match the shape dimensions.
+            ScaleImageToShapeSize = true // Scale images during export so they match the shape dimensions.
         };
 
-        string outputPath = @"C:\Output\ImageFitSize.html";   // <-- adjust as needed
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ImageFitSize.html");
         doc.Save(outputPath, htmlOptions);
+
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

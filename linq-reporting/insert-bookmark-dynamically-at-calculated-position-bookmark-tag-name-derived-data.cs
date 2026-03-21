@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -15,7 +16,8 @@ namespace BookmarkInsertionDemo
     public static class BookmarkHelper
     {
         /// <summary>
-        /// Loads a Word document, inserts a bookmark for each data item at a calculated position,
+        /// Loads a Word document (or creates a new one if the file does not exist),
+        /// inserts a bookmark for each data item at a calculated position,
         /// and saves the result.
         /// </summary>
         /// <param name="inputPath">Path to the source .docx file.</param>
@@ -23,8 +25,8 @@ namespace BookmarkInsertionDemo
         /// <param name="items">Collection of data items used to generate bookmark names.</param>
         public static void InsertBookmarks(string inputPath, string outputPath, List<DataItem> items)
         {
-            // Load the existing document (lifecycle rule: load).
-            Document doc = new Document(inputPath);
+            // Load the existing document or create a new one if the file is missing.
+            Document doc = File.Exists(inputPath) ? new Document(inputPath) : new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             // Iterate over the data items and create a bookmark for each.
@@ -59,7 +61,7 @@ namespace BookmarkInsertionDemo
                 }
             }
 
-            // Save the modified document (lifecycle rule: save).
+            // Save the modified document.
             doc.Save(outputPath);
         }
 
@@ -74,14 +76,21 @@ namespace BookmarkInsertionDemo
                 new DataItem { Id = 3, Name = "Charlie Brown" }
             };
 
-            // Paths to input and output documents.
-            string inputFile = @"C:\Docs\Template.docx";
-            string outputFile = @"C:\Docs\Result.docx";
+            // Use temporary paths that are guaranteed to exist.
+            string tempFolder = Path.GetTempPath();
+            string inputFile = Path.Combine(tempFolder, "Template.docx");
+            string outputFile = Path.Combine(tempFolder, "Result.docx");
+
+            // Ensure an input file exists; if not, create an empty document.
+            if (!File.Exists(inputFile))
+            {
+                new Document().Save(inputFile);
+            }
 
             // Perform the bookmark insertion.
             InsertBookmarks(inputFile, outputFile, data);
 
-            Console.WriteLine("Bookmarks inserted and document saved.");
+            Console.WriteLine($"Bookmarks inserted and document saved to: {outputFile}");
         }
     }
 }

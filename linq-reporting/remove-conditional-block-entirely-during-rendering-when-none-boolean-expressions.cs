@@ -1,5 +1,5 @@
 using System;
-using System.Data;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -10,8 +10,16 @@ class RemoveFalseIfBlocks
         // Load the source document.
         Document doc = new Document("Input.docx");
 
-        // Iterate over all IF fields in the document.
-        foreach (FieldIf ifField in doc.Range.Fields)
+        // Collect all IF fields in the document.
+        List<FieldIf> ifFields = new List<FieldIf>();
+        foreach (Field field in doc.Range.Fields)
+        {
+            if (field is FieldIf ifField)
+                ifFields.Add(ifField);
+        }
+
+        // Iterate over the collected IF fields.
+        foreach (FieldIf ifField in ifFields)
         {
             // Evaluate the condition of the IF field.
             FieldIfComparisonResult result = ifField.EvaluateCondition();
@@ -33,8 +41,7 @@ class RemoveFalseIfBlocks
                 }
 
                 // Finally remove the end node itself.
-                if (endNode != null)
-                    endNode.Remove();
+                endNode?.Remove();
             }
         }
 

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.Json;
 using Aspose.Words;
 using Aspose.Words.Lists;
@@ -18,13 +17,20 @@ namespace AsposeWordsListFromJson
     {
         public static void Main()
         {
-            // Path to the JSON file containing an array of items.
-            const string jsonPath = "data.json";
+            // Sample JSON data embedded directly in the source.
+            const string jsonData = @"
+            [
+                { ""Title"": ""Prepare quarterly report"", ""Category"": ""Important"" },
+                { ""Title"": ""Schedule team meeting"", ""Category"": ""Normal"" },
+                { ""Title"": ""Update project roadmap"", ""Category"": ""Important"" },
+                { ""Title"": ""Review pull requests"", ""Category"": ""Normal"" }
+            ]";
 
-            // Load and deserialize the JSON array.
-            List<Item> allItems = JsonSerializer.Deserialize<List<Item>>(File.ReadAllText(jsonPath));
+            // Deserialize the JSON array.
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            List<Item> allItems = JsonSerializer.Deserialize<List<Item>>(jsonData, options);
 
-            // Filter the items – keep only those with Category == "Important".
+            // Filter the items – keep only those with Category == ""Important"".
             List<Item> filtered = allItems.FindAll(i => i.Category == "Important");
 
             // ---------- Document lifecycle ----------

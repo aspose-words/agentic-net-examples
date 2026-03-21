@@ -9,28 +9,32 @@ namespace GifToAnimatedWebP
     {
         static void Main()
         {
-            // Folder that contains the extracted GIF files.
-            string inputFolder = @"C:\Images\Gif";
-            // Folder where the resulting animated WebP files will be saved.
-            string outputFolder = @"C:\Images\WebP";
+            // Use folders relative to the executable so they always exist.
+            string baseDir = AppContext.BaseDirectory;
+            string inputFolder = Path.Combine(baseDir, "Gif");
+            string outputFolder = Path.Combine(baseDir, "WebP");
 
+            // Ensure both folders exist.
+            Directory.CreateDirectory(inputFolder);
             Directory.CreateDirectory(outputFolder);
 
-            // Process each GIF file in the input folder.
-            foreach (string gifPath in Directory.GetFiles(inputFolder, "*.gif"))
+            // Get all GIF files in the input folder.
+            string[] gifFiles = Directory.GetFiles(inputFolder, "*.gif", SearchOption.TopDirectoryOnly);
+
+            if (gifFiles.Length == 0)
+            {
+                Console.WriteLine($"No GIF files found in \"{inputFolder}\". Place GIFs there and rerun.");
+                return;
+            }
+
+            foreach (string gifPath in gifFiles)
             {
                 // Load the GIF file as a document. Aspose.Words treats each frame of an animated GIF
                 // as a separate page in the document, preserving the original frame delays.
                 Document doc = new Document(gifPath);
 
                 // Configure image save options for WebP format.
-                ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.WebP)
-                {
-                    // For multi‑frame formats (GIF, WebP) the default layout renders each page as a separate frame.
-                    // No additional layout configuration is required; the frame delays are kept automatically.
-                    // If you need to customize the layout (e.g., grid), you could set:
-                    // PageLayout = MultiPageLayout.Grid(1, 0, 0);
-                };
+                ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.WebP);
 
                 // Build the output file name with the same base name but .webp extension.
                 string outputFileName = Path.GetFileNameWithoutExtension(gifPath) + ".webp";
@@ -38,6 +42,7 @@ namespace GifToAnimatedWebP
 
                 // Save the document as an animated WebP file.
                 doc.Save(outputPath, saveOptions);
+                Console.WriteLine($"Converted \"{Path.GetFileName(gifPath)}\" to \"{outputFileName}\".");
             }
 
             Console.WriteLine("Conversion completed.");

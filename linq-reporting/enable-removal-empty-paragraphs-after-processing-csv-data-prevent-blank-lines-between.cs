@@ -11,28 +11,48 @@ namespace AsposeWordsCsvMailMerge
     {
         static void Main()
         {
-            // Paths – adjust to your environment.
-            const string templatePath = @"C:\Docs\Template.docx";
-            const string csvPath = @"C:\Docs\Data.csv";
-            const string outputPath = @"C:\Docs\MergedResult.docx";
+            // Use the current directory for all files so the example works anywhere.
+            string baseDir = AppContext.BaseDirectory;
+            string templatePath = Path.Combine(baseDir, "Template.docx");
+            string csvPath = Path.Combine(baseDir, "Data.csv");
+            string outputPath = Path.Combine(baseDir, "MergedResult.docx");
+
+            // Ensure a simple template exists.
+            if (!File.Exists(templatePath))
+            {
+                var templateDoc = new Document();
+                var builder = new DocumentBuilder(templateDoc);
+                builder.Writeln("Dear <<Name>>,");
+                builder.Writeln("Your order <<OrderId>> has been shipped on <<ShipDate>>.");
+                builder.Writeln("Thank you!");
+                templateDoc.Save(templatePath);
+            }
+
+            // Ensure a simple CSV file exists.
+            if (!File.Exists(csvPath))
+            {
+                File.WriteAllText(csvPath,
+@"Name,OrderId,ShipDate
+John Doe,12345,2023-01-15
+Jane Smith,67890,2023-02-20");
+            }
 
             // Load the Word template.
             Document doc = new Document(templatePath);
 
-            // Load CSV data into a DataTable. This approach works with any Aspose.Words version
-            // and does not require the optional CsvDataSource / CsvDataLoadOptions classes.
+            // Load CSV data into a DataTable.
             DataTable csvTable = LoadCsvIntoDataTable(csvPath);
 
             // Remove empty paragraphs that may be created when a row contains empty fields.
             doc.MailMerge.CleanupOptions = MailMergeCleanupOptions.RemoveEmptyParagraphs;
-            // Optional: treat paragraphs that contain only punctuation as empty.
-            // doc.MailMerge.CleanupParagraphsWithPunctuationMarks = true;
 
             // Execute mail merge. The column names in the CSV become merge field names.
             doc.MailMerge.Execute(csvTable);
 
             // Save the merged document.
             doc.Save(outputPath);
+
+            Console.WriteLine($"Merged document saved to: {outputPath}");
         }
 
         /// <summary>

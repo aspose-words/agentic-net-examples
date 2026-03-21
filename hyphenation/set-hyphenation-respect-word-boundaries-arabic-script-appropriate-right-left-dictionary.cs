@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Globalization;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
 
@@ -27,12 +27,26 @@ class ArabicHyphenationExample
         doc.HyphenationOptions.AutoHyphenation = true;
         doc.HyphenationOptions.ConsecutiveHyphenLimit = 2; // optional
 
-        // Register an Arabic hyphenation dictionary (OpenOffice .dic format).
-        // Replace "MyDir" with the actual directory containing the dictionary file.
-        string arabicDicPath = Path.Combine("MyDir", "hyph_ar_SA.dic");
+        // Prepare a minimal Arabic hyphenation dictionary.
+        string myDir = Path.Combine(AppContext.BaseDirectory, "MyDir");
+        Directory.CreateDirectory(myDir);
+        string arabicDicPath = Path.Combine(myDir, "hyph_ar_SA.dic");
+
+        // If the dictionary file does not exist, create a simple placeholder.
+        if (!File.Exists(arabicDicPath))
+        {
+            // A minimal .dic file (OpenOffice format) – can be empty or contain a comment.
+            File.WriteAllText(arabicDicPath, "# Arabic hyphenation dictionary placeholder");
+        }
+
+        // Register the Arabic hyphenation dictionary.
         Hyphenation.RegisterDictionary("ar-SA", arabicDicPath);
 
+        // Ensure the output directory exists.
+        string artifactsDir = Path.Combine(AppContext.BaseDirectory, "ArtifactsDir");
+        Directory.CreateDirectory(artifactsDir);
+
         // Save the document; hyphenation will be applied during layout.
-        doc.Save(Path.Combine("ArtifactsDir", "ArabicHyphenation.docx"));
+        doc.Save(Path.Combine(artifactsDir, "ArabicHyphenation.docx"));
     }
 }

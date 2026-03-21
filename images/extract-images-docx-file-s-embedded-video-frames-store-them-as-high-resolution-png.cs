@@ -10,12 +10,20 @@ class ExtractVideoFrames
     static void Main()
     {
         // Path to the source DOCX that contains embedded online videos.
-        string sourceDocPath = @"C:\Docs\VideoDocument.docx";
+        // Use a path relative to the executable so the example can run without requiring a specific absolute location.
+        string sourceDocPath = Path.Combine(Environment.CurrentDirectory, "VideoDocument.docx");
 
         // Folder where extracted high‑resolution PNG frames will be saved.
-        string outputFolder = @"C:\Docs\ExtractedFrames";
+        string outputFolder = Path.Combine(Environment.CurrentDirectory, "ExtractedFrames");
 
-        // Load the document (uses the provided Document(string) constructor).
+        if (!File.Exists(sourceDocPath))
+        {
+            Console.WriteLine($"Source document not found: \"{sourceDocPath}\"");
+            Console.WriteLine("Place a DOCX file named \"VideoDocument.docx\" in the program's working directory and rerun.");
+            return;
+        }
+
+        // Load the document.
         Document doc = new Document(sourceDocPath);
 
         // Ensure the output directory exists.
@@ -44,7 +52,6 @@ class ExtractVideoFrames
                 string outFile = Path.Combine(outputFolder, $"VideoFrame_{frameIndex}.png");
 
                 // Render the shape (thumbnail) to a PNG file.
-                // GetShapeRenderer() returns a renderer that can save the shape as an image.
                 shape.GetShapeRenderer().Save(outFile, pngOptions);
 
                 frameIndex++;

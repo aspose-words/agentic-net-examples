@@ -1,47 +1,56 @@
 using System;
-using Aspose.Words;
-using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+using System.IO;
+using System.Linq;
 
 class CsvRecordFetcher
 {
     static void Main()
     {
-        // Load a template document that contains a table placeholder for the CSV data.
-        // The template should have a MERGEFIELD or a Reporting Engine tag that will be filled with the CSV rows.
-        Document doc = new Document("Template.docx");
+        const string csvPath = "Data.csv";
 
-        // Configure CSV loading options – the first line contains column headers.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-        // Adjust delimiters if needed, e.g., loadOptions.Delimiter = ';';
+        if (!File.Exists(csvPath))
+        {
+            Console.WriteLine($"CSV file not found: {csvPath}");
+            return;
+        }
 
-        // Create a CSV data source from the file.
-        CsvDataSource csvSource = new CsvDataSource("Data.csv", loadOptions);
+        // Read all lines from the CSV file.
+        string[] allLines = File.ReadAllLines(csvPath);
 
-        // Build the report – this will populate the table in the template with the CSV rows.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, csvSource, "CsvData");
+        if (allLines.Length == 0)
+        {
+            Console.WriteLine("CSV file is empty.");
+            return;
+        }
 
-        // After building the report, the document now contains a table with the CSV records.
-        // Access the first table in the document.
-        Table table = doc.FirstSection.Body.Tables[0];
+        // Assume the first line contains column headers.
+        string headerLine = allLines[0];
+        string[] headers = headerLine.Split(',');
+
+        // Parse the remaining lines into a collection of string arrays.
+        var records = allLines
+            .Skip(1) // skip header
+            .Select(line => line.Split(','))
+            .ToList();
 
         // Specify the zero‑based index of the record we want to fetch.
         int recordIndex = 2; // for example, the third record in the CSV.
 
-        // Use the indexer (ElementAt) to retrieve the specific row.
-        Row selectedRow = table.Rows[recordIndex];
-
-        // Display the contents of each cell in the selected row.
-        Console.WriteLine($"Record #{recordIndex + 1}:");
-        for (int i = 0; i < selectedRow.Cells.Count; i++)
+        if (recordIndex < 0 || recordIndex >= records.Count)
         {
-            // Convert the cell to plain text.
-            string cellText = selectedRow.Cells[i].ToString(SaveFormat.Text).Trim();
-            Console.WriteLine($"  Column {i + 1}: {cellText}");
+            Console.WriteLine($"Record index {recordIndex} is out of range. Total records: {records.Count}");
+            return;
         }
 
-        // Save the document with the populated data (optional).
-        doc.Save("CsvReportWithSelectedRecord.docx");
+        // Use ElementAt to retrieve the specific record.
+        string[] selectedRecord = records.ElementAt(recordIndex);
+
+        // Display the contents of each column in the selected record.
+        Console.WriteLine($"Record #{recordIndex + 1}:");
+        for (int i = 0; i < selectedRecord.Length; i++)
+        {
+            string columnName = i < headers.Length ? headers[i] : $"Column{i + 1}";
+            Console.WriteLine($"  {columnName}: {selectedRecord[i].Trim()}");
+        }
     }
 }

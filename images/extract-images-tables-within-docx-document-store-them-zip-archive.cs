@@ -10,16 +10,20 @@ class ExtractImagesFromTables
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        const string inputDocPath = @"C:\Docs\InputDocument.docx";
+        // Use paths relative to the current directory.
+        string inputDocPath = Path.Combine(Environment.CurrentDirectory, "InputDocument.docx");
+        string outputZipPath = Path.Combine(Environment.CurrentDirectory, "ExtractedImages.zip");
 
-        // Path where the resulting ZIP archive will be saved.
-        const string outputZipPath = @"C:\Docs\ExtractedImages.zip";
+        // Ensure a document exists. If not, create a simple one with a table containing an image.
+        if (!File.Exists(inputDocPath))
+        {
+            CreateSampleDocumentWithImage(inputDocPath);
+        }
 
-        // Load the Word document using the Aspose.Words Document constructor (lifecycle rule).
+        // Load the Word document.
         Document doc = new Document(inputDocPath);
 
-        // Create a new ZIP archive (System.IO.Compression) to hold the extracted images.
+        // Create a new ZIP archive to hold the extracted images.
         using (FileStream zipToCreate = new FileStream(outputZipPath, FileMode.Create))
         using (ZipArchive archive = new ZipArchive(zipToCreate, ZipArchiveMode.Create))
         {
@@ -50,11 +54,8 @@ class ExtractImagesFromTables
                         using (Stream entryStream = entry.Open())
                         using (MemoryStream imageStream = new MemoryStream())
                         {
-                            // Save the image data to a memory stream.
                             shape.ImageData.Save(imageStream);
                             imageStream.Position = 0;
-
-                            // Copy the image bytes to the ZIP entry stream.
                             imageStream.CopyTo(entryStream);
                         }
 
@@ -64,7 +65,33 @@ class ExtractImagesFromTables
             }
         }
 
-        // At this point the ZIP file contains all images that were located inside tables.
         Console.WriteLine($"Extraction complete. {Path.GetFileName(outputZipPath)} created.");
+    }
+
+    private static void CreateSampleDocumentWithImage(string path)
+    {
+        // A tiny 1x1 pixel PNG (transparent) encoded in base64.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a table with one cell.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Sample cell with image:");
+        builder.InsertCell();
+
+        // Insert the image into the second cell.
+        using (MemoryStream ms = new MemoryStream(imageBytes))
+        {
+            builder.InsertImage(ms);
+        }
+
+        builder.EndRow();
+        builder.EndTable();
+
+        doc.Save(path);
     }
 }

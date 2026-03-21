@@ -1,12 +1,10 @@
 using System;
-using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Replacing;
 
 namespace CustomTagDelimiterExample
 {
-    // Sample data source class
     public class Person
     {
         public string FirstName { get; set; }
@@ -17,35 +15,26 @@ namespace CustomTagDelimiterExample
     {
         static void Main()
         {
-            // Load the template document that contains custom delimiters (e.g., {{FirstName}})
-            Document template = new Document("TemplateWithCustomDelimiters.docx");
+            // Create an in‑memory template containing custom delimiters {{ }}.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+            builder.Writeln("{{FirstName}} {{LastName}}");
 
-            // Replace custom delimiters with the delimiters expected by ReportingEngine (<<[ ... ]>>)
-            // Example: {{FirstName}} -> <<[person.FirstName]>>
-            // This simple replacement assumes that the placeholder name does not contain the delimiters themselves.
-            // Adjust the patterns as needed for more complex scenarios.
-
-            // Replace opening delimiter "{{" with "<<["
+            // Convert custom delimiters to the format expected by ReportingEngine (<<[ ]>>).
             template.Range.Replace("{{", "<<[", new FindReplaceOptions());
-
-            // Replace closing delimiter "}}" with "]>>"
             template.Range.Replace("}}", "]>>", new FindReplaceOptions());
 
-            // Prepare the data source
+            // Prepare the data source.
             Person person = new Person { FirstName = "John", LastName = "Doe" };
 
-            // Configure the reporting engine
+            // Configure and execute the reporting engine.
             ReportingEngine engine = new ReportingEngine
             {
-                // Remove empty paragraphs that may appear after replacement
                 Options = ReportBuildOptions.RemoveEmptyParagraphs
             };
-
-            // Build the report using the modified template and the data source.
-            // The data source name ("person") must match the name used in the template placeholders.
             engine.BuildReport(template, person, "person");
 
-            // Save the generated report
+            // Save the generated report.
             template.Save("GeneratedReport.docx");
         }
     }

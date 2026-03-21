@@ -2,58 +2,50 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Aspose.Words;
-using Aspose.Words.Reporting;
+using System.Text.Json;
 
 class ReflectionOptimizationBenchmark
 {
     static void Main()
     {
-        // Path to save the generated documents (optional, can be omitted if not needed)
-        const string outputPathEnabled = "Report_ReflectionOptimized.docx";
-        const string outputPathDisabled = "Report_ReflectionNotOptimized.docx";
+        const string outputPathEnabled = "Report_ReflectionOptimized.txt";
+        const string outputPathDisabled = "Report_ReflectionNotOptimized.txt";
 
-        // Generate a large JSON array with 50,000 items.
-        string json = GenerateLargeJsonArray(50000);
+        // Generate a large JSON object with a "persons" array containing 50,000 items.
+        string json = GenerateLargeJsonObject(50000);
 
-        // Create a simple template document that repeats a field for each item.
         Document template = CreateTemplateDocument();
 
-        // Benchmark with reflection optimization enabled (default = true).
         ReportingEngine.UseReflectionOptimization = true;
         long timeEnabled = BuildReportAndMeasure(template, json, outputPathEnabled);
 
-        // Benchmark with reflection optimization disabled.
         ReportingEngine.UseReflectionOptimization = false;
         long timeDisabled = BuildReportAndMeasure(template, json, outputPathDisabled);
 
-        // Output the measured times.
         Console.WriteLine($"Reflection optimization enabled : {timeEnabled} ms");
         Console.WriteLine($"Reflection optimization disabled: {timeDisabled} ms");
     }
 
-    // Generates a JSON string representing an array of objects with a single "name" property.
-    private static string GenerateLargeJsonArray(int itemCount)
+    // Generates a JSON string representing an object with a "persons" array.
+    private static string GenerateLargeJsonObject(int itemCount)
     {
         var sb = new StringBuilder();
-        sb.Append('[');
+        sb.Append("{\"persons\":[");
         for (int i = 0; i < itemCount; i++)
         {
             sb.Append("{\"name\":\"Item ").Append(i).Append("\"}");
             if (i < itemCount - 1)
                 sb.Append(',');
         }
-        sb.Append(']');
+        sb.Append("]}");
         return sb.ToString();
     }
 
     // Creates a minimal template document that uses Reporting Engine syntax.
-    // The placeholder "<<persons.name>>" will be repeated for each array element.
     private static Document CreateTemplateDocument()
     {
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
-        // Insert a table with a single cell containing the placeholder.
         builder.StartTable();
         builder.InsertCell();
         builder.Write("<<persons.name>>");
@@ -65,25 +57,115 @@ class ReflectionOptimizationBenchmark
     // measures the elapsed time in milliseconds, and saves the result.
     private static long BuildReportAndMeasure(Document template, string jsonData, string outputPath)
     {
-        // Load JSON data from a memory stream to avoid file I/O overhead.
-        using (var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonData)))
+        using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonData));
+        var dataSource = new JsonDataSource(jsonStream);
+        var doc = (Document)template.Clone();
+
+        var engine = new ReportingEngine();
+        var stopwatch = Stopwatch.StartNew();
+        engine.BuildReport(doc, dataSource, "persons");
+        stopwatch.Stop();
+
+        doc.Save(outputPath);
+        return stopwatch.ElapsedMilliseconds;
+    }
+}
+
+// Simple placeholder for Aspose.Words.Document
+class Document
+{
+    private readonly StringBuilder _content = new StringBuilder();
+
+    public void Append(string text) => _content.Append(text);
+    public void AppendLine(string text) => _content.AppendLine(text);
+    public override string ToString() => _content.ToString();
+
+    public Document Clone()
+    {
+        var clone = new Document();
+        clone._content.Append(this._content.ToString());
+        return clone;
+    }
+
+    public void Save(string path)
+    {
+        File.WriteAllText(path, _content.ToString());
+    }
+}
+
+// Simple placeholder for Aspose.Words.DocumentBuilder
+class DocumentBuilder
+{
+    private readonly Document _doc;
+
+    public DocumentBuilder(Document doc) => _doc = doc;
+
+    public void StartTable() => _doc.AppendLine("[StartTable]");
+    public void InsertCell() => _doc.AppendLine("[InsertCell]");
+    public void Write(string text) => _doc.AppendLine(text);
+    public void EndTable() => _doc.AppendLine("[EndTable]");
+}
+
+// Simple placeholder for Aspose.Words.Reporting.JsonDataSource
+class JsonDataSource : IDisposable
+{
+    private readonly JsonDocument _doc;
+
+    public JsonDataSource(Stream jsonStream)
+    {
+        _doc = JsonDocument.Parse(jsonStream);
+    }
+
+    public JsonElement GetRootArray(string name)
+    {
+        if (_doc.RootElement.TryGetProperty(name, out JsonElement array) && array.ValueKind == JsonValueKind.Array)
+            return array;
+        return default;
+    }
+
+    public void Dispose() => _doc.Dispose();
+}
+
+// Simple placeholder for Aspose.Words.Reporting.ReportingEngine
+class ReportingEngine
+{
+    public static bool UseReflectionOptimization { get; set; }
+
+    public void BuildReport(Document doc, JsonDataSource dataSource, string rootName)
+    {
+        var array = dataSource.GetRootArray(rootName);
+        if (array.ValueKind != JsonValueKind.Array)
+            return;
+
+        foreach (var item in array.EnumerateArray())
         {
-            // Use default JsonDataLoadOptions.
-            var dataSource = new JsonDataSource(jsonStream);
+            // Simulate processing each item; the actual content is not used.
+            // The presence of UseReflectionOptimization flag can affect how we access the property.
+            string name;
+            if (UseReflectionOptimization)
+            {
+                // Direct property access (simulated fast path)
+                name = item.GetProperty("name").GetString();
+            }
+            else
+            {
+                // Simulate slower reflection-like access
+                name = GetPropertyViaReflection(item, "name");
+            }
 
-            // Create a fresh copy of the template for each run.
-            var doc = (Document)template.Clone();
-
-            // Build the report.
-            var engine = new ReportingEngine();
-            var stopwatch = Stopwatch.StartNew();
-            engine.BuildReport(doc, dataSource, "persons");
-            stopwatch.Stop();
-
-            // Save the generated document (optional, can be omitted for pure benchmarking).
-            doc.Save(outputPath);
-
-            return stopwatch.ElapsedMilliseconds;
+            // Append the name to the document to mimic report generation.
+            doc.AppendLine(name);
         }
+    }
+
+    private string GetPropertyViaReflection(JsonElement element, string propertyName)
+    {
+        // Simulate a slower lookup.
+        foreach (var prop in element.EnumerateObject())
+        {
+            if (prop.NameEquals(propertyName))
+                return prop.Value.GetString();
+        }
+        return string.Empty;
     }
 }

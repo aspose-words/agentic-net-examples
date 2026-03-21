@@ -1,52 +1,42 @@
 using System;
-using System.IO;
-using Aspose.Words;
-using Aspose.Words.Reporting;
+using System.Linq;
+using System.Xml.Linq;
 
-namespace AsposeWordsXmlReport
+namespace LinqReporting
 {
     class Program
     {
         static void Main()
         {
-            // Path to the Word template that contains the reporting tags.
-            // The template should have inline arithmetic expressions, e.g. <<[Category.Total]>> or
-            // <<[Amount] + [Tax]>> inside a <<foreach>> block to calculate totals per group.
-            string templatePath = @"C:\Templates\ReportTemplate.docx";
+            // Sample XML data.
+            string xml = @"<Report>
+  <Category name='Food'>
+    <Item amount='10.5' tax='0.5' />
+    <Item amount='20.0' tax='1.0' />
+  </Category>
+  <Category name='Books'>
+    <Item amount='15.0' tax='0.75' />
+  </Category>
+</Report>";
 
-            // Path to the XML file that holds the source data.
-            // Example XML structure:
-            // <Report>
-            //   <Category name="Food">
-            //     <Item amount="10.5" tax="0.5" />
-            //     <Item amount="20.0" tax="1.0" />
-            //   </Category>
-            //   <Category name="Books">
-            //     <Item amount="15.0" tax="0.75" />
-            //   </Category>
-            // </Report>
-            string xmlDataPath = @"C:\Data\ReportData.xml";
+            // Load the XML into an XDocument.
+            XDocument doc = XDocument.Parse(xml);
 
-            // Load the template document.
-            Document doc = new Document(templatePath);
+            // Group items by category and calculate totals using inline arithmetic.
+            var categoryTotals = doc.Root
+                .Elements("Category")
+                .Select(cat => new
+                {
+                    Name = (string)cat.Attribute("name"),
+                    Total = cat.Elements("Item")
+                               .Sum(item => (double)item.Attribute("amount") + (double)item.Attribute("tax"))
+                });
 
-            // Create an XML data source from the file.
-            // This uses the provided XmlDataSource constructor (string).
-            XmlDataSource xmlDataSource = new XmlDataSource(xmlDataPath);
-
-            // Create the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-
-            // Build the report.
-            // The third parameter is the name by which the XML data source will be referenced in the template.
-            // In the template you can use tags like <<foreach [in Report.Category]>> and
-            // inline arithmetic such as <<[Item.amount] + [Item.tax]>> to compute totals.
-            engine.BuildReport(doc, xmlDataSource, "Report");
-
-            // Save the generated report.
-            // This uses the provided Document.Save(string) method.
-            string outputPath = @"C:\Output\GeneratedReport.docx";
-            doc.Save(outputPath);
+            // Output the results.
+            foreach (var ct in categoryTotals)
+            {
+                Console.WriteLine($"{ct.Name}: {ct.Total}");
+            }
         }
     }
 }

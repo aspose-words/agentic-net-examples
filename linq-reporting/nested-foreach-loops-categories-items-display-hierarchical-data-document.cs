@@ -18,6 +18,12 @@ namespace NestedForeachExample
         public string Name { get; set; }
     }
 
+    // Wrapper class required by ReportingEngine (must be a visible type).
+    public class ReportData
+    {
+        public List<Category> categories { get; set; }
+    }
+
     class Program
     {
         static void Main()
@@ -27,13 +33,11 @@ namespace NestedForeachExample
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             // 2. Insert a template that uses Aspose.Words Reporting Engine syntax.
-            //    The outer foreach iterates over $categories$, the inner foreach iterates over $items$ of each category.
-            //    <<[Name]>> refers to the current object's Name property.
             builder.Writeln("Categories and their items:");
             builder.Writeln("<<foreach [in categories]>>");
             builder.Writeln("- Category: <<[Name]>>");
             builder.Writeln("  Items:");
-            builder.Writeln("  <<foreach [in items]>>");
+            builder.Writeln("  <<foreach [in Items]>>");
             builder.Writeln("    * <<[Name]>>");
             builder.Writeln("  <</foreach>>");
             builder.Writeln("<</foreach>>");
@@ -64,9 +68,8 @@ namespace NestedForeachExample
             };
 
             // 4. Build the report using the ReportingEngine.
-            //    The data source is an anonymous object that exposes the "categories" collection.
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, new { categories });
+            engine.BuildReport(doc, new ReportData { categories = categories });
 
             // 5. Save the resulting document.
             doc.Save("NestedForeachReport.docx");

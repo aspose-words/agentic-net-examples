@@ -7,10 +7,15 @@ class ImageCatalogGenerator
 {
     static void Main()
     {
-        // Folder containing the source DOCX files.
-        string sourceFolder = @"C:\Docs\Input";
+        // Folder containing the source DOCX files (relative to the executable).
+        string sourceFolder = Path.Combine(Environment.CurrentDirectory, "Input");
+        // Ensure the input folder exists.
+        Directory.CreateDirectory(sourceFolder);
+
         // Path for the resulting PDF catalog.
-        string outputPdf = @"C:\Docs\Output\Catalog.pdf";
+        string outputFolder = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputFolder);
+        string outputPdf = Path.Combine(outputFolder, "Catalog.pdf");
 
         // Create a new blank document that will become the catalog.
         Document catalog = new Document();
@@ -23,15 +28,13 @@ class ImageCatalogGenerator
             Document sourceDoc = new Document(docxPath);
 
             // Render the first page of the source document to a thumbnail image.
-            // Use ImageSaveOptions to control size and resolution.
             ImageSaveOptions imgOptions = new ImageSaveOptions(SaveFormat.Jpeg)
             {
                 // Render only the first page (zero‑based index).
                 PageSet = new PageSet(0),
                 // Small resolution keeps the thumbnail lightweight.
-                Resolution = 72,
-                // Optional: limit pixel dimensions.
-                ImageSize = new System.Drawing.Size(150, 200)
+                Resolution = 72
+                // ImageSize can be set if desired, but omitted to avoid System.Drawing dependency.
             };
 
             // Save the rendered page to a memory stream.
@@ -52,12 +55,9 @@ class ImageCatalogGenerator
         }
 
         // Save the assembled catalog as a PDF.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            // Optional: set PDF compliance or other options here.
-            // Example: pdfOptions.Compliance = PdfCompliance.PdfA1b;
-        };
-
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
         catalog.Save(outputPdf, pdfOptions);
+
+        Console.WriteLine($"Catalog generated at: {outputPdf}");
     }
 }

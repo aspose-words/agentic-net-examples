@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,29 +7,33 @@ class InsertDocAtBookmarkAndSavePdf
 {
     static void Main()
     {
-        // Paths to the template, the document to insert, and the output PDF.
-        string templatePath = @"C:\Docs\Template.docx";
-        string sourcePath   = @"C:\Docs\Source.docx";
-        string outputPath   = @"C:\Docs\Result.pdf";
+        // Create a template document with a bookmark named "InsertHere".
+        Document templateDoc = new Document();
+        DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
+        templateBuilder.Writeln("Template start");
+        templateBuilder.StartBookmark("InsertHere");
+        templateBuilder.Writeln("[Bookmark location]");
+        templateBuilder.EndBookmark("InsertHere");
+        templateBuilder.Writeln("Template end");
 
-        // Load the template document (create/load rule).
-        Document templateDoc = new Document(templatePath);
+        // Create a source document that will be inserted.
+        Document sourceDoc = new Document();
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This is the inserted document content.");
 
-        // Load the source document that will be inserted.
-        Document sourceDoc = new Document(sourcePath);
+        // Move the cursor to the bookmark in the template.
+        DocumentBuilder insertBuilder = new DocumentBuilder(templateDoc);
+        insertBuilder.MoveToBookmark("InsertHere");
 
-        // Create a DocumentBuilder for the template.
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Insert the source document at the bookmark position, keeping its formatting.
+        insertBuilder.InsertDocument(sourceDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Move the cursor to the bookmark named "InsertHere".
-        // The bookmark must exist in the template; otherwise an exception is thrown.
-        builder.MoveToBookmark("InsertHere");
+        // Define the output PDF path in the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.pdf");
 
-        // Insert the source document at the bookmark position.
-        // Keep the source formatting while inserting.
-        builder.InsertDocument(sourceDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // Save the combined document as PDF (save rule).
+        // Save the combined document as PDF.
         templateDoc.Save(outputPath, SaveFormat.Pdf);
+
+        Console.WriteLine($"PDF saved to: {outputPath}");
     }
 }

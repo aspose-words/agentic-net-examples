@@ -11,20 +11,55 @@ namespace AsposeWordsBatchMailMerge
     {
         static void Main()
         {
-            // Folder that contains the CSV files to be processed.
-            string csvFolder = @"C:\InputCsv";
-            // Path to the Word template that contains MERGEFIELDs matching the CSV column names.
-            string templatePath = @"C:\Template\MailMergeTemplate.docx";
-            // Path where the final merged document will be saved.
-            string outputPath = @"C:\Output\MergedResult.docx";
+            // Base directory for all temporary files.
+            string baseDir = AppContext.BaseDirectory;
+
+            // Prepare folders.
+            string csvFolder = Path.Combine(baseDir, "InputCsv");
+            string templateFolder = Path.Combine(baseDir, "Template");
+            string outputFolder = Path.Combine(baseDir, "Output");
+
+            Directory.CreateDirectory(csvFolder);
+            Directory.CreateDirectory(templateFolder);
+            Directory.CreateDirectory(outputFolder);
+
+            // Paths.
+            string templatePath = Path.Combine(templateFolder, "MailMergeTemplate.docx");
+            string outputPath = Path.Combine(outputFolder, "MergedResult.docx");
+
+            // Ensure a simple template exists.
+            if (!File.Exists(templatePath))
+            {
+                var templateDoc = new Document();
+                var builder = new DocumentBuilder(templateDoc);
+                builder.Font.Size = 14;
+                builder.Writeln("Mail Merge Result");
+                builder.InsertParagraph();
+                builder.InsertField("MERGEFIELD Name");
+                builder.InsertParagraph();
+                builder.InsertField("MERGEFIELD Age");
+                templateDoc.Save(templatePath);
+            }
+
+            // Ensure at least one CSV file exists.
+            string[] existingCsv = Directory.GetFiles(csvFolder, "*.csv");
+            if (existingCsv.Length == 0)
+            {
+                string sampleCsvPath = Path.Combine(csvFolder, "Sample1.csv");
+                File.WriteAllLines(sampleCsvPath, new[]
+                {
+                    "Name,Age",
+                    "Alice,30",
+                    "Bob,25"
+                });
+            }
 
             // Load the template once – it will be cloned for each CSV file.
             Document template = new Document(templatePath);
 
             // Create an empty document that will hold the merged results of all CSV files.
             Document mergedResult = new Document();
-            // Remove the default empty section that Aspose.Words adds on construction.
-            mergedResult.RemoveAllChildren();
+            mergedResult.RemoveAllChildren(); // Remove the default empty section.
 
             // Get all CSV files in the specified folder.
             string[] csvFiles = Directory.GetFiles(csvFolder, "*.csv");
@@ -46,18 +81,17 @@ namespace AsposeWordsBatchMailMerge
 
             // Save the combined document.
             mergedResult.Save(outputPath, SaveFormat.Docx);
+
+            Console.WriteLine($"Merged document saved to: {outputPath}");
         }
 
         /// <summary>
         /// Reads a CSV file and returns a DataTable.
         /// The first line is assumed to contain column headers.
         /// </summary>
-        /// <param name="csvPath">Full path to the CSV file.</param>
-        /// <param name="delimiter">Character that separates fields (e.g., ',' or ';').</param>
-        /// <returns>DataTable populated with the CSV data.</returns>
         private static DataTable BuildDataTableFromCsv(string csvPath, char delimiter)
         {
-            DataTable table = new DataTable();
+            var table = new DataTable();
 
             using (var reader = new StreamReader(csvPath))
             {
@@ -66,13 +100,12 @@ namespace AsposeWordsBatchMailMerge
                 {
                     string line = reader.ReadLine();
                     if (string.IsNullOrWhiteSpace(line))
-                        continue; // Skip empty lines.
+                        continue;
 
                     string[] fields = line.Split(delimiter);
 
                     if (isFirstLine)
                     {
-                        // Create columns using the header row.
                         foreach (string header in fields)
                         {
                             string columnName = header.Trim();
@@ -84,8 +117,7 @@ namespace AsposeWordsBatchMailMerge
                     }
                     else
                     {
-                        // Add a new row with the field values.
-                        DataRow row = table.NewRow();
+                        var row = table.NewRow();
                         for (int i = 0; i < table.Columns.Count && i < fields.Length; i++)
                         {
                             row[i] = fields[i].Trim();

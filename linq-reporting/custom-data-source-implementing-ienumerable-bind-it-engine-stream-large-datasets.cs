@@ -1,8 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Aspose.Words;
-using Aspose.Words.MailMerging;
 
 namespace CustomMailMergeExample
 {
@@ -19,27 +17,31 @@ namespace CustomMailMergeExample
         public string Address { get; }
     }
 
-    // Custom data source that implements both IMailMergeDataSource (required by Aspose.Words)
-    // and IEnumerable<Customer> (allows streaming large data sets lazily).
+    // Minimal IMailMergeDataSource definition (mirrors the Aspose interface used in the example).
+    public interface IMailMergeDataSource
+    {
+        string TableName { get; }
+        bool MoveNext();
+        bool GetValue(string fieldName, out object fieldValue);
+        IMailMergeDataSource GetChildDataSource(string tableName);
+    }
+
+    // Custom data source that implements both IMailMergeDataSource and IEnumerable<Customer>.
     public class CustomerDataSource : IMailMergeDataSource, IEnumerable<Customer>
     {
-        private readonly IEnumerable<Customer> _source;          // Original enumerable (could be lazy).
-        private IEnumerator<Customer> _enumerator;               // Enumerator used by the mail merge engine.
-        private Customer _current;                               // Holds the current record after MoveNext.
+        private readonly IEnumerable<Customer> _source;
+        private IEnumerator<Customer> _enumerator;
+        private Customer _current;
 
         public CustomerDataSource(IEnumerable<Customer> source)
         {
             _source = source ?? throw new ArgumentNullException(nameof(source));
-            // Create a fresh enumerator for the mail merge engine.
             _enumerator = _source.GetEnumerator();
         }
 
-        // IMailMergeDataSource implementation ---------------------------------
-
-        // Name of the data source – must match the merge region name if regions are used.
+        // IMailMergeDataSource implementation
         public string TableName => "Customer";
 
-        // Advances to the next record. Stores the current record for GetValue.
         public bool MoveNext()
         {
             if (_enumerator.MoveNext())
@@ -50,7 +52,6 @@ namespace CustomMailMergeExample
             return false;
         }
 
-        // Returns the value for a given field name.
         public bool GetValue(string fieldName, out object fieldValue)
         {
             switch (fieldName)
@@ -67,11 +68,9 @@ namespace CustomMailMergeExample
             }
         }
 
-        // No child data sources in this simple example.
         public IMailMergeDataSource GetChildDataSource(string tableName) => null;
 
-        // IEnumerable<Customer> implementation ----------------------------------
-
+        // IEnumerable<Customer> implementation
         public IEnumerator<Customer> GetEnumerator() => _source.GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -82,9 +81,7 @@ namespace CustomMailMergeExample
         // Example of a lazy enumerable that could stream millions of records.
         private static IEnumerable<Customer> GetLargeCustomerEnumerable()
         {
-            // In a real scenario this could read from a database, file, etc.
-            // Here we simulate with a simple loop.
-            for (int i = 1; i <= 1000000; i++)
+            for (int i = 1; i <= 1_000_000; i++)
             {
                 yield return new Customer($"Customer {i}", $"Address {i}");
             }
@@ -92,22 +89,26 @@ namespace CustomMailMergeExample
 
         static void Main()
         {
-            // Create a blank document and add merge fields.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.InsertField(" MERGEFIELD FullName ");
-            builder.InsertParagraph();
-            builder.InsertField(" MERGEFIELD Address ");
-
             // Prepare the custom data source that streams the data.
-            IEnumerable<Customer> customers = GetLargeCustomerEnumerable();
-            CustomerDataSource dataSource = new CustomerDataSource(customers);
+            var customers = GetLargeCustomerEnumerable();
+            var dataSource = new CustomerDataSource(customers);
 
-            // Execute mail merge using the custom data source.
-            doc.MailMerge.Execute(dataSource);
+            Console.WriteLine("First 10 merged customers:");
+            int count = 0;
+            while (dataSource.MoveNext())
+            {
+                dataSource.GetValue("FullName", out var fullName);
+                dataSource.GetValue("Address", out var address);
 
-            // Save the result.
-            doc.Save("MergedCustomers.docx");
+                if (count < 10)
+                {
+                    Console.WriteLine($"{fullName}, {address}");
+                }
+
+                count++;
+            }
+
+            Console.WriteLine($"Total records processed: {count}");
         }
     }
 }

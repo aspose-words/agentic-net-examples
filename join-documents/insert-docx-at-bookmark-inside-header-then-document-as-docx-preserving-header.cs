@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,39 +7,31 @@ class InsertDocxIntoHeaderBookmark
 {
     static void Main()
     {
-        // Path to the destination document that contains a header with a bookmark.
-        string destPath = @"C:\Docs\Destination.docx";
-
-        // Path to the source document that will be inserted.
-        string srcPath = @"C:\Docs\Source.docx";
-
-        // Load the destination document.
-        Document destDoc = new Document(destPath);
-
-        // Load the source document that we want to insert.
-        Document srcDoc = new Document(srcPath);
-
-        // Create a DocumentBuilder attached to the destination document.
+        // -----------------------------------------------------------------
+        // 1. Create the destination document with a header that contains a bookmark.
+        // -----------------------------------------------------------------
+        Document destDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(destDoc);
 
-        // -----------------------------------------------------------------
-        // 1. Move the builder's cursor to the primary header of the first
-        //    section. All subsequent operations will affect the header.
-        // -----------------------------------------------------------------
+        // Ensure the document has at least one section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-
-        // -----------------------------------------------------------------
-        // 2. (Optional) Ensure a bookmark exists in the header.
-        //    If the header already contains a bookmark, this step can be
-        //    omitted. Here we create a bookmark named "HeaderInsert".
-        // -----------------------------------------------------------------
         builder.StartBookmark("HeaderInsert");
         builder.Write("Placeholder text that will be replaced.");
         builder.EndBookmark("HeaderInsert");
 
+        // Return the builder to the main story (optional, not required for insertion).
+        builder.MoveToDocumentEnd();
+
         // -----------------------------------------------------------------
-        // 3. Move the cursor to the start of the bookmark where the source
-        //    document will be inserted.
+        // 2. Create the source document that will be inserted.
+        // -----------------------------------------------------------------
+        Document srcDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("This is the content from the source document.");
+        srcBuilder.Writeln("It will be inserted at the bookmark inside the header.");
+
+        // -----------------------------------------------------------------
+        // 3. Move the cursor to the bookmark inside the header.
         // -----------------------------------------------------------------
         bool found = builder.MoveToBookmark("HeaderInsert");
         if (!found)
@@ -46,17 +39,15 @@ class InsertDocxIntoHeaderBookmark
 
         // -----------------------------------------------------------------
         // 4. Insert the source document at the bookmark position.
-        //    KeepSourceFormatting preserves the original formatting of the
-        //    inserted document, including any header/footer styles it may
-        //    contain.
         // -----------------------------------------------------------------
         builder.InsertDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
 
         // -----------------------------------------------------------------
-        // 5. Save the modified document as DOCX, preserving header formatting.
-        //    The default OoxmlSaveOptions keep the existing compliance level.
+        // 5. Save the modified document.
         // -----------------------------------------------------------------
-        string outPath = @"C:\Docs\Result.docx";
+        string outPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
         destDoc.Save(outPath, SaveFormat.Docx);
+
+        Console.WriteLine($"Document saved to: {outPath}");
     }
 }

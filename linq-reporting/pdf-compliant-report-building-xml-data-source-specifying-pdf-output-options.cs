@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
@@ -7,28 +9,45 @@ class PdfAReportGenerator
 {
     static void Main()
     {
-        // Define file paths (modify these paths to match your environment)
-        string templatePath = @"C:\Docs\ReportTemplate.docx";
-        string xmlDataPath = @"C:\Docs\ReportData.xml";
-        string outputPath = @"C:\Docs\Report.pdf";
+        // Create a simple Word document with a reporting tag.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("<? for-each $data.item ?>");
+        builder.Writeln("Name: <? $item.Name ?>");
+        builder.Writeln("Age: <? $item.Age ?>");
+        builder.Writeln("<? end for-each ?>");
 
-        // Load the Word template that contains reporting tags
-        Document doc = new Document(templatePath);
+        // Sample XML data as a string.
+        string xml = @"
+<data>
+    <item>
+        <Name>John Doe</Name>
+        <Age>30</Age>
+    </item>
+    <item>
+        <Name>Jane Smith</Name>
+        <Age>25</Age>
+    </item>
+</data>";
 
-        // Create an XML data source from the specified file
-        XmlDataSource dataSource = new XmlDataSource(xmlDataPath);
+        // Load the XML data from a memory stream.
+        using var xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
+        XmlDataSource dataSource = new XmlDataSource(xmlStream);
 
-        // Populate the template with data using the ReportingEngine
+        // Build the report using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, dataSource, "data");
 
-        // Set up PDF save options to produce a PDF/A‑2u compliant document
+        // Set PDF/A‑2u compliance options.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA2u   // PDF/A‑2u (ISO 19005‑2) compliance
+            Compliance = PdfCompliance.PdfA2u
         };
 
-        // Save the filled report as a PDF/A document
+        // Save the resulting PDF in the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.pdf");
         doc.Save(outputPath, saveOptions);
+
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

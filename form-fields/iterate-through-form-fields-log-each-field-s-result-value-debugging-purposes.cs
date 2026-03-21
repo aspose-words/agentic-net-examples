@@ -7,8 +7,21 @@ class Program
 {
     static void Main()
     {
-        // Load an existing Word document that contains form fields.
-        Document doc = new Document("FormFields.docx");
+        // Create a new document and add a couple of form fields for demonstration.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a text input form field.
+        builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Sample text", 0);
+        builder.Writeln();
+
+        // Insert a checkbox form field.
+        builder.InsertCheckBox("CheckBoxField", false, 0);
+        builder.Writeln();
+
+        // Insert a dropdown form field.
+        builder.InsertComboBox("DropDownField", new[] { "Option1", "Option2", "Option3" }, 0);
+        builder.Writeln();
 
         // Access the collection of form fields in the document.
         FormFieldCollection formFields = doc.Range.FormFields;
@@ -26,7 +39,7 @@ class Program
             }
         }
 
-        // Save the document (optional – the document itself is unchanged).
+        // Save the document (optional – the document itself is unchanged except for the added fields).
         doc.Save("FormFields_Logged.docx");
     }
 }

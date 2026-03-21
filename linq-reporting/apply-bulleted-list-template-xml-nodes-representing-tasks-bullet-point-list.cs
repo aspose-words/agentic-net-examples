@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using Aspose.Words;
@@ -9,14 +8,16 @@ class TaskListGenerator
 {
     static void Main()
     {
-        // Load the XML containing tasks.
-        // Example XML structure:
-        // <Tasks>
-        //   <Task>Buy groceries</Task>
-        //   <Task>Call Alice</Task>
-        //   <Task>Finish report</Task>
-        // </Tasks>
-        XDocument xml = XDocument.Load("Tasks.xml");
+        // Sample XML data representing tasks.
+        const string xmlContent = @"
+<Tasks>
+    <Task>Buy groceries</Task>
+    <Task>Call Alice</Task>
+    <Task>Finish report</Task>
+</Tasks>";
+
+        // Load the XML from the string.
+        XDocument xml = XDocument.Parse(xmlContent);
 
         // Create a new Word document.
         Document doc = new Document();
@@ -27,7 +28,7 @@ class TaskListGenerator
         builder.ListFormat.List = bulletList;
         builder.ListFormat.ListLevelNumber = 0; // Top‑level bullet.
 
-        // Iterate over each <Task> element and add it as a list item.
+        // Add each task as a list item.
         foreach (XElement taskElement in xml.Descendants("Task"))
         {
             string taskText = taskElement.Value.Trim();

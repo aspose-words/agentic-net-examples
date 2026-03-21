@@ -9,18 +9,26 @@ class Program
 {
     static void Main()
     {
-        // Load an existing Word document that contains a custom XML part.
-        Document doc = new Document("input.docx");
+        // Create a new empty document.
+        Document doc = new Document();
 
-        // Assume the document has at least one custom XML part.
-        // Retrieve the first custom XML part.
-        CustomXmlPart xmlPart = doc.CustomXmlParts[0];
+        // Sample XML content with <item> elements.
+        string sampleXml = @"
+            <items>
+                <item type='Apple' name='Red Delicious' />
+                <item type='banana' name='Cavendish' />
+                <item type='APPLE' name='Granny Smith' />
+                <item type='orange' name='Navel' />
+            </items>";
+
+        // Add the XML as a custom XML part.
+        CustomXmlPart xmlPart = doc.CustomXmlParts.Add("myXmlPart", sampleXml);
 
         // Parse the XML content of the custom part.
         string xmlContent = Encoding.UTF8.GetString(xmlPart.Data);
         XDocument xDoc = XDocument.Parse(xmlContent);
 
-        // Example: filter all <item> elements where the "type" attribute equals "apple",
+        // Filter all <item> elements where the "type" attribute equals "apple",
         // using case‑insensitive comparison.
         var filteredItems = xDoc
             .Descendants("item")
@@ -29,13 +37,10 @@ class Program
                 "apple",
                 StringComparison.OrdinalIgnoreCase));
 
-        // Output the number of matching nodes (for demonstration purposes).
+        // Output the number of matching nodes.
         Console.WriteLine($"Found {filteredItems.Count()} <item> elements with type='apple' (case‑insensitive).");
 
-        // Optionally, you could map the filtered XML nodes back to structured document tags,
-        // or modify the document based on the results here.
-
-        // Save the (potentially modified) document.
+        // Save the document (optional, demonstrates that the document is still valid).
         doc.Save("output.docx");
     }
 }

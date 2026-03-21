@@ -6,17 +6,24 @@ class HyphenateBatch
 {
     static void Main()
     {
-        // Folder that contains the source Word documents.
-        string sourceFolder = @"C:\Docs\Input";
+        // Folder that contains the source Word documents (relative to the executable).
+        string sourceFolder = Path.Combine(Environment.CurrentDirectory, "Input");
 
-        // Folder where the hyphenated PDFs will be saved.
-        string outputFolder = @"C:\Docs\Output";
+        // Folder where the hyphenated PDFs will be saved (relative to the executable).
+        string outputFolder = Path.Combine(Environment.CurrentDirectory, "Output");
 
-        // Ensure the output directory exists.
+        // Ensure both directories exist.
+        Directory.CreateDirectory(sourceFolder);
         Directory.CreateDirectory(outputFolder);
 
         // Retrieve all .docx files from the source folder.
         string[] docFiles = Directory.GetFiles(sourceFolder, "*.docx");
+
+        if (docFiles.Length == 0)
+        {
+            Console.WriteLine($"No .docx files found in \"{sourceFolder}\". Place documents there and rerun.");
+            return;
+        }
 
         foreach (string docPath in docFiles)
         {
@@ -37,6 +44,7 @@ class HyphenateBatch
 
             // Save the document as PDF; the .pdf extension selects the PDF format.
             doc.Save(pdfPath);
+            Console.WriteLine($"Saved hyphenated PDF: {pdfPath}");
         }
     }
 }

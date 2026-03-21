@@ -21,6 +21,12 @@ namespace ReportingEngineKnownTypesDemo
         public string FullName() => $"{FirstName} {LastName}";
     }
 
+    // Visible data source type required by ReportingEngine.
+    public class ReportData
+    {
+        public Person person { get; set; }
+    }
+
     class Program
     {
         static void Main()
@@ -39,7 +45,7 @@ namespace ReportingEngineKnownTypesDemo
             engine.KnownTypes.Add(typeof(Person)); // instance members (used via data source)
 
             // 3. Prepare a data source that contains a Person instance.
-            var data = new
+            var data = new ReportData
             {
                 person = new Person { FirstName = "John", LastName = "Doe" }
             };

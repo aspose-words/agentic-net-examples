@@ -3,24 +3,21 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Drawing.Charts;
 using Aspose.Words.Saving;
-using Aspose.Words.Rendering;
 
 class ExtractChartImagesToSvg
 {
     static void Main()
     {
-        // Path to the source Word document.
-        string sourceDocPath = @"C:\Docs\InputDocument.docx";
-
-        // Folder where the extracted SVG files will be saved.
-        string svgOutputFolder = @"C:\Docs\ChartSvgs";
-
-        // Ensure the output folder exists.
+        // Output folder for the extracted SVG files (relative to the executable directory).
+        string svgOutputFolder = Path.Combine(Environment.CurrentDirectory, "ChartSvgs");
         Directory.CreateDirectory(svgOutputFolder);
 
-        // Load the Word document.
-        Document doc = new Document(sourceDocPath);
+        // Create a sample Word document with a chart.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertChart(ChartType.Column, 400, 300);
 
         // Get all shape nodes in the document (including charts).
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
@@ -32,25 +29,17 @@ class ExtractChartImagesToSvg
         {
             if (shape.HasChart)
             {
-                // Build the SVG file name.
                 string svgFilePath = Path.Combine(svgOutputFolder, $"Chart_{chartIndex}.svg");
 
-                // Configure SVG save options.
-                SvgSaveOptions svgOptions = new SvgSaveOptions
+                var svgOptions = new SvgSaveOptions
                 {
-                    // Render text as curves to avoid font issues.
                     TextOutputMode = SvgTextOutputMode.UsePlacedGlyphs,
-                    // Do not embed raster images inside the SVG (charts are vector based).
                     ExportEmbeddedImages = false,
-                    // Remove the page border for a cleaner output.
                     ShowPageBorder = false,
-                    // Fit the SVG to the viewport (optional).
                     FitToViewPort = true
                 };
 
-                // Render the chart shape to an SVG file.
                 shape.GetShapeRenderer().Save(svgFilePath, svgOptions);
-
                 chartIndex++;
             }
         }

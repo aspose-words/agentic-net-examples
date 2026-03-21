@@ -1,7 +1,10 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
+using Aspose.Words.Saving;
 
 namespace AsposeWordsImagePlaceholder
 {
@@ -9,20 +12,38 @@ namespace AsposeWordsImagePlaceholder
     {
         static void Main(string[] args)
         {
-            // Path to the source DOCX file.
-            string inputPath = @"C:\Docs\SourceDocument.docx";
+            // Define input and output paths relative to the current directory.
+            string currentDir = Directory.GetCurrentDirectory();
+            string inputPath = Path.Combine(currentDir, "SourceDocument.docx");
+            string outputPath = Path.Combine(currentDir, "SourceDocument_WithPlaceholders.docx");
 
-            // Path where the modified document will be saved.
-            string outputPath = @"C:\Docs\SourceDocument_WithPlaceholders.docx";
+            // Create a sample document with an image if it does not already exist.
+            if (!File.Exists(inputPath))
+            {
+                // Create a new blank document.
+                Document sampleDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-            // Load the existing document (lifecycle rule: load).
+                // Insert a simple 1x1 pixel PNG image from a base64 string.
+                const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X2V8AAAAASUVORK5CYII=";
+                byte[] pngBytes = Convert.FromBase64String(base64Png);
+                using (MemoryStream imgStream = new MemoryStream(pngBytes))
+                {
+                    builder.InsertImage(imgStream);
+                }
+
+                // Save the sample document.
+                sampleDoc.Save(inputPath);
+            }
+
+            // Load the existing document.
             Document doc = new Document(inputPath);
 
             // Get all Shape nodes in the document (including those inside headers/footers).
-            NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
             // Iterate over a copy of the collection because we will modify the document structure.
-            foreach (Shape shape in shapes.OfType<Shape>())
+            foreach (Shape shape in shapeNodes.OfType<Shape>().ToList())
             {
                 // Process only shapes that actually contain an image.
                 if (shape.HasImage)
@@ -38,8 +59,9 @@ namespace AsposeWordsImagePlaceholder
                 }
             }
 
-            // Save the modified document (lifecycle rule: save).
+            // Save the modified document.
             doc.Save(outputPath);
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

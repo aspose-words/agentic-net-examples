@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 namespace HyphenationExample
 {
@@ -7,14 +9,11 @@ namespace HyphenationExample
     {
         static void Main()
         {
-            // Path to the source DOCX file.
-            string inputPath = @"C:\Docs\InputDocument.docx";
-
-            // Path where the hyphenated DOCX will be saved.
-            string outputPath = @"C:\Docs\OutputDocument_Hyphenated.docx";
-
-            // Load the existing document from disk.
-            Document doc = new Document(inputPath);
+            // Create a new document with some sample text.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is a sample paragraph containing some longwordswhichmightneedhyphenation to demonstrate automatic hyphenation in Aspose.Words.");
+            builder.Writeln("Another line with CAPITALIZEDWORDS that should also be hyphenated when the option is enabled.");
 
             // Enable automatic hyphenation for the whole document.
             doc.HyphenationOptions.AutoHyphenation = true;
@@ -29,9 +28,13 @@ namespace HyphenationExample
             // Hyphenate words written in all capital letters.
             doc.HyphenationOptions.HyphenateCaps = true;
 
-            // Save the document back to DOCX format.
-            // The hyphenation marks generated during layout are preserved in the saved file.
+            // Determine output path in the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocument_Hyphenated.docx");
+
+            // Save the document. The hyphenation marks generated during layout are preserved in the saved file.
             doc.Save(outputPath);
+
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

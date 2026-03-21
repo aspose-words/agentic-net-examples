@@ -14,17 +14,21 @@ class Program
         // Expected format: { "Category1": ["Item1", "Item2"], "Category2": ["ItemA"] }
         string jsonPath = "data.json";
 
-        // Read and deserialize the JSON into a dictionary where the key is the category
+        // If the file does not exist, use a default JSON string.
+        string jsonContent = File.Exists(jsonPath)
+            ? File.ReadAllText(jsonPath)
+            : "{\"Fruits\":[\"Apple\",\"Banana\"],\"Vegetables\":[\"Carrot\",\"Broccoli\"]}";
+
+        // Deserialize the JSON into a dictionary where the key is the category
         // and the value is a list of items belonging to that category.
-        string jsonContent = File.ReadAllText(jsonPath);
-        var groupedData = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(jsonContent);
+        var groupedData = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(jsonContent)
+                          ?? new Dictionary<string, List<string>>();
 
         // Create a new blank Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Create a bulleted list using the default bullet template.
-        // This uses the ListCollection.Add(ListTemplate) rule.
         List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
         builder.ListFormat.List = bulletList;
 

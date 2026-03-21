@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,35 +7,35 @@ class GenerateToc
 {
     static void Main()
     {
-        // Path to the existing document template.
-        string templatePath = @"C:\Docs\Template.docx";
-
-        // Path where the resulting document will be saved.
-        string outputPath = @"C:\Docs\DocumentWithToc.docx";
-
-        // Load the template document.
-        Document doc = new Document(templatePath);
-
-        // Create a DocumentBuilder attached to the loaded document.
+        // Create a new blank document.
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add some sample headings to demonstrate the TOC.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 1");
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section 1.1");
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+        builder.Writeln("Subsection 1.1.1");
 
         // Move the cursor to the very beginning of the document.
         builder.MoveToDocumentStart();
 
-        // Insert a TOC field. The switches configure the TOC to:
-        //   - include heading levels 1 through 3 (\o "1-3")
-        //   - make entries clickable hyperlinks (\h)
-        //   - hide page numbers in web layout (\z)
-        //   - use outline levels from heading styles (\u)
+        // Insert a Table of Contents field.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
 
-        // Optionally insert a page break after the TOC so that content starts on a new page.
+        // Optionally insert a page break after the TOC.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Update all fields in the document so the TOC reflects the current headings.
+        // Update all fields so the TOC reflects the current headings.
         doc.UpdateFields();
 
-        // Save the document. The format is inferred from the file extension.
+        // Save the document to the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DocumentWithToc.docx");
         doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

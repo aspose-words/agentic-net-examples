@@ -1,8 +1,8 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
-using Aspose.Words.Reporting; // for CsvDataSource and CsvDataLoadOptions
 
 class PdfReportGenerator
 {
@@ -13,35 +13,47 @@ class PdfReportGenerator
         string csvPath = "Data.csv";
         string outputPath = "Report.pdf";
 
+        // Ensure a simple template exists.
+        if (!File.Exists(templatePath))
+        {
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Report");
+            builder.Writeln("Name: <<data.Name>>");
+            builder.Writeln("Age: <<data.Age>>");
+            templateDoc.Save(templatePath);
+        }
+
+        // Ensure a simple CSV data source exists.
+        if (!File.Exists(csvPath))
+        {
+            File.WriteAllText(csvPath, "Name,Age\nJohn Doe,30");
+        }
+
         // Load the template document.
         Document doc = new Document(templatePath);
 
-        // Apply custom page margins to the first (and usually only) section.
-        // Use the preset 'Custom' and then set the individual margins in points.
-        // 1 inch = 72 points; ConvertUtil.InchToPoint can be used for conversion.
-        doc.Sections[0].PageSetup.Margins = Margins.Custom;
-        doc.Sections[0].PageSetup.TopMargin = ConvertUtil.InchToPoint(0.5);    // 0.5 inch top margin
-        doc.Sections[0].PageSetup.BottomMargin = ConvertUtil.InchToPoint(0.5); // 0.5 inch bottom margin
-        doc.Sections[0].PageSetup.LeftMargin = ConvertUtil.InchToPoint(0.75);  // 0.75 inch left margin
-        doc.Sections[0].PageSetup.RightMargin = ConvertUtil.InchToPoint(0.75); // 0.75 inch right margin
+        // Apply custom page margins to the first section.
+        var pageSetup = doc.Sections[0].PageSetup;
+        pageSetup.TopMargin = ConvertUtil.InchToPoint(0.5);      // 0.5 inch top margin
+        pageSetup.BottomMargin = ConvertUtil.InchToPoint(0.5);   // 0.5 inch bottom margin
+        pageSetup.LeftMargin = ConvertUtil.InchToPoint(0.75);    // 0.75 inch left margin
+        pageSetup.RightMargin = ConvertUtil.InchToPoint(0.75);   // 0.75 inch right margin
 
-        // Configure CSV loading options (assume the first line contains column headers).
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-        // Optional: customize delimiter, comment character, etc. if needed.
-        // loadOptions.Delimiter = ',';
-        // loadOptions.CommentChar = '#';
+        // Configure CSV loading options (first line contains column headers).
+        var loadOptions = new CsvDataLoadOptions(true);
 
         // Create a CSV data source from the file.
-        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
+        var csvData = new CsvDataSource(csvPath, loadOptions);
 
         // Build the report by merging the CSV data into the template.
-        ReportingEngine engine = new ReportingEngine();
+        var engine = new ReportingEngine();
         engine.BuildReport(doc, csvData, "data");
 
-        // Prepare PDF save options (default options are sufficient for this scenario).
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
         // Save the populated document as a PDF file.
+        var pdfOptions = new PdfSaveOptions();
         doc.Save(outputPath, pdfOptions);
+
+        Console.WriteLine($"PDF report generated: {Path.GetFullPath(outputPath)}");
     }
 }

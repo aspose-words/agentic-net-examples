@@ -35,7 +35,7 @@ public class ChartImageExtractor
                 // Set a high DPI (e.g., 300) for better quality.
                 Resolution = 300,
                 // Optional: increase the scale factor if you need even larger images.
-                Scale = 1.0f // Fixed: use float literal
+                Scale = 1.0f
             };
 
             // Build the output file name.
@@ -46,6 +46,8 @@ public class ChartImageExtractor
 
             chartIndex++;
         }
+
+        Console.WriteLine($"{chartIndex} chart image(s) extracted to \"{outputDir}\".");
     }
 
     // Example usage.
@@ -54,8 +56,14 @@ public class ChartImageExtractor
         string sourceDoc = @"C:\Docs\SampleWithCharts.docx";
         string imagesFolder = @"C:\Docs\ExtractedCharts";
 
-        ExtractChartImages(sourceDoc, imagesFolder);
+        if (!File.Exists(sourceDoc))
+        {
+            Console.WriteLine($"Source file not found: {sourceDoc}");
+            Console.WriteLine("Please place a DOCX file with charts at the specified location or update the path.");
+            return;
+        }
 
+        ExtractChartImages(sourceDoc, imagesFolder);
         Console.WriteLine("Chart images extraction completed.");
     }
 }

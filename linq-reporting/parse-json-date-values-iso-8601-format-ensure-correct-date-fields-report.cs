@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,11 +8,22 @@ class Program
 {
     static void Main()
     {
-        // Load the Word template that contains reporting engine placeholders.
-        Document doc = new Document("Template.docx");
+        // Create a minimal Word document to act as the template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Write("{{records}}");
 
-        // Set up JSON loading options to explicitly recognize ISO‑8601 date formats.
-        // This ensures that date strings like "2023-04-15T13:45:30Z" are parsed as DateTime values.
+        // Sample JSON containing ISO‑8601 date strings.
+        string jsonContent = @"[
+            { ""date"": ""2023-04-15T13:45:30Z"", ""value"": 123 },
+            { ""date"": ""2023-04-16"", ""value"": 456 }
+        ]";
+
+        // Write the JSON to a temporary file so Aspose can read it.
+        string jsonPath = Path.Combine(Path.GetTempPath(), "Data.json");
+        File.WriteAllText(jsonPath, jsonContent);
+
+        // Set up JSON loading options to recognize ISO‑8601 date formats.
         JsonDataLoadOptions jsonOptions = new JsonDataLoadOptions
         {
             ExactDateTimeParseFormats = new List<string>
@@ -22,14 +34,17 @@ class Program
             }
         };
 
-        // Create a JSON data source using the options defined above.
-        JsonDataSource dataSource = new JsonDataSource("Data.json", jsonOptions);
+        // Create a JSON data source using the temporary file.
+        JsonDataSource dataSource = new JsonDataSource(jsonPath, jsonOptions);
 
-        // ReportingEngine is an instance class; create an instance before calling BuildReport.
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, dataSource, "records");
 
         // Save the generated document.
-        doc.Save("Report.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

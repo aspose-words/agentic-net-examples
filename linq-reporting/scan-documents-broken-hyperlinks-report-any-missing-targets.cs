@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -15,8 +16,24 @@ class HyperlinkScanner
         // Path to the document that needs to be scanned.
         const string documentPath = @"C:\Docs\Sample.docx";
 
-        // Load the document.
-        Document doc = new Document(documentPath);
+        // Load the document, or create a simple one if the file does not exist.
+        Document doc;
+        if (File.Exists(documentPath))
+        {
+            doc = new Document(documentPath);
+        }
+        else
+        {
+            doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Sample document with a hyperlink.");
+            // Insert a hyperlink field that points to a non‑existent file to demonstrate detection.
+            builder.InsertField("HYPERLINK \"nonexistent.txt\"");
+            // Insert a shape with an invalid web URL.
+            Shape shape = new Shape(doc, ShapeType.Image);
+            shape.HRef = "http://invalid.example.com/missing";
+            builder.InsertNode(shape);
+        }
 
         // Collect broken hyperlink information.
         List<string> brokenLinks = new List<string>();
@@ -47,8 +64,7 @@ class HyperlinkScanner
 
             if (isWebUrl)
             {
-                // Optional: perform a lightweight HEAD request to see if the URL is reachable.
-                // If the request fails, treat the link as broken.
+                // Perform a lightweight HEAD request to see if the URL is reachable.
                 if (!await IsWebUrlReachable(address))
                     brokenLinks.Add($"Web URL not reachable: {address}");
             }
@@ -112,8 +128,8 @@ class HyperlinkScanner
                 Console.WriteLine("- " + entry);
         }
 
-        // Optionally, save a simple text report.
-        const string reportPath = @"C:\Docs\HyperlinkReport.txt";
+        // Save a simple text report to the temporary folder.
+        string reportPath = Path.Combine(Path.GetTempPath(), "HyperlinkReport.txt");
         File.WriteAllLines(reportPath, brokenLinks);
         Console.WriteLine($"Report saved to: {reportPath}");
     }
@@ -123,13 +139,9 @@ class HyperlinkScanner
     {
         try
         {
-            using (HttpClient client = new HttpClient())
-            {
-                // Set a short timeout to avoid long waits on unreachable hosts.
-                client.Timeout = TimeSpan.FromSeconds(5);
-                HttpResponseMessage response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, url));
-                return response.IsSuccessStatusCode;
-            }
+            using HttpClient client = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+            HttpResponseMessage response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Head, url));
+            return response.IsSuccessStatusCode;
         }
         catch
         {

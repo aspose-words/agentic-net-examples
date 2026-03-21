@@ -28,9 +28,9 @@ class Program
             ReportingEngine.SetRestrictedTypes(typeof(System.Type));
             Console.WriteLine("FAIL: No exception was thrown.");
         }
-        catch (ArgumentException)
+        catch (InvalidOperationException)
         {
-            Console.WriteLine("PASS: ArgumentException thrown as documented.");
+            Console.WriteLine("PASS: InvalidOperationException thrown as documented.");
         }
     }
 }

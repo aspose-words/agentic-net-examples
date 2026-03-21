@@ -6,18 +6,20 @@ class Program
 {
     static void Main()
     {
-        // Load the first document (DOCX) using the Document(string) constructor.
-        Document docx = new Document("input.docx");
+        // Create the first document (DOCX) in memory.
+        Document docx = new Document();
+        DocumentBuilder builder = new DocumentBuilder(docx);
+        builder.Writeln("This is the DOCX document.");
 
-        // Load the second document (ODT) using the Document(string) constructor.
-        Document odt = new Document("input.odt");
+        // Create the second document (ODT) in memory.
+        Document odt = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(odt);
+        builder2.Writeln("This is the ODT document.");
 
-        // Append the ODT document to the DOCX document.
-        // Use KeepSourceFormatting to preserve the original formatting of the ODT content.
+        // Append the ODT document to the DOCX document, preserving source formatting.
         docx.AppendDocument(odt, ImportFormatMode.KeepSourceFormatting);
 
         // Save the combined document as a single PDF file.
-        // The Save method with a file name and SaveFormat ensures the correct format is used.
         docx.Save("output.pdf", SaveFormat.Pdf);
     }
 }

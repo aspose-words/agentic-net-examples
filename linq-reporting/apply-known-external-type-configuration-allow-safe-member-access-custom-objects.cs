@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-class Program
+public class Program
 {
     static void Main()
     {
@@ -22,8 +22,7 @@ class Program
         ReportingEngine engine = new ReportingEngine
         {
             // Treat missing members as null literals to avoid exceptions.
-            Options = ReportBuildOptions.AllowMissingMembers,
-            MissingMemberMessage = "[Missing]"
+            Options = ReportBuildOptions.AllowMissingMembers
         };
 
         // Register external types that are safe to use in the template.
@@ -32,7 +31,8 @@ class Program
         engine.KnownTypes.Add(typeof(Math));
 
         // Build the report using the template and the data source.
-        engine.BuildReport(doc, new { person });
+        var data = new DataSource { person = person };
+        engine.BuildReport(doc, data);
 
         // Save the generated document.
         doc.Save("Report.docx");
@@ -43,5 +43,11 @@ class Program
     {
         public string Name { get; set; }
         public int Age { get; set; }
+    }
+
+    // Wrapper class required because the reporting engine expects a visible type.
+    public class DataSource
+    {
+        public Person person { get; set; }
     }
 }

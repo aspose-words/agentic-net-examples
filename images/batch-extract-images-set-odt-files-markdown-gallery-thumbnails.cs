@@ -11,10 +11,7 @@ namespace OdtImageGallery
         private readonly string _docBaseName;
         private int _imageIndex = 0;
 
-        public ImageRenamer(string docBaseName)
-        {
-            _docBaseName = docBaseName;
-        }
+        public ImageRenamer(string docBaseName) => _docBaseName = docBaseName;
 
         void IImageSavingCallback.ImageSaving(ImageSavingArgs args)
         {
@@ -30,11 +27,12 @@ namespace OdtImageGallery
     {
         static void Main()
         {
-            // Folder containing the source ODT files.
-            string sourceFolder = @"C:\SourceOdtFiles";
+            // Folder containing the source ODT files (created if missing).
+            string sourceFolder = Path.Combine(AppContext.BaseDirectory, "SourceOdtFiles");
+            Directory.CreateDirectory(sourceFolder);
 
             // Folder where the Markdown files and extracted images will be placed.
-            string outputFolder = @"C:\MarkdownGallery";
+            string outputFolder = Path.Combine(AppContext.BaseDirectory, "MarkdownGallery");
             Directory.CreateDirectory(outputFolder);
 
             // Process each ODT file in the source folder.
@@ -66,6 +64,8 @@ namespace OdtImageGallery
                 // Save the document as Markdown; this extracts images and creates the gallery.
                 doc.Save(markdownPath, mdOptions); // lifecycle: save
             }
+
+            Console.WriteLine("Processing completed.");
         }
     }
 }

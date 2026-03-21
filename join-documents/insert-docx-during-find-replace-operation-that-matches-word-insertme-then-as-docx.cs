@@ -7,8 +7,22 @@ class InsertDocOnFindReplace
 {
     static void Main()
     {
+        // Create a main document with a placeholder.
+        Document mainDoc = new Document();
+        DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
+        mainBuilder.Writeln("This is the main document.");
+        mainBuilder.Writeln("INSERTME");
+        mainBuilder.Writeln("End of the main document.");
+        mainDoc.Save("MainDocument.docx");
+
+        // Create a document that will be inserted.
+        Document subDoc = new Document();
+        DocumentBuilder subBuilder = new DocumentBuilder(subDoc);
+        subBuilder.Writeln("This is the inserted document.");
+        subDoc.Save("DocumentToInsert.docx");
+
         // Load the document that contains the placeholder "INSERTME".
-        Document mainDoc = new Document("MainDocument.docx");
+        mainDoc = new Document("MainDocument.docx");
 
         // Configure find‑replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions();

@@ -1,18 +1,17 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load an existing document (replace with your actual file path).
-        Document doc = new Document("input.docx");
+        // Create a new empty document.
+        Document doc = new Document();
 
-        // Retrieve a decimal value from the metered licensing API.
-        decimal quantity = Aspose.Words.Metered.GetConsumptionQuantity();
+        // Simulate retrieving a decimal value (e.g., from a metered API).
+        decimal quantity = 123.45m;
 
-        // The method SetCustomProperty expects an int, so we cast explicitly.
+        // Explicitly cast to int when passing to a method that expects an integer.
         SetCustomProperty(doc, "ConsumptionQty", (int)quantity);
 
         // Save the modified document.
@@ -22,10 +21,8 @@ class Program
     // Example method that requires an integer argument.
     static void SetCustomProperty(Document doc, string propertyName, int value)
     {
-        // Access the custom document properties collection.
         var customProps = doc.CustomDocumentProperties;
 
-        // If the property already exists, update its value; otherwise, add a new one.
         if (customProps[propertyName] != null)
             customProps[propertyName].Value = value;
         else

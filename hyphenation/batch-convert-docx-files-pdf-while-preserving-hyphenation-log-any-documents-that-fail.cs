@@ -10,23 +10,31 @@ namespace BatchDocxToPdf
     {
         static void Main(string[] args)
         {
-            // Input folder containing DOCX files
-            string inputFolder = @"C:\Docs\Input";
-            // Output folder for generated PDFs
-            string outputFolder = @"C:\Docs\Output";
+            // Input folder containing DOCX files (relative to the executable)
+            string inputFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Input");
+            // Output folder for generated PDFs (relative to the executable)
+            string outputFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Output");
 
-            // Ensure the output directory exists
+            // Ensure the directories exist
+            Directory.CreateDirectory(inputFolder);
             Directory.CreateDirectory(outputFolder);
 
             // List to collect information about files that could not be processed
             List<string> failedFiles = new List<string>();
 
             // Enumerate all .docx files in the input folder (non‑recursive)
-            foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
+            string[] docxFiles = Directory.GetFiles(inputFolder, "*.docx");
+            if (docxFiles.Length == 0)
+            {
+                Console.WriteLine($"No .docx files found in \"{inputFolder}\". Place files there and rerun the program.");
+                return;
+            }
+
+            foreach (string docxPath in docxFiles)
             {
                 try
                 {
-                    // Load the DOCX document (uses the Document(string) constructor)
+                    // Load the DOCX document
                     Document doc = new Document(docxPath);
 
                     // Enable automatic hyphenation so that the layout (and thus the PDF) preserves hyphenation
@@ -36,7 +44,7 @@ namespace BatchDocxToPdf
                     string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
                     string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-                    // Save the document as PDF (uses Save(string, SaveFormat) overload)
+                    // Save the document as PDF
                     doc.Save(pdfPath, SaveFormat.Pdf);
                 }
                 catch (Exception ex)

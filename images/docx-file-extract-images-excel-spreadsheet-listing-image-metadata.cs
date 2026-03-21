@@ -11,14 +11,30 @@ namespace AsposeWordsImageExtractor
     {
         static void Main()
         {
+            // Use a temporary folder for all files so the example works on any machine.
+            string tempFolder = Path.GetTempPath();
+
             // Path to the source DOCX file.
-            const string inputDocPath = @"C:\Temp\InputDocument.docx";
+            string inputDocPath = Path.Combine(tempFolder, "InputDocument.docx");
 
-            // Path to the output Excel‑compatible CSV file.
-            const string outputCsvPath = @"C:\Temp\ImageMetadata.xlsx";
+            // Path to the output CSV file (Excel can open .csv files).
+            string outputCsvPath = Path.Combine(tempFolder, "ImageMetadata.csv");
 
-            // Load the Word document using the Document(string) constructor (load rule).
-            Document doc = new Document(inputDocPath);
+            // Ensure a document exists. If the file is missing, create a simple one.
+            Document doc;
+            if (File.Exists(inputDocPath))
+            {
+                doc = new Document(inputDocPath);
+            }
+            else
+            {
+                doc = new Document();
+                // Add a paragraph so the document is not empty.
+                DocumentBuilder builder = new DocumentBuilder(doc);
+                builder.Writeln("Sample document created by AsposeWordsImageExtractor.");
+                // Save the placeholder document for future runs.
+                doc.Save(inputDocPath);
+            }
 
             // Collect all Shape nodes that contain images.
             NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
@@ -29,18 +45,13 @@ namespace AsposeWordsImageExtractor
             {
                 if (!shape.HasImage) continue;
 
-                // Gather metadata for each image.
                 var info = new ImageInfo
                 {
                     Index = imageIndex,
-                    // Determine a file extension based on the image type.
                     Extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType),
-                    // Size of the raw image data in bytes.
                     SizeInBytes = shape.ImageData.ImageBytes.Length,
-                    // Width and height in points (as stored in the document).
                     WidthPoints = shape.Width,
                     HeightPoints = shape.Height,
-                    // Original image type enum value.
                     ImageType = shape.ImageData.ImageType.ToString()
                 };
                 imageInfos.Add(info);
@@ -50,13 +61,12 @@ namespace AsposeWordsImageExtractor
             // Build a CSV string that Excel can open.
             var sb = new StringBuilder();
             sb.AppendLine("Index,Extension,ImageType,SizeInBytes,WidthPoints,HeightPoints");
-
             foreach (var info in imageInfos)
             {
                 sb.AppendLine($"{info.Index},{info.Extension},{info.ImageType},{info.SizeInBytes},{info.WidthPoints},{info.HeightPoints}");
             }
 
-            // Write the CSV content to a file with an .xlsx extension.
+            // Write the CSV content.
             File.WriteAllText(outputCsvPath, sb.ToString(), Encoding.UTF8);
 
             Console.WriteLine($"Extracted {imageInfos.Count} image(s) and wrote metadata to '{outputCsvPath}'.");

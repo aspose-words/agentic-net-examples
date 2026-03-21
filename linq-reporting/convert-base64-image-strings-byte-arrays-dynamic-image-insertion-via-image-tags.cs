@@ -6,8 +6,8 @@ class Base64ImageInsertion
 {
     static void Main()
     {
-        // Base64-encoded image data (replace with your actual string)
-        string base64Image = "iVBORw0KGgoAAAANSUhEUgAA..."; // truncated for brevity
+        // Base64-encoded PNG image (1x1 pixel, transparent)
+        string base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9ZcAAAAASUVORK5CYII=";
 
         // Convert the Base64 string to a byte array.
         byte[] imageBytes = Convert.FromBase64String(base64Image);

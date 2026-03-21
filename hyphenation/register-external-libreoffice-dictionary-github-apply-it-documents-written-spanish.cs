@@ -1,22 +1,18 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Net.Http;
-using System.Collections.Generic;
 using Aspose.Words;
 
 class HyphenationExample
 {
-    // URL of the LibreOffice Spanish hyphenation dictionary on GitHub.
-    private const string DictionaryUrl = "https://raw.githubusercontent.com/LibreOffice/dictionaries/master/es_ES/hyph_es_ES.dic";
-
     // Language code used by Aspose.Words for Spanish (Spain).
     private const string SpanishLanguageCode = "es-ES";
 
     static void Main()
     {
-        // 1. Download the dictionary file to a temporary location.
-        string tempDictionaryPath = DownloadDictionary(DictionaryUrl);
+        // 1. Create a simple dictionary file for Spanish.
+        string tempDictionaryPath = CreateSimpleSpanishDictionary();
 
         // 2. Register the dictionary for Spanish.
         Hyphenation.RegisterDictionary(SpanishLanguageCode, tempDictionaryPath);
@@ -39,19 +35,19 @@ class HyphenationExample
         File.Delete(tempDictionaryPath);
     }
 
-    // Downloads the dictionary from the given URL and returns the local file path.
-    private static string DownloadDictionary(string url)
+    // Creates a minimal Spanish hyphenation dictionary file and returns its path.
+    private static string CreateSimpleSpanishDictionary()
     {
-        using (HttpClient client = new HttpClient())
-        using (Stream stream = client.GetStreamAsync(url).Result)
+        // Very small dictionary content – just enough for the example text.
+        // The first line is the number of patterns (can be 0 for a minimal file).
+        string[] lines =
         {
-            string tempPath = Path.GetTempFileName();
-            using (FileStream file = new FileStream(tempPath, FileMode.Create, FileAccess.Write))
-            {
-                stream.CopyTo(file);
-            }
-            return tempPath;
-        }
+            "0"
+        };
+
+        string tempPath = Path.GetTempFileName();
+        File.WriteAllLines(tempPath, lines);
+        return tempPath;
     }
 
     // Simple callback that registers dictionaries on demand if they are not already registered.
@@ -60,7 +56,8 @@ class HyphenationExample
         // Mapping of language codes to local dictionary file paths.
         private readonly Dictionary<string, string> _dictionaryFiles = new Dictionary<string, string>
         {
-            { HyphenationExample.SpanishLanguageCode, HyphenationExample.DownloadDictionary(HyphenationExample.DictionaryUrl) }
+            // For this example we only have Spanish; other languages will be ignored.
+            { SpanishLanguageCode, CreateSimpleSpanishDictionary() }
         };
 
         public void RequestDictionary(string language)

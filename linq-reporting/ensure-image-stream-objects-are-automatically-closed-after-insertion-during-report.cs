@@ -3,66 +3,37 @@ using System.Data;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load the template document that contains an image MERGEFIELD (e.g. MERGEFIELD Image:Photo).
-        Document doc = new Document("Template.docx");
+        // Create a simple template document with merge fields for FirstName and an image.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Employee:");
+        builder.InsertField("MERGEFIELD FirstName \\* MERGEFORMAT");
+        builder.Writeln();
+        builder.InsertField("MERGEFIELD Photo \\* MERGEFORMAT");
 
         // Prepare a data source. The Photo column holds raw image bytes.
         DataTable employees = new DataTable("Employees");
         employees.Columns.Add("FirstName", typeof(string));
         employees.Columns.Add("Photo", typeof(byte[]));
 
-        // Add sample rows – replace the file paths with real images.
-        employees.Rows.Add("John", File.ReadAllBytes("john.jpg"));
-        employees.Rows.Add("Jane", File.ReadAllBytes("jane.png"));
+        // Tiny 1x1 pixel PNG (transparent) encoded as base64.
+        const string pngBase64 =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(pngBase64);
 
-        // Register the field‑merging callback. Aspose.Words will close the stream after the image is merged.
-        doc.MailMerge.FieldMergingCallback = new ImageStreamCallback();
+        // Add sample rows.
+        employees.Rows.Add("John", pngBytes);
+        employees.Rows.Add("Jane", pngBytes);
 
-        // Execute the mail‑merge (or reporting) operation.
+        // Perform mail merge. Aspose.Words will automatically handle the image byte arrays.
         doc.MailMerge.Execute(employees);
 
-        // When saving to HTML we also want to guarantee that any streams created for images are closed.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions();
-        htmlOptions.ImageSavingCallback = new CloseImageStreamCallback();
-
-        // Save the final document.
-        doc.Save("Report.html", htmlOptions);
-    }
-
-    // Callback that provides an image stream for each image MERGEFIELD.
-    // Aspose.Words closes the stream after the image is merged (ImageFieldMergingArgs.ImageStream).
-    private class ImageStreamCallback : IFieldMergingCallback
-    {
-        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
-        {
-            // No custom text handling required.
-        }
-
-        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
-        {
-            // The data source supplies a byte[]; wrap it in a MemoryStream.
-            // The stream will be disposed by Aspose.Words after the merge.
-            if (args.FieldValue is byte[] imageBytes)
-            {
-                args.ImageStream = new MemoryStream(imageBytes);
-            }
-        }
-    }
-
-    // Callback that runs during HTML image saving.
-    // Setting KeepImageStreamOpen to false forces Aspose.Words to close the stream after writing.
-    private class CloseImageStreamCallback : IImageSavingCallback
-    {
-        void IImageSavingCallback.ImageSaving(ImageSavingArgs args)
-        {
-            // Explicitly state that the stream should be closed after the image is saved.
-            args.KeepImageStreamOpen = false;
-        }
+        // Save the result.
+        doc.Save("Report.docx");
     }
 }

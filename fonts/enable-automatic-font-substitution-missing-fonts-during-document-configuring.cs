@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 using Aspose.Words.Loading;
@@ -7,28 +8,25 @@ class FontSubstitutionExample
 {
     static void Main()
     {
-        // Paths to the input document and the output file.
-        string inputPath = @"C:\Docs\MissingFont.docx";
-        string outputPath = @"C:\Docs\Result.pdf";
+        // Output file path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.pdf");
 
-        // Create a FontSettings instance that will be used during loading.
+        // Configure font substitution settings.
         FontSettings fontSettings = new FontSettings();
-
-        // Configure the default font substitution rule.
-        // If a font used in the document cannot be found, Aspose.Words will replace it with Arial.
         fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial";
-
-        // Optionally enable other substitution rules (e.g., font info substitution).
         fontSettings.SubstitutionSettings.FontInfoSubstitution.Enabled = true;
 
-        // Attach the FontSettings to LoadOptions.
-        LoadOptions loadOptions = new LoadOptions();
-        loadOptions.FontSettings = fontSettings;
+        // Create a new document and apply the font settings.
+        Document doc = new Document();
+        doc.FontSettings = fontSettings;
 
-        // Load the document using the configured LoadOptions.
-        Document doc = new Document(inputPath, loadOptions);
+        // Add some text that uses a font that is likely missing.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "MissingFont";
+        builder.Writeln("This text uses a missing font and will be substituted with Arial.");
 
-        // Save the document; missing fonts will have been substituted automatically.
+        // Save the document; missing fonts will be substituted automatically.
         doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,27 +9,41 @@ namespace AsposeWordsReportExample
     {
         static void Main()
         {
-            // Path to the template Word document that contains the report tags.
-            string templatePath = @"C:\Data\ReportTemplate.docx";
+            // Create temporary files for the template, XML data, and output.
+            string templatePath = Path.Combine(Path.GetTempPath(), "ReportTemplate.docx");
+            string xmlDataPath = Path.Combine(Path.GetTempPath(), "ReportData.xml");
+            string outputPath = Path.Combine(Path.GetTempPath(), "GeneratedReport.docx");
 
-            // Path to the XML file that will be used as the data source.
-            string xmlDataPath = @"C:\Data\ReportData.xml";
+            // Build a simple Word template containing a reporting tag.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            // The tag format for ReportingEngine is <?Data/Employee/Name?>
+            builder.Writeln("Employee Name: <?Data/Employee/Name?>");
+            doc.Save(templatePath);
 
-            // Path where the generated report will be saved in DOCX format.
-            string outputPath = @"C:\Data\GeneratedReport.docx";
+            // Create a minimal XML data source.
+            string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Data>
+    <Employee>
+        <Name>John Doe</Name>
+    </Employee>
+</Data>";
+            File.WriteAllText(xmlDataPath, xmlContent);
 
             // Load the template document.
-            Document doc = new Document(templatePath);
+            Document templateDoc = new Document(templatePath);
 
-            // Create an XML data source from the file using the default loading options.
+            // Create an XML data source from the file.
             XmlDataSource dataSource = new XmlDataSource(xmlDataPath);
 
-            // Build the report. The third parameter is the name used in the template to reference the data source.
+            // Build the report.
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, dataSource, "Data");
+            engine.BuildReport(templateDoc, dataSource, "Data");
 
-            // Save the populated document as DOCX.
-            doc.Save(outputPath);
+            // Save the generated report.
+            templateDoc.Save(outputPath);
+
+            Console.WriteLine($"Report generated successfully at: {outputPath}");
         }
     }
 }

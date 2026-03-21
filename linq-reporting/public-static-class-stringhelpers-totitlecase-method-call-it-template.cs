@@ -17,15 +17,23 @@ public static class StringHelpers
     }
 }
 
+// Simple data class required by Aspose.Words.Reporting (must be a visible type).
+public class Person
+{
+    public string Name { get; set; }
+}
+
 class Program
 {
     static void Main()
     {
-        // Load a template document that contains a placeholder like {{StringHelpers.ToTitleCase(Name)}}
-        Document template = new Document("template.docx");
+        // Create a template document in memory with a reporting placeholder.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("{{StringHelpers.ToTitleCase(Name)}}");
 
-        // Simple anonymous object that provides the data used in the template.
-        var data = new { Name = "john doe" };
+        // Provide the data source as a visible type instance.
+        var data = new Person { Name = "john doe" };
 
         // Configure the ReportingEngine so it knows about the static helper class.
         ReportingEngine engine = new ReportingEngine();

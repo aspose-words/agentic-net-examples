@@ -8,18 +8,48 @@ class Program
 {
     static void Main()
     {
+        // -----------------------------------------------------------------
+        // Create sample documents if they do not already exist.
+        // -----------------------------------------------------------------
+        const string mainPath = "Document insertion destination.docx";
+        const string subPath = "Document.docx";
+
+        if (!File.Exists(mainPath))
+        {
+            var mainDoc = new Document();
+            var builder = new DocumentBuilder(mainDoc);
+            builder.Writeln("This is the main document.");
+            builder.Writeln("[MY_DOCUMENT]"); // placeholder tag
+            builder.Writeln("End of main document.");
+            mainDoc.Save(mainPath);
+        }
+
+        if (!File.Exists(subPath))
+        {
+            var subDoc = new Document();
+            var builder = new DocumentBuilder(subDoc);
+            builder.Writeln("=== Inserted Document Start ===");
+            builder.Writeln("This content comes from the sub‑document.");
+            builder.Writeln("=== Inserted Document End ===");
+            subDoc.Save(subPath);
+        }
+
+        // -----------------------------------------------------------------
         // Load the main document that contains the placeholder tag.
-        Document mainDoc = new Document("Document insertion destination.docx");
+        // -----------------------------------------------------------------
+        Document mainDocLoaded = new Document(mainPath);
 
         // Configure find‑replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions();
         options.ReplacingCallback = new InsertDocumentAtReplaceHandler();
 
         // Replace the placeholder tag (e.g. [MY_DOCUMENT]) and insert the sub‑document.
-        mainDoc.Range.Replace(new Regex(@"\[MY_DOCUMENT\]"), string.Empty, options);
+        mainDocLoaded.Range.Replace(new Regex(@"\[MY_DOCUMENT\]"), string.Empty, options);
 
         // Save the resulting document as DOCX.
-        mainDoc.Save("InsertDocumentResult.docx");
+        mainDocLoaded.Save("InsertDocumentResult.docx");
+
+        Console.WriteLine("Document created: InsertDocumentResult.docx");
     }
 
     // Callback that inserts a document at the location of each match.

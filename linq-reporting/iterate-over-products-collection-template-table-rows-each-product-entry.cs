@@ -13,30 +13,53 @@ namespace AsposeWordsTableExample
         public int Quantity { get; set; }
     }
 
+    // Wrapper class required by ReportingEngine.
+    public class ReportData
+    {
+        // Title used in the template (optional, but prevents missing‑field errors).
+        public string Title { get; set; }
+
+        // Collection of products to iterate over.
+        public List<Product> products { get; set; }
+    }
+
     class Program
     {
         static void Main()
         {
-            // Load the template document that contains a table with a foreach tag:
-            // <<foreach [in products]>><<[Name]>> <<[Price]>> <<[Quantity]>> <</foreach>>
-            Document template = new Document("Template.docx");
+            // Create a template document in memory with the required tags.
+            Document template = new Document();
+            var builder = new DocumentBuilder(template);
+
+            // Optional title placeholder.
+            builder.Writeln("<<[Title]>>");
+            builder.Writeln();
+
+            // Table header (optional, for readability).
+            builder.Writeln("Name\tPrice\tQuantity");
+            builder.Writeln();
+
+            // Foreach tag that will be replaced by the product rows.
+            builder.Writeln("<<foreach [in products]>><<[Name]>>\t<<[Price]>>\t<<[Quantity]>> <</foreach>>");
 
             // Prepare a collection of products to be merged into the template.
-            List<Product> products = new List<Product>
+            var products = new List<Product>
             {
                 new Product { Name = "Apple",  Price = 0.50m, Quantity = 120 },
                 new Product { Name = "Banana", Price = 0.30m, Quantity = 200 },
                 new Product { Name = "Orange", Price = 0.80m, Quantity = 150 }
             };
 
-            // The ReportingEngine will iterate over the "products" collection defined in the template.
-            // We pass an anonymous object that exposes the collection as a property named "products".
-            ReportingEngine engine = new ReportingEngine();
+            // Create the data source wrapper.
+            var data = new ReportData
+            {
+                Title = "Product Report",
+                products = products
+            };
 
-            // BuildReport populates the template using the provided data source.
-            // The second parameter is the data source object; the third (optional) parameter can be omitted
-            // because we reference the collection directly by its property name.
-            engine.BuildReport(template, new { products = products });
+            // Build the report.
+            var engine = new ReportingEngine();
+            engine.BuildReport(template, data);
 
             // Save the resulting document.
             template.Save("Report.docx");

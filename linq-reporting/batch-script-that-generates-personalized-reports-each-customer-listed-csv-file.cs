@@ -1,27 +1,30 @@
 using System;
 using System.Data;
 using System.IO;
-using Aspose.Words;
-using Aspose.Words.Reporting;
 
 class BatchReportGenerator
 {
-    // Path to the template Word document that contains merge fields like <<[Customer.Name]>>, <<[Customer.Email]>> etc.
-    private const string TemplatePath = @"C:\Reports\Template.docx";
+    // Simple text template with placeholders that will be replaced by CSV column values.
+    private const string TemplateContent = 
+@"Customer Report
+Name: {Name}
+Email: {Email}
+Customer ID: {CustomerID}
+";
 
     // Path to the CSV file that contains customer data. First line must contain column headers.
-    private const string CsvPath = @"C:\Reports\Customers.csv";
+    private const string CsvPath = @"Customers.csv";
 
     // Folder where the generated reports will be saved.
-    private const string OutputFolder = @"C:\Reports\Generated";
+    private const string OutputFolder = @"Generated";
 
     static void Main()
     {
         // Ensure the output directory exists.
         Directory.CreateDirectory(OutputFolder);
 
-        // Load the template document.
-        Document template = new Document(TemplatePath);
+        // Ensure a sample CSV file exists.
+        EnsureSampleCsvExists(CsvPath);
 
         // Load CSV data into a DataTable.
         DataTable customersTable = LoadCsvIntoDataTable(CsvPath);
@@ -29,19 +32,20 @@ class BatchReportGenerator
         // For each customer row generate a separate report.
         foreach (DataRow row in customersTable.Rows)
         {
-            // Clone the template so each report starts from a fresh copy.
-            Document report = (Document)template.Clone(true);
-
-            // Perform mail merge using the column names as field names.
-            // The field names in the template must match the column names in the CSV.
-            report.MailMerge.Execute(row);
-
             // Build a file name using a unique identifier, e.g., CustomerID or Name.
-            string fileName = $"{row["Name"]}_{row["CustomerID"]}.docx";
+            string fileName = $"{row["Name"]}_{row["CustomerID"]}.txt";
             string outputPath = Path.Combine(OutputFolder, fileName);
 
+            // Create report content by replacing placeholders with actual values.
+            string reportContent = TemplateContent;
+            foreach (DataColumn column in customersTable.Columns)
+            {
+                string placeholder = $"{{{column.ColumnName}}}";
+                reportContent = reportContent.Replace(placeholder, row[column].ToString());
+            }
+
             // Save the generated report.
-            report.Save(outputPath);
+            File.WriteAllText(outputPath, reportContent);
         }
 
         Console.WriteLine("All reports have been generated.");
@@ -87,5 +91,22 @@ class BatchReportGenerator
         }
 
         return table;
+    }
+
+    // Creates a simple CSV file with sample data if it does not already exist.
+    private static void EnsureSampleCsvExists(string path)
+    {
+        if (File.Exists(path))
+            return;
+
+        var sampleData = new[]
+        {
+            "CustomerID,Name,Email",
+            "1,John Doe,john.doe@example.com",
+            "2,Jane Smith,jane.smith@example.com",
+            "3,Bob Johnson,bob.johnson@example.com"
+        };
+
+        File.WriteAllLines(path, sampleData);
     }
 }

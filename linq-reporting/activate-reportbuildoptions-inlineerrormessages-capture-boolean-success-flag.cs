@@ -4,17 +4,21 @@ using Aspose.Words.Reporting;
 
 namespace ReportingEngineExample
 {
+    public class Person
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+    }
+
     class Program
     {
         static void Main()
         {
             // Load a template document that contains reporting tags.
-            // Replace the path with the actual location of your template.
             Document template = new Document("Template.docx");
 
-            // Prepare a simple data source. In real scenarios this could be a DataSet,
-            // a custom object, JSON, XML, etc.
-            var dataSource = new
+            // Prepare a simple data source.
+            var dataSource = new Person
             {
                 Name = "John Doe",
                 Age = 30
@@ -28,14 +32,12 @@ namespace ReportingEngineExample
             engine.Options = ReportBuildOptions.InlineErrorMessages;
 
             // Build the report and capture the success flag.
-            // The returned value is true if the template was parsed without errors.
             bool success = engine.BuildReport(template, dataSource);
 
             // Output the result of the build operation.
             Console.WriteLine($"Report build successful: {success}");
 
             // Save the resulting document.
-            // Replace the path with the desired output location.
             template.Save("Result.docx");
         }
     }

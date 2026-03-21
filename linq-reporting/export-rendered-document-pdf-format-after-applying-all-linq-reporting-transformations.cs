@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -17,11 +18,12 @@ namespace AsposeWordsPdfExport
     {
         static void Main()
         {
-            // Path to the template document that contains LINQ Reporting tags.
-            const string templatePath = @"C:\Docs\Template.docx";
-
-            // Load the template document.
-            Document doc = new Document(templatePath);
+            // Create a simple in‑memory template document with LINQ Reporting tags.
+            Document doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("Report Title: <<[data.Title]>>");
+            builder.Writeln("Author: <<[data.Author]>>");
+            builder.Writeln("Year: <<[data.Year]>>");
 
             // Prepare the data source that will be used by the ReportingEngine.
             var data = new ReportData
@@ -31,15 +33,14 @@ namespace AsposeWordsPdfExport
                 Year = DateTime.Now.Year
             };
 
-            // Create the reporting engine and populate the template.
-            ReportingEngine engine = new ReportingEngine();
-            // The third argument is the name used to reference the data source inside the template.
+            // Build the report using the data source.
+            var engine = new ReportingEngine();
             engine.BuildReport(doc, data, "data");
 
-            // Export the fully populated document to PDF.
-            // The file extension determines the save format (PDF) automatically.
-            const string outputPdfPath = @"C:\Docs\Report.pdf";
+            // Export the fully populated document to PDF in the current directory.
+            string outputPdfPath = Path.Combine(Environment.CurrentDirectory, "Report.pdf");
             doc.Save(outputPdfPath);
+            Console.WriteLine($"Report saved to: {outputPdfPath}");
         }
     }
 }

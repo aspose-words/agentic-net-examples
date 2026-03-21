@@ -11,27 +11,38 @@ namespace OdtImageCatalog
     {
         static void Main()
         {
+            // Base directory (the folder where the executable runs).
+            string baseDir = AppContext.BaseDirectory;
+
             // Folder that contains the source ODT files.
-            string odtFolder = @"C:\InputOdt";
+            string odtFolder = Path.Combine(baseDir, "InputOdt");
 
             // Folder where extracted images will be saved.
-            string imagesFolder = @"C:\ExtractedImages";
+            string imagesFolder = Path.Combine(baseDir, "ExtractedImages");
 
             // Path of the final searchable PDF catalog.
-            string catalogPdfPath = @"C:\Catalog.pdf";
+            string catalogPdfPath = Path.Combine(baseDir, "Catalog.pdf");
 
-            // Ensure the images folder exists.
-            if (!Directory.Exists(imagesFolder))
-                Directory.CreateDirectory(imagesFolder);
+            // Ensure the required folders exist.
+            Directory.CreateDirectory(odtFolder);
+            Directory.CreateDirectory(imagesFolder);
 
             // Create a blank document that will become the PDF catalog.
-            Document catalogDoc = new Document(); // uses Document() constructor rule
+            Document catalogDoc = new Document();
             DocumentBuilder catalogBuilder = new DocumentBuilder(catalogDoc);
 
-            // Process each ODT file in the source folder.
-            foreach (string odtFilePath in Directory.GetFiles(odtFolder, "*.odt"))
+            // Get all ODT files in the source folder.
+            string[] odtFiles = Directory.GetFiles(odtFolder, "*.odt");
+            if (odtFiles.Length == 0)
             {
-                // Load the ODT document (Document(string) constructor rule).
+                Console.WriteLine($"No ODT files found in '{odtFolder}'. Place files there and rerun the program.");
+                return;
+            }
+
+            // Process each ODT file.
+            foreach (string odtFilePath in odtFiles)
+            {
+                // Load the ODT document.
                 Document sourceDoc = new Document(odtFilePath);
 
                 // Collect all Shape nodes that may contain images.
@@ -49,7 +60,7 @@ namespace OdtImageCatalog
                     string imageFileName = $"{Path.GetFileNameWithoutExtension(odtFilePath)}_{imageCounter}{imageExtension}";
                     string imageFullPath = Path.Combine(imagesFolder, imageFileName);
 
-                    // Save the image to the file system (ImageData.Save method).
+                    // Save the image to the file system.
                     shape.ImageData.Save(imageFullPath);
                     imageCounter++;
 
@@ -58,7 +69,6 @@ namespace OdtImageCatalog
                     catalogBuilder.Writeln($"Image extracted from: {Path.GetFileName(odtFilePath)}");
 
                     // Insert the extracted image into the catalog document.
-                    // InsertImage(string) inserts the image inline at 100% scale.
                     catalogBuilder.InsertImage(imageFullPath);
                 }
             }
@@ -66,11 +76,13 @@ namespace OdtImageCatalog
             // Configure PDF save options to produce a searchable PDF (PDF/A‑2u compliance).
             PdfSaveOptions pdfOptions = new PdfSaveOptions
             {
-                Compliance = PdfCompliance.PdfA2u // ensures text is searchable and document is archivable
+                Compliance = PdfCompliance.PdfA2u
             };
 
-            // Save the catalog document as PDF using the Save(string, SaveOptions) overload.
+            // Save the catalog document as PDF.
             catalogDoc.Save(catalogPdfPath, pdfOptions);
+
+            Console.WriteLine($"Catalog PDF created at: {catalogPdfPath}");
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
@@ -7,10 +8,12 @@ class Program
 {
     static void Main()
     {
+        // Small 1x1 PNG image (transparent) encoded in base64.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+
         // Create a new empty document.
         Document doc = new Document();
-
-        // DocumentBuilder provides methods to construct the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start building a table.
@@ -19,11 +22,12 @@ class Program
         // ---------- First Row ----------
         // Cell (0,0) – insert an image.
         builder.InsertCell();
-        // InsertImage returns a Shape object that can be further configured.
-        Shape image1 = builder.InsertImage(@"C:\Images\Image1.jpg");
-        // Set explicit size for the image (optional).
-        image1.Width = 100;   // points
-        image1.Height = 100;  // points
+        using (var ms = new MemoryStream(imageBytes))
+        {
+            Shape image1 = builder.InsertImage(ms);
+            image1.Width = 100;   // points
+            image1.Height = 100;  // points
+        }
 
         // Cell (0,1) – insert some text.
         builder.InsertCell();
@@ -39,9 +43,12 @@ class Program
 
         // Cell (1,1) – insert another image.
         builder.InsertCell();
-        Shape image2 = builder.InsertImage(@"C:\Images\Image2.png");
-        image2.Width = 80;
-        image2.Height = 80;
+        using (var ms = new MemoryStream(imageBytes))
+        {
+            Shape image2 = builder.InsertImage(ms);
+            image2.Width = 80;
+            image2.Height = 80;
+        }
 
         // End the second row.
         builder.EndRow();
@@ -49,7 +56,10 @@ class Program
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to disk.
-        doc.Save(@"C:\Output\TableWithImages.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithImages.docx");
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

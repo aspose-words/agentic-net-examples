@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Fields;
@@ -8,21 +9,43 @@ class Program
 {
     static void Main()
     {
-        // Load the template document that contains the reporting tags.
-        Document doc = new Document("Template.docx");
+        // Prepare temporary files.
+        string templatePath = Path.Combine(Path.GetTempPath(), "Template.docx");
+        string dataPath = Path.Combine(Path.GetTempPath(), "Data.xml");
+        string outputPath = Path.Combine(Path.GetTempPath(), "Report.docx");
+
+        // Create a simple template document with a numeric merge field.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Price:");
+        // The field uses the reporting tag syntax <<ds.Price>> with a numeric format switch.
+        builder.InsertField("MERGEFIELD ds.Price \\# \"0.00\"", null);
+        doc.Save(templatePath);
+
+        // Create a minimal XML data source.
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<ds>
+    <Price>1234.56</Price>
+</ds>";
+        File.WriteAllText(dataPath, xmlContent);
+
+        // Load the template document.
+        Document reportDoc = new Document(templatePath);
 
         // Attach a custom result formatter that will format all numeric field results as currency.
-        doc.FieldOptions.ResultFormatter = new CurrencyResultFormatter();
+        reportDoc.FieldOptions.ResultFormatter = new CurrencyResultFormatter();
 
         // Create an XML data source from the file that holds the report data.
-        XmlDataSource xmlSource = new XmlDataSource("Data.xml");
+        XmlDataSource xmlSource = new XmlDataSource(dataPath);
 
         // Build the report by merging the XML data into the template.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, xmlSource, "ds");
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, xmlSource, "ds");
 
         // Save the generated report.
-        doc.Save("Report.docx");
+        reportDoc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 
     // Implements IFieldResultFormatter to provide custom formatting for numeric fields.

@@ -6,28 +6,30 @@ class Program
 {
     static void Main()
     {
-        // Paths to the source and destination documents.
-        const string destinationPath = @"Destination.docx";
-        const string sourcePath = @"Source.docx";
-        const string outputPdfPath = @"Result.pdf";
-
-        // Load the destination document.
-        Document destinationDoc = new Document(destinationPath);
+        // Create the destination document in memory.
+        var destinationDoc = new Document();
+        var destBuilder = new DocumentBuilder(destinationDoc);
+        destBuilder.Writeln("This is the destination document.");
 
         // Apply read‑only protection (no password required).
         destinationDoc.Protect(ProtectionType.ReadOnly);
 
-        // Load the source document that will be appended.
-        Document sourceDoc = new Document(sourcePath);
+        // Create the source document in memory.
+        var sourceDoc = new Document();
+        var srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("This is the source document.");
 
-        // Append the source document to the protected destination document.
-        // Keep the source formatting while appending.
+        // Append the source document to the protected destination document,
+        // keeping the source formatting.
         destinationDoc.AppendDocument(sourceDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Remove the protection so the final document can be saved normally.
+        // Remove protection so the final document can be saved normally.
         destinationDoc.Unprotect();
 
         // Save the combined document as PDF.
+        const string outputPdfPath = "Result.pdf";
         destinationDoc.Save(outputPdfPath, SaveFormat.Pdf);
+
+        Console.WriteLine($"PDF saved to {outputPdfPath}");
     }
 }

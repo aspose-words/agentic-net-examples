@@ -2,6 +2,19 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class ReportData
+{
+    public string Title { get; set; }
+    public DateTime Date { get; set; }
+    public Item[] Items { get; set; }
+}
+
+public class Item
+{
+    public string Name { get; set; }
+    public int Quantity { get; set; }
+}
+
 class Program
 {
     static void Main()
@@ -10,8 +23,7 @@ class Program
         string templatePath = "Template.docx";
         string outputPath = "Report.docx";
 
-        // Load the template document. Document does not implement IDisposable in older
-        // Aspose.Words versions, so we avoid a using statement.
+        // Load the template document.
         Document doc = new Document(templatePath);
         try
         {
@@ -22,14 +34,14 @@ class Program
             ReportingEngine engine = new ReportingEngine();
 
             // Example data source – replace with your actual data.
-            var data = new
+            var data = new ReportData
             {
                 Title = "Sample Report",
                 Date = DateTime.Now,
                 Items = new[]
                 {
-                    new { Name = "Item 1", Quantity = 10 },
-                    new { Name = "Item 2", Quantity = 20 }
+                    new Item { Name = "Item 1", Quantity = 10 },
+                    new Item { Name = "Item 2", Quantity = 20 }
                 }
             };
 

@@ -2,21 +2,25 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class EmptyDataSource { }
+
 class Program
 {
     static void Main()
     {
-        // Load a template document that contains a LINQ Reporting Engine expression like {{DateTime.Now}}
-        Document doc = new Document("Template.docx");
+        // Create a simple template document containing a LINQ Reporting Engine expression
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Report generated at: {{DateTime.Now}}");
 
         // Create a reporting engine instance
         ReportingEngine engine = new ReportingEngine();
 
-        // Add System.DateTime to the set of known types so the template can access static members (e.g., DateTime::Now)
+        // Add System.DateTime to the set of known types so the template can access static members (e.g., DateTime.Now)
         engine.KnownTypes.Add(typeof(DateTime));
 
-        // Build the report – in this simple example we do not need a data source, so we pass null
-        engine.BuildReport(doc, null);
+        // Build the report – a visible (public) empty class is used as the data source
+        engine.BuildReport(doc, new EmptyDataSource());
 
         // Save the populated document
         doc.Save("ReportWithDateTime.docx");

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Loading;
@@ -12,20 +13,21 @@ namespace AsposeWordsImageToLatex
     {
         static void Main(string[] args)
         {
-            // Input Word document path
-            string inputDocPath = @"C:\Input\Sample.docx";
+            // Create a simple Word document in memory (no external file needed)
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is a sample document without images.");
 
-            // Folder where extracted images will be saved
-            string imagesFolder = @"C:\Output\Images";
+            // Folder where extracted images will be saved (relative to the current directory)
+            string imagesFolder = Path.Combine(Environment.CurrentDirectory, "Output", "Images");
 
-            // Path of the generated LaTeX file
-            string latexFilePath = @"C:\Output\DocumentImages.tex";
+            // Path of the generated LaTeX file (relative to the current directory)
+            string latexFilePath = Path.Combine(Environment.CurrentDirectory, "Output", "DocumentImages.tex");
 
             // Ensure the images folder exists
             Directory.CreateDirectory(imagesFolder);
-
-            // Load the Word document (lifecycle: load)
-            Document doc = new Document(inputDocPath);
+            // Ensure the output folder exists
+            Directory.CreateDirectory(Path.GetDirectoryName(latexFilePath)!);
 
             // Collect all Shape nodes (including inline and floating images)
             NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
@@ -53,13 +55,13 @@ namespace AsposeWordsImageToLatex
                 string imageFileName = $"image_{imageIndex}{extension}";
                 string imageFullPath = Path.Combine(imagesFolder, imageFileName);
 
-                // Save the image data to the file system (lifecycle: save)
+                // Save the image data to the file system
                 shape.ImageData.Save(imageFullPath);
 
                 // Add LaTeX code that references the saved image
                 latexBuilder.AppendLine(@"\begin{figure}[h]");
                 latexBuilder.AppendLine(@"\centering");
-                latexBuilder.AppendLine($@"\includegraphics[width=\linewidth]{{{Path.Combine("Images", imageFileName)}}}");
+                latexBuilder.AppendLine($@"\includegraphics[width=\linewidth]{{Images/{imageFileName}}}");
                 latexBuilder.AppendLine($@"\caption{{Image {imageIndex + 1}}}");
                 latexBuilder.AppendLine(@"\end{figure}");
                 latexBuilder.AppendLine();

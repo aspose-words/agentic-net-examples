@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -72,20 +70,19 @@ namespace AsposeWordsReplaceWithDocument
     {
         static void Main()
         {
-            // Paths to the source documents.
-            string mainDocPath = "MainDocument.docx";      // Contains the placeholder token [PLACEHOLDER]
-            string insertDocPath = "InsertDocument.docx"; // Document whose content will replace the placeholder
+            // Create the main document containing the placeholder token [PLACEHOLDER].
+            Document mainDoc = new Document();
+            DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
+            mainBuilder.Writeln("[PLACEHOLDER]");
 
-            // Load the main document (the one that contains the placeholder).
-            Document mainDoc = new Document(mainDocPath);
-
-            // Load the document that will be inserted.
-            Document insertDoc = new Document(insertDocPath);
+            // Create the document whose content will replace the placeholder.
+            Document insertDoc = new Document();
+            DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+            insertBuilder.Writeln("This is the inserted content.");
 
             // Configure the find/replace operation.
             FindReplaceOptions options = new FindReplaceOptions
             {
-                // Use a callback to perform a custom replacement (inserting a whole document).
                 ReplacingCallback = new InsertDocumentHandler(insertDoc)
             };
 

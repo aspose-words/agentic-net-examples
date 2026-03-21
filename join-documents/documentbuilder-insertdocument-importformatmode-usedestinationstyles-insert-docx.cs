@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,29 +9,35 @@ namespace InsertDocAndSaveHtml
     {
         static void Main()
         {
-            // Paths to the files – replace with actual locations.
-            string templatePath = @"C:\Docs\StyledTemplate.docx";   // The styled template.
-            string sourcePath   = @"C:\Docs\ContentToInsert.docx"; // The document to be inserted.
-            string outputPath   = @"C:\Docs\Result.html";          // The final HTML file.
+            // Create the styled template document in memory.
+            Document templateDoc = new Document();
+            DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
+            // Apply a heading style to demonstrate destination styles.
+            templateBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            templateBuilder.Writeln("Template Heading");
+            // Add a normal paragraph.
+            templateBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            templateBuilder.Writeln("Template body text.");
 
-            // Load the template (styled) document.
-            Document templateDoc = new Document(templatePath);
+            // Create the source document that will be inserted.
+            Document sourceDoc = new Document();
+            DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+            sourceBuilder.Writeln("Inserted paragraph 1.");
+            sourceBuilder.Writeln("Inserted paragraph 2 with a different style.");
+            // Apply a different style to show style import.
+            sourceBuilder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
+            sourceBuilder.Writeln("Inserted quoted text.");
 
-            // Load the source document that will be inserted.
-            Document sourceDoc = new Document(sourcePath);
+            // Insert the source document into the template using UseDestinationStyles.
+            DocumentBuilder insertBuilder = new DocumentBuilder(templateDoc);
+            insertBuilder.MoveToDocumentEnd();
+            insertBuilder.InsertDocument(sourceDoc, ImportFormatMode.UseDestinationStyles);
 
-            // Create a DocumentBuilder for the template document.
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Move the cursor to the end of the template (or any other position you need).
-            builder.MoveToDocumentEnd();
-
-            // Insert the source document using the UseDestinationStyles mode.
-            // This keeps the template's styles and copies any new styles from the source.
-            builder.InsertDocument(sourceDoc, ImportFormatMode.UseDestinationStyles);
-
-            // Save the combined document as HTML.
+            // Save the combined document as HTML in the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.html");
             templateDoc.Save(outputPath, SaveFormat.Html);
+
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

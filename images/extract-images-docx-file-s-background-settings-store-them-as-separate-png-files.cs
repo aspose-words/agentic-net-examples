@@ -7,12 +7,20 @@ class ExtractBackgroundImages
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\input.docx";
+        // Use a path relative to the executable so the file always exists.
+        string baseDir = AppContext.BaseDirectory;
+        string inputPath = Path.Combine(baseDir, "input.docx");
+        string outputDir = Path.Combine(baseDir, "BackgroundImages");
 
-        // Folder where extracted PNG images will be saved.
-        string outputDir = @"C:\Docs\BackgroundImages";
+        // Ensure the output directory exists.
         Directory.CreateDirectory(outputDir);
+
+        // If the input file does not exist, create a minimal DOCX file.
+        if (!File.Exists(inputPath))
+        {
+            var emptyDoc = new Document();
+            emptyDoc.Save(inputPath);
+        }
 
         // Load the document.
         Document doc = new Document(inputPath);
@@ -23,7 +31,6 @@ class ExtractBackgroundImages
         Shape bgShape = doc.BackgroundShape;
         if (bgShape != null && bgShape.HasImage)
         {
-            // Save the image directly – no System.Drawing required.
             string outPath = Path.Combine(outputDir, "DocumentBackground.png");
             bgShape.ImageData.Save(outPath);
         }
@@ -36,7 +43,6 @@ class ExtractBackgroundImages
         {
             foreach (HeaderFooter hf in section.HeadersFooters)
             {
-                // Get all shapes inside the header/footer.
                 NodeCollection shapes = hf.GetChildNodes(NodeType.Shape, true);
                 foreach (Shape shape in shapes)
                 {
@@ -50,6 +56,7 @@ class ExtractBackgroundImages
             }
         }
 
-        // The images are now saved as PNG files in the specified folder.
+        // Indicate completion.
+        Console.WriteLine($"Extraction complete. Images saved to: {outputDir}");
     }
 }

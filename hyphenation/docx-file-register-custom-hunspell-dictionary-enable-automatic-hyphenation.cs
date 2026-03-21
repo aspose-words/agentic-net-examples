@@ -7,23 +7,39 @@ class HyphenationExample
 {
     static void Main()
     {
-        // Paths to the input document and the hyphenation dictionary.
-        // Adjust these paths to point to your actual files.
-        string dataDir = @"C:\Data\";
-        string inputDocPath = Path.Combine(dataDir, "input.docx");
-        string dictionaryPath = Path.Combine(dataDir, "hyph_en_US.dic");
-        string outputDocPath = Path.Combine(dataDir, "output.docx");
+        // Create a temporary working directory.
+        string tempDir = Path.Combine(Path.GetTempPath(), "HyphenationExample");
+        Directory.CreateDirectory(tempDir);
 
-        // Load the existing DOCX file.
-        Document doc = new Document(inputDocPath);
+        // Define file paths.
+        string inputDocPath = Path.Combine(tempDir, "input.docx");
+        string dictionaryPath = Path.Combine(tempDir, "hyph_en_US.dic");
+        string outputDocPath = Path.Combine(tempDir, "output.docx");
 
-        // Register the custom hyphenation dictionary for the desired language (e.g., en-US).
+        // Create a minimal Hunspell dictionary file.
+        // The first line is the number of entries, followed by the words.
+        File.WriteAllText(dictionaryPath, "2\nhyphenation\nexample");
+
+        // Create a simple DOCX document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is an example text to demonstrate automatic hyphenation using a custom dictionary.");
+        doc.Save(inputDocPath);
+
+        // Load the document (could also continue using the same instance).
+        doc = new Document(inputDocPath);
+
+        // Register the custom hyphenation dictionary for en-US.
         Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
-        // Enable automatic hyphenation for the document.
+        // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
 
         // Save the modified document.
         doc.Save(outputDocPath);
+
+        Console.WriteLine($"Input document: {inputDocPath}");
+        Console.WriteLine($"Dictionary file: {dictionaryPath}");
+        Console.WriteLine($"Output document: {outputDocPath}");
     }
 }

@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -9,39 +9,37 @@ namespace AsposeWordsImageInsertion
     {
         static void Main()
         {
-            // Path to the DOCX template that will be loaded.
-            const string templatePath = @"C:\Docs\Template.docx";
+            // Create a new empty document (acts as the template).
+            Document doc = new Document();
 
-            // Load the existing template document.
-            Document doc = new Document(templatePath);
-
-            // Create a DocumentBuilder for the loaded document.
+            // Create a DocumentBuilder for the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // List of image file paths to insert into the document.
-            List<string> imagePaths = new List<string>
-            {
-                @"C:\Images\Photo1.jpg",
-                @"C:\Images\Diagram.png",
-                @"C:\Images\Logo.gif"
-            };
+            // A 1x1 pixel PNG image (transparent) encoded in Base64.
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+            byte[] pngBytes = Convert.FromBase64String(base64Png);
 
-            // Insert each image at the current cursor position.
-            // Images are inserted as inline shapes with their original dimensions.
-            foreach (string imagePath in imagePaths)
+            // Insert the image three times to mimic multiple images.
+            for (int i = 0; i < 3; i++)
             {
-                // Insert the image.
-                Shape imageShape = builder.InsertImage(imagePath);
+                using (MemoryStream ms = new MemoryStream(pngBytes))
+                {
+                    // Insert the image from the memory stream.
+                    Shape imageShape = builder.InsertImage(ms);
+                    // Optionally set a size for visibility.
+                    imageShape.Width = 100;
+                    imageShape.Height = 100;
+                }
 
-                // Optional: add a paragraph break after each image for spacing.
+                // Add a paragraph break after each image for spacing.
                 builder.Writeln();
             }
 
-            // Path where the resulting document will be saved.
-            const string outputPath = @"C:\Docs\Result.docx";
-
-            // Save the modified document as DOCX.
+            // Save the resulting document in the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
             doc.Save(outputPath);
+
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

@@ -18,6 +18,11 @@ public class Person
     public int Age { get; set; }
 }
 
+public class ReportData
+{
+    public Person person { get; set; }
+}
+
 class Program
 {
     static void Main()
@@ -62,7 +67,7 @@ class Program
             Options = ReportBuildOptions.AllowMissingMembers
         };
 
-        var data = new
+        var data = new ReportData
         {
             person = new Person
             {

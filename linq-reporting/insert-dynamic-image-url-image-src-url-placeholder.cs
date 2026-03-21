@@ -1,10 +1,13 @@
 using System;
+using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
 class InsertDynamicImage
 {
-    static void Main()
+    static async Task Main()
     {
         // Create a new empty document.
         Document doc = new Document();
@@ -15,12 +18,29 @@ class InsertDynamicImage
         // URL of the image to be inserted.
         string imageUrl = "https://example.com/path/to/image.jpg";
 
-        // Insert the image from the remote URL.
-        // The InsertImage(string) overload automatically downloads the image.
-        Shape imageShape = builder.InsertImage(imageUrl);
+        byte[] imageBytes;
 
-        // Optional: set hyperlink on the image (if desired).
-        // imageShape.HRef = "https://example.com";
+        using (HttpClient http = new HttpClient())
+        {
+            try
+            {
+                imageBytes = await http.GetByteArrayAsync(imageUrl);
+            }
+            catch
+            {
+                // Fallback to a 1x1 transparent PNG if download fails.
+                const string placeholderBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+                imageBytes = Convert.FromBase64String(placeholderBase64);
+            }
+        }
+
+        using (MemoryStream ms = new MemoryStream(imageBytes))
+        {
+            // Insert the image from the stream.
+            Shape imageShape = builder.InsertImage(ms);
+            // Optional: set hyperlink on the image (if desired).
+            // imageShape.HRef = "https://example.com";
+        }
 
         // Save the document to a file.
         doc.Save("DynamicImage.docx");

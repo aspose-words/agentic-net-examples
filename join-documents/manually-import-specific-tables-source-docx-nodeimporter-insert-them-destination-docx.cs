@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,28 +9,78 @@ namespace AsposeWordsNodeImportExample
     {
         static void Main()
         {
-            // Paths to the source and destination documents.
-            string sourcePath = @"C:\Docs\Source.docx";
-            string destinationPath = @"C:\Docs\Destination.docx";
-            string resultPath = @"C:\Docs\Result.docx";
+            // Create temporary file paths.
+            string tempDir = Path.GetTempPath();
+            string sourcePath = Path.Combine(tempDir, "Source.docx");
+            string destinationPath = Path.Combine(tempDir, "Destination.docx");
+            string resultPath = Path.Combine(tempDir, "Result.docx");
 
-            // Load the source and destination documents using the Document(string) constructor.
-            Document srcDoc = new Document(sourcePath);
-            Document dstDoc = new Document(destinationPath);
+            // -----------------------------------------------------------------
+            // Build a source document containing a few tables.
+            // -----------------------------------------------------------------
+            Document srcDoc = new Document();
+            Section srcSection = srcDoc.FirstSection ?? (Section)srcDoc.AppendChild(new Section(srcDoc));
+            Body srcBody = srcSection.Body;
 
-            // Choose which tables to import.
-            // Example: import the first and third tables (0‑based index).
-            // Adjust the indices or selection logic as needed.
-            int[] tablesToImport = { 0, 2 };
+            // Table 0
+            Table table0 = new Table(srcDoc);
+            Row row0 = new Row(srcDoc);
+            Cell cell0 = new Cell(srcDoc);
+            Paragraph para0 = new Paragraph(srcDoc);
+            para0.AppendChild(new Run(srcDoc, "Source Table 0, Cell 0"));
+            cell0.AppendChild(para0);
+            row0.AppendChild(cell0);
+            table0.AppendChild(row0);
+            srcBody.AppendChild(table0);
 
-            // Create a NodeImporter that will handle style and list translation.
-            NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
+            // Some text between tables.
+            Paragraph between = new Paragraph(srcDoc);
+            between.AppendChild(new Run(srcDoc, "Between tables"));
+            srcBody.AppendChild(between);
 
-            // Iterate over the selected table indices.
+            // Table 1
+            Table table1 = new Table(srcDoc);
+            Row row1 = new Row(srcDoc);
+            Cell cell1 = new Cell(srcDoc);
+            Paragraph para1 = new Paragraph(srcDoc);
+            para1.AppendChild(new Run(srcDoc, "Source Table 1, Cell 0"));
+            cell1.AppendChild(para1);
+            row1.AppendChild(cell1);
+            table1.AppendChild(row1);
+            srcBody.AppendChild(table1);
+
+            // Save the source document.
+            srcDoc.Save(sourcePath);
+
+            // -----------------------------------------------------------------
+            // Build a destination document (initially empty with a single paragraph).
+            // -----------------------------------------------------------------
+            Document dstDoc = new Document();
+            Section dstSection = dstDoc.FirstSection ?? (Section)dstDoc.AppendChild(new Section(dstDoc));
+            Body dstBody = dstSection.Body;
+            Paragraph startPara = new Paragraph(dstDoc);
+            startPara.AppendChild(new Run(dstDoc, "Destination document start"));
+            dstBody.AppendChild(startPara);
+
+            // Save the destination document.
+            dstDoc.Save(destinationPath);
+
+            // -----------------------------------------------------------------
+            // Load the documents from the temporary files.
+            // -----------------------------------------------------------------
+            Document sourceDocument = new Document(sourcePath);
+            Document destinationDocument = new Document(destinationPath);
+
+            // Choose which tables to import (0‑based indices).
+            int[] tablesToImport = { 0, 1 }; // Import both tables for demonstration.
+
+            // Create a NodeImporter to handle style and list translation.
+            NodeImporter importer = new NodeImporter(sourceDocument, destinationDocument, ImportFormatMode.KeepSourceFormatting);
+
             foreach (int tableIndex in tablesToImport)
             {
                 // Retrieve the table from the source document.
-                Table srcTable = (Table)srcDoc.GetChild(NodeType.Table, tableIndex, true);
+                Table srcTable = (Table)sourceDocument.GetChild(NodeType.Table, tableIndex, true);
                 if (srcTable == null)
                     continue; // Skip if the index is out of range.
 
@@ -37,12 +88,13 @@ namespace AsposeWordsNodeImportExample
                 Node importedNode = importer.ImportNode(srcTable, true);
 
                 // Append the imported table to the end of the destination document's body.
-                // You can change the insertion point as required (e.g., InsertAfter a specific node).
-                dstDoc.FirstSection.Body.AppendChild(importedNode);
+                destinationDocument.FirstSection.Body.AppendChild(importedNode);
             }
 
-            // Save the modified destination document using the Save(string) method.
-            dstDoc.Save(resultPath);
+            // Save the modified destination document.
+            destinationDocument.Save(resultPath);
+
+            Console.WriteLine($"Result document saved to: {resultPath}");
         }
     }
 }

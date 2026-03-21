@@ -10,18 +10,28 @@ namespace ImageExtractionDemo
     {
         static void Main()
         {
-            // Folder that contains the source ODT files.
-            string sourceFolder = @"C:\InputOdt";
+            // Folder that contains the source ODT files (relative to the executable's directory).
+            string sourceFolder = Path.Combine(AppContext.BaseDirectory, "InputOdt");
 
             // Root folder where extracted images will be placed.
             // Each document will have its own sub‑folder named after the original file (without extension).
-            string destinationRoot = @"C:\ExtractedImages";
+            string destinationRoot = Path.Combine(AppContext.BaseDirectory, "ExtractedImages");
 
-            // Ensure the destination root exists.
+            // Ensure both source and destination folders exist.
+            Directory.CreateDirectory(sourceFolder);
             Directory.CreateDirectory(destinationRoot);
 
-            // Process every *.odt file in the source folder.
-            foreach (string odtPath in Directory.GetFiles(sourceFolder, "*.odt"))
+            // Get all *.odt files in the source folder.
+            string[] odtFiles = Directory.GetFiles(sourceFolder, "*.odt");
+
+            if (odtFiles.Length == 0)
+            {
+                Console.WriteLine($"No ODT files found in \"{sourceFolder}\". Place ODT files there and rerun the program.");
+                return;
+            }
+
+            // Process each ODT file.
+            foreach (string odtPath in odtFiles)
             {
                 // Derive a clean name for the document (no path, no extension).
                 string documentName = Path.GetFileNameWithoutExtension(odtPath);

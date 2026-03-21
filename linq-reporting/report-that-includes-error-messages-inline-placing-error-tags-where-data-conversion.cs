@@ -1,5 +1,4 @@
 using System;
-using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -22,7 +21,7 @@ namespace InlineErrorReportDemo
             // The template contains a field that tries to format the value as a number.
             // When the conversion fails, the ReportingEngine will insert an inline error message
             // surrounded by <<error>> tags because we enable the InlineErrorMessages option.
-            builder.Writeln("Amount: <<[data.Amount]:dollarText>>");
+            builder.Writeln("Amount: <<[data.Amount]:dollar>>");
 
             // 2. Prepare a data source with an invalid numeric value.
             SampleData data = new SampleData { Amount = "NotANumber" };

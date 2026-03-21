@@ -1,3 +1,4 @@
+#nullable disable
 using System;
 using System.IO;
 using Aspose.Words;
@@ -17,16 +18,23 @@ namespace ImageConversionDemo
         /// </summary>
         public static void Convert(string inputFolder, string outputFolder, string logFilePath)
         {
-            // Ensure folders exist.
-            if (!Directory.Exists(inputFolder))
-                throw new DirectoryNotFoundException($"Input folder not found: {inputFolder}");
-
-            Directory.CreateDirectory(outputFolder);
-
-            // Guard against Path.GetDirectoryName returning null (e.g., when logFilePath is a root path).
-            string? logDir = Path.GetDirectoryName(logFilePath);
+            // Ensure the log directory exists before any file operations.
+            string logDir = Path.GetDirectoryName(logFilePath);
             if (!string.IsNullOrEmpty(logDir))
                 Directory.CreateDirectory(logDir);
+
+            // Ensure input folder exists; if not, log and exit gracefully.
+            if (!Directory.Exists(inputFolder))
+            {
+                Console.Error.WriteLine($"Input folder not found: {inputFolder}");
+                using (var logWriter = new StreamWriter(logFilePath, false))
+                {
+                    logWriter.WriteLine($"Input folder not found: {inputFolder}");
+                }
+                return;
+            }
+
+            Directory.CreateDirectory(outputFolder);
 
             // Prepare a log writer.
             using (StreamWriter logWriter = new StreamWriter(logFilePath, false))
@@ -65,7 +73,15 @@ namespace ImageConversionDemo
                         logWriter.WriteLine($"Converted: {Path.GetFileName(bmpPath)}");
                         logWriter.WriteLine($"  Original Size : {originalSize:N0} bytes");
                         logWriter.WriteLine($"  WebP Size     : {newSize:N0} bytes");
-                        logWriter.WriteLine($"  Reduction     : {((originalSize - newSize) * 100.0 / originalSize):F2}%");
+                        if (originalSize > 0)
+                        {
+                            double reduction = (originalSize - newSize) * 100.0 / originalSize;
+                            logWriter.WriteLine($"  Reduction     : {reduction:F2}%");
+                        }
+                        else
+                        {
+                            logWriter.WriteLine("  Reduction     : N/A (original size zero)");
+                        }
                         logWriter.WriteLine();
                     }
                     catch (Exception ex)
@@ -90,13 +106,18 @@ namespace ImageConversionDemo
     {
         /// <summary>
         /// Expected arguments: <c>inputFolder outputFolder logFilePath</c>.
-        /// If omitted, example paths are used.
+        /// If omitted, example paths relative to the current directory are used.
         /// </summary>
         static void Main(string[] args)
         {
-            string inputFolder = args.Length > 0 ? args[0] : @"C:\Images\Bmp";
-            string outputFolder = args.Length > 1 ? args[1] : @"C:\Images\Webp";
-            string logFilePath = args.Length > 2 ? args[2] : @"C:\Images\conversion_log.txt";
+            string baseDir = AppContext.BaseDirectory;
+            string defaultInput = Path.Combine(baseDir, "Images", "Bmp");
+            string defaultOutput = Path.Combine(baseDir, "Images", "Webp");
+            string defaultLog = Path.Combine(baseDir, "Images", "conversion_log.txt");
+
+            string inputFolder = args.Length > 0 ? args[0] : defaultInput;
+            string outputFolder = args.Length > 1 ? args[1] : defaultOutput;
+            string logFilePath = args.Length > 2 ? args[2] : defaultLog;
 
             try
             {

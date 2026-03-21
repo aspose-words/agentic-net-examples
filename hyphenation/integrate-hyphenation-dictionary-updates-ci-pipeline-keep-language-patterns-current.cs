@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 using Aspose.Words;
 
 class CIHyphenationUpdater
@@ -40,7 +39,10 @@ class CIHyphenationUpdater
     static void Main(string[] args)
     {
         // Directory where the CI pipeline places the latest hyphenation dictionaries.
-        string dictionariesPath = args.Length > 0 ? args[0] : @"./HyphenationDictionaries";
+        string dictionariesPath = args.Length > 0 ? args[0] : "./HyphenationDictionaries";
+
+        // Ensure the directory exists to avoid DirectoryNotFoundException.
+        Directory.CreateDirectory(dictionariesPath);
 
         // Pre‑register any dictionaries that already exist in the folder.
         foreach (string file in Directory.GetFiles(dictionariesPath, "hyph_*.dic"))
@@ -57,7 +59,19 @@ class CIHyphenationUpdater
         Hyphenation.Callback = new FolderHyphenationCallback(dictionariesPath);
 
         // Load a document that will be processed in the CI pipeline.
-        Document doc = new Document("Template.docx");
+        Document doc;
+        const string templatePath = "Template.docx";
+        if (File.Exists(templatePath))
+        {
+            doc = new Document(templatePath);
+        }
+        else
+        {
+            // Create a simple document if the template is missing.
+            doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("This is a sample paragraph used to demonstrate automatic hyphenation in the CI pipeline.");
+        }
 
         // Enable automatic hyphenation for the document.
         doc.HyphenationOptions.AutoHyphenation = true;

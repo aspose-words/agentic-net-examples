@@ -1,16 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
-using Aspose.Words;
-using Aspose.Words.Reporting;
 
 namespace AsposeWordsJsonFilter
 {
-    // Simple POCO that matches the structure of each employee record in the JSON file.
+    // Simple POCO that matches the structure of each employee record in the JSON data.
     public class Employee
     {
         public string Name { get; set; }
@@ -22,13 +17,14 @@ namespace AsposeWordsJsonFilter
     {
         public static void Main()
         {
-            // Paths to the template document, the source JSON file and the output document.
-            string templatePath = @"C:\Docs\EmployeeTemplate.docx";
-            string jsonPath = @"C:\Data\employees.json";
-            string outputPath = @"C:\Docs\FilteredEmployees.docx";
-
-            // Load the JSON file content.
-            string jsonContent = File.ReadAllText(jsonPath);
+            // Sample JSON data representing a collection of employee records.
+            string jsonContent = @"
+            [
+                { ""Name"": ""Alice"",   ""Age"": 35, ""Department"": ""Sales"" },
+                { ""Name"": ""Bob"",     ""Age"": 28, ""Department"": ""HR"" },
+                { ""Name"": ""Charlie"", ""Age"": 40, ""Department"": ""Sales"" },
+                { ""Name"": ""Diana"",   ""Age"": 32, ""Department"": ""IT"" }
+            ]";
 
             // Deserialize the JSON array into a list of Employee objects.
             List<Employee> allEmployees = JsonSerializer.Deserialize<List<Employee>>(jsonContent);
@@ -37,25 +33,12 @@ namespace AsposeWordsJsonFilter
             IEnumerable<Employee> filteredEmployees = allEmployees
                 .Where(e => e.Age > 30 && e.Department == "Sales");
 
-            // Convert the filtered collection into a DataTable for mail merge.
-            DataTable employeeTable = new DataTable("Employees");
-            employeeTable.Columns.Add("Name", typeof(string));
-            employeeTable.Columns.Add("Age", typeof(int));
-            employeeTable.Columns.Add("Department", typeof(string));
-
+            // Output the filtered results to the console.
+            Console.WriteLine("Filtered Employees (Age > 30 && Department == \"Sales\"):");
             foreach (Employee emp in filteredEmployees)
             {
-                employeeTable.Rows.Add(emp.Name, emp.Age, emp.Department);
+                Console.WriteLine($"- {emp.Name}, Age: {emp.Age}, Department: {emp.Department}");
             }
-
-            // Load the Word template document.
-            Document doc = new Document(templatePath);
-
-            // Perform mail merge using the filtered DataTable.
-            doc.MailMerge.Execute(employeeTable);
-
-            // Save the resulting document.
-            doc.Save(outputPath);
         }
     }
 }

@@ -5,11 +5,15 @@ class InsertDocAtSectionEnds
 {
     static void Main()
     {
-        // Load the destination document.
-        Document dstDoc = new Document("Destination.docx");
+        // Create a destination document with a single section and a paragraph.
+        Document dstDoc = new Document();
+        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
+        dstBuilder.Writeln("This is the destination document.");
 
-        // Load the source document that will be inserted.
-        Document srcDoc = new Document("Source.docx");
+        // Create a source document with a single section and a paragraph.
+        Document srcDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("This is the source document.");
 
         // For each section in the destination document, append the content of every
         // section from the source document to the end of that destination section.
@@ -24,5 +28,6 @@ class InsertDocAtSectionEnds
 
         // Save the modified document.
         dstDoc.Save("Result.docx");
+        Console.WriteLine("Result.docx has been created successfully.");
     }
 }

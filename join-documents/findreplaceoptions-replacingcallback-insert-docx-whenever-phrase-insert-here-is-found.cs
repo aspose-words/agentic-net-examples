@@ -7,36 +7,54 @@ class Program
 {
     static void Main()
     {
-        // Load the destination document that contains the placeholder "INSERT_HERE".
-        Document mainDoc = new Document("Destination.docx");
+        // Create the destination document with a placeholder.
+        Document mainDoc = new Document();
+        DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
+        mainBuilder.Writeln("This is the beginning of the document.");
+        mainBuilder.Writeln("INSERT_HERE");
+        mainBuilder.Writeln("This is the end of the document.");
+
+        // Create the document that will be inserted.
+        Document insertDoc = new Document();
+        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
+        insertBuilder.Writeln("=== Inserted Content Start ===");
+        insertBuilder.Writeln("Here is the content that will be inserted.");
+        insertBuilder.Writeln("=== Inserted Content End ===");
 
         // Configure find/replace options with a custom callback that will insert another document.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new InsertDocHandler();
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new InsertDocHandler(insertDoc)
+        };
 
-        // Replace the placeholder with an empty string; the callback will handle the insertion.
-        mainDoc.Range.Replace(new Regex("INSERT_HERE"), "", options);
+        // Replace the placeholder; the callback will handle the insertion.
+        mainDoc.Range.Replace(new Regex("INSERT_HERE"), string.Empty, options);
 
         // Save the modified document.
         mainDoc.Save("Result.docx");
+        Console.WriteLine("Result.docx created successfully.");
     }
 
     // Callback that inserts a separate DOCX at the location of each match.
     private class InsertDocHandler : IReplacingCallback
     {
+        private readonly Document _docToInsert;
+
+        public InsertDocHandler(Document docToInsert)
+        {
+            _docToInsert = docToInsert ?? throw new ArgumentNullException(nameof(docToInsert));
+        }
+
         ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
-            // Load the document to be inserted.
-            Document subDoc = new Document("Insert.docx");
-
             // The match node is inside a Run; its parent paragraph is the insertion point.
-            Paragraph para = (Paragraph)args.MatchNode.ParentNode;
+            Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
 
             // Insert the entire sub‑document after the paragraph containing the match.
-            InsertDocument(para, subDoc);
+            InsertDocument(placeholderParagraph, _docToInsert);
 
             // Remove the paragraph that held the placeholder text.
-            para.Remove();
+            placeholderParagraph.Remove();
 
             // Skip further processing for this match.
             return ReplaceAction.Skip;
@@ -46,12 +64,12 @@ class Program
         private static void InsertDocument(Node insertionDestination, Document docToInsert)
         {
             if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
-                throw new ArgumentException("Destination must be a paragraph or table.");
+                throw new ArgumentException("Destination must be a paragraph or table.", nameof(insertionDestination));
 
-            CompositeNode dstStory = insertionDestination.ParentNode;
-            // NodeImporter now lives directly under Aspose.Words namespace.
+            CompositeNode destinationStory = insertionDestination.ParentNode;
             NodeImporter importer = new NodeImporter(docToInsert, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
 
+            // Insert nodes from each section of the source document.
             foreach (Section srcSection in docToInsert.Sections)
             {
                 foreach (Node srcNode in srcSection.Body)
@@ -65,7 +83,7 @@ class Program
                     }
 
                     Node newNode = importer.ImportNode(srcNode, true);
-                    dstStory.InsertAfter(newNode, insertionDestination);
+                    destinationStory.InsertAfter(newNode, insertionDestination);
                     insertionDestination = newNode;
                 }
             }

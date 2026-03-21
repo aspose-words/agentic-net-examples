@@ -26,9 +26,11 @@ namespace AsposeWordsInsertDocAtBookmark
             builder.EndTable();            // </TABLE>
 
             // -----------------------------------------------------------------
-            // 2. Load the source document that we want to insert.
+            // 2. Create the source document that we want to insert.
             // -----------------------------------------------------------------
-            Document srcDoc = new Document("Source.docx"); // replace with your source file path
+            Document srcDoc = new Document();                     // create a new source document
+            DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+            srcBuilder.Writeln("Hello from the source document!"); // add some content
 
             // -----------------------------------------------------------------
             // 3. Move the builder's cursor to the bookmark and insert the source document.

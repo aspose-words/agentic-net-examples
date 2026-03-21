@@ -15,22 +15,29 @@ namespace MyTemplateExtensions
         }
     }
 
+    // Simple data source class with a public property.
+    public class DataSource
+    {
+        public int Count { get; set; }
+    }
+
     public class Program
     {
         public static void Main()
         {
-            // Load a template document that contains an IF field like:
-            // { IF {{MyTemplateExtensions.TemplateExtensions.IsEven(Count)}} "Even" "Odd" }
-            Document doc = new Document("Template.docx");
+            // Create a document with an IF field that uses the custom method.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("{ IF TemplateExtensions.IsEven(Count) \"Even\" \"Odd\" }");
 
-            // Data source for the template. The property name must match the placeholder used in the template.
-            var data = new { Count = 5 };
+            // Prepare the data source.
+            var data = new DataSource { Count = 5 };
 
             // Configure the reporting engine to recognize the static class containing the custom method.
             ReportingEngine engine = new ReportingEngine();
             engine.KnownTypes.Add(typeof(TemplateExtensions));
 
-            // Build the report – the placeholder {{TemplateExtensions.IsEven(Count)}} will be evaluated,
+            // Build the report – the placeholder TemplateExtensions.IsEven(Count) will be evaluated,
             // its boolean result will be inserted into the IF field, which then displays the appropriate text.
             engine.BuildReport(doc, data);
 

@@ -31,17 +31,29 @@ namespace DocumentProcessing
         }
     }
 
-    // Entry point required for a console application.
     public static class Program
     {
         public static void Main(string[] args)
         {
-            // Example usage – replace paths with real files when testing.
+            // Create simple placeholder documents so the example runs without external files.
             string templatePath = "Template.docx";
             string appendixPath = "Appendix.docx";
             string outputPath = "MergedResult.docx";
-            bool includeAppendix = true; // or false depending on your scenario
+            bool includeAppendix = true; // Change to false to test without merging.
 
+            // Generate a basic template document.
+            Document templateDoc = new Document();
+            DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
+            templateBuilder.Writeln("This is the main template document.");
+            templateDoc.Save(templatePath);
+
+            // Generate a basic appendix document.
+            Document appendixDoc = new Document();
+            DocumentBuilder appendixBuilder = new DocumentBuilder(appendixDoc);
+            appendixBuilder.Writeln("This is the appendix document.");
+            appendixDoc.Save(appendixPath);
+
+            // Perform the merge based on the flag.
             AppendixMerger.MergeIfNeeded(templatePath, appendixPath, outputPath, includeAppendix);
             Console.WriteLine($"Document saved to '{outputPath}'.");
         }

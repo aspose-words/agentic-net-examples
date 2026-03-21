@@ -12,73 +12,71 @@ namespace AsposeWordsReportWithAttachment
     {
         static void Main()
         {
-            // Paths to the template document and the JSON data file.
-            string templatePath = @"C:\Data\ReportTemplate.docx";
-            string jsonPath = @"C:\Data\ReportData.json";
-            string outputPdfPath = @"C:\Data\GeneratedReport.pdf";
+            // -----------------------------------------------------------------
+            // Create a simple template document in memory.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder templateBuilder = new DocumentBuilder(doc);
+            templateBuilder.Writeln("Sample Report");
+            // (If the template needed merge fields they could be added here.)
 
-            // Load the template document.
-            Document doc = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // Prepare JSON data containing the attachment (Base64 + file name).
+            // -----------------------------------------------------------------
+            string attachmentContent = "Hello, this is the embedded file content.";
+            string attachmentBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(attachmentContent));
+            string attachmentFileName = "Sample.txt";
 
-            // Create a JsonDataSource from the JSON file (default parsing options).
-            JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+            string jsonString = $@"{{
+                ""AttachmentBase64"": ""{attachmentBase64}"",
+                ""AttachmentFileName"": ""{attachmentFileName}""
+            }}";
 
-            // Build the report using the ReportingEngine.
+            // Load JSON data from a memory stream.
+            using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(jsonString));
+            JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
+
+            // Build the report (no specific data fields are used in this simple example).
             ReportingEngine engine = new ReportingEngine();
-            // The data source name ("data") can be used inside the template if needed.
             engine.BuildReport(doc, jsonDataSource, "data");
 
             // -----------------------------------------------------------------
-            // Extract the attachment data from the same JSON file.
-            // The JSON is expected to contain a property "AttachmentBase64"
-            // with the file content encoded in Base64.
+            // Extract attachment bytes from the JSON we just created.
             // -----------------------------------------------------------------
             byte[] attachmentBytes;
-            string attachmentFileName;
-
-            using (FileStream jsonStream = File.OpenRead(jsonPath))
+            using (JsonDocument jsonDoc = JsonDocument.Parse(jsonString))
             {
-                using (JsonDocument jsonDoc = JsonDocument.Parse(jsonStream))
+                JsonElement root = jsonDoc.RootElement;
+                if (root.TryGetProperty("AttachmentBase64", out JsonElement base64Element) &&
+                    root.TryGetProperty("AttachmentFileName", out JsonElement nameElement))
                 {
-                    JsonElement root = jsonDoc.RootElement;
-
-                    // Example JSON structure:
-                    // {
-                    //   "AttachmentBase64": "UEsDBBQAAAAIA...",
-                    //   "AttachmentFileName": "Sample.xlsx"
-                    // }
-                    if (root.TryGetProperty("AttachmentBase64", out JsonElement base64Element) &&
-                        root.TryGetProperty("AttachmentFileName", out JsonElement nameElement))
-                    {
-                        string base64String = base64Element.GetString();
-                        attachmentFileName = nameElement.GetString();
-
-                        attachmentBytes = Convert.FromBase64String(base64String);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Attachment data not found in JSON.");
-                    }
+                    attachmentBytes = Convert.FromBase64String(base64Element.GetString()!);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Attachment data not found in JSON.");
                 }
             }
 
             // Insert the attachment as an OLE object into the document.
-            // The "Package" progID allows embedding arbitrary files.
             DocumentBuilder builder = new DocumentBuilder(doc);
             using (MemoryStream attachmentStream = new MemoryStream(attachmentBytes))
             {
-                // Insert the OLE object at the current cursor position.
-                // Parameters: stream, progId, isLink (false = embed), iconStream (null = default icon), fileName (optional)
+                // "Package" progID allows embedding arbitrary files.
                 builder.InsertOleObject(attachmentStream, "Package", false, null);
             }
 
-            // Save the document as PDF with the attachment embedded as a document file.
+            // -----------------------------------------------------------------
+            // Save the final document as PDF with the attachment embedded.
+            // -----------------------------------------------------------------
+            string outputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "GeneratedReport.pdf");
             PdfSaveOptions pdfOptions = new PdfSaveOptions
             {
                 AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.DocumentEmbeddedFiles
             };
-
             doc.Save(outputPdfPath, pdfOptions);
+
+            Console.WriteLine($"PDF generated successfully: {outputPdfPath}");
         }
     }
 }

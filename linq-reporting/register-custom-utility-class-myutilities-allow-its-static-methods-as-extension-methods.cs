@@ -4,16 +4,20 @@ using Aspose.Words.Reporting;
 
 public static class MyUtilities
 {
-    // Example static method that can be called from a reporting template
     public static string ToUpper(string input) => input?.ToUpper();
+}
+
+public class DataSource
+{
+    public string Name { get; set; }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Load the template document (adjust the path as needed)
-        Document doc = new Document("Template.docx");
+        // Create an empty document (or load a template if you have one)
+        Document doc = new Document();
 
         // Create a ReportingEngine instance
         ReportingEngine engine = new ReportingEngine();
@@ -22,7 +26,7 @@ public class Program
         engine.KnownTypes.Add(typeof(MyUtilities));
 
         // Example data source for the template
-        var data = new { Name = "Aspose" };
+        var data = new DataSource { Name = "Aspose" };
 
         // Populate the template with data
         engine.BuildReport(doc, data);

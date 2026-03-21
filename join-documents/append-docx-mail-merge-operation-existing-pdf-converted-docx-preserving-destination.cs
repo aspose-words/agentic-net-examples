@@ -8,16 +8,26 @@ class Program
 {
     static void Main()
     {
-        // Paths to the files.
-        string existingDocPath = "ExistingFromPdf.docx";   // DOCX that originated from a PDF.
-        string templatePath    = "MailMergeTemplate.docx"; // Template containing MERGEFIELDs.
-        string outputPath      = "CombinedResult.docx";    // Resulting combined document.
+        // -----------------------------------------------------------------
+        // Create a destination document (simulating a DOCX converted from PDF)
+        // -----------------------------------------------------------------
+        Document destination = new Document();
+        var destBuilder = new DocumentBuilder(destination);
+        destBuilder.Writeln("=== Destination Document (converted from PDF) ===");
+        destBuilder.Writeln("This content comes from the original PDF-derived DOCX.");
+        destBuilder.Writeln();
 
-        // Load the existing DOCX (converted from PDF) – destination document.
-        Document destination = new Document(existingDocPath);
-
-        // Load the mail‑merge template – source document.
-        Document source = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // Create a mail‑merge template document (source)
+        // -----------------------------------------------------------------
+        Document source = new Document();
+        var srcBuilder = new DocumentBuilder(source);
+        srcBuilder.Writeln("=== Mail‑Merge Template ===");
+        srcBuilder.Writeln("Dear <<FirstName>> <<LastName>>,");
+        srcBuilder.Writeln("<<Message>>");
+        srcBuilder.Writeln("Best regards,");
+        srcBuilder.Writeln("Your Company");
+        srcBuilder.Writeln();
 
         // -------------------------------------------------
         // Prepare a simple data source for the mail merge.
@@ -45,6 +55,8 @@ class Program
         destination.AppendDocument(source, ImportFormatMode.UseDestinationStyles);
 
         // Save the combined document.
+        string outputPath = "CombinedResult.docx";
         destination.Save(outputPath);
+        Console.WriteLine($"Combined document saved to '{outputPath}'.");
     }
 }

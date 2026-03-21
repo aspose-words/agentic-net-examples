@@ -14,9 +14,8 @@ class Program
         // The property name "名前" (Japanese for "Name") is written as literal characters.
         builder.Writeln("Customer name: <<[customer.名前]>>");
 
-        // Prepare the data source. The anonymous object contains a "customer" object
-        // whose type has a property named "名前".
-        var data = new
+        // Prepare the data source. Use a visible type instead of an anonymous object.
+        var data = new ReportData
         {
             customer = new Customer { 名前 = "山田太郎" } // Literal Japanese characters.
         };
@@ -24,18 +23,23 @@ class Program
         // Configure the reporting engine.
         ReportingEngine engine = new ReportingEngine
         {
-            // Allow missing members to be treated as null (optional for this example).
             Options = ReportBuildOptions.AllowMissingMembers
         };
-        // Message to display when a member is missing (not used here but shown for completeness).
+        // Message to display when a member is missing (optional).
         engine.MissingMemberMessage = "N/A";
 
         // Build the report using the template and the data source.
-        engine.BuildReport(doc, data, string.Empty);
+        engine.BuildReport(doc, data, "Data");
 
         // Save the generated document.
         doc.Save("ReportWithUnicode.docx");
     }
+}
+
+// Wrapper class for the data source (must be a visible type).
+public class ReportData
+{
+    public Customer customer { get; set; }
 }
 
 // Class that contains a Unicode property name.

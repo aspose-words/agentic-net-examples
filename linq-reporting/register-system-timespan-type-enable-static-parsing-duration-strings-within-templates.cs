@@ -21,8 +21,8 @@ class Program
         engine.KnownTypes.Add(typeof(TimeSpan));
 
         // Build the report. No external data source is required for this example,
-        // so we pass an empty anonymous object.
-        engine.BuildReport(doc, new { });
+        // so we pass an empty object as the data source.
+        engine.BuildReport(doc, new object());
 
         // Save the generated document.
         doc.Save("Output.docx");

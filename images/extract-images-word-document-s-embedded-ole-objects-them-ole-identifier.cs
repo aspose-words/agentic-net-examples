@@ -8,14 +8,22 @@ class ExtractOleImages
 {
     static void Main()
     {
-        // Path to the source Word document.
-        string inputPath = @"C:\Docs\InputDocument.docx";
+        // Path to the source Word document. Adjust as needed or place a document named "InputDocument.docx" in the same folder as the executable.
+        string inputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "InputDocument.docx");
 
         // Folder where extracted OLE objects will be saved.
-        string outputFolder = @"C:\Docs\ExtractedOleObjects";
+        string outputFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExtractedOleObjects");
 
         // Ensure the output directory exists.
         Directory.CreateDirectory(outputFolder);
+
+        // Verify that the input file exists.
+        if (!File.Exists(inputPath))
+        {
+            Console.WriteLine($"Input file not found: {inputPath}");
+            Console.WriteLine("Please place a Word document named 'InputDocument.docx' in the executable directory.");
+            return;
+        }
 
         // Load the Word document.
         Document doc = new Document(inputPath);
@@ -39,7 +47,7 @@ class ExtractOleImages
 
             // Build a file name using the OLE object's ProgId (sanitized) and its suggested extension.
             // If the suggested extension is missing, default to a generic binary extension.
-            string progIdSafe = oleFormat.ProgId.Replace(".", "_");
+            string progIdSafe = (oleFormat.ProgId ?? "unknown").Replace(".", "_");
             string extension = string.IsNullOrEmpty(oleFormat.SuggestedExtension) ? ".bin" : oleFormat.SuggestedExtension;
             string fileName = Path.Combine(outputFolder,
                 $"OleObject_{oleIndex}_{progIdSafe}{extension}");
@@ -50,6 +58,6 @@ class ExtractOleImages
             oleIndex++;
         }
 
-        Console.WriteLine($"Extraction complete. {oleIndex} OLE objects saved to '{outputFolder}'.");
+        Console.WriteLine($"Extraction complete. {oleIndex} OLE object(s) saved to '{outputFolder}'.");
     }
 }

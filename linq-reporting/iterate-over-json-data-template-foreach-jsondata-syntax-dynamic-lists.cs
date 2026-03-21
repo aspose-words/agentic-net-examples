@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,38 +10,35 @@ namespace AsposeWordsJsonForeachDemo
     {
         static void Main()
         {
-            // Path to the Word template that contains the <<foreach>> tag.
-            // Example template content (in the document body):
-            //   <<foreach [in persons]>>
-            //   Name: <<[Name]>>
-            //   Age: <<[Age]>>
-            //   <</foreach>>
-            string templatePath = @"C:\Templates\PersonsTemplate.docx";
+            // Create a simple Word template in memory with a <<foreach>> tag.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("<<foreach [in persons]>>");
+            builder.Writeln("Name: <<[Name]>>");
+            builder.Writeln("Age: <<[Age]>>");
+            builder.Writeln("<</foreach>>");
 
-            // Path to the JSON file that will be used as the data source.
-            // Example JSON:
-            // {
-            //   "persons": [
-            //     { "Name": "John Doe", "Age": 30 },
-            //     { "Name": "Jane Smith", "Age": 25 }
-            //   ]
-            // }
-            string jsonPath = @"C:\Data\persons.json";
+            // JSON data source as a string.
+            string json = @"{
+                ""persons"": [
+                    { ""Name"": ""John Doe"", ""Age"": 30 },
+                    { ""Name"": ""Jane Smith"", ""Age"": 25 }
+                ]
+            }";
 
-            // Load the template document.
-            Document doc = new Document(templatePath);
+            // Load JSON from a memory stream.
+            using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+            JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
 
-            // Create a JsonDataSource from the JSON file using default parsing options.
-            JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
-
-            // Build the report. The third argument ("persons") is the name that will be
-            // referenced inside the template (the collection name used in <<foreach>>).
+            // Build the report.
             ReportingEngine engine = new ReportingEngine();
             engine.BuildReport(doc, jsonDataSource, "persons");
 
-            // Save the populated document.
-            string outputPath = @"C:\Output\PersonsReport.docx";
+            // Save the populated document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "PersonsReport.docx");
             doc.Save(outputPath);
+
+            Console.WriteLine($"Report generated: {outputPath}");
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
@@ -16,8 +17,13 @@ class InsertImageIntoFooter
         // Move the cursor to the primary footer of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
 
-        // Insert the image. The method returns the Shape that contains the image.
-        Shape imageShape = builder.InsertImage(@"C:\Images\Logo.png");
+        // Create a tiny PNG image (1x1 pixel) from a Base64 string.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        using var imageStream = new MemoryStream(imageBytes);
+
+        // Insert the image from the stream. The method returns the Shape that contains the image.
+        Shape imageShape = builder.InsertImage(imageStream);
 
         // Set the shape to be a floating picture (no text wrapping) so it can be positioned freely.
         imageShape.WrapType = WrapType.None;
@@ -32,17 +38,20 @@ class InsertImageIntoFooter
         imageShape.Top = 0;
 
         // Resize the shape to match the height of the footer.
-        // The footer height can be approximated by the bottom margin of the page.
-        // Here we use the page margin height as a proxy for the footer height.
         double footerHeight = builder.PageSetup.BottomMargin;
         imageShape.Height = footerHeight;
-        // Preserve the aspect ratio by letting the width adjust automatically.
-        imageShape.Width = -1; // -1 tells Aspose.Words to keep the original width proportionally.
+
+        // Set a positive width; using the same value as height preserves aspect ratio for a square image.
+        imageShape.Width = footerHeight;
 
         // Fit the image data to the shape frame so the picture scales to the shape size.
         imageShape.ImageData.FitImageToShape();
 
+        // Determine output path in the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DocumentWithFooterImage.docx");
+
         // Save the document.
-        doc.Save(@"C:\Output\DocumentWithFooterImage.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

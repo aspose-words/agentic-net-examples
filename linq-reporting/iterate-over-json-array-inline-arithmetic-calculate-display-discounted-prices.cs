@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,32 +10,37 @@ namespace AsposeWordsJsonReport
     {
         static void Main()
         {
-            // Path to the Word template that contains the reporting placeholders.
-            // Example placeholder row in the template:
-            // {{Name}} {{Price}} {{Discount}} {{Price * (1 - Discount/100)}}
-            string templatePath = @"C:\Templates\DiscountReport.docx";
+            // Create a simple Word template in memory with reporting placeholders.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Path to the JSON file. The JSON should be an array of objects, e.g.:
-            // [
-            //   { "Name": "Product A", "Price": 100.0, "Discount": 10 },
-            //   { "Name": "Product B", "Price": 250.0, "Discount": 15 }
-            // ]
-            string jsonPath = @"C:\Data\Products.json";
+            // Begin the collection loop.
+            builder.Writeln("{{#products}}");
+            // Row with placeholders and an inline arithmetic expression.
+            builder.Writeln("{{Name}} {{Price}} {{Discount}} {{Price * (1 - Discount/100)}}");
+            // End the collection loop.
+            builder.Writeln("{{/products}}");
 
-            // Load the template document.
-            Document doc = new Document(templatePath);
+            // JSON data as a string.
+            string json = @"
+            [
+                { ""Name"": ""Product A"", ""Price"": 100.0, ""Discount"": 10 },
+                { ""Name"": ""Product B"", ""Price"": 250.0, ""Discount"": 15 }
+            ]";
 
-            // Create a JSON data source from the file.
-            JsonDataSource jsonData = new JsonDataSource(jsonPath);
+            // Load JSON data from a memory stream.
+            using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+            JsonDataSource jsonData = new JsonDataSource(jsonStream);
 
-            // Build the report. The root element name ("products") must match the
-            // name used in the template syntax (e.g. {{#products}} ... {{/products}}).
+            // Build the report using the root element name "products".
             ReportingEngine engine = new ReportingEngine();
             engine.BuildReport(doc, jsonData, "products");
 
-            // Save the generated document.
-            string outputPath = @"C:\Output\DiscountReport.docx";
+            // Save the generated document to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "DiscountReport.docx");
             doc.Save(outputPath);
+
+            Console.WriteLine($"Report generated: {outputPath}");
         }
     }
 }

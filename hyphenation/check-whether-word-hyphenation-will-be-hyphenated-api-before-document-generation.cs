@@ -9,7 +9,7 @@ class HyphenationCheck
     static void Main()
     {
         // Path to an English hyphenation dictionary (OpenOffice .dic format).
-        // Ensure the file exists; otherwise automatic hyphenation cannot work.
+        // If the file does not exist, Aspose.Words will use its built‑in dictionary (if available).
         string dictionaryPath = @"C:\Hyphenation\hyph_en_US.dic";
         if (File.Exists(dictionaryPath))
         {
@@ -23,8 +23,8 @@ class HyphenationCheck
 
         // Enable automatic hyphenation for the document.
         doc.HyphenationOptions.AutoHyphenation = true;
-        // Optional: set hyphenation zone to zero to allow hyphenation anywhere.
-        doc.HyphenationOptions.HyphenationZone = 0;
+        // Set a positive hyphenation zone (zero is not allowed and throws an exception).
+        doc.HyphenationOptions.HyphenationZone = 5;
         // Hyphenate words written in all caps as well (not needed for this word).
         doc.HyphenationOptions.HyphenateCaps = true;
 
@@ -48,15 +48,10 @@ class HyphenationCheck
             if (enumerator.Type == LayoutEntityType.Line)
             {
                 string lineText = enumerator.Text;
-                if (lineText.EndsWith("-"))
+                if (lineText.EndsWith("-") && lineText.Contains("hyphen"))
                 {
-                    // Verify that the hyphen belongs to the word "hyphenation".
-                    // The line fragment before the hyphen should contain the prefix "hyphen".
-                    if (lineText.Contains("hyphen"))
-                    {
-                        hyphenated = true;
-                        break;
-                    }
+                    hyphenated = true;
+                    break;
                 }
             }
         }

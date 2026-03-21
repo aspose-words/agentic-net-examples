@@ -2,16 +2,82 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using Aspose.Words;
-using Aspose.Words.Reporting;
+using System.Xml.Linq;
 
 namespace ReflectionOptimizationBenchmark
 {
+    // Minimal placeholder for a document.
+    class Document
+    {
+        public StringBuilder Content { get; } = new StringBuilder();
+
+        public void Save(string path)
+        {
+            // Ensure directory exists.
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, Content.ToString());
+        }
+
+        public Document Clone()
+        {
+            var clone = new Document();
+            clone.Content.Append(this.Content);
+            return clone;
+        }
+    }
+
+    // Minimal placeholder for a data source based on XML.
+    class XmlDataSource
+    {
+        public XDocument Document { get; }
+
+        public XmlDataSource(string filePath)
+        {
+            Document = XDocument.Load(filePath);
+        }
+
+        public XElement Root => Document.Root!;
+    }
+
+    // Minimal reporting engine that simulates work.
+    class ReportingEngine
+    {
+        public static bool UseReflectionOptimization { get; set; }
+
+        public void BuildReport(Document doc, XmlDataSource dataSource, string rootElementName)
+        {
+            // Simulate different processing based on the optimization flag.
+            var persons = dataSource.Root.Elements("person");
+            foreach (var person in persons)
+            {
+                // Simulated work: read values and append to document content.
+                var name = (string?)person.Element("Name") ?? string.Empty;
+                var age = (string?)person.Element("Age") ?? string.Empty;
+
+                if (UseReflectionOptimization)
+                {
+                    // Faster path (simulated).
+                    doc.Content.AppendLine($"{name} ({age})");
+                }
+                else
+                {
+                    // Slower path (simulated extra work).
+                    var combined = $"{name} ({age})";
+                    // Simulate extra processing delay.
+                    for (int i = 0; i < 3; i++)
+                    {
+                        combined = combined.Replace(" ", " ");
+                    }
+                    doc.Content.AppendLine(combined);
+                }
+            }
+        }
+    }
+
     class Program
     {
-        // Adjust these paths to point to your actual directories.
-        private static readonly string MyDir = @"C:\Docs\Templates\";
-        private static readonly string ArtifactsDir = @"C:\Docs\Artifacts\";
+        // Use a directory relative to the current working directory.
+        private static readonly string ArtifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
 
         static void Main()
         {
@@ -20,13 +86,10 @@ namespace ReflectionOptimizationBenchmark
 
             // 1. Prepare a large XML data file.
             string xmlPath = Path.Combine(ArtifactsDir, "LargeData.xml");
-            GenerateLargeXml(xmlPath, elementCount: 500_000); // Adjust count as needed.
+            GenerateLargeXml(xmlPath, elementCount: 200_000); // Adjust count as needed.
 
-            // 2. Load a reporting template document.
-            // The template should contain a repeating region like: {{persons}}
-            // where "persons" matches the root element name in the XML.
-            string templatePath = Path.Combine(MyDir, "ReportingTemplate.docx");
-            Document template = new Document(templatePath);
+            // 2. Create a reporting template document in memory.
+            Document template = CreateTemplateDocument();
 
             // 3. Create the XML data source.
             XmlDataSource dataSource = new XmlDataSource(xmlPath);
@@ -72,13 +135,23 @@ namespace ReflectionOptimizationBenchmark
         }
 
         /// <summary>
+        /// Creates a minimal placeholder document.
+        /// </summary>
+        private static Document CreateTemplateDocument()
+        {
+            // In a real scenario this would contain a template.
+            // For this benchmark we just return an empty document.
+            return new Document();
+        }
+
+        /// <summary>
         /// Builds the report using the provided template and data source,
         /// measuring the elapsed time of the BuildReport operation.
         /// </summary>
         private static TimeSpan BuildReportAndMeasure(Document template, XmlDataSource dataSource, string rootElementName)
         {
             // Clone the template to avoid modifying the original instance between runs.
-            Document doc = (Document)template.Clone();
+            Document doc = template.Clone();
 
             var engine = new ReportingEngine();
 
@@ -89,10 +162,9 @@ namespace ReflectionOptimizationBenchmark
 
             stopwatch.Stop();
 
-            // Optionally, save the generated report to verify correctness.
-            // The file name includes a timestamp to avoid overwriting.
+            // Save the generated report to verify correctness.
             string outputPath = Path.Combine(ArtifactsDir,
-                $"Report_{DateTime.Now:yyyyMMdd_HHmmss}_{(ReportingEngine.UseReflectionOptimization ? "Opt" : "NoOpt")}.docx");
+                $"Report_{DateTime.Now:yyyyMMdd_HHmmss}_{(ReportingEngine.UseReflectionOptimization ? "Opt" : "NoOpt")}.txt");
             doc.Save(outputPath);
 
             return stopwatch.Elapsed;

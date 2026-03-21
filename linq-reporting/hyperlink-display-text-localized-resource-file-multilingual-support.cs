@@ -1,6 +1,5 @@
 using System;
 using System.Globalization;
-using System.Resources;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Fonts;
@@ -13,16 +12,10 @@ namespace HyperlinkLocalizationExample
         static void Main()
         {
             // Define the culture for which we want the localized hyperlink text.
-            // This could be changed at runtime based on user preferences.
             CultureInfo culture = new CultureInfo("fr-FR"); // Example: French (France)
 
-            // Load the resource manager for the .resx file named "Resources.resx"
-            // The base name is the fully qualified name of the resource file without the .resx extension.
-            ResourceManager rm = new ResourceManager("HyperlinkLocalizationExample.Resources", typeof(Program).Assembly);
-
-            // Retrieve the localized display text for the hyperlink.
-            // The resource file must contain a string entry with the key "LinkText".
-            string displayText = rm.GetString("LinkText", culture) ?? "Default Link";
+            // Retrieve the localized display text without using external resource files.
+            string displayText = GetLocalizedLinkText(culture);
 
             // Create a new blank document.
             Document doc = new Document();
@@ -36,7 +29,6 @@ namespace HyperlinkLocalizationExample
             builder.Font.Underline = Underline.Single;
 
             // Insert the hyperlink using the localized display text.
-            // The third parameter 'false' indicates that the second argument is a URL, not a bookmark.
             builder.InsertHyperlink(displayText, "https://www.example.com", false);
 
             // Reset formatting to default for subsequent text.
@@ -45,6 +37,18 @@ namespace HyperlinkLocalizationExample
 
             // Save the document to disk.
             doc.Save("LocalizedHyperlink.docx");
+        }
+
+        private static string GetLocalizedLinkText(CultureInfo culture)
+        {
+            // Simple in‑code localization fallback.
+            return culture.Name switch
+            {
+                "fr-FR" => "Lien vers l'exemple",
+                "es-ES" => "Enlace al ejemplo",
+                "de-DE" => "Beispiel‑Link",
+                _ => "Example Link"
+            };
         }
     }
 }

@@ -3,26 +3,35 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 class ImageExtractor
 {
     static void Main(string[] args)
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\Sample.docx";
+        // Determine base directory (where the executable resides).
+        string baseDir = AppContext.BaseDirectory;
 
-        // Folder where extracted images will be saved.
-        string outputFolder = @"C:\Docs\ExtractedImages";
+        // Path to the source DOCX file (relative to the executable).
+        string inputPath = Path.Combine(baseDir, "Sample.docx");
+
+        // Folder where extracted images will be saved (relative to the executable).
+        string outputFolder = Path.Combine(baseDir, "ExtractedImages");
 
         // Ensure the output directory exists.
         Directory.CreateDirectory(outputFolder);
+
+        // If the sample document does not exist, create a minimal one.
+        if (!File.Exists(inputPath))
+        {
+            var emptyDoc = new Document();
+            emptyDoc.Save(inputPath);
+        }
 
         // Load the document from the file system.
         Document doc = new Document(inputPath);
 
         // Retrieve all Shape nodes (including those that contain images).
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        var shapes = doc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
         foreach (Shape shape in shapes.OfType<Shape>())

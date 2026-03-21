@@ -38,27 +38,21 @@ namespace ReportingExample
             // Convert the list to a list of read‑only wrappers.
             var readOnlyPeople = people.Select(p => new PersonReadOnly(p)).ToList();
 
-            // ---------------------------------------------------------------------------
-            // Configure the ReportingEngine.
-            //
-            // 1. Restrict the original mutable type (Person) so that its members cannot be
-            //    accessed from templates. This prevents any accidental use of setters.
-            // 2. Build the report using the read‑only wrapper type (PersonReadOnly) which
-            //    only exposes getters.
-            // ---------------------------------------------------------------------------
+            // Restrict the mutable type so its members cannot be accessed from templates.
             ReportingEngine.SetRestrictedTypes(typeof(Person));
 
-            // Create the engine instance. No special options are required for this scenario.
+            // Create the engine instance.
             var engine = new ReportingEngine();
 
-            // Load a template document that contains reporting tags, e.g.:
-            //   <<foreach [in readOnlyPeople]>>
-            //       <<[Name]>> is <<[Age]>>
-            //   <</foreach>>
-            var doc = new Document("Template.docx");
+            // Create a simple template document in‑memory.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("<<foreach [in readOnlyPeople]>>");
+            builder.Writeln("Name: <<[Name]>>, Age: <<[Age]>>");
+            builder.Writeln("<</foreach>>");
 
             // Build the report using the read‑only collection as the data source.
-            engine.BuildReport(doc, new { readOnlyPeople });
+            engine.BuildReport(doc, readOnlyPeople, "readOnlyPeople");
 
             // Save the resulting document.
             doc.Save("Report_Output.docx");

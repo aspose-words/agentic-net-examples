@@ -3,27 +3,37 @@ using System.Diagnostics;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class ReportData
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+}
+
 class ReportMemoryMeasurement
 {
     static void Main()
     {
-        // Path to the template document that contains reporting tags.
-        string templatePath = "Template.docx";          // TODO: replace with actual template file path
-        // Path where the generated report will be saved.
-        string outputPath = "Report.docx";              // TODO: replace with desired output file path
+        // Create a simple template document with reporting tags.
+        Document template = new Document();
+        var builder = new DocumentBuilder(template);
+        builder.Writeln("Name: <<[ReportData.Name]>>");
+        builder.Writeln("Age: <<[ReportData.Age]>>");
 
-        // Load the template document.
-        Document template = new Document(templatePath);
+        // Path where the generated report will be saved.
+        string outputPath = "Report.docx";
 
         // Create the reporting engine and enable the RemoveEmptyParagraphs option.
-        ReportingEngine engine = new ReportingEngine
+        var engine = new ReportingEngine
         {
             Options = ReportBuildOptions.RemoveEmptyParagraphs
         };
 
-        // Prepare the data source for the report.
-        // Replace this with the actual data source (e.g., a DataSet, an object, etc.).
-        object dataSource = GetReportData(); // TODO: implement GetReportData()
+        // Prepare a visible data source for the report.
+        var dataSource = new ReportData
+        {
+            Name = "John Doe",
+            Age = 30
+        };
 
         // Force a garbage collection to get a clean baseline memory measurement.
         GC.Collect();
@@ -33,8 +43,8 @@ class ReportMemoryMeasurement
         // Record memory usage before building the report.
         long memoryBefore = Process.GetCurrentProcess().PrivateMemorySize64;
 
-        // Build the report.
-        engine.BuildReport(template, dataSource);
+        // Build the report using the data source name "ReportData".
+        engine.BuildReport(template, dataSource, "ReportData");
 
         // Record memory usage after building the report.
         long memoryAfter = Process.GetCurrentProcess().PrivateMemorySize64;
@@ -49,13 +59,5 @@ class ReportMemoryMeasurement
 
         // Save the generated report.
         template.Save(outputPath);
-    }
-
-    // Placeholder method – replace with actual logic to obtain the data source.
-    private static object GetReportData()
-    {
-        // Example: return a DataSet, a custom object, etc.
-        // For demonstration purposes we return an empty anonymous object.
-        return new { };
     }
 }

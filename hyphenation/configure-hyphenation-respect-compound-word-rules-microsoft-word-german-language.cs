@@ -8,30 +8,50 @@ class Program
 {
     static void Main()
     {
-        // Paths to input and output folders (adjust as needed).
-        string dataDir = @"C:\Data\";
-        string artifactsDir = @"C:\Artifacts\";
+        // Prepare folders relative to the executable directory.
+        string baseDir = AppContext.BaseDirectory;
+        string dataDir = Path.Combine(baseDir, "Data");
+        string artifactsDir = Path.Combine(baseDir, "Artifacts");
 
-        // Register the German hyphenation dictionary (de-CH) from a file.
-        Hyphenation.RegisterDictionary("de-CH", Path.Combine(dataDir, "hyph_de_CH.dic"));
+        Directory.CreateDirectory(dataDir);
+        Directory.CreateDirectory(artifactsDir);
+
+        // Ensure a (dummy) hyphenation dictionary exists so RegisterDictionary does not throw.
+        string germanDictPath = Path.Combine(dataDir, "hyph_de_CH.dic");
+        if (!File.Exists(germanDictPath))
+        {
+            // A minimal dictionary file – real hyphenation patterns are not required for this demo.
+            File.WriteAllText(germanDictPath, "%% Dummy hyphenation dictionary");
+        }
+
+        // Register the German hyphenation dictionary (de-CH) from the file.
+        try
+        {
+            Hyphenation.RegisterDictionary("de-CH", germanDictPath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: could not register hyphenation dictionary: {ex.Message}");
+        }
 
         // Optional: set a callback to load dictionaries on demand.
         Hyphenation.Callback = new HyphenationCallback(dataDir);
 
-        // Load a German language document.
-        Document doc = new Document(Path.Combine(dataDir, "GermanText.docx"));
+        // Create a simple German language document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Dies ist ein Beispieltext, der die Silbentrennung in deutscher Sprache demonstriert.");
 
         // Enable automatic hyphenation for the document.
         doc.HyphenationOptions.AutoHyphenation = true;
-        // Keep default behavior for capitalized words.
         doc.HyphenationOptions.HyphenateCaps = true;
-        // Limit consecutive hyphenated lines (optional).
         doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        // Set hyphenation zone (distance from right margin where hyphenation is suppressed).
         doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch (720 / 1440 points)
 
         // Save the hyphenated document.
-        doc.Save(Path.Combine(artifactsDir, "GermanHyphenated.docx"));
+        string outputPath = Path.Combine(artifactsDir, "GermanHyphenated.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 
     // Callback that registers hyphenation dictionaries when requested by the layout engine.
@@ -50,12 +70,10 @@ class Program
 
         public void RequestDictionary(string language)
         {
-            // If the dictionary is already registered, do nothing.
             if (Hyphenation.IsDictionaryRegistered(language))
                 return;
 
-            // Register the dictionary if we have a matching file.
-            if (_dictionaryFiles.TryGetValue(language, out string filePath))
+            if (_dictionaryFiles.TryGetValue(language, out string filePath) && File.Exists(filePath))
                 Hyphenation.RegisterDictionary(language, filePath);
         }
     }

@@ -1,39 +1,68 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
-using Aspose.Words.Rendering;
 
 class ImagePreviewGenerator
 {
     static void Main()
     {
-        // Paths for the source document and the folder where previews will be saved.
-        string sourceDocPath = @"C:\Docs\input.docx";
-        string previewFolder = @"C:\Previews\";
+        // Determine paths.
+        string sourceDocPath = Path.Combine(Path.GetTempPath(), "input.docx");
+        string previewFolder = Path.Combine(Path.GetTempPath(), "Previews");
 
-        // Load the Word document.
-        Document doc = new Document(sourceDocPath);
+        // Ensure the preview folder exists.
+        Directory.CreateDirectory(previewFolder);
 
-        // Counter to generate unique file names for each extracted image.
+        Document doc;
+
+        // If the source document does not exist, create a simple one with an embedded image.
+        if (!File.Exists(sourceDocPath))
+        {
+            doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // A minimal 1x1 PNG image (transparent).
+            byte[] pngData = Convert.FromBase64String(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+
+            using (MemoryStream ms = new MemoryStream(pngData))
+            {
+                // Insert the image into the document.
+                builder.InsertImage(ms);
+            }
+
+            // Save the temporary document.
+            doc.Save(sourceDocPath);
+        }
+        else
+        {
+            doc = new Document(sourceDocPath);
+        }
+
         int imageIndex = 0;
 
-        // Iterate over all Shape nodes in the document (including those inside headers/footers).
+        // Iterate over all Shape nodes (including those in headers/footers).
         foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
-            // Process only shapes that actually contain an image.
             if (shape.HasImage)
             {
-                // Configure image save options to scale the output to 75% of the original size.
                 ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
                 {
-                    Scale = 0.75f // 75% zoom factor.
+                    Scale = 0.75f // 75% of original size.
                 };
 
-                // Render the shape (image) to a PNG file using the specified scaling.
-                shape.GetShapeRenderer().Save($"{previewFolder}image_{imageIndex}.png", saveOptions);
+                string outputPath = Path.Combine(previewFolder, $"image_{imageIndex}.png");
+                shape.GetShapeRenderer().Save(outputPath, saveOptions);
+                Console.WriteLine($"Saved preview: {outputPath}");
                 imageIndex++;
             }
+        }
+
+        if (imageIndex == 0)
+        {
+            Console.WriteLine("No images were found in the document.");
         }
     }
 }

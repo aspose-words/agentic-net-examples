@@ -7,11 +7,12 @@ class Program
 {
     static void Main()
     {
-        // Define paths to the data folder, custom fonts folder, XML substitution file and output PDF.
-        string dataDir = @"C:\Data\";
-        string fontsDir = Path.Combine(dataDir, "MyFonts");
-        string xmlPath = Path.Combine(dataDir, "FontSubstitutionRules.xml");
-        string outPath = Path.Combine(dataDir, "Result.pdf");
+        // Create temporary working directories.
+        string workDir = Path.Combine(Path.GetTempPath(), "AsposeExample");
+        Directory.CreateDirectory(workDir);
+        string fontsDir = Path.Combine(workDir, "MyFonts");
+        Directory.CreateDirectory(fontsDir);
+        string outPath = Path.Combine(workDir, "Result.pdf");
 
         // Create a new empty document.
         Document doc = new Document();
@@ -20,13 +21,25 @@ class Program
         FontSettings fontSettings = new FontSettings();
         doc.FontSettings = fontSettings;
 
-        // Restrict Aspose.Words to look for fonts only in the custom folder.
+        // Restrict Aspose.Words to look for fonts only in the custom folder (which is empty in this example).
         FolderFontSource folderSource = new FolderFontSource(fontsDir, false);
         fontSettings.SetFontsSources(new FontSourceBase[] { folderSource });
 
-        // Load the custom font substitution table from the XML configuration file.
+        // Load the custom font substitution table from an XML string.
+        string xml = @"
+<SubstitutionTable>
+    <Substitution>
+        <SourceFont>Arial</SourceFont>
+        <TargetFont>Times New Roman</TargetFont>
+    </Substitution>
+</SubstitutionTable>";
+
+        // Write the XML to a temporary file because TableSubstitutionRule only supports loading from a file.
+        string tempXmlPath = Path.Combine(workDir, "substitution.xml");
+        File.WriteAllText(tempXmlPath, xml);
+
         TableSubstitutionRule tableRule = fontSettings.SubstitutionSettings.TableSubstitution;
-        tableRule.Load(xmlPath);
+        tableRule.Load(tempXmlPath);
 
         // Write some text using a font that is not present in the custom folder.
         // The substitution rule loaded from XML will determine which font is actually used.
@@ -36,5 +49,6 @@ class Program
 
         // Save the resulting document.
         doc.Save(outPath);
+        Console.WriteLine($"Document saved to: {outPath}");
     }
 }

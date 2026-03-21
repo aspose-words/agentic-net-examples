@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Lists;
@@ -8,18 +7,20 @@ class CsvNestedBullets
 {
     static void Main()
     {
-        // Path to the source CSV file.
-        // Expected format: Category,Item (first line may contain headers).
-        string csvPath = @"C:\Data\sample.csv";
+        // Sample CSV data (Category,Item). In a real scenario you could read from a file.
+        string[] csvLines = new[]
+        {
+            "Category,Item",          // header
+            "Fruits,Apple",
+            "Fruits,Banana",
+            "Fruits,Orange",
+            "Vegetables,Carrot",
+            "Vegetables,Potato",
+            "Vegetables,Tomato"
+        };
 
-        // Path where the generated Word document will be saved.
-        string outputPath = @"C:\Output\NestedBullets.docx";
-
-        // Load all lines from the CSV file.
-        string[] allLines = File.ReadAllLines(csvPath);
-
-        // If the file contains a header row, skip it.
-        var dataLines = allLines.Skip(1)
+        // Skip the header and any empty lines.
+        var dataLines = csvLines.Skip(1)
                                 .Where(l => !string.IsNullOrWhiteSpace(l));
 
         // Parse each line into a tuple (Category, Item) and group by Category.
@@ -57,7 +58,10 @@ class CsvNestedBullets
         // End list formatting for any subsequent paragraphs.
         builder.ListFormat.List = null;
 
-        // Save the document to the specified location.
+        // Save the document to the current directory.
+        string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "NestedBullets.docx");
         doc.Save(outputPath);
+
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

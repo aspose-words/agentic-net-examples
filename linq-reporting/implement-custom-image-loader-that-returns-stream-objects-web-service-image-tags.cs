@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Net.Http;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
@@ -16,7 +14,7 @@ class Program
 
         // Build the document and insert images using placeholder URIs.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage("logo");      // Will be replaced by the image returned from the web service.
+        builder.InsertImage("logo");      // Will be replaced by the image returned from the loader.
         builder.InsertImage("banner");    // Another placeholder.
 
         // Save the resulting document.
@@ -24,30 +22,20 @@ class Program
     }
 }
 
-// Implements IResourceLoadingCallback to fetch images from a web service.
+// Implements IResourceLoadingCallback to provide image data.
 class WebServiceImageLoader : IResourceLoadingCallback
 {
-    // Base URL of the web service that returns image bytes.
-    private const string ServiceBaseUrl = "https://example.com/api/images/";
+    // A 1x1 pixel PNG (transparent) encoded in base64.
+    private static readonly byte[] PlaceholderImage = Convert.FromBase64String(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII=");
 
     public ResourceLoadingAction ResourceLoading(ResourceLoadingArgs args)
     {
         // Process only image resources.
         if (args.ResourceType == ResourceType.Image)
         {
-            // Construct the request URL using the original URI as an identifier.
-            string requestUrl = ServiceBaseUrl + Uri.EscapeDataString(args.OriginalUri);
-
-            using (HttpClient client = new HttpClient())
-            {
-                // Synchronously download the image bytes.
-                byte[] imageBytes = client.GetByteArrayAsync(requestUrl).GetAwaiter().GetResult();
-
-                // Provide the downloaded bytes to Aspose.Words.
-                args.SetData(imageBytes);
-            }
-
-            // Instruct Aspose.Words to use the user‑provided data.
+            // Provide the placeholder image bytes to Aspose.Words.
+            args.SetData(PlaceholderImage);
             return ResourceLoadingAction.UserProvided;
         }
 

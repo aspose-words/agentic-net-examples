@@ -2,22 +2,41 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Rendering;
 using Aspose.Words.Drawing;
 
 class ResizeExtractedPngImages
 {
     static void Main()
     {
-        // Load the source Word document that contains PNG images.
-        Document doc = new Document(@"C:\Input\DocumentWithImages.docx");
+        // Prepare a temporary working folder.
+        string workFolder = Path.Combine(Path.GetTempPath(), "ResizeExtractedPngImages");
+        Directory.CreateDirectory(workFolder);
+
+        // Create a tiny PNG file (1×1 pixel, red) if it does not already exist.
+        string pngPath = Path.Combine(workFolder, "sample.png");
+        if (!File.Exists(pngPath))
+        {
+            // Base64‑encoded PNG (red 1×1 pixel).
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK7cAAAAASUVORK5CYII=";
+            File.WriteAllBytes(pngPath, Convert.FromBase64String(base64Png));
+        }
+
+        // Create a Word document and insert the PNG image.
+        string docPath = Path.Combine(workFolder, "DocumentWithImages.docx");
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(pngPath);
+        doc.Save(docPath);
+
+        // Load the document (simulating an external source).
+        Document loadedDoc = new Document(docPath);
 
         // Prepare a folder for the resized preview images.
-        string previewFolder = @"C:\Output\Previews\";
+        string previewFolder = Path.Combine(workFolder, "Previews");
         Directory.CreateDirectory(previewFolder);
 
         // Iterate over all Shape nodes in the document.
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
 
         foreach (Shape shape in shapes)
@@ -35,16 +54,13 @@ class ResizeExtractedPngImages
             // Configure ImageSaveOptions to render the shape at 50% scale.
             ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Png)
             {
-                // Scale = 0.5 reduces both width and height by half.
                 Scale = 0.5f
             };
 
             // Render the shape to a PNG file using the configured options.
-            // ShapeRenderer inherits from NodeRendererBase and provides a Save method.
             shape.GetShapeRenderer().Save(previewPath, saveOptions);
         }
 
-        // Optionally, inform that processing is complete.
-        Console.WriteLine("Preview images have been generated.");
+        Console.WriteLine($"Preview images have been generated in: {previewFolder}");
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -8,11 +9,19 @@ class ExtractVideoThumbnails
     static void Main()
     {
         // Path to the DOCX that contains online video objects.
-        string inputFile = @"C:\Docs\VideoDocument.docx";
+        // Use a relative path so the example works without requiring a specific absolute location.
+        string inputFile = Path.Combine(AppContext.BaseDirectory, "VideoDocument.docx");
 
         // Folder where extracted PNG thumbnails will be saved.
-        string outputFolder = @"C:\Docs\VideoThumbnails";
+        string outputFolder = Path.Combine(AppContext.BaseDirectory, "VideoThumbnails");
         Directory.CreateDirectory(outputFolder);
+
+        if (!File.Exists(inputFile))
+        {
+            Console.WriteLine($"Input file not found: {inputFile}");
+            Console.WriteLine("Place a DOCX file named 'VideoDocument.docx' in the application directory and rerun the program.");
+            return;
+        }
 
         // Load the document.
         Document doc = new Document(inputFile);
@@ -28,14 +37,12 @@ class ExtractVideoThumbnails
             if (!shape.HasImage)
                 continue;
 
-            // Build the output file name.  The thumbnail image stored by Aspose.Words is already a PNG,
-            // so we can save it directly without using System.Drawing.
+            // Build the output file name. The thumbnail image stored by Aspose.Words is already a PNG,
+            // so we can save it directly.
             string outPath = Path.Combine(outputFolder, $"VideoThumbnail_{thumbIndex}.png");
 
-            // Save the image data to a file.  Aspose.Words will keep the original image format; if the
-            // source thumbnail is not PNG you can change the extension to the appropriate format.
+            // Save the image data to a file.
             shape.ImageData.Save(outPath);
-
             thumbIndex++;
         }
 

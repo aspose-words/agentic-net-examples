@@ -3,9 +3,22 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
 
-class Program
+public class ReportData
 {
-    static void Main()
+    public string Title { get; set; }
+    public Item[] Items { get; set; }
+}
+
+public class Item
+{
+    public string Name { get; set; }
+    public int Quantity { get; set; }
+    public double Price { get; set; }
+}
+
+public class Program
+{
+    public static void Main()
     {
         // Load the DOCX template that contains LINQ tags.
         Document doc = new Document("Template.docx");
@@ -28,19 +41,5 @@ class Program
 
         // Save the resulting document as a PDF file.
         doc.Save("Report.pdf", SaveFormat.Pdf);
-    }
-
-    // Classes that represent the structure of the data source.
-    public class ReportData
-    {
-        public string Title { get; set; }
-        public Item[] Items { get; set; }
-    }
-
-    public class Item
-    {
-        public string Name { get; set; }
-        public int Quantity { get; set; }
-        public double Price { get; set; }
     }
 }

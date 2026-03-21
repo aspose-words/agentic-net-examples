@@ -1,51 +1,64 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
 using Aspose.Words.Saving;
 
 class HyphenateBatchProcessor
 {
     static void Main()
     {
-        // Folder that contains the source DOCX files.
-        string inputFolder = @"C:\Docs\Input";
+        // Use folders relative to the executable location.
+        string baseDir = AppContext.BaseDirectory;
+        string inputFolder = Path.Combine(baseDir, "Input");
+        string outputFolder = Path.Combine(baseDir, "Output");
+        string dictionariesFolder = Path.Combine(baseDir, "Dictionaries");
 
-        // Folder where the resulting PDF files will be written.
-        string outputFolder = @"C:\Docs\Output";
-
-        // Folder that holds hyphenation dictionary files (e.g., hyph_en-US.dic).
-        string dictionariesFolder = @"C:\Docs\Dictionaries";
-
-        // Ensure the output directory exists.
+        // Ensure required directories exist.
+        Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
+        Directory.CreateDirectory(dictionariesFolder);
 
-        // Iterate over every DOCX file in the input directory.
-        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
+        // If there are no DOCX files, inform the user and exit gracefully.
+        var docxFiles = Directory.EnumerateFiles(inputFolder, "*.docx");
+        bool anyFile = false;
+        foreach (var docxPath in docxFiles)
         {
-            // Load the DOCX document.
-            Document doc = new Document(docxPath);
-
-            // Determine the language code to use for hyphenation.
-            // Expected file naming convention: <BaseName>_<lang>.docx (e.g., Report_en-US.docx).
-            string language = ExtractLanguageFromFileName(Path.GetFileNameWithoutExtension(docxPath));
-
-            // Register the appropriate hyphenation dictionary if it hasn't been registered yet.
-            EnsureDictionaryRegistered(language, dictionariesFolder);
-
-            // Enable automatic hyphenation and configure optional parameters.
-            doc.HyphenationOptions.AutoHyphenation = true;
-            doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;   // Max consecutive hyphenated lines.
-            doc.HyphenationOptions.HyphenationZone = 720;       // 0.5 inch from right margin.
-            doc.HyphenationOptions.HyphenateCaps = true;       // Hyphenate all‑caps words.
-
-            // Construct the output PDF file path.
-            string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
-            string pdfPath = Path.Combine(outputFolder, pdfFileName);
-
-            // Save the document as PDF.
-            doc.Save(pdfPath, SaveFormat.Pdf);
+            anyFile = true;
+            ProcessDocument(docxPath, outputFolder, dictionariesFolder);
         }
+
+        if (!anyFile)
+        {
+            Console.WriteLine($"No DOCX files found in '{inputFolder}'. Place files there and rerun the program.");
+        }
+    }
+
+    private static void ProcessDocument(string docxPath, string outputFolder, string dictionariesFolder)
+    {
+        // Load the DOCX document.
+        Document doc = new Document(docxPath);
+
+        // Determine the language code to use for hyphenation.
+        // Expected file naming convention: <BaseName>_<lang>.docx (e.g., Report_en-US.docx).
+        string language = ExtractLanguageFromFileName(Path.GetFileNameWithoutExtension(docxPath));
+
+        // Register the appropriate hyphenation dictionary if it hasn't been registered yet.
+        EnsureDictionaryRegistered(language, dictionariesFolder);
+
+        // Enable automatic hyphenation and configure optional parameters.
+        doc.HyphenationOptions.AutoHyphenation = true;
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;   // Max consecutive hyphenated lines.
+        doc.HyphenationOptions.HyphenationZone = 720;       // 0.5 inch from right margin.
+        doc.HyphenationOptions.HyphenateCaps = true;       // Hyphenate all‑caps words.
+
+        // Construct the output PDF file path.
+        string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
+        string pdfPath = Path.Combine(outputFolder, pdfFileName);
+
+        // Save the document as PDF.
+        doc.Save(pdfPath, SaveFormat.Pdf);
+
+        Console.WriteLine($"Processed '{Path.GetFileName(docxPath)}' → '{pdfFileName}'.");
     }
 
     // Extracts a language identifier from a file name.

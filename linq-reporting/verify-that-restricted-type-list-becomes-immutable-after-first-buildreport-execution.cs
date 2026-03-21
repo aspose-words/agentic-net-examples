@@ -12,7 +12,7 @@ class RestrictedTypesImmutabilityDemo
         builder.Writeln("<<[obj.ToString()]>>"); // placeholder, not used.
 
         // Set restricted types BEFORE the first BuildReport call.
-        ReportingEngine.SetRestrictedTypes(typeof(System.Type));
+        ReportingEngine.SetRestrictedTypes(new Type[] { typeof(System.Type) });
 
         // Verify that the restricted types were set correctly.
         Type[] initialRestricted = ReportingEngine.GetRestrictedTypes();
@@ -28,10 +28,10 @@ class RestrictedTypesImmutabilityDemo
         // After the first BuildReport, attempting to modify the restricted types should throw.
         try
         {
-            ReportingEngine.SetRestrictedTypes(typeof(string));
+            ReportingEngine.SetRestrictedTypes(new Type[] { typeof(string) });
             Console.WriteLine("ERROR: SetRestrictedTypes did not throw after BuildReport.");
         }
-        catch (ArgumentException ex)
+        catch (InvalidOperationException ex)
         {
             Console.WriteLine("Expected exception caught: " + ex.Message);
         }

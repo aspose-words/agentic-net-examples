@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 namespace InsertDocumentDynamically
@@ -7,32 +8,30 @@ namespace InsertDocumentDynamically
     {
         static void Main()
         {
-            // Path to the main template document that contains a bookmark placeholder.
-            // The bookmark name is "InsertHere". It can be created in Word beforehand.
-            string templatePath = @"C:\Docs\Template.docx";
+            // Create the template document with a bookmark placeholder.
+            Document templateDoc = new Document();
+            DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
+            templateBuilder.Writeln("This is the main document.");
+            templateBuilder.StartBookmark("InsertHere");
+            templateBuilder.Writeln("[Placeholder for external document]");
+            templateBuilder.EndBookmark("InsertHere");
+            templateBuilder.Writeln("End of the main document.");
 
-            // Path to the external document that we want to insert.
-            string externalDocPath = @"C:\Docs\External.docx";
-
-            // Load the template document.
-            Document templateDoc = new Document(templatePath);               // Document(string)
-
-            // Load the external document.
-            Document externalDoc = new Document(externalDocPath);            // Document(string)
-
-            // Create a DocumentBuilder for the template document.
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);      // DocumentBuilder(Document)
-
-            // Move the cursor to the bookmark where the external document will be inserted.
-            builder.MoveToBookmark("InsertHere");                           // MoveToBookmark(string)
+            // Create the external document that will be inserted.
+            Document externalDoc = new Document();
+            DocumentBuilder externalBuilder = new DocumentBuilder(externalDoc);
+            externalBuilder.Writeln("This is the content of the external document.");
+            externalBuilder.Writeln("It will be inserted at the bookmark.");
 
             // Insert the external document at the bookmark position.
-            // KeepSourceFormatting preserves the original formatting of the inserted document.
-            builder.InsertDocument(externalDoc, ImportFormatMode.KeepSourceFormatting); // InsertDocument(Document, ImportFormatMode)
+            templateBuilder.MoveToBookmark("InsertHere");
+            templateBuilder.InsertDocument(externalDoc, ImportFormatMode.KeepSourceFormatting);
 
-            // Save the resulting document.
-            string outputPath = @"C:\Docs\Result.docx";
-            templateDoc.Save(outputPath);                                   // Save(string)
+            // Save the resulting document to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
+            templateDoc.Save(outputPath);
+
+            Console.WriteLine($"Result document saved to: {outputPath}");
         }
     }
 }

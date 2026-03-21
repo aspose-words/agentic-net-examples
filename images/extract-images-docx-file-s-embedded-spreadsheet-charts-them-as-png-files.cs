@@ -10,13 +10,22 @@ class Program
     static void Main()
     {
         // Path to the source DOCX that contains embedded spreadsheet charts.
-        string inputPath = @"C:\Docs\ChartDocument.docx";
+        // Use a relative path so the example can run without requiring a specific absolute location.
+        string inputPath = Path.Combine(AppContext.BaseDirectory, "ChartDocument.docx");
 
         // Folder where extracted PNG images will be saved.
-        string outputFolder = @"C:\Docs\ExtractedCharts";
+        string outputFolder = Path.Combine(AppContext.BaseDirectory, "ExtractedCharts");
 
         // Ensure the output directory exists.
         Directory.CreateDirectory(outputFolder);
+
+        // Verify that the input file exists before attempting to load it.
+        if (!File.Exists(inputPath))
+        {
+            Console.WriteLine($"Input file not found: {inputPath}");
+            Console.WriteLine("Place a DOCX file named 'ChartDocument.docx' in the application directory and rerun the program.");
+            return;
+        }
 
         // Load the Word document.
         Document doc = new Document(inputPath);

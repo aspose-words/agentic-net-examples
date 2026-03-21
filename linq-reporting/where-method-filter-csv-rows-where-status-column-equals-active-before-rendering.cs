@@ -9,22 +9,38 @@ class CsvFilterExample
 {
     static void Main()
     {
-        // Load the Word template that contains the reporting tags.
-        // Example template tag: <<foreach [persons]>><<[Name]>> <<[/foreach]>>
-        Document doc = new Document("Template.docx");
+        // Ensure CSV file exists with sample data.
+        const string csvPath = "People.csv";
+        if (!File.Exists(csvPath))
+        {
+            File.WriteAllLines(csvPath, new[]
+            {
+                "Name,Age,Status",
+                "John,30,Active",
+                "Jane,25,Inactive",
+                "Bob,40,Active"
+            });
+        }
 
-        // --------------------------------------------------------------------
+        // Create a simple Word template in memory if the file does not exist.
+        const string templatePath = "Template.docx";
+        Document doc;
+        if (File.Exists(templatePath))
+        {
+            doc = new Document(templatePath);
+        }
+        else
+        {
+            doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("Report of active persons:");
+            builder.Writeln("<<foreach [persons]>>");
+            builder.Writeln("Name: <<[Name]>>, Age: <<[Age]>>");
+            builder.Writeln("<</foreach>>");
+        }
+
         // Load CSV data into a DataTable.
-        // --------------------------------------------------------------------
-        // The CSV file is expected to have a header row.
-        // Example CSV content:
-        // Name,Age,Status
-        // John,30,Active
-        // Jane,25,Inactive
-        // --------------------------------------------------------------
-        string csvPath = "People.csv";
         DataTable csvTable = new DataTable("persons");
-
         using (var reader = new StreamReader(csvPath))
         {
             bool isFirstLine = true;
@@ -38,14 +54,12 @@ class CsvFilterExample
 
                 if (isFirstLine)
                 {
-                    // Create columns from the header row.
                     foreach (var header in fields)
                         csvTable.Columns.Add(header.Trim());
                     isFirstLine = false;
                 }
                 else
                 {
-                    // Add data rows.
                     var row = csvTable.NewRow();
                     for (int i = 0; i < fields.Length; i++)
                         row[i] = fields[i].Trim();
@@ -54,29 +68,21 @@ class CsvFilterExample
             }
         }
 
-        // --------------------------------------------------------------------
-        // Filter rows where the "Status" column equals "Active" using LINQ Where.
-        // --------------------------------------------------------------------
+        // Filter rows where Status == "Active".
         var activeRows = csvTable.AsEnumerable()
                                  .Where(r => string.Equals(r.Field<string>("Status"),
                                                           "Active",
                                                           StringComparison.OrdinalIgnoreCase));
 
-        // If no rows match, create an empty table with the same schema to avoid exceptions.
         DataTable filteredTable = activeRows.Any()
             ? activeRows.CopyToDataTable()
-            : csvTable.Clone(); // empty table with same columns
+            : csvTable.Clone();
 
-        // --------------------------------------------------------------------
-        // Build the report using the filtered data.
-        // --------------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        // The data source name ("persons") must match the name used in the template tags.
+        // Build the report.
+        var engine = new ReportingEngine();
         engine.BuildReport(doc, filteredTable, "persons");
 
-        // --------------------------------------------------------------------
         // Save the rendered document.
-        // --------------------------------------------------------------------
         doc.Save("FilteredReport.docx");
     }
 }

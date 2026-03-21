@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -15,9 +15,13 @@ namespace AsposeWordsBase64Example
             // Use DocumentBuilder to add content to the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert an image from the local file system.
-            // The image will be stored inside the document.
-            builder.InsertImage(@"C:\Images\Sample.png");
+            // A 1x1 pixel transparent PNG encoded as Base64.
+            const string pngBase64 =
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+            byte[] pngBytes = Convert.FromBase64String(pngBase64);
+
+            // Insert the image from the byte array.
+            builder.InsertImage(pngBytes);
 
             // Configure HTML save options to embed images as Base64 strings.
             HtmlSaveOptions saveOptions = new HtmlSaveOptions
@@ -26,8 +30,11 @@ namespace AsposeWordsBase64Example
                 PrettyFormat = true          // Optional: make the output HTML more readable.
             };
 
-            // Save the document as HTML with embedded Base64 images.
-            doc.Save(@"C:\Output\DocumentWithBase64Images.html", saveOptions);
+            // Save the document as HTML with embedded Base64 images in the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DocumentWithBase64Images.html");
+            doc.Save(outputPath, saveOptions);
+
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

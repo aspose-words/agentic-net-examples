@@ -14,18 +14,30 @@ class XmlToBulletedList
         // Create a multi‑level bulleted list using the default bullet template.
         List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
 
-        // Load the source XML.
-        XmlDocument xml = new XmlDocument();
-        xml.Load("input.xml"); // replace with your XML file path
+        // Sample XML data (replace with your own XML if desired).
+        const string sampleXml = @"
+<root>
+    <item>Top level item 1</item>
+    <item>
+        <item>Second level item 1</item>
+        <item>Second level item 2</item>
+        <item>
+            <item>Third level item</item>
+        </item>
+    </item>
+    <item>Top level item 2</item>
+</root>";
 
-        // Select the nodes you want to turn into list items.
-        // Example XPath selects all <item> elements; adjust as needed.
+        // Load the source XML from the string.
+        XmlDocument xml = new XmlDocument();
+        xml.LoadXml(sampleXml);
+
+        // Select all <item> elements.
         XmlNodeList xmlNodes = xml.SelectNodes("//item");
 
         foreach (XmlNode xmlNode in xmlNodes)
         {
             // Determine the hierarchical depth of the current node.
-            // Depth 0 => top‑level bullet, depth 1 => second level, etc.
             int depth = GetNodeDepth(xmlNode);
 
             // Ensure the depth does not exceed the maximum list level (0‑8).
@@ -43,7 +55,7 @@ class XmlToBulletedList
         builder.ListFormat.List = null;
 
         // Save the resulting document.
-        doc.Save("output.docx"); // replace with your desired output path
+        doc.Save("output.docx");
     }
 
     // Returns the number of element ancestors of the same node type.

@@ -4,7 +4,6 @@ using Aspose.Words.Reporting;
 
 namespace MyApp
 {
-    // Custom type defined in a different namespace to be exposed to templates
     namespace Models
     {
         public class Customer
@@ -14,23 +13,27 @@ namespace MyApp
         }
     }
 
+    public class DummyData { }
+
     class Program
     {
         static void Main()
         {
-            // Load a template document (ensure the file exists at the specified path)
-            Document doc = new Document("template.docx");
+            // Create a minimal document using DocumentBuilder
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Report generated.");
 
             // Initialize the reporting engine
             ReportingEngine engine = new ReportingEngine();
 
-            // Register multiple external types from different namespaces
-            engine.KnownTypes.Add(typeof(System.DateTime));          // System namespace
-            engine.KnownTypes.Add(typeof(System.Math));              // System namespace
-            engine.KnownTypes.Add(typeof(MyApp.Models.Customer));   // Custom namespace
+            // Register external types from different namespaces
+            engine.KnownTypes.Add(typeof(DateTime));
+            engine.KnownTypes.Add(typeof(Math));
+            engine.KnownTypes.Add(typeof(Models.Customer));
 
-            // Build the report; using an empty anonymous object as a placeholder data source
-            engine.BuildReport(doc, new { });
+            // Build the report using a visible data source type
+            engine.BuildReport(doc, new DummyData());
 
             // Save the processed document
             doc.Save("output.docx");

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -14,50 +15,48 @@ namespace AsposeWordsExamples
         /// <param name="outputFolder">Folder where the JPEG files will be written.</param>
         public static void ExtractImagesAsJpeg(string docxPath, string outputFolder)
         {
-            // Ensure the output directory exists.
             if (!Directory.Exists(outputFolder))
                 Directory.CreateDirectory(outputFolder);
 
-            // Load the document.
             Document doc = new Document(docxPath);
-
-            // Get all Shape nodes (inline and floating) – they may contain images or OLE objects.
             var shapes = doc.GetChildNodes(NodeType.Shape, true);
-
             int imageIndex = 0;
 
             foreach (Shape shape in shapes.OfType<Shape>())
             {
-                // Skip shapes without image data.
                 if (!shape.HasImage)
                     continue;
 
-                // Retrieve the raw image bytes.
                 byte[] imageBytes = shape.ImageData.ImageBytes;
-
-                // Determine a file name. The original image format may already be JPEG, PNG, etc.
-                // We force a .jpg extension as required by the task.
                 string outFile = Path.Combine(outputFolder, $"CoverArt_{imageIndex}.jpg");
-
-                // Write the bytes directly to disk. If the source format is not JPEG the file will still be
-                // a valid image, but its internal format will be whatever was stored in the DOCX.
-                // For a true conversion to JPEG you could load the bytes into a System.Drawing.Image on Windows
-                // or use a third‑party library (e.g., ImageSharp) that works cross‑platform.
                 File.WriteAllBytes(outFile, imageBytes);
-
                 imageIndex++;
             }
         }
 
-        // Example usage.
+        private static byte[] GetPlaceholderImageBytes()
+        {
+            // 1x1 transparent PNG
+            const string base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+            return Convert.FromBase64String(base64);
+        }
+
         public static void Main()
         {
-            string sourceDocx = @"C:\Docs\AudioDocument.docx";
-            string jpegFolder = @"C:\Docs\ExtractedImages";
+            string sourceDocx = Path.Combine(Directory.GetCurrentDirectory(), "SampleAudioDocument.docx");
+            if (!File.Exists(sourceDocx))
+            {
+                Document doc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(doc);
+                builder.Writeln("Sample document containing an image (simulating cover art).");
+                builder.InsertImage(GetPlaceholderImageBytes());
+                doc.Save(sourceDocx);
+            }
 
+            string jpegFolder = Path.Combine(Directory.GetCurrentDirectory(), "ExtractedImages");
             ExtractImagesAsJpeg(sourceDocx, jpegFolder);
 
-            Console.WriteLine("Extraction complete.");
+            Console.WriteLine("Extraction complete. Images saved to: " + jpegFolder);
         }
     }
 }

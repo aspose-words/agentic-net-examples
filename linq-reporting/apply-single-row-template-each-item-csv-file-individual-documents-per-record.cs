@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
@@ -8,10 +9,29 @@ class CsvMailMergePerRecord
 {
     static void Main()
     {
-        // Paths – adjust as needed.
-        string templatePath = @"C:\Templates\SingleRowTemplate.docx";
-        string csvPath = @"C:\Data\Records.csv";
-        string outputFolder = @"C:\Output\";
+        // Use paths relative to the current directory so they work everywhere.
+        string baseDir = AppContext.BaseDirectory;
+        string templatePath = Path.Combine(baseDir, "SingleRowTemplate.docx");
+        string csvPath = Path.Combine(baseDir, "Records.csv");
+        string outputFolder = Path.Combine(baseDir, "Output");
+
+        // Ensure the template exists – create a simple one if it does not.
+        if (!File.Exists(templatePath))
+        {
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Record:");
+            builder.InsertField("MERGEFIELD Id");
+            builder.Writeln();
+            builder.InsertField("MERGEFIELD Name");
+            templateDoc.Save(templatePath);
+        }
+
+        // Ensure the CSV file exists – create a small sample if it does not.
+        if (!File.Exists(csvPath))
+        {
+            File.WriteAllText(csvPath, "Id,Name\n1,John Doe\n2,Jane Smith\n3,Bob Johnson");
+        }
 
         // Load the template document (single‑row mail‑merge template).
         Document template = new Document(templatePath);
@@ -22,6 +42,11 @@ class CsvMailMergePerRecord
         // Ensure the output folder exists.
         Directory.CreateDirectory(outputFolder);
 
+        // Prepare field names for mail merge.
+        string[] fieldNames = table.Columns.Cast<DataColumn>()
+                                          .Select(col => col.ColumnName)
+                                          .ToArray();
+
         // Iterate over each row and generate an individual document.
         foreach (DataRow row in table.Rows)
         {
@@ -29,30 +54,31 @@ class CsvMailMergePerRecord
             Document doc = (Document)template.Clone(true);
 
             // Perform mail merge for the current row.
-            doc.MailMerge.Execute(row);
+            doc.MailMerge.Execute(fieldNames, row.ItemArray);
 
-            // Build a file name using a field value (e.g., "Id" column) or row index.
-            string fileName = $"Document_{row[0]}.docx"; // assumes first column is unique identifier
+            // Build a file name using the first column value (assumed unique).
+            string fileName = $"Document_{row[0]}.docx";
             string outputPath = Path.Combine(outputFolder, fileName);
 
             // Save the generated document.
             doc.Save(outputPath);
         }
+
+        Console.WriteLine($"Generated {table.Rows.Count} documents in \"{outputFolder}\".");
     }
 
-    // Reads a CSV file (with optional header row) into a DataTable.
+    // Reads a CSV file (with a header row) into a DataTable.
     private static DataTable LoadCsvIntoDataTable(string csvFilePath)
     {
-        DataTable dt = new DataTable();
+        var dt = new DataTable();
 
         using (var reader = new StreamReader(csvFilePath))
         {
-            bool hasHeaders = true; // set to false if your CSV has no header row
+            bool hasHeaders = true;
             string[] headers = null;
 
             if (hasHeaders && !reader.EndOfStream)
             {
-                // First line contains column names.
                 headers = ParseCsvLine(reader.ReadLine());
                 foreach (var header in headers)
                     dt.Columns.Add(header);
@@ -69,7 +95,6 @@ class CsvMailMergePerRecord
                         dt.Columns.Add($"Column{i + 1}");
                 }
 
-                // Add the row to the table.
                 dt.Rows.Add(fields);
             }
         }

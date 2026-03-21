@@ -4,10 +4,17 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
 
+public class ReportData
+{
+    public string Title { get; set; }
+    public string Date { get; set; }
+    public double Total { get; set; }
+}
+
 class ReportToMemoryStream
 {
     // Generates a report from a template and returns it as a MemoryStream.
-    public static MemoryStream GenerateReport(string templatePath, object dataSource)
+    public static MemoryStream GenerateReport(string templatePath, ReportData dataSource)
     {
         // Load the template document from file.
         Document doc = new Document(templatePath);
@@ -16,44 +23,46 @@ class ReportToMemoryStream
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, dataSource);
 
-        // Create a memory stream that will receive the document bytes.
+        // Save the populated document to a memory stream in DOCX format.
         MemoryStream stream = new MemoryStream();
-
-        // Save the populated document to the stream in DOCX format.
-        // This uses the documented overload: Save(Stream, SaveFormat).
         doc.Save(stream, SaveFormat.Docx);
-
-        // Rewind the stream so that callers can read from the beginning.
-        stream.Position = 0;
+        stream.Position = 0; // Rewind for reading.
 
         return stream;
     }
 
-    // Example entry point demonstrating how to use the method.
     static void Main()
     {
-        // Path to the .docx template file.
-        string templatePath = @"C:\Templates\ReportTemplate.docx";
+        // Create a temporary template file with simple placeholders.
+        string tempDir = Path.GetTempPath();
+        string templatePath = Path.Combine(tempDir, "ReportTemplate.docx");
 
-        // Example data source – any supported type (anonymous object, DataSet, etc.).
-        var data = new
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Title: {{Title}}");
+        builder.Writeln("Date: {{Date}}");
+        builder.Writeln("Total: {{Total}}");
+        templateDoc.Save(templatePath);
+        // DocumentBuilder does not implement IDisposable; no need to call Dispose.
+
+        // Example data source.
+        var data = new ReportData
         {
             Title = "Quarterly Sales",
-            Date = DateTime.Now,
+            Date = DateTime.Now.ToString("d"),
             Total = 12345.67
         };
 
         // Generate the report into a memory stream.
-        MemoryStream reportStream = GenerateReport(templatePath, data);
+        using MemoryStream reportStream = GenerateReport(templatePath, data);
 
-        // The stream can now be attached to an email, sent over a network, etc.
-        // For illustration, write the stream contents to a physical file.
-        using (FileStream file = new FileStream(@"C:\Output\Report.docx", FileMode.Create, FileAccess.Write))
+        // Write the stream contents to a temporary output file.
+        string outputPath = Path.Combine(tempDir, "Report.docx");
+        using (FileStream file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
         {
             reportStream.CopyTo(file);
         }
 
-        // Clean up the memory stream when finished.
-        reportStream.Dispose();
+        Console.WriteLine($"Report generated at: {outputPath}");
     }
 }

@@ -1,40 +1,31 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 
 class PdfHyphenationToImage
 {
     static void Main()
     {
-        // Path to the source PDF file.
-        string pdfFile = @"C:\Docs\Source.pdf";
-
-        // Path where the rendered image will be saved.
-        string imageFile = @"C:\Docs\Rendered.png";
-
-        // Load the PDF into a Document object using PdfLoadOptions.
-        PdfLoadOptions loadOptions = new PdfLoadOptions();
-        Document doc = new Document(pdfFile, loadOptions);
+        // Create a new document with some long text to demonstrate hyphenation.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Size = 24;
+        builder.Writeln("This is a demonstration of automatic hyphenation in a long word: extraordinaryextraordinaryextraordinary.");
 
         // Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Optional: adjust hyphenation parameters if desired.
-        // doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        // doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
-
         // Prepare image save options.
         ImageSaveOptions imgOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            // Render the first page only. Remove or modify to render all pages.
-            PageSet = new PageSet(0),
-
-            // Set a reasonable resolution (dpi) for visual inspection.
+            PageSet = new PageSet(0), // first page
             Resolution = 150
         };
 
-        // Save the rendered page to an image file.
+        // Save the rendered page to an image file in the current directory.
+        string imageFile = "Rendered.png";
         doc.Save(imageFile, imgOptions);
+
+        Console.WriteLine($"Image saved to {System.IO.Path.GetFullPath(imageFile)}");
     }
 }

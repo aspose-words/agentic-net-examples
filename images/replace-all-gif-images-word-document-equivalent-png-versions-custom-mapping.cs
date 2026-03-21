@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -19,52 +20,65 @@ namespace AsposeWordsGifToPng
         /// </param>
         static void ReplaceGifWithPng(string inputPath, string outputPath, Dictionary<int, string> gifIndexToPngPath)
         {
-            // Load the document using the standard constructor (load rule).
+            // Load the document.
             Document doc = new Document(inputPath);
 
-            // Counter for GIF images found so far.
             int gifCounter = 0;
 
-            // Iterate over all Shape nodes in the document (including inline and floating images).
+            // Iterate over all Shape nodes (including inline and floating images).
             foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
             {
-                // Process only shapes that actually contain an image and whose image type is GIF.
                 if (shape.HasImage && shape.ImageData.ImageType == ImageType.Gif)
                 {
-                    // Try to obtain a replacement PNG path for the current GIF index.
                     if (gifIndexToPngPath.TryGetValue(gifCounter, out string pngPath) && File.Exists(pngPath))
                     {
-                        // Replace the image data with the PNG file (replace rule).
                         shape.ImageData.SetImage(pngPath);
                     }
 
-                    // Move to the next GIF image.
                     gifCounter++;
                 }
             }
 
-            // Save the modified document using the standard Save method (save rule).
+            // Save the modified document.
             doc.Save(outputPath);
         }
 
         static void Main()
         {
-            // Example usage:
+            // Create a temporary working folder.
+            string workDir = Path.Combine(Path.GetTempPath(), "AsposeGifToPngDemo");
+            Directory.CreateDirectory(workDir);
 
-            // Path to the original Word document.
-            string sourceDoc = @"C:\Docs\SampleWithGifs.docx";
+            // Paths for the sample files.
+            string sourceDoc = Path.Combine(workDir, "SampleWithGifs.docx");
+            string resultDoc = Path.Combine(workDir, "SampleWithGifs_Converted.docx");
+            string gifPath = Path.Combine(workDir, "sample.gif");
+            string pngPath = Path.Combine(workDir, "replacement.png");
 
-            // Path where the updated document will be written.
-            string resultDoc = @"C:\Docs\SampleWithGifs_Converted.docx";
+            // Write a tiny 1x1 transparent GIF.
+            byte[] gifBytes = Convert.FromBase64String(
+                "R0lGODdhAQABAPAAAP///wAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==");
+            File.WriteAllBytes(gifPath, gifBytes);
 
-            // Build a custom mapping: GIF #0 -> PNG file A, GIF #1 -> PNG file B, etc.
+            // Write a tiny 1x1 transparent PNG.
+            byte[] pngBytes = Convert.FromBase64String(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=");
+            File.WriteAllBytes(pngPath, pngBytes);
+
+            // Create a simple document and insert the GIF image.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Document with a GIF image:");
+            builder.InsertImage(gifPath);
+            doc.Save(sourceDoc);
+
+            // Build the mapping: first GIF (index 0) -> our PNG replacement.
             var gifToPngMap = new Dictionary<int, string>
             {
-                { 0, @"C:\Images\Replacement0.png" },
-                { 1, @"C:\Images\Replacement1.png" },
-                // Add more entries as needed.
+                { 0, pngPath }
             };
 
+            // Perform the replacement.
             ReplaceGifWithPng(sourceDoc, resultDoc, gifToPngMap);
 
             Console.WriteLine("GIF images have been replaced and the document saved to:");

@@ -14,11 +14,28 @@ class ReflectionOptimizationDemo
         // Enable reflection optimization globally.
         ReportingEngine.UseReflectionOptimization = true;
 
+        // Create temporary files for the demo.
+        string tempDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+        Directory.CreateDirectory(tempDir);
+
         // Path to the template document.
-        string templatePath = @"C:\Docs\Template.docx";
+        string templatePath = Path.Combine(tempDir, "Template.docx");
+
+        // Create a minimal template document.
+        Document templateDoc = new Document();
+        templateDoc.Save(templatePath);
 
         // Path to the JSON data file.
-        string jsonPath = @"C:\Data\People.json";
+        string jsonPath = Path.Combine(tempDir, "People.json");
+
+        // Write sample JSON data.
+        string sampleJson = @"{
+            ""persons"": [
+                { ""Name"": ""John"", ""Age"": 30 },
+                { ""Name"": ""Jane"", ""Age"": 25 }
+            ]
+        }";
+        File.WriteAllText(jsonPath, sampleJson);
 
         // Load the template.
         Document doc = new Document(templatePath);
@@ -39,8 +56,10 @@ class ReflectionOptimizationDemo
         ReportingEngine.UseReflectionOptimization = previousSetting;
 
         // Save the generated report.
-        string outputPath = @"C:\Docs\Report_Output.docx";
+        string outputPath = Path.Combine(tempDir, "Report_Output.docx");
         doc.Save(outputPath);
+
+        Console.WriteLine($"Report generated at: {outputPath}");
     }
 
     // Checks whether the root element of the JSON file is an array whose length

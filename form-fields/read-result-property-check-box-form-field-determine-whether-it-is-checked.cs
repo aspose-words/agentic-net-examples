@@ -6,10 +6,12 @@ class Program
 {
     static void Main()
     {
-        // Load the document that contains the checkbox form field.
-        Document doc = new Document("FormFields.docx");
+        // Create a new document and insert a checkbox form field.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertCheckBox("MyCheckBox", true, 0); // true = checked
 
-        // Get the checkbox form field by its bookmark/name.
+        // Retrieve the checkbox form field by its name.
         FormField checkBox = doc.Range.FormFields["MyCheckBox"];
         if (checkBox == null)
         {
