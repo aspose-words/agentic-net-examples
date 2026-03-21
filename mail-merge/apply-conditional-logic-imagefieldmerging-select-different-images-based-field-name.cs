@@ -1,56 +1,29 @@
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Drawing;                     // For Image.FromFile (NET Framework)
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
 namespace AsposeWordsImageMergeExample
 {
-    // Callback that selects an image based on the merge field name.
+    // Callback that provides an image for each merge field.
     public class ConditionalImageCallback : IFieldMergingCallback
     {
-        // Mapping of field names (without the "Image:" prefix) to image file paths.
-        private readonly Dictionary<string, string> _fieldToImage = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "Logo",      ImageDir + "Logo.jpg" },
-            { "Signature", ImageDir + "Signature.png" },
-            { "Stamp",     ImageDir + "Stamp.bmp" }
-        };
-
-        // Not used for plain text fields.
-        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
-        {
-            // No custom handling for non‑image fields.
-        }
+        // Not used for plain‑text fields.
+        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args) { }
 
         // Called for each image merge field.
         void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
         {
-            // args.DocumentFieldName contains the field name as written in the document,
-            // e.g. "Image:Logo". We need the part after the prefix.
-            string fieldName = args.FieldName; // Already stripped of the "Image:" prefix.
+            // A tiny placeholder PNG (16×16 transparent pixel) encoded in base64.
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAAF0lEQVR4AWP8z8Dwn4EIwDiqgAIAAP//AwA6VgZcAAAAAElFTkSuQmCC";
 
-            if (_fieldToImage.TryGetValue(fieldName, out string imagePath))
-            {
-#if NET461_OR_GREATER || JAVA
-                // Load the image from the file system.
-                args.Image = Image.FromFile(imagePath);
-#elif NET5_0_OR_GREATER
-                // For .NET 5+ use SkiaSharp.
-                args.Image = SkiaSharp.SKBitmap.Decode(imagePath);
-                args.ImageFileName = imagePath;
-#endif
-            }
-            else
-            {
-                // If no mapping is found, leave the image null – the merge will insert nothing.
-                args.Image = null;
-            }
+            // Write the PNG to a temporary file and tell Aspose.Words to use it.
+            var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.png");
+            File.WriteAllBytes(tempPath, Convert.FromBase64String(base64Png));
+
+            args.ImageFileName = tempPath;
         }
-
-        // Helper to locate the images folder (adjust as needed).
-        private static string ImageDir => @"C:\Images\"; // <-- change to your actual image directory.
     }
 
     class Program
@@ -58,22 +31,19 @@ namespace AsposeWordsImageMergeExample
         static void Main()
         {
             // Create a new blank document.
-            Document doc = new Document();
+            var doc = new Document();
 
             // Insert two image merge fields: one for "Logo" and one for "Signature".
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            var builder = new DocumentBuilder(doc);
             builder.InsertField("MERGEFIELD Image:Logo");
             builder.Writeln(); // Add a line break between the images.
             builder.InsertField("MERGEFIELD Image:Signature");
 
-            // Prepare a data source. The column names must match the field names without the "Image:" prefix.
-            DataTable table = new DataTable("Images");
+            // Prepare a data source. Column names must match the field names without the "Image:" prefix.
+            var table = new DataTable("Images");
             table.Columns.Add("Logo", typeof(string));
             table.Columns.Add("Signature", typeof(string));
-
-            // The actual values are irrelevant because the callback ignores them;
-            // we just need rows to trigger the merge for each field.
-            table.Rows.Add("unused1", "unused2");
+            table.Rows.Add("unused1", "unused2"); // Values are irrelevant; the callback supplies the images.
 
             // Assign the custom callback.
             doc.MailMerge.FieldMergingCallback = new ConditionalImageCallback();
@@ -81,8 +51,8 @@ namespace AsposeWordsImageMergeExample
             // Execute the mail merge.
             doc.MailMerge.Execute(table);
 
-            // Save the resulting document.
-            doc.Save(@"C:\Output\ConditionalImageMerge.docx");
+            // Save the resulting document in the current directory.
+            doc.Save("ConditionalImageMerge.docx");
         }
     }
 }

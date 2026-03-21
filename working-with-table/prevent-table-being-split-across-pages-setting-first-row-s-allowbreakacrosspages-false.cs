@@ -8,17 +8,25 @@ namespace TableRowBreakControl
     {
         static void Main()
         {
-            // Load an existing document that contains at least one table.
-            Document doc = new Document("Input.docx");
+            // Create a new document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Get the first table in the document.
-            Table table = doc.FirstSection.Body.Tables[0];
+            // Insert a simple table with two rows.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Writeln("First row, first cell");
+            builder.EndRow();
+
+            builder.InsertCell();
+            builder.Writeln("Second row, first cell");
+            builder.EndRow();
+            builder.EndTable();
 
             // Access the first row of the table.
             Row firstRow = table.FirstRow;
 
             // Prevent this row from being split across pages.
-            // Setting AllowBreakAcrossPages to false keeps the row together.
             firstRow.RowFormat.AllowBreakAcrossPages = false;
 
             // Save the modified document.

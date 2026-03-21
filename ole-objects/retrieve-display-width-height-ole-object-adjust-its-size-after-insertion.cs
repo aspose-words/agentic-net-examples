@@ -1,8 +1,8 @@
 using System;
 using System.IO;
+using System.IO.Compression;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Ole;
 
 class Program
 {
@@ -12,14 +12,29 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an OLE object (example: a ZIP package) as an icon.
-        byte[] zipBytes = File.ReadAllBytes("cat001.zip");
+        // Create a dummy ZIP package in memory.
+        byte[] zipBytes;
+        using (MemoryStream zipStream = new MemoryStream())
+        {
+            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
+            {
+                var entry = archive.CreateEntry("dummy.txt");
+                using (var entryStream = entry.Open())
+                using (var writer = new StreamWriter(entryStream))
+                {
+                    writer.Write("This is a dummy file inside the ZIP package.");
+                }
+            }
+            zipBytes = zipStream.ToArray();
+        }
+
+        // Insert the OLE object (ZIP package) as an icon.
         using (MemoryStream stream = new MemoryStream(zipBytes))
         {
-            // InsertOleObject is the provided rule for OLE insertion.
+            // InsertOleObject inserts the OLE object; "Package" is the ProgID for generic packages.
             Shape oleShape = builder.InsertOleObject(stream, "Package", true, null);
 
-            // Optional: set package display properties.
+            // Set package display properties.
             oleShape.OleFormat.OlePackage.FileName = "cat001.zip";
             oleShape.OleFormat.OlePackage.DisplayName = "cat001.zip";
 
@@ -32,7 +47,7 @@ class Program
             oleShape.Height = originalHeight * 1.5;
         }
 
-        // Save the document using the provided lifecycle rule.
+        // Save the document.
         doc.Save("OleObjectResized.docx");
     }
 }

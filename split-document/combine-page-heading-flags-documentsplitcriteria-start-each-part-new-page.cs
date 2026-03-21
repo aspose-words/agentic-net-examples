@@ -9,27 +9,58 @@ namespace CombinePageAndHeadingFlags
     {
         static void Main(string[] args)
         {
-            // Adjust these paths to point to your actual input and output folders.
-            string dataDir = Path.Combine(Environment.CurrentDirectory, "Data");
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+            // Set up input and output directories relative to the executable location.
+            string baseDir = AppContext.BaseDirectory;
+            string dataDir = Path.Combine(baseDir, "Data");
+            string outputDir = Path.Combine(baseDir, "Output");
 
-            // Ensure the directories exist.
             Directory.CreateDirectory(dataDir);
             Directory.CreateDirectory(outputDir);
 
-            // Load an existing Word document.
+            // Path to the input document.
             string inputPath = Path.Combine(dataDir, "InputDocument.docx");
+
+            // If the input file does not exist, create a simple document for demonstration.
+            if (!File.Exists(inputPath))
+            {
+                Document tempDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(tempDoc);
+
+                // First part – heading level 1.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+                builder.Writeln("Chapter 1");
+
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+                builder.Writeln("This is the first chapter.");
+
+                // Insert a page break to start a new part.
+                builder.InsertBreak(BreakType.PageBreak);
+
+                // Second part – heading level 2.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+                builder.Writeln("Section 1.1");
+
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+                builder.Writeln("Details of section 1.1.");
+
+                // Save the temporary document.
+                tempDoc.Save(inputPath);
+            }
+
+            // Load the document.
             Document doc = new Document(inputPath);
 
             // Configure HTML save options to split the output into separate parts.
-            // Combine the PageBreak and HeadingParagraph flags so that each part starts on a new page.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions();
-            saveOptions.DocumentSplitCriteria = DocumentSplitCriteria.PageBreak | DocumentSplitCriteria.HeadingParagraph;
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+            {
+                DocumentSplitCriteria = DocumentSplitCriteria.PageBreak | DocumentSplitCriteria.HeadingParagraph,
+                DocumentSplitHeadingLevel = 2,
+                // Ensure each part is saved to a separate file.
+                ExportHeadersFootersMode = ExportHeadersFootersMode.None,
+                ExportPageMargins = false
+            };
 
-            // Optionally limit heading levels that trigger a split (default is 2).
-            saveOptions.DocumentSplitHeadingLevel = 2;
-
-            // Save the document; each part will be written to its own HTML file.
+            // Save the split document.
             string outputPath = Path.Combine(outputDir, "OutputDocument.html");
             doc.Save(outputPath, saveOptions);
 

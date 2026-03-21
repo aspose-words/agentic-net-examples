@@ -28,14 +28,68 @@ namespace VbaModuleBatchCopy
             // Path to the JSON configuration file.
             const string configPath = "copyConfig.json";
 
-            // Load and deserialize the configuration.
-            ConfigRoot config = JsonSerializer.Deserialize<ConfigRoot>(File.ReadAllText(configPath));
+            if (!File.Exists(configPath))
+            {
+                Console.WriteLine($"Configuration file '{configPath}' not found. No work to do.");
+                return;
+            }
+
+            ConfigRoot config;
+            try
+            {
+                config = JsonSerializer.Deserialize<ConfigRoot>(File.ReadAllText(configPath));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to read or deserialize configuration: {ex.Message}");
+                return;
+            }
+
+            if (config?.Mappings == null || config.Mappings.Count == 0)
+            {
+                Console.WriteLine("No mappings defined in the configuration.");
+                return;
+            }
 
             foreach (CopyInstruction instruction in config.Mappings)
             {
-                // Load source and destination documents using the provided constructors.
-                Document srcDoc = new Document(instruction.Source);
-                Document dstDoc = new Document(instruction.Destination);
+                if (string.IsNullOrWhiteSpace(instruction.Source) ||
+                    string.IsNullOrWhiteSpace(instruction.Destination) ||
+                    instruction.Modules == null || instruction.Modules.Count == 0)
+                {
+                    Console.WriteLine("Invalid instruction detected; skipping.");
+                    continue;
+                }
+
+                if (!File.Exists(instruction.Source))
+                {
+                    Console.WriteLine($"Source file '{instruction.Source}' does not exist; skipping.");
+                    continue;
+                }
+
+                // Load source and destination documents.
+                Document srcDoc;
+                Document dstDoc;
+                try
+                {
+                    srcDoc = new Document(instruction.Source);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to load source document '{instruction.Source}': {ex.Message}");
+                    continue;
+                }
+
+                try
+                {
+                    // If the destination does not exist, create an empty document.
+                    dstDoc = File.Exists(instruction.Destination) ? new Document(instruction.Destination) : new Document();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to load/create destination document '{instruction.Destination}': {ex.Message}");
+                    continue;
+                }
 
                 // Ensure both documents have a VBA project; create one for the destination if missing.
                 if (srcDoc.VbaProject == null)
@@ -76,9 +130,15 @@ namespace VbaModuleBatchCopy
                     dstModules.Add(clonedModule);
                 }
 
-                // Save the modified destination document using the provided Save method.
-                dstDoc.Save(instruction.Destination);
-                Console.WriteLine($"Processed '{instruction.Source}' -> '{instruction.Destination}'.");
+                try
+                {
+                    dstDoc.Save(instruction.Destination);
+                    Console.WriteLine($"Processed '{instruction.Source}' -> '{instruction.Destination}'.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to save destination document '{instruction.Destination}': {ex.Message}");
+                }
             }
         }
     }

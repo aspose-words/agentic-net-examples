@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -10,14 +11,22 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an image shape into the document.
-        // Replace the path with the actual location of your image file.
-        Shape shape = builder.InsertImage("ImageDir/Logo.jpg");
+        // A 1x1 pixel PNG image (transparent) encoded in base64.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+
+        // Insert the image shape into the document from the stream.
+        using var imageStream = new MemoryStream(pngBytes);
+        Shape shape = builder.InsertImage(imageStream);
 
         // Lock the shape's aspect ratio so that resizing preserves its proportions.
         shape.AspectRatioLocked = true;
 
+        // Ensure the output directory exists.
+        string outputDir = "ArtifactsDir";
+        Directory.CreateDirectory(outputDir);
+
         // Save the resulting document.
-        doc.Save("ArtifactsDir/Shape.AspectRatioLocked.docx");
+        doc.Save(Path.Combine(outputDir, "Shape.AspectRatioLocked.docx"));
     }
 }

@@ -42,7 +42,14 @@ namespace AsposeWordsDebugExample
         {
             // Paths to input and output files (adjust as needed).
             string inputPath = Path.Combine(Environment.CurrentDirectory, "Big document.docx");
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.html");
+
+            // Ensure an input file exists – create a minimal document if missing.
+            if (!File.Exists(inputPath))
+            {
+                var tempDoc = new Document();
+                tempDoc.Save(inputPath);
+            }
 
             // ---------- Document Loading ----------
             var loadOptions = new LoadOptions
@@ -63,7 +70,6 @@ namespace AsposeWordsDebugExample
                 Console.WriteLine(ex.Message);
                 Console.WriteLine("Stack Trace:");
                 Console.WriteLine(ex.StackTrace);
-                // Optionally rethrow or handle further.
                 return;
             }
 

@@ -1,17 +1,24 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
 class MacroExtractor
 {
-    static void Main()
+    static void Main(string[] args)
     {
-        // Folder containing the DOCM files.
-        string inputFolder = @"C:\Docs\MacroEnabled";
-        // Path for the CSV summary file.
-        string csvPath = @"C:\Docs\MacroSummary.csv";
+        // Determine input folder and CSV output path.
+        string inputFolder = args.Length > 0 ? args[0] : Path.Combine(Directory.GetCurrentDirectory(), "Docs");
+        string csvPath = args.Length > 1 ? args[1] : Path.Combine(inputFolder, "MacroSummary.csv");
+
+        // Ensure the input folder exists.
+        if (!Directory.Exists(inputFolder))
+        {
+            Console.WriteLine($"Input folder \"{inputFolder}\" does not exist. Creating it.");
+            Directory.CreateDirectory(inputFolder);
+            Console.WriteLine("Place .docm files in this folder and rerun the program.");
+            return;
+        }
 
         // Prepare the CSV file with a header.
         using (var writer = new StreamWriter(csvPath, false))
@@ -19,31 +26,32 @@ class MacroExtractor
             writer.WriteLine("Document,ModuleName,MacroName");
 
             // Process each .docm file in the folder.
-            foreach (string filePath in Directory.GetFiles(inputFolder, "*.docm"))
+            foreach (string filePath in Directory.EnumerateFiles(inputFolder, "*.docm"))
             {
-                // Load the document (lifecycle rule: use Document constructor).
-                Document doc = new Document(filePath);
-
-                // If the document does not contain macros, skip it.
-                if (!doc.HasMacros || doc.VbaProject == null)
-                    continue;
-
-                // Iterate through all VBA modules.
-                foreach (VbaModule module in doc.VbaProject.Modules)
+                try
                 {
-                    // The module name is a reasonable identifier for the macro container.
-                    // For a more detailed list, you could parse module.SourceCode for Sub/Function names.
-                    string moduleName = module.Name ?? string.Empty;
+                    // Load the document.
+                    Document doc = new Document(filePath);
 
-                    // Write a CSV line: Document file name, module name, (placeholder for macro name).
-                    // Since extracting individual macro names requires parsing the source code,
-                    // we record the module name as the macro identifier.
-                    writer.WriteLine($"{Path.GetFileName(filePath)},{EscapeCsv(moduleName)},{EscapeCsv(moduleName)}");
+                    // Skip if the document does not contain macros.
+                    if (!doc.HasMacros || doc.VbaProject == null)
+                        continue;
+
+                    // Iterate through all VBA modules.
+                    foreach (VbaModule module in doc.VbaProject.Modules)
+                    {
+                        string moduleName = module.Name ?? string.Empty;
+                        // Record the module name as the macro identifier (parsing individual macros is out of scope).
+                        writer.WriteLine($"{EscapeCsv(Path.GetFileName(filePath))},{EscapeCsv(moduleName)},{EscapeCsv(moduleName)}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error processing \"{filePath}\": {ex.Message}");
                 }
             }
         }
 
-        // Optionally, open the CSV after creation (not required for batch processing).
         Console.WriteLine($"Macro summary written to: {csvPath}");
     }
 

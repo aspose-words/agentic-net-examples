@@ -7,11 +7,26 @@ class Program
 {
     static void Main()
     {
-        // Input document path.
-        string inputPath = Path.Combine("Data", "Input.docx");
-        // Output folder for the split parts.
-        string outputFolder = Path.Combine("Output");
+        // Resolve paths relative to the executable directory.
+        string baseDir = AppContext.BaseDirectory;
+        string dataDir = Path.Combine(baseDir, "Data");
+        string inputPath = Path.Combine(dataDir, "Input.docx");
+        string outputFolder = Path.Combine(baseDir, "Output");
+
+        // Ensure required directories exist.
+        Directory.CreateDirectory(dataDir);
         Directory.CreateDirectory(outputFolder);
+
+        // If the input document does not exist, create a simple one.
+        if (!File.Exists(inputPath))
+        {
+            var tempDoc = new Document();
+            var builder = new DocumentBuilder(tempDoc);
+            builder.Writeln("This is a sample document.");
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+            builder.Writeln("Second section.");
+            tempDoc.Save(inputPath);
+        }
 
         // Load the source document.
         Document doc = new Document(inputPath);

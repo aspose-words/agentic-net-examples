@@ -21,10 +21,13 @@ class RevisionImageExample
         doc.StartTrackRevisions("John Doe");
 
         // Insert an image while tracking is enabled.
-        // The image will be inserted as an inline shape.
-        // Replace the path with a valid image file on your system.
-        string imagePath = @"C:\Images\SampleImage.jpg";
-        builder.InsertImage(imagePath);
+        // Use an embedded 1x1 PNG image to avoid external file dependencies.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        using (var ms = new MemoryStream(imageBytes))
+        {
+            builder.InsertImage(ms);
+        }
 
         // Stop tracking revisions so subsequent edits are not recorded.
         doc.StopTrackRevisions();

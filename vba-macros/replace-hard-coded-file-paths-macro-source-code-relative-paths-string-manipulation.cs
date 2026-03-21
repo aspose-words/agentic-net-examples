@@ -8,20 +8,27 @@ class Program
 {
     static void Main()
     {
-        // Path to the source macro‑enabled document (hard‑coded absolute path)
-        string inputFile = @"C:\Docs\Macro.docm";
+        // Use paths relative to the executable directory
+        string baseDir = AppContext.BaseDirectory;
+        string inputFile = Path.Combine(baseDir, "Macro.docm");
+        string outputFile = Path.Combine(baseDir, "MacroRelative.docm");
 
-        // Path where the modified document will be saved
-        string outputFile = @"C:\Docs\MacroRelative.docm";
+        // Ensure the input file exists; if not, create a minimal DOCM file
+        if (!File.Exists(inputFile))
+        {
+            // Create a new blank document and save it as a macro‑enabled file
+            var doc = new Document();
+            doc.Save(inputFile, SaveFormat.Docm);
+        }
 
         // Load the document (lifecycle rule: load)
-        Document doc = new Document(inputFile);
+        Document document = new Document(inputFile);
 
         // Proceed only if the document actually contains VBA macros
-        if (doc.HasMacros && doc.VbaProject != null)
+        if (document.HasMacros && document.VbaProject != null)
         {
             // Iterate through each VBA module in the project
-            foreach (VbaModule module in doc.VbaProject.Modules)
+            foreach (VbaModule module in document.VbaProject.Modules)
             {
                 // Original macro source code
                 string source = module.SourceCode;
@@ -44,6 +51,7 @@ class Program
         }
 
         // Save the document with updated macro source code (lifecycle rule: save)
-        doc.Save(outputFile);
+        document.Save(outputFile);
+        Console.WriteLine($"Processed document saved to: {outputFile}");
     }
 }

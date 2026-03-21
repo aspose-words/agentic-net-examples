@@ -7,9 +7,28 @@ class RevisionSummary
 {
     static void Main()
     {
-        // Load the document that contains tracked changes.
-        // (Assumes the file "Revisions.docx" exists in the working directory.)
-        Document doc = new Document("Revisions.docx");
+        // Create a new document and add some tracked changes.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start tracking revisions.
+        doc.StartTrackRevisions("Author");
+
+        // Insertion revision: add a paragraph.
+        builder.Writeln("This is an inserted paragraph.");
+
+        // Add another paragraph that we will later delete.
+        builder.Writeln("This paragraph will be deleted.");
+
+        // Stop tracking to finalize the insertion.
+        doc.StopTrackRevisions();
+
+        // Delete the second paragraph while tracking revisions.
+        // Re‑enable tracking for the deletion.
+        doc.StartTrackRevisions("Author");
+        Paragraph paraToDelete = doc.FirstSection.Body.Paragraphs[2]; // zero‑based index
+        paraToDelete.Remove(); // This creates a deletion revision.
+        doc.StopTrackRevisions();
 
         // Group all revisions by their RevisionType.
         var revisionGroups = doc.Revisions
@@ -17,10 +36,8 @@ class RevisionSummary
                                 .ToDictionary(g => g.Key, g => g.Count());
 
         // Retrieve counts for insertions and deletions, defaulting to 0 if the type is absent.
-        int insertionCount = revisionGroups.ContainsKey(RevisionType.Insertion)
-                             ? revisionGroups[RevisionType.Insertion] : 0;
-        int deletionCount = revisionGroups.ContainsKey(RevisionType.Deletion)
-                            ? revisionGroups[RevisionType.Deletion] : 0;
+        int insertionCount = revisionGroups.TryGetValue(RevisionType.Insertion, out var ins) ? ins : 0;
+        int deletionCount = revisionGroups.TryGetValue(RevisionType.Deletion, out var del) ? del : 0;
 
         // Output the summary to the console.
         Console.WriteLine($"Insertions: {insertionCount}");

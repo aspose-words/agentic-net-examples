@@ -5,8 +5,17 @@ class Program
 {
     static void Main()
     {
-        // Load an existing document that already contains a table.
-        Document doc = new Document("Input.docx");
+        // Create a new document and add a simple table with one row.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.StartTable();
+        for (int i = 0; i < 3; i++)
+        {
+            builder.InsertCell();
+            builder.Write($"Cell {i + 1}");
+        }
+        builder.EndRow();
+        builder.EndTable();
 
         // Retrieve the first table in the document.
         Table table = doc.FirstSection.Body.Tables[0];

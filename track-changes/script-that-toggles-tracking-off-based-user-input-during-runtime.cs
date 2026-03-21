@@ -1,57 +1,63 @@
 using System;
-using Aspose.Words;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 class TrackRevisionsToggle
 {
-    static void Main()
+    static void Main(string[] args)
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Simulated document content.
+        var lines = new List<string>();
+        bool tracking = false;
 
         // Initial content.
-        builder.Writeln("Initial content. ");
+        lines.Add("Initial content.");
 
-        Console.WriteLine("Type 'on' to start tracking revisions, 'off' to stop tracking, or 'exit' to finish.");
-
-        while (true)
+        // If commands are supplied via arguments, process them.
+        // Otherwise, show usage and exit (avoids waiting for interactive input).
+        if (args.Length == 0)
         {
-            Console.Write("> ");
-            string input = Console.ReadLine()?.Trim().ToLowerInvariant();
+            Console.WriteLine("Usage: dotnet run -- <command1> <command2> ...");
+            Console.WriteLine("Commands: on, off, exit");
+            Console.WriteLine("Example: dotnet run -- on off exit");
+            // Save the document as‑is and finish.
+            SaveDocument(lines);
+            return;
+        }
+
+        foreach (var raw in args)
+        {
+            var input = raw.Trim().ToLowerInvariant();
 
             if (input == "exit")
                 break;
 
             if (input == "on")
             {
-                // Start tracking programmatic changes.
-                doc.StartTrackRevisions("ConsoleUser", DateTime.Now);
-                // Also set the Word UI flag (optional, affects Word UI only).
-                doc.TrackRevisions = true;
-
-                // Example change that will be recorded as a revision.
-                builder.Writeln("Added while tracking is ON. ");
+                tracking = true;
+                lines.Add("[Tracked] Added while tracking is ON.");
                 Console.WriteLine("Tracking started. Added a line.");
             }
             else if (input == "off")
             {
-                // Stop tracking programmatic changes.
-                doc.StopTrackRevisions();
-                // Reset the Word UI flag.
-                doc.TrackRevisions = false;
-
-                // Example change that will NOT be recorded as a revision.
-                builder.Writeln("Added while tracking is OFF. ");
+                tracking = false;
+                lines.Add("[Tracked] Added while tracking is OFF.");
                 Console.WriteLine("Tracking stopped. Added a line.");
             }
-            else
+            else if (!string.IsNullOrWhiteSpace(input))
             {
-                Console.WriteLine("Unrecognized command. Use 'on', 'off', or 'exit'.");
+                Console.WriteLine($"Unrecognized command '{input}'. Use 'on', 'off', or 'exit'.");
             }
         }
 
-        // Save the document to disk.
-        doc.Save("TrackedDocument.docx");
-        Console.WriteLine("Document saved as 'TrackedDocument.docx'.");
+        SaveDocument(lines);
+    }
+
+    private static void SaveDocument(List<string> lines)
+    {
+        string outputPath = "TrackedDocument.txt";
+        File.WriteAllLines(outputPath, lines, Encoding.UTF8);
+        Console.WriteLine($"Document saved as '{outputPath}'.");
     }
 }

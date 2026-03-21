@@ -8,28 +8,47 @@ namespace AsposeWordsFieldUpdateExample
     {
         static void Main()
         {
-            // Load an existing document that contains a table with formula fields.
-            // (Replace the path with the actual location of your document.)
-            Document doc = new Document(@"C:\Docs\InputWithTable.docx");
+            // Create a new document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Find the first table in the document.
-            Table table = doc.FirstSection.Body.Tables[0];
+            // Build a simple table with a numeric cell and a formula field.
+            Table table = builder.StartTable();
 
-            // Insert a new row at the end of the table.
-            // The new row will inherit the formatting of the previous row.
+            // Header row.
+            builder.InsertCell();
+            builder.Write("Value");
+            builder.EndRow();
+
+            // Data row with a numeric value.
+            builder.InsertCell();
+            builder.Write("10");
+            builder.EndRow();
+
+            // Row with a formula field that sums the values above.
+            builder.InsertCell();
+            builder.InsertField("=SUM(ABOVE)", "0");
+            builder.EndRow();
+
+            builder.EndTable();
+
+            // Get the first table in the document.
+            table = doc.FirstSection.Body.Tables[0];
+
+            // Insert a new row at the end of the table (clone the last row to keep formatting).
             Row newRow = (Row)table.LastRow.Clone(true);
             table.Rows.Add(newRow);
 
-            // Optionally, fill the new row with data.
-            // For example, set the first cell's text to a numeric value that a formula field will use.
+            // Fill the new row with a numeric value that the formula will include.
             newRow.Cells[0].FirstParagraph.AppendChild(new Run(doc, "42"));
-            // If the table contains formula fields (e.g., = SUM(ABOVE)), they will reference the new data.
 
-            // Recalculate all fields in the document, including the formula fields in the table.
+            // Recalculate all fields, including the formula field.
             doc.UpdateFields();
 
-            // Save the updated document.
-            doc.Save(@"C:\Docs\OutputWithUpdatedFields.docx");
+            // Save the updated document to the current directory.
+            string outputPath = "OutputWithUpdatedFields.docx";
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved to {outputPath}");
         }
     }
 }

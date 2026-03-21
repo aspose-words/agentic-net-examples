@@ -6,22 +6,28 @@ class AddCommentToTableCell
 {
     static void Main()
     {
-        // Load an existing document that contains a table.
-        Document doc = new Document("Input.docx");
+        // Create a new document.
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define the target cell location (zero‑based indexes):
+        // Build a table with 2 rows and 3 columns.
+        builder.StartTable();
+        for (int row = 0; row < 2; row++)
+        {
+            for (int col = 0; col < 3; col++)
+            {
+                builder.InsertCell();
+                builder.Writeln($"R{row + 1}C{col + 1}");
+            }
+            builder.EndRow();
+        }
+        builder.EndTable();
+
+        // Move the builder's cursor to the end of the target cell:
         // first table (0), second row (1), third column (2).
-        int tableIndex = 0;
-        int rowIndex = 1;
-        int columnIndex = 2;
+        builder.MoveToCell(0, 1, 2, -1);
 
-        // Move the builder's cursor to the end of the specified cell.
-        // The characterIndex of -1 positions the cursor after the last character in the cell.
-        builder.MoveToCell(tableIndex, rowIndex, columnIndex, -1);
-
-        // Ensure the cell contains at least one paragraph (required for a comment anchor).
-        // If the cell is empty, Insert a new paragraph.
+        // Ensure the cell contains at least one paragraph.
         if (builder.CurrentParagraph == null)
         {
             builder.Writeln();
@@ -31,7 +37,7 @@ class AddCommentToTableCell
         Comment comment = new Comment(doc, "Reviewer", "RV", DateTime.Now);
         comment.SetText("Please verify the data in this cell.");
 
-        // Append the comment to the paragraph that the builder is currently positioned in.
+        // Append the comment to the paragraph where the builder is positioned.
         builder.CurrentParagraph.AppendChild(comment);
 
         // Save the modified document.

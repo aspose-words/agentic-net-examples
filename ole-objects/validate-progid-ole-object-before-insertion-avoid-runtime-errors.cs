@@ -13,24 +13,24 @@ namespace OleProgIdValidationExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Path to the file that will be embedded as an OLE object.
-            string oleFilePath = @"C:\Data\Sample.xlsx";
-
             // The ProgID we intend to use for the OLE object.
             string progId = "Excel.Sheet.12";
 
             // Validate the ProgID before insertion.
             ValidateProgId(progId);
 
-            // Insert the OLE object using the validated ProgID.
-            using (FileStream oleStream = File.Open(oleFilePath, FileMode.Open, FileAccess.Read))
+            // Create a dummy OLE data stream (e.g., a minimal ZIP header).
+            byte[] dummyData = new byte[] { 0x50, 0x4B, 0x03, 0x04 };
+            using (MemoryStream oleStream = new MemoryStream(dummyData))
             {
                 // Insert as a normal (non‑icon) object; presentation stream is null.
                 builder.InsertOleObject(oleStream, progId, false, null);
             }
 
-            // Save the resulting document.
-            doc.Save(@"C:\Output\OleWithValidatedProgId.docx");
+            // Save the resulting document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleWithValidatedProgId.docx");
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
 
         /// <summary>

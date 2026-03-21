@@ -15,6 +15,12 @@ class OlePackageFileNameComparer
         // This is the file we expect the OLE package to reference.
         string originalSourcePath = @"C:\SourceFiles\Archive.zip";
 
+        if (!File.Exists(documentPath))
+        {
+            Console.WriteLine($"Document not found: {documentPath}");
+            return;
+        }
+
         // Load the document from disk.
         Document doc = new Document(documentPath);
 
@@ -60,7 +66,14 @@ class OlePackageFileNameComparer
 
         // Optionally, save the document after any modifications (none in this example).
         string outputPath = @"C:\Docs\DocumentWithOlePackage_Processed.docx";
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
+        try
+        {
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved to: {outputPath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to save document: {ex.Message}");
+        }
     }
 }

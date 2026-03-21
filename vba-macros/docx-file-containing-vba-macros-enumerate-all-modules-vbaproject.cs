@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -6,8 +7,19 @@ class Program
 {
     static void Main()
     {
-        // Load the macro-enabled document.
-        Document doc = new Document("MyDir/VBA project.docm");
+        // Path to the macro‑enabled document.
+        string docPath = Path.Combine("MyDir", "VBA project.docm");
+
+        // Verify that the file exists before attempting to load it.
+        if (!File.Exists(docPath))
+        {
+            Console.WriteLine($"File not found: {docPath}");
+            Console.WriteLine("Place a macro‑enabled .docm file at the specified location and rerun the program.");
+            return;
+        }
+
+        // Load the macro‑enabled document.
+        Document doc = new Document(docPath);
 
         // Verify that the document actually contains VBA macros.
         if (!doc.HasMacros)

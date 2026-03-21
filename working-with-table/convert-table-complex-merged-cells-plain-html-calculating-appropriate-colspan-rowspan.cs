@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using System.Net;
 
 namespace AsposeWordsTableToHtml
 {
@@ -15,7 +16,7 @@ namespace AsposeWordsTableToHtml
         /// <param name="outputPath">Path where the resulting HTML file will be saved.</param>
         public static void ConvertTableToHtml(string inputPath, string outputPath)
         {
-            // Load the document (lifecycle rule: load)
+            // Load the document
             Document doc = new Document(inputPath);
 
             // Get the first table in the document
@@ -36,7 +37,7 @@ namespace AsposeWordsTableToHtml
             bool[,] visited = new bool[rowCount, maxColCount];
 
             // Build the HTML string
-            StringWriter html = new StringWriter();
+            using StringWriter html = new StringWriter();
             html.WriteLine("<table border=\"1\" cellspacing=\"0\" cellpadding=\"5\">");
 
             for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
@@ -101,7 +102,7 @@ namespace AsposeWordsTableToHtml
                     // Extract plain text from the cell
                     string cellText = cell.ToString(SaveFormat.Text).Trim();
                     // Encode basic HTML entities
-                    cellText = System.Net.WebUtility.HtmlEncode(cellText);
+                    cellText = WebUtility.HtmlEncode(cellText);
                     html.Write(cellText);
                     html.WriteLine("</td>");
 
@@ -123,19 +124,64 @@ namespace AsposeWordsTableToHtml
 
             html.WriteLine("</table>");
 
-            // Save the generated HTML (lifecycle rule: save)
+            // Save the generated HTML
             File.WriteAllText(outputPath, html.ToString());
         }
 
         // Example usage
         public static void Main()
         {
-            string sourceDoc = @"C:\Docs\InputWithMergedCells.docx";
-            string htmlFile = @"C:\Docs\ConvertedTable.html";
+            string baseDir = Directory.GetCurrentDirectory();
+            string sourceDoc = Path.Combine(baseDir, "InputWithMergedCells.docx");
+            string htmlFile = Path.Combine(baseDir, "ConvertedTable.html");
+
+            // If the source document does not exist, create a simple one with merged cells
+            if (!File.Exists(sourceDoc))
+            {
+                Document doc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(doc);
+
+                // Start a table with 2 rows and 2 columns
+                Table table = builder.StartTable();
+
+                // First row, first cell
+                builder.InsertCell();
+                builder.Writeln("Header 1");
+
+                // First row, second cell (will be merged horizontally with first)
+                builder.InsertCell();
+                builder.Writeln("Header 2");
+                builder.EndRow();
+
+                // Merge the two cells horizontally
+                Cell firstCell = table.FirstRow.FirstCell;
+                firstCell.CellFormat.HorizontalMerge = CellMerge.First;
+                Cell secondCell = table.FirstRow.LastCell;
+                secondCell.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+                // Second row, first cell
+                builder.InsertCell();
+                builder.Writeln("Row 1, Col 1");
+
+                // Second row, second cell (will be merged vertically with cell above)
+                builder.InsertCell();
+                builder.Writeln("Row 1, Col 2");
+                builder.EndRow();
+
+                // Merge the second column vertically
+                Cell cellToMerge = table.Rows[0].Cells[1];
+                cellToMerge.CellFormat.VerticalMerge = CellMerge.First;
+                Cell cellBelow = table.Rows[1].Cells[1];
+                cellBelow.CellFormat.VerticalMerge = CellMerge.Previous;
+
+                builder.EndTable();
+
+                doc.Save(sourceDoc);
+            }
 
             ConvertTableToHtml(sourceDoc, htmlFile);
 
-            Console.WriteLine("HTML conversion completed.");
+            Console.WriteLine($"HTML conversion completed. Output saved to: {htmlFile}");
         }
     }
 }

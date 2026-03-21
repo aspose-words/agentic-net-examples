@@ -21,6 +21,12 @@ namespace AsposeWordsBatchProcessing
 
             foreach (string inputPath in inputFiles)
             {
+                if (!File.Exists(inputPath))
+                {
+                    Console.WriteLine($"Warning: Input file not found and will be skipped: {inputPath}");
+                    continue;
+                }
+
                 // Load the document from file.
                 Document doc = new Document(inputPath);
 
@@ -36,27 +42,38 @@ namespace AsposeWordsBatchProcessing
         }
     }
 
-    // Example usage:
     class Program
     {
         static void Main()
         {
-            // List of document paths to process.
-            var files = new List<string>
+            // Create a temporary folder for sample input documents.
+            string tempInputFolder = Path.Combine(Path.GetTempPath(), "AsposeSampleInput");
+            Directory.CreateDirectory(tempInputFolder);
+
+            // Create a few simple documents to work with.
+            var files = new List<string>();
+            for (int i = 1; i <= 3; i++)
             {
-                @"C:\Docs\Document1.docx",
-                @"C:\Docs\Document2.docx",
-                @"C:\Docs\Document3.docx"
-            };
+                string filePath = Path.Combine(tempInputFolder, $"Document{i}.docx");
+                // Create a new empty document with a single paragraph of sample text.
+                Document doc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(doc);
+                builder.Writeln($"Sample content for Document{i}");
+                doc.Save(filePath);
+                files.Add(filePath);
+            }
 
             // Destination folder for cleared documents.
-            string outputFolder = @"C:\ClearedDocs";
+            string outputFolder = Path.Combine(Path.GetTempPath(), "AsposeClearedDocs");
+            Directory.CreateDirectory(outputFolder);
 
             // Perform the batch clear operation.
             var clearer = new BatchClearer();
             clearer.ClearDocuments(files, outputFolder);
 
             Console.WriteLine("Batch clearing completed.");
+            Console.WriteLine($"Input files located at: {tempInputFolder}");
+            Console.WriteLine($"Cleared files saved at: {outputFolder}");
         }
     }
 }

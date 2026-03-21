@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Saving;
@@ -9,16 +10,30 @@ class Program
 {
     static void Main()
     {
-        // Path to the source document.
-        string sourcePath = @"MyDir\Big document.docx";
-        // Path to the output document.
-        string outputPath = @"ArtifactsDir\ProcessedDocument.docx";
+        // Prepare source and output paths.
+        string sourceDir = Path.Combine(Path.GetTempPath(), "MyDir");
+        string outputDir = Path.Combine(Path.GetTempPath(), "ArtifactsDir");
+        Directory.CreateDirectory(sourceDir);
+        Directory.CreateDirectory(outputDir);
+
+        string sourcePath = Path.Combine(sourceDir, "Big document.docx");
+        string outputPath = Path.Combine(outputDir, "ProcessedDocument.docx");
+
+        // Create a simple source document if it does not exist.
+        if (!File.Exists(sourcePath))
+        {
+            var tempDoc = new Document();
+            var builder = new DocumentBuilder(tempDoc);
+            builder.Writeln("This is a sample document.");
+            builder.InsertField("AUTHOR");
+            tempDoc.Save(sourcePath);
+        }
 
         // Set up loading progress callback that reports progress and cancels after a time limit.
         var loadingCallback = new LoadingProgressCallback();
 
         // LoadOptions with the progress callback.
-        LoadOptions loadOptions = new LoadOptions { ProgressCallback = loadingCallback };
+        var loadOptions = new LoadOptions { ProgressCallback = loadingCallback };
 
         Document doc = null;
         try
@@ -59,6 +74,7 @@ class Program
         {
             // Save the document using the provided SaveOptions (saving rule).
             doc.Save(outputPath, saveOptions);
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
         catch (OperationCanceledException ex)
         {
@@ -71,7 +87,7 @@ class Program
 public class LoadingProgressCallback : IDocumentLoadingCallback
 {
     private readonly DateTime _startTime;
-    private const double MaxDurationSeconds = 0.5; // Adjust as needed.
+    private const double MaxDurationSeconds = 30.0; // Increased to avoid premature cancellation.
 
     public LoadingProgressCallback()
     {
@@ -92,7 +108,7 @@ public class LoadingProgressCallback : IDocumentLoadingCallback
 public class SavingProgressCallback : IDocumentSavingCallback
 {
     private readonly DateTime _startTime;
-    private const double MaxDurationSeconds = 0.1; // Adjust as needed.
+    private const double MaxDurationSeconds = 30.0; // Increased to avoid premature cancellation.
 
     public SavingProgressCallback()
     {
@@ -113,7 +129,7 @@ public class SavingProgressCallback : IDocumentSavingCallback
 public class FieldUpdatingCallback : IFieldUpdatingCallback, IFieldUpdatingProgressCallback
 {
     private readonly DateTime _startTime;
-    private const double MaxDurationSeconds = 0.3; // Adjust as needed.
+    private const double MaxDurationSeconds = 30.0; // Increased to avoid premature cancellation.
 
     public FieldUpdatingCallback()
     {

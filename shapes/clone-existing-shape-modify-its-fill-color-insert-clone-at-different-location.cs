@@ -22,7 +22,7 @@ clonedShape.Left = originalShape.Left + 150; // Shift right.
 clonedShape.Top = originalShape.Top;         // Same vertical position.
 
 // Insert the cloned shape into the document after the original shape.
-originalShape.InsertAfter(clonedShape, originalShape);
+originalShape.ParentNode.InsertAfter(clonedShape, originalShape);
 
 // Save the document.
 doc.Save("CloneShape.docx");

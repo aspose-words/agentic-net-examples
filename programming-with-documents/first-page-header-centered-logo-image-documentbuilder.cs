@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -17,8 +19,13 @@ class Program
         // Move the cursor to the first-page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
 
-        // Insert the logo image (provide the correct path to your image file).
-        Shape logo = builder.InsertImage("logo.png");
+        // Create a tiny placeholder PNG image in memory.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XbZcAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        using var imageStream = new MemoryStream(pngBytes);
+
+        // Insert the image from the stream.
+        Shape logo = builder.InsertImage(imageStream);
 
         // Configure the image as a floating shape behind the text.
         logo.WrapType = WrapType.None;
@@ -33,7 +40,7 @@ class Program
         logo.VerticalAlignment = VerticalAlignment.Center;
 
         // Return the cursor to the main document body.
-        builder.MoveToSection(0);
+        builder.MoveToDocumentEnd();
 
         // Add sample content to demonstrate the header.
         builder.Writeln("This is the first page.");

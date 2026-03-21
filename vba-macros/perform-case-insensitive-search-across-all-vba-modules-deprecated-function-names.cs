@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Vba;
@@ -8,9 +9,27 @@ class VbaModuleUpdater
 {
     static void Main()
     {
-        // Load the document that contains VBA macros.
+        // Paths for input and output documents.
         string inputPath = "input.docm";
+        string outputPath = "output.docm";
+
+        // Verify that the input file exists.
+        if (!File.Exists(inputPath))
+        {
+            Console.WriteLine($"Input file '{inputPath}' not found.");
+            return;
+        }
+
+        // Load the document that contains VBA macros.
         Document doc = new Document(inputPath);
+
+        // If the document has no VBA project, nothing to update.
+        if (doc.VbaProject == null)
+        {
+            Console.WriteLine("No VBA project found in the document.");
+            doc.Save(outputPath);
+            return;
+        }
 
         // Map of deprecated function names (key) to their replacements (value).
         var deprecatedFunctions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -23,7 +42,9 @@ class VbaModuleUpdater
         // Iterate through all VBA modules in the project.
         foreach (VbaModule module in doc.VbaProject.Modules)
         {
-            string source = module.SourceCode;
+            if (module == null) continue;
+
+            string source = module.SourceCode ?? string.Empty;
 
             // Replace each deprecated function name with its new name, case‑insensitively.
             foreach (var kvp in deprecatedFunctions)
@@ -38,7 +59,7 @@ class VbaModuleUpdater
         }
 
         // Save the modified document.
-        string outputPath = "output.docm";
         doc.Save(outputPath);
+        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

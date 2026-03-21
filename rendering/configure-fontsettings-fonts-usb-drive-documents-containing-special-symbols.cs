@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 using Aspose.Words.Loading;
@@ -11,26 +12,40 @@ class FontSettingsFromUsb
         // Adjust the drive letter and folder name as needed.
         string usbFontsFolder = @"E:\MyFonts";
 
-        // Create a FontSettings instance and configure it to search the USB folder.
-        // The second argument (true) enables recursive scanning of subfolders.
+        // Create a FontSettings instance and configure it to search the USB folder
+        // only if the folder actually exists.
         FontSettings usbFontSettings = new FontSettings();
-        usbFontSettings.SetFontsFolder(usbFontsFolder, true);
+        if (Directory.Exists(usbFontsFolder))
+        {
+            // The second argument (true) enables recursive scanning of subfolders.
+            usbFontSettings.SetFontsFolder(usbFontsFolder, true);
+        }
 
         // Apply the FontSettings to LoadOptions so that fonts are resolved while loading.
-        LoadOptions loadOptions = new LoadOptions();
-        loadOptions.FontSettings = usbFontSettings;
+        LoadOptions loadOptions = new LoadOptions { FontSettings = usbFontSettings };
 
         // Load the source document using the configured LoadOptions.
-        // Replace "input.docx" with the actual path to your document.
-        Document doc = new Document("input.docx", loadOptions);
+        // If the input file does not exist, create a new empty document instead.
+        Document doc;
+        const string inputPath = "input.docx";
+        if (File.Exists(inputPath))
+        {
+            doc = new Document(inputPath, loadOptions);
+        }
+        else
+        {
+            doc = new Document();
+        }
 
-        // Optional: add some text that uses special symbols to verify font loading.
+        // Add some text that uses special symbols to verify font loading.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "CustomFontFromUsb"; // use a font that exists in the USB folder
+        // Use a font that is likely to be present; if a custom font from the USB folder is needed,
+        // replace the name with the exact font name.
+        builder.Font.Name = "Arial";
         builder.Writeln("Special symbols: Ω, 漢字, 😊");
 
-        // Save the processed document. The fonts will be resolved from the USB drive.
-        // Replace "output.pdf" with the desired output path and format.
-        doc.Save("output.pdf");
+        // Save the processed document. The fonts will be resolved from the USB drive if needed.
+        // Save as DOCX to avoid PDF dependencies in environments without the PDF add‑on.
+        doc.Save("output.docx");
     }
 }

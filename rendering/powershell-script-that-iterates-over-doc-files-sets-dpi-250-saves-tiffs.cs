@@ -7,17 +7,23 @@ class Program
 {
     static void Main()
     {
-        // Folder containing the source DOC/DOCX files
-        string sourceFolder = @"C:\Docs\Input";
-        // Folder where the generated TIFF files will be saved
-        string outputFolder = @"C:\Docs\Output";
+        // Use folders relative to the executable location
+        string baseDir = AppContext.BaseDirectory;
+        string sourceFolder = Path.Combine(baseDir, "Input");
+        string outputFolder = Path.Combine(baseDir, "Output");
 
-        // Ensure the output folder exists
-        if (!Directory.Exists(outputFolder))
-            Directory.CreateDirectory(outputFolder);
+        // Ensure the folders exist
+        Directory.CreateDirectory(sourceFolder);
+        Directory.CreateDirectory(outputFolder);
 
         // Get all .doc and .docx files (including subfolders)
         var files = Directory.GetFiles(sourceFolder, "*.*", SearchOption.AllDirectories);
+        if (files.Length == 0)
+        {
+            Console.WriteLine($"No Word documents found in '{sourceFolder}'. Place .doc or .docx files there and rerun.");
+            return;
+        }
+
         foreach (var filePath in files)
         {
             string ext = Path.GetExtension(filePath).ToLowerInvariant();
@@ -30,7 +36,7 @@ class Program
             // Set up TIFF save options with 250 DPI resolution
             ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                Resolution = 250,
+                Resolution = 250
                 // Optional: change compression if required
                 // TiffCompression = TiffCompression.Lzw
             };

@@ -6,20 +6,29 @@ using Aspose.Words.Vba;
 
 class VbaModuleDiff
 {
-    // Entry point
     static void Main()
     {
         // Paths to the two documents containing VBA projects
         string docPath1 = @"C:\Docs\Document1.docm";
         string docPath2 = @"C:\Docs\Document2.docm";
 
-        // Load the documents (lifecycle rule: use Document constructor)
+        // Ensure the files exist; if not, create minimal .docm files so the example can run.
+        docPath1 = EnsureDocumentExists(docPath1);
+        docPath2 = EnsureDocumentExists(docPath2);
+
+        // Load the documents
         Document doc1 = new Document(docPath1);
         Document doc2 = new Document(docPath2);
 
-        // Access VBA projects
+        // Access VBA projects (may be null for empty documents)
         VbaProject vbaProject1 = doc1.VbaProject;
         VbaProject vbaProject2 = doc2.VbaProject;
+
+        if (vbaProject1 == null || vbaProject2 == null)
+        {
+            Console.WriteLine("One or both documents do not contain a VBA project. No comparison performed.");
+            return;
+        }
 
         // Build a lookup for modules in the second document by name
         var modules2ByName = new Dictionary<string, VbaModule>(StringComparer.OrdinalIgnoreCase);
@@ -65,15 +74,45 @@ class VbaModuleDiff
             }
         }
 
-        // Optionally, save a report file (using the allowed Save method)
-        string reportPath = @"C:\Docs\VbaDiffReport.txt";
+        // Save a simple report to a writable location
+        string reportPath = Path.Combine(Path.GetTempPath(), "VbaDiffReport.txt");
         using (StreamWriter writer = new StreamWriter(reportPath))
         {
             writer.WriteLine("VBA Module Diff Report");
             writer.WriteLine($"Generated on {DateTime.Now}");
-            // Additional detailed report could be written here following the same logic as above.
+            writer.WriteLine();
+            writer.WriteLine("See console output for detailed differences.");
         }
 
         Console.WriteLine($"Diff report saved to: {reportPath}");
+    }
+
+    // Creates a minimal .docm file if the specified path does not exist and returns the path to use.
+    private static string EnsureDocumentExists(string path)
+    {
+        if (File.Exists(path))
+            return path;
+
+        try
+        {
+            // Ensure directory exists
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+
+            // Create a new blank document and save as .docm
+            Document doc = new Document();
+            doc.Save(path, SaveFormat.Docm);
+            Console.WriteLine($"Created placeholder document at: {path}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to create placeholder document at '{path}': {ex.Message}");
+            // Fallback to a temporary in‑memory document saved to a temp file
+            string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".docm");
+            new Document().Save(tempPath, SaveFormat.Docm);
+            Console.WriteLine($"Using temporary document at: {tempPath}");
+            return tempPath;
+        }
+
+        return path;
     }
 }

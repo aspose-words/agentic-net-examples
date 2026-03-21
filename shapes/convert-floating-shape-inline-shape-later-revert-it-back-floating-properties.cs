@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -6,12 +7,25 @@ class ConvertShapeExample
 {
     static void Main()
     {
+        // Ensure the Images folder exists and create a sample PNG if it does not.
+        string imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "Images");
+        Directory.CreateDirectory(imagesFolder);
+        string imagePath = Path.Combine(imagesFolder, "Sample.png");
+
+        if (!File.Exists(imagePath))
+        {
+            // A 1x1 red pixel PNG (base64 encoded).
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
+            byte[] pngBytes = Convert.FromBase64String(base64Png);
+            File.WriteAllBytes(imagePath, pngBytes);
+        }
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a floating image (initially floating).
-        Shape floatingShape = builder.InsertImage(@"Images\Sample.png");
+        Shape floatingShape = builder.InsertImage(imagePath);
         floatingShape.WrapType = WrapType.None;               // Floating shape – no text wrap.
         floatingShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
         floatingShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;

@@ -11,9 +11,9 @@ class InsertOleWithSize
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path to the file that will be embedded as an OLE object.
-        // For example, a ZIP archive or any file you want to embed.
-        string oleFilePath = @"C:\Data\SampleArchive.zip";
+        // Create a temporary file to embed as an OLE object.
+        string tempFilePath = Path.Combine(Path.GetTempPath(), "SampleData.txt");
+        File.WriteAllText(tempFilePath, "This is sample embedded content.");
 
         // Insert the OLE object. This overload returns a Shape that contains the OLE data.
         // Parameters:
@@ -23,7 +23,7 @@ class InsertOleWithSize
         //   asIcon   – false = display the object's content, true = display as an icon.
         //   presentation – null = use default icon.
         Shape oleShape = builder.InsertOleObject(
-            oleFilePath,
+            tempFilePath,
             "Package",
             false,   // embed, not link
             false,   // display content, not icon
@@ -34,15 +34,18 @@ class InsertOleWithSize
         oleShape.Width = 300;   // 300 points ≈ 4.17 inches
         oleShape.Height = 200;  // 200 points ≈ 2.78 inches
 
-        // Optionally, adjust positioning (floating shape) if needed.
-        // Here we place the OLE object 100 points from the left and top margins.
+        // Position the OLE object relative to the page margins.
         oleShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
         oleShape.RelativeVerticalPosition = RelativeVerticalPosition.Margin;
         oleShape.Left = 100;
         oleShape.Top = 100;
         oleShape.WrapType = WrapType.Square; // Text will wrap around the object.
 
-        // Save the document.
-        doc.Save(@"C:\Output\DocumentWithOle.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DocumentWithOle.docx");
+        doc.Save(outputPath);
+
+        // Clean up the temporary file.
+        File.Delete(tempFilePath);
     }
 }

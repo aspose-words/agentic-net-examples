@@ -7,13 +7,25 @@ class ExtractOleObject
 {
     static void Main()
     {
-        // Path to the Word document that contains the OLE object.
-        string documentPath = @"C:\Docs\Sample.docx";
+        // Use a document path relative to the executable directory.
+        string baseDir = AppContext.BaseDirectory;
+        string documentPath = Path.Combine(baseDir, "Sample.docx");
+        string outputPath = Path.Combine(baseDir, "OleObject.bin");
 
-        // Path where the extracted OLE binary stream will be saved.
-        string outputPath = @"C:\Output\OleObject.bin";
+        // If the sample document does not exist, create a minimal placeholder document.
+        if (!File.Exists(documentPath))
+        {
+            Document placeholder = new Document();
+            placeholder.Save(documentPath);
+            Console.WriteLine($"Placeholder document created at: {documentPath}");
+            Console.WriteLine("No OLE objects to extract. Exiting.");
+            return;
+        }
 
-        // Load the document from the file system.
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+
+        // Load the document.
         Document doc = new Document(documentPath);
 
         // Retrieve the first shape that holds an OLE object.
@@ -24,13 +36,10 @@ class ExtractOleObject
             return;
         }
 
-        // Access the OleFormat of the shape.
-        OleFormat oleFormat = oleShape.OleFormat;
-
-        // Save the OLE object's data to a binary file using a stream.
-        using (FileStream fileStream = new FileStream(outputPath, FileMode.Create))
+        // Save the OLE object's data to a binary file.
+        using (FileStream fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
         {
-            oleFormat.Save(fileStream);
+            oleShape.OleFormat.Save(fileStream);
         }
 
         Console.WriteLine($"OLE object extracted successfully to: {outputPath}");

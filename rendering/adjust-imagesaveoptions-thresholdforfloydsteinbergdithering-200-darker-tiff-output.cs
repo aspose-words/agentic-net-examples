@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,28 +7,32 @@ class Program
 {
     static void Main()
     {
-        // Load or create a document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // A tiny 1x1 red PNG image encoded in base64.
+        const string base64Image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==";
+        byte[] imageBytes = Convert.FromBase64String(base64Image);
+        using var imageStream = new MemoryStream(imageBytes);
+        imageStream.Position = 0;
 
-        // Add some content and an image to demonstrate the effect.
+        // Create a new document and add text and the image.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
         builder.Writeln("Sample text for TIFF rendering with darker dithering.");
-        builder.InsertImage("ImageDir\\SampleImage.jpg"); // Replace with actual image path.
+        builder.InsertImage(imageStream);
 
-        // Create ImageSaveOptions for TIFF output.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure TIFF save options with darker Floyd‑Steinberg dithering.
+        var options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Use CCITT3 compression (common for 1‑bpp TIFF).
             TiffCompression = TiffCompression.Ccitt3,
-
-            // Enable Floyd‑Steinberg dithering for binarization.
             TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
-
-            // Increase the threshold to 200 to produce a darker image.
             ThresholdForFloydSteinbergDithering = 200
         };
 
-        // Save the document as a TIFF image using the configured options.
-        doc.Save("ArtifactsDir\\DarkerDithered.tiff", options);
+        // Ensure the output directory exists and save the TIFF.
+        var outputDir = Path.Combine(Directory.GetCurrentDirectory(), "ArtifactsDir");
+        Directory.CreateDirectory(outputDir);
+        var outputPath = Path.Combine(outputDir, "DarkerDithered.tiff");
+        doc.Save(outputPath, options);
+
+        Console.WriteLine($"TIFF saved to: {outputPath}");
     }
 }

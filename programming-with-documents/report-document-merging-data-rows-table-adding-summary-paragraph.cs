@@ -16,34 +16,31 @@ class ReportGenerator
         builder.Writeln();
 
         // Build a table with a mail‑merge region named "Employees".
-        // The region will be repeated for each row in the data source.
         builder.StartTable();
 
-        // First cell – start of the region.
-        builder.InsertCell();
-        builder.InsertField(" MERGEFIELD TableStart:Employees");
-
-        // Header row (optional – static text, not part of the region).
-        builder.InsertCell();
+        // Header row (static text, not part of the region).
+        builder.InsertCell(); // placeholder for TableStart column
         builder.Write("Name");
         builder.InsertCell();
         builder.Write("Age");
         builder.InsertCell();
         builder.Write("Country");
+        builder.InsertCell(); // placeholder for TableEnd column
         builder.EndRow();
 
-        // Data row – contains merge fields that will be populated.
+        // Data row – contains the region start/end and merge fields.
+        builder.InsertCell();
+        builder.InsertField(" MERGEFIELD TableStart:Employees");
         builder.InsertCell();
         builder.InsertField(" MERGEFIELD Name");
         builder.InsertCell();
         builder.InsertField(" MERGEFIELD Age");
         builder.InsertCell();
         builder.InsertField(" MERGEFIELD Country");
-        // End of the region.
         builder.InsertCell();
         builder.InsertField(" MERGEFIELD TableEnd:Employees");
-
         builder.EndRow();
+
         builder.EndTable();
 
         builder.Writeln(); // Add a blank line after the table.

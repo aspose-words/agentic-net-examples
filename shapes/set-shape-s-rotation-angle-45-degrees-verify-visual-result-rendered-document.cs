@@ -4,7 +4,6 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Rendering;
 using Aspose.Words.Saving;
-using System.Drawing;
 
 class ShapeRotationDemo
 {
@@ -20,16 +19,22 @@ class ShapeRotationDemo
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an image shape. Replace the path with a valid image on your machine.
-        Shape shape = builder.InsertImage(@"C:\Images\Sample.jpg");
-        // Ensure the shape can contain an image.
-        if (!shape.CanHaveImage || !shape.HasImage)
-            throw new InvalidOperationException("The inserted shape does not contain an image.");
+        // Base64-encoded PNG (1x1 pixel). Replace with any PNG data as needed.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
 
-        // -----------------------------------------------------------------
-        // 2. Rotate the shape 45 degrees clockwise.
-        // -----------------------------------------------------------------
-        shape.Rotation = 45; // Positive value rotates clockwise.
+        using (MemoryStream ms = new MemoryStream(pngBytes))
+        {
+            Shape shape = builder.InsertImage(ms);
+            // Ensure the shape contains an image.
+            if (!shape.CanHaveImage || !shape.HasImage)
+                throw new InvalidOperationException("The inserted shape does not contain an image.");
+
+            // -----------------------------------------------------------------
+            // 2. Rotate the shape 45 degrees clockwise.
+            // -----------------------------------------------------------------
+            shape.Rotation = 45; // Positive value rotates clockwise.
+        }
 
         // -----------------------------------------------------------------
         // 3. Save the document to disk.

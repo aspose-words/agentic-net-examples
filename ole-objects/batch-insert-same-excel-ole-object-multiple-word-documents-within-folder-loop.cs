@@ -6,14 +6,33 @@ class Program
 {
     static void Main()
     {
-        // Folder that contains the Word documents to be processed
-        string docsFolder = @"C:\Docs";
+        // Create a temporary working directory
+        string workDir = Path.Combine(Path.GetTempPath(), "OleDemo");
+        Directory.CreateDirectory(workDir);
 
         // Path to the Excel file that will be embedded as an OLE object
-        string excelFile = @"C:\Data\Sample.xlsx";
+        string excelFile = Path.Combine(workDir, "Sample.xlsx");
 
-        // Retrieve all .docx files in the specified folder
+        // Ensure a dummy Excel file exists (a minimal ZIP header is enough for the demo)
+        if (!File.Exists(excelFile))
+        {
+            // Write a minimal ZIP file header so the file is recognized as an Office Open XML package
+            byte[] minimalZipHeader = new byte[] { 0x50, 0x4B, 0x03, 0x04 };
+            File.WriteAllBytes(excelFile, minimalZipHeader);
+        }
+
+        // Folder that contains the Word documents to be processed
+        string docsFolder = workDir;
+
+        // Ensure at least one .docx file exists for processing
         string[] wordFiles = Directory.GetFiles(docsFolder, "*.docx");
+        if (wordFiles.Length == 0)
+        {
+            string sampleDoc = Path.Combine(docsFolder, "Sample.docx");
+            var emptyDoc = new Document();
+            emptyDoc.Save(sampleDoc);
+            wordFiles = new[] { sampleDoc };
+        }
 
         foreach (string wordFile in wordFiles)
         {
@@ -39,5 +58,7 @@ class Program
             // Save the modified document, overwriting the original file
             doc.Save(wordFile);
         }
+
+        Console.WriteLine("OLE objects inserted successfully.");
     }
 }

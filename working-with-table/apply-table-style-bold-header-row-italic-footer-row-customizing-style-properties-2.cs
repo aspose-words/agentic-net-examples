@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -51,7 +50,7 @@ class TableStyleExample
         customStyle.ConditionalStyles[ConditionalStyleType.LastRow].Font.Italic = true;
 
         // Optional: set a base style to inherit default formatting (e.g., GridTable1Light).
-        customStyle.BaseStyleName = StyleIdentifier.TableGrid1.ToString();
+        customStyle.BaseStyleName = "Table Grid 1";
 
         // Assign the custom style to the table.
         table.Style = customStyle;

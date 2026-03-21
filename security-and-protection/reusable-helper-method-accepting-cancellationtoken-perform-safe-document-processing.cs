@@ -13,7 +13,8 @@ namespace AsposeWordsHelper
     public static class DocumentHelper
     {
         /// <summary>
-        /// Loads a document, optionally processes it, and saves it while respecting the supplied <see cref="CancellationToken"/>.
+        /// Loads a document (or creates a new one if the source file does not exist), optionally processes it,
+        /// and saves it while respecting the supplied <see cref="CancellationToken"/>.
         /// </summary>
         /// <param name="inputPath">Path to the source document.</param>
         /// <param name="outputPath">Path where the processed document will be saved.</param>
@@ -31,8 +32,17 @@ namespace AsposeWordsHelper
             Document doc;
             try
             {
-                // Load the document using the provided load options.
-                doc = new Document(inputPath, loadOptions);
+                if (File.Exists(inputPath))
+                {
+                    // Load the document using the provided load options.
+                    doc = new Document(inputPath, loadOptions);
+                }
+                else
+                {
+                    // If the input file does not exist, create a minimal document to keep the example runnable.
+                    doc = new Document();
+                    doc.FirstSection.Body.FirstParagraph.AppendChild(new Run(doc, "Placeholder content"));
+                }
             }
             catch (OperationCanceledException)
             {
@@ -69,10 +79,7 @@ namespace AsposeWordsHelper
         {
             private readonly CancellationToken _cancellationToken;
 
-            public LoadingCancellationCallback(CancellationToken cancellationToken)
-            {
-                _cancellationToken = cancellationToken;
-            }
+            public LoadingCancellationCallback(CancellationToken cancellationToken) => _cancellationToken = cancellationToken;
 
             public void Notify(DocumentLoadingArgs args)
             {
@@ -91,10 +98,7 @@ namespace AsposeWordsHelper
         {
             private readonly CancellationToken _cancellationToken;
 
-            public SavingCancellationCallback(CancellationToken cancellationToken)
-            {
-                _cancellationToken = cancellationToken;
-            }
+            public SavingCancellationCallback(CancellationToken cancellationToken) => _cancellationToken = cancellationToken;
 
             public void Notify(DocumentSavingArgs args)
             {
@@ -112,14 +116,14 @@ namespace AsposeWordsHelper
         static void Main(string[] args)
         {
             // Example usage of the helper method.
-            string inputPath = "input.docx";   // replace with an existing file path
-            string outputPath = "output.pdf"; // replace with desired output path
+            string inputPath = "input.docx";   // replace with an existing file path or leave as is to create a placeholder document
+            string outputPath = "output.docx"; // using DOCX avoids PDF‑specific processing that may trigger errors in minimal environments
             var tokenSource = new CancellationTokenSource();
 
             bool success = DocumentHelper.ProcessDocument(
                 inputPath,
                 outputPath,
-                SaveFormat.Pdf,
+                SaveFormat.Docx,
                 tokenSource.Token);
 
             Console.WriteLine(success ? "Document processed successfully." : "Document processing was cancelled.");

@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Text.Json;
 
-// Define classes that match the JSON structure.
 public class TableData
 {
     public List<RowData> Rows { get; set; }
@@ -21,76 +20,85 @@ public class RowData
     public List<string> Cells { get; set; }
 }
 
-// Main routine that builds the Word document from JSON.
 public class JsonTableToWord
 {
     public static void BuildDocument(string jsonPath, string outputDocPath)
     {
-        // Load JSON from file.
         string json = File.ReadAllText(jsonPath);
-        // Use System.Text.Json for deserialization (no external NuGet needed).
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         TableData tableData = JsonSerializer.Deserialize<TableData>(json, options);
 
-        // Create a blank Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start a new table.
         Table table = builder.StartTable();
 
-        // Apply optional table‑level formatting.
-        if (!string.IsNullOrEmpty(tableData.TableStyle))
+        // Build rows and cells
+        if (tableData?.Rows != null)
+        {
+            foreach (RowData rowData in tableData.Rows)
+            {
+                foreach (string cellText in rowData.Cells)
+                {
+                    builder.InsertCell();
+                    builder.Write(cellText);
+                }
+                builder.EndRow();
+            }
+        }
+
+        // Apply formatting after the table has at least one row
+        if (!string.IsNullOrEmpty(tableData?.TableStyle))
         {
             if (Enum.TryParse(tableData.TableStyle, out StyleIdentifier styleId))
                 table.StyleIdentifier = styleId;
             else
-                table.StyleName = tableData.TableStyle; // fallback to name.
+                table.StyleName = tableData.TableStyle;
         }
 
-        if (tableData.PreferredWidth.HasValue)
+        if (tableData?.PreferredWidth.HasValue == true)
             table.PreferredWidth = PreferredWidth.FromPoints(tableData.PreferredWidth.Value);
 
-        if (tableData.AllowAutoFit.HasValue)
+        if (tableData?.AllowAutoFit.HasValue == true)
             table.AllowAutoFit = tableData.AllowAutoFit.Value;
 
-        if (!string.IsNullOrEmpty(tableData.Title))
+        if (!string.IsNullOrEmpty(tableData?.Title))
             table.Title = tableData.Title;
 
-        if (!string.IsNullOrEmpty(tableData.Description))
+        if (!string.IsNullOrEmpty(tableData?.Description))
             table.Description = tableData.Description;
 
-        // Populate rows and cells.
-        foreach (RowData rowData in tableData.Rows)
-        {
-            // For each cell in the current row.
-            foreach (string cellText in rowData.Cells)
-            {
-                builder.InsertCell();
-                builder.Write(cellText);
-            }
-            // End the current row.
-            builder.EndRow();
-        }
-
-        // Finish the table.
         builder.EndTable();
-
-        // Save the document.
         doc.Save(outputDocPath);
     }
 
-    // Example usage.
     public static void Main()
     {
-        // Path to the JSON file containing table data.
-        string jsonFile = @"C:\Data\sampleTable.json";
+        string baseDir = AppContext.BaseDirectory;
+        string jsonFile = Path.Combine(baseDir, "sampleTable.json");
+        string outputFile = Path.Combine(baseDir, "GeneratedTable.docx");
 
-        // Desired output Word document path.
-        string outputFile = @"C:\Output\GeneratedTable.docx";
+        if (!File.Exists(jsonFile))
+        {
+            var sampleData = new TableData
+            {
+                TableStyle = "MediumShading1Accent1",
+                Title = "Sample Table",
+                Description = "A table generated from JSON data.",
+                PreferredWidth = 500,
+                AllowAutoFit = true,
+                Rows = new List<RowData>
+                {
+                    new RowData { Cells = new List<string> { "Header 1", "Header 2", "Header 3" } },
+                    new RowData { Cells = new List<string> { "Row 1, Cell 1", "Row 1, Cell 2", "Row 1, Cell 3" } },
+                    new RowData { Cells = new List<string> { "Row 2, Cell 1", "Row 2, Cell 2", "Row 2, Cell 3" } }
+                }
+            };
+
+            string json = JsonSerializer.Serialize(sampleData, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(jsonFile, json);
+        }
 
         BuildDocument(jsonFile, outputFile);
-
-        Console.WriteLine("Document created successfully.");
+        Console.WriteLine($"Document created successfully at: {outputFile}");
     }
 }

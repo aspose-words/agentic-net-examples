@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,22 +7,24 @@ class Program
 {
     static void Main()
     {
-        // Load or create a document.
+        // Create a new document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a sample image so the TIFF will contain visual content.
-        // Replace with a valid path to an image file if needed.
-        builder.InsertImage("sample.jpg");
+        // Insert a tiny 1x1 PNG image from an in‑memory stream.
+        // This avoids the need for an external image file.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        using var imageStream = new MemoryStream(imageBytes);
+        builder.InsertImage(imageStream);
 
-        // Create ImageSaveOptions for TIFF format.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        // Configure TIFF save options with maximum loss‑less compression.
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            TiffCompression = TiffCompression.Lzw
+        };
 
-        // Set the compression scheme to the strongest loss‑less option (LZW).
-        // This reduces file size without degrading image quality.
-        tiffOptions.TiffCompression = TiffCompression.Lzw;
-
-        // Save the document as a TIFF image using the configured options.
+        // Save the document as a TIFF image.
         doc.Save("output.tiff", tiffOptions);
     }
 }

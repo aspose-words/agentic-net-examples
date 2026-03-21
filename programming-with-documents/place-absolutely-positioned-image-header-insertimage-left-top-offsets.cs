@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -5,6 +7,11 @@ class Program
 {
     static void Main()
     {
+        // Prepare a temporary PNG image (1x1 pixel transparent).
+        string tempImagePath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".png");
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X0ZcAAAAASUVORK5CYII=";
+        File.WriteAllBytes(tempImagePath, Convert.FromBase64String(base64Png));
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
@@ -12,25 +19,28 @@ class Program
         // Move the builder's cursor to the primary header of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Insert a floating image into the header.
-        // The image is positioned relative to the page (absolute positioning).
-        // Left offset = 50 points, top offset = 30 points.
-        // Width and height are set to -1 to keep the original image dimensions.
-        // WrapType.None places the image behind the text.
+        // Insert a floating image into the header with absolute positioning.
         Shape shape = builder.InsertImage(
-            "ImageDir/Logo.png",                     // Path to the image file.
-            RelativeHorizontalPosition.Page,         // Horizontal reference (page).
-            50,                                      // Left offset (points).
-            RelativeVerticalPosition.Page,           // Vertical reference (page).
-            30,                                      // Top offset (points).
-            -1,                                      // Width (auto).
-            -1,                                      // Height (auto).
-            WrapType.None);                          // No text wrapping.
+            tempImagePath,
+            RelativeHorizontalPosition.Page,
+            50, // left offset (points)
+            RelativeVerticalPosition.Page,
+            30, // top offset (points)
+            -1, // width (auto)
+            -1, // height (auto)
+            WrapType.None);
 
         // Ensure the image appears behind any overlapping text.
         shape.BehindText = true;
 
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
         // Save the resulting document.
-        doc.Save("Output/HeaderImage.docx");
+        doc.Save(Path.Combine(outputDir, "HeaderImage.docx"));
+
+        // Clean up the temporary image file.
+        File.Delete(tempImagePath);
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Drawing;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -7,8 +8,21 @@ class Program
 {
     static void Main()
     {
-        // Load the existing document.
-        Document doc = new Document("{inputPath}");
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Add a textbox shape to the document so we have something to modify.
+        Shape textBox = new Shape(doc, ShapeType.TextBox)
+        {
+            Width = 200,
+            Height = 100,
+            WrapType = WrapType.Inline,
+            Fill = { Color = Color.White } // initial fill color
+        };
+
+        Paragraph para = new Paragraph(doc);
+        para.AppendChild(textBox);
+        doc.FirstSection.Body.AppendChild(para);
 
         // Get all shapes in the document (including those inside text boxes).
         NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
@@ -25,6 +39,6 @@ class Program
         }
 
         // Save the modified document.
-        doc.Save("{outputPath}");
+        doc.Save("output.docx");
     }
 }

@@ -1,17 +1,21 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Path to the source DOCX file that will be split later.
-        string sourceFilePath = @"C:\Docs\Source.docx";
+        // Create a new empty document.
+        Document sourceDocument = new Document();
 
-        // Load the document using the Document constructor that accepts a file name.
-        Document sourceDocument = new Document(sourceFilePath);
+        // Use DocumentBuilder to add some content to the document.
+        DocumentBuilder builder = new DocumentBuilder(sourceDocument);
+        builder.Writeln("This is the source document created programmatically.");
+        builder.InsertParagraph();
+        builder.Writeln("It contains two paragraphs.");
 
         // Example verification – output the number of sections in the loaded document.
-        Console.WriteLine($"Document loaded successfully. Sections count: {sourceDocument.Sections.Count}");
+        Console.WriteLine($"Document created successfully. Sections count: {sourceDocument.Sections.Count}");
     }
 }

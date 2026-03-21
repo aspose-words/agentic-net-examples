@@ -8,13 +8,15 @@ class ExtractEmbeddedFonts
 {
     static void Main()
     {
-        // Directories for input and output files.
-        string dataDir = @"C:\Data\";
-        string outputDir = @"C:\Output\";
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Load a source document that uses TrueType fonts.
-        Document srcDoc = new Document(dataDir + "Source.docx");
+        // Create a simple document with some text using a common TrueType font.
+        Document srcDoc = new Document();
+        var builder = new DocumentBuilder(srcDoc);
+        builder.Font.Name = "Arial";
+        builder.Writeln("Hello, world! This document is used to demonstrate font extraction.");
 
         // Configure the document to embed TrueType fonts when saved.
         FontInfoCollection srcFonts = srcDoc.FontInfos;
@@ -22,10 +24,12 @@ class ExtractEmbeddedFonts
         srcFonts.EmbedSystemFonts = true; // optional, embeds system fonts as well.
 
         // Save the document to PDF with subsetting (default behavior).
-        PdfSaveOptions pdfOptions = new PdfSaveOptions(); // creates a PdfSaveOptions instance
-        pdfOptions.EmbedFullFonts = false; // false => fonts will be subsetted.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
+            EmbedFullFonts = false // false => fonts will be subsetted.
+        };
         string pdfPath = Path.Combine(outputDir, "Rendered.pdf");
-        srcDoc.Save(pdfPath, pdfOptions); // saves the document as PDF.
+        srcDoc.Save(pdfPath, pdfOptions);
 
         // Load the generated PDF.
         Document pdfDoc = new Document(pdfPath);
@@ -56,5 +60,7 @@ class ExtractEmbeddedFonts
                 Console.WriteLine($"Extracted font: {fontInfo.Name} -> {fontPath}");
             }
         }
+
+        Console.WriteLine("Processing completed.");
     }
 }

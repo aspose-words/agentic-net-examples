@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -8,13 +9,11 @@ namespace AsposeWordsShapeDemo
     {
         static void Main()
         {
-            // Path to the existing DOCX template.
-            const string templatePath = @"C:\Docs\Template.docx";
+            // Use a template file if it exists; otherwise create a new blank document.
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+            Document doc = File.Exists(templatePath) ? new Document(templatePath) : new Document();
 
-            // Load the template document.
-            Document doc = new Document(templatePath);
-
-            // Create a DocumentBuilder for editing the loaded document.
+            // Create a DocumentBuilder for editing the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             // -----------------------------------------------------------------
@@ -22,7 +21,6 @@ namespace AsposeWordsShapeDemo
             // -----------------------------------------------------------------
             // Insert a rectangle shape (inline) with width=150pt and height=80pt.
             Shape rect = builder.InsertShape(ShapeType.Rectangle, 150, 80);
-            // Optional: set fill color and line style.
             rect.FillColor = System.Drawing.Color.LightBlue;
             rect.Stroke.Color = System.Drawing.Color.DarkBlue;
 
@@ -40,18 +38,17 @@ namespace AsposeWordsShapeDemo
             // -----------------------------------------------------------------
             // Group the two shapes into a single GroupShape.
             // -----------------------------------------------------------------
-            // The InsertGroupShape method automatically calculates the group bounds.
             GroupShape group = builder.InsertGroupShape(rect, ellipse);
-
-            // Optionally adjust the group's position.
             group.Left = 50;
             group.Top = 150;
 
             // -----------------------------------------------------------------
-            // Save the modified document to a new file.
+            // Save the modified document to a new file in the current directory.
             // -----------------------------------------------------------------
-            const string outputPath = @"C:\Docs\ModifiedDocument.docx";
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "ModifiedDocument.docx");
             doc.Save(outputPath);
+
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

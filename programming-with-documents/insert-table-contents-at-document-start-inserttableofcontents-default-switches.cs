@@ -14,8 +14,9 @@ class InsertTocExample
         // Ensure the cursor is at the very beginning of the document.
         builder.MoveToDocumentStart();
 
-        // Insert a Table of Contents field with default (empty) switches.
-        builder.InsertTableOfContents(string.Empty);
+        // Insert a Table of Contents field with default switches.
+        // The switches string cannot be empty; use the standard default switches.
+        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
 
         // Update all fields so the TOC will display correct entries when opened in Word.
         doc.UpdateFields();

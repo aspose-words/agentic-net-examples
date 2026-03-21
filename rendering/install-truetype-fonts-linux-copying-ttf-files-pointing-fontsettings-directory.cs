@@ -3,50 +3,74 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Fonts;
+using Aspose.Words.Saving;
 
 class InstallFontsOnLinux
 {
     static void Main()
     {
-        // Paths – adjust as needed.
-        string sourceFontsDir = "/usr/share/fonts/truetype/custom"; // Directory containing .ttf files to install.
-        string targetFontsDir = "/app/fonts";                       // Directory where Aspose.Words will look for fonts.
+        // Directory containing .ttf files to install (adjust if you have custom fonts).
+        string sourceFontsDir = Path.Combine(Environment.CurrentDirectory, "fonts");
+        // Directory where Aspose.Words will look for fonts.
+        string targetFontsDir = Path.Combine(Environment.CurrentDirectory, "app_fonts");
 
         // Ensure the target directory exists.
-        if (!Directory.Exists(targetFontsDir))
-            Directory.CreateDirectory(targetFontsDir);
+        Directory.CreateDirectory(targetFontsDir);
 
-        // Copy all TrueType font files (*.ttf) from the source to the target directory.
-        foreach (string fontFilePath in Directory.GetFiles(sourceFontsDir, "*.ttf", SearchOption.AllDirectories))
+        // Copy all TrueType font files (*.ttf) from the source to the target directory, if the source exists.
+        if (Directory.Exists(sourceFontsDir))
         {
-            string destPath = Path.Combine(targetFontsDir, Path.GetFileName(fontFilePath));
-            // Overwrite if the file already exists.
-            File.Copy(fontFilePath, destPath, true);
+            foreach (string fontFilePath in Directory.GetFiles(sourceFontsDir, "*.ttf", SearchOption.AllDirectories))
+            {
+                string destPath = Path.Combine(targetFontsDir, Path.GetFileName(fontFilePath));
+                File.Copy(fontFilePath, destPath, true);
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Source fonts directory not found: {sourceFontsDir}. Continuing without custom fonts.");
         }
 
         // Configure Aspose.Words to use the target fonts folder.
         FontSettings fontSettings = new FontSettings();
-        // 'true' enables recursive scanning of subfolders (if any).
         fontSettings.SetFontsFolder(targetFontsDir, true);
+        // Optional: set a fallback font name if needed (commented out because the property may not exist in some versions).
+        // fontSettings.SubstitutionSettings.DefaultFontName = "Arial";
 
-        // Load a document with the custom FontSettings.
-        // Replace "input.docx" with the path to your source document.
-        string inputPath = "input.docx";
-        LoadOptions loadOptions = new LoadOptions
+        // Create or load a document.
+        string inputPath = Path.Combine(Environment.CurrentDirectory, "input.docx");
+        Document doc;
+        if (File.Exists(inputPath))
         {
-            FontSettings = fontSettings
-        };
-        Document doc = new Document(inputPath, loadOptions);
+            LoadOptions loadOptions = new LoadOptions { FontSettings = fontSettings };
+            doc = new Document(inputPath, loadOptions);
+        }
+        else
+        {
+            doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello world! This document uses the configured font settings.");
+        }
 
-        // Optionally, embed the fonts into the saved document.
+        // Ensure the document uses the configured FontSettings.
+        doc.FontSettings = fontSettings;
+
+        // Enable font substitution and embedding options.
         doc.FontSettings.SubstitutionSettings.FontInfoSubstitution.Enabled = true;
         doc.FontInfos.EmbedTrueTypeFonts = true;
         doc.FontInfos.EmbedSystemFonts = true;
         doc.FontInfos.SaveSubsetFonts = true;
 
-        // Save the processed document.
-        // Replace "output.pdf" with the desired output path and format.
-        string outputPath = "output.pdf";
-        doc.Save(outputPath);
+        // Save the processed document as PDF.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "output.pdf");
+        try
+        {
+            doc.Save(outputPath, SaveFormat.Pdf);
+            Console.WriteLine($"Document saved to: {outputPath}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to save document: {ex.Message}");
+        }
     }
 }

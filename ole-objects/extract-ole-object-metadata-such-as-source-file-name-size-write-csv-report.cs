@@ -8,21 +8,27 @@ class OleMetadataExtractor
 {
     static void Main()
     {
-        // Path to the input Word document.
-        string inputPath = @"C:\Docs\InputDocument.docx";
+        // Use paths relative to the executable directory.
+        string baseDir = AppContext.BaseDirectory;
+        string inputPath = Path.Combine(baseDir, "InputDocument.docx");
+        string csvPath = Path.Combine(baseDir, "OleMetadataReport.csv");
 
-        // Path to the output CSV report.
-        string csvPath = @"C:\Docs\OleMetadataReport.csv";
+        // Ensure the input document exists. If not, create a minimal document.
+        if (!File.Exists(inputPath))
+        {
+            var emptyDoc = new Document();
+            emptyDoc.Save(inputPath);
+        }
 
-        // Load the Word document (uses the provided load rule).
+        // Load the Word document.
         Document doc = new Document(inputPath);
 
         // Prepare a StringBuilder to build CSV content.
-        StringBuilder csvBuilder = new StringBuilder();
+        var csvBuilder = new StringBuilder();
         csvBuilder.AppendLine("ShapeIndex,SourceFileName,SizeBytes");
 
         // Iterate over all Shape nodes in the document.
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        var shapes = doc.GetChildNodes(NodeType.Shape, true);
         int shapeIndex = 0;
 
         foreach (Shape shape in shapes)
@@ -35,7 +41,7 @@ class OleMetadataExtractor
             // SourceFullName may be empty for embedded objects; use SuggestedFileName instead.
             string sourceFileName = !string.IsNullOrEmpty(ole.SourceFullName)
                 ? Path.GetFileName(ole.SourceFullName)
-                : ole.SuggestedFileName;
+                : ole.SuggestedFileName ?? string.Empty;
 
             // Get the raw data of the OLE object to determine its size in bytes.
             byte[] rawData = ole.GetRawData();
@@ -47,7 +53,9 @@ class OleMetadataExtractor
             shapeIndex++;
         }
 
-        // Write the CSV content to a file (uses the provided save rule).
+        // Write the CSV content to a file.
         File.WriteAllText(csvPath, csvBuilder.ToString(), Encoding.UTF8);
+
+        Console.WriteLine($"Report written to: {csvPath}");
     }
 }

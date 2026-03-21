@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
@@ -6,29 +7,28 @@ class ImportVbaModule
 {
     static void Main()
     {
-        // Paths to the source .bas file, the input document (optional), and the output document.
-        string basFilePath = @"C:\Path\To\module.bas";
-        string outputDocPath = @"C:\Path\To\output.docm";
+        // Output path for the generated macro‑enabled document.
+        string outputDocPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docm");
 
-        // Create a new blank document. If you already have a macro‑enabled document, load it instead:
-        // Document doc = new Document(@"C:\Path\To\input.docm");
+        // Create a new blank document (or load an existing .docm if desired).
         Document doc = new Document();
 
         // Ensure the document has a VBA project; create one if it does not exist.
         if (doc.VbaProject == null)
         {
-            doc.VbaProject = new VbaProject();
-            doc.VbaProject.Name = "MyVbaProject";
+            doc.VbaProject = new VbaProject { Name = "MyVbaProject" };
         }
 
-        // Read the VBA source code from the external .bas file.
-        string vbaSource = File.ReadAllText(basFilePath);
+        // VBA source code to import. This replaces reading from an external .bas file.
+        string vbaSource = @"Sub HelloWorld()
+    MsgBox ""Hello from VBA!""
+End Sub";
 
-        // Create a new VBA module, set its name, type, and source code.
+        // Create a new VBA module and set its properties.
         VbaModule module = new VbaModule
         {
-            Name = "ImportedModule",               // Desired module name
-            Type = VbaModuleType.ProceduralModule, // Most .bas files are procedural modules
+            Name = "ImportedModule",
+            Type = VbaModuleType.ProceduralModule,
             SourceCode = vbaSource
         };
 
@@ -37,5 +37,6 @@ class ImportVbaModule
 
         // Save the document as a macro‑enabled file.
         doc.Save(outputDocPath, SaveFormat.Docm);
+        Console.WriteLine($"Document saved to: {outputDocPath}");
     }
 }

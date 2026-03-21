@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Aspose.Words;
 
 namespace RevisionFilteringExample
@@ -24,11 +25,29 @@ namespace RevisionFilteringExample
     {
         static void Main()
         {
-            // Load the document that contains tracked changes.
-            Document doc = new Document("InputWithRevisions.docx");
+            // Create a new document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Add initial content.
+            builder.Writeln("Original paragraph.");
+
+            // First revision (older).
+            doc.StartTrackRevisions("Author", DateTime.Now);
+            builder.Writeln("First revision – will be considered old.");
+            doc.StopTrackRevisions();
+
+            // Wait to create a time gap between revisions.
+            Thread.Sleep(2000);
+
+            // Second revision (newer).
+            doc.StartTrackRevisions("Author", DateTime.Now);
+            builder.Writeln("Second revision – will be preserved.");
+            doc.StopTrackRevisions();
 
             // Define the cutoff date – revisions older than this will be rejected.
-            DateTime cutoff = new DateTime(2023, 1, 1);
+            // Set it to a point between the two revisions.
+            DateTime cutoff = DateTime.Now.AddSeconds(-1);
 
             // Reject all revisions that match the custom criteria (i.e., older than the cutoff).
             doc.Revisions.Reject(new DateRevisionCriteria(cutoff));

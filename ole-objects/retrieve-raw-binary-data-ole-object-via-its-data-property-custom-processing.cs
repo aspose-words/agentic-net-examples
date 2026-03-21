@@ -7,9 +7,18 @@ class RetrieveOleRawData
 {
     static void Main()
     {
+        // Resolve the document path relative to the current working directory.
+        string docPath = Path.Combine(Environment.CurrentDirectory, "OleObjects.docx");
+
+        // If the file does not exist, create an empty document so the program can run without error.
+        if (!File.Exists(docPath))
+        {
+            Console.WriteLine($"Document not found at '{docPath}'. Creating an empty placeholder document.");
+            var emptyDoc = new Document();
+            emptyDoc.Save(docPath);
+        }
+
         // Load the Word document that contains OLE objects.
-        // Replace with the actual path to your document.
-        string docPath = @"C:\Docs\OleObjects.docx";
         Document doc = new Document(docPath);
 
         // Iterate through all shapes in the document.
@@ -32,9 +41,15 @@ class RetrieveOleRawData
                 // Example custom processing: display size and optionally save to a file.
                 Console.WriteLine($"Raw data length: {rawData.Length} bytes.");
 
-                // Optional: save the raw data to a file using the suggested filename.
-                string suggestedFileName = oleFormat.SuggestedFileName ?? "OleObject.bin";
-                string outputPath = Path.Combine(@"C:\Output", suggestedFileName);
+                // Save the raw data to a file in a safe output folder.
+                string suggestedFileName = string.IsNullOrEmpty(oleFormat.SuggestedFileName)
+                    ? "OleObject.bin"
+                    : oleFormat.SuggestedFileName;
+
+                string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+                Directory.CreateDirectory(outputDir);
+
+                string outputPath = Path.Combine(outputDir, suggestedFileName);
                 File.WriteAllBytes(outputPath, rawData);
                 Console.WriteLine($"Raw data saved to: {outputPath}");
             }
@@ -43,5 +58,7 @@ class RetrieveOleRawData
                 Console.WriteLine("Skipping linked OLE object; raw data not available.");
             }
         }
+
+        Console.WriteLine("Processing completed.");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -7,7 +8,15 @@ class RemoveVbaReferenceExample
     static void Main()
     {
         // Path to the input document that contains a VBA project.
-        string inputPath = @"C:\Data\VBA project.docm";
+        // Use a relative path so the example can run on any machine.
+        string inputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "VBA project.docm");
+
+        if (!File.Exists(inputPath))
+        {
+            Console.WriteLine($"Input file not found: {inputPath}");
+            Console.WriteLine("Place a .docm file named \"VBA project.docm\" in the executable directory and rerun the example.");
+            return;
+        }
 
         // Load the document.
         Document doc = new Document(inputPath);
@@ -42,7 +51,7 @@ class RemoveVbaReferenceExample
             Console.WriteLine("Reference removal failed.");
 
         // Save the modified document.
-        string outputPath = @"C:\Data\VBA project Modified.docm";
+        string outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "VBA project Modified.docm");
         doc.Save(outputPath);
         Console.WriteLine($"Modified document saved to: {outputPath}");
     }

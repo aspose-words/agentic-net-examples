@@ -7,27 +7,30 @@ using Aspose.Words.Vba;
 
 class ExportVbaMacrosToJson
 {
-    static void Main()
+    static void Main(string[] args)
     {
-        // Path to the input macro‑enabled document.
-        string inputPath = @"C:\Docs\MacroDocument.docm";
+        // Determine input and output paths.
+        string inputPath = args.Length > 0 ? args[0] : Path.Combine(Directory.GetCurrentDirectory(), "MacroDocument.docm");
+        string outputPath = args.Length > 1 ? args[1] : Path.Combine(Directory.GetCurrentDirectory(), "VbaModules.json");
 
-        // Path where the JSON file will be written.
-        string outputPath = @"C:\Docs\VbaModules.json";
+        // Verify that the input file exists.
+        if (!File.Exists(inputPath))
+        {
+            Console.WriteLine($"Input file not found: \"{inputPath}\"");
+            Console.WriteLine("Place a macro‑enabled document (.docm) at the specified location or pass the path as an argument.");
+            return;
+        }
 
-        // Load the document (uses Aspose.Words loading rule).
+        // Load the document.
         Document doc = new Document(inputPath);
 
-        // Prepare a collection to hold module name and source code.
+        // Collect module information.
         var modulesInfo = new List<object>();
 
-        // Ensure the document actually contains a VBA project.
         if (doc.VbaProject != null)
         {
-            // Iterate through all VBA modules.
             foreach (VbaModule module in doc.VbaProject.Modules)
             {
-                // Add an anonymous object with the required fields.
                 modulesInfo.Add(new
                 {
                     Name = module.Name,
@@ -36,13 +39,10 @@ class ExportVbaMacrosToJson
             }
         }
 
-        // Serialize the collection to a formatted JSON string.
-        string json = JsonSerializer.Serialize(modulesInfo, new JsonSerializerOptions
-        {
-            WriteIndented = true
-        });
+        // Serialize to JSON.
+        string json = JsonSerializer.Serialize(modulesInfo, new JsonSerializerOptions { WriteIndented = true });
 
-        // Write the JSON to the specified file (uses standard .NET I/O).
+        // Write JSON to the output file.
         File.WriteAllText(outputPath, json);
 
         Console.WriteLine($"Exported {modulesInfo.Count} VBA module(s) to \"{outputPath}\".");

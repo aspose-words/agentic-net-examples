@@ -85,10 +85,20 @@ namespace ReportingEngineCancellationDemo
                 doc.Save("ReportResult.docx");
                 Console.WriteLine("Report generated successfully.");
             }
+            catch (InvalidOperationException ex) when (ex.InnerException is OperationCanceledException)
+            {
+                // Handle cancellation that was wrapped by the ReportingEngine.
+                Console.WriteLine($"Report generation aborted: {ex.InnerException.Message}");
+            }
             catch (OperationCanceledException ex)
             {
-                // Handle cancellation gracefully.
+                // Handle direct cancellation (unlikely due to wrapping).
                 Console.WriteLine($"Report generation aborted: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // Handle any other unexpected errors.
+                Console.WriteLine($"An unexpected error occurred: {ex.Message}");
             }
         }
     }

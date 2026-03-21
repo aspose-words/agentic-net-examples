@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Loading;
@@ -20,11 +21,6 @@ public class LoadingProgressCallback : IDocumentLoadingCallback
         // If the external token signals cancellation, abort the loading by throwing.
         if (_cancellationToken.IsCancellationRequested)
             throw new OperationCanceledException($"Loading cancelled by token. EstimatedProgress = {args.EstimatedProgress}");
-
-        // Optional example: abort after a time limit.
-        // double elapsed = (DateTime.Now - _startTime).TotalSeconds;
-        // if (elapsed > 5)
-        //     throw new OperationCanceledException($"Loading timed out after {elapsed:F1}s. EstimatedProgress = {args.EstimatedProgress}");
     }
 }
 
@@ -32,6 +28,13 @@ public class Program
 {
     public static void Main()
     {
+        // Prepare a temporary document to load.
+        string tempPath = Path.Combine(Path.GetTempPath(), "MyDocument.docx");
+        var tempDoc = new Document();
+        var builder = new DocumentBuilder(tempDoc);
+        builder.Writeln("Sample content for testing cancellation.");
+        tempDoc.Save(tempPath);
+
         // Cancel the load after 500 milliseconds.
         using var cts = new CancellationTokenSource(500);
 
@@ -44,13 +47,19 @@ public class Program
         try
         {
             // Load the document with the specified options.
-            var doc = new Document("MyDocument.docx", loadOptions);
+            var doc = new Document(tempPath, loadOptions);
             Console.WriteLine("Document loaded successfully.");
         }
         catch (OperationCanceledException ex)
         {
             // Handle the cancellation gracefully.
             Console.WriteLine($"Loading was cancelled: {ex.Message}");
+        }
+        finally
+        {
+            // Clean up the temporary file.
+            if (File.Exists(tempPath))
+                File.Delete(tempPath);
         }
     }
 }

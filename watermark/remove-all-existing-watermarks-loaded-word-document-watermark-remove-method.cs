@@ -1,24 +1,27 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 class RemoveWatermarksExample
 {
     static void Main()
     {
-        // Path to the folder that contains the input document.
-        // Replace with your actual folder path.
-        string docsPath = @"C:\Docs\";
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Load the existing Word document.
-        Document doc = new Document(docsPath + "InputDocument.docx");
+        // Add a sample text watermark so we have something to remove.
+        doc.Watermark.SetText("Sample Watermark");
 
-        // If a watermark is present, remove it.
+        // Remove the watermark if it exists.
         if (doc.Watermark.Type != WatermarkType.None)
         {
             doc.Watermark.Remove();
         }
 
-        // Save the document without the watermark.
-        doc.Save(docsPath + "OutputDocument.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocument.docx");
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

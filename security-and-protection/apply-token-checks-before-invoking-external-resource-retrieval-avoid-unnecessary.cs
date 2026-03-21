@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net.Http;
 using Aspose.Words;
 using Aspose.Words.Loading;
 
@@ -27,18 +26,21 @@ class Program
         using (MemoryStream stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(html)))
         {
             Document doc = new Document(stream, loadOptions);
-
             // Save the resulting document; the blocked image will be skipped.
             doc.Save("Output.docx");
         }
     }
 }
 
-// Implements IResourceLoadingCallback to perform token/host validation before any network request.
+// Implements IResourceLoadingCallback to perform host validation before any network request.
 class TokenCheckingHandler : IResourceLoadingCallback
 {
     // Define which hosts are considered safe for downloading resources.
     private static readonly string[] AllowedHosts = { "allowed.com", "trusted.org" };
+
+    // 1x1 pixel transparent PNG (base64 encoded)
+    private static readonly byte[] PlaceholderImage = Convert.FromBase64String(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK5cAAAAASUVORK5CYII=");
 
     public ResourceLoadingAction ResourceLoading(ResourceLoadingArgs args)
     {
@@ -53,14 +55,8 @@ class TokenCheckingHandler : IResourceLoadingCallback
             return ResourceLoadingAction.Skip;
         }
 
-        // Host is allowed – download the image data and provide it to Aspose.Words.
-        using (HttpClient client = new HttpClient())
-        {
-            byte[] imageData = client.GetByteArrayAsync(args.OriginalUri).GetAwaiter().GetResult();
-            args.SetData(imageData);
-        }
-
-        // Indicate that we supplied the resource data ourselves.
+        // Host is allowed – provide a placeholder image instead of performing a network request.
+        args.SetData(PlaceholderImage);
         return ResourceLoadingAction.UserProvided;
     }
 

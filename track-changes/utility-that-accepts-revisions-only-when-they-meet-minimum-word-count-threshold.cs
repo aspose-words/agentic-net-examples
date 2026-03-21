@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
 namespace RevisionUtility
 {
@@ -52,11 +54,36 @@ namespace RevisionUtility
     {
         static void Main()
         {
-            string sourceFile = @"C:\Docs\Input.docx";
-            string resultFile = @"C:\Docs\Output.docx";
+            // Create a temporary input document with tracked revisions.
+            string sourceFile = Path.Combine(Path.GetTempPath(), $"Input_{Guid.NewGuid()}.docx");
+            string resultFile = Path.Combine(Path.GetTempPath(), $"Output_{Guid.NewGuid()}.docx");
             int minimumWords = 5; // Minimum word count threshold.
 
+            // Build a document with revisions.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start tracking revisions.
+            doc.StartTrackRevisions("Author");
+
+            // This revision has enough words (>=5).
+            builder.Writeln("This is a revision that contains enough words.");
+
+            // This revision does NOT meet the threshold.
+            builder.Writeln("Short rev.");
+
+            // Stop tracking.
+            doc.StopTrackRevisions();
+
+            // Save the input document.
+            doc.Save(sourceFile);
+
+            // Process the document using the utility.
             RevisionProcessor.AcceptRevisionsByWordCount(sourceFile, resultFile, minimumWords);
+
+            // Output paths for verification (optional).
+            Console.WriteLine($"Input document:  {sourceFile}");
+            Console.WriteLine($"Processed document: {resultFile}");
         }
     }
 }

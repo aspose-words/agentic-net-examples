@@ -17,11 +17,9 @@ class Program
 
         public void Notify(DocumentLoadingArgs args)
         {
-            // Throw if any linked token has been cancelled.
             if (_token.IsCancellationRequested)
                 throw new OperationCanceledException($"Loading cancelled at {DateTime.Now}");
 
-            // Optional: also cancel after a fixed duration for demo purposes.
             if ((DateTime.Now - _startedAt).TotalSeconds > 5)
                 throw new OperationCanceledException($"Loading timeout after 5 seconds. EstimatedProgress = {args.EstimatedProgress}");
         }
@@ -37,11 +35,9 @@ class Program
 
         public void Notify(DocumentSavingArgs args)
         {
-            // Throw if any linked token has been cancelled.
             if (_token.IsCancellationRequested)
                 throw new OperationCanceledException($"Saving cancelled at {DateTime.Now}");
 
-            // Optional: also cancel after a fixed duration for demo purposes.
             if ((DateTime.Now - _startedAt).TotalSeconds > 5)
                 throw new OperationCanceledException($"Saving timeout after 5 seconds. EstimatedProgress = {args.EstimatedProgress}");
         }
@@ -76,8 +72,16 @@ class Program
             var loadCallback = new LinkedLoadingCallback(linkedToken);
             var loadOptions = new LoadOptions { ProgressCallback = loadCallback };
 
-            // Replace the path with an actual large document for a realistic test.
-            doc = new Document("BigDocument.docx", loadOptions);
+            // Create a simple document in memory to avoid external file dependencies.
+            var sampleDoc = new Document();
+            var builder = new Aspose.Words.DocumentBuilder(sampleDoc);
+            builder.Writeln("Sample text for cancellation demo.");
+
+            using var ms = new MemoryStream();
+            sampleDoc.Save(ms, SaveFormat.Docx);
+            ms.Position = 0;
+
+            doc = new Document(ms, loadOptions);
         }
         catch (OperationCanceledException ex)
         {
@@ -94,6 +98,7 @@ class Program
             var saveOptions = new HtmlSaveOptions(SaveFormat.Html) { ProgressCallback = saveCallback };
 
             doc.Save("Output.html", saveOptions);
+            Console.WriteLine("Document saved successfully to Output.html");
         }
         catch (OperationCanceledException ex)
         {
@@ -101,7 +106,6 @@ class Program
         }
         finally
         {
-            // Clean up timers.
             timer.Dispose();
             userTimer.Dispose();
         }

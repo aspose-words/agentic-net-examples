@@ -6,23 +6,36 @@ class Program
 {
     static void Main()
     {
-        // Load the source document that contains a table spanning multiple pages.
-        Document doc = new Document("Table spanning two pages.docx");
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Find every table in the document (searches all sections).
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+        // Insert a table with enough rows to span multiple pages.
+        Table table = builder.StartTable();
 
-        // Iterate through each table and then each row within the table.
-        foreach (Table table in tables)
+        // Add a header row.
+        builder.InsertCell();
+        builder.Writeln("Header");
+        builder.EndRow();
+
+        // Add many rows to force the table to span at least two pages.
+        for (int i = 1; i <= 50; i++)
         {
-            foreach (Row row in table.Rows)
-            {
-                // Disable the ability for this row to break across a page boundary.
-                row.RowFormat.AllowBreakAcrossPages = false;
-            }
+            builder.InsertCell();
+            builder.Writeln($"Row {i}");
+            builder.EndRow();
+        }
+
+        builder.EndTable();
+
+        // Disable the ability for each row to break across a page boundary.
+        foreach (Row row in table.Rows)
+        {
+            row.RowFormat.AllowBreakAcrossPages = false;
         }
 
         // Save the updated document.
         doc.Save("Table.AllowBreakAcrossPages.docx");
+        Console.WriteLine("Document saved successfully.");
     }
 }

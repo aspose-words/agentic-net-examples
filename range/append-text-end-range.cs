@@ -14,7 +14,6 @@ class AppendTextToRange
         builder.Writeln("Original text.");
 
         // Insert a plain‑text structured document tag (range) at the current cursor position.
-        // The range start node will hold the content of the tag.
         StructuredDocumentTagRangeStart rangeStart = new StructuredDocumentTagRangeStart(doc, SdtType.PlainText);
         StructuredDocumentTagRangeEnd rangeEnd = new StructuredDocumentTagRangeEnd(doc, rangeStart.Id);
 
@@ -23,12 +22,10 @@ class AppendTextToRange
         doc.FirstSection.Body.InsertBefore(rangeStart, firstParagraph);
         doc.FirstSection.Body.InsertAfter(rangeEnd, firstParagraph);
 
-        // Create a Run node that contains the text we want to append.
-        Run appendedRun = new Run(doc, " Appended text.");
-
-        // Append the Run to the end of the stdContent range of the StructuredDocumentTagRangeStart.
-        // AppendChild adds the node after any existing children inside the range.
-        rangeStart.AppendChild(appendedRun);
+        // Move a builder to the start of the range and write the appended text.
+        DocumentBuilder rangeBuilder = new DocumentBuilder(doc);
+        rangeBuilder.MoveTo(rangeStart);
+        rangeBuilder.Write(" Appended text.");
 
         // Optionally, verify the resulting document text.
         Console.WriteLine("Document text after appending:");

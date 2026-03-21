@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -6,8 +7,17 @@ class ChangePictureToAutoShape
 {
     static void Main()
     {
-        // Load the existing document that contains a picture shape.
-        Document doc = new Document(@"C:\Docs\Input.docx");
+        // Create a new document and insert a tiny picture shape.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // 1x1 pixel PNG (transparent) as base64.
+        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X6eUAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        using (MemoryStream ms = new MemoryStream(pngBytes))
+        {
+            builder.InsertImage(ms);
+        }
 
         // Find the first shape that is an image (picture).
         Shape pictureShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
@@ -46,7 +56,9 @@ class ChangePictureToAutoShape
         pictureShape.ParentNode.InsertAfter(autoShape, pictureShape);
         pictureShape.Remove();
 
-        // Save the modified document.
-        doc.Save(@"C:\Docs\Output.docx");
+        // Save the modified document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

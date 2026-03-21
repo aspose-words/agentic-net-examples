@@ -1,44 +1,31 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
 class CustomImageHandler : IFieldMergingCallback
 {
-    // No custom text merging needed.
     void IFieldMergingCallback.FieldMerging(FieldMergingArgs args) { }
 
-    // Called for MERGEFIELDS whose name starts with "Image:".
     void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
     {
-        // The data source provides a short identifier for the image.
         string key = args.FieldValue?.ToString();
         if (string.IsNullOrEmpty(key))
             return;
 
-        // Resolve the identifier to a physical file path.
         if (ImageMap.TryGetValue(key, out string filePath) && File.Exists(filePath))
         {
-#if NET461_OR_GREATER || JAVA
-            // For .NET Framework or Java, use System.Drawing.Image.
-            args.Image = Image.FromFile(filePath);
-#elif NET5_0_OR_GREATER
-            // For .NET 5+ use SkiaSharp (Aspose.Words supports SKBitmap as an image source).
-            args.Image = SkiaSharp.SKBitmap.Decode(filePath);
-            // Also set the filename for completeness.
+            // Provide the image file name; Aspose.Words will load the image from the file.
             args.ImageFileName = filePath;
-#endif
         }
     }
 
-    // Simple lookup table mapping short names to actual image files.
     private static readonly Dictionary<string, string> ImageMap = new()
     {
-        { "Logo", @"C:\Images\Logo.jpg" },
-        { "Badge", @"C:\Images\Badge.png" }
+        { "Logo", Path.Combine(Path.GetTempPath(), "Logo.png") },
+        { "Badge", Path.Combine(Path.GetTempPath(), "Badge.png") }
     };
 }
 
@@ -46,8 +33,16 @@ class Program
 {
     static void Main()
     {
-        // Load a template that contains a field like MERGEFIELD Image:Photo.
-        Document doc = new Document(@"C:\Templates\Report.docx");
+        // Ensure temporary images exist.
+        CreateSampleImage(Path.Combine(Path.GetTempPath(), "Logo.png"));
+        CreateSampleImage(Path.Combine(Path.GetTempPath(), "Badge.png"));
+
+        // Create a simple template document with an image merge field and a text merge field.
+        string templatePath = Path.Combine(Path.GetTempPath(), "ReportTemplate.docx");
+        CreateTemplateDocument(templatePath);
+
+        // Load the template.
+        Document doc = new Document(templatePath);
 
         // Attach the custom callback that supplies images.
         doc.MailMerge.FieldMergingCallback = new CustomImageHandler();
@@ -63,6 +58,33 @@ class Program
         doc.MailMerge.Execute(table);
 
         // Save the merged document.
-        doc.Save(@"C:\Output\ReportMerged.docx");
+        string outputPath = Path.Combine(Path.GetTempPath(), "ReportMerged.docx");
+        doc.Save(outputPath);
+
+        Console.WriteLine($"Merged document saved to: {outputPath}");
+    }
+
+    private static void CreateSampleImage(string path)
+    {
+        // A 1x1 pixel transparent PNG.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(path, pngBytes);
+    }
+
+    private static void CreateTemplateDocument(string path)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Insert an image merge field.
+        builder.InsertField("MERGEFIELD Image:Photo \\* MERGEFORMAT");
+        builder.Writeln();
+
+        // Insert a text merge field.
+        builder.InsertField("MERGEFIELD Name \\* MERGEFORMAT");
+        builder.Writeln();
+
+        doc.Save(path);
     }
 }

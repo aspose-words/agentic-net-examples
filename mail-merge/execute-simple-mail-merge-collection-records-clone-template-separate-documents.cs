@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
@@ -23,13 +24,8 @@ namespace MailMergeExample
         // Entry point.
         public static void Main()
         {
-            // Path to the template document that contains MERGEFIELDs:
-            //   MERGEFIELD FullName
-            //   MERGEFIELD Address
-            string templatePath = @"C:\Templates\CustomerTemplate.docx";
-
-            // Load the template document.
-            Document template = new Document(templatePath);
+            // Create a simple template document in memory with MERGEFIELDs.
+            Document template = CreateTemplateDocument();
 
             // Prepare a collection of records.
             List<Customer> customers = new List<Customer>
@@ -37,6 +33,10 @@ namespace MailMergeExample
                 new Customer("Thomas Hardy", "120 Hanover Sq., London"),
                 new Customer("Paolo Accorti", "Via Monte Bianco 34, Torino")
             };
+
+            // Ensure output directory exists.
+            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+            Directory.CreateDirectory(outputDir);
 
             // For each record create a separate document.
             for (int i = 0; i < customers.Count; i++)
@@ -49,13 +49,30 @@ namespace MailMergeExample
                 object[] fieldValues = { customers[i].FullName, customers[i].Address };
 
                 // Perform a simple mail merge for a single record.
-                // This uses the MailMerge.Execute(string[], object[]) overload as required.
                 doc.MailMerge.Execute(fieldNames, fieldValues);
 
                 // Save the merged document. Each file gets a unique name.
-                string outputPath = $@"C:\Output\Customer_{i + 1}.docx";
+                string outputPath = Path.Combine(outputDir, $"Customer_{i + 1}.docx");
                 doc.Save(outputPath);
+                Console.WriteLine($"Saved merged document to: {outputPath}");
             }
+        }
+
+        // Helper method to create a template document with merge fields.
+        private static Document CreateTemplateDocument()
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Customer Information");
+            builder.Writeln();
+
+            builder.InsertField("MERGEFIELD FullName");
+            builder.Writeln();
+            builder.InsertField("MERGEFIELD Address");
+            builder.Writeln();
+
+            return doc;
         }
     }
 }

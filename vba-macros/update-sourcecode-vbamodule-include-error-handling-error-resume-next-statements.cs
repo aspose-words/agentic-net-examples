@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -10,6 +11,14 @@ class UpdateVbaModuleSource
         const string inputPath = @"C:\Docs\InputDocument.docm";
         // Path where the updated document will be saved.
         const string outputPath = @"C:\Docs\OutputDocument.docm";
+
+        // Verify that the input file exists before attempting to load it.
+        if (!File.Exists(inputPath))
+        {
+            Console.WriteLine($"Input file not found: {inputPath}");
+            Console.WriteLine("Please place a .docm file at the specified location or update the path.");
+            return;
+        }
 
         // Load the document (creates a Document instance).
         Document doc = new Document(inputPath);

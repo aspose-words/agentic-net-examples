@@ -6,23 +6,35 @@ class Program
 {
     static void Main()
     {
-        // Load an existing document that already contains a TOC field.
-        Document doc = new Document("InputWithToc.docx");
-
-        // Use DocumentBuilder to add a new section with a heading that the TOC should pick up.
+        // Create a new blank document.
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a new section on a new page.
+        // Insert a Table of Contents at the beginning of the document.
+        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+
+        // Add some initial headings that will appear in the TOC.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("First Section");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Subsection A");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Subsection B");
+
+        // Return to normal style.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+
+        // Insert a page break before adding a new section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Apply a heading style (e.g., Heading 1) so the TOC will include this entry.
+        // Add a new heading that should be captured by the TOC.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("New Section Added Programmatically");
 
-        // Return to normal style for subsequent content if needed.
+        // Return to normal style for any further content.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
 
-        // Update all fields in the document, including the TOC, to reflect the new heading.
+        // Update all fields in the document, including the TOC.
         doc.UpdateFields();
 
         // Save the modified document.

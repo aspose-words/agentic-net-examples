@@ -5,21 +5,35 @@ using Aspose.Words.Saving;
 
 class DocxPageSplitter
 {
-    // Entry point
     static void Main()
     {
-        // Folder containing the source DOCX files
-        string sourceFolder = @"C:\Docs\Input";
-        // Folder where the per‑page PDFs will be written
-        string outputFolder = @"C:\Docs\Output";
+        // Use folders relative to the executable location
+        string baseDir = AppContext.BaseDirectory;
+        string sourceFolder = Path.Combine(baseDir, "Input");
+        string outputFolder = Path.Combine(baseDir, "Output");
 
-        // Ensure the output directory exists
+        // Ensure both directories exist
+        Directory.CreateDirectory(sourceFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Process each .docx file in the source folder
-        foreach (string docxPath in Directory.GetFiles(sourceFolder, "*.docx"))
+        // If there are no .docx files, create a simple sample document
+        string[] docxFiles = Directory.GetFiles(sourceFolder, "*.docx");
+        if (docxFiles.Length == 0)
         {
-            // Load the document from file (load rule)
+            string samplePath = Path.Combine(sourceFolder, "Sample.docx");
+            var sampleDoc = new Document();
+            var builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln("This is page 1.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("This is page 2.");
+            sampleDoc.Save(samplePath);
+            docxFiles = new[] { samplePath };
+        }
+
+        // Process each .docx file in the source folder
+        foreach (string docxPath in docxFiles)
+        {
+            // Load the document (load rule)
             Document sourceDoc = new Document(docxPath);
 
             // Determine the number of pages in the document
@@ -43,5 +57,8 @@ class DocxPageSplitter
                 pageDoc.Save(pdfPath, SaveFormat.Pdf);
             }
         }
+
+        Console.WriteLine("Processing complete. PDFs are located in:");
+        Console.WriteLine(outputFolder);
     }
 }

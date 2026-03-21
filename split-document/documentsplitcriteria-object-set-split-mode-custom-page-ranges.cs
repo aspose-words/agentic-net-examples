@@ -6,24 +6,38 @@ class Program
 {
     static void Main()
     {
-        // Load an existing document (replace with your actual file path)
-        Document doc = new Document("input.docx");
+        // Create a simple document in memory.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a DocumentSplitCriteria variable.
-        // Combine flags to split the document at explicit page breaks and at heading paragraphs.
+        // Add a heading (level 1) – this will be used for splitting.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 1");
+
+        // Add some regular content.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the first chapter.");
+
+        // Insert an explicit page break.
+        builder.InsertBreak(BreakType.PageBreak);
+
+        // Add another heading (level 2) – also a split point.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section 1.1");
+        builder.Writeln("More content after the page break.");
+
+        // Define split criteria: split at page breaks and heading paragraphs.
         DocumentSplitCriteria splitCriteria = DocumentSplitCriteria.PageBreak | DocumentSplitCriteria.HeadingParagraph;
 
-        // Configure HtmlSaveOptions to use the custom split criteria.
+        // Configure HTML save options with the custom split criteria.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            // Apply the custom split mode.
             DocumentSplitCriteria = splitCriteria,
-
-            // Optional: define up to which heading level the split should occur.
-            DocumentSplitHeadingLevel = 3
+            DocumentSplitHeadingLevel = 3, // split up to heading level 3
+            UpdateFields = false           // avoid processing fields that may cause errors
         };
 
-        // Save the document. The output will be split into multiple HTML parts according to the criteria.
+        // Save the document; it will be split into multiple HTML files (output.html, output_1.html, etc.).
         doc.Save("output.html", saveOptions);
     }
 }

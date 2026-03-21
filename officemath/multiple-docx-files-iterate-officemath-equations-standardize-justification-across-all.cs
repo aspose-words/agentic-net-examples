@@ -8,14 +8,15 @@ namespace OfficeMathJustificationStandardizer
 {
     public class Program
     {
-        // Entry point for demonstration purposes.
         public static void Main()
         {
-            // Example input: all DOCX files in a source directory.
-            string sourceFolder = @"C:\Docs\Input";
-            string destinationFolder = @"C:\Docs\Output";
+            // Use folders relative to the executable location.
+            string baseDir = AppContext.BaseDirectory;
+            string sourceFolder = Path.Combine(baseDir, "Input");
+            string destinationFolder = Path.Combine(baseDir, "Output");
 
-            // Ensure the output folder exists.
+            // Ensure both folders exist.
+            Directory.CreateDirectory(sourceFolder);
             Directory.CreateDirectory(destinationFolder);
 
             // Target justification to apply to every OfficeMath equation.
@@ -24,46 +25,41 @@ namespace OfficeMathJustificationStandardizer
             // Gather all DOCX files from the source folder.
             string[] docxFiles = Directory.GetFiles(sourceFolder, "*.docx");
 
+            if (docxFiles.Length == 0)
+            {
+                Console.WriteLine($"No DOCX files found in '{sourceFolder}'. Place files there and rerun.");
+                return;
+            }
+
             // Process each document.
             foreach (string filePath in docxFiles)
             {
                 StandardizeOfficeMathJustification(filePath, destinationFolder, targetJustification);
+                Console.WriteLine($"Processed: {Path.GetFileName(filePath)}");
             }
+
+            Console.WriteLine($"All files saved to '{destinationFolder}'.");
         }
 
-        /// <summary>
-        /// Loads a DOCX file, sets a uniform justification for all OfficeMath objects,
-        /// and saves the modified document to the specified output folder.
-        /// </summary>
-        /// <param name="inputFilePath">Full path to the source DOCX file.</param>
-        /// <param name="outputFolder">Folder where the processed file will be saved.</param>
-        /// <param name="justification">Desired OfficeMathJustification value.</param>
         private static void StandardizeOfficeMathJustification(string inputFilePath, string outputFolder, OfficeMathJustification justification)
         {
-            // Load the document using the Document(string) constructor.
+            // Load the document.
             Document doc = new Document(inputFilePath);
 
-            // Retrieve all OfficeMath nodes in the document (deep search).
+            // Retrieve all OfficeMath nodes (deep search).
             NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
 
-            // Iterate through each OfficeMath node and apply the justification.
+            // Apply justification to each OfficeMath node.
             foreach (OfficeMath officeMath in officeMathNodes.OfType<OfficeMath>())
             {
-                // Justification cannot be set while the equation is inline.
-                // Ensure the display type is not Inline before assigning justification.
                 if (officeMath.DisplayType == OfficeMathDisplayType.Inline)
-                {
                     officeMath.DisplayType = OfficeMathDisplayType.Display;
-                }
 
-                // Apply the requested justification.
                 officeMath.Justification = justification;
             }
 
-            // Build the output file path (preserve original file name).
+            // Save the modified document.
             string outputFilePath = Path.Combine(outputFolder, Path.GetFileName(inputFilePath));
-
-            // Save the modified document using the Save(string) method.
             doc.Save(outputFilePath);
         }
     }

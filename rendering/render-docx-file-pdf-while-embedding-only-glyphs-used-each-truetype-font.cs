@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,28 +9,28 @@ namespace AsposeWordsPdfSubsetExample
     {
         static void Main(string[] args)
         {
-            // Path to the source DOCX file.
-            string docxPath = @"C:\Input\SampleDocument.docx";
+            // Create a simple DOCX document in memory.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello, Aspose.Words PDF subsetting example!");
 
-            // Path where the resulting PDF will be saved.
-            string pdfPath = @"C:\Output\SampleDocument_Subset.pdf";
+            // Determine output path (current directory).
+            string outputDirectory = Directory.GetCurrentDirectory();
+            string pdfPath = Path.Combine(outputDirectory, "SampleDocument_Subset.pdf");
 
-            // Load the DOCX document.
-            Document doc = new Document(docxPath);
-
-            // Create PDF save options.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-            // Ensure that only the glyphs used in the document are embedded.
-            // The default value of EmbedFullFonts is false, which enables subsetting.
-            // Explicitly set it for clarity.
-            pdfOptions.EmbedFullFonts = false;
-
-            // Embed all fonts that are used in the document (default behavior).
-            pdfOptions.FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll;
+            // Configure PDF save options to embed only used glyphs.
+            PdfSaveOptions pdfOptions = new PdfSaveOptions
+            {
+                // Subsetting is enabled when EmbedFullFonts is false.
+                EmbedFullFonts = false,
+                // Embed all fonts that are used in the document.
+                FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll
+            };
 
             // Save the document as PDF using the configured options.
             doc.Save(pdfPath, pdfOptions);
+
+            Console.WriteLine($"PDF saved to: {pdfPath}");
         }
     }
 }

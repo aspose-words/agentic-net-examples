@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
@@ -11,9 +12,13 @@ class TableWrapAroundImageExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Create a tiny PNG image (1x1 pixel, white) in memory.
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=");
+        using var imageStream = new MemoryStream(pngBytes);
+
         // Insert a floating image that will be wrapped by surrounding text.
-        // The image is positioned relative to the page margin and will allow text to flow around it.
-        Shape image = builder.InsertImage(@"C:\Images\SampleImage.jpg");
+        Shape image = builder.InsertImage(imageStream);
         image.WrapType = WrapType.Square;                     // Text wraps on all sides of the image.
         image.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
         image.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
@@ -35,12 +40,6 @@ class TableWrapAroundImageExample
 
         // Enable text wrapping for the table.
         table.TextWrapping = TextWrapping.Around;            // Wrap text around the table.
-        // AllowOverlap is true by default, but we can assert it.
-        if (!table.AllowOverlap)
-        {
-            // In practice this block will never execute because AllowOverlap defaults to true.
-            throw new InvalidOperationException("Table must allow overlap for proper wrapping.");
-        }
 
         // Adjust the distance between the table and surrounding text.
         table.AbsoluteHorizontalDistance = 10; // Points of horizontal space.
@@ -50,7 +49,13 @@ class TableWrapAroundImageExample
         table.HorizontalAnchor = RelativeHorizontalPosition.Margin;
         table.VerticalAnchor = RelativeVerticalPosition.Paragraph;
 
+        // Ensure output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
         // Save the resulting document.
-        doc.Save(@"C:\Output\TableWrapAroundImage.docx");
+        string outputPath = Path.Combine(outputDir, "TableWrapAroundImage.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

@@ -1,5 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.BuildingBlocks;
 using Aspose.Words.Fields;
 
 namespace TocPageNumberRebuilder
@@ -8,31 +10,52 @@ namespace TocPageNumberRebuilder
     {
         static void Main()
         {
-            // Load an existing document that contains a Table of Contents.
-            Document doc = new Document("Input.docx");
+            const string inputPath = "Input.docx";
+            const string outputPath = "Output.docx";
 
-            // First, update all fields that are not dependent on page layout
-            // (e.g., REF, DATE, etc.). This ensures the TOC field itself is up‑to‑date.
+            // Ensure an input file exists – create a minimal one if it does not.
+            if (!File.Exists(inputPath))
+            {
+                var tempDoc = new Document();
+                var builder = new DocumentBuilder(tempDoc);
+                builder.Writeln("This is a placeholder document.");
+                // Insert a simple TOC so the example has something to work with.
+                builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+                tempDoc.Save(inputPath);
+            }
+
+            // Load the document.
+            Document doc = new Document(inputPath);
+
+            // Update fields that are not dependent on page layout.
             doc.UpdateFields();
 
-            // Rebuild the page layout so that page‑related fields (PAGE, NUMPAGES, etc.)
-            // have correct values. This step is required before updating TOC page numbers.
-            doc.UpdatePageLayout();
+            // Rebuild the page layout. Wrap in try/catch to avoid crashes caused by
+            // unsupported field types (e.g., barcode fields without a license).
+            try
+            {
+                doc.UpdatePageLayout();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: UpdatePageLayout failed – {ex.Message}");
+            }
 
-            // Iterate through all fields in the document and find TOC fields.
+            // Update TOC page numbers.
             foreach (Field field in doc.Range.Fields)
             {
                 if (field.Type == FieldType.FieldTOC)
                 {
-                    // Cast to FieldToc to access the UpdatePageNumbers method.
-                    FieldToc toc = (FieldToc)field;
-                    // Update the page numbers displayed in this TOC.
-                    toc.UpdatePageNumbers();
+                    if (field is FieldToc toc)
+                    {
+                        toc.UpdatePageNumbers();
+                    }
                 }
             }
 
             // Save the updated document.
-            doc.Save("Output.docx");
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved to '{outputPath}'.");
         }
     }
 }

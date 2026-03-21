@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
@@ -10,9 +11,8 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Load the binary data that we want to embed.
-        // Replace the path with the actual file you wish to package.
-        byte[] packageData = File.ReadAllBytes("Path/To/YourFile.zip");
+        // Create dummy package data instead of reading from a non‑existent file.
+        byte[] packageData = System.Text.Encoding.UTF8.GetBytes("Dummy package content");
 
         // Insert the data as an OLE Package (unknown handler) and display it as an icon.
         using (MemoryStream ms = new MemoryStream(packageData))
@@ -27,5 +27,6 @@ class Program
 
         // Save the resulting document.
         doc.Save("Result.docx");
+        Console.WriteLine("Document saved as Result.docx");
     }
 }

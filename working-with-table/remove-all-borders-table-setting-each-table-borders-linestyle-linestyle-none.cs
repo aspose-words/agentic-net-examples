@@ -1,20 +1,28 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
 class RemoveTableBorders
 {
     static void Main()
     {
-        // Load an existing Word document.
-        Document doc = new Document("Input.docx");
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Get the first table in the document (adjust index as needed).
+        // Build a simple table with two cells.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Get the first table in the document.
         Table table = doc.FirstSection.Body.Tables[0];
 
         // Remove all borders from the table.
-        // This sets each border's LineStyle to LineStyle.None internally.
         table.ClearBorders();
 
         // Save the modified document.

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -6,8 +7,18 @@ class AddVbaLogging
 {
     static void Main()
     {
-        // Load the macro-enabled document.
-        Document doc = new Document("Input.docm");
+        const string inputPath = "Input.docm";
+        const string outputPath = "Output_WithLogging.docm";
+
+        // Verify that the input file exists before attempting to load it.
+        if (!File.Exists(inputPath))
+        {
+            Console.WriteLine($"Input file '{inputPath}' not found. Please place a macro‑enabled document in the program's directory.");
+            return;
+        }
+
+        // Load the macro‑enabled document.
+        Document doc = new Document(inputPath);
 
         // Ensure the document actually contains VBA macros.
         if (!doc.HasMacros)
@@ -44,6 +55,7 @@ End Sub
         }
 
         // Save the modified document.
-        doc.Save("Output_WithLogging.docm");
+        doc.Save(outputPath);
+        Console.WriteLine($"Logging routine added. Document saved as '{outputPath}'.");
     }
 }

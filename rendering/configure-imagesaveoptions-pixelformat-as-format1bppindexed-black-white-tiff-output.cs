@@ -5,16 +5,17 @@ class Program
 {
     static void Main()
     {
-        // Load the source Word document.
-        Document doc = new Document("Input.docx");
+        // Create a simple Word document.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, world!");
 
-        // Create ImageSaveOptions for TIFF output.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure image save options for 1‑bpp black‑and‑white TIFF output.
+        var options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Configure the pixel format to 1‑bit indexed (black‑and‑white).
             PixelFormat = ImagePixelFormat.Format1bppIndexed,
-            // Optional: use CCITT4 compression which is suitable for 1‑bpp images.
-            TiffCompression = TiffCompression.Ccitt4
+            TiffCompression = TiffCompression.Ccitt4,
+            ImageColorMode = ImageColorMode.BlackAndWhite
         };
 
         // Save the document as a black‑and‑white TIFF file.

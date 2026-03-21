@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -5,11 +7,49 @@ class HeaderCopyExample
 {
     static void Main()
     {
-        // Load the source document that contains the header we want to copy.
-        Document srcDoc = new Document("Source.docx");
+        const string srcPath = "Source.docx";
+        const string dstPath = "Destination.docx";
+        const string resultPath = "Result.docx";
 
-        // Load (or create) the destination document where the header will be inserted.
-        Document dstDoc = new Document("Destination.docx");
+        // Create a source document with a primary header if it does not exist.
+        if (!File.Exists(srcPath))
+        {
+            Document srcCreate = new Document();
+            Section srcSection = srcCreate.FirstSection;
+
+            // Add a primary header.
+            HeaderFooter srcHeaderCreate = new HeaderFooter(srcCreate, HeaderFooterType.HeaderPrimary);
+            Paragraph headerPara = new Paragraph(srcCreate);
+            Run headerRun = new Run(srcCreate, "Source Header");
+            headerPara.AppendChild(headerRun);
+            srcHeaderCreate.AppendChild(headerPara);
+            srcSection.HeadersFooters.Add(srcHeaderCreate);
+
+            // Add some body content.
+            Paragraph bodyPara = new Paragraph(srcCreate);
+            bodyPara.AppendChild(new Run(srcCreate, "This is the source document body."));
+            srcSection.Body.AppendChild(bodyPara);
+
+            srcCreate.Save(srcPath);
+        }
+
+        // Create a destination document if it does not exist.
+        if (!File.Exists(dstPath))
+        {
+            Document dstCreate = new Document();
+            Section dstSection = dstCreate.FirstSection;
+
+            // Add some body content.
+            Paragraph bodyPara = new Paragraph(dstCreate);
+            bodyPara.AppendChild(new Run(dstCreate, "This is the destination document body."));
+            dstSection.Body.AppendChild(bodyPara);
+
+            dstCreate.Save(dstPath);
+        }
+
+        // Load the source and destination documents.
+        Document srcDoc = new Document(srcPath);
+        Document dstDoc = new Document(dstPath);
 
         // Retrieve the primary header from the first section of the source document.
         HeaderFooter srcHeader = srcDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
@@ -45,6 +85,7 @@ class HeaderCopyExample
         }
 
         // Save the modified destination document.
-        dstDoc.Save("Result.docx");
+        dstDoc.Save(resultPath);
+        Console.WriteLine($"Header copied successfully. Result saved to '{resultPath}'.");
     }
 }

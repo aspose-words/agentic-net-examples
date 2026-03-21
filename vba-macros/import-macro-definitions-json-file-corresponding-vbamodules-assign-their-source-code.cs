@@ -22,7 +22,7 @@ namespace MacroImportExample
             // Path to the JSON file containing macro definitions.
             const string jsonPath = "macros.json";
 
-            // Load macro definitions from the JSON file.
+            // Load macro definitions from the JSON file (or use a fallback if the file is missing).
             List<MacroDefinition> macros = LoadMacroDefinitions(jsonPath);
 
             // Create a new blank document.
@@ -56,10 +56,25 @@ namespace MacroImportExample
         }
 
         // Reads the JSON file and deserializes it into a list of MacroDefinition objects.
+        // If the file does not exist, returns a default list with a simple example macro.
         private static List<MacroDefinition> LoadMacroDefinitions(string path)
         {
-            using FileStream stream = File.OpenRead(path);
-            return JsonSerializer.Deserialize<List<MacroDefinition>>(stream);
+            if (File.Exists(path))
+            {
+                using FileStream stream = File.OpenRead(path);
+                return JsonSerializer.Deserialize<List<MacroDefinition>>(stream);
+            }
+
+            // Fallback JSON with a single example macro.
+            const string fallbackJson = @"[
+                {
+                    ""Name"": ""ExampleModule"",
+                    ""Type"": ""DocumentModule"",
+                    ""SourceCode"": ""Sub HelloWorld()\n    MsgBox \""Hello, World!\""\nEnd Sub""
+                }
+            ]";
+
+            return JsonSerializer.Deserialize<List<MacroDefinition>>(fallbackJson);
         }
     }
 }

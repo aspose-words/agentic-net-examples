@@ -1,33 +1,27 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Settings;
 
-namespace OpenTypeFeatureDisableExample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Path to the source Word document.
-            string inputPath = @"C:\Docs\SourceDocument.docx";
+        // Create a simple document in memory.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, world! This is a test document with OpenType features disabled.");
 
-            // Path where the resulting PDF will be saved.
-            string outputPath = @"C:\Docs\ResultDocument.pdf";
+        // Disable OpenType font formatting features for the whole document.
+        doc.CompatibilityOptions.DisableOpenTypeFontFormattingFeatures = true;
 
-            // Load the existing Word document.
-            Document doc = new Document(inputPath);
+        // Determine output path in the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ResultDocument.pdf");
 
-            // Disable OpenType font formatting features for the whole document.
-            // This ensures that advanced OpenType features (ligatures, contextual forms, etc.) are ignored.
-            doc.CompatibilityOptions.DisableOpenTypeFontFormattingFeatures = true;
+        // Save as PDF.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        doc.Save(outputPath, pdfOptions);
 
-            // Create PDF save options. No special options are required for this scenario,
-            // but the object is instantiated to follow the standard save pattern.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-            // Save the document as PDF using the configured options.
-            doc.Save(outputPath, pdfOptions);
-        }
+        Console.WriteLine($"PDF saved to: {outputPath}");
     }
 }

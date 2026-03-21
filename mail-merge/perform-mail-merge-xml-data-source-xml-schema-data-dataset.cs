@@ -1,34 +1,27 @@
 using System;
-using System.Data;
 using Aspose.Words;
 
 class MailMergeXmlExample
 {
     static void Main()
     {
-        // Paths to the template, XML data, XML schema and the output document.
-        string templatePath = "Template.docx";
-        string xmlDataPath = "Data.xml";
-        string xmlSchemaPath = "Schema.xsd";
-        string outputPath = "MergedOutput.docx";
+        // Create a new document with simple mail‑merge fields.
+        Document doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Dear ");
+        builder.InsertField("MERGEFIELD", "FirstName");
+        builder.Write(" ");
+        builder.InsertField("MERGEFIELD", "LastName");
+        builder.Writeln(",");
 
-        // Load the Word template that contains mail‑merge regions.
-        Document doc = new Document(templatePath);
+        // Prepare data for the merge.
+        string[] fieldNames = { "FirstName", "LastName" };
+        object[] fieldValues = { "John", "Doe" };
 
-        // Create a DataSet and populate it with the XML schema and data.
-        DataSet dataSet = new DataSet();
-
-        // Load the XSD schema first so the DataSet knows the table structure.
-        dataSet.ReadXmlSchema(xmlSchemaPath);
-
-        // Load the XML data into the DataSet according to the previously loaded schema.
-        dataSet.ReadXml(xmlDataPath);
-
-        // Execute mail merge using the DataSet. The DataSet tables must have names that match
-        // the mail‑merge region names defined in the template (TableStart:TableName / TableEnd:TableName).
-        doc.MailMerge.ExecuteWithRegions(dataSet);
+        // Execute the mail merge.
+        doc.MailMerge.Execute(fieldNames, fieldValues);
 
         // Save the merged document.
-        doc.Save(outputPath);
+        doc.Save("MergedOutput.docx");
     }
 }

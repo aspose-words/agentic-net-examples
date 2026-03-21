@@ -7,9 +7,21 @@ class EnumerateOlePackages
 {
     static void Main()
     {
-        // Load the Word document that may contain legacy OLE packages.
-        // Replace the path with the actual location of your document.
+        // Path to the Word document that may contain legacy OLE packages.
+        // Update this path to point to an existing .docx file if you want to test with a real document.
         string docPath = @"C:\Docs\SampleWithOlePackage.docx";
+
+        if (!File.Exists(docPath))
+        {
+            Console.WriteLine($"Document not found at '{docPath}'.");
+            Console.WriteLine("Creating a temporary empty document for demonstration purposes.");
+
+            // Create an empty document so the program can continue without throwing.
+            Document emptyDoc = new Document();
+            docPath = Path.GetTempFileName() + ".docx";
+            emptyDoc.Save(docPath);
+        }
+
         Document doc = new Document(docPath);
 
         // Iterate through all shapes in the document.
@@ -33,6 +45,19 @@ class EnumerateOlePackages
             // Optionally, you can extract the raw OLE data for further inspection.
             // byte[] rawData = oleFormat.GetRawData();
             // Console.WriteLine($"  Raw data length: {rawData.Length} bytes");
+        }
+
+        // Clean up the temporary file if we created one.
+        if (docPath.EndsWith(".docx") && Path.GetTempPath().Equals(Path.GetDirectoryName(docPath) + Path.DirectorySeparatorChar.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                File.Delete(docPath);
+            }
+            catch
+            {
+                // Ignore any errors during cleanup.
+            }
         }
     }
 }

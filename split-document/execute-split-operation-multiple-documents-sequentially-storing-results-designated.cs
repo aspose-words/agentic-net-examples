@@ -23,7 +23,6 @@ namespace AsposeWordsSplitExample
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Determine a readable part type name (optional, used only for naming).
             string partType = _splitCriteria switch
             {
                 DocumentSplitCriteria.PageBreak => "Page",
@@ -33,13 +32,11 @@ namespace AsposeWordsSplitExample
                 _ => "Part"
             };
 
-            // Build a unique file name for the part.
             string partFileName = $"{_baseFileName}_part{++_partCount}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
 
-            // Set the file name (used when saving to a file) and the stream (used for direct writing).
             args.DocumentPartFileName = partFileName;
             args.DocumentPartStream = new FileStream(Path.Combine(_outputDirectory, partFileName), FileMode.Create);
-            args.KeepDocumentPartStreamOpen = false; // close after each part is written.
+            args.KeepDocumentPartStreamOpen = false;
         }
     }
 
@@ -59,55 +56,69 @@ namespace AsposeWordsSplitExample
                 string inputPath = inputFiles[i];
                 string outputDir = outputDirectories[i];
 
-                // Ensure the output directory exists.
                 Directory.CreateDirectory(outputDir);
 
-                // Load the source document.
                 Document doc = new Document(inputPath);
 
-                // Prepare save options for HTML with splitting at section breaks.
                 HtmlSaveOptions saveOptions = new HtmlSaveOptions
                 {
                     DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak
                 };
 
-                // Base file name for the main HTML file (without extension).
                 string baseFileName = Path.GetFileNameWithoutExtension(inputPath) + ".html";
 
-                // Assign the custom callback that will name and stream each part.
                 saveOptions.DocumentPartSavingCallback = new SavedDocumentPartRename(
                     outputDir,
                     baseFileName,
                     saveOptions.DocumentSplitCriteria);
 
-                // Save the document; Aspose.Words will invoke the callback for each part.
                 string mainOutputPath = Path.Combine(outputDir, baseFileName);
                 doc.Save(mainOutputPath, saveOptions);
             }
         }
     }
 
-    // Example usage.
     class Program
     {
         static void Main()
         {
-            // Define source documents.
+            // Create temporary directories for source documents and split results.
+            string tempRoot = Path.Combine(Path.GetTempPath(), "AsposeSplitDemo");
+            string sourceDir = Path.Combine(tempRoot, "Sources");
+            string outputRoot = Path.Combine(tempRoot, "Outputs");
+            Directory.CreateDirectory(sourceDir);
+            Directory.CreateDirectory(outputRoot);
+
+            // Prepare source document paths.
             string[] sources = new[]
             {
-                @"C:\Docs\Report1.docx",
-                @"C:\Docs\Report2.docx"
+                Path.Combine(sourceDir, "Report1.docx"),
+                Path.Combine(sourceDir, "Report2.docx")
             };
 
-            // Define where each document's split parts should be stored.
+            // Generate simple documents with a section break to allow splitting.
+            for (int i = 0; i < sources.Length; i++)
+            {
+                Document doc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(doc);
+                builder.Writeln($"Document {i + 1} - First section");
+                builder.InsertBreak(BreakType.SectionBreakNewPage);
+                builder.Writeln($"Document {i + 1} - Second section");
+                doc.Save(sources[i]);
+            }
+
+            // Define output directories for each source document.
             string[] destinations = new[]
             {
-                @"C:\SplitOutput\Report1",
-                @"C:\SplitOutput\Report2"
+                Path.Combine(outputRoot, "Report1"),
+                Path.Combine(outputRoot, "Report2")
             };
 
             // Perform the split operation.
             DocumentSplitter.SplitDocuments(sources, destinations);
+
+            Console.WriteLine("Splitting completed. Check the folder:");
+            Console.WriteLine(outputRoot);
         }
     }
 }

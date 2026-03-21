@@ -6,23 +6,26 @@ class Program
 {
     static void Main()
     {
-        // Folder that contains the Word documents to process
-        string inputFolder = @"C:\Docs\Input";
+        // Use a folder relative to the executable. It will be created if it does not exist.
+        string inputFolder = Path.Combine(AppContext.BaseDirectory, "Input");
+        Directory.CreateDirectory(inputFolder);
 
         // Get all .docx files in the folder (adjust the pattern if other formats are needed)
-        string[] files = Directory.GetFiles(inputFolder, "*.docx");
+        string[] files = Directory.GetFiles(inputFolder, "*.docx", SearchOption.TopDirectoryOnly);
 
         foreach (string filePath in files)
         {
-            // Load the document from file (uses Document(string) constructor rule)
+            // Load the document from file
             Document doc = new Document(filePath);
 
-            // If the document has any watermark (text, image, or other), remove it
+            // If the document has any watermark, remove it
             if (doc.Watermark.Type != WatermarkType.None)
-                doc.Watermark.Remove(); // Uses Watermark.Remove() method rule
+                doc.Watermark.Remove();
 
-            // Save the modified document back to the same file (uses Document.Save(string) rule)
+            // Save the modified document back to the same file
             doc.Save(filePath);
         }
+
+        Console.WriteLine($"Processed {files.Length} file(s) in \"{inputFolder}\".");
     }
 }

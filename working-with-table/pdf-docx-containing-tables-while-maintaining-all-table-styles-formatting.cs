@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 namespace AsposeWordsTableToPdf
 {
@@ -8,24 +10,45 @@ namespace AsposeWordsTableToPdf
     {
         static void Main()
         {
-            // Path to the source DOCX file that contains tables.
-            string inputPath = @"C:\Docs\InputDocument.docx";
+            // Create a new document.
+            Document doc = new Document();
 
-            // Path where the resulting PDF will be saved.
-            string outputPath = @"C:\Docs\OutputDocument.pdf";
+            // Build a simple table with some styled content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Sample document with a table:");
+            Table table = builder.StartTable();
 
-            // Load the DOCX document.
-            Document doc = new Document(inputPath);
+            // First row.
+            builder.InsertCell();
+            builder.Font.Bold = true;
+            builder.Writeln("Header 1");
+            builder.InsertCell();
+            builder.Font.Bold = true;
+            builder.Writeln("Header 2");
+            builder.EndRow();
+
+            // Second row.
+            builder.InsertCell();
+            builder.Font.Bold = false;
+            builder.Writeln("Cell A1");
+            builder.InsertCell();
+            builder.Writeln("Cell A2");
+            builder.EndRow();
+
+            builder.EndTable();
 
             // Convert any formatting defined in table styles to direct formatting.
             // This ensures that the visual appearance of tables is preserved
             // when the document is saved to a fixed‑page format such as PDF.
             doc.ExpandTableStylesToDirectFormatting();
 
-            // Save the document as PDF. The Save method automatically determines
-            // the format from the file extension, but we can also specify the
-            // format explicitly using SaveFormat.Pdf.
+            // Determine output path in the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "OutputDocument.pdf");
+
+            // Save the document as PDF.
             doc.Save(outputPath, SaveFormat.Pdf);
+
+            Console.WriteLine($"PDF saved to: {outputPath}");
         }
     }
 }

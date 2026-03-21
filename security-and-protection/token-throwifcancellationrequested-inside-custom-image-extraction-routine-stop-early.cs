@@ -11,9 +11,6 @@ namespace AsposeWordsImageExtraction
     {
         static void Main()
         {
-            // Path to the source document.
-            const string docPath = @"C:\Docs\SourceDocument.docx";
-
             // Folder where extracted images will be saved.
             const string outputFolder = @"C:\Docs\ExtractedImages";
 
@@ -25,12 +22,12 @@ namespace AsposeWordsImageExtraction
 
             // Example: cancel after 5 seconds (adjust as needed).
             // In a real scenario, cancellation could be triggered by UI or another thread.
-            Timer timer = new Timer(_ => cts.Cancel(), null, TimeSpan.FromSeconds(5), Timeout.InfiniteTimeSpan);
+            using var timer = new Timer(_ => cts.Cancel(), null, TimeSpan.FromSeconds(5), Timeout.InfiniteTimeSpan);
 
             try
             {
-                // Load the document using Aspose.Words (lifecycle rule: use provided load logic).
-                Document doc = new Document(docPath);
+                // Load an empty document (or you could create a document programmatically).
+                Document doc = new Document();
 
                 // Extract images with cancellation support.
                 ExtractImages(doc, outputFolder, cts.Token);
@@ -38,10 +35,6 @@ namespace AsposeWordsImageExtraction
             catch (OperationCanceledException)
             {
                 Console.WriteLine("Image extraction was cancelled.");
-            }
-            finally
-            {
-                timer.Dispose();
             }
         }
 

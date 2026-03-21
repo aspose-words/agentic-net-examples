@@ -6,10 +6,23 @@ class AddRowExample
 {
     static void Main()
     {
-        // Load an existing Word document that already contains a table.
-        Document doc = new Document("Input.docx");
+        // Create a new document and add a simple table with one row.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Get the first table in the document (adjust the index if needed).
+        // Start the table.
+        builder.StartTable();
+
+        // Add two cells to the first row.
+        builder.InsertCell();
+        builder.Write("Existing cell 1");
+        builder.InsertCell();
+        builder.Write("Existing cell 2");
+
+        // End the first row.
+        builder.EndRow();
+
+        // Retrieve the table we just created.
         Table table = doc.FirstSection.Body.Tables[0];
 
         // Create a new row that belongs to the same document.

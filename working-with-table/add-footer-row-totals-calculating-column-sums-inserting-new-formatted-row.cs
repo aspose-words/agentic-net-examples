@@ -61,7 +61,10 @@ class AddFooterRowWithTotals
         // Add a new empty row at the end of the table.
         Row totalRow = new Row(doc);
         table.Rows.Add(totalRow);
-        totalRow.EnsureMinimum(); // Ensure at least one cell exists.
+
+        // Ensure the row has the correct number of cells.
+        for (int i = 0; i < columnCount; i++)
+            totalRow.Cells.Add(new Cell(doc));
 
         // Apply formatting to the total row (bold text and a top border).
         totalRow.RowFormat.Height = 20;
@@ -74,7 +77,6 @@ class AddFooterRowWithTotals
         for (int colIdx = 0; colIdx < columnCount; colIdx++)
         {
             Cell cell = totalRow.Cells[colIdx];
-            // Ensure the cell has a paragraph to host the run.
             cell.EnsureMinimum();
 
             string text = colIdx == 0 ? "Total" : columnSums[colIdx].ToString();

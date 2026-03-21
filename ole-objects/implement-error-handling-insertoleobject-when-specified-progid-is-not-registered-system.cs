@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -19,39 +20,32 @@ namespace OleObjectInsertion
                                                       bool asIcon,
                                                       Stream? presentationStream = null)
         {
-            // Validate arguments.
             if (builder == null) throw new ArgumentNullException(nameof(builder));
             if (dataStream == null) throw new ArgumentNullException(nameof(dataStream));
             if (string.IsNullOrWhiteSpace(progId)) throw new ArgumentException("ProgId cannot be null or empty.", nameof(progId));
 
-            // OLE registration is a Windows‑only feature.
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 Console.WriteLine("OLE insertion is only supported on Windows platforms. Skipping insertion.");
                 return null;
             }
 
-            // Check whether the ProgId exists in the registry (HKEY_CLASSES_ROOT\<ProgId>).
             using (RegistryKey? key = Registry.ClassesRoot.OpenSubKey(progId))
             {
                 if (key == null)
                 {
-                    // ProgId not registered – handle gracefully.
                     Console.WriteLine($"ProgId \"{progId}\" is not registered on this machine. OLE object will not be inserted.");
                     return null;
                 }
             }
 
-            // ProgId is present – attempt insertion.
             try
             {
-                // InsertOleObject is an existing Aspose.Words method; we use it directly.
                 Shape oleShape = builder.InsertOleObject(dataStream, progId, asIcon, presentationStream);
                 return oleShape;
             }
             catch (Exception ex)
             {
-                // Unexpected errors (e.g., corrupted stream) are caught here.
                 Console.WriteLine($"Failed to insert OLE object with ProgId \"{progId}\": {ex.Message}");
                 return null;
             }
@@ -62,18 +56,26 @@ namespace OleObjectInsertion
     {
         public static void Run()
         {
-            // Create a new document and a builder.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Prepare a stream containing the data to embed (e.g., an Excel file).
-            using (FileStream fileStream = File.Open("Sample.xlsx", FileMode.Open, FileAccess.Read))
+            const string excelFileName = "Sample.xlsx";
+
+            // Ensure the sample file exists; if not, create a minimal placeholder.
+            if (!File.Exists(excelFileName))
             {
-                // Attempt to insert the OLE object with error handling.
+                Console.WriteLine($"File \"{excelFileName}\" not found. Creating a placeholder file.");
+                // Create a tiny empty Excel file (ZIP container with minimal structure) to avoid errors.
+                // For simplicity, write a few bytes; Aspose.Words will treat it as a generic binary stream.
+                File.WriteAllBytes(excelFileName, new byte[] { 0x50, 0x4B, 0x03, 0x04 }); // ZIP header
+            }
+
+            using (FileStream fileStream = File.Open(excelFileName, FileMode.Open, FileAccess.Read))
+            {
                 Shape? shape = OleHelper.InsertOleObjectWithCheck(
                     builder,
                     fileStream,
-                    "Excel.Sheet.12",   // ProgId for Excel worksheets.
+                    "Excel.Sheet.12",
                     asIcon: false,
                     presentationStream: null);
 
@@ -81,16 +83,19 @@ namespace OleObjectInsertion
                 {
                     Console.WriteLine("OLE object inserted successfully.");
                 }
+                else
+                {
+                    Console.WriteLine("OLE object was not inserted.");
+                }
             }
 
-            // Save the document.
             doc.Save("Result.docx");
+            Console.WriteLine("Document saved as Result.docx");
         }
     }
 
     internal class Program
     {
-        // Entry point required by the compiler.
         private static void Main(string[] args)
         {
             Example.Run();

@@ -32,23 +32,24 @@ namespace SplitPdfExample
     {
         static void Main()
         {
-            // Input Word document.
-            string inputPath = @"C:\Docs\SourceDocument.docx";
-
             // Folder where the split PDF parts will be stored.
-            string outputFolder = @"C:\Docs\SplitPdfParts";
+            string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "SplitPdfParts");
 
             // Ensure the output directory exists.
-            if (!Directory.Exists(outputFolder))
-                Directory.CreateDirectory(outputFolder);
+            Directory.CreateDirectory(outputFolder);
 
-            // Load the original document (preserves all styles and layout).
-            Document doc = new Document(inputPath);
+            // Create a simple Word document in memory (no external file needed).
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is page 1.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("This is page 2.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("This is page 3.");
 
-            // Configure PDF save options.
+            // Configure PDF save options with a callback to write each page to a separate PDF file.
             PdfSaveOptions pdfOptions = new PdfSaveOptions
             {
-                // Use a callback to write each page to a separate PDF file.
                 PageSavingCallback = new PageSplitCallback(outputFolder)
             };
 
@@ -58,6 +59,8 @@ namespace SplitPdfExample
 
             // Save the document; the callback handles the actual per‑page files.
             doc.Save(dummyMainFile, pdfOptions);
+
+            Console.WriteLine($"Document split into {Directory.GetFiles(outputFolder, "*.pdf").Length} PDF parts in '{outputFolder}'.");
         }
     }
 }

@@ -14,17 +14,31 @@ class ExportVbaModulesToZip
         // Path where the resulting ZIP archive will be saved.
         string zipPath = @"C:\Docs\VbaModules.zip";
 
-        // Load the document (uses the provided Document load rule).
+        // Verify that the source document exists.
+        if (!File.Exists(docsPath))
+        {
+            Console.WriteLine($"Source file not found: {docsPath}");
+            return;
+        }
+
+        // Ensure the output directory exists.
+        string zipDirectory = Path.GetDirectoryName(zipPath);
+        if (!Directory.Exists(zipDirectory))
+        {
+            Directory.CreateDirectory(zipDirectory);
+        }
+
+        // Load the document.
         Document doc = new Document(docsPath);
 
         // Ensure the document actually contains a VBA project.
-        if (doc.VbaProject == null || doc.VbaProject.Modules == null)
+        if (doc.VbaProject == null || doc.VbaProject.Modules == null || doc.VbaProject.Modules.Count == 0)
         {
             Console.WriteLine("The document does not contain any VBA modules.");
             return;
         }
 
-        // Create the ZIP archive (ZIP creation is not covered by a specific rule, so we use standard .NET APIs).
+        // Create the ZIP archive.
         using (FileStream zipStream = new FileStream(zipPath, FileMode.Create))
         using (ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Create))
         {
@@ -32,7 +46,7 @@ class ExportVbaModulesToZip
             foreach (VbaModule module in doc.VbaProject.Modules)
             {
                 // Preserve the original module name as the file name.
-                // Append a .bas extension for procedural modules; other types could use different extensions if needed.
+                // Append a .bas extension for procedural modules.
                 string entryName = $"{module.Name}.bas";
 
                 // Create a new entry in the ZIP archive.

@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Drawing; // For LineStyle enum
@@ -10,66 +9,74 @@ class Program
 {
     static void Main()
     {
-        // Folder that contains the source documents.
-        string inputFolder = @"C:\Docs\Input";
+        // Use folders relative to the executable location.
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string inputFolder = Path.Combine(baseDir, "Input");
+        string outputFolder = Path.Combine(baseDir, "Output");
 
-        // Folder where the processed documents will be saved.
-        string outputFolder = @"C:\Docs\Output";
-
-        // Ensure the output directory exists.
+        // Ensure the directories exist.
+        Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Name of the predefined table style that will be applied to every table.
+        // If there are no .docx files, create a sample document with a table.
+        if (Directory.GetFiles(inputFolder, "*.docx").Length == 0)
+        {
+            var sampleDoc = new Document();
+            var builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln("Sample document created by the batch processor.");
+            builder.StartTable();
+            for (int r = 0; r < 3; r++)
+            {
+                for (int c = 0; c < 4; c++)
+                {
+                    builder.InsertCell();
+                    builder.Writeln($"R{r + 1}C{c + 1}");
+                }
+                builder.EndRow();
+            }
+            builder.EndTable();
+            string samplePath = Path.Combine(inputFolder, "Sample.docx");
+            sampleDoc.Save(samplePath);
+        }
+
         const string predefinedStyleName = "MyBatchTableStyle";
 
-        // Process each .docx file in the input folder.
         foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            // Load the document (uses the Document constructor – a lifecycle rule).
             Document doc = new Document(filePath);
 
-            // -----------------------------------------------------------------
-            // Create (or retrieve) the predefined table style in the current document.
-            // -----------------------------------------------------------------
+            // Create (or retrieve) the predefined table style.
             TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, predefinedStyleName);
-
-            // Define the visual appearance of the style.
             tableStyle.Borders.Color = Color.Blue;
             tableStyle.Borders.LineStyle = LineStyle.Single;
             tableStyle.Borders.LineWidth = 1.0; // points
-            tableStyle.CellSpacing = 0; // no extra spacing between cells
+            tableStyle.CellSpacing = 0;
             tableStyle.LeftPadding = 5;
             tableStyle.RightPadding = 5;
             tableStyle.TopPadding = 5;
             tableStyle.BottomPadding = 5;
             tableStyle.Shading.BackgroundPatternColor = Color.LightGray;
 
-            // -----------------------------------------------------------------
-            // Apply the style to every table in the document.
-            // -----------------------------------------------------------------
+            // Apply the style to every table.
             NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
             foreach (Table table in tables)
             {
-                // Assign the predefined style.
                 table.Style = tableStyle;
-
-                // Apply margin‑like settings directly to the table.
-                // These properties control the distance between the table and surrounding text.
                 table.DistanceTop = 12;    // points
                 table.DistanceBottom = 12; // points
                 table.DistanceLeft = 12;   // points
                 table.DistanceRight = 12;  // points
-
-                // Optional: remove any left indent that might have been inherited.
                 table.LeftIndent = 0;
             }
 
-            // Convert style formatting to direct formatting so that the style is fully materialized.
+            // Convert style formatting to direct formatting.
             doc.ExpandTableStylesToDirectFormatting();
 
-            // Save the modified document to the output folder (uses the Document.Save method – a lifecycle rule).
+            // Save the modified document.
             string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
             doc.Save(outputPath);
         }
+
+        Console.WriteLine("Processing complete. Check the 'Output' folder.");
     }
 }

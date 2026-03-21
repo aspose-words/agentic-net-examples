@@ -25,25 +25,19 @@ class AppendShapeToGroup
         // Group the two shapes. The group is inserted at the current builder position.
         GroupShape group = builder.InsertGroupShape(shape1, shape2);
 
-        // Create a new shape that we want to add to the existing group.
-        Shape newShape = new Shape(doc, ShapeType.Star);
-        newShape.Width = 80;
-        newShape.Height = 80;
+        // Create a new shape that we want to add to the existing group using a builder
+        // positioned inside the group so that the markup language matches.
+        DocumentBuilder groupBuilder = new DocumentBuilder(doc);
+        groupBuilder.MoveTo(group);
+        Shape newShape = groupBuilder.InsertShape(ShapeType.Star, 80, 80);
         // Position the new shape relative to the group's internal coordinate system.
-        // Here we place it partially outside the current bounds to demonstrate the update.
         newShape.Left = -30;   // left of the current origin
         newShape.Top = 180;    // below the current shapes
         newShape.FillColor = Color.Red;
 
-        // Append the new shape to the group.
-        group.AppendChild(newShape);
-
         // -----------------------------------------------------------------
         // Recalculate the group's bounds so that it fully contains all children.
         // -----------------------------------------------------------------
-        // Determine the union of all child shapes' bounds in the group's local
-        // coordinate space (the values returned by Shape.Bounds for children of a
-        // GroupShape are expressed in that local space).
         float minLeft = 0, minTop = 0, maxRight = 0, maxBottom = 0;
         bool first = true;
 
@@ -70,19 +64,14 @@ class AppendShapeToGroup
 
         // Adjust the group's outer bounds (document coordinates) and its internal
         // coordinate system (origin and size) to match the new union.
-        // The group's current outer bounds.
         RectangleF oldGroupBounds = group.Bounds;
 
-        // New outer bounds: shift by the difference between the old origin (0,0)
-        // in the group's local space and the new minimum coordinates.
         group.Bounds = new RectangleF(
             oldGroupBounds.Left + minLeft,
             oldGroupBounds.Top + minTop,
             maxRight - minLeft,
             maxBottom - minTop);
 
-        // Update the internal coordinate system so that (0,0) corresponds to the
-        // new top‑left corner of the group's content.
         group.CoordOrigin = new Point((int)minLeft, (int)minTop);
         group.CoordSize = new Size((int)(maxRight - minLeft), (int)(maxBottom - minTop));
 

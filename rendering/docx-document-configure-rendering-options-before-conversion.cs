@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,11 +7,10 @@ class DocumentConversion
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        const string inputPath = @"C:\Docs\InputDocument.docx";
-
-        // Load the DOCX document.
-        Document doc = new Document(inputPath);
+        // Create a new document in memory.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
 
         // --------------------------------------------------------------------
         // Configure rendering options that affect how the document is laid out
@@ -24,9 +24,6 @@ class DocumentConversion
 
         // Example: Set revision display options (optional).
         doc.LayoutOptions.RevisionOptions.ShowRevisionBars = true;
-        // The RevisionColor enum is not available in the current Aspose.Words version.
-        // If you need to colour inserted text, use the InsertedTextColor property with a supported enum value or omit it.
-        // doc.LayoutOptions.RevisionOptions.InsertedTextColor = RevisionColor.BrightGreen; // Removed for compatibility
 
         // --------------------------------------------------------------------
         // Configure save options for the target format (PDF in this case).
@@ -43,10 +40,12 @@ class DocumentConversion
             Compliance = PdfCompliance.PdfA1b
         };
 
-        // Path to the output PDF file.
-        const string outputPath = @"C:\Docs\ConvertedDocument.pdf";
+        // Path to the output PDF file in the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ConvertedDocument.pdf");
 
         // Save the document to PDF using the configured options.
         doc.Save(outputPath, pdfOptions);
+
+        Console.WriteLine($"Document successfully saved to: {outputPath}");
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -9,8 +10,9 @@ namespace AsposeWordsMailMergeToPdf
     {
         static void Main()
         {
-            // Path to the source DOCX template that contains MERGEFIELDs.
-            string templatePath = @"C:\Docs\Template.docx";
+            // Create a simple DOCX template with MERGEFIELDs if it doesn't already exist.
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+            CreateTemplateIfMissing(templatePath);
 
             // Load the template document.
             Document doc = new Document(templatePath);
@@ -28,12 +30,37 @@ namespace AsposeWordsMailMergeToPdf
             // Execute the mail merge using the DataTable.
             doc.MailMerge.Execute(table);
 
-            // Save the merged document as PDF.
-            // Use the overload that accepts a file name and a SaveFormat enum.
-            string pdfOutputPath = @"C:\Docs\MergedResult.pdf";
+            // Save the merged document as PDF in the current directory.
+            string pdfOutputPath = Path.Combine(Environment.CurrentDirectory, "MergedResult.pdf");
             doc.Save(pdfOutputPath, SaveFormat.Pdf);
 
-            Console.WriteLine("Mail merge completed and PDF saved to: " + pdfOutputPath);
+            Console.WriteLine($"Mail merge completed and PDF saved to: {pdfOutputPath}");
+        }
+
+        private static void CreateTemplateIfMissing(string path)
+        {
+            if (File.Exists(path))
+                return;
+
+            Document template = new Document();
+            var builder = new DocumentBuilder(template);
+
+            builder.Writeln("Employee Details:");
+            builder.Writeln();
+
+            builder.InsertField("MERGEFIELD FullName \\* MERGEFORMAT");
+            builder.Writeln();
+
+            builder.InsertField("MERGEFIELD Company \\* MERGEFORMAT");
+            builder.Writeln();
+
+            builder.InsertField("MERGEFIELD Address \\* MERGEFORMAT");
+            builder.Writeln();
+
+            builder.InsertField("MERGEFIELD City \\* MERGEFORMAT");
+            builder.Writeln();
+
+            template.Save(path);
         }
     }
 }

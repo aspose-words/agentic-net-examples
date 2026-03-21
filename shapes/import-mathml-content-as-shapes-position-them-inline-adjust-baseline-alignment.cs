@@ -1,34 +1,54 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load an HTML file that contains MathML. The MathML will be imported as Shape objects.
-        // Setting ConvertShapeToOfficeMath to false ensures the MathML stays as shapes rather than being converted to OfficeMath.
-        HtmlLoadOptions loadOptions = new HtmlLoadOptions();
-        loadOptions.ConvertShapeToOfficeMath = false;
+        // HTML content containing MathML.
+        const string html = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+</head>
+<body>
+    <p>
+        Here is an equation:
+        <math xmlns='http://www.w3.org/1998/Math/MathML'>
+            <mi>x</mi><mo>=</mo><mn>5</mn>
+        </math>
+    </p>
+</body>
+</html>";
 
-        Document doc = new Document("MathML.html", loadOptions);
-
-        // Iterate through all Shape nodes (these represent the imported MathML equations).
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
+        // Load the HTML from a memory stream with the appropriate options.
+        HtmlLoadOptions loadOptions = new HtmlLoadOptions
         {
-            // Position the shape inline with the surrounding text.
-            shape.WrapType = WrapType.Inline;
+            ConvertShapeToOfficeMath = false
+        };
 
-            // In older Aspose.Words versions the Font class does not expose BaselineAlignment.
-            // To keep the shape aligned with the text baseline we can set the vertical offset to 0.
-            // This mimics the default baseline alignment.
-            shape.Font.Position = 0; // optional – removes any vertical offset
+        using (MemoryStream stream = new MemoryStream(Encoding.UTF8.GetBytes(html)))
+        {
+            Document doc = new Document(stream, loadOptions);
+
+            // Iterate through all Shape nodes (these represent the imported MathML equations).
+            foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
+            {
+                // Position the shape inline with the surrounding text.
+                shape.WrapType = WrapType.Inline;
+
+                // Remove any vertical offset to keep the shape aligned with the text baseline.
+                shape.Font.Position = 0;
+            }
+
+            // Save the modified document.
+            doc.Save("Result.docx");
         }
-
-        // Save the modified document.
-        doc.Save("Result.docx");
     }
 }

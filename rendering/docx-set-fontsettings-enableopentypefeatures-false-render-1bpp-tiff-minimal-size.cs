@@ -1,17 +1,17 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Load the DOCX document.
-        Document doc = new Document("input.docx");
+        // Create a new document with some content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample text for TIFF rendering.");
 
         // Disable OpenType font formatting features to ensure minimal rendering size.
-        // This uses the CompatibilityOptions.DisableOpenTypeFontFormattingFeatures property.
         doc.CompatibilityOptions.DisableOpenTypeFontFormattingFeatures = true;
 
         // Configure image save options for 1bpp TIFF.
@@ -21,7 +21,7 @@ class Program
             TiffCompression = TiffCompression.Ccitt4,
             // Force black-and-white output.
             ImageColorMode = ImageColorMode.BlackAndWhite,
-            // Optional: set resolution if needed.
+            // Set resolution if needed.
             Resolution = 300
         };
 

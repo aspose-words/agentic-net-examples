@@ -6,22 +6,37 @@ class CloneTableExample
 {
     static void Main()
     {
-        // Load the source document.
-        Document doc = new Document("Input.docx");
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Locate the table to be cloned. Here we take the first table in the document.
-        Table originalTable = doc.FirstSection.Body.Tables[0];
+        // Add the first paragraph.
+        builder.Writeln("First paragraph.");
+
+        // Create a simple table.
+        Table originalTable = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Cell 1");
+        builder.InsertCell();
+        builder.Writeln("Cell 2");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Add a second paragraph that will serve as the reference point.
+        builder.Writeln("Second paragraph.");
 
         // Perform a deep clone of the table (including all rows, cells, and contents).
         Table clonedTable = (Table)originalTable.Clone(true);
 
-        // Identify the paragraph after which the cloned table will be inserted.
-        // For demonstration we use the second paragraph in the body (index 1).
-        Paragraph referenceParagraph = doc.FirstSection.Body.Paragraphs[1];
+        // Locate the reference paragraph (the second paragraph in the document).
+        Paragraph referenceParagraph = (Paragraph)doc.GetChild(NodeType.Paragraph, 1, true);
+        if (referenceParagraph == null)
+        {
+            throw new InvalidOperationException("Reference paragraph not found.");
+        }
 
         // Insert the cloned table immediately after the reference paragraph.
-        // InsertAfter is a method of CompositeNode (Body is a CompositeNode).
-        doc.FirstSection.Body.InsertAfter(clonedTable, referenceParagraph);
+        referenceParagraph.ParentNode.InsertAfter(clonedTable, referenceParagraph);
 
         // Save the modified document.
         doc.Save("Output.docx");

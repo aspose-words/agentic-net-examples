@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -39,12 +40,33 @@ namespace AsposeWordsTableDeletion
         // Example usage.
         public static void Main()
         {
-            string sourceFile = @"C:\Docs\Input.docx";
-            string destinationFile = @"C:\Docs\Output.docx";
+            // Create a temporary source document with a table that contains the keyword.
+            string sourceFile = Path.Combine(Path.GetTempPath(), "Input.docx");
+            string destinationFile = Path.Combine(Path.GetTempPath(), "Output.docx");
             string searchKeyword = "CONFIDENTIAL";
 
+            // Build a simple document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Add a paragraph.
+            builder.Writeln("This is a sample document.");
+
+            // Add a table that contains the keyword.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Write("Header");
+            builder.InsertCell();
+            builder.Write(searchKeyword); // Cell with the keyword.
+            builder.EndRow();
+            builder.EndTable();
+
+            // Save the source document.
+            doc.Save(sourceFile);
+
+            // Perform the deletion.
             DeleteTableWithKeyword(sourceFile, destinationFile, searchKeyword);
-            Console.WriteLine("Tables containing the keyword have been removed.");
+            Console.WriteLine($"Tables containing the keyword have been removed. Output saved to: {destinationFile}");
         }
     }
 }

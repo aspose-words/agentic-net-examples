@@ -8,29 +8,29 @@ class Program
 {
     static void Main()
     {
-        // Path to the source DOC file.
-        string inputDocPath = "/path/to/input/document.doc";
-
-        // Path where the rendered PDF will be saved.
-        string outputPdfPath = "/path/to/output/document.pdf";
+        // Create a simple document in memory.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
 
         // Linux font folder that contains TrueType fonts.
-        // Adjust this path if your fonts are located elsewhere.
+        // If the folder does not exist (e.g., on Windows), the setting is simply ignored.
         string linuxFontsFolder = "/usr/share/fonts";
 
-        // Load the DOC file.
-        Document doc = new Document(inputDocPath);
+        if (Directory.Exists(linuxFontsFolder))
+        {
+            var fontSettings = new FontSettings();
+            // Search recursively for fonts in the specified folder.
+            fontSettings.SetFontsFolder(linuxFontsFolder, true);
+            doc.FontSettings = fontSettings;
+        }
 
-        // Create a FontSettings instance and point it to the Linux fonts folder.
-        // The second argument (true) makes the search recursive, including sub‑folders.
-        FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(linuxFontsFolder, true);
+        // Determine output path relative to the current working directory.
+        string outputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "output.pdf");
 
-        // Assign the custom FontSettings to the document.
-        doc.FontSettings = fontSettings;
-
-        // Save the document to PDF (or any other fixed‑page format).
-        // Using the overload that specifies the SaveFormat ensures correct rendering.
+        // Save the document as PDF.
         doc.Save(outputPdfPath, SaveFormat.Pdf);
+
+        Console.WriteLine($"PDF saved to: {outputPdfPath}");
     }
 }

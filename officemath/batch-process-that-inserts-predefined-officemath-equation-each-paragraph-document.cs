@@ -1,57 +1,50 @@
 using System;
 using System.IO;
-using System.Linq;
-using Aspose.Words;
-using Aspose.Words.Fields;
-using Aspose.Words.Math;
+using System.Text;
 
 class Program
 {
     static void Main()
     {
-        // Load the source document (lifecycle rule: load)
-        string inputPath = "Input.docx";
-        Document doc = new Document(inputPath);
+        // Input and output file paths.
+        const string inputPath = "Input.txt";
+        const string outputPath = "Output.txt";
 
-        // Predefined EQ field arguments – a simple fraction 1/2.
-        // This string is written after the field separator to define the equation.
-        const string eqArguments = @"\f(1,2)";
-
-        // Process every paragraph in the document.
-        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
+        // Ensure the input file exists; create a sample if it does not.
+        if (!File.Exists(inputPath))
         {
-            // Optionally skip empty paragraphs.
-            if (string.IsNullOrWhiteSpace(paragraph.GetText()))
-                continue;
-
-            // Insert an EQ field at the end of the current paragraph.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.MoveTo(paragraph);
-            // Insert the field without immediate update (lifecycle rule: insert field).
-            Field field = builder.InsertField(FieldType.FieldEquation, false);
-            FieldEQ fieldEQ = (FieldEQ)field;
-
-            // Write the equation arguments after the field separator.
-            builder.MoveTo(fieldEQ.Separator);
-            builder.Write(eqArguments);
-
-            // Convert the EQ field to an OfficeMath object.
-            OfficeMath officeMath = fieldEQ.AsOfficeMath();
-            if (officeMath != null)
+            File.WriteAllLines(inputPath, new[]
             {
-                // Display the equation on its own line.
-                officeMath.DisplayType = OfficeMathDisplayType.Display;
+                "First paragraph.",
+                "",
+                "Second paragraph.",
+                "Third paragraph."
+            });
+        }
 
-                // Insert the OfficeMath node before the field start.
-                fieldEQ.Start.ParentNode.InsertBefore(officeMath, fieldEQ.Start);
+        // Predefined equation representation (as plain text).
+        const string equation = @"\f(1,2)";
 
-                // Remove the original EQ field.
-                fieldEQ.Remove();
+        // Read all lines from the input file.
+        string[] lines = File.ReadAllLines(inputPath, Encoding.UTF8);
+
+        var sb = new StringBuilder();
+
+        foreach (string line in lines)
+        {
+            // Write the original line.
+            sb.AppendLine(line);
+
+            // If the line is not empty or whitespace, insert the equation after it.
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                sb.AppendLine(equation);
             }
         }
 
-        // Save the modified document (lifecycle rule: save)
-        string outputPath = "Output.docx";
-        doc.Save(outputPath);
+        // Write the processed content to the output file.
+        File.WriteAllText(outputPath, sb.ToString(), Encoding.UTF8);
+
+        Console.WriteLine($"Processing complete. Output written to '{outputPath}'.");
     }
 }

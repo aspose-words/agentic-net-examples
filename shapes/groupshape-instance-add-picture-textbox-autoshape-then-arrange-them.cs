@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -12,44 +12,43 @@ class GroupShapeExample
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // ---------- Insert a picture ----------
-        // Insert a floating image (replace with a valid image path on your machine).
-        Shape picture = builder.InsertImage(@"C:\Images\Sample.jpg");
-        picture.WrapType = WrapType.None;               // No text wrapping.
-        picture.Width = 100;                             // Set desired size.
+        // Use a tiny 1x1 PNG image (red pixel) encoded in base64.
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/6kZcAAAAAElFTkSuQmCC");
+        using var ms = new MemoryStream(pngBytes);
+        Shape picture = builder.InsertImage(ms);
+        picture.WrapType = WrapType.None;
+        picture.Width = 100;
         picture.Height = 100;
 
-        // ---------- Insert a textbox ----------
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.Width = 120;
-        textBox.Height = 40;
+        // ---------- Insert a textbox (implemented as a rectangle with text) ----------
+        Shape textBox = builder.InsertShape(ShapeType.Rectangle, 120, 40);
         textBox.WrapType = WrapType.None;
-        // Add a paragraph with some text inside the textbox.
+        textBox.Fill.Color = System.Drawing.Color.Transparent;
+        textBox.Stroke.Color = System.Drawing.Color.Black;
         textBox.AppendChild(new Paragraph(doc));
-        Paragraph tbParagraph = textBox.FirstParagraph;
-        Run tbRun = new Run(doc);
-        tbRun.Text = "Hello World!";
-        tbParagraph.AppendChild(tbRun);
+        textBox.FirstParagraph.AppendChild(new Run(doc, "Hello World!"));
 
         // ---------- Insert an AutoShape (rectangle) ----------
         Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 80, 60);
-        rectangle.Stroke.Color = Color.Blue;            // Outline color.
+        rectangle.Stroke.Color = System.Drawing.Color.Blue;
 
         // ---------- Group the shapes ----------
-        // The InsertGroupShape method automatically calculates the group's bounds.
         GroupShape group = builder.InsertGroupShape(picture, textBox, rectangle);
 
-        // Optional: reposition child shapes within the group.
-        // Coordinates are relative to the group's internal coordinate system.
+        // Reposition child shapes within the group.
         picture.Left = 0;
         picture.Top = 0;
 
-        textBox.Left = picture.Width + 10;               // Place textbox to the right of the picture.
+        textBox.Left = picture.Width + 10;
         textBox.Top = 0;
 
         rectangle.Left = 0;
-        rectangle.Top = picture.Height + 10;             // Place rectangle below the picture.
+        rectangle.Top = picture.Height + 10;
 
         // Save the document.
-        doc.Save(@"C:\Output\GroupShapeExample.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "GroupShapeExample.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

@@ -13,17 +13,21 @@ class TableReadOnlyProtection
         Table table = new Table(doc);
         doc.FirstSection.Body.AppendChild(table);
 
-        // Ensure the table has at least one row and one cell.
-        table.EnsureMinimum();
-
-        // Fill the table with sample text.
+        // Add rows and cells with sample text.
         for (int rowIdx = 0; rowIdx < 2; rowIdx++)
         {
-            Row row = table.Rows[rowIdx];
+            Row row = new Row(doc);
+            table.AppendChild(row);
+
             for (int cellIdx = 0; cellIdx < 2; cellIdx++)
             {
-                Cell cell = row.Cells[cellIdx];
-                cell.FirstParagraph.AppendChild(new Run(doc, $"R{rowIdx + 1}C{cellIdx + 1}"));
+                Cell cell = new Cell(doc);
+                // Each cell must contain at least one paragraph.
+                cell.AppendChild(new Paragraph(doc));
+                row.AppendChild(cell);
+
+                cell.FirstParagraph.AppendChild(
+                    new Run(doc, $"R{rowIdx + 1}C{cellIdx + 1}"));
             }
         }
 

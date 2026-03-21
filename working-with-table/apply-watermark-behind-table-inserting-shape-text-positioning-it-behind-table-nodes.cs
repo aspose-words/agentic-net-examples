@@ -31,32 +31,32 @@ class WatermarkBehindTableExample
         table = doc.FirstSection.Body.Tables[0];
 
         // Create a floating shape that will serve as the text watermark.
-        Shape watermarkShape = new Shape(doc, ShapeType.Rectangle);
-        // Set the size of the shape (width, height) in points.
-        watermarkShape.Width = 300;
-        watermarkShape.Height = 100;
-
-        // Configure the shape to behave as a floating object.
-        watermarkShape.WrapType = WrapType.None;               // No text wrapping – shape floats.
-        watermarkShape.BehindText = true;                      // Place shape behind the text.
-        watermarkShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        watermarkShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        watermarkShape.HorizontalAlignment = HorizontalAlignment.Center;
-        watermarkShape.VerticalAlignment = VerticalAlignment.Center;
+        Shape watermarkShape = new Shape(doc, ShapeType.Rectangle)
+        {
+            Width = 300,
+            Height = 100,
+            WrapType = WrapType.None,               // No text wrapping – shape floats.
+            BehindText = true,                      // Place shape behind the text.
+            RelativeHorizontalPosition = RelativeHorizontalPosition.Page,
+            RelativeVerticalPosition = RelativeVerticalPosition.Page,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            Rotation = -45                           // Diagonal layout.
+        };
 
         // Add the actual watermark text using the TextPath object.
         watermarkShape.TextPath.Text = "CONFIDENTIAL";
         watermarkShape.TextPath.FontFamily = "Arial";
-        // FontSize property is not available in older Aspose.Words versions; omit or set via shape scaling.
         watermarkShape.TextPath.Bold = true;
-        watermarkShape.Rotation = -45;                         // Diagonal layout.
 
         // Optional visual styling.
-        watermarkShape.Fill.Color = Color.LightGray;           // Light fill to make text visible.
-        watermarkShape.StrokeColor = Color.Empty;              // No outline.
+        watermarkShape.Fill.Color = Color.LightGray;   // Light fill to make text visible.
+        watermarkShape.StrokeColor = Color.Empty;      // No outline.
 
-        // Insert the shape *before* the table so that it appears behind the table nodes.
-        table.ParentNode.InsertBefore(watermarkShape, table);
+        // Insert the shape into a paragraph and place that paragraph before the table.
+        Paragraph watermarkParagraph = new Paragraph(doc);
+        watermarkParagraph.AppendChild(watermarkShape);
+        table.ParentNode.InsertBefore(watermarkParagraph, table);
 
         // Save the document.
         doc.Save("WatermarkBehindTable.docx");

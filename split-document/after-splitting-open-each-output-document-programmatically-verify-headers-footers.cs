@@ -9,21 +9,32 @@ class Program
 {
     static void Main()
     {
-        // Input document to be split.
-        const string inputFile = @"MyDir\Input.docx";
+        // Folder where the split parts will be written.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a sample document with two sections, each having a header and a footer.
+        Document srcDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(srcDoc);
+
+        // First section
+        builder.Writeln("Section 1 - Content");
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Header 1");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Footer 1");
+        builder.MoveToDocumentEnd();
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Second section
+        builder.Writeln("Section 2 - Content");
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Header 2");
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Footer 2");
 
         // Base name for the output HTML files (the main file name without extension).
         const string outputBaseName = "SplitDocument.html";
-
-        // Folder where the split parts will be written.
-        const string artifactsDir = @"ArtifactsDir\";
-
-        // Ensure the output folder exists.
-        if (!Directory.Exists(artifactsDir))
-            Directory.CreateDirectory(artifactsDir);
-
-        // Load the source document.
-        Document srcDoc = new Document(inputFile);
 
         // Configure HTML save options to split the document at each section break.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions
@@ -44,17 +55,15 @@ class Program
             // Load the part as a separate document.
             Document partDoc = new Document(partPath);
 
-            // Example verification: ensure that the first section has at least one header and one footer.
-            bool hasHeader = partDoc.FirstSection.HeadersFooters.Count > 0;
-            bool hasFooter = partDoc.FirstSection.HeadersFooters.Count > 0; // same collection holds both
+            // Verify that the first section has at least one header and one footer.
+            bool hasHeader = partDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary] != null;
+            bool hasFooter = partDoc.FirstSection.HeadersFooters[HeaderFooterType.FooterPrimary] != null;
 
             Debug.Assert(hasHeader, $"Header missing in part: {partPath}");
             Debug.Assert(hasFooter, $"Footer missing in part: {partPath}");
-
-            // Additional checks can be performed here, e.g., specific header types:
-            // var header = partDoc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
-            // Debug.Assert(header != null && !string.IsNullOrWhiteSpace(header.GetText().Trim()));
         }
+
+        Console.WriteLine("Document split and verification completed successfully.");
     }
 
     // Callback that assigns a unique filename to each document part and records the full path.

@@ -7,7 +7,6 @@ namespace MailMergeExample
 {
     class Program
     {
-        // Entry point required by the C# compiler.
         static void Main()
         {
             MailMergeWithRegionsExample.Run();
@@ -18,22 +17,18 @@ namespace MailMergeExample
     {
         public static void Run()
         {
-            // Create a new blank document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             // ---------- Begin outer mail merge region "Orders" ----------
-            // This region will be repeated for each row in the Orders table.
             builder.InsertField(" MERGEFIELD TableStart:Orders");
             builder.Write("Order ID: ");
             builder.InsertField(" MERGEFIELD OrderID");
             builder.Writeln();
 
             // ---------- Begin inner mail merge region "Products" ----------
-            // This region will be repeated for each product belonging to the current order.
             builder.InsertField(" MERGEFIELD TableStart:Products");
 
-            // Create a simple table to display product name and quantity.
             builder.StartTable();
 
             // Header row.
@@ -57,14 +52,10 @@ namespace MailMergeExample
             // End outer region.
             builder.InsertField(" MERGEFIELD TableEnd:Orders");
 
-            // Build the data source: a DataSet containing two related tables.
             DataSet data = CreateDataSet();
 
-            // Execute the mail merge with regions. The document will expand the regions
-            // according to the rows in the DataSet.
             doc.MailMerge.ExecuteWithRegions(data);
 
-            // Save the merged document.
             doc.Save("OrdersWithProducts.docx");
         }
 
@@ -91,18 +82,18 @@ namespace MailMergeExample
             products.Rows.Add(1002, "Grapes", 1);
             products.Rows.Add(1002, "Mango", 4);
 
-            // Define the relation between Orders and Products on OrderID.
-            // The null‑forgiving operator (!) tells the compiler the columns exist.
-            DataRelation relation = new DataRelation(
-                "Orders_Products",
-                orders.Columns["OrderID"]!,
-                products.Columns["OrderID"]!
-            );
-
             // Assemble the DataSet.
             DataSet ds = new DataSet();
             ds.Tables.Add(orders);
             ds.Tables.Add(products);
+
+            // Define the relation between Orders and Products on OrderID.
+            DataRelation relation = new DataRelation(
+                "Orders_Products",
+                ds.Tables["Orders"]!.Columns["OrderID"]!,
+                ds.Tables["Products"]!.Columns["OrderID"]!
+            );
+
             ds.Relations.Add(relation);
 
             return ds;

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 using Aspose.Words.Loading;
@@ -7,8 +8,9 @@ class FontPriorityExample
 {
     static void Main()
     {
-        // Path to the user‑specified folder that contains TrueType fonts.
-        string userFontsFolder = @"C:\MyFonts";
+        // Create a temporary folder that will act as the user‑specified font directory.
+        string userFontsFolder = Path.Combine(Path.GetTempPath(), "MyFonts");
+        Directory.CreateDirectory(userFontsFolder);
 
         // Create a folder font source for the user folder.
         // The third argument sets the priority – a higher value means higher priority.
@@ -27,13 +29,17 @@ class FontPriorityExample
         fontSettings.SetFontsSources(combinedSources);
 
         // Apply the FontSettings while loading the document.
-        LoadOptions loadOptions = new LoadOptions();
-        loadOptions.FontSettings = fontSettings;
+        LoadOptions loadOptions = new LoadOptions { FontSettings = fontSettings };
 
-        // Load the source document (replace with your actual file path).
-        Document doc = new Document(@"C:\Docs\Input.docx", loadOptions);
+        // Create a simple document in memory (no external file needed).
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, world! This document uses font priority settings.");
 
-        // Render the document – the user‑specified fonts will be used before system fonts.
-        doc.Save(@"C:\Docs\Output.pdf");
+        // Save the document to PDF in the temporary folder.
+        string outputPath = Path.Combine(Path.GetTempPath(), "Output.pdf");
+        doc.Save(outputPath, SaveFormat.Pdf);
+
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

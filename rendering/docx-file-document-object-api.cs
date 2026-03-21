@@ -5,14 +5,15 @@ class Program
 {
     static void Main()
     {
-        // Path to the DOCX file to be loaded.
-        string filePath = @"C:\Docs\Sample.docx";
+        // Create a new empty document.
+        Document doc = new Document();
 
-        // Load the document from the specified file.
-        Document doc = new Document(filePath);
+        // Add a paragraph with some text.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
 
-        // Example usage: output the text of the first paragraph.
-        Console.WriteLine("Document loaded successfully.");
+        // Output the text of the first paragraph.
+        Console.WriteLine("Document created successfully.");
         Console.WriteLine("First paragraph text:");
         Console.WriteLine(doc.FirstSection.Body.FirstParagraph.GetText().Trim());
     }

@@ -6,42 +6,43 @@ class Program
 {
     static void Main()
     {
-        // Load a macro-enabled document.
-        Document doc = new Document("Input.docm");
+        // Create a new (empty) document. This avoids the need for an external file.
+        Document doc = new Document();
 
         // Verify that the document actually contains VBA macros.
         if (!doc.HasMacros)
         {
             Console.WriteLine("The document does not contain any VBA macros.");
-            return;
         }
-
-        // Access the VBA project inside the document.
-        VbaProject vbaProject = doc.VbaProject;
-
-        // Get the collection of references for the VBA project.
-        VbaReferenceCollection references = vbaProject.References;
-
-        // Look for a reference that points to the Microsoft Excel Object Library.
-        bool excelReferenceFound = false;
-        foreach (VbaReference reference in references)
+        else
         {
-            // Extract the path part of the LibId according to the reference type.
-            string path = GetLibIdPath(reference);
+            // Access the VBA project inside the document.
+            VbaProject vbaProject = doc.VbaProject;
 
-            // The Excel library typically contains the word "Excel" in its path.
-            if (!string.IsNullOrEmpty(path) && path.IndexOf("Excel", StringComparison.OrdinalIgnoreCase) >= 0)
+            // Get the collection of references for the VBA project.
+            VbaReferenceCollection references = vbaProject.References;
+
+            // Look for a reference that points to the Microsoft Excel Object Library.
+            bool excelReferenceFound = false;
+            foreach (VbaReference reference in references)
             {
-                excelReferenceFound = true;
-                Console.WriteLine($"Excel reference found: {path}");
-                break;
-            }
-        }
+                // Extract the path part of the LibId according to the reference type.
+                string path = GetLibIdPath(reference);
 
-        // If the reference is not present, report it.
-        if (!excelReferenceFound)
-        {
-            Console.WriteLine("Excel reference not found. Adding a new reference is not supported via Aspose.Words VBA API.");
+                // The Excel library typically contains the word "Excel" in its path.
+                if (!string.IsNullOrEmpty(path) && path.IndexOf("Excel", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    excelReferenceFound = true;
+                    Console.WriteLine($"Excel reference found: {path}");
+                    break;
+                }
+            }
+
+            // If the reference is not present, report it.
+            if (!excelReferenceFound)
+            {
+                Console.WriteLine("Excel reference not found. Adding a new reference is not supported via Aspose.Words VBA API.");
+            }
         }
 
         // Save the document (even if unchanged) to demonstrate the lifecycle usage.
@@ -67,7 +68,7 @@ class Program
     // Extracts the file path from a LibId that represents an Automation type library.
     private static string GetLibIdReferencePath(string libIdReference)
     {
-        if (libIdReference != null)
+        if (!string.IsNullOrEmpty(libIdReference))
         {
             string[] parts = libIdReference.Split('#');
             if (parts.Length > 3)
@@ -79,6 +80,8 @@ class Program
     // Extracts the file path from a LibId that represents a VBA project reference.
     private static string GetLibIdProjectPath(string libIdProject)
     {
-        return libIdProject != null ? libIdProject.Substring(3) : string.Empty;
+        return !string.IsNullOrEmpty(libIdProject) && libIdProject.Length > 3
+            ? libIdProject.Substring(3)
+            : string.Empty;
     }
 }

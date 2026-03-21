@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Math;
 
@@ -24,7 +25,6 @@ namespace OfficeMathInspection
             MathObjectType.Limit,          // Limit
             MathObjectType.Subscript,      // Subscript
             // MathObjectType.Superscript, // <-- removed – not defined in this version of Aspose.Words
-            // Add other types that are known to be supported as needed.
         };
 
         // List to store descriptions of unsupported nodes.
@@ -36,7 +36,6 @@ namespace OfficeMathInspection
             // If the node's type is not in the supported set, record it.
             if (!SupportedTypes.Contains(officeMath.MathObjectType))
             {
-                // Record the node's index within its parent and its type.
                 int index = officeMath.ParentNode?.IndexOf(officeMath) ?? -1;
                 _unsupported.Add($"Unsupported MathObjectType: {officeMath.MathObjectType} (Parent index: {index})");
             }
@@ -52,24 +51,29 @@ namespace OfficeMathInspection
     {
         static void Main()
         {
-            // Path to the input document.
-            string inputPath = @"MyDir\DocumentWithMath.docx";
+            // -----------------------------------------------------------------
+            // Create a sample document.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Sample document with a math object (none added).");
 
-            // Load the document.
-            Document doc = new Document(inputPath);
-
-            // Create and run the visitor.
+            // -----------------------------------------------------------------
+            // Run the visitor to detect unsupported MathObjectTypes.
+            // -----------------------------------------------------------------
             var visitor = new UnsupportedMathVisitor();
             doc.Accept(visitor);
 
             // Output any unsupported equation types.
             foreach (var entry in visitor.GetLog())
-            {
                 Console.WriteLine(entry);
-            }
 
-            // Optionally, save the document after inspection (no modifications made here).
-            string outputPath = @"ArtifactsDir\DocumentWithMath_Inspected.docx";
+            // -----------------------------------------------------------------
+            // Save the document (ensuring the output directory exists).
+            // -----------------------------------------------------------------
+            string outputDir = "ArtifactsDir";
+            Directory.CreateDirectory(outputDir);
+            string outputPath = Path.Combine(outputDir, "DocumentWithMath_Inspected.docx");
             doc.Save(outputPath);
         }
     }

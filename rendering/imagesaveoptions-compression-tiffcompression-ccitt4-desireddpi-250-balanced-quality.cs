@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -9,7 +11,14 @@ class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Sample text for black‑and‑white TIFF.");
-        builder.InsertImage("logo.png"); // replace with an actual image path if needed.
+
+        // Insert a simple 1x1 PNG image from a base64 string.
+        const string pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(pngBase64);
+        using (var ms = new MemoryStream(pngBytes))
+        {
+            builder.InsertImage(ms);
+        }
 
         // Configure save options for a balanced‑quality B&W TIFF.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)

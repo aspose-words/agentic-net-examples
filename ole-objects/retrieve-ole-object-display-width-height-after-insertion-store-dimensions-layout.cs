@@ -13,13 +13,13 @@ class OleObjectDimensions
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path to the file that will be embedded as an OLE object.
-        // Adjust the path to point to an existing file on your system.
-        string oleFilePath = @"C:\Temp\Sample.xlsx";
+        // Create a temporary text file to embed as an OLE object.
+        string tempFilePath = Path.Combine(Path.GetTempPath(), "Sample.txt");
+        File.WriteAllText(tempFilePath, "Sample content for OLE object.");
 
         // Insert the OLE object into the document.
         // Parameters: file name, isLinked (false = embed), asIcon (false = display content), presentation (null = default image).
-        Shape oleShape = builder.InsertOleObject(oleFilePath, false, false, null);
+        Shape oleShape = builder.InsertOleObject(tempFilePath, false, false, null);
 
         // After insertion the shape's Width and Height properties contain the display size in points.
         double displayWidthPoints = oleShape.Width;   // Width in points (1 point = 1/72 inch)
@@ -33,13 +33,16 @@ class OleObjectDimensions
         int widthPixels = sizeInPixels.Width;
         int heightPixels = sizeInPixels.Height;
 
-        // Store the dimensions for later layout calculations.
-        // Here we simply output them to the console, but they could be saved to a data structure.
+        // Output the dimensions.
         Console.WriteLine($"OLE object display size: {displayWidthPoints:F2} pt × {displayHeightPoints:F2} pt");
         Console.WriteLine($"Converted to pixels (96 DPI): {widthPixels} px × {heightPixels} px");
 
-        // Save the document.
-        string outputPath = @"C:\Temp\OleObjectWithDimensions.docx";
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "OleObjectWithDimensions.docx");
         doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
+
+        // Clean up the temporary file.
+        File.Delete(tempFilePath);
     }
 }

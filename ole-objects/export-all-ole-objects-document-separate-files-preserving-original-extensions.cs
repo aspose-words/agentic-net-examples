@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -7,15 +8,22 @@ class ExportOleObjects
 {
     static void Main()
     {
-        // Path to the source Word document.
-        string sourcePath = @"C:\Docs\InputDocument.docx";
+        // Path to the source Word document (placed in the executable folder).
+        string sourcePath = Path.Combine(AppContext.BaseDirectory, "InputDocument.docx");
 
         // Folder where extracted OLE files will be saved.
-        string outputFolder = @"C:\Docs\ExtractedOleObjects";
+        string outputFolder = Path.Combine(AppContext.BaseDirectory, "ExtractedOleObjects");
 
         // Ensure the output directory exists.
-        if (!Directory.Exists(outputFolder))
-            Directory.CreateDirectory(outputFolder);
+        Directory.CreateDirectory(outputFolder);
+
+        // If the source document does not exist, create a minimal one.
+        if (!File.Exists(sourcePath))
+        {
+            var emptyDoc = new Document();
+            emptyDoc.Save(sourcePath);
+            Console.WriteLine($"Created placeholder document at: {sourcePath}");
+        }
 
         // Load the Word document.
         Document doc = new Document(sourcePath);
@@ -41,7 +49,7 @@ class ExportOleObjects
             string fileName = ole.SuggestedFileName;
             if (string.IsNullOrEmpty(fileName))
             {
-                // Fallback: OleObject_0.xlsx, OleObject_1.doc, etc.
+                // Fallback: OleObject_0.bin, OleObject_1.bin, etc.
                 string extension = ole.SuggestedExtension ?? ".bin";
                 fileName = $"OleObject_{oleIndex}{extension}";
             }

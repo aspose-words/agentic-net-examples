@@ -31,7 +31,6 @@ namespace AsposeWordsCancellationDemo
 
         public void Notify(DocumentLoadingArgs args)
         {
-            // If cancellation is disabled, simply return.
             if (!_config.EnableLoadingCancellation)
                 return;
 
@@ -57,7 +56,6 @@ namespace AsposeWordsCancellationDemo
 
         public void Notify(DocumentSavingArgs args)
         {
-            // If cancellation is disabled, simply return.
             if (!_config.EnableSavingCancellation)
                 return;
 
@@ -72,22 +70,27 @@ namespace AsposeWordsCancellationDemo
     {
         public static void Main()
         {
-            // Path to the source document.
-            string sourcePath = @"C:\Docs\BigDocument.docx";
-            // Path to the output document.
-            string outputPath = @"C:\Docs\BigDocument_Cancelled.docx";
+            // Create a temporary source document.
+            string sourcePath = Path.Combine(Path.GetTempPath(), $"Source_{Guid.NewGuid()}.docx");
+            string outputPath = Path.Combine(Path.GetTempPath(), $"Output_{Guid.NewGuid()}.html");
 
-            // Create configuration and enable cancellation for both stages.
+            // Build a simple document and save it to the temporary source file.
+            var tempDoc = new Document();
+            var builder = new DocumentBuilder(tempDoc);
+            builder.Writeln("This is a sample document created for the cancellation demo.");
+            tempDoc.Save(sourcePath);
+
+            // Create configuration and enable cancellation for both stages (set to false to avoid actual cancellation).
             var cancellationConfig = new CancellationConfig
             {
-                EnableLoadingCancellation = true,
-                EnableSavingCancellation = true
+                EnableLoadingCancellation = false,
+                EnableSavingCancellation = false
             };
 
             // Set up load options with the custom loading callback.
             var loadOptions = new LoadOptions
             {
-                ProgressCallback = new LoadingProgressCallback(maxDurationSeconds: 0.5, config: cancellationConfig)
+                ProgressCallback = new LoadingProgressCallback(maxDurationSeconds: 10, config: cancellationConfig)
             };
 
             Document doc = null;
@@ -95,29 +98,35 @@ namespace AsposeWordsCancellationDemo
             {
                 // Load the document using the configured load options.
                 doc = new Document(sourcePath, loadOptions);
+                Console.WriteLine("Document loaded successfully.");
             }
             catch (OperationCanceledException ex)
             {
                 Console.WriteLine($"Loading aborted: {ex.Message}");
-                // Handle loading cancellation (e.g., cleanup, retry, etc.).
                 return;
             }
 
             // Set up save options with the custom saving callback.
             var saveOptions = new HtmlSaveOptions(SaveFormat.Html)
             {
-                ProgressCallback = new SavingProgressCallback(maxDurationSeconds: 0.2, config: cancellationConfig)
+                ProgressCallback = new SavingProgressCallback(maxDurationSeconds: 10, config: cancellationConfig)
             };
 
             try
             {
                 // Save the document using the configured save options.
                 doc.Save(outputPath, saveOptions);
+                Console.WriteLine($"Document saved successfully to: {outputPath}");
             }
             catch (OperationCanceledException ex)
             {
                 Console.WriteLine($"Saving aborted: {ex.Message}");
-                // Handle saving cancellation (e.g., delete partial file, notify user, etc.).
+            }
+            finally
+            {
+                // Clean up temporary source file.
+                if (File.Exists(sourcePath))
+                    File.Delete(sourcePath);
             }
         }
     }

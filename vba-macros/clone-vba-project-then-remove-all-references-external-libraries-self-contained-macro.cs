@@ -7,29 +7,46 @@ class Program
     static void Main()
     {
         // Load the source document that contains the original VBA project.
-        Document sourceDoc = new Document("Source.docm");
+        // Ensure the file exists; otherwise, the program will inform the user and exit gracefully.
+        const string sourcePath = "Source.docm";
+        if (!System.IO.File.Exists(sourcePath))
+        {
+            Console.WriteLine($"Source file \"{sourcePath}\" not found. The program will exit.");
+            return;
+        }
+
+        Document sourceDoc = new Document(sourcePath);
 
         // Create a new (blank) destination document.
         Document destDoc = new Document();
 
-        // Perform a deep clone of the VBA project from the source document.
-        VbaProject clonedProject = sourceDoc.VbaProject.Clone();
+        // Perform a deep clone of the VBA project from the source document, if it exists.
+        VbaProject clonedProject = sourceDoc.VbaProject?.Clone();
 
-        // Remove all references from the cloned project to make it self‑contained.
-        VbaReferenceCollection references = clonedProject.References;
-        for (int i = references.Count - 1; i >= 0; i--)
+        if (clonedProject != null)
         {
-            // If you only want to keep project references, uncomment the condition below.
-            // if (references[i].Type != VbaReferenceType.Project)
-            // {
-                references.RemoveAt(i);
-            // }
+            // Remove all references from the cloned project to make it self‑contained.
+            VbaReferenceCollection references = clonedProject.References;
+            for (int i = references.Count - 1; i >= 0; i--)
+            {
+                // If you only want to keep project references, uncomment the condition below.
+                // if (references[i].Type != VbaReferenceType.Project)
+                // {
+                    references.RemoveAt(i);
+                // }
+            }
+
+            // Assign the cleaned, cloned VBA project to the destination document.
+            destDoc.VbaProject = clonedProject;
+        }
+        else
+        {
+            Console.WriteLine("The source document does not contain a VBA project. No VBA will be added to the destination document.");
         }
 
-        // Assign the cleaned, cloned VBA project to the destination document.
-        destDoc.VbaProject = clonedProject;
-
-        // Save the resulting document; it now contains a self‑contained macro set.
-        destDoc.Save("SelfContained.docm");
+        // Save the resulting document; it now contains a self‑contained macro set (if any).
+        const string destPath = "SelfContained.docm";
+        destDoc.Save(destPath);
+        Console.WriteLine($"Document saved to \"{destPath}\".");
     }
 }

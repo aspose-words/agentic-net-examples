@@ -12,11 +12,11 @@ namespace DocumentPartSavingExample
     {
         private readonly List<string> _headings;
         private int _partIndex;
+        private readonly string _outputDir;
 
-        public HeadingBasedDocumentPartRename(Document sourceDocument, DocumentSplitCriteria splitCriteria)
+        public HeadingBasedDocumentPartRename(Document sourceDocument, string outputDir)
         {
             // Collect heading texts in the order they appear in the source document.
-            // This order matches the order of parts when splitting by HeadingParagraph.
             _headings = sourceDocument
                 .GetChildNodes(NodeType.Paragraph, true)
                 .Cast<Paragraph>()
@@ -25,16 +25,23 @@ namespace DocumentPartSavingExample
                 .ToList();
 
             _partIndex = 0;
+            _outputDir = outputDir;
+            Directory.CreateDirectory(_outputDir);
         }
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Guard against mismatched part count.
-            if (_partIndex >= _headings.Count)
-                throw new InvalidOperationException("More document parts than headings were generated.");
+            string headingText;
+            if (_partIndex < _headings.Count)
+            {
+                headingText = _headings[_partIndex];
+            }
+            else
+            {
+                // Fallback for parts without a corresponding heading (e.g., content before the first heading).
+                headingText = $"Part{_partIndex + 1}";
+            }
 
-            // Use the heading text as the base file name.
-            string headingText = _headings[_partIndex];
             _partIndex++;
 
             // Preserve the original extension (e.g., .html).
@@ -45,9 +52,8 @@ namespace DocumentPartSavingExample
             // Assign the new file name.
             args.DocumentPartFileName = partFileName;
 
-            // Optionally write to a custom stream (demonstrates both ways).
-            args.DocumentPartStream = new FileStream(Path.Combine(ArtifactsDir, partFileName), FileMode.Create);
-            args.KeepDocumentPartStreamOpen = false;
+            // Ensure the directory exists; Aspose will handle the stream creation.
+            // No need to set DocumentPartStream manually.
         }
 
         // Removes characters that are invalid in file names.
@@ -57,9 +63,6 @@ namespace DocumentPartSavingExample
                 name = name.Replace(c, '_');
             return string.IsNullOrWhiteSpace(name) ? "Untitled" : name;
         }
-
-        // Adjust this path as needed for your environment.
-        private static readonly string ArtifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
     }
 
     class Program
@@ -69,18 +72,18 @@ namespace DocumentPartSavingExample
             // Load the source document.
             Document doc = new Document("InputDocument.docx");
 
+            // Output directory for the split parts.
+            string outputDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
+            Directory.CreateDirectory(outputDir);
+
             // Configure HTML save options to split by heading paragraphs.
             HtmlSaveOptions options = new HtmlSaveOptions
             {
                 DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-                DocumentPartSavingCallback = new HeadingBasedDocumentPartRename(doc, DocumentSplitCriteria.HeadingParagraph)
+                DocumentPartSavingCallback = new HeadingBasedDocumentPartRename(doc, outputDir)
             };
 
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-            Directory.CreateDirectory(outputDir);
-
-            // Save the document; each part will be named after its heading.
+            // Save the document; each part will be named after its heading (or a fallback name).
             doc.Save(Path.Combine(outputDir, "CombinedOutput.html"), options);
         }
     }

@@ -1,20 +1,36 @@
+using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
-// Load an existing document that contains at least one table.
-Document doc = new Document("Input.docx");
+class Program
+{
+    static void Main(string[] args)
+    {
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-// Retrieve the first table in the document.
-Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        // Build a simple table with one cell.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Sample text");
+        builder.EndRow();
+        builder.EndTable();
 
-// Apply a uniform border thickness of 2 points to all sides of the table.
-// The SetBorders method sets the line style, width and colour for every border of the table.
-// If the current line style is None, this call automatically changes it to Single.
-// Parameters: line style, line width (points), colour.
+        // Retrieve the first table in the document.
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        if (table == null)
+        {
+            Console.WriteLine("No table found in the document.");
+            return;
+        }
 
-table.SetBorders(LineStyle.Single, 2.0, Color.Black);
+        // Apply a uniform border thickness of 2 points to all sides of the table.
+        table.SetBorders(LineStyle.Single, 2.0, Color.Black);
 
-// Save the modified document.
-
-doc.Save("Output.docx");
+        // Save the modified document.
+        doc.Save("Output.docx");
+        Console.WriteLine("Document saved as Output.docx");
+    }
+}

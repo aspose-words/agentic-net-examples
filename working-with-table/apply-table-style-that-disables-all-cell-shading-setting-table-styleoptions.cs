@@ -1,26 +1,39 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using System.Drawing;
 
 class ApplyNoShading
 {
     static void Main()
     {
-        // Load an existing document that contains a table.
-        Document doc = new Document("MyDir/Tables.docx");
+        // Create a new document and a table.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+        builder.EndTable();
 
-        // Get the first table in the document.
-        Table table = doc.FirstSection.Body.Tables[0];
+        // (Optional) Apply shading to each cell to demonstrate removal.
+        foreach (Row row in table.Rows)
+        {
+            foreach (Cell cell in row.Cells)
+            {
+                cell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
+            }
+        }
 
         // Remove any shading that may be applied directly to the table.
         table.ClearShading();
 
         // Ensure that no table style shading is applied.
-        // Setting StyleOptions to None disables all conditional style formatting,
-        // including any shading that could be applied via a style.
         table.StyleOptions = TableStyleOptions.None;
 
         // Save the modified document.
-        doc.Save("ArtifactsDir/Table.NoShading.docx");
+        doc.Save("Table.NoShading.docx");
     }
 }

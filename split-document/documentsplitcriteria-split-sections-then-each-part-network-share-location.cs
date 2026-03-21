@@ -8,7 +8,7 @@ namespace AsposeWordsSplitExample
     // Implements the callback that controls how each document part is saved.
     internal class SavedDocumentPartRename : IDocumentPartSavingCallback
     {
-        private readonly string _outputFolder;   // Network share folder where parts will be stored.
+        private readonly string _outputFolder;   // Folder where parts will be stored.
         private readonly string _baseFileName;   // Base name of the original document (without extension).
         private int _partCounter;                // Counter for generated part files.
 
@@ -28,7 +28,7 @@ namespace AsposeWordsSplitExample
             // Set the file name (without path) – Aspose.Words uses this for internal references.
             args.DocumentPartFileName = partFileName;
 
-            // Create a full path on the network share and assign a stream for the part.
+            // Create a full path on the folder and assign a stream for the part.
             string fullPath = Path.Combine(_outputFolder, partFileName);
             args.DocumentPartStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write);
 
@@ -40,23 +40,21 @@ namespace AsposeWordsSplitExample
     public class DocumentSplitter
     {
         /// <summary>
-        /// Splits the input document by section breaks and saves each part to the specified network share.
+        /// Splits the input document by section breaks and saves each part to the specified folder.
         /// </summary>
         /// <param name="sourcePath">Full path to the source .docx (or any supported) file.</param>
-        /// <param name="networkShareFolder">UNC path to the network share folder (e.g., \\Server\Share\Folder).</param>
-        public static void SplitAndSaveBySections(string sourcePath, string networkShareFolder)
+        /// <param name="outputFolder">Folder where parts will be stored.</param>
+        public static void SplitAndSaveBySections(string sourcePath, string outputFolder)
         {
-            // Validate inputs.
             if (string.IsNullOrEmpty(sourcePath))
                 throw new ArgumentException("Source path must be provided.", nameof(sourcePath));
-            if (string.IsNullOrEmpty(networkShareFolder))
-                throw new ArgumentException("Network share folder must be provided.", nameof(networkShareFolder));
+            if (string.IsNullOrEmpty(outputFolder))
+                throw new ArgumentException("Output folder must be provided.", nameof(outputFolder));
 
-            // Ensure the network folder exists; create it if necessary.
-            if (!Directory.Exists(networkShareFolder))
-                Directory.CreateDirectory(networkShareFolder);
+            // Ensure the output folder exists.
+            Directory.CreateDirectory(outputFolder);
 
-            // Load the document (lifecycle rule: load).
+            // Load the document.
             Document doc = new Document(sourcePath);
 
             // Prepare HTML save options with section split criteria.
@@ -67,25 +65,33 @@ namespace AsposeWordsSplitExample
 
             // Set the custom callback to control where each part is saved.
             string baseFileName = Path.GetFileNameWithoutExtension(sourcePath);
-            saveOptions.DocumentPartSavingCallback = new SavedDocumentPartRename(networkShareFolder, baseFileName);
+            saveOptions.DocumentPartSavingCallback = new SavedDocumentPartRename(outputFolder, baseFileName);
 
-            // Save the document (lifecycle rule: save). The main file is also written to the network share.
-            string mainOutputPath = Path.Combine(networkShareFolder, $"{baseFileName}.html");
+            // Save the main document.
+            string mainOutputPath = Path.Combine(outputFolder, $"{baseFileName}.html");
             doc.Save(mainOutputPath, saveOptions);
         }
 
         // Example usage.
         public static void Main()
         {
-            // Local source document.
-            string localDocPath = @"C:\Docs\SampleDocument.docx";
+            // Create a temporary source document with two sections.
+            string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeSplitDemo");
+            Directory.CreateDirectory(tempFolder);
+            string sourceDocPath = Path.Combine(tempFolder, "SampleDocument.docx");
 
-            // UNC network share where parts will be stored.
-            string networkShare = @"\\MyServer\SharedDocs\WordParts";
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Section 1 content.");
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+            builder.Writeln("Section 2 content.");
+            doc.Save(sourceDocPath);
 
-            SplitAndSaveBySections(localDocPath, networkShare);
+            // Output folder for split parts (local folder, not a network share).
+            string outputFolder = Path.Combine(tempFolder, "WordParts");
+            SplitAndSaveBySections(sourceDocPath, outputFolder);
 
-            Console.WriteLine("Document split and saved to network share successfully.");
+            Console.WriteLine($"Document split and saved to: {outputFolder}");
         }
     }
 }

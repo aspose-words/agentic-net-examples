@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -5,33 +7,44 @@ class Program
 {
     static void Main()
     {
-        // Load the template document that contains the VBA project (macros).
-        Document templateDoc = new Document("TemplateWithMacros.docm");
+        const string templatePath = "TemplateWithMacros.docm";
+        const string outputPath = "GeneratedReport.docm";
 
-        // Create a new blank document that will become the report.
         Document reportDoc = new Document();
 
-        // Clone the entire VBA project from the template.
-        VbaProject clonedProject = templateDoc.VbaProject.Clone();
-
-        // Assign the cloned VBA project to the new report document.
-        reportDoc.VbaProject = clonedProject;
-
-        // If the report already contains a module with the same name as one in the template,
-        // replace it with the cloned module to avoid duplicates.
-        // (This step is optional for a completely blank document.)
-        VbaModule existingModule = reportDoc.VbaProject.Modules["Module1"];
-        if (existingModule != null)
+        if (File.Exists(templatePath))
         {
-            // Clone the specific module from the template.
-            VbaModule clonedModule = templateDoc.VbaProject.Modules["Module1"].Clone();
+            // Load the template document that contains the VBA project (macros).
+            Document templateDoc = new Document(templatePath);
 
-            // Remove the existing module and add the cloned one.
-            reportDoc.VbaProject.Modules.Remove(existingModule);
-            reportDoc.VbaProject.Modules.Add(clonedModule);
+            // Clone the entire VBA project from the template.
+            VbaProject clonedProject = templateDoc.VbaProject?.Clone();
+
+            if (clonedProject != null)
+            {
+                // Assign the cloned VBA project to the new report document.
+                reportDoc.VbaProject = clonedProject;
+
+                // Optional: replace an existing module with the cloned one to avoid duplicates.
+                VbaModule existingModule = reportDoc.VbaProject.Modules["Module1"];
+                if (existingModule != null)
+                {
+                    VbaModule clonedModule = templateDoc.VbaProject.Modules["Module1"]?.Clone();
+                    if (clonedModule != null)
+                    {
+                        reportDoc.VbaProject.Modules.Remove(existingModule);
+                        reportDoc.VbaProject.Modules.Add(clonedModule);
+                    }
+                }
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Template file '{templatePath}' not found. Creating a report without macros.");
         }
 
         // Save the generated report as a macro‑enabled document.
-        reportDoc.Save("GeneratedReport.docm");
+        reportDoc.Save(outputPath);
+        Console.WriteLine($"Report saved to '{outputPath}'.");
     }
 }

@@ -1,54 +1,83 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 class TableCellWatermarkExample
 {
     static void Main()
     {
-        // Load an existing document that contains the complex table.
-        Document doc = new Document("Input.docx");
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Locate the target table. Adjust the index if the document has multiple tables.
-        Table table = doc.FirstSection.Body.Tables[0];
+        // Build a complex table with a cell that spans multiple rows and columns.
+        Table table = builder.StartTable();
 
-        // Identify the cell that spans multiple rows and columns.
-        // For this example we assume it is the cell at row 1, column 1 (zero‑based indexes).
-        // In a real scenario you may need to search for cells with CellFormat.HorizontalMerge / VerticalMerge flags.
+        // First row
+        // Cell (0,0) – start of merged area (spans 2 rows x 2 columns)
+        builder.InsertCell();
+        builder.CellFormat.Width = 200;
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.CellFormat.VerticalMerge = CellMerge.First;
+        builder.Write("Merged Cell");
+
+        // Cell (0,1) – part of the horizontal merge
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        builder.CellFormat.VerticalMerge = CellMerge.None;
+        builder.Write(string.Empty);
+
+        // Cell (0,2) – regular cell
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.CellFormat.VerticalMerge = CellMerge.None;
+        builder.Write("Regular Cell");
+        builder.EndRow();
+
+        // Second row
+        // Cell (1,0) – part of the vertical merge
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;
+        builder.Write(string.Empty);
+
+        // Cell (1,1) – part of both merges
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;
+        builder.Write(string.Empty);
+
+        // Cell (1,2) – another regular cell
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.CellFormat.VerticalMerge = CellMerge.None;
+        builder.Write("Regular Cell 2");
+        builder.EndRow();
+
+        builder.EndTable();
+
+        // Locate the merged cell (row 0, column 0).
         Cell targetCell = table.Rows[0].Cells[0];
-
-        // Ensure the cell contains at least one paragraph (required for inserting a shape).
         targetCell.EnsureMinimum();
 
         // Move the builder cursor to the first paragraph of the target cell.
-        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.MoveTo(targetCell.FirstParagraph);
 
         // Insert a WordArt shape that will act as the watermark.
         Shape watermarkShape = new Shape(doc, ShapeType.TextPlainText)
         {
-            // Set the watermark text.
             TextPath = { Text = "CONFIDENTIAL", FontFamily = "Arial", Bold = true },
-
-            // Position the shape relative to the cell.
-            RelativeHorizontalPosition = RelativeHorizontalPosition.Margin,
-            RelativeVerticalPosition = RelativeVerticalPosition.Margin,
-            // Center the shape inside the cell.
+            RelativeHorizontalPosition = RelativeHorizontalPosition.Column,
+            // RelativeVerticalPosition omitted – default works inside a cell
             Left = 0,
             Top = 0,
-            Width = targetCell.CellFormat.Width > 0 ? targetCell.CellFormat.Width : 200,
+            Width = 200,
             Height = 50,
-
-            // Rotate the text to give a typical watermark appearance.
             Rotation = -45,
-
-            // Make the shape semi‑transparent.
             FillColor = Color.LightGray,
-            // Use StrokeColor instead of the non‑existent OutlineColor.
             StrokeColor = Color.LightGray,
-            // Set the shape behind the text.
             WrapType = WrapType.None,
             BehindText = true
         };

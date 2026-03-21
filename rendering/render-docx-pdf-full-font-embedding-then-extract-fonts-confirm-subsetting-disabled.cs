@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 using Aspose.Words.Saving;
@@ -9,16 +8,17 @@ class Program
 {
     static void Main()
     {
-        // Paths – adjust as needed.
-        string inputDocx = @"C:\Docs\InputDocument.docx";
-        string outputPdf = @"C:\Docs\OutputDocument.pdf";
-        string extractedFontsDir = @"C:\Docs\ExtractedFonts";
+        // Output paths – placed in the current working directory.
+        string outputPdf = Path.Combine(Environment.CurrentDirectory, "OutputDocument.pdf");
+        string extractedFontsDir = Path.Combine(Environment.CurrentDirectory, "ExtractedFonts");
 
         // Ensure the output folder for extracted fonts exists.
         Directory.CreateDirectory(extractedFontsDir);
 
-        // Load the DOCX document.
-        Document doc = new Document(inputDocx);
+        // Create a simple DOCX document in memory.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
 
         // Configure PDF save options to embed the full font files (no subsetting).
         PdfSaveOptions pdfOptions = new PdfSaveOptions
@@ -30,7 +30,7 @@ class Program
         doc.Save(outputPdf, pdfOptions);
 
         // --------------------------------------------------------------------
-        // Extract embedded fonts from the original document to verify that
+        // Extract embedded fonts from the document to verify that
         // subsetting is not applied (full font files are present).
         // --------------------------------------------------------------------
         foreach (FontInfo fontInfo in doc.FontInfos)
@@ -55,6 +55,7 @@ class Program
         }
 
         Console.WriteLine("PDF saved with full font embedding.");
+        Console.WriteLine($"PDF path: {outputPdf}");
         Console.WriteLine($"Extracted fonts are located in: {extractedFontsDir}");
     }
 }

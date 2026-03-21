@@ -2,52 +2,42 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-// Custom criteria that matches revisions authored by a specific user.
 class AuthorRevisionCriteria : IRevisionCriteria
 {
     private readonly string _authorName;
-
-    public AuthorRevisionCriteria(string authorName)
-    {
-        _authorName = authorName;
-    }
-
-    // Returns true only for revisions whose Author property matches the specified name.
-    public bool IsMatch(Revision revision)
-    {
-        return revision.Author == _authorName;
-    }
+    public AuthorRevisionCriteria(string authorName) => _authorName = authorName;
+    public bool IsMatch(Revision revision) => revision.Author == _authorName;
 }
 
 class BatchRejectRevisions
 {
     static void Main()
     {
-        // Folder containing the source documents.
-        string sourceFolder = @"C:\Docs\Input";
+        string baseDir = AppContext.BaseDirectory;
+        string sourceFolder = Path.Combine(baseDir, "Input");
+        string targetFolder = Path.Combine(baseDir, "Output");
 
-        // Folder where the processed documents will be saved.
-        string targetFolder = @"C:\Docs\Output";
-
-        // Ensure the output directory exists.
+        Directory.CreateDirectory(sourceFolder);
         Directory.CreateDirectory(targetFolder);
 
-        // Author whose revisions should be rejected.
         string authorToReject = "John Doe";
 
-        // Process each .docx file in the source folder.
-        foreach (string filePath in Directory.GetFiles(sourceFolder, "*.docx"))
+        var files = Directory.GetFiles(sourceFolder, "*.docx");
+        if (files.Length == 0)
         {
-            // Load the document (lifecycle rule: load).
-            Document doc = new Document(filePath);
+            Console.WriteLine($"No .docx files found in '{sourceFolder}'. Place files there and rerun.");
+            return;
+        }
 
-            // Reject all revisions that match the custom criteria (author name).
+        foreach (var filePath in files)
+        {
+            Document doc = new Document(filePath);
             doc.Revisions.Reject(new AuthorRevisionCriteria(authorToReject));
 
-            // Save the modified document (lifecycle rule: save).
             string fileName = Path.GetFileName(filePath);
             string outputPath = Path.Combine(targetFolder, fileName);
             doc.Save(outputPath);
+            Console.WriteLine($"Processed '{fileName}' -> '{outputPath}'.");
         }
     }
 }

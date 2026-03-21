@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 namespace SmartArtReplacement
 {
@@ -12,8 +13,24 @@ namespace SmartArtReplacement
         {
             // Input and output file paths.
             // Adjust these paths as needed.
-            string inputPath = @"Input\DocumentWithSmartArt.docx";
-            string outputPath = @"Output\DocumentWithoutSmartArt.docx";
+            string inputPath = Path.Combine("Input", "DocumentWithSmartArt.docx");
+            string outputPath = Path.Combine("Output", "DocumentWithoutSmartArt.docx");
+
+            // Ensure the Input and Output directories exist.
+            Directory.CreateDirectory(Path.GetDirectoryName(inputPath)!);
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+
+            // If the input file does not exist, create a minimal document so the example can run.
+            if (!File.Exists(inputPath))
+            {
+                Console.WriteLine($"Input file not found: {inputPath}");
+                Console.WriteLine("Creating a blank document as a placeholder.");
+
+                var placeholderDoc = new Document();
+                var builder = new DocumentBuilder(placeholderDoc);
+                builder.Writeln("This is a placeholder document. No SmartArt is present.");
+                placeholderDoc.Save(inputPath);
+            }
 
             // Load the document (lifecycle rule: load).
             Document doc = new Document(inputPath);
@@ -55,6 +72,7 @@ namespace SmartArtReplacement
 
             // Save the modified document (lifecycle rule: save).
             doc.Save(outputPath);
+            Console.WriteLine($"Processing complete. Output saved to: {outputPath}");
         }
     }
 }

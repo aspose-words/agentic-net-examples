@@ -3,14 +3,35 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 using Aspose.Words.Fields;
-using Aspose.Words.Drawing;
 
 class InsertPageBreakBeforeRegions
 {
     static void Main()
     {
-        // Load the source document that contains mail‑merge regions.
-        Document doc = new Document("TemplateWithRegions.docx");
+        // Create a simple template document with a mail‑merge region.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert some content before the region.
+        builder.Writeln("Document Header");
+
+        // Insert the start of the mail‑merge region.
+        builder.InsertField("MERGEFIELD TableStart:MyRegion");
+
+        // Insert a table that will be repeated for each data row.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.InsertField("MERGEFIELD Name");
+        builder.InsertCell();
+        builder.InsertField("MERGEFIELD Age");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Insert the end of the mail‑merge region.
+        builder.InsertField("MERGEFIELD TableEnd:MyRegion");
+
+        // Insert some content after the region.
+        builder.Writeln("Document Footer");
 
         // Get the hierarchy of all mail‑merge regions in the document.
         MailMergeRegionInfo rootInfo = doc.MailMerge.GetRegionsHierarchy();

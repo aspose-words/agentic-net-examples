@@ -9,11 +9,21 @@ namespace AsposeWordsPlainTextExtractor
     {
         static void Main(string[] args)
         {
-            // Path to the source Word document.
-            string inputFilePath = @"C:\Docs\SourceDocument.docx";
+            // Use a temporary folder for the demo files.
+            string tempFolder = Path.GetTempPath();
+            string inputFilePath = Path.Combine(tempFolder, "SourceDocument.docx");
+            string outputFilePath = Path.Combine(tempFolder, "PlainTextOutput.txt");
 
-            // Path where the plain‑text output will be saved.
-            string outputFilePath = @"C:\Docs\PlainTextOutput.txt";
+            // If the source document does not exist, create a simple one.
+            if (!File.Exists(inputFilePath))
+            {
+                Document docToCreate = new Document();
+                DocumentBuilder builder = new DocumentBuilder(docToCreate);
+                builder.Writeln("First section text.");
+                builder.InsertBreak(BreakType.SectionBreakNewPage);
+                builder.Writeln("Second section text.");
+                docToCreate.Save(inputFilePath);
+            }
 
             // Load the document from the file system.
             Document doc = new Document(inputFilePath);
@@ -35,7 +45,7 @@ namespace AsposeWordsPlainTextExtractor
             // Write the concatenated plain‑text to the output file.
             File.WriteAllText(outputFilePath, plainTextBuilder.ToString());
 
-            // Optional: inform the user that the operation completed.
+            // Inform the user that the operation completed.
             Console.WriteLine("Plain‑text extraction completed. Output saved to:");
             Console.WriteLine(outputFilePath);
         }

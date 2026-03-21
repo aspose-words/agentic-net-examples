@@ -7,40 +7,50 @@ class OleCloneExample
 {
     static void Main()
     {
-        // Load the source document that contains the OLE object.
-        Document srcDoc = new Document("SourceWithOle.docx");
+        // ---------- Create a source document with an OLE object ----------
+        Document srcDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("Source document with OLE object:");
 
-        // Locate the first shape that holds an OLE object.
+        // Create a simple text file in memory to embed as OLE.
+        byte[] oleFileBytes = System.Text.Encoding.UTF8.GetBytes("This is the embedded OLE content.");
+        using (MemoryStream oleFileStream = new MemoryStream(oleFileBytes))
+        {
+            // Insert the OLE object. Use "Package" as a generic ProgID.
+            srcBuilder.InsertOleObject(oleFileStream, "Package", false, null);
+        }
+
+        // Save the source document (optional, for inspection).
+        srcDoc.Save("SourceWithOle.docx");
+
+        // ---------- Locate the OLE shape in the source document ----------
         Shape srcOleShape = (Shape)srcDoc.GetChild(NodeType.Shape, 0, true);
         if (srcOleShape == null || srcOleShape.OleFormat == null)
             throw new InvalidOperationException("No OLE object found in the source document.");
 
-        // Access the OLE format of the shape.
         OleFormat srcOleFormat = srcOleShape.OleFormat;
-
-        // Retrieve the ProgID of the OLE object (e.g., "Excel.Sheet.12").
         string progId = srcOleFormat.ProgId;
 
         // Save the embedded OLE data into a memory stream.
         using (MemoryStream oleDataStream = new MemoryStream())
         {
             srcOleFormat.Save(oleDataStream);
-            oleDataStream.Position = 0; // Reset stream position for reading.
+            oleDataStream.Position = 0; // Reset for reading.
 
-            // Load the destination document where the OLE object will be cloned.
-            Document dstDoc = new Document("Destination.docx");
-            DocumentBuilder builder = new DocumentBuilder(dstDoc);
+            // ---------- Create a destination document ----------
+            Document dstDoc = new Document();
+            DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
+            dstBuilder.Writeln("Destination document before cloning OLE object:");
+            dstBuilder.MoveToDocumentEnd();
 
-            // Move the cursor to the desired insertion point (here, the end of the document).
-            builder.MoveToDocumentEnd();
+            // Insert the cloned OLE object.
+            dstBuilder.InsertOleObject(oleDataStream, progId, false, null);
+            dstBuilder.Writeln("\nDestination document after cloning OLE object.");
 
-            // Insert the OLE object using the extracted data stream.
-            // asIcon = false – insert the object in its normal (content) view.
-            // presentation = null – let Aspose.Words choose a default icon if needed.
-            builder.InsertOleObject(oleDataStream, progId, false, null);
-
-            // Save the modified destination document.
+            // Save the destination document.
             dstDoc.Save("DestinationWithClonedOle.docx");
         }
+
+        Console.WriteLine("OLE object cloned successfully.");
     }
 }

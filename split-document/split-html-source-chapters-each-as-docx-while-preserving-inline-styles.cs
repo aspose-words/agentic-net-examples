@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
+using Aspose.Words.Loading;
 
 namespace HtmlChapterSplitter
 {
@@ -9,26 +11,33 @@ namespace HtmlChapterSplitter
     {
         static void Main()
         {
-            // Path to the source HTML file.
-            string htmlPath = @"C:\Input\source.html";
+            // Sample HTML content.
+            const string htmlContent = @"
+                <html>
+                <body>
+                    <h1>Chapter 1</h1>
+                    <p>This is the first paragraph of chapter 1.</p>
+                    <p>Another paragraph in chapter 1.</p>
+                    <h2>Section 1.1</h2>
+                    <p>Content of section 1.1.</p>
+                    <h1>Chapter 2</h1>
+                    <p>First paragraph of chapter 2.</p>
+                </body>
+                </html>";
 
-            // Folder where the resulting DOCX chapters will be saved.
-            string outputFolder = @"C:\Output\Chapters";
+            // Create a temporary folder for output.
+            string outputFolder = Path.Combine(Path.GetTempPath(), "HtmlChapterSplitter", "Chapters");
+            Directory.CreateDirectory(outputFolder);
 
-            // Ensure the output folder exists.
-            if (!Directory.Exists(outputFolder))
-                Directory.CreateDirectory(outputFolder);
-
-            // Load the HTML document.
-            Document sourceDoc = new Document(htmlPath);
+            // Load the HTML document from the string.
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(htmlContent));
+            var loadOptions = new LoadOptions { LoadFormat = LoadFormat.Html };
+            Document sourceDoc = new Document(stream, loadOptions);
 
             // List to hold each chapter document.
-            List<Document> chapterDocs = new List<Document>();
+            var chapterDocs = new List<Document>();
 
-            // The current chapter document we are building.
             Document currentChapter = null;
-
-            // NodeImporter to efficiently import nodes from the source document.
             NodeImporter importer = null;
 
             // Iterate through all paragraphs in the source document in order.
@@ -40,11 +49,8 @@ namespace HtmlChapterSplitter
                 // If we encounter a heading, start a new chapter.
                 if (isHeading)
                 {
-                    // Finish the previous chapter (if any) and start a new one.
                     currentChapter = new Document();
                     currentChapter.EnsureMinimum();
-
-                    // Create a fresh importer for this chapter.
                     importer = new NodeImporter(sourceDoc, currentChapter, ImportFormatMode.KeepSourceFormatting);
                     chapterDocs.Add(currentChapter);
                 }

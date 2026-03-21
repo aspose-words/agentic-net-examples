@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
@@ -9,30 +10,30 @@ namespace MailMergeExample
     {
         static void Main()
         {
-            // Path to the template document that contains MERGEFIELDs and region tags.
-            // Example template should have fields like <<TableStart:Employees>> ... <<TableEnd:Employees>>
-            string templatePath = @"C:\Templates\EmployeeTemplate.docx";
+            // Create a template document in memory.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-            // Path to the XML file that will be loaded into a DataSet.
-            // The XML should contain tables whose names match the mail‑merge region names.
-            string xmlDataPath = @"C:\Data\Employees.xml";
+            // Insert mail‑merge region tags and a field.
+            builder.Writeln("<<TableStart:Employees>>");
+            builder.Writeln("Name: <<Name>>");
+            builder.Writeln("<<TableEnd:Employees>>");
 
-            // Path where the merged document will be saved.
-            string outputPath = @"C:\Output\EmployeeReport.docx";
-
-            // Load the template document.
-            Document doc = new Document(templatePath);
-
-            // Load XML data into a DataSet.
+            // Prepare data.
             DataSet dataSet = new DataSet();
-            dataSet.ReadXml(xmlDataPath);
+            DataTable table = new DataTable("Employees");
+            table.Columns.Add("Name", typeof(string));
+            table.Rows.Add("John Doe");
+            table.Rows.Add("Jane Smith");
+            dataSet.Tables.Add(table);
 
-            // Perform mail merge using the DataSet.
-            // This method will look for mail‑merge regions whose names correspond to the DataTable names.
-            doc.MailMerge.ExecuteWithRegions(dataSet);
+            // Execute mail merge with regions.
+            template.MailMerge.ExecuteWithRegions(dataSet);
 
-            // Save the merged document.
-            doc.Save(outputPath);
+            // Save the result to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EmployeeReport.docx");
+            template.Save(outputPath);
+            Console.WriteLine($"Document saved to {outputPath}");
         }
     }
 }

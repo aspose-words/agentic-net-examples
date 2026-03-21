@@ -1,35 +1,49 @@
 using System;
-using Aspose.Words;                       // Core Aspose.Words namespace
-using Aspose.Words.Drawing;               // For ImageWatermarkOptions
+using System.IO;
+using Aspose.Words;
+using Aspose.Words.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Path to the existing Word document.
-        string inputDocPath = @"C:\Docs\SourceDocument.docx";
+        // Create temporary file paths.
+        string inputDocPath = Path.Combine(Path.GetTempPath(), "SourceDocument.docx");
+        string watermarkImagePath = Path.Combine(Path.GetTempPath(), "Watermark.png");
+        string outputDocPath = Path.Combine(Path.GetTempPath(), "WatermarkedDocument.docx");
 
-        // Path to the image that will be used as a watermark.
-        string watermarkImagePath = @"C:\Images\Watermark.png";
+        // -----------------------------------------------------------------
+        // 1. Create a simple Word document to work with.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document.");
+        doc.Save(inputDocPath);
 
-        // Path where the watermarked document will be saved.
-        string outputDocPath = @"C:\Docs\WatermarkedDocument.docx";
+        // -----------------------------------------------------------------
+        // 2. Create a simple PNG image that will be used as a watermark.
+        // -----------------------------------------------------------------
+        // A minimal 1x1 transparent PNG (base64 encoded).
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(watermarkImagePath, pngBytes);
 
-        // Load the document from the file system.
-        Document doc = new Document(inputDocPath);
-
-        // Configure watermark appearance (optional).
-        ImageWatermarkOptions watermarkOptions = new ImageWatermarkOptions
+        // -----------------------------------------------------------------
+        // 3. Load the document and apply the image watermark.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(inputDocPath);
+        ImageWatermarkOptions options = new ImageWatermarkOptions
         {
-            Scale = 5,          // Scale factor of the image.
-            IsWashout = false   // Disable washout effect for a solid appearance.
+            Scale = 5,
+            IsWashout = false
         };
+        loadedDoc.Watermark.SetImage(watermarkImagePath, options);
 
-        // Add the image watermark to the document using the overload that accepts a file path.
-        // This avoids the need for System.Drawing.Image which is not available in .NET 6+ without extra packages.
-        doc.Watermark.SetImage(watermarkImagePath, watermarkOptions);
+        // -----------------------------------------------------------------
+        // 4. Save the watermarked document.
+        // -----------------------------------------------------------------
+        loadedDoc.Save(outputDocPath);
 
-        // Save the modified document.
-        doc.Save(outputDocPath);
+        Console.WriteLine($"Watermarked document saved to: {outputDocPath}");
     }
 }

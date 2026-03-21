@@ -27,25 +27,31 @@ namespace DocxToTiffBatch
             // Enumerate all DOCX files in the source folder.
             foreach (string docxPath in Directory.GetFiles(sourceFolder, "*.docx"))
             {
-                // Load the DOCX document.
-                Document doc = new Document(docxPath);
-
-                // Configure image save options for TIFF output.
-                ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+                try
                 {
-                    // Use LZW compression (change to desired enum value if needed).
-                    TiffCompression = TiffCompression.Lzw,
+                    // Load the DOCX document.
+                    Document doc = new Document(docxPath);
 
-                    // Render all pages into a single multi‑frame TIFF.
-                    PageLayout = MultiPageLayout.TiffFrames()
-                };
+                    // Configure image save options for TIFF output.
+                    ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+                    {
+                        // Use LZW compression (change to desired enum value if needed).
+                        TiffCompression = TiffCompression.Lzw
+                        // The default PageLayout for TIFF is MultiPageLayout.TiffPages,
+                        // which creates a multi‑page TIFF. No explicit setting is required.
+                    };
 
-                // Build the output file name (same base name, .tiff extension).
-                string tiffPath = Path.Combine(outputFolder,
-                    Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
+                    // Build the output file name (same base name, .tiff extension).
+                    string tiffPath = Path.Combine(outputFolder,
+                        Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
 
-                // Save the document as TIFF using the configured options.
-                doc.Save(tiffPath, tiffOptions);
+                    // Save the document as TIFF using the configured options.
+                    doc.Save(tiffPath, tiffOptions);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Failed to convert '{Path.GetFileName(docxPath)}': {ex.Message}");
+                }
             }
 
             Console.WriteLine("Conversion completed. TIFF files are located in:");

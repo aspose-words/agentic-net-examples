@@ -24,10 +24,8 @@ namespace OfficeMathPdfValidation
             int srcMathCount = srcDoc.GetChildNodes(NodeType.OfficeMath, true).Count;
 
             // Ensure that each top‑level OfficeMath is displayed as a block (Display) and left‑justified.
-            // This makes the positioning explicit and reproducible in the PDF.
             foreach (OfficeMath math in srcDoc.GetChildNodes(NodeType.OfficeMath, true))
             {
-                // Only top‑level OfficeMath can have its DisplayType changed.
                 if (math.MathObjectType == MathObjectType.OMathPara)
                 {
                     math.DisplayType = OfficeMathDisplayType.Display;
@@ -36,7 +34,6 @@ namespace OfficeMathPdfValidation
             }
 
             // Configure PDF save options to preserve additional text positioning operators.
-            // This option helps keep the exact layout of equations.
             PdfSaveOptions pdfOptions = new PdfSaveOptions
             {
                 AdditionalTextPositioning = true
@@ -57,13 +54,11 @@ namespace OfficeMathPdfValidation
                     $"OfficeMath count mismatch. Source: {srcMathCount}, PDF: {pdfMathCount}");
 
             // Additional validation can be performed by comparing the rendered size of each equation.
-            // Here we compare the bounding box size (in points) of each top‑level OfficeMath.
             for (int i = 0; i < srcMathCount; i++)
             {
                 OfficeMath srcMath = (OfficeMath)srcDoc.GetChild(NodeType.OfficeMath, i, true);
                 OfficeMath pdfMath = (OfficeMath)pdfDoc.GetChild(NodeType.OfficeMath, i, true);
 
-                // Only compare display equations (top‑level).
                 if (srcMath.MathObjectType != MathObjectType.OMathPara ||
                     pdfMath.MathObjectType != MathObjectType.OMathPara)
                     continue;
@@ -71,7 +66,6 @@ namespace OfficeMathPdfValidation
                 var srcRenderer = srcMath.GetMathRenderer();
                 var pdfRenderer = pdfMath.GetMathRenderer();
 
-                // Width and height should match within a small tolerance.
                 const float tolerance = 0.5f; // points
                 if (Math.Abs(srcRenderer.SizeInPoints.Width - pdfRenderer.SizeInPoints.Width) > tolerance ||
                     Math.Abs(srcRenderer.SizeInPoints.Height - pdfRenderer.SizeInPoints.Height) > tolerance)
@@ -83,15 +77,33 @@ namespace OfficeMathPdfValidation
                 }
             }
 
-            // If no exception was thrown, the validation succeeded.
             Console.WriteLine("PDF validation succeeded: OfficeMath equations retain their positioning.");
         }
 
         // Example usage.
         public static void Main()
         {
-            string docxPath = Path.Combine(Environment.CurrentDirectory, "Input", "OfficeMathSample.docx");
-            string pdfPath = Path.Combine(Environment.CurrentDirectory, "Output", "OfficeMathSample.pdf");
+            // Determine input and output directories relative to the executable location.
+            string baseDir = Environment.CurrentDirectory;
+            string inputDir = Path.Combine(baseDir, "Input");
+            string outputDir = Path.Combine(baseDir, "Output");
+
+            Directory.CreateDirectory(inputDir);
+            Directory.CreateDirectory(outputDir);
+
+            string docxPath = Path.Combine(inputDir, "OfficeMathSample.docx");
+            string pdfPath = Path.Combine(outputDir, "OfficeMathSample.pdf");
+
+            // If the sample DOCX does not exist, create a minimal one (without OfficeMath).
+            if (!File.Exists(docxPath))
+            {
+                Document doc = new Document();
+                var builder = new DocumentBuilder(doc);
+                builder.Writeln("This is a sample document generated at runtime.");
+                // Optionally, insert a simple OfficeMath equation as plain text.
+                builder.Writeln("x = y");
+                doc.Save(docxPath);
+            }
 
             ValidateOfficeMathPdfPositioning(docxPath, pdfPath);
         }

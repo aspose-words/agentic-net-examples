@@ -1,6 +1,7 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
 class ShapeHyperlinkExample
 {
@@ -10,9 +11,12 @@ class ShapeHyperlinkExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an image (or any shape) that will act as the clickable hyperlink.
-        // Here we use InsertImage; you can replace the path with any valid image file.
-        Shape shape = builder.InsertImage(@"C:\Images\Logo.jpg");
+        // Insert a rectangle shape that will act as the clickable hyperlink.
+        // Width and height are in points (1 point = 1/72 inch).
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        shape.FillColor = Color.LightBlue;
+        shape.StrokeColor = Color.DarkBlue;
+        shape.WrapType = WrapType.Inline;
 
         // Apply hyperlink properties to the shape.
         shape.HRef = "https://www.example.com/";   // Destination URL.
@@ -27,7 +31,7 @@ class ShapeHyperlinkExample
         if (shape.ScreenTip != "Open Example.com")
             throw new InvalidOperationException("ScreenTip was not set correctly.");
 
-        // Save the document. The shape now behaves as a hyperlink when the document is opened in Word.
-        doc.Save(@"C:\Output\ShapeWithHyperlink.docx");
+        // Save the document in the current directory.
+        doc.Save("ShapeWithHyperlink.docx");
     }
 }
