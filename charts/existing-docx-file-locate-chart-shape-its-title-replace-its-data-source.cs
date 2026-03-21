@@ -1,17 +1,32 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Tables;
 
 class ReplaceChartDataSource
 {
     static void Main()
     {
-        // Path to the input DOCX file that contains the chart.
-        string inputPath = @"C:\Docs\InputDocument.docx";
+        // Create temporary paths for the input, data source, and output files.
+        string tempDir = Path.GetTempPath();
+        string inputPath = Path.Combine(tempDir, "InputDocument.docx");
+        string newDataSourcePath = Path.Combine(tempDir, "NewChartData.xlsx");
+        string outputPath = Path.Combine(tempDir, "OutputDocument.docx");
 
-        // Path to the new Excel file that will become the chart's data source.
-        string newDataSourcePath = @"C:\Data\NewChartData.xlsx";
+        // Ensure the input DOCX file exists. If not, create a minimal document.
+        if (!File.Exists(inputPath))
+        {
+            var emptyDoc = new Document();
+            emptyDoc.Save(inputPath);
+        }
+
+        // Ensure the new data source file exists (can be empty for this demo).
+        if (!File.Exists(newDataSourcePath))
+        {
+            File.WriteAllBytes(newDataSourcePath, Array.Empty<byte>());
+        }
 
         // The exact title text of the chart we want to modify.
         string targetChartTitle = "Sales Overview";
@@ -33,15 +48,14 @@ class ReplaceChartDataSource
                 // Replace the chart's linked data source with the new Excel file.
                 chart.SourceFullName = newDataSourcePath;
 
-                // If the chart is linked, you may need to update it to reflect the new data.
-                // This can be done by calling UpdateChartData() if such a method exists,
-                // otherwise the new source will be used the next time the document is opened.
-                break; // Assuming titles are unique; exit after the first match.
+                // Break after the first match (assuming titles are unique).
+                break;
             }
         }
 
         // Save the modified document to a new file.
-        string outputPath = @"C:\Docs\OutputDocument.docx";
         doc.Save(outputPath);
+
+        Console.WriteLine($"Processing complete. Output saved to: {outputPath}");
     }
 }

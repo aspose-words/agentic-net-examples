@@ -8,8 +8,6 @@ namespace BarcodeLoggingExample
     // Custom barcode generator that logs each generation request.
     public class LoggingBarcodeGenerator : IBarcodeGenerator
     {
-        // Optional inner generator to actually produce the barcode image.
-        // If null, the generator will return an empty image stream.
         private readonly IBarcodeGenerator _innerGenerator;
 
         public LoggingBarcodeGenerator(IBarcodeGenerator innerGenerator = null)
@@ -20,10 +18,9 @@ namespace BarcodeLoggingExample
         // Generate barcode image for DISPLAYBARCODE fields.
         public Stream GetBarcodeImage(BarcodeParameters parameters)
         {
-            // Use the inner generator if supplied; otherwise create an empty stream.
-            Stream imageStream = _innerGenerator?.GetBarcodeImage(parameters) ?? new MemoryStream();
+            Stream imageStream = _innerGenerator?.GetBarcodeImage(parameters) ?? CreatePlaceholderImage();
 
-            // Ensure the stream position is at the beginning for size calculation.
+            // Ensure the stream is positioned at the beginning.
             if (imageStream.CanSeek)
                 imageStream.Position = 0;
 
@@ -32,7 +29,7 @@ namespace BarcodeLoggingExample
             string logEntry = $"[{DateTime.UtcNow:O}] Field: {parameters.BarcodeValue}, ImageSize: {imageSize} bytes{Environment.NewLine}";
             File.AppendAllText("BarcodeGenerationLog.txt", logEntry);
 
-            // Return the stream to the caller (position reset to start).
+            // Reset position for the caller.
             if (imageStream.CanSeek)
                 imageStream.Position = 0;
 
@@ -42,8 +39,26 @@ namespace BarcodeLoggingExample
         // Generate barcode image for old-fashioned BARCODE fields.
         public Stream GetOldBarcodeImage(BarcodeParameters parameters)
         {
-            // Reuse the same logic as GetBarcodeImage.
             return GetBarcodeImage(parameters);
+        }
+
+        // Creates a minimal 1x1 PNG image as a placeholder.
+        private static Stream CreatePlaceholderImage()
+        {
+            // PNG data for a 1x1 transparent pixel.
+            byte[] pngBytes = new byte[]
+            {
+                0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
+                0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+                0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
+                0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
+                0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
+                0x54,0x78,0x9C,0x63,0x00,0x01,0x00,0x00,
+                0x05,0x00,0x01,0x0D,0x0A,0x2D,0xB4,0x00,
+                0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
+                0x42,0x60,0x82
+            };
+            return new MemoryStream(pngBytes);
         }
     }
 
@@ -51,15 +66,14 @@ namespace BarcodeLoggingExample
     {
         static void Main()
         {
-            // Load an existing document or create a new one.
+            // Create a new document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             // Assign the custom logging generator to the document.
-            // If you have a real generator (e.g., from a third‑party library), pass it to the constructor.
             doc.FieldOptions.BarcodeGenerator = new LoggingBarcodeGenerator();
 
-            // Example: insert a DISPLAYBARCODE field and generate its image manually.
+            // Insert a DISPLAYBARCODE field.
             FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
             barcodeField.BarcodeValue = "ABC123";
             barcodeField.BarcodeType = "QR";

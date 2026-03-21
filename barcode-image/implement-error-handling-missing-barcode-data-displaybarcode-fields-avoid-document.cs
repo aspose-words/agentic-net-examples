@@ -7,14 +7,26 @@ class DisplayBarcodeHandler
 {
     static void Main()
     {
-        // Path to the source document that may contain DISPLAYBARCODE fields with missing data.
-        string inputPath = @"C:\Docs\Input.docx";
+        // Use files in the current working directory to avoid hard‑coded paths.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "Input.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
 
-        // Path where the processed document will be saved.
-        string outputPath = @"C:\Docs\Output.docx";
+        Document doc;
 
-        // Load the document using the provided lifecycle rule.
-        Document doc = new Document(inputPath);
+        // If the input file does not exist, create a simple document with an empty DISPLAYBARCODE field.
+        if (File.Exists(inputPath))
+        {
+            doc = new Document(inputPath);
+        }
+        else
+        {
+            doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("Sample document containing a DISPLAYBARCODE field with missing data:");
+            // Insert a DISPLAYBARCODE field with an empty value.
+            builder.InsertField("DISPLAYBARCODE \"\"");
+            doc.Save(inputPath);
+        }
 
         // Iterate through all fields in the document.
         foreach (Field field in doc.Range.Fields)
@@ -22,23 +34,21 @@ class DisplayBarcodeHandler
             // Process only DISPLAYBARCODE fields.
             if (field.Type == FieldType.FieldDisplayBarcode)
             {
-                FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)field;
+                var barcodeField = (FieldDisplayBarcode)field;
 
                 // If the barcode value is null, empty, or whitespace, replace it with a placeholder.
                 if (string.IsNullOrWhiteSpace(barcodeField.BarcodeValue))
                 {
-                    // Setting a non‑empty value prevents save‑time exceptions caused by missing data.
                     barcodeField.BarcodeValue = "N/A";
                 }
             }
         }
 
-        // Save the document using the provided lifecycle rule.
-        // Wrap the save operation in a try/catch to handle any unexpected errors gracefully.
+        // Save the processed document.
         try
         {
             doc.Save(outputPath);
-            Console.WriteLine("Document saved successfully.");
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
         }
         catch (Exception ex)
         {

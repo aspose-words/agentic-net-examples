@@ -8,16 +8,22 @@ namespace BatchDocToPdfWithBarcodes
     {
         static void Main(string[] args)
         {
-            // Input folder containing .doc files
-            string inputFolder = @"C:\InputDocs";
-            // Output folder for generated PDFs
-            string outputFolder = @"C:\OutputPdfs";
+            // Input folder containing .doc files (created if missing)
+            string inputFolder = Path.Combine(AppContext.BaseDirectory, "InputDocs");
+            Directory.CreateDirectory(inputFolder);
 
-            // Ensure output directory exists
+            // Output folder for generated PDFs (created if missing)
+            string outputFolder = Path.Combine(AppContext.BaseDirectory, "OutputPdfs");
             Directory.CreateDirectory(outputFolder);
 
             // Get all .doc files in the input folder (non‑recursive)
             string[] docFiles = Directory.GetFiles(inputFolder, "*.doc");
+
+            if (docFiles.Length == 0)
+            {
+                Console.WriteLine($"No .doc files found in \"{inputFolder}\". Place documents there and rerun.");
+                return;
+            }
 
             foreach (string docPath in docFiles)
             {
@@ -33,6 +39,7 @@ namespace BatchDocToPdfWithBarcodes
 
                 // Save the document as PDF; the format is inferred from the .pdf extension
                 doc.Save(pdfPath);
+                Console.WriteLine($"Converted \"{Path.GetFileName(docPath)}\" to \"{pdfFileName}\".");
             }
         }
     }

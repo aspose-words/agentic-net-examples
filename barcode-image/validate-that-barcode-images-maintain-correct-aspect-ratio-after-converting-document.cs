@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 using Aspose.Words.Loading;
-using Aspose.Words.Drawing; // <-- Added for Shape class
+using Aspose.Words.Saving;
 
 class BarcodeAspectRatioValidator
 {
@@ -14,39 +14,35 @@ class BarcodeAspectRatioValidator
     static void Main()
     {
         // -----------------------------------------------------------------
-        // 1. Load the source DOCX that contains barcode images.
+        // 1. Create a temporary DOCX that contains a barcode‑like image.
         // -----------------------------------------------------------------
-        // (Replace the path with the actual location of your document.)
-        Document doc = new Document(@"C:\Docs\Barcodes.docx");
+        string tempFolder = Path.Combine(Path.GetTempPath(), "BarcodeAspectRatioDemo");
+        Directory.CreateDirectory(tempFolder);
+
+        string docPath = Path.Combine(tempFolder, "Barcodes.docx");
+        string pdfPath = Path.Combine(tempFolder, "Barcodes.pdf");
+
+        CreateSampleDocumentWithImage(docPath);
 
         // -----------------------------------------------------------------
         // 2. Record the aspect ratios of all image shapes in the DOCX.
         // -----------------------------------------------------------------
+        Document doc = new Document(docPath);
         List<double> docAspectRatios = GetImageAspectRatios(doc);
 
         // -----------------------------------------------------------------
         // 3. Save the document to PDF using PdfSaveOptions.
         // -----------------------------------------------------------------
-        PdfSaveOptions pdfSaveOptions = new PdfSaveOptions
+        var pdfSaveOptions = new PdfSaveOptions
         {
-            // Ensure that the conversion does not alter image scaling.
-            // The default settings already keep the original dimensions,
-            // but we explicitly disable any down‑sampling that could affect size.
-            DownsampleOptions = { DownsampleImages = false }
+            DownsampleOptions = new DownsampleOptions { DownsampleImages = false }
         };
-
-        string pdfPath = @"C:\Docs\Barcodes.pdf";
         doc.Save(pdfPath, pdfSaveOptions);
 
         // -----------------------------------------------------------------
         // 4. Load the generated PDF back into a Document object.
         // -----------------------------------------------------------------
-        PdfLoadOptions pdfLoadOptions = new PdfLoadOptions
-        {
-            // Load the PDF without skipping images so we can inspect them.
-            SkipPdfImages = false
-        };
-
+        var pdfLoadOptions = new PdfLoadOptions { SkipPdfImages = false };
         Document pdfDoc = new Document(pdfPath, pdfLoadOptions);
 
         // -----------------------------------------------------------------
@@ -60,8 +56,7 @@ class BarcodeAspectRatioValidator
         // -----------------------------------------------------------------
         if (docAspectRatios.Count != pdfAspectRatios.Count)
         {
-            Console.WriteLine("Image count mismatch: DOCX has {0}, PDF has {1}.",
-                docAspectRatios.Count, pdfAspectRatios.Count);
+            Console.WriteLine($"Image count mismatch: DOCX has {docAspectRatios.Count}, PDF has {pdfAspectRatios.Count}.");
             return;
         }
 
@@ -72,14 +67,33 @@ class BarcodeAspectRatioValidator
             double diff = Math.Abs(docRatio - pdfRatio);
 
             if (diff > AspectRatioTolerance)
-            {
                 Console.WriteLine($"Image {i + 1}: aspect ratio changed (DOCX={docRatio:F4}, PDF={pdfRatio:F4}).");
-            }
             else
-            {
                 Console.WriteLine($"Image {i + 1}: aspect ratio preserved (ratio={docRatio:F4}).");
-            }
         }
+
+        // Cleanup (optional)
+        // Directory.Delete(tempFolder, true);
+    }
+
+    /// <summary>
+    /// Creates a simple DOCX file containing a single PNG image.
+    /// </summary>
+    private static void CreateSampleDocumentWithImage(string filePath)
+    {
+        // 1x1 red pixel PNG (base64)
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        using (var ms = new MemoryStream(pngBytes))
+        {
+            // Insert the image; Aspose.Words will treat it as a Shape.
+            builder.InsertImage(ms);
+        }
+
+        doc.Save(filePath);
     }
 
     /// <summary>
@@ -87,27 +101,13 @@ class BarcodeAspectRatioValidator
     /// </summary>
     private static List<double> GetImageAspectRatios(Document document)
     {
-        List<double> ratios = new List<double>();
-
-        // Collect all Shape nodes that contain images.
+        var ratios = new List<double>();
         NodeCollection shapes = document.GetChildNodes(NodeType.Shape, true);
         foreach (Shape shape in shapes)
         {
-            if (shape.IsImage)
-            {
-                // Width and Height are stored in points (1 point = 1/72 inch).
-                // Convert to double for ratio calculation.
-                double width = shape.Width;
-                double height = shape.Height;
-
-                // Guard against zero height to avoid division by zero.
-                if (height != 0)
-                {
-                    ratios.Add(width / height);
-                }
-            }
+            if (shape.IsImage && shape.Height != 0)
+                ratios.Add(shape.Width / shape.Height);
         }
-
         return ratios;
     }
 }

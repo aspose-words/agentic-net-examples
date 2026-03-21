@@ -1,64 +1,50 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;               // <-- added
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
 class ChartSeriesModifier
 {
     static void Main()
     {
-        // Load an existing Word document that contains a chart.
-        const string inputPath = @"ArtifactsDir\ChartDocument.docx";
-        const string outputPath = @"ArtifactsDir\ChartDocument_Modified.docx";
-
-        Document doc = new Document(inputPath);
+        // Create a new document and insert a simple chart.
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Find the first shape that contains a chart.
-        Shape chartShape = null;
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
-        {
-            if (shape.HasChart)
-            {
-                chartShape = shape;
-                break;
-            }
-        }
-
-        if (chartShape == null)
-        {
-            Console.WriteLine("No chart found in the document.");
-            return;
-        }
-
-        // Access the chart object.
+        // Insert a column chart with some initial data.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Iterate through all series in the chart.
-        foreach (ChartSeries series in chart.Series)
-        {
-            // Example modification 1: Change the first Y value (if it exists).
-            if (series.YValues.Count > 0)
-            {
-                // Replace the first Y value with a new double value.
-                series.YValues[0] = ChartYValue.FromDouble(42.0);
-            }
+        // Populate the chart with a single series and a few data points.
+        ChartSeries series = chart.Series[0];
+        series.Name = "Series 1";
+        series.Add(ChartXValue.FromString("Category A"), ChartYValue.FromDouble(10));
+        series.Add(ChartXValue.FromString("Category B"), ChartYValue.FromDouble(20));
+        series.Add(ChartXValue.FromString("Category C"), ChartYValue.FromDouble(30));
 
-            // Example modification 2: Add a new data point to the series.
-            // Use a string category for the X value and a double for the Y value.
+        // Iterate through all series in the chart and modify them.
+        foreach (ChartSeries s in chart.Series)
+        {
+            // Change the first Y value (if it exists).
+            if (s.YValues.Count > 0)
+                s.YValues[0] = ChartYValue.FromDouble(42.0);
+
+            // Add a new data point.
             ChartXValue newX = ChartXValue.FromString("New Category");
             ChartYValue newY = ChartYValue.FromDouble(15.5);
-            series.Add(newX, newY);
+            s.Add(newX, newY);
 
-            // Example modification 3: Remove the last data point (if more than one point exists).
-            if (series.YValues.Count > 1)
+            // Remove the last data point (if more than one point exists).
+            if (s.YValues.Count > 1)
             {
-                int lastIndex = series.YValues.Count - 1;
-                series.Remove(lastIndex);
+                int lastIndex = s.YValues.Count - 1;
+                s.Remove(lastIndex);
             }
         }
 
-        // Save the modified document. The chart reflects the changes automatically.
+        // Save the modified document.
+        const string outputPath = "ChartDocument_Modified.docx";
         doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }
