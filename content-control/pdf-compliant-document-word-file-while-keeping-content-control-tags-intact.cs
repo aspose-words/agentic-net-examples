@@ -6,23 +6,21 @@ class Program
 {
     static void Main()
     {
-        // Load the source Word document.
-        Document doc = new Document("input.docx");
+        // Create a new document.
+        Document doc = new Document();
 
-        // Configure PDF/A‑1a compliance and preserve content‑control (SDT) tags.
+        // Add some content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, world!");
+
+        // Configure PDF/A‑1a compliance and preserve content‑control tags.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // PDF/A‑1a requires a tagged PDF (includes document structure).
             Compliance = PdfCompliance.PdfA1a,
-
-            // Export the document structure so that tags are retained.
             ExportDocumentStructure = true,
-
-            // Preserve form fields (including content controls) in the PDF.
             PreserveFormFields = true,
-
-            // Use the SDT tag as the name of the form field in the PDF.
-            UseSdtTagAsFormFieldName = true
+            UseSdtTagAsFormFieldName = true,
+            UpdateFields = false // Prevent processing of fields that may cause errors.
         };
 
         // Save the document as a PDF/A‑1a file.

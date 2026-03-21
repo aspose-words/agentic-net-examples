@@ -6,24 +6,33 @@ class PdfToHtmlWithExternalCss
 {
     static void Main()
     {
-        // Path to the source PDF file.
-        string pdfPath = @"C:\Docs\source.pdf";
+        // Input PDF path (optional). If the file does not exist, create a simple document.
+        string pdfPath = "source.pdf";
+        Document doc;
 
-        // Path where the resulting HTML file will be saved.
-        string htmlPath = @"C:\Docs\output.html";
-
-        // Load the PDF document.
-        Document doc = new Document(pdfPath);
-
-        // Configure HTML fixed save options.
-        // Setting ExportEmbeddedCss to true creates a separate CSS file
-        // and links it from the generated HTML document.
-        HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
+        if (System.IO.File.Exists(pdfPath))
         {
-            ExportEmbeddedCss = true
+            doc = new Document(pdfPath);
+        }
+        else
+        {
+            // Create a simple document as a placeholder.
+            doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("This is a sample document generated because the source PDF was not found.");
+        }
+
+        // Output HTML path.
+        string htmlPath = "output.html";
+
+        // Configure HTML fixed save options to export external CSS.
+        var htmlOptions = new HtmlFixedSaveOptions
+        {
+            ExportEmbeddedCss = false // false creates an external CSS file
         };
 
-        // Save the document as HTML using the configured options.
+        // Save the document as HTML.
         doc.Save(htmlPath, htmlOptions);
+        Console.WriteLine($"HTML saved to {htmlPath}");
     }
 }

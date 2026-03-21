@@ -1,21 +1,40 @@
 using System;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Loading;
 
 class HtmlToPdfConverter
 {
     static void Main()
     {
-        // Path to the source HTML file.
-        string htmlFile = @"C:\Temp\source.html";
+        // Simple HTML content with inline CSS.
+        string htmlContent = @"
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #2E86C1; }
+        p { font-size: 14pt; }
+    </style>
+</head>
+<body>
+    <h1>Sample Document</h1>
+    <p>This PDF was generated from HTML while preserving CSS styles.</p>
+</body>
+</html>";
 
-        // Path where the resulting PDF will be saved.
-        string pdfFile = @"C:\Temp\result.pdf";
+        // Load the HTML from a memory stream.
+        using var htmlStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(htmlContent));
+        var loadOptions = new LoadOptions { LoadFormat = LoadFormat.Html };
+        Document doc = new Document(htmlStream, loadOptions);
 
-        // Load the HTML document. Aspose.Words automatically parses CSS styles,
-        // so the visual appearance is preserved when converting.
-        Document doc = new Document(htmlFile);
+        // Determine an output path in the system's temporary folder.
+        string pdfPath = Path.Combine(Path.GetTempPath(), "result.pdf");
 
-        // Save the loaded document as PDF, preserving the layout and styling.
-        doc.Save(pdfFile, SaveFormat.Pdf);
+        // Save the document as PDF.
+        doc.Save(pdfPath, SaveFormat.Pdf);
+
+        Console.WriteLine($"PDF successfully created at: {pdfPath}");
     }
 }

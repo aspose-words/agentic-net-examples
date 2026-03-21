@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
@@ -7,15 +8,19 @@ class Program
 {
     static void Main()
     {
-        // Load the source EPUB document.
-        Document doc = new Document("input.epub");
+        // Create a simple document to act as the source EPUB.
+        Document sourceDoc = new Document();
+        var builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Hello, world! This is a sample EPUB document.");
 
-        // Configure save options for MHTML.
-        // - Use the MHTML format.
-        // - Embed images as Base64 so they are stored inside the MHTML file.
-        // - Export font resources and embed them.
-        // - Use CID URLs for resources (helps some mail agents/browsers).
-        // - Keep CSS inline and format the output nicely.
+        // Save the document as a temporary EPUB file.
+        string epubPath = Path.Combine(Path.GetTempPath(), "sample_input.epub");
+        sourceDoc.Save(epubPath, SaveFormat.Epub);
+
+        // Load the EPUB document we just created.
+        Document doc = new Document(epubPath);
+
+        // Configure save options for MHTML with all resources embedded.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
             ExportImagesAsBase64 = true,
@@ -26,7 +31,10 @@ class Program
             Encoding = Encoding.UTF8
         };
 
-        // Save the document as MHTML with all resources embedded.
-        doc.Save("output.mht", saveOptions);
+        // Save the document as MHTML.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.mht");
+        doc.Save(outputPath, saveOptions);
+
+        Console.WriteLine($"MHTML file saved to: {outputPath}");
     }
 }

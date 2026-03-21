@@ -6,8 +6,10 @@ class Program
 {
     static void Main()
     {
-        // Load an existing Word document (replace with your actual file path)
-        var doc = new Document("Input.docx");
+        // Create a simple Word document programmatically
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, world! This is a sample PDF/A‑2u document with image compression.");
 
         // Configure PDF save options for PDF/A‑2u with image compression and output optimisation
         var pdfOptions = new PdfSaveOptions
@@ -20,7 +22,10 @@ class Program
             JpegQuality = 50,
 
             // Remove unused objects and redundant canvases to reduce file size
-            OptimizeOutput = true
+            OptimizeOutput = true,
+
+            // Do not update fields during save to avoid processing unsupported fields
+            UpdateFields = false
         };
 
         // Save the document as a compressed PDF/A‑2u file

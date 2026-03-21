@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 using Aspose.Words.Tables;
@@ -9,45 +10,82 @@ namespace AsposeWordsCompareTables
     {
         static void Main()
         {
-            // Paths to the source documents.
-            // docOriginal is a legacy .doc file, docEdited is a .docx file.
-            string docPath = @"C:\Docs\Original.doc";
-            string editedPath = @"C:\Docs\Edited.docx";
+            // Create temporary file paths.
+            string tempDir = Path.GetTempPath();
+            string originalPath = Path.Combine(tempDir, "Original.docx");
+            string editedPath = Path.Combine(tempDir, "Edited.docx");
+            string resultPath = Path.Combine(tempDir, "ComparisonResult.docx");
 
-            // Load the documents using the Document constructors (lifecycle rule).
-            Document docOriginal = new Document(docPath);
-            Document docEdited = new Document(editedPath);
+            // Build the original document with a simple 2x2 table.
+            Document docOriginal = new Document();
+            DocumentBuilder builderOrig = new DocumentBuilder(docOriginal);
+            Table tableOrig = builderOrig.StartTable();
+            builderOrig.InsertCell();
+            builderOrig.Writeln("A1");
+            builderOrig.InsertCell();
+            builderOrig.Writeln("B1");
+            builderOrig.EndRow();
+            builderOrig.InsertCell();
+            builderOrig.Writeln("A2");
+            builderOrig.InsertCell();
+            builderOrig.Writeln("B2");
+            builderOrig.EndRow();
+            builderOrig.EndTable();
+            docOriginal.Save(originalPath);
 
-            // Configure comparison options.
-            // Ensure that table differences are NOT ignored.
+            // Build the edited document with a 2x3 table (adds an extra column).
+            Document docEdited = new Document();
+            DocumentBuilder builderEdit = new DocumentBuilder(docEdited);
+            Table tableEdit = builderEdit.StartTable();
+            builderEdit.InsertCell();
+            builderEdit.Writeln("A1");
+            builderEdit.InsertCell();
+            builderEdit.Writeln("B1");
+            builderEdit.InsertCell();
+            builderEdit.Writeln("C1");
+            builderEdit.EndRow();
+            builderEdit.InsertCell();
+            builderEdit.Writeln("A2");
+            builderEdit.InsertCell();
+            builderEdit.Writeln("B2");
+            builderEdit.InsertCell();
+            builderEdit.Writeln("C2");
+            builderEdit.EndRow();
+            builderEdit.EndTable();
+            docEdited.Save(editedPath);
+
+            // Load the documents from the temporary files.
+            Document originalDoc = new Document(originalPath);
+            Document editedDoc = new Document(editedPath);
+
+            // Configure comparison options to detect table changes.
             CompareOptions compareOptions = new CompareOptions
             {
-                IgnoreTables = false,               // Detect table structure changes.
-                IgnoreFormatting = false,           // Include formatting changes.
-                IgnoreComments = false,             // Include comment changes.
-                IgnoreHeadersAndFooters = false,    // Include header/footer changes.
-                Target = ComparisonTargetType.New   // Use the edited document as the target.
+                IgnoreTables = false,
+                IgnoreFormatting = false,
+                IgnoreComments = false,
+                IgnoreHeadersAndFooters = false,
+                Target = ComparisonTargetType.New
             };
 
-            // Perform the comparison. The original document will receive Revision objects.
-            docOriginal.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+            // Perform the comparison; revisions are added to the original document.
+            originalDoc.Compare(editedDoc, "Comparer", DateTime.Now, compareOptions);
 
-            // Count revisions that are related to tables.
+            // Count revisions that involve tables.
             int tableRevisions = 0;
-            foreach (Revision rev in docOriginal.Revisions)
+            foreach (Revision rev in originalDoc.Revisions)
             {
-                // The ParentNode of a revision indicates the node that changed.
                 if (rev.ParentNode != null && rev.ParentNode.NodeType == NodeType.Table)
                     tableRevisions++;
             }
 
-            // Output the result – a non‑zero count means table differences were detected.
-            Console.WriteLine($"Total revisions: {docOriginal.Revisions.Count}");
+            // Output results.
+            Console.WriteLine($"Total revisions: {originalDoc.Revisions.Count}");
             Console.WriteLine($"Table‑related revisions: {tableRevisions}");
 
-            // Save the comparison result (lifecycle rule).
-            string resultPath = @"C:\Docs\ComparisonResult.docx";
-            docOriginal.Save(resultPath);
+            // Save the comparison result.
+            originalDoc.Save(resultPath);
+            Console.WriteLine($"Comparison result saved to: {resultPath}");
         }
     }
 }

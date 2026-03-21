@@ -7,13 +7,13 @@ class BatchDocxToHtml
 {
     static void Main()
     {
-        // Folder containing the source DOCX files.
-        string sourceFolder = @"C:\Docs\Input";
+        // Folder containing the source DOCX files (relative to the executable).
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string sourceFolder = Path.Combine(baseDir, "Input");
+        string outputFolder = Path.Combine(baseDir, "Output");
 
-        // Folder where the converted HTML files will be saved.
-        string outputFolder = @"C:\Docs\Output";
-
-        // Ensure the output directory exists.
+        // Ensure both input and output directories exist.
+        Directory.CreateDirectory(sourceFolder);
         Directory.CreateDirectory(outputFolder);
 
         // Get all *.docx files in the source folder (non‑recursive).
@@ -22,7 +22,7 @@ class BatchDocxToHtml
         // Prepare the HtmlSaveOptions with round‑trip information enabled.
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
-            ExportRoundtripInformation = true   // Preserve hidden elements, comments, etc.
+            ExportRoundtripInformation = true // Preserve hidden elements, comments, etc.
         };
 
         foreach (string docxPath in docxFiles)
@@ -38,6 +38,6 @@ class BatchDocxToHtml
             doc.Save(htmlPath, htmlOptions);
         }
 
-        Console.WriteLine("Conversion completed. {0} files processed.", docxFiles.Length);
+        Console.WriteLine("Conversion completed. {0} file(s) processed.", docxFiles.Length);
     }
 }

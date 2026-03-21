@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
@@ -6,70 +7,58 @@ class CompareSpecificSections
 {
     static void Main()
     {
-        // Load the original and edited documents.
-        Document docOriginal = new Document(@"C:\Docs\Original.docx");
-        Document docEdited   = new Document(@"C:\Docs\Edited.docx");
+        // Create original document with two sections.
+        Document docOriginal = new Document();
+        DocumentBuilder builder = new DocumentBuilder(docOriginal);
+        builder.Writeln("This is the original first section.");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("Original second section.");
 
-        // -----------------------------------------------------------------
-        // Prepare comparison options so that only the main body text of the
-        // first section is taken into account. All other element types are
-        // ignored (tables, footnotes, headers/footers, etc.).
-        // -----------------------------------------------------------------
+        // Create edited document with modifications in the first section.
+        Document docEdited = new Document();
+        DocumentBuilder eb = new DocumentBuilder(docEdited);
+        eb.Writeln("This is the edited first section with changes.");
+        eb.InsertBreak(BreakType.SectionBreakNewPage);
+        eb.Writeln("Original second section."); // unchanged
+
+        // Configure comparison options to focus on main body text only.
         CompareOptions compareOptions = new CompareOptions
         {
-            // Do not generate move revisions.
             CompareMoves = false,
-
-            // Ignore formatting changes – we only care about the text itself.
             IgnoreFormatting = true,
-
-            // Case‑insensitive comparison (optional, set to false to keep case).
             IgnoreCaseChanges = false,
-
-            // Suppress revisions for all element types that are not plain text.
-            IgnoreComments          = true,
-            IgnoreTables            = true,
-            IgnoreFields            = true,
-            IgnoreFootnotes         = true,
-            IgnoreTextboxes         = true,
+            IgnoreComments = true,
+            IgnoreTables = true,
+            IgnoreFields = true,
+            IgnoreFootnotes = true,
+            IgnoreTextboxes = true,
             IgnoreHeadersAndFooters = true,
-
-            // Use the edited document as the base for comparison.
             Target = ComparisonTargetType.New
         };
 
-        // -----------------------------------------------------------------
-        // To limit the comparison to a specific section we extract that
-        // section from each document into a temporary document and compare
-        // those temporary documents.
-        // -----------------------------------------------------------------
-        Document tempOriginal = ExtractSection(docOriginal, 0); // first section (index 0)
+        // Extract the first section from each document.
+        Document tempOriginal = ExtractSection(docOriginal, 0);
         Document tempEdited   = ExtractSection(docEdited,   0);
 
-        // Perform the comparison using the configured options.
+        // Perform the comparison.
         tempOriginal.Compare(tempEdited, "Analyzer", DateTime.Now, compareOptions);
 
-        // Save the comparison result – it will contain revisions only for the
-        // first section's body text.
-        tempOriginal.Save(@"C:\Docs\ComparisonResult.docx");
+        // Save result to the current directory.
+        string outPath = Path.Combine(Environment.CurrentDirectory, "ComparisonResult.docx");
+        tempOriginal.Save(outPath);
+        Console.WriteLine($"Comparison saved to: {outPath}");
     }
 
-    // Helper method that creates a new document containing only the section
-    // at the specified index from the source document.
     private static Document ExtractSection(Document source, int sectionIndex)
     {
-        // Clone the requested section to avoid modifying the original document.
+        // Clone the required section.
         Section sectionClone = (Section)source.Sections[sectionIndex].Clone(true);
 
-        // Create a new blank document.
+        // Create a new empty document and import the cloned section.
         Document result = new Document();
-        // Remove the default empty section that the constructor creates.
         result.RemoveAllChildren();
-
-        // The cloned section is already a detached node, so we can simply
-        // append it to the new document. No NodeImporter is required.
-        result.AppendChild(sectionClone);
-
+        Node importedSection = result.ImportNode(sectionClone, true);
+        result.AppendChild(importedSection);
         return result;
     }
 }

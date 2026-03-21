@@ -8,14 +8,28 @@ class PdfToPngConverter
 {
     static void Main()
     {
-        // Path to the source PDF file.
-        string pdfPath = @"C:\Input\sample.pdf";
+        // Base directory for temporary files.
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+        // Path to the source PDF file (created on the fly).
+        string pdfPath = Path.Combine(baseDir, "sample.pdf");
 
         // Folder where PNG images will be saved.
-        string outputFolder = @"C:\Output\Pages";
+        string outputFolder = Path.Combine(baseDir, "Pages");
 
         // Ensure the output directory exists.
         Directory.CreateDirectory(outputFolder);
+
+        // Create a sample PDF if it does not already exist.
+        if (!File.Exists(pdfPath))
+        {
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln("This is page 1 of the sample PDF.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("This is page 2 of the sample PDF.");
+            sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+        }
 
         // Load the PDF document with default PDF load options.
         LoadOptions loadOptions = new PdfLoadOptions();

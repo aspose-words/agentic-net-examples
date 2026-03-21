@@ -6,8 +6,22 @@ class FilterCommentsByAuthor
 {
     static void Main()
     {
-        // Load the source document that contains comments.
-        Document sourceDoc = new Document("InputDocument.docx");
+        // Create a source document with sample comments.
+        Document sourceDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("This is a sample document.");
+
+        // Add a comment by the target author.
+        Comment comment1 = new Comment(sourceDoc, "John Doe", "JD", DateTime.Now);
+        comment1.Paragraphs.Add(new Paragraph(sourceDoc));
+        comment1.FirstParagraph.Runs.Add(new Run(sourceDoc, "Comment from John Doe."));
+        srcBuilder.CurrentParagraph.AppendChild(comment1);
+
+        // Add a comment by another author.
+        Comment comment2 = new Comment(sourceDoc, "Jane Smith", "JS", DateTime.Now);
+        comment2.Paragraphs.Add(new Paragraph(sourceDoc));
+        comment2.FirstParagraph.Runs.Add(new Run(sourceDoc, "Comment from Jane Smith."));
+        srcBuilder.CurrentParagraph.AppendChild(comment2);
 
         // Create a new blank document that will hold the filtered comments.
         Document filteredDoc = new Document();

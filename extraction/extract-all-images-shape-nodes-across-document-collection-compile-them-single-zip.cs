@@ -19,8 +19,8 @@ public class ShapeImageExtractor
     /// <param name="zipFilePath">Destination path for the created ZIP archive.</param>
     public static void ExtractImagesToZip(string[] documentPaths, string zipFilePath)
     {
-        // Ensure the output directory exists. Path.GetDirectoryName can return null if the path is rooted without a directory.
-        string? zipDirectory = Path.GetDirectoryName(zipFilePath);
+        // Ensure the output directory exists.
+        string zipDirectory = Path.GetDirectoryName(zipFilePath) ?? string.Empty;
         if (!string.IsNullOrEmpty(zipDirectory) && !Directory.Exists(zipDirectory))
         {
             Directory.CreateDirectory(zipDirectory);
@@ -76,19 +76,29 @@ public class ShapeImageExtractor
     // Example usage.
     public static void Main()
     {
-        // Paths to the source documents.
-        string[] docs = new string[]
+        // Create a temporary folder for the demo files.
+        string tempFolder = Path.Combine(Path.GetTempPath(), "ShapeImageExtractorDemo");
+        Directory.CreateDirectory(tempFolder);
+
+        // Paths to the source documents (generated on the fly).
+        string[] docs = new string[2];
+        for (int i = 0; i < docs.Length; i++)
         {
-            @"C:\Docs\Document1.docx",
-            @"C:\Docs\Document2.docx",
-            // Add more document paths as needed.
-        };
+            string docPath = Path.Combine(tempFolder, $"Document{i + 1}.docx");
+            // Create a simple document. No images are added, but the code works even if there are none.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is sample document {i + 1}.");
+            doc.Save(docPath);
+            docs[i] = docPath;
+        }
 
         // Destination ZIP file.
-        string zipPath = @"C:\Output\AllImages.zip";
+        string zipPath = Path.Combine(tempFolder, "AllImages.zip");
 
+        // Perform extraction.
         ExtractImagesToZip(docs, zipPath);
 
-        Console.WriteLine($"Images extracted to: {zipPath}");
+        Console.WriteLine($"Extraction completed. ZIP file created at: {zipPath}");
     }
 }

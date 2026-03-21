@@ -1,29 +1,37 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 class BatchDisclaimer
 {
     static void Main()
     {
-        // Folder containing the source documents
-        string inputFolder = @"C:\Docs\Input";
+        // Use folders relative to the executable location
+        string baseDir = AppContext.BaseDirectory;
+        string inputFolder = Path.Combine(baseDir, "Input");
+        string outputFolder = Path.Combine(baseDir, "Output");
 
-        // Folder where the processed documents will be saved
-        string outputFolder = @"C:\Docs\Output";
-
-        // Ensure the output directory exists
+        // Ensure both directories exist
+        Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Retrieve all Word documents in the input folder (adjust the pattern if needed)
+        // If there are no .docx files, create a sample document to demonstrate functionality
         string[] docFiles = Directory.GetFiles(inputFolder, "*.docx");
+        if (docFiles.Length == 0)
+        {
+            string samplePath = Path.Combine(inputFolder, "Sample.docx");
+            var sampleDoc = new Document();
+            var builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln("This is a sample document.");
+            sampleDoc.Save(samplePath);
+            docFiles = new[] { samplePath };
+        }
 
         foreach (string sourcePath in docFiles)
         {
-            // Load the document using the constructor that accepts a file name
+            // Load the document
             Document doc = new Document(sourcePath);
-
-            // Ensure the document has at least one paragraph to attach the comment to
             doc.EnsureMinimum();
 
             // Create a standardized disclaimer comment
@@ -33,7 +41,7 @@ class BatchDisclaimer
             // Insert the comment into the first paragraph
             Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
 
-            // Add a comment range (optional placeholder text inside the range)
+            // Add comment range start, a placeholder run, and comment range end
             firstParagraph.AppendChild(new CommentRangeStart(doc, disclaimer.Id));
             firstParagraph.AppendChild(new Run(doc, " ")); // placeholder run
             firstParagraph.AppendChild(new CommentRangeEnd(doc, disclaimer.Id));
@@ -41,10 +49,12 @@ class BatchDisclaimer
             // Append the comment node itself
             firstParagraph.AppendChild(disclaimer);
 
-            // Save the modified document, preserving the original file name
+            // Save the modified document preserving the original file name
             string fileName = Path.GetFileName(sourcePath);
             string destinationPath = Path.Combine(outputFolder, fileName);
             doc.Save(destinationPath);
         }
+
+        Console.WriteLine("Processing complete. Check the 'Output' folder.");
     }
 }

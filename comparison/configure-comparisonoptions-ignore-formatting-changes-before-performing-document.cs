@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
@@ -6,10 +7,30 @@ class ContractComparison
 {
     static void Main()
     {
-        // Paths to the original and revised contract documents.
-        string originalPath = @"C:\Docs\OriginalContract.docx";
-        string revisedPath  = @"C:\Docs\RevisedContract.docx";
-        string resultPath   = @"C:\Docs\ContractComparisonResult.docx";
+        // Create a temporary folder for the demo files.
+        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeComparisonDemo");
+        Directory.CreateDirectory(tempFolder);
+
+        // Paths to the original, revised, and result documents.
+        string originalPath = Path.Combine(tempFolder, "OriginalContract.docx");
+        string revisedPath  = Path.Combine(tempFolder, "RevisedContract.docx");
+        string resultPath   = Path.Combine(tempFolder, "ContractComparisonResult.docx");
+
+        // Build the original document.
+        Document originalDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
+        builder.Writeln("This is the original contract.");
+        builder.Font.Bold = true;
+        builder.Writeln("The price is $1000.");
+        originalDoc.Save(originalPath);
+
+        // Build the revised document (with a content change and a formatting change).
+        Document revisedDoc = new Document();
+        builder = new DocumentBuilder(revisedDoc);
+        builder.Writeln("This is the original contract.");
+        builder.Font.Bold = false; // formatting change that we will ignore
+        builder.Writeln("The price is $1200."); // content change
+        revisedDoc.Save(revisedPath);
 
         // Load the two documents that need to be compared.
         Document docOriginal = new Document(originalPath);
@@ -18,20 +39,7 @@ class ContractComparison
         // Configure comparison options to ignore all formatting changes.
         CompareOptions compareOptions = new CompareOptions
         {
-            // When true, differences in font, style, color, etc. are not reported as revisions.
             IgnoreFormatting = true,
-
-            // Optional: keep other flags at their defaults (false) to capture content changes.
-            CompareMoves = false,
-            IgnoreCaseChanges = false,
-            IgnoreComments = false,
-            IgnoreTables = false,
-            IgnoreFields = false,
-            IgnoreFootnotes = false,
-            IgnoreTextboxes = false,
-            IgnoreHeadersAndFooters = false,
-
-            // Use the revised document as the base for comparison (mirrors Word's "Show changes in" option).
             Target = ComparisonTargetType.New
         };
 
@@ -40,5 +48,7 @@ class ContractComparison
 
         // Save the document that now contains revision marks for the content differences.
         docOriginal.Save(resultPath);
+
+        Console.WriteLine($"Comparison completed. Result saved to: {resultPath}");
     }
 }

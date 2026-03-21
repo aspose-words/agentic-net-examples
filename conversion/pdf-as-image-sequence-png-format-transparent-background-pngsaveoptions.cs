@@ -8,38 +8,34 @@ class PdfToPngSequence
 {
     static void Main()
     {
-        // Path to the source PDF file.
-        string pdfPath = @"C:\Input\source.pdf";
+        // Create a temporary PDF file to work with.
+        string tempPdfPath = Path.Combine(Path.GetTempPath(), "sample.pdf");
+        if (!File.Exists(tempPdfPath))
+        {
+            Document tempDoc = new Document();
+            var builder = new DocumentBuilder(tempDoc);
+            builder.Writeln("This is a sample PDF generated for the demo.");
+            tempDoc.Save(tempPdfPath, SaveFormat.Pdf);
+        }
 
-        // Folder where the PNG images will be saved.
-        string outputFolder = @"C:\Output\Images";
-
-        // Ensure the output folder exists.
+        // Folder where the PNG images will be saved (relative to the current directory).
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputImages");
         Directory.CreateDirectory(outputFolder);
 
         // Load the PDF document.
-        Document pdfDoc = new Document(pdfPath);
+        Document pdfDoc = new Document(tempPdfPath);
 
-        // Create ImageSaveOptions for PNG format.
+        // Create ImageSaveOptions for PNG format with a transparent background.
         ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            // Set the background (paper) color to transparent.
-            PaperColor = Color.Transparent,
-
-            // Optional: set resolution if needed (default is 96 DPI).
-            // Resolution = 300
+            PaperColor = Color.Transparent
         };
 
-        // Iterate through each page of the PDF.
+        // Iterate through each page of the PDF and save as PNG.
         for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            // Configure the options to render only the current page.
             pngOptions.PageSet = new PageSet(pageIndex);
-
-            // Build the output file name (e.g., Page_1.png, Page_2.png, ...).
             string outputPath = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
-
-            // Save the current page as a PNG image with transparent background.
             pdfDoc.Save(outputPath, pngOptions);
         }
 

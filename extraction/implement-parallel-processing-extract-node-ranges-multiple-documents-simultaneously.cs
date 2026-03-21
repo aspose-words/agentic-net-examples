@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Aspose.Words;
 
@@ -15,20 +16,16 @@ namespace AsposeWordsParallelProcessing
         /// <param name="sourceFiles">Full paths of the source .doc/.docx files.</param>
         public static void ExtractSectionRangesParallel(IEnumerable<string> sourceFiles)
         {
-            // Parallel.ForEach will schedule the work on multiple threads automatically.
             Parallel.ForEach(sourceFiles, sourcePath =>
             {
-                // Load the document (lifecycle rule: load).
+                // Load the document.
                 Document doc = new Document(sourcePath);
 
                 // Build a string that contains the text of every section's range.
-                // Using StringBuilder for efficiency when concatenating many sections.
-                var builder = new System.Text.StringBuilder();
+                var builder = new StringBuilder();
 
                 for (int i = 0; i < doc.Sections.Count; i++)
                 {
-                    // Each Section is a Node; its Range property gives a Range object.
-                    // The Range.Text property returns the full text covered by that node.
                     string sectionText = doc.Sections[i].Range.Text?.Trim() ?? string.Empty;
 
                     builder.AppendLine($"--- Section {i + 1} ---");
@@ -39,10 +36,10 @@ namespace AsposeWordsParallelProcessing
                 // Determine output file path (same folder, same name with .txt extension).
                 string outputPath = Path.ChangeExtension(sourcePath, ".txt");
 
-                // Save the extracted text (lifecycle rule: save).
+                // Save the extracted text.
                 File.WriteAllText(outputPath, builder.ToString());
 
-                // Optional: log progress (console output is thread‑safe for WriteLine).
+                // Log progress.
                 Console.WriteLine($"Processed '{Path.GetFileName(sourcePath)}' -> '{Path.GetFileName(outputPath)}'");
             });
         }
@@ -50,15 +47,50 @@ namespace AsposeWordsParallelProcessing
         // Example usage.
         public static void Main()
         {
-            // Example list of document paths. Replace with actual file locations.
-            var docs = new List<string>
-            {
-                @"C:\Docs\Document1.docx",
-                @"C:\Docs\Document2.docx",
-                @"C:\Docs\Document3.docx"
-            };
+            // Create a temporary directory to hold sample documents.
+            string tempDir = Path.Combine(Path.GetTempPath(), "AsposeDocsSample");
+            Directory.CreateDirectory(tempDir);
 
+            // Generate sample .docx files.
+            var docs = new List<string>();
+            for (int i = 1; i <= 3; i++)
+            {
+                string docPath = Path.Combine(tempDir, $"Document{i}.docx");
+                CreateSampleDocument(docPath, i);
+                docs.Add(docPath);
+            }
+
+            // Run the parallel extraction.
             ExtractSectionRangesParallel(docs);
+
+            // Optionally display the generated text files.
+            Console.WriteLine("\n--- Extracted Text Files ---");
+            foreach (var docPath in docs)
+            {
+                string txtPath = Path.ChangeExtension(docPath, ".txt");
+                Console.WriteLine($"\n{Path.GetFileName(txtPath)}:");
+                Console.WriteLine(File.ReadAllText(txtPath));
+            }
+        }
+
+        // Helper method to create a simple Word document with a few sections.
+        private static void CreateSampleDocument(string path, int docNumber)
+        {
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // Section 1
+            builder.Writeln($"Document {docNumber} - Section 1");
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+            // Section 2
+            builder.Writeln($"Document {docNumber} - Section 2");
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+            // Section 3
+            builder.Writeln($"Document {docNumber} - Section 3");
+
+            doc.Save(path);
         }
     }
 }

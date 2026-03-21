@@ -10,14 +10,21 @@ class HtmlToPdfBatchConverter
 
     static void Main()
     {
-        // Folder containing the source HTML files
-        string sourceFolder = @"C:\InputHtml";
+        // Use folders relative to the executable location
+        string baseDir = AppContext.BaseDirectory;
+        string sourceFolder = Path.Combine(baseDir, "InputHtml");
+        string outputFolder = Path.Combine(baseDir, "OutputPdf");
 
-        // Folder where the resulting PDF files will be saved
-        string outputFolder = @"C:\OutputPdf";
-
-        // Ensure the output directory exists
+        // Ensure the directories exist
+        Directory.CreateDirectory(sourceFolder);
         Directory.CreateDirectory(outputFolder);
+
+        // If there are no HTML files, create a simple sample file
+        if (Directory.GetFiles(sourceFolder, "*.html").Length == 0)
+        {
+            string sampleHtmlPath = Path.Combine(sourceFolder, "Sample.html");
+            File.WriteAllText(sampleHtmlPath, "<html><body><h1>Hello, Aspose.Words!</h1><p>This is a sample HTML file.</p></body></html>");
+        }
 
         // Convert each .html file in the source folder
         foreach (string htmlFilePath in Directory.GetFiles(sourceFolder, "*.html"))
@@ -47,5 +54,7 @@ class HtmlToPdfBatchConverter
         }
 
         Console.WriteLine("Batch conversion completed.");
+        Console.WriteLine($"Input folder:  {sourceFolder}");
+        Console.WriteLine($"Output folder: {outputFolder}");
     }
 }

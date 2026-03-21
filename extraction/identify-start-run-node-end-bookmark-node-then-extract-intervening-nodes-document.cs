@@ -6,10 +6,25 @@ class ExtractBetweenNodes
 {
     static void Main()
     {
-        // Load the source document.
-        Document srcDoc = new Document("Source.docx");
+        // Create a source document programmatically.
+        Document srcDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(srcDoc);
 
-        // Identify the start Run node (for example, the first run that contains the text "START").
+        // Add some content before the start run.
+        builder.Writeln("Paragraph before start.");
+
+        // Insert the start run containing the marker text "START".
+        builder.Writeln("START");
+
+        // Insert a bookmark named "MyBookmark" with some content.
+        builder.StartBookmark("MyBookmark");
+        builder.Writeln("Content inside bookmark.");
+        builder.EndBookmark("MyBookmark");
+
+        // Add some content after the bookmark.
+        builder.Writeln("Paragraph after bookmark.");
+
+        // Identify the start Run node (the first run that contains the text "START").
         Run startRun = srcDoc.GetChildNodes(NodeType.Run, true)
                              .Cast<Run>()
                              .FirstOrDefault(r => r.Text.Contains("START"));
@@ -42,5 +57,6 @@ class ExtractBetweenNodes
 
         // Save the extracted fragment as a separate document.
         destDoc.Save("ExtractedFragment.docx");
+        Console.WriteLine("Extraction completed. File saved as ExtractedFragment.docx");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Saving;
@@ -7,21 +8,30 @@ class PdfToDocxConverter
 {
     static void Main()
     {
+        // Use the system temporary folder for all files.
+        string tempFolder = Path.GetTempPath();
+
         // Path to the source PDF file.
-        string pdfPath = @"C:\Temp\SourceDocument.pdf";
+        string pdfPath = Path.Combine(tempFolder, "SourceDocument.pdf");
 
         // Path where the converted DOCX will be saved.
-        string docxPath = @"C:\Temp\ConvertedDocument.docx";
+        string docxPath = Path.Combine(tempFolder, "ConvertedDocument.docx");
+
+        // If the PDF does not exist, create a simple one to demonstrate the conversion.
+        if (!File.Exists(pdfPath))
+        {
+            Document tempDoc = new Document();
+            var builder = new DocumentBuilder(tempDoc);
+            builder.Writeln("This is a sample PDF created for conversion demonstration.");
+            builder.Writeln("It contains a few lines of text to illustrate layout preservation.");
+            tempDoc.Save(pdfPath, SaveFormat.Pdf);
+        }
 
         // Load the PDF with options that help preserve the original layout.
-        // PdfLoadOptions is a derived class of LoadOptions specific to PDF files.
         PdfLoadOptions loadOptions = new PdfLoadOptions
         {
             // Converting metafile images (WMF/EMF) to PNG helps keep their appearance.
-            ConvertMetafilesToPng = true,
-
-            // Preserve the original page size and margins.
-            // (No explicit property for this; the default behavior already retains layout.)
+            ConvertMetafilesToPng = true
         };
 
         // Load the PDF document using the specified load options.
@@ -31,8 +41,11 @@ class PdfToDocxConverter
         // reflects the PDF's original layout before conversion.
         pdfDocument.UpdatePageLayout();
 
-        // Save the document as DOCX. The file extension determines the format,
-        // but we explicitly specify SaveFormat.Docx for clarity.
+        // Save the document as DOCX.
         pdfDocument.Save(docxPath, SaveFormat.Docx);
+
+        Console.WriteLine($"PDF successfully converted to DOCX:");
+        Console.WriteLine($"PDF : {pdfPath}");
+        Console.WriteLine($"DOCX: {docxPath}");
     }
 }

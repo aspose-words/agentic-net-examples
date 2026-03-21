@@ -8,16 +8,24 @@ class ExtractAndEmbedImages
 {
     static void Main()
     {
-        // Paths to the source and destination documents.
-        string sourcePath = @"Images.docx";      // Replace with your source file.
-        string destinationPath = @"EmbeddedImages.docx";
+        // Create a source document with an embedded image.
+        Document sourceDoc = new Document();
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
 
-        // Load the source document that contains shapes with images.
-        Document sourceDoc = new Document(sourcePath);
+        // A 1x1 pixel transparent PNG (base64 encoded).
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        using (MemoryStream pngStream = new MemoryStream(pngBytes))
+        {
+            // Insert the image into the source document as a shape.
+            Shape shape = sourceBuilder.InsertImage(pngStream);
+            shape.Width = 100;
+            shape.Height = 100;
+        }
 
         // Create a new empty document where the extracted images will be embedded.
         Document destDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(destDoc);
+        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
 
         // Get all shape nodes from the source document (including those inside groups).
         NodeCollection shapeNodes = sourceDoc.GetChildNodes(NodeType.Shape, true);
@@ -35,19 +43,18 @@ class ExtractAndEmbedImages
                 imageStream.Position = 0; // Reset stream position before reading.
 
                 // Insert the image into the destination document.
-                // InsertImage returns a Shape representing the inserted picture.
-                Shape insertedShape = builder.InsertImage(imageStream);
+                Shape insertedShape = destBuilder.InsertImage(imageStream);
 
                 // Preserve the original dimensions (optional).
                 insertedShape.Width = shape.Width;
                 insertedShape.Height = shape.Height;
 
                 // Add a line break after each image for readability.
-                builder.Writeln();
+                destBuilder.Writeln();
             }
         }
 
         // Save the new document with all images embedded.
-        destDoc.Save(destinationPath);
+        destDoc.Save("EmbeddedImages.docx");
     }
 }

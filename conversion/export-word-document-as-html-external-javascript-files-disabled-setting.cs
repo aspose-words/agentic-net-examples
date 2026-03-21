@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,14 +7,21 @@ class Program
 {
     static void Main()
     {
-        // Load the source Word document.
-        Document doc = new Document("input.docx");
+        // Always create a simple document to avoid issues with unknown input files.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document created for the HTML export example.");
 
-        // Create HTML save options and disable JavaScript in links.
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
-        htmlOptions.RemoveJavaScriptFromLinks = true; // removes any "javascript:" hrefs.
+        // Configure HTML save options to remove any JavaScript from links.
+        var htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
+        {
+            RemoveJavaScriptFromLinks = true
+        };
 
-        // Save the document as HTML using the configured options.
-        doc.Save("output.html", htmlOptions);
+        // Save the document as HTML.
+        const string outputPath = "output.html";
+        doc.Save(outputPath, htmlOptions);
+
+        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

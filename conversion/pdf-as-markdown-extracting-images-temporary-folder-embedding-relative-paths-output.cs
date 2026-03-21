@@ -7,15 +7,27 @@ class Program
 {
     static void Main()
     {
-        // Path to the source PDF file.
-        string pdfPath = @"C:\Input\sample.pdf";
+        // Create a temporary working directory.
+        string workDir = Path.Combine(Path.GetTempPath(),
+            "AsposeDemo_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(workDir);
+
+        // Create a simple PDF file to work with.
+        string pdfPath = Path.Combine(workDir, "sample.pdf");
+        Document tempDoc = new Document();
+
+        Paragraph paragraph = new Paragraph(tempDoc);
+        Run run = new Run(tempDoc, "Hello, Aspose.Words!");
+        paragraph.AppendChild(run);
+        tempDoc.FirstSection.Body.AppendChild(paragraph);
+
+        tempDoc.Save(pdfPath, SaveFormat.Pdf);
 
         // Path where the resulting Markdown file will be saved.
-        string markdownPath = @"C:\Output\sample.md";
+        string markdownPath = Path.Combine(workDir, "sample.md");
 
         // Create a temporary folder for extracted images.
-        string imagesTempFolder = Path.Combine(Path.GetTempPath(),
-            "AsposeImages_" + Guid.NewGuid().ToString("N"));
+        string imagesTempFolder = Path.Combine(workDir, "images");
         Directory.CreateDirectory(imagesTempFolder);
 
         // Load the PDF document.
@@ -24,16 +36,14 @@ class Program
         // Configure Markdown save options.
         MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
         {
-            // Save images to the temporary folder.
             ImagesFolder = imagesTempFolder,
-            // Use a dot as the folder alias so image URIs are relative (no path prefix).
             ImagesFolderAlias = ".",
-            // Ensure the format is set to Markdown (optional, as the options type implies it).
             SaveFormat = SaveFormat.Markdown
         };
 
-        // Save the document as Markdown. Images will be written to the temporary folder,
-        // and the Markdown file will reference them with relative paths.
+        // Save the document as Markdown.
         doc.Save(markdownPath, saveOptions);
+
+        Console.WriteLine($"Markdown file saved to: {markdownPath}");
     }
 }

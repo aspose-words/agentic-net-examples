@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -14,25 +15,36 @@ namespace ImageToPdfConversion
         public static void ConvertPngToPdf(string pngFilePath, string pdfFilePath)
         {
             // Create a new empty document.
-            Document doc = new Document();
+            var doc = new Document();
 
             // Use DocumentBuilder to insert the PNG image into the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            var builder = new DocumentBuilder(doc);
             builder.InsertImage(pngFilePath);
 
-            // Save the document as PDF using the SaveFormat.Pdf enumeration value.
+            // Ensure the output directory exists.
+            var pdfDir = Path.GetDirectoryName(pdfFilePath);
+            if (!string.IsNullOrEmpty(pdfDir) && !Directory.Exists(pdfDir))
+                Directory.CreateDirectory(pdfDir);
+
+            // Save the document as PDF.
             doc.Save(pdfFilePath, SaveFormat.Pdf);
         }
 
         // Example usage.
         public static void Main()
         {
-            string pngPath = @"C:\Images\sample.png";
-            string pdfPath = @"C:\Output\sample.pdf";
+            // Create a temporary PNG file (1x1 pixel, red).
+            string tempPngPath = Path.Combine(Path.GetTempPath(), "sample.png");
+            const string base64Png = 
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+X6cAAAAASUVORK5CYII=";
+            File.WriteAllBytes(tempPngPath, Convert.FromBase64String(base64Png));
 
-            ConvertPngToPdf(pngPath, pdfPath);
+            // Define the output PDF path.
+            string pdfPath = Path.Combine(Path.GetTempPath(), "sample.pdf");
 
-            Console.WriteLine("Conversion completed.");
+            ConvertPngToPdf(tempPngPath, pdfPath);
+
+            Console.WriteLine($"Conversion completed. PDF saved to: {pdfPath}");
         }
     }
 }

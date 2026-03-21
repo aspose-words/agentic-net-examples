@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -13,26 +14,34 @@ namespace AsposeWordsExamples
         /// <param name="outputMhtmlPath">Full path where the MHTML file will be saved.</param>
         public static void Convert(string inputDocxPath, string outputMhtmlPath)
         {
-            // Load the existing DOCX document.
-            Document doc = new Document(inputDocxPath);
-
-            // Configure save options for MHTML.
-            // - SaveFormat.Mhtml tells Aspose.Words to produce an MHTML (web archive) file.
-            // - ExportFontResources = true ensures that font files are embedded.
-            // - ExportImagesAsBase64 = true embeds images directly as Base64 data URIs.
-            // - ExportCidUrlsForMhtmlResources = true uses CID URLs, which is the standard way
-            //   to embed resources in MHTML files.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+            if (!File.Exists(inputDocxPath))
             {
-                ExportFontResources = true,
-                ExportImagesAsBase64 = true,
-                ExportCidUrlsForMhtmlResources = true,
-                // Optional: make the output more readable.
-                PrettyFormat = true
-            };
+                Console.WriteLine($"Input file not found: {inputDocxPath}");
+                return;
+            }
 
-            // Save the document using the configured options.
-            doc.Save(outputMhtmlPath, saveOptions);
+            try
+            {
+                // Load the existing DOCX document.
+                Document doc = new Document(inputDocxPath);
+
+                // Configure save options for MHTML.
+                HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+                {
+                    ExportFontResources = true,
+                    ExportImagesAsBase64 = true,
+                    ExportCidUrlsForMhtmlResources = true,
+                    PrettyFormat = true
+                };
+
+                // Save the document using the configured options.
+                doc.Save(outputMhtmlPath, saveOptions);
+                Console.WriteLine($"DOCX converted to MHTML successfully: {outputMhtmlPath}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred during conversion: {ex.Message}");
+            }
         }
     }
 
@@ -44,14 +53,23 @@ namespace AsposeWordsExamples
         /// </summary>
         static void Main(string[] args)
         {
-            // Example usage – replace with real paths or pass via command‑line arguments.
-            string inputPath = "input.docx";   // Path to the source DOCX file.
-            string outputPath = "output.mhtml"; // Desired MHTML output path.
+            // Allow passing paths via command‑line arguments.
+            string inputPath;
+            string outputPath;
 
-            // Call the conversion method.
+            if (args.Length >= 2)
+            {
+                inputPath = args[0];
+                outputPath = args[1];
+            }
+            else
+            {
+                // Example usage – replace with real paths or pass via command‑line arguments.
+                inputPath = "input.docx";   // Path to the source DOCX file.
+                outputPath = "output.mhtml"; // Desired MHTML output path.
+            }
+
             DocxToMhtmlConverter.Convert(inputPath, outputPath);
-
-            Console.WriteLine($"DOCX converted to MHTML successfully: {outputPath}");
         }
     }
 }

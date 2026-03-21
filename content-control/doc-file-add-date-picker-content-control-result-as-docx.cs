@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
@@ -13,7 +14,16 @@ class Program
         // Path where the resulting DOCX will be saved.
         const string outputPath = "output.docx";
 
-        // Load the DOC file. This uses the Document(string) constructor rule.
+        // Ensure the input file exists; if not, create a simple document.
+        if (!File.Exists(inputPath))
+        {
+            Document tempDoc = new Document();
+            DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
+            tempBuilder.Writeln("This is a placeholder document.");
+            tempDoc.Save(inputPath);
+        }
+
+        // Load the DOC file.
         Document doc = new Document(inputPath);
 
         // Create a date picker content control (Structured Document Tag of type Date).
@@ -35,7 +45,7 @@ class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertNode(dateTag);
 
-        // Save the modified document as DOCX. This uses the Document.Save(string, SaveFormat) rule.
+        // Save the modified document as DOCX.
         doc.Save(outputPath, SaveFormat.Docx);
     }
 }

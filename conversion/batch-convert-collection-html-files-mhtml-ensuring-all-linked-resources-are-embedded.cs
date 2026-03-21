@@ -42,17 +42,39 @@ class HtmlToMhtmlBatchConverter
         }
     }
 
-    // Example entry point.
     static void Main()
     {
-        // Folder containing source HTML files.
-        string sourceFolder = @"C:\InputHtml";
+        // Use temporary directories so the example works out‑of‑the‑box.
+        string tempRoot = Path.Combine(Path.GetTempPath(), "HtmlToMhtmlDemo");
+        string sourceFolder = Path.Combine(tempRoot, "InputHtml");
+        string targetFolder = Path.Combine(tempRoot, "OutputMhtml");
 
-        // Folder where the resulting MHTML files will be placed.
-        string targetFolder = @"C:\OutputMhtml";
+        // Ensure clean state.
+        if (Directory.Exists(tempRoot))
+            Directory.Delete(tempRoot, recursive: true);
 
+        Directory.CreateDirectory(sourceFolder);
+        Directory.CreateDirectory(targetFolder);
+
+        // Create a simple HTML file for demonstration.
+        string sampleHtmlPath = Path.Combine(sourceFolder, "sample.html");
+        File.WriteAllText(sampleHtmlPath,
+            @"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Sample</title>
+    <style>body { font-family: Arial; }</style>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <p>This is a sample HTML file.</p>
+</body>
+</html>");
+
+        // Perform the batch conversion.
         ConvertFolder(sourceFolder, targetFolder);
 
-        Console.WriteLine("Batch conversion completed.");
+        Console.WriteLine($"Batch conversion completed. Output files are located in: {targetFolder}");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,23 +7,29 @@ class Program
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\Sample.docx";
+        // Use files relative to the current working directory so they always exist.
+        string inputPath = Path.Combine(Environment.CurrentDirectory, "Sample.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Sample.mht");
 
-        // Path where the resulting MHTML file will be saved.
-        string outputPath = @"C:\Docs\Sample.mht";
+        Document doc;
 
-        // Load the DOCX document.
-        Document doc = new Document(inputPath);
+        if (File.Exists(inputPath))
+        {
+            // Load the existing DOCX file.
+            doc = new Document(inputPath);
+        }
+        else
+        {
+            // Create a simple document if the input file is missing.
+            doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello, Aspose.Words!");
+            // Save the generated DOCX so the example can be rerun without errors.
+            doc.Save(inputPath);
+        }
 
-        // Configure save options for MHTML.
-        // - CssStyleSheetType.External tells Aspose.Words to treat linked CSS as external files,
-        //   which are then packaged inside the MHTML container.
-        // - ExportCidUrlsForMhtmlResources forces resources (CSS, images, fonts) to be referenced
-        //   via CID URLs, ensuring they are embedded in the MHTML output.
-        // - ExportImagesAsBase64 and ExportFontsAsBase64 are optional but often desirable for a
-        //   fully self‑contained MHTML file.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+        // Configure save options for MHTML with embedded resources.
+        var saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
         {
             CssStyleSheetType = CssStyleSheetType.External,
             ExportCidUrlsForMhtmlResources = true,
@@ -31,7 +38,8 @@ class Program
             PrettyFormat = true
         };
 
-        // Save the document as MHTML; all linked CSS files are automatically embedded.
+        // Save the document as MHTML.
         doc.Save(outputPath, saveOptions);
+        Console.WriteLine($"MHTML file saved to: {outputPath}");
     }
 }

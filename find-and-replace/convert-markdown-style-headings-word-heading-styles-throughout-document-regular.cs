@@ -1,16 +1,26 @@
 using System;
+using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Replacing;
-using Aspose.Words.Drawing;
 
 class Program
 {
     static void Main()
     {
-        // Load a Markdown document. The MarkdownLoadOptions enable proper handling of Markdown syntax.
-        Document doc = new Document("input.md", new MarkdownLoadOptions());
+        // Sample markdown content.
+        string markdown = @"
+# Heading 1
+## Heading 2
+### Heading 3
+Regular paragraph text.
+";
+
+        // Load the markdown from a memory stream.
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(markdown));
+        Document doc = new Document(stream, new MarkdownLoadOptions());
 
         // Regular expression that matches Markdown headings:
         //   ^(#{1,6})\s*(.+)$

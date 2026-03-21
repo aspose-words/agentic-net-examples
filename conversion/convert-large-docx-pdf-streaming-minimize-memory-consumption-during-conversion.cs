@@ -7,25 +7,28 @@ class Program
 {
     static void Main()
     {
-        // Paths to the source DOCX and the destination PDF.
-        const string inputFile = @"C:\Docs\LargeDocument.docx";
-        const string outputFile = @"C:\Docs\LargeDocument.pdf";
+        // Create a simple document in memory.
+        Document doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document generated at runtime.");
+        builder.Writeln("It demonstrates streaming conversion to PDF with minimal memory usage.");
 
-        // Open the source document as a read‑only stream to avoid loading the whole file into memory.
-        using (FileStream inputStream = File.OpenRead(inputFile))
+        // Define the output PDF path (relative to the executable's folder).
+        string outputFile = Path.Combine(AppContext.BaseDirectory, "LargeDocument.pdf");
+
+        // Ensure the output directory exists.
+        Directory.CreateDirectory(Path.GetDirectoryName(outputFile)!);
+
+        // Configure PDF save options with memory optimization.
+        SaveOptions pdfOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
+        pdfOptions.MemoryOptimization = true;
+
+        // Save the document to a write‑only stream, which writes the PDF incrementally.
+        using (FileStream outputStream = File.Create(outputFile))
         {
-            // Load the document from the stream.
-            Document doc = new Document(inputStream);
-
-            // Create PDF save options and enable memory optimization to reduce RAM usage.
-            SaveOptions pdfOptions = SaveOptions.CreateSaveOptions(SaveFormat.Pdf);
-            pdfOptions.MemoryOptimization = true;
-
-            // Save the document to a write‑only stream, which writes the PDF incrementally.
-            using (FileStream outputStream = File.Create(outputFile))
-            {
-                doc.Save(outputStream, pdfOptions);
-            }
+            doc.Save(outputStream, pdfOptions);
         }
+
+        Console.WriteLine($"PDF saved to: {outputFile}");
     }
 }

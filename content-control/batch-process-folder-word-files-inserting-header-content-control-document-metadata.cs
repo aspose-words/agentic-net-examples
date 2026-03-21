@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Markup; // <-- added for StructuredDocumentTag and SdtType
+using Aspose.Words.Markup;
 using Aspose.Words.Saving;
 
 namespace BatchHeaderContentControl
@@ -10,15 +10,16 @@ namespace BatchHeaderContentControl
     {
         static void Main()
         {
-            // Folder containing the Word documents to process.
-            string inputFolder = @"C:\Docs\Input";
-            // Optional: folder to save processed files (can be the same as inputFolder to overwrite).
-            string outputFolder = @"C:\Docs\Output";
+            // Use folders relative to the executable so they always exist.
+            string baseDir = AppContext.BaseDirectory;
+            string inputFolder = Path.Combine(baseDir, "Input");
+            string outputFolder = Path.Combine(baseDir, "Output");
 
-            // Ensure the output folder exists.
+            // Ensure the folders exist.
+            Directory.CreateDirectory(inputFolder);
             Directory.CreateDirectory(outputFolder);
 
-            // Process each .docx file in the input folder.
+            // Process each .docx file in the input folder (if any).
             foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
             {
                 // Load the document.
@@ -37,24 +38,24 @@ namespace BatchHeaderContentControl
                 builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
                 // Insert a plain‑text content control (StructuredDocumentTag) into the header.
-                // The overload without the "isShowingPlaceholderText" parameter is available in
-                // Aspose.Words 22.9 and later. If you target an older version, use the two‑parameter overload.
                 StructuredDocumentTag sdt = builder.InsertStructuredDocumentTag(SdtType.PlainText);
 
                 // Inside the content control, insert a DOCPROPERTY field that displays the document title.
                 builder.InsertField(" DOCPROPERTY \"Title\" ");
 
-                // Optionally, you can set a tag or title for the content control for identification.
+                // Optionally, set a tag or title for the content control for identification.
                 sdt.Title = "HeaderTitleControl";
                 sdt.Tag = "HeaderTitle";
 
                 // Update all fields in the document so the DOCPROPERTY reflects the metadata we set.
                 doc.UpdateFields();
 
-                // Save the modified document. Overwrite the original or write to the output folder.
+                // Save the modified document.
                 string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
                 doc.Save(outputPath);
             }
+
+            Console.WriteLine("Processing completed.");
         }
     }
 }

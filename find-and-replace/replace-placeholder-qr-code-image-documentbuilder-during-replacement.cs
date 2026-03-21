@@ -7,11 +7,26 @@ class Program
 {
     static void Main()
     {
-        // Load the template document that contains a merge field named "QRPlaceholder".
-        Document doc = new Document("Template.docx");
+        const string templatePath = "Template.docx";
+
+        // Ensure the template exists; if not, create a simple one with a merge field named "QRPlaceholder".
+        Document doc;
+        if (File.Exists(templatePath))
+        {
+            doc = new Document(templatePath);
+        }
+        else
+        {
+            doc = new Document();
+            DocumentBuilder tempBuilder = new DocumentBuilder(doc);
+            tempBuilder.Writeln("This is a sample document.");
+            tempBuilder.InsertField("MERGEFIELD QRPlaceholder \\* MERGEFORMAT");
+            doc.Save(templatePath);
+        }
+
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Assign a custom barcode generator (implementation must be provided elsewhere).
+        // Assign a custom barcode generator.
         doc.FieldOptions.BarcodeGenerator = new CustomBarcodeGenerator();
 
         // Set up QR code parameters.
@@ -42,19 +57,21 @@ class Program
 }
 
 // Minimal stub for a custom barcode generator.
-// In a real scenario, this class should generate a valid barcode image.
+// Returns a simple 1x1 PNG image.
 public class CustomBarcodeGenerator : IBarcodeGenerator
 {
+    // Base64-encoded 1x1 black PNG.
+    private static readonly byte[] PngBytes = Convert.FromBase64String(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+
     public Stream GetBarcodeImage(BarcodeParameters parameters)
     {
-        // TODO: Generate an image based on the parameters.
-        // For demonstration purposes, return an empty stream.
-        return new MemoryStream();
+        return new MemoryStream(PngBytes) { Position = 0 };
     }
 
     public Stream GetOldBarcodeImage(BarcodeParameters parameters)
     {
-        // Not required for this example.
-        return new MemoryStream();
+        // Not required for this example; return the same placeholder image.
+        return GetBarcodeImage(parameters);
     }
 }

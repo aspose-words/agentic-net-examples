@@ -1,25 +1,32 @@
 using System;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Comparing;
-using Aspose.Words.Replacing; // not required but harmless
 
 class Program
 {
     static void Main()
     {
-        // Load the original and the edited documents.
-        Document docOriginal = new Document("Original.docx");
-        Document docEdited   = new Document("Edited.docx");
+        // Create the original document.
+        Document docOriginal = new Document();
+        DocumentBuilder builder = new DocumentBuilder(docOriginal);
+        builder.Writeln("This is a sample paragraph.");
+        docOriginal.Save("Original.docx");
 
-        // Configure comparison options:
-        // - Track formatting changes (IgnoreFormatting = false).
-        // - Ignore all other element types to reduce noise.
-        // - Do not compare moves.
+        // Create the edited document based on the original and apply a formatting change.
+        Document docEdited = new Document("Original.docx");
+        DocumentBuilder editBuilder = new DocumentBuilder(docEdited);
+        editBuilder.MoveToDocumentStart();
+        editBuilder.Font.Bold = true;
+        editBuilder.Writeln("This is a sample paragraph."); // same text, different formatting
+        docEdited.Save("Edited.docx");
+
+        // Configure comparison options to track only formatting changes.
         CompareOptions compareOptions = new CompareOptions
         {
             CompareMoves = false,
             IgnoreFormatting = false,
-            IgnoreCaseChanges = false,
+            IgnoreCaseChanges = true,
             IgnoreComments = true,
             IgnoreTables = true,
             IgnoreFields = true,
@@ -33,12 +40,13 @@ class Program
         docOriginal.Compare(docEdited, "Reviewer", DateTime.Now, compareOptions);
 
         // Accept only formatting revisions, reject all other content revisions.
-        foreach (Revision rev in docOriginal.Revisions)
+        var revisions = docOriginal.Revisions.Cast<Revision>().ToList();
+        foreach (Revision rev in revisions)
         {
             if (rev.RevisionType == RevisionType.FormatChange)
-                rev.Accept();   // keep formatting change
+                rev.Accept();
             else
-                rev.Reject();   // discard insertion, deletion, move, etc.
+                rev.Reject();
         }
 
         // Save the resulting document with only formatting revisions applied.

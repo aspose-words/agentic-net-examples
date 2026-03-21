@@ -7,36 +7,67 @@ class Program
 {
     static void Main()
     {
-        // Load the Word document that contains repeating sections.
-        // Replace the path with the actual location of your document.
-        Document doc = new Document("InputDocument.docx");
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a repeating section content control directly into the document body.
+        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block)
+        {
+            Title = "MyRepeatingSection",
+            Tag = "RepeatingSectionTag"
+        };
+        doc.FirstSection.Body.AppendChild(repeatingSection);
+
+        // Inside the repeating section, add a paragraph to host nested controls.
+        Paragraph para = new Paragraph(doc);
+        repeatingSection.AppendChild(para);
+        builder.MoveTo(para);
+
+        // Add a nested rich text content control.
+        StructuredDocumentTag nestedRichText = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Inline)
+        {
+            Title = "NestedRichText",
+            Tag = "RichTextTag"
+        };
+        para.AppendChild(nestedRichText);
+        builder.MoveTo(nestedRichText);
+        builder.Writeln("Sample text inside nested rich text control.");
+
+        // Add another nested plain text content control.
+        StructuredDocumentTag nestedPlain = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "NestedPlainText",
+            Tag = "PlainTextTag"
+        };
+        para.AppendChild(nestedPlain);
+        builder.MoveTo(nestedPlain);
+        builder.Writeln("Plain text inside nested plain text control.");
 
         // Retrieve all structured document tags (content controls) in the document.
         NodeCollection allSdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true);
 
         // Iterate through each content control that is a repeating section.
-        foreach (StructuredDocumentTag repeatingSection in allSdtNodes
+        foreach (StructuredDocumentTag repeating in allSdtNodes
                      .OfType<StructuredDocumentTag>()
                      .Where(sdt => sdt.SdtType == SdtType.RepeatingSection))
         {
-            Console.WriteLine($"Repeating Section found. Title: '{repeatingSection.Title}', Tag: '{repeatingSection.Tag}'");
+            Console.WriteLine($"Repeating Section found. Title: '{repeating.Title}', Tag: '{repeating.Tag}'");
 
             // Get all nested content controls inside this repeating section (deep search).
-            // The repeating section itself is also a StructuredDocumentTag, so we filter it out.
-            NodeCollection nestedControls = repeatingSection.GetChildNodes(NodeType.StructuredDocumentTag, true);
+            NodeCollection nestedControls = repeating.GetChildNodes(NodeType.StructuredDocumentTag, true);
 
-            foreach (StructuredDocumentTag nestedControl in nestedControls
+            foreach (StructuredDocumentTag nested in nestedControls
                          .OfType<StructuredDocumentTag>()
-                         .Where(sdt => sdt != repeatingSection))
+                         .Where(sdt => sdt != repeating))
             {
-                // Output useful information about each nested content control.
-                Console.WriteLine($"  Nested Control - Type: {nestedControl.SdtType}, Title: '{nestedControl.Title}', Tag: '{nestedControl.Tag}'");
+                Console.WriteLine($"  Nested Control - Type: {nested.SdtType}, Title: '{nested.Title}', Tag: '{nested.Tag}'");
             }
 
             Console.WriteLine(); // Blank line for readability between sections.
         }
 
-        // Optionally, save the document after inspection (no modifications made here).
+        // Optionally, save the document after inspection.
         doc.Save("OutputDocument.docx");
     }
 }

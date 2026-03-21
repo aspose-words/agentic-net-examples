@@ -6,16 +6,20 @@ class Program
 {
     static void Main()
     {
-        // Load the original and edited documentation files
-        Document docOriginal = new Document("OriginalDocumentation.docx");
-        Document docEdited = new Document("EditedDocumentation.docx");
+        // Create original document
+        Document docOriginal = new Document();
+        DocumentBuilder builder = new DocumentBuilder(docOriginal);
+        builder.Writeln("Hello world");
+
+        // Create edited document with extra whitespace
+        Document docEdited = new Document();
+        DocumentBuilder builderEdited = new DocumentBuilder(docEdited);
+        builderEdited.Writeln("Hello   world");
 
         // Configure comparison options to ignore whitespace/formatting changes
         CompareOptions compareOptions = new CompareOptions
         {
-            // Ignoring formatting treats whitespace differences as non‑significant
             IgnoreFormatting = true,
-            // Keep other options at their defaults (explicitly set for clarity)
             CompareMoves = false,
             IgnoreCaseChanges = false,
             IgnoreComments = false,

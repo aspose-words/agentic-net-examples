@@ -6,13 +6,17 @@ class XlsxCompressionExample
 {
     static void Main()
     {
-        // Load the source DOCX document.
-        Document doc = new Document("InputDocument.docx");
+        // Create a new document and add some content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
 
-        // Create XlsxSaveOptions and configure fast compression.
-        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions();
-        xlsxOptions.CompressionLevel = CompressionLevel.Fast;   // Fast (weaker) compression.
-        xlsxOptions.SaveFormat = SaveFormat.Xlsx;               // Ensure the format is XLSX.
+        // Configure XlsxSaveOptions for fast compression.
+        XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
+        {
+            CompressionLevel = CompressionLevel.Fast, // Fast (weaker) compression.
+            SaveFormat = SaveFormat.Xlsx               // Ensure the format is XLSX.
+        };
 
         // Save the document as an XLSX file using the specified options.
         doc.Save("CompressedOutput.xlsx", xlsxOptions);

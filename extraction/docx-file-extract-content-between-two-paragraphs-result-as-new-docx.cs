@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 class ExtractBetweenParagraphs
 {
@@ -12,6 +13,24 @@ class ExtractBetweenParagraphs
         // Text of the paragraphs that mark the start and end of the range to extract.
         const string startMarker = "Start of extraction";
         const string endMarker = "End of extraction";
+
+        // -----------------------------------------------------------------
+        // Ensure a sample source document exists with the required markers.
+        // -----------------------------------------------------------------
+        if (!System.IO.File.Exists(inputPath))
+        {
+            var sampleDoc = new Document();
+            var builder = new DocumentBuilder(sampleDoc);
+
+            builder.Writeln("Paragraph before start marker.");
+            builder.Writeln(startMarker);
+            builder.Writeln("First extracted paragraph.");
+            builder.Writeln("Second extracted paragraph.");
+            builder.Writeln(endMarker);
+            builder.Writeln("Paragraph after end marker.");
+
+            sampleDoc.Save(inputPath);
+        }
 
         // Load the source document.
         Document srcDoc = new Document(inputPath);
@@ -39,7 +58,10 @@ class ExtractBetweenParagraphs
 
         // Validate that both markers were found and that the range is logical.
         if (startIdx == -1 || endIdx == -1 || endIdx <= startIdx)
-            throw new InvalidOperationException("Unable to locate valid start/end paragraphs.");
+        {
+            Console.WriteLine("Unable to locate valid start/end paragraphs.");
+            return;
+        }
 
         // Create a new blank document.
         Document destDoc = new Document();
@@ -56,5 +78,7 @@ class ExtractBetweenParagraphs
 
         // Save the extracted content as a new DOCX file.
         destDoc.Save(outputPath);
+
+        Console.WriteLine($"Extraction complete. Saved to '{outputPath}'.");
     }
 }

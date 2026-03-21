@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -42,9 +42,7 @@ namespace AsposeWordsExport
                 pngOptions.PageSet = new PageSet(zeroBasedIndex);
 
                 // Build the output file name.
-                string outFile = System.IO.Path.Combine(
-                    outputFolder,
-                    $"Page_{pageNumber}.png");
+                string outFile = Path.Combine(outputFolder, $"Page_{pageNumber}.png");
 
                 // Save the single page as a PNG image.
                 doc.Save(outFile, pngOptions);
@@ -54,14 +52,33 @@ namespace AsposeWordsExport
         // Example usage.
         public static void Main()
         {
-            string pdfFile = @"C:\Docs\Sample.pdf";
-            string outputDir = @"C:\Docs\ExportedPages";
+            // Create a temporary PDF file with a few pages for demonstration.
+            string tempDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+            Directory.CreateDirectory(tempDir);
+
+            string pdfFile = Path.Combine(tempDir, "Sample.pdf");
+            if (!File.Exists(pdfFile))
+            {
+                Document tempDoc = new Document();
+                for (int i = 1; i <= 10; i++)
+                {
+                    Paragraph para = new Paragraph(tempDoc);
+                    para.AppendChild(new Run(tempDoc, $"This is page {i}."));
+                    tempDoc.FirstSection.Body.AppendChild(para);
+                    if (i < 10)
+                        tempDoc.AppendChild(new Section(tempDoc));
+                }
+                tempDoc.Save(pdfFile);
+            }
+
+            string outputDir = Path.Combine(tempDir, "ExportedPages");
+            Directory.CreateDirectory(outputDir);
+
             float dpi = 300f; // Custom resolution.
 
-            // Ensure the output directory exists.
-            System.IO.Directory.CreateDirectory(outputDir);
-
             ExportSelectedPages(pdfFile, outputDir, dpi);
+
+            Console.WriteLine($"Export completed. PNG files are located in: {outputDir}");
         }
     }
 }

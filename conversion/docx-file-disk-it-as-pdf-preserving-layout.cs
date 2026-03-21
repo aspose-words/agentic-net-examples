@@ -1,20 +1,28 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 class ConvertDocxToPdf
 {
     static void Main()
     {
-        // Path to the source DOCX file.
-        string inputPath = @"C:\Docs\SourceDocument.docx";
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Path to the destination PDF file.
-        string outputPath = @"C:\Docs\ConvertedDocument.pdf";
+        // Use DocumentBuilder to add some content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
+        builder.Writeln("This PDF was generated from a DOCX document created in code.");
 
-        // Load the existing DOCX document from disk.
-        Document doc = new Document(inputPath);
+        // Determine a writable output path (temporary folder).
+        string outputPath = Path.Combine(Path.GetTempPath(), "ConvertedDocument.pdf");
+
+        // Ensure the directory exists.
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
 
         // Save the document as PDF. The file extension determines the format.
         doc.Save(outputPath);
+
+        Console.WriteLine($"PDF successfully saved to: {outputPath}");
     }
 }

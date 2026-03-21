@@ -1,35 +1,40 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-namespace AsposeWordsRevisionSample
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            // Paths to the original and edited documents.
-            // In a real scenario replace these with actual file locations.
-            string originalPath = @"C:\Docs\Original.docx";
-            string editedPath   = @"C:\Docs\Edited.docx";
+        // Create temporary file paths.
+        string originalPath = Path.Combine(Path.GetTempPath(), "Original.docx");
+        string editedPath   = Path.Combine(Path.GetTempPath(), "Edited.docx");
+        string resultPath   = Path.Combine(Path.GetTempPath(), "ComparedResult.docx");
 
-            // Load the two documents.
-            Document docOriginal = new Document(originalPath);
-            Document docEdited   = new Document(editedPath);
+        // Build the original document.
+        var originalDoc = new Document();
+        var builder = new DocumentBuilder(originalDoc);
+        builder.Writeln("Hello world!");
+        originalDoc.Save(originalPath);
 
-            // Ensure both documents have no revisions before comparison.
-            // This is required by the Compare method.
-            if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
-            {
-                // Compare the edited document against the original.
-                // The revisions will be added to docOriginal.
-                docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
-            }
+        // Build the edited document (adds an extra line).
+        var editedDoc = new Document();
+        var editedBuilder = new DocumentBuilder(editedDoc);
+        editedBuilder.Writeln("Hello world!");
+        editedBuilder.Writeln("Additional line.");
+        editedDoc.Save(editedPath);
 
-            // Save the result as DOCX while preserving all revision metadata.
-            // The Save method automatically determines the format from the extension.
-            string resultPath = @"C:\Docs\ComparedResult.docx";
-            docOriginal.Save(resultPath);
-        }
+        // Load the documents.
+        var docOriginal = new Document(originalPath);
+        var docEdited   = new Document(editedPath);
+
+        // Compare edited document against the original; revisions are added to docOriginal.
+        docOriginal.Compare(docEdited, "Comparer", DateTime.Now);
+
+        // Save the comparison result while preserving all revision metadata.
+        docOriginal.Save(resultPath);
+
+        Console.WriteLine($"Comparison completed. Result saved to: {resultPath}");
     }
 }

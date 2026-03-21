@@ -8,25 +8,39 @@ class PdfToEpubBatch
 {
     static void Main()
     {
-        // Folder containing source PDF files
-        string inputFolder = @"C:\InputPdfs";
-        // Folder where the resulting EPUB files will be placed
-        string outputFolder = @"C:\OutputEpubs";
+        // Base directory of the application
+        string baseDir = AppContext.BaseDirectory;
 
+        // Folder containing source PDF files (created if missing)
+        string inputFolder = Path.Combine(baseDir, "InputPdfs");
+        Directory.CreateDirectory(inputFolder);
+
+        // Folder where the resulting EPUB files will be placed (created if missing)
+        string outputFolder = Path.Combine(baseDir, "OutputEpubs");
         Directory.CreateDirectory(outputFolder);
 
-        // Process each PDF file in the input folder
-        foreach (string pdfPath in Directory.GetFiles(inputFolder, "*.pdf"))
+        // Get all PDF files in the input folder
+        string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
+        if (pdfFiles.Length == 0)
+        {
+            Console.WriteLine($"No PDF files found in '{inputFolder}'. Place PDFs there and rerun.");
+            return;
+        }
+
+        // Process each PDF file
+        foreach (string pdfPath in pdfFiles)
         {
             // Load the PDF document
             Document pdfDoc = new Document(pdfPath);
 
             // Configure EPUB save options
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions();
-            saveOptions.SaveFormat = SaveFormat.Epub;          // Target format
-            saveOptions.Encoding = Encoding.UTF8;              // Use UTF‑8 encoding
-            saveOptions.DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph; // Preserve chapter structure
-            saveOptions.ExportDocumentProperties = true;      // Optional: include document properties
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+            {
+                SaveFormat = SaveFormat.Epub,               // Target format
+                Encoding = Encoding.UTF8,                   // Use UTF‑8 encoding
+                DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph, // Preserve chapter structure
+                ExportDocumentProperties = true            // Include document properties (optional)
+            };
 
             // Determine output file name (same base name, .epub extension)
             string fileName = Path.GetFileNameWithoutExtension(pdfPath);
@@ -34,6 +48,7 @@ class PdfToEpubBatch
 
             // Save the document as EPUB using the configured options
             pdfDoc.Save(epubPath, saveOptions);
+            Console.WriteLine($"Converted '{pdfPath}' → '{epubPath}'.");
         }
     }
 }

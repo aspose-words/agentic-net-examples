@@ -9,25 +9,32 @@ namespace ExportFontsExample
     {
         static void Main()
         {
-            // Path to the folder that contains the input document and where output will be written.
+            // Path to the folder where output will be written.
             string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
             Directory.CreateDirectory(artifactsDir);
 
-            // Load the source document.
-            Document doc = new Document(Path.Combine(artifactsDir, "Rendering.docx"));
+            // Create a simple document programmatically.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Font.Name = "Arial";
+            builder.Writeln("Hello, world! This document demonstrates exporting fonts.");
 
             // Configure HTML save options to export each used font as a separate file.
             HtmlSaveOptions saveOptions = new HtmlSaveOptions
             {
-                ExportFontResources = true,                     // Enable font exporting.
-                FontsFolder = Path.Combine(artifactsDir, "Fonts") // Folder where the font files will be saved.
+                ExportFontResources = true,
+                FontsFolder = Path.Combine(artifactsDir, "Fonts")
             };
 
-            // Ensure the fonts folder exists; Aspose.Words will also create it if missing.
+            // Ensure the fonts folder exists.
             Directory.CreateDirectory(saveOptions.FontsFolder);
 
             // Save the document as HTML. Fonts will be written to the specified folder.
-            doc.Save(Path.Combine(artifactsDir, "Rendering.html"), saveOptions);
+            string htmlPath = Path.Combine(artifactsDir, "Rendering.html");
+            doc.Save(htmlPath, saveOptions);
+
+            Console.WriteLine($"HTML saved to: {htmlPath}");
+            Console.WriteLine($"Fonts saved to: {saveOptions.FontsFolder}");
         }
     }
 }

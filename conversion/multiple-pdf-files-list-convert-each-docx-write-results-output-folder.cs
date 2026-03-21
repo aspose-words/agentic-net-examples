@@ -20,31 +20,50 @@ namespace PdfToDocxBatch
 
             foreach (string pdfPath in pdfFiles)
             {
-                // Load the PDF document using the Document(string) constructor.
+                if (!File.Exists(pdfPath))
+                {
+                    Console.WriteLine($"Skipping missing file: {pdfPath}");
+                    continue;
+                }
+
+                // Load the PDF document.
                 Document pdfDoc = new Document(pdfPath);
 
                 // Build the output DOCX file name (same base name, .docx extension).
                 string docxFileName = Path.GetFileNameWithoutExtension(pdfPath) + ".docx";
                 string docxPath = Path.Combine(outputFolder, docxFileName);
 
-                // Save the document as DOCX using the Save(string) overload.
+                // Save the document as DOCX.
                 pdfDoc.Save(docxPath);
+                Console.WriteLine($"Converted '{pdfPath}' to '{docxPath}'.");
             }
         }
 
         // Example usage.
         public static void Main()
         {
-            // Example list of PDF files – replace with your actual file paths.
-            List<string> pdfFiles = new List<string>
+            // Create temporary input and output folders.
+            string tempRoot = Path.Combine(Path.GetTempPath(), "PdfToDocxDemo");
+            string inputFolder = Path.Combine(tempRoot, "Input");
+            string outputFolder = Path.Combine(tempRoot, "Output");
+
+            Directory.CreateDirectory(inputFolder);
+            Directory.CreateDirectory(outputFolder);
+
+            // Generate sample PDF files.
+            var pdfFiles = new List<string>();
+            for (int i = 1; i <= 3; i++)
             {
-                @"C:\Input\file1.pdf",
-                @"C:\Input\file2.pdf",
-                @"C:\Input\file3.pdf"
-            };
+                string pdfPath = Path.Combine(inputFolder, $"file{i}.pdf");
+                // Create a simple Word document and save it as PDF.
+                Document doc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(doc);
+                builder.Writeln($"This is sample PDF number {i}.");
+                doc.Save(pdfPath, SaveFormat.Pdf);
+                pdfFiles.Add(pdfPath);
+            }
 
-            string outputFolder = @"C:\Output";
-
+            // Perform conversion.
             Converter converter = new Converter();
             converter.ConvertAll(pdfFiles, outputFolder);
 

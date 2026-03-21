@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
@@ -23,26 +24,21 @@ namespace ImageToPdfBatch
             bool firstImage = true;
             foreach (string pngPath in pngFilePaths)
             {
-                // Insert the PNG image. The image is inserted inline at 100% scale.
-                builder.InsertImage(pngPath);
-
-                // After each image (except the last) insert a page break so the next image starts on a new page.
-                // For the first image we do not need a preceding break.
                 if (!firstImage)
                 {
-                    // Insert a page break before the current image to ensure each image starts on a new page.
-                    // This approach works even if the image itself occupies the whole page.
+                    // Insert a page break before the next image.
                     builder.InsertBreak(BreakType.PageBreak);
                 }
 
-                // Mark that we have processed at least one image.
+                // Insert the PNG image. The image is inserted inline at 100% scale.
+                builder.InsertImage(pngPath);
+
                 firstImage = false;
             }
 
             // Prepare PDF save options (optional – can be omitted if defaults are sufficient).
             PdfSaveOptions pdfOptions = new PdfSaveOptions
             {
-                // Example: keep the original image quality.
                 ImageCompression = PdfImageCompression.Auto,
                 JpegQuality = 100
             };
@@ -54,21 +50,29 @@ namespace ImageToPdfBatch
         // Example usage.
         public static void Main()
         {
-            // Define the PNG files to be merged.
-            List<string> pngFiles = new List<string>
+            // Create a temporary directory for the demo images and output PDF.
+            string tempDir = Path.Combine(Path.GetTempPath(), "ImageToPdfDemo");
+            Directory.CreateDirectory(tempDir);
+
+            // Generate three simple PNG images (1x1 white pixel) from a base64 string.
+            List<string> pngFiles = new List<string>();
+            byte[] pngData = Convert.FromBase64String(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/lK6XAAAAAElFTkSuQmCC");
+
+            for (int i = 1; i <= 3; i++)
             {
-                @"C:\Images\Page1.png",
-                @"C:\Images\Page2.png",
-                @"C:\Images\Page3.png"
-            };
+                string filePath = Path.Combine(tempDir, $"Page{i}.png");
+                File.WriteAllBytes(filePath, pngData);
+                pngFiles.Add(filePath);
+            }
 
             // Destination PDF file.
-            string outputPdf = @"C:\Output\MergedDocument.pdf";
+            string outputPdf = Path.Combine(tempDir, "MergedDocument.pdf");
 
             // Perform the conversion.
             ConvertPngsToPdf(pngFiles, outputPdf);
 
-            Console.WriteLine("PDF created successfully at: " + outputPdf);
+            Console.WriteLine($"PDF created successfully at: {outputPdf}");
         }
     }
 }

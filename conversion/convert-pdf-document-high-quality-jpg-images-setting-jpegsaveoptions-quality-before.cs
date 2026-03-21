@@ -7,43 +7,44 @@ class Program
 {
     static void Main()
     {
-        // Path to the source PDF document.
-        string inputPdfPath = @"C:\Docs\source.pdf";
-
-        // Folder where the JPEG images will be saved.
-        string outputFolder = @"C:\Docs\JpgPages";
-
-        // Ensure the output directory exists.
+        // Output folder for the generated JPEG images.
+        string outputFolder = Path.Combine(Environment.CurrentDirectory, "JpgPages");
         Directory.CreateDirectory(outputFolder);
 
-        // Load the PDF document.
-        Document doc = new Document(inputPdfPath);
+        // Create a simple Word document in memory.
+        Document doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document generated at runtime.");
+        builder.Writeln("It will be saved as high‑quality JPEG images, one per page.");
 
-        // Create ImageSaveOptions for JPEG format.
+        // Save the document as PDF first (optional, demonstrates PDF loading).
+        string tempPdfPath = Path.Combine(Path.GetTempPath(), "temp_source.pdf");
+        doc.Save(tempPdfPath, SaveFormat.Pdf);
+
+        // Load the PDF back into a Document object.
+        Document pdfDoc = new Document(tempPdfPath);
+
+        // Configure JPEG save options for high quality.
         ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
         {
-            // Set high quality (100 = best quality, minimum compression).
-            JpegQuality = 100,
-
-            // Optional: increase resolution for sharper images.
-            Resolution = 300,
-
-            // Optional: enable high‑quality rendering algorithms.
+            JpegQuality = 100,          // Best quality.
+            Resolution = 300,           // High resolution.
             UseHighQualityRendering = true,
             UseAntiAliasing = true
         };
 
-        // Iterate through each page of the PDF and save it as a separate JPEG file.
-        for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
+        // Save each page of the PDF as a separate JPEG file.
+        for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            // Select the current page for rendering.
             jpegOptions.PageSet = new PageSet(pageIndex);
-
-            // Build the output file name (e.g., Page_1.jpg, Page_2.jpg, ...).
             string outputPath = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.jpg");
-
-            // Save the selected page as a JPEG image.
-            doc.Save(outputPath, jpegOptions);
+            pdfDoc.Save(outputPath, jpegOptions);
         }
+
+        // Clean up the temporary PDF file.
+        if (File.Exists(tempPdfPath))
+            File.Delete(tempPdfPath);
+
+        Console.WriteLine($"Saved {pdfDoc.PageCount} JPEG page(s) to \"{outputFolder}\".");
     }
 }

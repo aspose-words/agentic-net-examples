@@ -6,19 +6,32 @@ class Program
 {
     static void Main()
     {
-        // Load the source DOCX document.
-        Document doc = new Document("Input.docx");
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create XlsxSaveOptions using the default constructor.
-        XlsxSaveOptions xlsxSaveOptions = new XlsxSaveOptions();
+        // Insert a simple table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
 
-        // Set the compression level to Maximum to reduce the XLSX file size.
-        xlsxSaveOptions.CompressionLevel = CompressionLevel.Maximum;
+        builder.InsertCell();
+        builder.Write("Data 1");
+        builder.InsertCell();
+        builder.Write("Data 2");
+        builder.EndTable();
 
-        // Explicitly specify the target format (XLSX).
-        xlsxSaveOptions.SaveFormat = SaveFormat.Xlsx;
+        // Configure XlsxSaveOptions.
+        XlsxSaveOptions saveOptions = new XlsxSaveOptions
+        {
+            CompressionLevel = CompressionLevel.Maximum,
+            SaveFormat = SaveFormat.Xlsx
+        };
 
-        // Save the document as an XLSX file using the configured save options.
-        doc.Save("Output.xlsx", xlsxSaveOptions);
+        // Save the document as an XLSX file.
+        doc.Save("Output.xlsx", saveOptions);
     }
 }

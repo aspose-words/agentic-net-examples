@@ -8,8 +8,8 @@ class PdfToDocxConverter
 {
     static void Main()
     {
-        // URL of the PDF document to be converted.
-        const string pdfUrl = "https://example.com/sample.pdf";
+        // URL of a publicly accessible PDF document to be converted.
+        const string pdfUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
 
         // Destination path for the resulting DOCX file.
         const string outputDocxPath = "ConvertedDocument.docx";

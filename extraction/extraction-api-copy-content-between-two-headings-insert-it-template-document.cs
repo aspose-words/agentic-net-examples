@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -7,11 +6,22 @@ class CopyBetweenHeadings
 {
     static void Main()
     {
-        // Load the source document that contains the headings.
-        Document srcDoc = new Document("Source.docx");
+        // ---------- Create source document ----------
+        Document srcDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("Start Heading");          // start heading
+        srcBuilder.Writeln("First paragraph.");       // content to copy
+        srcBuilder.Writeln("Second paragraph.");      // content to copy
+        srcBuilder.Writeln("End Heading");            // end heading
 
-        // Load the template document where the extracted content will be inserted.
-        Document templateDoc = new Document("Template.docx");
+        // ---------- Create template document ----------
+        Document templateDoc = new Document();
+        DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
+        tmplBuilder.Writeln("Template start");
+        tmplBuilder.StartBookmark("InsertHere");
+        tmplBuilder.Writeln("Placeholder (will be replaced)");
+        tmplBuilder.EndBookmark("InsertHere");
+        tmplBuilder.Writeln("Template end");
 
         // Define the exact heading texts that mark the start and end of the range to copy.
         const string startHeadingText = "Start Heading";
@@ -50,16 +60,15 @@ class CopyBetweenHeadings
 
         // Save the modified template document.
         templateDoc.Save("Result.docx");
+        Console.WriteLine("Result.docx created successfully.");
     }
 
     // Helper method to locate a paragraph whose visible text matches the supplied string.
     private static Paragraph FindParagraphByText(Document doc, string text)
     {
-        // Get all paragraphs in the document.
         NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
         foreach (Paragraph para in paragraphs)
         {
-            // Trim to ignore trailing paragraph marks.
             if (para.GetText().Trim() == text)
                 return para;
         }

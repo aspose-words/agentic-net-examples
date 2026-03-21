@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 namespace DocumentComparisonExample
 {
@@ -7,21 +8,27 @@ namespace DocumentComparisonExample
     {
         static void Main()
         {
-            // Load the original document from the file system.
-            Document originalDoc = new Document("OriginalDocument.doc");
+            // Create the original document in memory.
+            Document originalDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(originalDoc);
+            builder.Writeln("This is the original document.");
+            builder.Writeln("It contains a few lines of text.");
+            builder.Writeln("The quick brown fox jumps over the lazy dog.");
 
-            // Load the document to compare against.
-            Document editedDoc = new Document("EditedDocument.doc");
+            // Create the edited document in memory.
+            Document editedDoc = new Document();
+            DocumentBuilder editedBuilder = new DocumentBuilder(editedDoc);
+            editedBuilder.Writeln("This is the original document.");
+            editedBuilder.Writeln("It contains a few lines of text that have been modified.");
+            editedBuilder.Writeln("The quick brown fox jumps over the lazy cat.");
 
-            // Ensure both documents have no revisions before performing the comparison.
-            if (originalDoc.Revisions.Count == 0 && editedDoc.Revisions.Count == 0)
-            {
-                // Compare the documents. All differences will be recorded as revisions in originalDoc.
-                originalDoc.Compare(editedDoc, "JD", DateTime.Now);
-            }
+            // Perform the comparison. All differences will be recorded as revisions in originalDoc.
+            originalDoc.Compare(editedDoc, "JD", DateTime.Now);
 
-            // Save the result. The saved file will contain the revisions (tracked changes).
+            // Save the comparison result. The saved file will contain the revisions (tracked changes).
             originalDoc.Save("ComparisonResult.docx");
+
+            Console.WriteLine("Comparison completed. Result saved to ComparisonResult.docx");
         }
     }
 }

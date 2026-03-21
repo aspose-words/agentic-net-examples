@@ -9,9 +9,31 @@ namespace DocumentComparisonDemo
     {
         static void Main()
         {
+            // Create a temporary folder for the demo files.
+            string tempFolder = Path.Combine(Path.GetTempPath(), "DocumentComparisonDemo");
+            Directory.CreateDirectory(tempFolder);
+
             // Paths to the source documents.
-            const string originalPath = @"C:\Docs\Original.docx";
-            const string editedPath   = @"C:\Docs\Edited.docx";
+            string originalPath = Path.Combine(tempFolder, "Original.docx");
+            string editedPath   = Path.Combine(tempFolder, "Edited.docx");
+            string resultPath   = Path.Combine(tempFolder, "ComparisonResult.docx");
+
+            // Ensure the source documents exist.
+            if (!File.Exists(originalPath))
+            {
+                var doc = new Document();
+                var builder = new DocumentBuilder(doc);
+                builder.Writeln("This is the original document.");
+                doc.Save(originalPath);
+            }
+
+            if (!File.Exists(editedPath))
+            {
+                var doc = new Document();
+                var builder = new DocumentBuilder(doc);
+                builder.Writeln("This is the edited document with a small change.");
+                doc.Save(editedPath);
+            }
 
             // Use using statements to guarantee that the file streams are closed and disposed
             // as soon as the comparison operation is finished.
@@ -41,7 +63,8 @@ namespace DocumentComparisonDemo
                 }
 
                 // Save the comparison result. The Save method determines the format from the file extension.
-                originalDoc.Save(@"C:\Docs\ComparisonResult.docx");
+                originalDoc.Save(resultPath);
+                Console.WriteLine($"Comparison result saved to: {resultPath}");
             } // Both FileStream objects are disposed here; the Document instances are now eligible for GC.
         }
     }

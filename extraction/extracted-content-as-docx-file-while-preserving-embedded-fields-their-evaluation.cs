@@ -6,32 +6,36 @@ class PreserveFieldsExample
 {
     static void Main()
     {
-        // Path to the source document that contains the content to be extracted.
-        string sourcePath = @"C:\Docs\Source.docx";
+        // Create a source document in memory.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Path where the extracted content will be saved as a DOCX file.
-        string outputPath = @"C:\Docs\Extracted.docx";
+        // Add some content with an embedded field.
+        builder.Writeln("This is a sample document.");
+        builder.InsertField("MERGEFIELD Name \\* MERGEFORMAT");
+        builder.Writeln();
+        builder.Writeln("Page 1 content.");
 
-        // Load the source document. This uses the Document(string) constructor – a permitted lifecycle rule.
-        Document sourceDoc = new Document(sourcePath);
+        // Insert a page break to ensure there is a second page.
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 2 content.");
 
-        // Example extraction: take pages 1‑2 (zero‑based indices) from the source document.
-        // The ExtractPages method returns a new Document containing only the specified pages.
+        // Extract pages 1‑2 (zero‑based indices 0 and 1) from the source document.
         Document extractedDoc = sourceDoc.ExtractPages(0, 1);
 
         // Configure save options for DOCX output.
-        // OoxmlSaveOptions is the appropriate SaveOptions class for DOCX files.
         OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
         {
             // Preserve the current field results; do not recalculate them on save.
             UpdateFields = false,
-
-            // Optional: omit the Aspose.Words generator name from the saved file.
+            // Omit the Aspose.Words generator name from the saved file.
             ExportGeneratorName = false
         };
 
-        // Save the extracted document using the Save(string, SaveOptions) overload.
-        // This follows the provided save rule and ensures the document is written as DOCX.
+        // Save the extracted document to the current directory.
+        string outputPath = "Extracted.docx";
         extractedDoc.Save(outputPath, saveOptions);
+
+        Console.WriteLine($"Extracted document saved to: {outputPath}");
     }
 }

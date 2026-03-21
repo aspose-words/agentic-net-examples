@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Saving;
@@ -7,42 +8,52 @@ class PdfToPngConverter
 {
     static void Main()
     {
-        // Path to the encrypted PDF file.
-        string pdfPath = @"C:\Docs\EncryptedDocument.pdf";
+        // Temporary paths.
+        string tempDir = Path.Combine(Path.GetTempPath(), "PdfToPngDemo");
+        Directory.CreateDirectory(tempDir);
 
-        // Password required to open the PDF.
-        string pdfPassword = "myPassword";
+        string pdfPath = Path.Combine(tempDir, "EncryptedDocument.pdf");
+        string outputFolder = Path.Combine(tempDir, "Images");
+        Directory.CreateDirectory(outputFolder);
 
-        // Folder where the PNG images will be saved.
-        string outputFolder = @"C:\Docs\Images\";
+        // Password for the encrypted PDF.
+        const string pdfPassword = "myPassword";
 
-        // Ensure the output folder exists.
-        System.IO.Directory.CreateDirectory(outputFolder);
+        // -----------------------------------------------------------------
+        // Create a simple document and save it as an encrypted PDF.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample PDF page 1.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is a sample PDF page 2.");
 
-        // Configure load options with the password.
-        PdfLoadOptions loadOptions = new PdfLoadOptions();
-        loadOptions.Password = pdfPassword;
+        PdfSaveOptions saveOptions = new PdfSaveOptions
+        {
+            EncryptionDetails = new PdfEncryptionDetails(pdfPassword, "")
+        };
+        doc.Save(pdfPath, saveOptions);
 
-        // Load the PDF document using the load options.
+        // -----------------------------------------------------------------
+        // Load the encrypted PDF using the password.
+        // -----------------------------------------------------------------
+        PdfLoadOptions loadOptions = new PdfLoadOptions { Password = pdfPassword };
         Document pdfDocument = new Document(pdfPath, loadOptions);
 
-        // Convert each page of the PDF to a separate PNG image.
+        // -----------------------------------------------------------------
+        // Convert each page to a PNG image.
+        // -----------------------------------------------------------------
         for (int pageIndex = 0; pageIndex < pdfDocument.PageCount; pageIndex++)
         {
-            // Set up image save options for PNG format.
             ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
             {
-                // Export only the current page using PageSet.
                 PageSet = new PageSet(pageIndex)
             };
 
-            // Build the output file name (e.g., Page_1.png, Page_2.png, ...).
-            string pngPath = System.IO.Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
-
-            // Save the page as a PNG image.
+            string pngPath = Path.Combine(outputFolder, $"Page_{pageIndex + 1}.png");
             pdfDocument.Save(pngPath, pngOptions);
         }
 
-        Console.WriteLine("PDF conversion to PNG completed successfully.");
+        Console.WriteLine($"PDF conversion to PNG completed successfully. Files saved in: {outputFolder}");
     }
 }

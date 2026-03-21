@@ -49,12 +49,30 @@ namespace PdfToHtmlConversion
         // Example usage.
         public static void Main()
         {
-            string pdfFile = @"C:\Input\sample.pdf";
-            string htmlFile = @"C:\Output\sample.html";
-            string imagesDir = @"C:\Output\sample_images";
+            // Create a temporary working directory.
+            string workDir = Path.Combine(Path.GetTempPath(), "PdfToHtmlDemo");
+            Directory.CreateDirectory(workDir);
 
-            ConvertPdfToHtml(pdfFile, htmlFile, imagesDir);
-            Console.WriteLine("Conversion completed.");
+            // Paths for the sample PDF, output HTML, and images folder.
+            string pdfPath = Path.Combine(workDir, "sample.pdf");
+            string htmlPath = Path.Combine(workDir, "sample.html");
+            string imagesDir = Path.Combine(workDir, "sample_images");
+
+            // Generate a simple PDF if it does not already exist.
+            if (!File.Exists(pdfPath))
+            {
+                Document tempDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(tempDoc);
+                builder.Writeln("Hello, PDF! This is a sample document for conversion.");
+                tempDoc.Save(pdfPath, SaveFormat.Pdf);
+            }
+
+            // Perform the conversion.
+            ConvertPdfToHtml(pdfPath, htmlPath, imagesDir);
+
+            Console.WriteLine($"Conversion completed.");
+            Console.WriteLine($"HTML file: {htmlPath}");
+            Console.WriteLine($"Images folder: {imagesDir}");
         }
     }
 }

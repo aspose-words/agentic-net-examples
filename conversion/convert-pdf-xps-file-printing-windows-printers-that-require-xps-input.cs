@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,27 +9,38 @@ namespace PdfToXpsConversion
     {
         static void Main(string[] args)
         {
-            // Path to the source PDF file.
-            string pdfPath = @"C:\Input\sample.pdf";
+            // Determine working directory.
+            string workingDir = Directory.GetCurrentDirectory();
 
-            // Path where the resulting XPS file will be saved.
-            string xpsPath = @"C:\Output\sample.xps";
+            // Paths for input PDF and output XPS.
+            string pdfPath = Path.Combine(workingDir, "sample.pdf");
+            string xpsPath = Path.Combine(workingDir, "sample.xps");
+
+            // Ensure the input PDF exists; if not, create a simple one.
+            if (!File.Exists(pdfPath))
+            {
+                Document tempDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(tempDoc);
+                builder.Writeln("This is a sample PDF generated for conversion.");
+                tempDoc.Save(pdfPath, SaveFormat.Pdf);
+                Console.WriteLine($"Created placeholder PDF at: {pdfPath}");
+            }
+
+            // Ensure the output directory exists.
+            string outputDir = Path.GetDirectoryName(xpsPath);
+            if (!Directory.Exists(outputDir))
+                Directory.CreateDirectory(outputDir);
 
             // Load the PDF document.
-            // Uses the Document(string) constructor rule.
             Document pdfDocument = new Document(pdfPath);
 
-            // Create XpsSaveOptions instance.
-            // Uses the XpsSaveOptions() constructor rule.
+            // Set XPS save options (optional customizations can be added here).
             XpsSaveOptions xpsOptions = new XpsSaveOptions();
 
-            // (Optional) Set any additional options here, e.g. optimize output.
-            // xpsOptions.OptimizeOutput = true;
-
-            // Save the document as XPS using the Save(string, SaveOptions) method rule.
+            // Save the document as XPS.
             pdfDocument.Save(xpsPath, xpsOptions);
 
-            Console.WriteLine("PDF has been successfully converted to XPS.");
+            Console.WriteLine($"PDF has been successfully converted to XPS at: {xpsPath}");
         }
     }
 }

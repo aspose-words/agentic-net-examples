@@ -7,20 +7,25 @@ class BatchDocumentComparer
 {
     static void Main()
     {
-        // Folder containing the document pairs.
-        string inputFolder = @"C:\Docs\Input";
-        // Folder where the compared documents will be saved.
-        string outputFolder = @"C:\Docs\Output";
+        // Use folders relative to the executable location.
+        string baseDir = AppContext.BaseDirectory;
+        string inputFolder = Path.Combine(baseDir, "Input");
+        string outputFolder = Path.Combine(baseDir, "Output");
 
-        // Ensure the output folder exists.
+        // Ensure the folders exist.
+        Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
         // Find all original documents (assumed to end with "_original").
         foreach (string originalPath in Directory.GetFiles(inputFolder, "*_original.*"))
         {
             // Derive the base name without the "_original" suffix.
-            string fileName = Path.GetFileNameWithoutExtension(originalPath);
-            string baseName = fileName.Substring(0, fileName.LastIndexOf("_original", StringComparison.Ordinal));
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalPath);
+            if (!fileNameWithoutExt.EndsWith("_original", StringComparison.OrdinalIgnoreCase))
+                continue; // Safety check.
+
+            string baseName = fileNameWithoutExt.Substring(0,
+                fileNameWithoutExt.Length - "_original".Length);
             string extension = Path.GetExtension(originalPath);
 
             // Construct the expected edited document path.
@@ -34,12 +39,8 @@ class BatchDocumentComparer
             Document docOriginal = new Document(originalPath);
             Document docEdited = new Document(editedPath);
 
-            // Documents must not contain revisions before comparison.
-            if (docOriginal.Revisions.Count == 0 && docEdited.Revisions.Count == 0)
-            {
-                // Compare the documents, generating revisions in the original document.
-                docOriginal.Compare(docEdited, "BatchComparer", DateTime.Now);
-            }
+            // Compare the documents, generating revisions in the original document.
+            docOriginal.Compare(docEdited, "BatchComparer", DateTime.Now);
 
             // Save the compared document with revisions to the output folder.
             string outputPath = Path.Combine(outputFolder, $"{baseName}_compared{extension}");

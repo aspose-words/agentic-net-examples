@@ -11,14 +11,27 @@ namespace AsposeWordsBatchConversion
     /// </summary>
     public static class Program
     {
-        // Adjust these paths as needed.
-        private const string InputFolder = @"C:\Docs\Input";
-        private const string OutputFolder = @"C:\Docs\Output";
+        // Use folders relative to the executable so they always exist.
+        private static readonly string BaseFolder = AppContext.BaseDirectory;
+        private static readonly string InputFolder = Path.Combine(BaseFolder, "Input");
+        private static readonly string OutputFolder = Path.Combine(BaseFolder, "Output");
 
         public static void Main()
         {
-            // Ensure the output directory exists.
+            // Ensure the input and output directories exist.
+            Directory.CreateDirectory(InputFolder);
             Directory.CreateDirectory(OutputFolder);
+
+            // If there are no .doc files, create a simple sample document to demonstrate conversion.
+            if (Directory.GetFiles(InputFolder, "*.doc", SearchOption.TopDirectoryOnly).Length == 0)
+            {
+                var sampleDoc = new Document();
+                var builder = new DocumentBuilder(sampleDoc);
+                builder.Writeln("This is a sample document generated at " + DateTime.Now);
+                string samplePath = Path.Combine(InputFolder, "Sample.doc");
+                sampleDoc.Save(samplePath, SaveFormat.Doc);
+                Console.WriteLine($"[INFO] Created sample document at '{samplePath}'.");
+            }
 
             // Get all files with .doc extension (including .docx if desired).
             string[] docFiles = Directory.GetFiles(InputFolder, "*.doc", SearchOption.TopDirectoryOnly);

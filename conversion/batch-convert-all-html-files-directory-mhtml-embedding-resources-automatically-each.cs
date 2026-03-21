@@ -7,14 +7,21 @@ class Program
 {
     static void Main()
     {
-        // Input directory containing HTML files.
-        string inputDir = @"C:\InputHtml";
+        // Use directories relative to the executable location.
+        string baseDir = AppContext.BaseDirectory;
+        string inputDir = Path.Combine(baseDir, "InputHtml");
+        string outputDir = Path.Combine(baseDir, "OutputMhtml");
 
-        // Output directory where MHTML files will be saved.
-        string outputDir = @"C:\OutputMhtml";
-
-        // Ensure the output directory exists.
+        // Ensure both directories exist.
+        Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
+
+        // If there are no HTML files, create a simple one for demonstration.
+        if (Directory.GetFiles(inputDir, "*.html").Length == 0)
+        {
+            string samplePath = Path.Combine(inputDir, "sample.html");
+            File.WriteAllText(samplePath, "<html><body><h1>Hello, World!</h1></body></html>");
+        }
 
         // Get all *.html files in the input directory (non‑recursive).
         string[] htmlFiles = Directory.GetFiles(inputDir, "*.html");
@@ -46,5 +53,7 @@ class Program
             // Save the document as MHTML using the configured options.
             doc.Save(mhtmlPath, saveOptions);
         }
+
+        Console.WriteLine($"Conversion complete. MHTML files are located in: {outputDir}");
     }
 }

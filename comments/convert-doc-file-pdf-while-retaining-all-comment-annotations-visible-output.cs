@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Layout;
 using Aspose.Words.Saving;
@@ -7,26 +8,32 @@ class ConvertDocToPdfWithComments
 {
     static void Main()
     {
-        // Path to the source DOC file.
-        string inputPath = @"C:\Docs\SourceDocument.doc";
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Path to the destination PDF file.
-        string outputPath = @"C:\Docs\ConvertedDocument.pdf";
+        // Add some text.
+        builder.Writeln("This is a sample paragraph.");
 
-        // Load the DOC file.
-        Document doc = new Document(inputPath);
+        // Add a comment to the last paragraph.
+        Comment comment = new Comment(doc, "Author", "A", DateTime.Now);
+        comment.Paragraphs.Add(new Paragraph(doc) { ParagraphFormat = { StyleIdentifier = StyleIdentifier.CommentText } });
+        comment.Paragraphs[0].AppendChild(new Run(doc, "This is a comment that will appear as a PDF annotation."));
+        doc.FirstSection.Body.FirstParagraph.AppendChild(comment);
 
         // Make comments visible as PDF annotations.
-        // ShowInAnnotations is only supported for PDF output.
         doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
 
         // Rebuild the layout after changing the comment display mode.
         doc.UpdatePageLayout();
 
-        // Create PDF save options (default constructor is sufficient).
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+        // Determine output path in the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ConvertedDocument.pdf");
 
-        // Save the document as PDF with the specified options.
+        // Save the document as PDF.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
         doc.Save(outputPath, pdfOptions);
+
+        Console.WriteLine($"PDF saved to: {outputPath}");
     }
 }

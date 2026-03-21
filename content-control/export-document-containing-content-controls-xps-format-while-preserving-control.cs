@@ -1,21 +1,36 @@
 using Aspose.Words;
+using Aspose.Words.Markup;
 using Aspose.Words.Saving;
 
 class Program
 {
     static void Main()
     {
-        // Load a document that contains content controls (structured document tags).
-        Document doc = new Document("InputWithContentControls.docx");
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create XpsSaveOptions – this object allows us to customize the XPS export.
-        XpsSaveOptions xpsOptions = new XpsSaveOptions();
+        // Add some introductory text.
+        builder.Writeln("This is a document with a content control:");
 
-        // Prevent automatic field updates so the original layout of the content controls is kept unchanged.
-        xpsOptions.UpdateFields = false;
+        // Insert a plain‑text content control (structured document tag).
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "SampleContentControl"
+            // PlaceholderName is omitted because it requires an existing building block.
+        };
+        builder.InsertNode(sdt);
 
-        // Save the document to XPS format. The content controls are rendered as part of the page,
-        // preserving their visual boundaries in the resulting XPS file.
+        // Add text inside the content control.
+        sdt.AppendChild(new Run(doc, "Content inside control"));
+
+        // Configure XPS save options.
+        XpsSaveOptions xpsOptions = new XpsSaveOptions
+        {
+            UpdateFields = false
+        };
+
+        // Save the document as XPS.
         doc.Save("OutputWithContentControls.xps", xpsOptions);
     }
 }

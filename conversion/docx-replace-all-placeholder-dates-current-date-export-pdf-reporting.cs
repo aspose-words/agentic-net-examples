@@ -1,6 +1,8 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Replacing;
 
 namespace AsposeWordsExample
 {
@@ -8,29 +10,31 @@ namespace AsposeWordsExample
     {
         static void Main()
         {
-            // Path to the source DOCX file.
-            string inputPath = @"C:\Docs\Template.docx";
-
-            // Path to the output PDF file.
-            string outputPath = @"C:\Docs\Report.pdf";
-
-            // Load the existing DOCX document.
-            Document doc = new Document(inputPath);
+            // Create a new document in memory with a placeholder for the date.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This report was generated on {{Date}}.");
 
             // Define the placeholder text that should be replaced with the current date.
-            // Adjust this value to match the actual placeholder used in your template.
             const string placeholder = "{{Date}}";
 
             // Format the current date as a short date string (you can change the format as needed).
             string currentDate = DateTime.Now.ToString("d");
 
             // Replace all occurrences of the placeholder with the current date.
-            // The Replace method works on the document's Range and replaces text case‑insensitively.
-            doc.Range.Replace(placeholder, currentDate);
+            var options = new FindReplaceOptions
+            {
+                Direction = FindReplaceDirection.Forward
+            };
+            doc.Range.Replace(placeholder, currentDate, options);
+
+            // Determine an output path in the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.pdf");
 
             // Save the modified document as a PDF.
-            // Use the Save overload that accepts a file name and a SaveFormat enum value.
             doc.Save(outputPath, SaveFormat.Pdf);
+
+            Console.WriteLine($"PDF saved to: {outputPath}");
         }
     }
 }

@@ -17,21 +17,17 @@ namespace AsposeWordsTableOfFiguresExample
             Paragraph captionParagraph = (Paragraph)args.MatchNode.ParentNode;
 
             // Create a builder attached to the same document.
-            // captionParagraph.Document returns DocumentBase, so cast to Document which the constructor expects.
             DocumentBuilder builder = new DocumentBuilder((Document)captionParagraph.Document);
 
             // Move the cursor to the end of the caption paragraph.
-            // MoveTo places the cursor at the start of the node, so we first move to the paragraph,
-            // then insert a paragraph break to position the cursor after it.
             builder.MoveTo(captionParagraph);
             builder.InsertBreak(BreakType.ParagraphBreak);
 
             // Insert a TOC field that will act as a Table of Figures.
-            // FieldType.FieldTOC creates a generic TOC field; we configure it to build a Table of Figures.
             FieldToc tocField = (FieldToc)builder.InsertField(FieldType.FieldTOC, true);
-            tocField.TableOfFiguresLabel = "Figure";          // Use the "Figure" sequence identifier.
-            tocField.InsertHyperlinks = true;                // Make entries clickable.
-            tocField.CaptionlessTableOfFiguresLabel = "";    // Not needed for standard TOF.
+            tocField.TableOfFiguresLabel = "Figure";
+            tocField.InsertHyperlinks = true;
+            tocField.CaptionlessTableOfFiguresLabel = string.Empty;
 
             // Skip the original match text (we already removed it by replacing with an empty string).
             return ReplaceAction.Skip;
@@ -42,15 +38,20 @@ namespace AsposeWordsTableOfFiguresExample
     {
         static void Main()
         {
-            // Load the source document that contains figure captions.
-            Document doc = new Document("InputDocument.docx");
+            // Create a sample document with a figure caption.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("This is an introductory paragraph.");
+            builder.Writeln("Figure 1: Sample figure caption.");
+            builder.Writeln("Some more text after the figure.");
 
             // Set up find-and-replace options with our custom callback.
-            FindReplaceOptions options = new FindReplaceOptions();
-            options.ReplacingCallback = new InsertTableOfFiguresAfterCaption();
+            FindReplaceOptions options = new FindReplaceOptions
+            {
+                ReplacingCallback = new InsertTableOfFiguresAfterCaption()
+            };
 
             // Regular expression that matches typical figure captions, e.g., "Figure 1: Description".
-            // Adjust the pattern as needed for your document's caption format.
             Regex figureCaptionPattern = new Regex(@"Figure\s+\d+\s*:", RegexOptions.IgnoreCase);
 
             // Replace each caption with an empty string (the callback will insert the TOF after it).

@@ -5,35 +5,33 @@ class PrependNodesExample
 {
     static void Main()
     {
-        // Load the source document whose nodes we want to extract.
-        Document srcDoc = new Document("Source.docx");
+        // Create a source document with some sample content.
+        Document srcDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("First paragraph in source document.");
+        srcBuilder.Writeln("Second paragraph in source document.");
+        srcDoc.EnsureMinimum();
 
-        // Create a new empty document and attach a DocumentBuilder to it.
+        // Create a new empty document.
         Document newDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(newDoc);
-
-        // Ensure the new document has at least one section/body.
         newDoc.EnsureMinimum();
 
-        // Move the builder's cursor to the very start of the document.
-        builder.MoveToDocumentStart();
-
-        // Prepare a NodeImporter to efficiently import nodes from srcDoc to newDoc.
+        // Prepare a NodeImporter to import nodes from srcDoc to newDoc.
         NodeImporter importer = new NodeImporter(srcDoc, newDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Get all child nodes (paragraphs, tables, etc.) from the first section's body of the source.
-        NodeCollection srcNodes = srcDoc.FirstSection.Body.GetChildNodes(NodeType.Any, true);
+        // Get only paragraph nodes from the source document's body.
+        NodeCollection srcParagraphs = srcDoc.FirstSection.Body.GetChildNodes(NodeType.Paragraph, true);
 
-        // Insert the imported nodes at the beginning of the new document.
-        // InsertNode inserts before the current cursor position, so we iterate in reverse order
-        // to preserve the original ordering of the source nodes.
-        for (int i = srcNodes.Count - 1; i >= 0; i--)
+        // Insert the imported paragraphs at the beginning of the new document's body.
+        Body newBody = newDoc.FirstSection.Body;
+        for (int i = srcParagraphs.Count - 1; i >= 0; i--)
         {
-            Node importedNode = importer.ImportNode(srcNodes[i], true);
-            builder.InsertNode(importedNode);
+            Node importedNode = importer.ImportNode(srcParagraphs[i], true);
+            newBody.PrependChild(importedNode);
         }
 
         // Save the resulting document.
         newDoc.Save("Result.docx");
+        Console.WriteLine("Result.docx created successfully.");
     }
 }

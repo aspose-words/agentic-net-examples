@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -6,15 +7,15 @@ class Program
 {
     static void Main()
     {
-        // Load the source Word document.
-        Document doc = new Document("Input.docx");
+        // Always create a new document to avoid issues with existing files that may contain unsupported fields.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, Aspose.Words!");
 
         // Configure HTML save options to generate an external CSS file.
-        // Setting ExportEmbeddedCss to false disables embedding the CSS into the HTML
-        // and causes Aspose.Words to write the stylesheet to a separate .css file.
-        HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
+        var htmlOptions = new HtmlSaveOptions
         {
-            ExportEmbeddedCss = false
+            CssStyleSheetType = CssStyleSheetType.External
         };
 
         // Save the document as HTML. An accompanying .css file will be created

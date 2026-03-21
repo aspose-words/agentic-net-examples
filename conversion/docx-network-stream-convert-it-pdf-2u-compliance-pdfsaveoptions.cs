@@ -1,36 +1,25 @@
 using System;
-using System.IO;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
 class Program
 {
-    static async Task Main()
+    static void Main()
     {
-        // URL of the DOCX file to download
-        const string docxUrl = "https://example.com/sample.docx";
+        // Create a simple DOCX document in memory
+        Document document = new Document();
+        DocumentBuilder builder = new DocumentBuilder(document);
+        builder.Writeln("Hello, Aspose.Words! This document will be saved as PDF/A‑2u.");
 
-        // Download the DOCX into a seek‑able memory stream
-        using (HttpClient httpClient = new HttpClient())
-        using (Stream networkStream = await httpClient.GetStreamAsync(docxUrl))
-        using (MemoryStream docStream = new MemoryStream())
+        // Set PDF save options for PDF/A‑2u compliance
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            await networkStream.CopyToAsync(docStream);
-            docStream.Position = 0; // reset for reading
+            Compliance = PdfCompliance.PdfA2u
+        };
 
-            // Load the document from the stream (lifecycle rule: Document(Stream))
-            Document document = new Document(docStream);
+        // Save the document as PDF/A‑2u
+        document.Save("ConvertedDocument.pdf", pdfOptions);
 
-            // Create PDF save options and set PDF/A‑2u compliance (rule: PdfSaveOptions)
-            PdfSaveOptions pdfOptions = new PdfSaveOptions
-            {
-                Compliance = PdfCompliance.PdfA2u
-            };
-
-            // Save the document as PDF/A‑2u (lifecycle rule: Save(string, SaveOptions))
-            document.Save("ConvertedDocument.pdf", pdfOptions);
-        }
+        Console.WriteLine("Document successfully converted to PDF/A‑2u: ConvertedDocument.pdf");
     }
 }

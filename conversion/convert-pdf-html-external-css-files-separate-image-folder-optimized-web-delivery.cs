@@ -7,43 +7,48 @@ class PdfToHtmlConverter
 {
     static void Main()
     {
-        // Path to the source PDF file.
-        string pdfPath = @"C:\Input\sample.pdf";
+        // Create a temporary working directory.
+        string workDir = Path.Combine(Path.GetTempPath(), "PdfToHtmlDemo");
+        Directory.CreateDirectory(workDir);
 
-        // Path where the HTML file will be saved.
-        string htmlPath = @"C:\Output\sample.html";
+        // Paths for the source PDF, output HTML, CSS, and images folder.
+        string pdfPath = Path.Combine(workDir, "sample.pdf");
+        string htmlPath = Path.Combine(workDir, "sample.html");
+        string cssFile = Path.Combine(workDir, "sample.css");
+        string imagesFolder = Path.Combine(workDir, "images");
 
-        // Determine folder for the external CSS file (same folder as HTML).
-        string cssFolder = Path.GetDirectoryName(htmlPath);
-        string cssFile = Path.Combine(cssFolder, "sample.css");
-
-        // Folder for extracted images.
-        string imagesFolder = Path.Combine(cssFolder, "images");
-
-        // Ensure the images folder is clean and exists.
+        // Ensure the images folder exists and is empty.
         if (Directory.Exists(imagesFolder))
             Directory.Delete(imagesFolder, true);
         Directory.CreateDirectory(imagesFolder);
 
+        // Create a simple PDF document if it does not already exist.
+        if (!File.Exists(pdfPath))
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello, Aspose.Words PDF to HTML conversion!");
+            doc.Save(pdfPath, SaveFormat.Pdf);
+        }
+
         // Load the PDF document.
-        Document doc = new Document(pdfPath);
+        Document pdfDoc = new Document(pdfPath);
 
         // Configure HTML save options.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
-            // Export CSS to an external stylesheet.
             CssStyleSheetType = CssStyleSheetType.External,
             CssStyleSheetFileName = cssFile,
-
-            // Export images as separate files into the images folder.
             ImagesFolder = imagesFolder,
             ExportImagesAsBase64 = false,
-
-            // Optional: make the generated HTML more readable.
             PrettyFormat = true
         };
 
         // Save the document as HTML using the configured options.
-        doc.Save(htmlPath, saveOptions);
+        pdfDoc.Save(htmlPath, saveOptions);
+
+        Console.WriteLine($"HTML saved to: {htmlPath}");
+        Console.WriteLine($"CSS saved to: {cssFile}");
+        Console.WriteLine($"Images saved to: {imagesFolder}");
     }
 }

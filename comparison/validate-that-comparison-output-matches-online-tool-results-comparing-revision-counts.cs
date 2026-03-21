@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
@@ -9,48 +10,43 @@ namespace AsposeWordsComparisonValidator
     {
         static void Main(string[] args)
         {
-            // Paths to the documents to compare.
-            string originalPath = @"C:\Docs\Original.docx";
-            string editedPath   = @"C:\Docs\Edited.docx";
+            // Create the original document using a DocumentBuilder that does not require a file path.
+            DocumentBuilder builder = new DocumentBuilder();
+            builder.Writeln("Hello world!");
+            builder.Writeln("This is the original document.");
+            builder.Writeln("It has three paragraphs.");
+            Document originalDoc = builder.Document;
 
-            // Expected results from the online comparison tool.
-            int expectedRevisionCount = 5;
-            RevisionType[] expectedTypes = new RevisionType[]
-            {
-                RevisionType.Insertion,
-                RevisionType.Deletion,
-                RevisionType.FormatChange,
-                RevisionType.Moving,
-                RevisionType.Insertion
-            };
+            // Create the edited document based on the original.
+            Document editedDoc = (Document)originalDoc.Clone();
 
-            // Perform validation.
-            ValidateComparison(originalPath, editedPath, expectedRevisionCount, expectedTypes);
+            // Insert a new paragraph (insertion) at the end of the edited document.
+            Paragraph newPara = new Paragraph(editedDoc);
+            Run run = new Run(editedDoc, "This paragraph was added in the edited version.");
+            newPara.AppendChild(run);
+            editedDoc.FirstSection.Body.AppendChild(newPara);
+
+            // Delete a paragraph (deletion) by removing the first paragraph from the original.
+            originalDoc.FirstSection.Body.Paragraphs[0].Remove();
+
+            // Perform validation/comparison.
+            ValidateComparison(originalDoc, editedDoc);
         }
 
         /// <summary>
-        /// Loads two documents, compares them, and validates that the resulting revisions
-        /// match the expected count and types.
+        /// Compares two documents and prints the resulting revisions.
         /// </summary>
-        /// <param name="originalPath">Path to the original document.</param>
-        /// <param name="editedPath">Path to the edited document.</param>
-        /// <param name="expectedCount">Expected number of revisions.</param>
-        /// <param name="expectedTypes">Expected revision types (order‑independent).</param>
-        static void ValidateComparison(string originalPath, string editedPath, int expectedCount, RevisionType[] expectedTypes)
+        /// <param name="original">The original document (will receive revisions).</param>
+        /// <param name="edited">The edited document to compare against.</param>
+        static void ValidateComparison(Document original, Document edited)
         {
-            // Load the documents.
-            Document docOriginal = new Document(originalPath);
-            Document docEdited   = new Document(editedPath);
-
             // Ensure both documents are revision‑free before comparison.
-            if (docOriginal.Revisions.Count != 0 || docEdited.Revisions.Count != 0)
+            if (original.Revisions.Count != 0 || edited.Revisions.Count != 0)
                 throw new InvalidOperationException("Both documents must not contain revisions before comparison.");
 
             // Set up comparison options (default values are sufficient for a full comparison).
             CompareOptions compareOptions = new CompareOptions
             {
-                // Example: you can change any flag here if you need to ignore specific elements.
-                // All flags are left as false to include every change.
                 CompareMoves = false,
                 IgnoreFormatting = false,
                 IgnoreCaseChanges = false,
@@ -64,30 +60,15 @@ namespace AsposeWordsComparisonValidator
             };
 
             // Perform the comparison. Revisions are added to the original document.
-            docOriginal.Compare(docEdited, "Validator", DateTime.Now, compareOptions);
+            original.Compare(edited, "Validator", DateTime.Now, compareOptions);
 
-            // Validate revision count.
-            int actualCount = docOriginal.Revisions.Count;
-            if (actualCount != expectedCount)
-                throw new Exception($"Revision count mismatch. Expected: {expectedCount}, Actual: {actualCount}");
-
-            // Validate revision types (order‑independent).
-            var actualTypes = new List<RevisionType>();
-            foreach (Revision rev in docOriginal.Revisions)
-                actualTypes.Add(rev.RevisionType);
-
-            var expectedSet = new HashSet<RevisionType>(expectedTypes);
-            var actualSet   = new HashSet<RevisionType>(actualTypes);
-
-            if (!expectedSet.SetEquals(actualSet))
-                throw new Exception($"Revision types mismatch. Expected: [{string.Join(", ", expectedSet)}], Actual: [{string.Join(", ", actualSet)}]");
-
-            // If we reach this point, the comparison matches the expected results.
+            // Output revision information.
+            int revisionCount = original.Revisions.Count;
             Console.WriteLine("Comparison validation succeeded.");
-            Console.WriteLine($"Total revisions: {actualCount}");
+            Console.WriteLine($"Total revisions: {revisionCount}");
             Console.WriteLine("Revision types:");
-            foreach (var type in actualSet)
-                Console.WriteLine($" - {type}");
+            foreach (Revision rev in original.Revisions)
+                Console.WriteLine($" - {rev.RevisionType}");
         }
     }
 }

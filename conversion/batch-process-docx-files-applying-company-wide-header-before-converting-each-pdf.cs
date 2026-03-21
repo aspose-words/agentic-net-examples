@@ -9,17 +9,23 @@ namespace BatchDocxToPdf
     {
         static void Main()
         {
-            // Folder containing the source DOCX files.
-            string sourceFolder = @"C:\Docs\Input";
+            // Use folders relative to the executable location.
+            string baseDir = AppContext.BaseDirectory;
+            string sourceFolder = Path.Combine(baseDir, "Input");
+            string outputFolder = Path.Combine(baseDir, "Output");
 
-            // Folder where the resulting PDF files will be written.
-            string outputFolder = @"C:\Docs\Output";
-
-            // Ensure the output directory exists.
+            // Ensure both directories exist.
+            Directory.CreateDirectory(sourceFolder);
             Directory.CreateDirectory(outputFolder);
 
             // Retrieve all DOCX files in the source folder (non‑recursive).
             string[] docxFiles = Directory.GetFiles(sourceFolder, "*.docx", SearchOption.TopDirectoryOnly);
+
+            if (docxFiles.Length == 0)
+            {
+                Console.WriteLine($"No DOCX files found in '{sourceFolder}'. Place files there and rerun the program.");
+                return;
+            }
 
             foreach (string docxPath in docxFiles)
             {
@@ -27,7 +33,6 @@ namespace BatchDocxToPdf
                 Document doc = new Document(docxPath);
 
                 // Insert a company‑wide header into each section of the document.
-                // The header will contain the same text for all sections.
                 foreach (Section section in doc.Sections)
                 {
                     // Ensure the section has a primary header; create one if missing.
@@ -48,7 +53,7 @@ namespace BatchDocxToPdf
                 string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
                 string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-                // Save the document as PDF using the Save(string, SaveFormat) overload.
+                // Save the document as PDF.
                 doc.Save(pdfPath, SaveFormat.Pdf);
             }
 

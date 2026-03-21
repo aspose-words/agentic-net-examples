@@ -9,16 +9,18 @@ class ImagesToPdfConverter
 {
     static void Main()
     {
-        // Folder that contains the source PNG and JPEG images.
-        string imagesFolder = @"C:\Images";
+        // Use folders relative to the executable location.
+        string baseDir = AppContext.BaseDirectory;
+        string imagesFolder = Path.Combine(baseDir, "Images");
+        string outputFolder = Path.Combine(baseDir, "Result");
+        Directory.CreateDirectory(imagesFolder);
+        Directory.CreateDirectory(outputFolder);
 
         // Path for the resulting PDF document.
-        string outputPdfPath = @"C:\Result\CombinedImages.pdf";
+        string outputPdfPath = Path.Combine(outputFolder, "CombinedImages.pdf");
 
         // Create a new blank Word document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to insert content into the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Get all PNG and JPEG files from the folder (non‑recursive).
@@ -28,14 +30,19 @@ class ImagesToPdfConverter
                         f.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase))
             .ToArray();
 
-        // Insert each image on a separate page.
-        foreach (string imagePath in imageFiles)
+        if (imageFiles.Length == 0)
         {
-            // Insert the image inline at its original dimensions.
-            builder.InsertImage(imagePath);
+            Console.WriteLine($"No image files found in '{imagesFolder}'. Place PNG/JPEG files there and rerun.");
+            return;
+        }
+
+        // Insert each image on a separate page.
+        for (int i = 0; i < imageFiles.Length; i++)
+        {
+            builder.InsertImage(imageFiles[i]);
 
             // Add a page break after each image except the last one.
-            if (imagePath != imageFiles.Last())
+            if (i < imageFiles.Length - 1)
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
@@ -48,5 +55,6 @@ class ImagesToPdfConverter
 
         // Save the document as a PDF file using the specified options.
         doc.Save(outputPdfPath, pdfOptions);
+        Console.WriteLine($"PDF created successfully at '{outputPdfPath}'.");
     }
 }

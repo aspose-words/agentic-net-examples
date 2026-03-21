@@ -6,8 +6,10 @@ class PdfA1bExport
 {
     static void Main()
     {
-        // Load the source document (replace with your actual file path).
-        Document doc = new Document("InputDocument.docx");
+        // Create a simple in‑memory document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, PDF/A‑1b world!");
 
         // Configure PDF save options for PDF/A‑1b compliance.
         // PDF/A compliance automatically embeds the required ICC color profile.
@@ -18,5 +20,7 @@ class PdfA1bExport
 
         // Save the document as a PDF/A‑1b compliant PDF.
         doc.Save("OutputDocument.pdf", pdfOptions);
+
+        Console.WriteLine("PDF/A‑1b file created successfully: OutputDocument.pdf");
     }
 }

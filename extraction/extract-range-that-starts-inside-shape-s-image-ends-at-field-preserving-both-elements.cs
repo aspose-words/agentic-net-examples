@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Fields;
@@ -11,42 +12,28 @@ class ExtractShapeToFieldRange
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an inline image shape.
-        // The shape itself will be the start of the range we want to extract.
-        Shape shape = builder.InsertImage(@"C:\Images\Sample.png");
+        // Insert a rectangle shape instead of an external image.
+        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        shape.FillColor = System.Drawing.Color.LightBlue;
 
-        // Insert a field after the image. This field will be the end of the range.
-        // Use any field type; here we use a simple MERGEFIELD.
+        // Insert a field after the shape. This field will be the end of the range.
         Field field = builder.InsertField("MERGEFIELD MyField");
 
-        // Identify the start node (the shape) and the end node (the field end node).
-        Node startNode = shape;
-        Node endNode = field.End;
+        // The shape and the field are both inside the same paragraph.
+        Paragraph paragraph = (Paragraph)shape.ParentNode;
 
         // Create a new empty document that will hold the extracted range.
         Document extractedDoc = new Document();
 
-        // Use a NodeImporter to copy nodes from the source document to the new document.
+        // Use a NodeImporter to copy the paragraph from the source document to the new document.
         NodeImporter importer = new NodeImporter(doc, extractedDoc, ImportFormatMode.KeepSourceFormatting);
+        Node importedParagraph = importer.ImportNode(paragraph, true);
+        extractedDoc.FirstSection.Body.AppendChild(importedParagraph);
 
-        // Walk the node tree from the start node to the end node, importing each node.
-        Node current = startNode;
-        while (current != null)
-        {
-            // Import the current node (deep clone) into the target document.
-            Node importedNode = importer.ImportNode(current, true);
-            // Append the imported node to the body of the new document.
-            extractedDoc.FirstSection.Body.AppendChild(importedNode);
+        // Save the extracted document to a path relative to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ExtractedRange.docx");
+        extractedDoc.Save(outputPath);
 
-            // Stop when we have imported the end node.
-            if (current == endNode)
-                break;
-
-            // Move to the next sibling in the source document.
-            current = current.NextSibling;
-        }
-
-        // Save the extracted document, preserving both the image shape and the field.
-        extractedDoc.Save(@"C:\Output\ExtractedRange.docx");
+        Console.WriteLine($"Extracted document saved to: {outputPath}");
     }
 }

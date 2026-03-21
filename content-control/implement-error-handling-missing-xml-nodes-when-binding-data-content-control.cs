@@ -52,8 +52,11 @@ class ContentControlXmlBinding
         // Remove any existing child nodes.
         sdt.RemoveAllChildren();
 
-        // Add a Run node containing the placeholder text.
-        sdt.AppendChild(new Run(sdt.Document, message));
+        // For a block‑level content control we must add a Paragraph, then a Run.
+        Paragraph placeholderParagraph = new Paragraph(sdt.Document);
+        placeholderParagraph.AppendChild(new Run(sdt.Document, message));
+
+        sdt.AppendChild(placeholderParagraph);
 
         // Ensure the placeholder is displayed when the control is empty.
         sdt.IsShowingPlaceholderText = true;

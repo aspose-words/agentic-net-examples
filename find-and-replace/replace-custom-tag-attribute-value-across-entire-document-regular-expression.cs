@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -37,12 +38,20 @@ public class CustomTagAttributeReplacer
     // Example usage.
     public static void Main()
     {
-        string inputPath = @"C:\Docs\Source.docx";
-        string outputPath = @"C:\Docs\Result.docx";
+        // Create a temporary source document with sample content.
+        string tempDir = Path.GetTempPath();
+        string inputPath = Path.Combine(tempDir, "Source.docx");
+        string outputPath = Path.Combine(tempDir, "Result.docx");
+
+        // Build a simple document containing the attribute to be replaced.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln(@"This is a test document. myAttr=""OldValue"" appears here.");
+        doc.Save(inputPath);
 
         // Replace the value of the custom attribute "myAttr" with "NewValue".
         ReplaceAttributeValue(inputPath, outputPath, "myAttr", "NewValue");
 
-        Console.WriteLine("Attribute value replacement completed.");
+        Console.WriteLine($"Attribute value replacement completed. Output saved to: {outputPath}");
     }
 }

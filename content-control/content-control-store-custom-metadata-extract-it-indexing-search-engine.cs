@@ -31,10 +31,12 @@ namespace ContentControlMetadataExample
             string jsonMetadata = "{\"id\":123,\"category\":\"news\",\"author\":\"John Doe\"}";
 
             // Insert the metadata text into the content control.
-            metadataTag.AppendChild(new Run(doc, jsonMetadata));
+            Paragraph para = new Paragraph(doc);
+            para.AppendChild(new Run(doc, jsonMetadata));
+            metadataTag.AppendChild(para);
 
             // Insert the content control into the document body.
-            builder.InsertNode(metadataTag);
+            doc.FirstSection.Body.AppendChild(metadataTag);
 
             // Save the document to disk.
             doc.Save("ArticleWithMetadata.docx");                  // save

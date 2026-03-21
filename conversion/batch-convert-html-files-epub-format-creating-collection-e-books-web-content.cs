@@ -30,33 +30,36 @@ namespace BatchHtmlToEpub
                 // Load the HTML document.
                 Document doc = new Document(htmlPath);
 
-                // Configure save options for EPUB output.
-                HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Epub)
-                {
-                    // Use UTF‑8 encoding for the EPUB content.
-                    Encoding = Encoding.UTF8,
-
-                    // Split the EPUB into separate parts at heading paragraphs (optional, improves readability on some devices).
-                    DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-
-                    // Export built‑in and custom document properties into the EPUB.
-                    ExportDocumentProperties = true
-                };
-
                 // Build the output file name with .epub extension.
                 string outputFileName = Path.GetFileNameWithoutExtension(htmlPath) + ".epub";
                 string outputPath = Path.Combine(outputFolder, outputFileName);
 
-                // Save the document as EPUB using the configured options.
-                doc.Save(outputPath, saveOptions);
+                // Save the document as EPUB.
+                doc.Save(outputPath, SaveFormat.Epub);
             }
         }
 
         // Example usage.
         public static void Main()
         {
-            string inputDir = @"C:\HtmlSource";
-            string outputDir = @"C:\EpubCollection";
+            // Use directories relative to the current working directory so they always exist.
+            string baseDir = Directory.GetCurrentDirectory();
+            string inputDir = Path.Combine(baseDir, "HtmlSource");
+            string outputDir = Path.Combine(baseDir, "EpubCollection");
+
+            // Ensure input directory exists.
+            Directory.CreateDirectory(inputDir);
+            // Ensure output directory exists.
+            Directory.CreateDirectory(outputDir);
+
+            // If there are no HTML files, create a simple sample file.
+            if (Directory.GetFiles(inputDir, "*.html").Length == 0)
+            {
+                string sampleHtmlPath = Path.Combine(inputDir, "Sample.html");
+                File.WriteAllText(sampleHtmlPath,
+                    "<html><head><title>Sample</title></head><body><h1>Hello, EPUB!</h1><p>This is a sample HTML file.</p></body></html>",
+                    Encoding.UTF8);
+            }
 
             BatchConvertHtmlToEpub(inputDir, outputDir);
 

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
 using Aspose.Words.Saving;
@@ -9,11 +10,22 @@ namespace PdfAConversionExample
     {
         static void Main()
         {
-            // Path to the source PDF file.
-            string inputPdfPath = @"C:\Input\source.pdf";
+            // Use the current directory for input and output files.
+            string baseDir = Directory.GetCurrentDirectory();
+            string inputPdfPath = Path.Combine(baseDir, "source.pdf");
+            string outputPdfPath = Path.Combine(baseDir, "searchable_a1a.pdf");
 
-            // Path where the searchable PDF/A‑1a file will be saved.
-            string outputPdfPath = @"C:\Output\searchable_a1a.pdf";
+            // Ensure a source PDF exists. If not, create a simple one.
+            if (!File.Exists(inputPdfPath))
+            {
+                // Create a simple Word document with some text.
+                Document doc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(doc);
+                builder.Writeln("This is a sample document used for PDF/A‑1a conversion.");
+
+                // Save it as a regular PDF.
+                doc.Save(inputPdfPath, SaveFormat.Pdf);
+            }
 
             // Load the PDF document. PdfLoadOptions can be used to customize loading,
             // but for this scenario the default options are sufficient.
@@ -31,6 +43,8 @@ namespace PdfAConversionExample
             // raster images in the PDF during the save operation, embedding the
             // recognized text so that the resulting file is searchable.
             pdfDocument.Save(outputPdfPath, saveOptions);
+
+            Console.WriteLine($"PDF/A‑1a file saved to: {outputPdfPath}");
         }
     }
 }

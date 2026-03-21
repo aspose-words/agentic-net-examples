@@ -9,36 +9,54 @@ namespace AsposeWordsMarkdownExample
     {
         static void Main()
         {
-            // Path to the source DOCX file.
-            string inputDocxPath = @"C:\Docs\SourceDocument.docx";
+            // Create a temporary working directory.
+            string workDir = Path.Combine(Path.GetTempPath(), "AsposeWordsExample");
+            Directory.CreateDirectory(workDir);
 
-            // Path where the resulting Markdown file will be saved.
-            string outputMarkdownPath = @"C:\Docs\ResultDocument.md";
-
-            // Folder where extracted images will be stored.
-            string imagesFolderPath = @"C:\Docs\ExtractedImages";
+            // Define paths for the source DOCX, the resulting Markdown, and the images folder.
+            string inputDocxPath = Path.Combine(workDir, "SourceDocument.docx");
+            string outputMarkdownPath = Path.Combine(workDir, "ResultDocument.md");
+            string imagesFolderPath = Path.Combine(workDir, "ExtractedImages");
 
             // Ensure the images folder exists.
             Directory.CreateDirectory(imagesFolderPath);
 
-            // Load the DOCX document from the file system.
-            Document doc = new Document(inputDocxPath);
+            // -----------------------------------------------------------------
+            // Create a sample DOCX document with some text and an embedded image.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello, this is a sample document generated at runtime.");
 
-            // Configure Markdown save options.
+            // Insert a simple 1x1 PNG image from a base64 string (no System.Drawing dependency).
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+            byte[] pngBytes = Convert.FromBase64String(base64Png);
+            using (MemoryStream imgStream = new MemoryStream(pngBytes))
+            {
+                builder.InsertImage(imgStream);
+            }
+
+            // Save the DOCX to the temporary location.
+            doc.Save(inputDocxPath);
+
+            // --------------------------------------------------------------
+            // Load the DOCX and convert it to Markdown, extracting images.
+            // --------------------------------------------------------------
+            Document loadedDoc = new Document(inputDocxPath);
             MarkdownSaveOptions saveOptions = new MarkdownSaveOptions
             {
-                // Explicitly set the format to Markdown (optional, but clarifies intent).
                 SaveFormat = SaveFormat.Markdown,
-
-                // Specify the folder where images will be saved.
                 ImagesFolder = imagesFolderPath,
-
-                // Optionally, set an alias for image URIs in the Markdown file.
-                // ImagesFolderAlias = "images"
+                // Optionally set a relative path alias for images in the markdown.
+                ImagesFolderAlias = "ExtractedImages"
             };
 
-            // Save the document as Markdown using the configured options.
-            doc.Save(outputMarkdownPath, saveOptions);
+            loadedDoc.Save(outputMarkdownPath, saveOptions);
+
+            Console.WriteLine("Conversion completed.");
+            Console.WriteLine($"Source DOCX: {inputDocxPath}");
+            Console.WriteLine($"Markdown output: {outputMarkdownPath}");
+            Console.WriteLine($"Extracted images folder: {imagesFolderPath}");
         }
     }
 }

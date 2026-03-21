@@ -5,16 +5,18 @@ class PdfUaExport
 {
     static void Main()
     {
-        // Load the source Word document.
-        Document doc = new Document("Input.docx");
+        // Create a new document and add some content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello, PDF/UA!");
 
-        // Create PDF save options and set the compliance level to PDF/UA‑1.
+        // Configure PDF save options for PDF/UA‑1 compliance.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfUa1
         };
 
         // Save the document as a PDF/UA‑compliant file.
-        doc.Save("Output.PdfUa.pdf", pdfOptions);
+        doc.Save("Output.pdf", pdfOptions);
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
@@ -9,39 +10,39 @@ namespace PdfToEpubConversion
     {
         static void Main()
         {
-            // Path to the source PDF file.
-            const string pdfPath = @"C:\Input\SourceDocument.pdf";
+            // Create a simple document in memory with heading paragraphs to demonstrate chapter splitting.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Path where the resulting EPUB file will be saved.
-            const string epubPath = @"C:\Output\ResultDocument.epub";
+            // Chapter 1
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 1");
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("This is the content of the first chapter.");
 
-            // Load the PDF document into an Aspose.Words Document object.
-            // The constructor automatically detects the format from the file extension.
-            Document pdfDocument = new Document(pdfPath);
+            // Chapter 2
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Chapter 2");
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("This is the content of the second chapter.");
+
+            // Define output path (using the system's temporary folder).
+            string epubPath = Path.Combine(Path.GetTempPath(), "ResultDocument.epub");
 
             // Configure save options for EPUB output.
             HtmlSaveOptions epubSaveOptions = new HtmlSaveOptions
             {
-                // Specify that the target format is EPUB.
                 SaveFormat = SaveFormat.Epub,
-
-                // Use UTF‑8 encoding without BOM.
                 Encoding = new UTF8Encoding(false),
-
-                // Split the document at heading paragraphs so that each chapter becomes a separate HTML part
-                // inside the EPUB package. This preserves the chapter hierarchy.
                 DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-
-                // Export built‑in and custom document properties (e.g., title, author) to the EPUB.
                 ExportDocumentProperties = true,
-
-                // Limit the navigation map (table of contents) to the desired heading levels.
-                // Adjust this value according to the depth of your chapter hierarchy (1‑9).
                 NavigationMapLevel = 3
             };
 
-            // Save the loaded PDF as an EPUB using the configured options.
-            pdfDocument.Save(epubPath, epubSaveOptions);
+            // Save the document as an EPUB using the configured options.
+            doc.Save(epubPath, epubSaveOptions);
+
+            Console.WriteLine($"EPUB file saved to: {epubPath}");
         }
     }
 }
