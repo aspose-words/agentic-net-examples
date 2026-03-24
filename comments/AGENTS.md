@@ -21,17 +21,18 @@ See the root [AGENTS.md](../AGENTS.md) for repository-wide conventions and bound
 
 ## Required Namespaces
 
-- `using Aspose.Words;` (29/29 files) ← category-specific
-- `using System;` (28/29 files)
-- `using System.IO;` (6/29 files)
-- `using System.Linq;` (6/29 files)
-- `using Aspose.Words.Saving;` (5/29 files)
-- `using Aspose.Words.Tables;` (4/29 files)
-- `using Aspose.Words.Layout;` (4/29 files)
-- `using Aspose.Words.Drawing;` (3/29 files)
-- `using System.Drawing;` (2/29 files)
-- `using Aspose.Words.Comparing;` (1/29 files)
-- `using System.Collections.Generic;` (1/29 files)
+- `using Aspose.Words;` (22/22 files) ← category-specific
+- `using System;` (21/22 files)
+- `using System.IO;` (8/22 files)
+- `using System.Linq;` (5/22 files)
+- `using Aspose.Words.Saving;` (4/22 files)
+- `using Aspose.Words.Drawing;` (3/22 files)
+- `using Aspose.Words.Tables;` (3/22 files)
+- `using System.Drawing;` (2/22 files)
+- `using Aspose.Words.Layout;` (2/22 files)
+- `using System.Text;` (1/22 files)
+- `using Aspose.Words.Notes;` (1/22 files)
+- `using Aspose.Words.AI;` (1/22 files)
 
 ## Common Code Pattern
 
@@ -48,47 +49,36 @@ doc.Save("output.docx");
 
 | File | Key APIs | Description |
 |------|----------|-------------|
-| [add-comment-containing-hyperlink-external-resource-veri...](./add-comment-containing-hyperlink-external-resource-verify-link-functions-pdf.cs) | `Font`, `Document` | Add comment containing hyperlink external resource verify link functions pdf |
+| [add-comment-containing-hyperlink-external-resource-veri...](./add-comment-containing-hyperlink-external-resource-verify-link-functions-pdf.cs) | `Font`, `Document`, `DocumentBuilder` | Add comment containing hyperlink external resource verify link functions pdf |
 | [add-new-comment-specific-paragraph-word-document-as-docx](./add-new-comment-specific-paragraph-word-document-as-docx.cs) | `Document`, `DocumentBuilder`, `Comment` | Add new comment specific paragraph word document as docx |
-| [apply-custom-style-all-comment-text-blocks-within-docum...](./apply-custom-style-all-comment-text-blocks-within-document-match-corporate-branding.cs) | `Font`, `Document` | Apply custom style all comment text blocks within document match corporate br... |
-| [batch-process-that-adds-standardized-disclaimer-comment...](./batch-process-that-adds-standardized-disclaimer-comment-every-document-directory.cs) | `Document`, `Comment`, `CommentRangeStart` | Batch process that adds standardized disclaimer comment every document directory |
+| [apply-custom-style-all-comment-text-blocks-within-docum...](./apply-custom-style-all-comment-text-blocks-within-document-match-corporate-branding.cs) | `Font`, `Document`, `NodeType` | Apply custom style all comment text blocks within document match corporate br... |
+| [batch-process-that-adds-standardized-disclaimer-comment...](./batch-process-that-adds-standardized-disclaimer-comment-every-document-directory.cs) | `Document`, `Comment`, `DocumentBuilder` | Batch process that adds standardized disclaimer comment every document directory |
 | [comment-collection-events-trigger-custom-logging-whenev...](./comment-collection-events-trigger-custom-logging-whenever-comment-is-added-removed.cs) | `Comment`, `INodeChangingCallback`, `StringBuilder` | Comment collection events trigger custom logging whenever comment is added re... |
-| [compare-two-versions-document-list-comments-that-were-a...](./compare-two-versions-document-list-comments-that-were-added-modified-deleted.cs) | `Document`, `Revisions` | Compare two versions document list comments that were added modified deleted |
-| [convert-doc-file-pdf-while-retaining-all-comment-annota...](./convert-doc-file-pdf-while-retaining-all-comment-annotations-visible-output.cs) | `Document`, `PdfSaveOptions` | Convert doc file pdf while retaining all comment annotations visible output |
-| [convert-document-comments-xps-format-ensuring-comments-...](./convert-document-comments-xps-format-ensuring-comments-appear-as-markup-annotations.cs) | `Document`, `XpsSaveOptions` | Convert document comments xps format ensuring comments appear as markup annot... |
-| [delete-all-comments-authored-particular-user-loaded-doc...](./delete-all-comments-authored-particular-user-loaded-document-before-exporting.cs) | `NodeType`, `Document`, `System` | Delete all comments authored particular user loaded document before exporting |
-| [document-change-comment-author-names-uppercase-updated-...](./document-change-comment-author-names-uppercase-updated-file.cs) | `Document`, `NodeType`,  | Document change comment author names uppercase updated file |
+| [convert-doc-file-pdf-while-retaining-all-comment-annota...](./convert-doc-file-pdf-while-retaining-all-comment-annotations-visible-output.cs) | `Document`, `DocumentBuilder`, `Comment` | Convert doc file pdf while retaining all comment annotations visible output |
+| [convert-document-comments-xps-format-ensuring-comments-...](./convert-document-comments-xps-format-ensuring-comments-appear-as-markup-annotations.cs) | `Document`, `DocumentBuilder`, `Comment` | Convert document comments xps format ensuring comments appear as markup annot... |
+| [document-change-comment-author-names-uppercase-updated-...](./document-change-comment-author-names-uppercase-updated-file.cs) | `Document`, `NodeType`, `Input` | Document change comment author names uppercase updated file |
 | [document-stream-add-comments-modified-document-back-mem...](./document-stream-add-comments-modified-document-back-memory-stream.cs) | `Document`, `DocumentBuilder`, `Comment` | Document stream add comments modified document back memory stream |
 | [docx-file-enumerate-all-comments-print-each-author-text...](./docx-file-enumerate-all-comments-print-each-author-text-console.cs) | `Document`, `NodeType` | Docx file enumerate all comments print each author text console |
-| [export-all-comments-docx-file-csv-file-author-date-text...](./export-all-comments-docx-file-csv-file-author-date-text-columns.cs) | `Document`, `StreamWriter` | Export all comments docx file csv file author date text columns |
-| [extract-comment-metadata-author-date-text-write-it-json...](./extract-comment-metadata-author-date-text-write-it-json-file.cs) | `System`, `Document`, `CommentInfo` | Extract comment metadata author date text write it json file |
-| [extract-comment-text-embed-it-as-footnotes-within-same-...](./extract-comment-text-embed-it-as-footnotes-within-same-document-alternative.cs) | `Document`, `DocumentBuilder` | Extract comment text embed it as footnotes within same document alternative |
-| [filter-comments-author-export-only-those-comments-separ...](./filter-comments-author-export-only-those-comments-separate-word-document-review.cs) | `Document`, `DocumentBuilder`, `System` | Filter comments author export only those comments separate word document review |
-| [implement-feature-that-hides-all-comments-document-view...](./implement-feature-that-hides-all-comments-document-view-without-removing-them-file.cs) | `Document` | Implement feature that hides all comments document view without removing them... |
-| [import-comments-exported-xml-file-attach-them-appropria...](./import-comments-exported-xml-file-attach-them-appropriate-locations-new-document.cs) | `Document`, `NodeImporter`, `Run` | Import comments exported xml file attach them appropriate locations new document |
-| [iterate-through-comment-collection-remove-comments-olde...](./iterate-through-comment-collection-remove-comments-older-than-specified-date-threshold.cs) | `Document`, `System` | Iterate through comment collection remove comments older than specified date... |
-| [multiple-word-documents-folder-aggregate-their-comments...](./multiple-word-documents-folder-aggregate-their-comments-summary-report.cs) | `Document`, `DocumentBuilder` | Multiple word documents folder aggregate their comments summary report |
-| [preserve-comment-formatting-such-as-bold-italic-text-wh...](./preserve-comment-formatting-such-as-bold-italic-text-when-converting-document-html.cs) | `Run`, `Document`, `DocumentBuilder` | Preserve comment formatting such as bold italic text when converting document... |
-| [printable-report-listing-all-comments-page-numbers-asso...](./printable-report-listing-all-comments-page-numbers-associated-paragraph-text.cs) | `Document`, `ParagraphFormat` | Printable report listing all comments page numbers associated paragraph text |
-| [programmatically-accept-reject-comments-based-author-na...](./programmatically-accept-reject-comments-based-author-name-revised-document-version.cs) | `Document`, `System` | Programmatically accept reject comments based author name revised document ve... |
+| [export-all-comments-docx-file-csv-file-author-date-text...](./export-all-comments-docx-file-csv-file-author-date-text-columns.cs) | `Document`, `StreamWriter`, `NodeType` | Export all comments docx file csv file author date text columns |
+| [extract-comment-text-embed-it-as-footnotes-within-same-...](./extract-comment-text-embed-it-as-footnotes-within-same-document-alternative.cs) | `Document`, `DocumentBuilder`, `Comment` | Extract comment text embed it as footnotes within same document alternative |
+| [filter-comments-author-export-only-those-comments-separ...](./filter-comments-author-export-only-those-comments-separate-word-document-review.cs) | `Document`, `DocumentBuilder`, `Comment` | Filter comments author export only those comments separate word document review |
+| [import-comments-exported-xml-file-attach-them-appropria...](./import-comments-exported-xml-file-attach-them-appropriate-locations-new-document.cs) | `Document`, `DocumentBuilder`, `Comment` | Import comments exported xml file attach them appropriate locations new document |
+| [iterate-through-comment-collection-remove-comments-olde...](./iterate-through-comment-collection-remove-comments-older-than-specified-date-threshold.cs) | `Document`, `Input`, `NodeType` | Iterate through comment collection remove comments older than specified date... |
+| [multiple-word-documents-folder-aggregate-their-comments...](./multiple-word-documents-folder-aggregate-their-comments-summary-report.cs) | `Document`, `DocumentBuilder`, `SummarizeOptions` | Multiple word documents folder aggregate their comments summary report |
+| [programmatically-accept-reject-comments-based-author-na...](./programmatically-accept-reject-comments-based-author-name-revised-document-version.cs) | `Document`, `Input`, `NodeType` | Programmatically accept reject comments based author name revised document ve... |
 | [reply-existing-comment-ensure-reply-appears-nested-unde...](./reply-existing-comment-ensure-reply-appears-nested-under-original.cs) | `Document`, `DocumentBuilder`, `Comment` | Reply existing comment ensure reply appears nested under original |
-| [search-comments-containing-specific-keyword-highlight-c...](./search-comments-containing-specific-keyword-highlight-corresponding-text-range-document.cs) | `NodeType`, `Document`, `System` | Search comments containing specific keyword highlight corresponding text rang... |
+| [search-comments-containing-specific-keyword-highlight-c...](./search-comments-containing-specific-keyword-highlight-corresponding-text-range-document.cs) | `NodeType`, `Document`, `Font` | Search comments containing specific keyword highlight corresponding text rang... |
 | [set-custom-author-name-initials-programmatically-added-...](./set-custom-author-name-initials-programmatically-added-comments-document.cs) | `Document`, `DocumentBuilder`, `Comment` | Set custom author name initials programmatically added comments document |
 | [synchronize-comment-positions-after-document-sections-a...](./synchronize-comment-positions-after-document-sections-are-reordered-maintain-accurate.cs) | `Sections`, `NodeType`, `Document` | Synchronize comment positions after document sections are reordered maintain... |
-| [update-text-existing-comment-identified-its-index-while...](./update-text-existing-comment-identified-its-index-while-preserving-original-formatting.cs) | `FirstParagraph`, `Document` | Update text existing comment identified its index while preserving original f... |
 | [validate-that-comment-reference-ids-update-correctly-af...](./validate-that-comment-reference-ids-update-correctly-after-inserting-new-paragraphs.cs) | `PreviousSibling`, `Document`, `DocumentBuilder` | Validate that comment reference ids update correctly after inserting new para... |
 
 ## Category Statistics
-- Total examples: 29
+- Total examples: 22
 
 ## General Tips
-- See parent [AGENTS.md](../AGENTS.md) for:
-  - **Boundaries** — Always / Ask First / Never rules for all examples
-  - **Common Mistakes** — verified anti-patterns that cause build failures
-  - **Domain Knowledge** — cross-cutting API-specific gotchas
-  - **Testing Guide** — build and run verification steps
-- Review code examples in this folder for comments patterns
+- See parent [AGENTS.md](../AGENTS.md) for repository-wide boundaries and testing guidance.
+- Review code examples in this folder for comments patterns.
 
 <!-- AUTOGENERATED:START -->
-Updated: 2026-03-16 | Run: `20260316_082306`
+Updated: 2026-03-24 | Run: `20260315_203408_65134f`
 <!-- AUTOGENERATED:END -->

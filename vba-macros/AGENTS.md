@@ -21,15 +21,14 @@ See the root [AGENTS.md](../AGENTS.md) for repository-wide conventions and bound
 
 ## Required Namespaces
 
-- `using Aspose.Words;` (33/33 files) ← category-specific
-- `using Aspose.Words.Vba;` (33/33 files)
-- `using System;` (28/33 files)
-- `using System.IO;` (10/33 files)
-- `using System.Collections.Generic;` (6/33 files)
-- `using System.Text.Json;` (3/33 files)
-- `using System.Text.RegularExpressions;` (2/33 files)
-- `using System.Linq;` (1/33 files)
-- `using System.IO.Compression;` (1/33 files)
+- `using Aspose.Words;` (30/30 files) ← category-specific
+- `using Aspose.Words.Vba;` (30/30 files)
+- `using System;` (28/30 files)
+- `using System.IO;` (21/30 files)
+- `using System.Collections.Generic;` (5/30 files)
+- `using System.Text.Json;` (3/30 files)
+- `using System.Text.RegularExpressions;` (2/30 files)
+- `using System.IO.Compression;` (1/30 files)
 
 ## Common Code Pattern
 
@@ -46,49 +45,44 @@ doc.Save("output.docx");
 
 | File | Key APIs | Description |
 |------|----------|-------------|
-| [add-error-logging-code-each-vba-module-inserting-standa...](./add-error-logging-code-each-vba-module-inserting-standardized-logging-routine-at.cs) | `Document`, `Aspose`, `Words` | Add error logging code each vba module inserting standardized logging routine at |
-| [add-reference-microsoft-excel-object-library-vbaproject...](./add-reference-microsoft-excel-object-library-vbaproject-verify-its-presence.cs) | `VbaReferenceType`, `Aspose`, `Document` | Add reference microsoft excel object library vbaproject verify its presence |
+| [add-error-logging-code-each-vba-module-inserting-standa...](./add-error-logging-code-each-vba-module-inserting-standardized-logging-routine-at.cs) | `Document`, `Input`, `Output_WithLogging` | Add error logging code each vba module inserting standardized logging routine at |
+| [add-reference-microsoft-excel-object-library-vbaproject...](./add-reference-microsoft-excel-object-library-vbaproject-verify-its-presence.cs) | `VbaReferenceType`, `Document`, `ArgumentOutOfRangeException` | Add reference microsoft excel object library vbaproject verify its presence |
 | [add-reference-microsoft-scripting-runtime-library-its-d...](./add-reference-microsoft-scripting-runtime-library-its-dictionary-object-within-macro.cs) | `VbaProject`, `Document`, `VbaModule` | Add reference microsoft scripting runtime library its dictionary object withi... |
-| [batch-process-folder-docm-files-extracting-macro-names-...](./batch-process-folder-docm-files-extracting-macro-names-writing-them-csv-summary-file.cs) | `Document`, `System`, `Aspose` | Batch process folder docm files extracting macro names writing them csv summa... |
-| [clone-entire-vba-project-one-word-document-another-targ...](./clone-entire-vba-project-one-word-document-another-target-document.cs) | `VbaProject`, `Document`, `Aspose` | Clone entire vba project one word document another target document |
-| [clone-vba-project-template-document-newly-reports-ensur...](./clone-vba-project-template-document-newly-reports-ensure-consistent-macros.cs) | `VbaProject`, `Document`, `Aspose` | Clone vba project template document newly reports ensure consistent macros |
-| [clone-vba-project-then-remove-all-references-external-l...](./clone-vba-project-then-remove-all-references-external-libraries-self-contained-macro.cs) | `Document`, `Aspose`, `Words` | Clone vba project then remove all references external libraries self containe... |
+| [batch-process-folder-docm-files-extracting-macro-names-...](./batch-process-folder-docm-files-extracting-macro-names-writing-them-csv-summary-file.cs) | `Document`, `StreamWriter`, `MacroSummary` | Batch process folder docm files extracting macro names writing them csv summa... |
+| [clone-entire-vba-project-one-word-document-another-targ...](./clone-entire-vba-project-one-word-document-another-target-document.cs) | `Document`, `VbaProject`, `Modules` | Clone entire vba project one word document another target document |
+| [clone-vba-project-template-document-newly-reports-ensur...](./clone-vba-project-template-document-newly-reports-ensure-consistent-macros.cs) | `Document`, `VbaProject`, `Modules` | Clone vba project template document newly reports ensure consistent macros |
+| [clone-vba-project-then-remove-all-references-external-l...](./clone-vba-project-then-remove-all-references-external-libraries-self-contained-macro.cs) | `Document`, `Source`, `VbaReferenceType` | Clone vba project then remove all references external libraries self containe... |
 | [clonevbaproject-method-duplicate-vba-project-while-pres...](./clonevbaproject-method-duplicate-vba-project-while-preserving-module-order-references.cs) | `VbaProject`, `Document`, `Modules` | Clonevbaproject method duplicate vba project while preserving module order re... |
-| [compare-source-code-two-vbamodules-different-documents-...](./compare-source-code-two-vbamodules-different-documents-diff-report.cs) | `Document`, `StreamWriter`, `System` | Compare source code two vbamodules different documents diff report |
-| [configuration-file-specify-which-vba-modules-copy-betwe...](./configuration-file-specify-which-vba-modules-copy-between-documents-during-batch.cs) | `Document`, `System`, `Aspose` | Configuration file specify which vba modules copy between documents during batch |
-| [copy-single-vbamodule-source-document-s-vba-project-des...](./copy-single-vbamodule-source-document-s-vba-project-destination-document-s-project.cs) | `VbaProject`, `Document`, `Aspose` | Copy single vbamodule source document s vba project destination document s pr... |
-| [document-vbaproject-property-replace-existing-vba-proje...](./document-vbaproject-property-replace-existing-vba-project-pre-configured-project.cs) | `Document`, `Aspose`, `Words` | Document vbaproject property replace existing vba project pre configured project |
-| [documentation-report-listing-each-vba-module-its-type-n...](./documentation-report-listing-each-vba-module-its-type-number-lines-code.cs) | `Document`, `DocumentBuilder`, `Aspose` | Documentation report listing each vba module its type number lines code |
+| [compare-source-code-two-vbamodules-different-documents-...](./compare-source-code-two-vbamodules-different-documents-diff-report.cs) | `Document`, `StreamWriter`, `StringSplitOptions` | Compare source code two vbamodules different documents diff report |
+| [configuration-file-specify-which-vba-modules-copy-betwe...](./configuration-file-specify-which-vba-modules-copy-between-documents-during-batch.cs) | `Document`, `VbaProject`, `Collections` | Configuration file specify which vba modules copy between documents during batch |
+| [copy-single-vbamodule-source-document-s-vba-project-des...](./copy-single-vbamodule-source-document-s-vba-project-destination-document-s-project.cs) | `VbaProject`, `Document`, `Modules` | Copy single vbamodule source document s vba project destination document s pr... |
+| [documentation-report-listing-each-vba-module-its-type-n...](./documentation-report-listing-each-vba-module-its-type-number-lines-code.cs) | `Document`, `DocumentBuilder`, `ParagraphFormat` | Documentation report listing each vba module its type number lines code |
 | [docx-file-add-new-vba-module-that-automates-table-forma...](./docx-file-add-new-vba-module-that-automates-table-formatting-updated-document.cs) | `VbaProject`, `Document`, `VbaModule` | Docx file add new vba module that automates table formatting updated document |
-| [docx-file-containing-vba-macros-enumerate-all-modules-v...](./docx-file-containing-vba-macros-enumerate-all-modules-vbaproject.cs) | `Document`, `Aspose`, `Words` | Docx file containing vba macros enumerate all modules vbaproject |
-| [docx-file-new-vba-project-copy-selected-modules-another...](./docx-file-new-vba-project-copy-selected-modules-another-document-it.cs) | `Document`, `VbaProject`, `Aspose` | Docx file new vba project copy selected modules another document it |
-| [enumerate-vbaproject-references-filter-out-com-referenc...](./enumerate-vbaproject-references-filter-out-com-references-log-remaining-references.cs) | `Document`, `Aspose`, `Words` | Enumerate vbaproject references filter out com references log remaining refer... |
+| [docx-file-containing-vba-macros-enumerate-all-modules-v...](./docx-file-containing-vba-macros-enumerate-all-modules-vbaproject.cs) | `Document` | Docx file containing vba macros enumerate all modules vbaproject |
+| [enumerate-vbaproject-references-filter-out-com-referenc...](./enumerate-vbaproject-references-filter-out-com-references-log-remaining-references.cs) | `Document`, `Input`, `SaveFormat` | Enumerate vbaproject references filter out com references log remaining refer... |
 | [export-all-vba-modules-document-zip-archive-maintaining...](./export-all-vba-modules-document-zip-archive-maintaining-original-module-filenames.cs) | `VbaProject`, `Document`, `ZipArchive` | Export all vba modules document zip archive maintaining original module filen... |
-| [export-macro-source-code-json-format-including-module-n...](./export-macro-source-code-json-format-including-module-names-code-strings-external.cs) | `System`, `Aspose`, `Document` | Export macro source code json format including module names code strings exte... |
-| [import-macro-definitions-json-file-corresponding-vbamod...](./import-macro-definitions-json-file-corresponding-vbamodules-assign-their-source-code.cs) | `System`, `Document`, `VbaProject` | Import macro definitions json file corresponding vbamodules assign their sour... |
-| [import-vba-module-external-bas-file-document-s-vbaproje...](./import-vba-module-external-bas-file-document-s-vbaproject-set-its-name.cs) | `Document`, `VbaProject`, `Aspose` | Import vba module external bas file document s vbaproject set its name |
-| [iterate-through-all-vbamodules-document-replace-depreca...](./iterate-through-all-vbamodules-document-replace-deprecated-api-calls-updated.cs) | `Document`, `Aspose`, `SourceCode` | Iterate through all vbamodules document replace deprecated api calls updated |
-| [iterate-through-all-vbamodules-prepend-comment-header-c...](./iterate-through-all-vbamodules-prepend-comment-header-containing-author-date.cs) | `Aspose`, `Document`, `Words` | Iterate through all vbamodules prepend comment header containing author date |
-| [multiple-docm-files-batch-extract-each-macro-s-source-c...](./multiple-docm-files-batch-extract-each-macro-s-source-code-store-them-separate-files.cs) | `Document`, `DocumentBuilder`, `Aspose` | Multiple docm files batch extract each macro s source code store them separat... |
-| [new-vbaproject-add-standard-module-assign-custom-macro-...](./new-vbaproject-add-standard-module-assign-custom-macro-code-its-sourcecode-property.cs) | `Document`, `Aspose`, `VbaProject` | New vbaproject add standard module assign custom macro code its sourcecode pr... |
-| [perform-case-insensitive-search-across-all-vba-modules-...](./perform-case-insensitive-search-across-all-vba-modules-deprecated-function-names.cs) | `Document`, `System`, `Aspose` | Perform case insensitive search across all vba modules deprecated function names |
-| [remove-all-standard-modules-vbaproject-leaving-only-cla...](./remove-all-standard-modules-vbaproject-leaving-only-class-modules-document.cs) | `Document`, `Aspose`, `Words` | Remove all standard modules vbaproject leaving only class modules document |
-| [remove-existing-reference-vbaproject-s-references-colle...](./remove-existing-reference-vbaproject-s-references-collection-confirm-reference-count.cs) | `Document`, `Aspose`, `Words` | Remove existing reference vbaproject s references collection confirm referenc... |
-| [replace-hard-coded-file-paths-macro-source-code-relativ...](./replace-hard-coded-file-paths-macro-source-code-relative-paths-string-manipulation.cs) | `Document`, `System`, `Aspose` | Replace hard coded file paths macro source code relative paths string manipul... |
-| [retrieve-source-code-specific-vbamodule-write-it-text-f...](./retrieve-source-code-specific-vbamodule-write-it-text-file-analysis.cs) | `Document`, `Aspose`, `ModuleSource` | Retrieve source code specific vbamodule write it text file analysis |
-| ... | | *and 3 more files* |
+| [export-macro-source-code-json-format-including-module-n...](./export-macro-source-code-json-format-including-module-names-code-strings-external.cs) | `Document`, `Collections`, `Text` | Export macro source code json format including module names code strings exte... |
+| [import-macro-definitions-json-file-corresponding-vbamod...](./import-macro-definitions-json-file-corresponding-vbamodules-assign-their-source-code.cs) | `Document`, `VbaProject`, `VbaModule` | Import macro definitions json file corresponding vbamodules assign their sour... |
+| [import-vba-module-external-bas-file-document-s-vbaproje...](./import-vba-module-external-bas-file-document-s-vbaproject-set-its-name.cs) | `Document`, `VbaModule`, `VbaModuleType` | Import vba module external bas file document s vbaproject set its name |
+| [iterate-through-all-vbamodules-document-replace-depreca...](./iterate-through-all-vbamodules-document-replace-deprecated-api-calls-updated.cs) | `Document`, `SourceCode`, `Input` | Iterate through all vbamodules document replace deprecated api calls updated |
+| [multiple-docm-files-batch-extract-each-macro-s-source-c...](./multiple-docm-files-batch-extract-each-macro-s-source-code-store-them-separate-files.cs) | `Document`, `DocumentBuilder` | Multiple docm files batch extract each macro s source code store them separat... |
+| [new-vbaproject-add-standard-module-assign-custom-macro-...](./new-vbaproject-add-standard-module-assign-custom-macro-code-its-sourcecode-property.cs) | `Document`, `VbaProject`, `VbaModule` | New vbaproject add standard module assign custom macro code its sourcecode pr... |
+| [perform-case-insensitive-search-across-all-vba-modules-...](./perform-case-insensitive-search-across-all-vba-modules-deprecated-function-names.cs) | `Document`, `Collections`, `Text` | Perform case insensitive search across all vba modules deprecated function names |
+| [remove-all-standard-modules-vbaproject-leaving-only-cla...](./remove-all-standard-modules-vbaproject-leaving-only-class-modules-document.cs) | `Document`, `Input`, `VbaProject` | Remove all standard modules vbaproject leaving only class modules document |
+| [remove-existing-reference-vbaproject-s-references-colle...](./remove-existing-reference-vbaproject-s-references-collection-confirm-reference-count.cs) | `Document`, `AppDomain`, `CurrentDomain` | Remove existing reference vbaproject s references collection confirm referenc... |
+| [replace-hard-coded-file-paths-macro-source-code-relativ...](./replace-hard-coded-file-paths-macro-source-code-relative-paths-string-manipulation.cs) | `Document`, `Text`, `AppContext` | Replace hard coded file paths macro source code relative paths string manipul... |
+| [retrieve-source-code-specific-vbamodule-write-it-text-f...](./retrieve-source-code-specific-vbamodule-write-it-text-file-analysis.cs) | `Document`, `ModuleSource`, `Input` | Retrieve source code specific vbamodule write it text file analysis |
+| [update-sourcecode-vbamodule-include-error-handling-erro...](./update-sourcecode-vbamodule-include-error-handling-error-resume-next-statements.cs) | `Document`, `InputDocument`, `OutputDocument` | Update sourcecode vbamodule include error handling error resume next statements |
+| [validate-that-loaded-document-s-vbaproject-contains-at-...](./validate-that-loaded-document-s-vbaproject-contains-at-least-one-module-before.cs) | `Document`, `InvalidOperationException`, `VbaProject` | Validate that loaded document s vbaproject contains at least one module before |
+| [vba-project-class-module-define-public-method-invoke-it...](./vba-project-class-module-define-public-method-invoke-it-another-module.cs) | `VbaProject`, `VbaModule`, `Document` | Vba project class module define public method invoke it another module |
 
 ## Category Statistics
-- Total examples: 33
+- Total examples: 30
 
 ## General Tips
-- See parent [AGENTS.md](../AGENTS.md) for:
-  - **Boundaries** — Always / Ask First / Never rules for all examples
-  - **Common Mistakes** — verified anti-patterns that cause build failures
-  - **Domain Knowledge** — cross-cutting API-specific gotchas
-  - **Testing Guide** — build and run verification steps
-- Review code examples in this folder for vba-macros patterns
+- See parent [AGENTS.md](../AGENTS.md) for repository-wide boundaries and testing guidance.
+- Review code examples in this folder for vba-macros patterns.
 
 <!-- AUTOGENERATED:START -->
-Updated: 2026-03-16 | Run: `20260316_082635`
+Updated: 2026-03-24 | Run: `20260315_203408_65134f`
 <!-- AUTOGENERATED:END -->

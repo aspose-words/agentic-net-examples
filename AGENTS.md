@@ -21,16 +21,16 @@ When working in this repository:
 
 ## Repository Overview
 
-This repository contains **1701** working code examples demonstrating Aspose.Words for .NET capabilities.
+This repository contains **1534** verified code examples demonstrating Aspose.Words for .NET capabilities.
 
-**Statistics** (as of 2026-03-16):
-- Total Examples: 1701
+**Statistics** (as of 2026-03-24):
+- Total Examples: 1534
 - Categories: 29
 
 ## Category Details
 
 ### barcode-image
-- Examples: 26
+- Examples: 21
 - Guide: [AGENTS.md](./barcode-image/AGENTS.md)
 
 ### charts
@@ -38,7 +38,7 @@ This repository contains **1701** working code examples demonstrating Aspose.Wor
 - Guide: [AGENTS.md](./charts/AGENTS.md)
 
 ### comments
-- Examples: 29
+- Examples: 22
 - Guide: [AGENTS.md](./comments/AGENTS.md)
 
 ### comparison
@@ -46,19 +46,19 @@ This repository contains **1701** working code examples demonstrating Aspose.Wor
 - Guide: [AGENTS.md](./comparison/AGENTS.md)
 
 ### content-control
-- Examples: 34
+- Examples: 26
 - Guide: [AGENTS.md](./content-control/AGENTS.md)
 
 ### conversion
-- Examples: 100
+- Examples: 95
 - Guide: [AGENTS.md](./conversion/AGENTS.md)
 
 ### extraction
-- Examples: 30
+- Examples: 27
 - Guide: [AGENTS.md](./extraction/AGENTS.md)
 
 ### find-and-replace
-- Examples: 62
+- Examples: 61
 - Guide: [AGENTS.md](./find-and-replace/AGENTS.md)
 
 ### fonts
@@ -66,15 +66,15 @@ This repository contains **1701** working code examples demonstrating Aspose.Wor
 - Guide: [AGENTS.md](./fonts/AGENTS.md)
 
 ### form-fields
-- Examples: 30
+- Examples: 28
 - Guide: [AGENTS.md](./form-fields/AGENTS.md)
 
 ### hyphenation
-- Examples: 39
+- Examples: 37
 - Guide: [AGENTS.md](./hyphenation/AGENTS.md)
 
 ### images
-- Examples: 88
+- Examples: 75
 - Guide: [AGENTS.md](./images/AGENTS.md)
 
 ### join-documents
@@ -82,7 +82,7 @@ This repository contains **1701** working code examples demonstrating Aspose.Wor
 - Guide: [AGENTS.md](./join-documents/AGENTS.md)
 
 ### linq-reporting
-- Examples: 395
+- Examples: 314
 - Guide: [AGENTS.md](./linq-reporting/AGENTS.md)
 
 ### lists
@@ -90,23 +90,23 @@ This repository contains **1701** working code examples demonstrating Aspose.Wor
 - Guide: [AGENTS.md](./lists/AGENTS.md)
 
 ### mail-merge
-- Examples: 30
+- Examples: 29
 - Guide: [AGENTS.md](./mail-merge/AGENTS.md)
 
 ### officemath
-- Examples: 30
+- Examples: 18
 - Guide: [AGENTS.md](./officemath/AGENTS.md)
 
 ### ole-objects
-- Examples: 29
+- Examples: 27
 - Guide: [AGENTS.md](./ole-objects/AGENTS.md)
 
 ### paragraphs
-- Examples: 34
+- Examples: 33
 - Guide: [AGENTS.md](./paragraphs/AGENTS.md)
 
 ### programming-with-documents
-- Examples: 107
+- Examples: 106
 - Guide: [AGENTS.md](./programming-with-documents/AGENTS.md)
 
 ### range
@@ -114,7 +114,7 @@ This repository contains **1701** working code examples demonstrating Aspose.Wor
 - Guide: [AGENTS.md](./range/AGENTS.md)
 
 ### rendering
-- Examples: 63
+- Examples: 57
 - Guide: [AGENTS.md](./rendering/AGENTS.md)
 
 ### security-and-protection
@@ -126,23 +126,23 @@ This repository contains **1701** working code examples demonstrating Aspose.Wor
 - Guide: [AGENTS.md](./shapes/AGENTS.md)
 
 ### split-document
-- Examples: 29
+- Examples: 23
 - Guide: [AGENTS.md](./split-document/AGENTS.md)
 
 ### track-changes
-- Examples: 40
+- Examples: 37
 - Guide: [AGENTS.md](./track-changes/AGENTS.md)
 
 ### vba-macros
-- Examples: 33
+- Examples: 30
 - Guide: [AGENTS.md](./vba-macros/AGENTS.md)
 
 ### watermark
-- Examples: 32
+- Examples: 28
 - Guide: [AGENTS.md](./watermark/AGENTS.md)
 
 ### working-with-table
-- Examples: 190
+- Examples: 189
 - Guide: [AGENTS.md](./working-with-table/AGENTS.md)
 
 ## Boundaries

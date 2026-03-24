@@ -24,12 +24,14 @@ See the root [AGENTS.md](../AGENTS.md) for repository-wide conventions and bound
 - `using Aspose.Words;` (30/30 files) ← category-specific
 - `using System;` (29/30 files)
 - `using Aspose.Words.Comparing;` (17/30 files)
-- `using System.IO;` (4/30 files)
-- `using Aspose.Words.Replacing;` (2/30 files)
+- `using System.IO;` (9/30 files)
 - `using Aspose.Words.Tables;` (2/30 files)
 - `using Aspose.Words.Saving;` (2/30 files)
+- `using System.Linq;` (1/30 files)
+- `using Aspose.Words.Replacing;` (1/30 files)
+- `using System.Drawing;` (1/30 files)
+- `using Aspose.Words.Drawing;` (1/30 files)
 - `using Aspose.Words.Loading;` (1/30 files)
-- `using Aspose.Words.Layout;` (1/30 files)
 - `using System.Collections.Generic;` (1/30 files)
 
 ## Common Code Pattern
@@ -47,48 +49,44 @@ doc.Save("output.docx");
 
 | File | Key APIs | Description |
 |------|----------|-------------|
-| [accept-only-formatting-revisions-while-rejecting-all-co...](./accept-only-formatting-revisions-while-rejecting-all-content-changes-compared-document.cs) | `Document`, `Aspose`, `Words` | Accept only formatting revisions while rejecting all content changes compared... |
-| [after-accepting-revisions-remove-all-revision-marks-cle...](./after-accepting-revisions-remove-all-revision-marks-clearing-revisions-collection.cs) | `Document`, `Aspose`, `Revisions` | After accepting revisions remove all revision marks clearing revisions collec... |
-| [after-comparison-programmatically-accept-all-revisions-...](./after-comparison-programmatically-accept-all-revisions-cleaned-document-as-docx.cs) | `Document`, `Aspose`, `Words` | After comparison programmatically accept all revisions cleaned document as docx |
-| [apply-custom-author-name-timestamp-when-calling-compare...](./apply-custom-author-name-timestamp-when-calling-compare-attribute-revisions-specific.cs) | `Document`, `Aspose`, `Words` | Apply custom author name timestamp when calling compare attribute revisions s... |
-| [batch-process-folder-document-pairs-generating-compared...](./batch-process-folder-document-pairs-generating-compared-versions-revision-tracking.cs) | `Document`, `Aspose`, `Revisions` | Batch process folder document pairs generating compared versions revision tra... |
+| [accept-only-formatting-revisions-while-rejecting-all-co...](./accept-only-formatting-revisions-while-rejecting-all-content-changes-compared-document.cs) | `Document`, `DocumentBuilder`, `Original` | Accept only formatting revisions while rejecting all content changes compared... |
+| [after-accepting-revisions-remove-all-revision-marks-cle...](./after-accepting-revisions-remove-all-revision-marks-clearing-revisions-collection.cs) | `Document`, `Revisions` | After accepting revisions remove all revision marks clearing revisions collec... |
+| [after-comparison-programmatically-accept-all-revisions-...](./after-comparison-programmatically-accept-all-revisions-cleaned-document-as-docx.cs) | `Document`, `Original`, `Edited` | After comparison programmatically accept all revisions cleaned document as docx |
+| [apply-custom-author-name-timestamp-when-calling-compare...](./apply-custom-author-name-timestamp-when-calling-compare-attribute-revisions-specific.cs) | `Document`, `Original`, `Edited` | Apply custom author name timestamp when calling compare attribute revisions s... |
+| [batch-process-folder-document-pairs-generating-compared...](./batch-process-folder-document-pairs-generating-compared-versions-revision-tracking.cs) | `Document`, `AppContext`, `StringComparison` | Batch process folder document pairs generating compared versions revision tra... |
 | [check-doc1-revisions-count-equals-zero-determine-that-t...](./check-doc1-revisions-count-equals-zero-determine-that-two-documents-are-identical.cs) | `Document`, `Revisions`, `InvalidOperationException` | Check doc1 revisions count equals zero determine that two documents are ident... |
-| [compare-doc-file-docx-file-verify-that-table-structure-...](./compare-doc-file-docx-file-verify-that-table-structure-differences-are-detected.cs) | `Document`, `Aspose`, `Words` | Compare doc file docx file verify that table structure differences are detected |
+| [compare-doc-file-docx-file-verify-that-table-structure-...](./compare-doc-file-docx-file-verify-that-table-structure-differences-are-detected.cs) | `Document`, `DocumentBuilder`, `CompareOptions` | Compare doc file docx file verify that table structure differences are detected |
 | [compare-document-against-itself-confirm-that-no-revisio...](./compare-document-against-itself-confirm-that-no-revisions-are.cs) | `Document`, `InvalidOperationException`, `Revisions` | Compare document against itself confirm that no revisions are |
-| [compare-documents-containing-embedded-charts-ensure-tha...](./compare-documents-containing-embedded-charts-ensure-that-chart-data-changes-are.cs) | `Document`, `Aspose`, `Revisions` | Compare documents containing embedded charts ensure that chart data changes are |
+| [compare-documents-containing-embedded-charts-ensure-tha...](./compare-documents-containing-embedded-charts-ensure-that-chart-data-changes-are.cs) | `Document`, `Revisions`, `InvalidOperationException` | Compare documents containing embedded charts ensure that chart data changes are |
 | [compare-documents-different-page-orientations-verify-th...](./compare-documents-different-page-orientations-verify-that-orientation-changes-appear.cs) | `PageSetup`, `Orientation`, `Document` | Compare documents different page orientations verify that orientation changes... |
-| [compared-document-as-doc-format-while-preserving-all-re...](./compared-document-as-doc-format-while-preserving-all-revision-metadata.cs) | `Document`, `DocSaveOptions`, `Aspose` | Compared document as doc format while preserving all revision metadata |
-| [compared-document-as-docx-format-while-preserving-all-r...](./compared-document-as-docx-format-while-preserving-all-revision-metadata.cs) | `Document`, `Aspose`, `Revisions` | Compared document as docx format while preserving all revision metadata |
-| [comparisonoptions-limit-comparison-specific-sections-do...](./comparisonoptions-limit-comparison-specific-sections-document-targeted-analysis.cs) | `Document`, `Aspose`, `CompareOptions` | Comparisonoptions limit comparison specific sections document targeted analysis |
-| [configure-comparisonoptions-ignore-case-differences-whe...](./configure-comparisonoptions-ignore-case-differences-when-comparing-textual-content.cs) | `Document`, `Aspose`, `CompareOptions` | Configure comparisonoptions ignore case differences when comparing textual co... |
-| [configure-comparisonoptions-ignore-formatting-changes-b...](./configure-comparisonoptions-ignore-formatting-changes-before-performing-document.cs) | `Document`, `Aspose`, `CompareOptions` | Configure comparisonoptions ignore formatting changes before performing document |
-| [configure-comparisonoptions-ignore-whitespace-changes-w...](./configure-comparisonoptions-ignore-whitespace-changes-when-comparing-source-code.cs) | `Document`, `Aspose`, `CompareOptions` | Configure comparisonoptions ignore whitespace changes when comparing source code |
+| [compared-document-as-doc-format-while-preserving-all-re...](./compared-document-as-doc-format-while-preserving-all-revision-metadata.cs) | `Document`, `DocSaveOptions`, `Original` | Compared document as doc format while preserving all revision metadata |
+| [compared-document-as-docx-format-while-preserving-all-r...](./compared-document-as-docx-format-while-preserving-all-revision-metadata.cs) | `Document`, `DocumentBuilder`, `Original` | Compared document as docx format while preserving all revision metadata |
+| [comparisonoptions-limit-comparison-specific-sections-do...](./comparisonoptions-limit-comparison-specific-sections-document-targeted-analysis.cs) | `Document`, `DocumentBuilder`, `BreakType` | Comparisonoptions limit comparison specific sections document targeted analysis |
+| [configure-comparisonoptions-ignore-case-differences-whe...](./configure-comparisonoptions-ignore-case-differences-when-comparing-textual-content.cs) | `Document`, `CompareOptions`, `Original` | Configure comparisonoptions ignore case differences when comparing textual co... |
+| [configure-comparisonoptions-ignore-formatting-changes-b...](./configure-comparisonoptions-ignore-formatting-changes-before-performing-document.cs) | `Document`, `DocumentBuilder`, `Font` | Configure comparisonoptions ignore formatting changes before performing document |
+| [configure-comparisonoptions-ignore-whitespace-changes-w...](./configure-comparisonoptions-ignore-whitespace-changes-when-comparing-source-code.cs) | `Document`, `DocumentBuilder`, `CompareOptions` | Configure comparisonoptions ignore whitespace changes when comparing source code |
 | [custom-logger-that-records-revision-type-author-timesta...](./custom-logger-that-records-revision-type-author-timestamp-each-detected-change.cs) | `Document`, `DocumentBuilder`, `RevisionLogger` | Custom logger that records revision type author timestamp each detected change |
-| [detect-changes-table-cell-formatting-log-specific-cell-...](./detect-changes-table-cell-formatting-log-specific-cell-coordinates-each-revision.cs) | `Document`, `Aspose`, `Words` | Detect changes table cell formatting log specific cell coordinates each revision |
-| [disposable-pattern-ensure-document-objects-are-properly...](./disposable-pattern-ensure-document-objects-are-properly-released-after-comparison.cs) | `Document`, `Aspose`, `Revisions` | Disposable pattern ensure document objects are properly released after compar... |
-| [doc-file-compare-it-another-doc-result-revisions-included](./doc-file-compare-it-another-doc-result-revisions-included.cs) | `Document`, `Revisions`, `Aspose` | Doc file compare it another doc result revisions included |
-| [enable-detection-moved-paragraphs-setting-appropriate-f...](./enable-detection-moved-paragraphs-setting-appropriate-flags-comparisonoptions-before.cs) | `Document`, `Aspose`, `CompareOptions` | Enable detection moved paragraphs setting appropriate flags comparisonoptions... |
+| [detect-changes-table-cell-formatting-log-specific-cell-...](./detect-changes-table-cell-formatting-log-specific-cell-coordinates-each-revision.cs) | `Document`, `DocumentBuilder`, `NodeType` | Detect changes table cell formatting log specific cell coordinates each revision |
+| [disposable-pattern-ensure-document-objects-are-properly...](./disposable-pattern-ensure-document-objects-are-properly-released-after-comparison.cs) | `Document`, `DocumentBuilder`, `Revisions` | Disposable pattern ensure document objects are properly released after compar... |
+| [doc-file-compare-it-another-doc-result-revisions-included](./doc-file-compare-it-another-doc-result-revisions-included.cs) | `Document`, `DocumentBuilder`, `ComparisonResult` | Doc file compare it another doc result revisions included |
+| [enable-detection-moved-paragraphs-setting-appropriate-f...](./enable-detection-moved-paragraphs-setting-appropriate-flags-comparisonoptions-before.cs) | `Document`, `CompareOptions`, `Original` | Enable detection moved paragraphs setting appropriate flags comparisonoptions... |
 | [implement-error-handling-catch-exceptions-thrown-when-u...](./implement-error-handling-catch-exceptions-thrown-when-unsupported-file-formats-during.cs) | `LoadOptions`, `Document`, `DocumentComparer` | Implement error handling catch exceptions thrown when unsupported file format... |
-| [iterate-through-doc1-revisions-collection-log-each-revi...](./iterate-through-doc1-revisions-collection-log-each-revision-type-affected-text.cs) | `Document`, `Aspose`, `RevisionType` | Iterate through doc1 revisions collection log each revision type affected text |
-| [memorystream-documents-perform-comparison-write-result-...](./memorystream-documents-perform-comparison-write-result-byte-array.cs) | `Document`, `Aspose`, `Revisions` | Memorystream documents perform comparison write result byte array |
-| [reject-revisions-related-header-modifications-preserve-...](./reject-revisions-related-header-modifications-preserve-footer-changes-final-output.cs) | `Document`, `Aspose`, `HeaderRevisionCriteria` | Reject revisions related header modifications preserve footer changes final o... |
-| [set-comparisonoptions-showdeletedcontent-true-retain-de...](./set-comparisonoptions-showdeletedcontent-true-retain-deleted-text-comparison-output.cs) | `Aspose`, `Document`, `DocumentBuilder` | Set comparisonoptions showdeletedcontent true retain deleted text comparison... |
-| [set-comparisontarget-new-document-so-that-revisions-app...](./set-comparisontarget-new-document-so-that-revisions-appear-second-file.cs) | `Document`, `DocumentBuilder`, `Aspose` | Set comparisontarget new document so that revisions appear second file |
-| [summary-report-added-deleted-modified-paragraphs-revisi...](./summary-report-added-deleted-modified-paragraphs-revisions-collection.cs) | `RevisionType`, `Document`, `System` | Summary report added deleted modified paragraphs revisions collection |
-| [two-docx-files-compare-them-resulting-document-revision...](./two-docx-files-compare-them-resulting-document-revisions-applied.cs) | `Document`, `Revisions`, `Aspose` | Two docx files compare them resulting document revisions applied |
-| [validate-that-comparison-output-matches-online-tool-res...](./validate-that-comparison-output-matches-online-tool-results-comparing-revision-counts.cs) | `RevisionType`, `Document`, `Revisions` | Validate that comparison output matches online tool results comparing revisio... |
+| [iterate-through-doc1-revisions-collection-log-each-revi...](./iterate-through-doc1-revisions-collection-log-each-revision-type-affected-text.cs) | `Document`, `RevisionType`, `ParentStyle` | Iterate through doc1 revisions collection log each revision type affected text |
+| [memorystream-documents-perform-comparison-write-result-...](./memorystream-documents-perform-comparison-write-result-byte-array.cs) | `Document`, `Revisions`, `SaveFormat` | Memorystream documents perform comparison write result byte array |
+| [reject-revisions-related-header-modifications-preserve-...](./reject-revisions-related-header-modifications-preserve-footer-changes-final-output.cs) | `Document`, `HeaderRevisionCriteria`, `CompareOptions` | Reject revisions related header modifications preserve footer changes final o... |
+| [set-comparisonoptions-showdeletedcontent-true-retain-de...](./set-comparisonoptions-showdeletedcontent-true-retain-deleted-text-comparison-output.cs) | `Document`, `DocumentBuilder`, `CompareOptions` | Set comparisonoptions showdeletedcontent true retain deleted text comparison... |
+| [set-comparisontarget-new-document-so-that-revisions-app...](./set-comparisontarget-new-document-so-that-revisions-appear-second-file.cs) | `Document`, `DocumentBuilder`, `CompareOptions` | Set comparisontarget new document so that revisions appear second file |
+| [summary-report-added-deleted-modified-paragraphs-revisi...](./summary-report-added-deleted-modified-paragraphs-revisions-collection.cs) | `RevisionType`, `Document`, `DocumentBuilder` | Summary report added deleted modified paragraphs revisions collection |
+| [two-docx-files-compare-them-resulting-document-revision...](./two-docx-files-compare-them-resulting-document-revisions-applied.cs) | `Document`, `Revisions`, `Original` | Two docx files compare them resulting document revisions applied |
+| [validate-that-comparison-output-matches-online-tool-res...](./validate-that-comparison-output-matches-online-tool-results-comparing-revision-counts.cs) | `Revisions`, `DocumentBuilder`, `Paragraph` | Validate that comparison output matches online tool results comparing revisio... |
 
 ## Category Statistics
 - Total examples: 30
 
 ## General Tips
-- See parent [AGENTS.md](../AGENTS.md) for:
-  - **Boundaries** — Always / Ask First / Never rules for all examples
-  - **Common Mistakes** — verified anti-patterns that cause build failures
-  - **Domain Knowledge** — cross-cutting API-specific gotchas
-  - **Testing Guide** — build and run verification steps
-- Review code examples in this folder for comparison patterns
+- See parent [AGENTS.md](../AGENTS.md) for repository-wide boundaries and testing guidance.
+- Review code examples in this folder for comparison patterns.
 
 <!-- AUTOGENERATED:START -->
-Updated: 2026-03-16 | Run: `20260316_082314`
+Updated: 2026-03-24 | Run: `20260315_203408_65134f`
 <!-- AUTOGENERATED:END -->
