@@ -50,14 +50,42 @@ Top-level folders are categories. Examples are stored **directly inside category
 - `watermark/` (28 examples)
 - `working-with-table/` (189 examples)
 
-## How to build
+## Getting Started
+
+### Prerequisites
+
+- .NET SDK (net8.0 or higher)
+- Aspose.Words for .NET NuGet package (`26.3.0`)
+- Any input files required by a specific example (for example, `.docx`, images, fonts, or template data)
+- A valid Aspose license for production or unrestricted evaluation scenarios
+
+### Running Examples
+
+Each example in this repository is a **single, standalone `.cs` file**. To run one example, create a temporary console project, add the Aspose.Words package, and use the example file as `Program.cs`.
 
 ```bash
-dotnet --info
-dotnet restore
-dotnet build
-dotnet run
+# From the repository root
+dotnet new console -n ExampleProject --framework net8.0
+cd ExampleProject
+dotnet add package Aspose.Words --version 26.3.0
+
+# Copy one repository example into the project as Program.cs
+# PowerShell:
+Copy-Item ..\<category-folder>\<example-file>.cs .\Program.cs
+
+# Build and run
+dotnet build --configuration Release --verbosity minimal
+dotnet run --configuration Release --no-build
 ```
+
+Examples are stored directly inside category folders, so replace `<category-folder>` and `<example-file>` with a real path such as `barcode-image\new-document-insert-displaybarcode-field-then-document-as-docx.cs`.
+
+### Notes
+
+- Each `.cs` file is intended to be compiled and run independently.
+- Some examples expect input files in the current working directory; place those assets next to `Program.cs` or update the sample paths before running.
+- Generated output files are usually written to the working directory of the temporary console project.
+
 
 ## Contribution workflow
 

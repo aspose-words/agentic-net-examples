@@ -257,14 +257,86 @@ Cross-cutting rules and API-specific gotchas.
 ## Command Reference
 
 ### Build and Run
-```bash
-# Create a new project (if needed)
-dotnet new console -n ExampleProject --framework net8.0
 
-# Restore and build
-dotnet restore
-dotnet build
+Each repository example is a standalone `.cs` file. Run examples by creating a temporary console project and copying the desired example to `Program.cs`.
+
+```bash
+# Create a new project
+dotnet new console -n ExampleProject --framework net8.0
+cd ExampleProject
+
+# Add Aspose.Words
+dotnet add package Aspose.Words --version 26.3.0
+
+# Copy a repository example into the project as Program.cs
+# PowerShell:
+Copy-Item ..\<category-folder>\<example-file>.cs .\Program.cs
+
+# Build
+dotnet build --configuration Release --verbosity minimal
 
 # Run
-dotnet run
+dotnet run --configuration Release --no-build
 ```
+
+### Project File (.csproj)
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Aspose.Words" Version="26.3.0" />
+  </ItemGroup>
+</Project>
+```
+
+### Environment
+
+- .NET SDK: net8.0 or higher
+- NuGet: Aspose.Words 26.3.0
+- All examples are standalone Console Applications
+- Each `.cs` file must be compiled and run independently inside a temporary console project
+
+## Testing Guide
+
+Every example must pass these verification steps.
+
+### Build Verification
+
+```bash
+dotnet build --configuration Release --verbosity minimal
+```
+
+- Success: exit code `0` and no `CS####` compiler errors
+- Failure: any `error CS####` line indicates a build failure
+
+### Run Verification
+
+```bash
+dotnet run --configuration Release --no-build
+```
+
+- Success: exit code `0`, no unhandled exception, and expected output file(s) created where applicable
+- Failure: non-zero exit code, `Unhandled exception`, or missing expected output
+
+## How to Use These Examples
+
+### Prerequisites
+
+- .NET SDK (net8.0 or higher)
+- Aspose.Words for .NET (26.3.0 or higher)
+- NuGet package restore enabled
+- Any required input files available in the temporary project working directory
+
+### Running an Example
+
+1. Choose a category folder and a single `.cs` example file
+2. Create a temporary console project targeting `net8.0`
+3. Add `Aspose.Words` version `26.3.0`
+4. Copy the selected example file into the project as `Program.cs`
+5. Build and run the project
+
+Updated: 2026-03-26 | Run: `20260315_203408_65134f` | Examples: 1534 | Categories: 29
