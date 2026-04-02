@@ -1,0 +1,437 @@
+{
+  "category": {
+    "name": "BarCode Image",
+    "slug": "barcode-image",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use custom barcode generator by default for non-DOCX outputs and for DOCX tasks with advanced/rendered/generator indications. Use plain barcode fields only for simple Word-field-only DOCX scenarios.",
+    "required_packages": [
+      "Aspose.Words",
+      "Aspose.BarCode",
+      "Aspose.Drawing.Common"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "winner_counts": {
+      "both": 19,
+      "mcp": 4,
+      "llm": 7,
+      "none": 0
+    },
+    "custom_generator_examples": 25,
+    "word_field_only_examples": 5
+  },
+  "rules_summary": {
+    "absolute_ambiguity_bans": [
+      "Never use unqualified BarcodeParameters anywhere in this category. Always write Aspose.Words.Fields.BarcodeParameters.",
+      "Never use unqualified Font anywhere in this category. Always write Aspose.Drawing.Font.",
+      "Never use unqualified Color anywhere in this category for drawing or barcode color conversion logic. Always write Aspose.Drawing.Color.",
+      "Never use System.Drawing.Font, System.Drawing.Color, System.Drawing.Bitmap, or other System.Drawing types in this category.",
+      "If an API name can be ambiguous, use the fully qualified type name instead of adding a broad using directive."
+    ],
+    "strict_barcode_field_usage_rules": [
+      "Do NOT use builder.InsertField with DISPLAYBARCODE string syntax.",
+      "Do NOT use string-based DISPLAYBARCODE fields.",
+      "Always create barcode fields using FieldDisplayBarcode object only.",
+      "Always set properties explicitly: BarcodeType, BarcodeValue, colors, scaling etc.",
+      "Always call doc.UpdateFields() after setting properties."
+    ],
+    "custom_barcode_generator_enforcement_rules": [
+      "If output format is PDF, image, or rendered output, ALWAYS use CustomBarcodeGenerator.",
+      "If barcode type is not natively supported by MS Word fields, ALWAYS use CustomBarcodeGenerator.",
+      "If task involves validation, extraction, or rendering, ALWAYS use CustomBarcodeGenerator.",
+      "Never rely on DISPLAYBARCODE field rendering for PDF output."
+    ],
+    "typed_construction_rules": [
+      "When a typed barcode field is required, create it via DocumentBuilder.InsertField(FieldType.FieldDisplayBarcode, true) and cast to FieldDisplayBarcode.",
+      "Do not instantiate FieldDisplayBarcode directly with a constructor.",
+      "Do not append FieldDisplayBarcode directly as a Node."
+    ],
+    "typed_parameter_rules": [
+      "When generator workflow is required, prefer typed FieldDisplayBarcode property assignment over raw DISPLAYBARCODE string switch syntax.",
+      "For generator-based verification or direct generator calls, create an Aspose.Words.Fields.BarcodeParameters instance explicitly and populate matching values.",
+      "Do not rely on raw field switch strings like \\f, \\b, or similar as the primary implementation pattern for generator-required scenarios."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Ambiguous Font type",
+      "seen_count": 3,
+      "symptom": "Compiler error: 'Font' is an ambiguous reference between Aspose.Drawing.Font and Aspose.Words.Font.",
+      "fix": "Always use Aspose.Drawing.Font explicitly in DrawErrorImage and any barcode-image drawing code."
+    },
+    {
+      "pattern": "Ambiguous BarcodeParameters type",
+      "seen_count": 1,
+      "symptom": "Compiler error: 'BarcodeParameters' is ambiguous between Aspose.Words.Fields and Aspose.BarCode.Generation.",
+      "fix": "Always use Aspose.Words.Fields.BarcodeParameters in IBarcodeGenerator signatures and in any verification object construction."
+    },
+    {
+      "pattern": "Incorrect FieldDisplayBarcode.BarcodeParameters usage",
+      "seen_count": 1,
+      "symptom": "Compiler error: FieldDisplayBarcode does not expose a BarcodeParameters property.",
+      "fix": "Set typed FieldDisplayBarcode properties directly. When a parameter object is needed, create a new Aspose.Words.Fields.BarcodeParameters instance instead of reading a non-existent field property."
+    },
+    {
+      "pattern": "Wrong Aspose.Drawing FontStyle / constructor usage",
+      "seen_count": 1,
+      "symptom": "Compiler/runtime errors around Aspose.Drawing.Drawing2D.FontStyle or invalid Aspose.Drawing.Font constructor arguments.",
+      "fix": "Use new Aspose.Drawing.Font(\"Microsoft Sans Serif\", 8f, Aspose.Drawing.FontStyle.Regular) and avoid Aspose.Drawing.Drawing2D.FontStyle."
+    },
+    {
+      "pattern": "Invalid EncodeTypes member",
+      "seen_count": 1,
+      "symptom": "Compiler error: EncodeTypes does not contain a definition for Code39Standard.",
+      "fix": "Use only valid Aspose.BarCode.Generation.EncodeTypes members and keep the Word-to-BarCode mapping method constrained to supported values."
+    },
+    {
+      "pattern": "Verifier missing input asset/path",
+      "seen_count": 2,
+      "symptom": "Runtime failures caused by missing Template.docx or missing input directories during sandbox verification.",
+      "fix": "Create temporary sample input assets inside the example before loading them, or guard file-system input scenarios with existence checks and bootstrap sample files/folders."
+    },
+    {
+      "pattern": "Transient MCP gateway timeout",
+      "seen_count": 2,
+      "symptom": "504 Gateway Time-out during generation, not a code-quality issue.",
+      "fix": "Treat as infrastructure noise. Re-run generation or allow the alternate engine result when the produced example is otherwise verified."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "create-a-new-document-insert-a-displaybarcode-field-then-save-the-document-as-docx.cs",
+      "task": "Create a new Document, insert a DISPLAYBARCODE field, then save the document as DOCX.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "word-field-only",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 2,
+      "file_name": "use-documentbuilder-to-insert-a-displaybarcode-field-with-a-datamatrix-barcode-type-switch.cs",
+      "task": "Use DocumentBuilder to insert a DISPLAYBARCODE field with a DataMatrix barcode type switch.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 3,
+      "file_name": "create-a-reusable-method-to-insert-a-displaybarcode-field-with-customizable-height-width-a.cs",
+      "task": "Create a reusable method to insert a DISPLAYBARCODE field with customizable height, width, and type switches.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "word-field-only",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 4,
+      "file_name": "create-a-macro-to-insert-displaybarcode-fields-with-predefined-switches-for-various-barcod.cs",
+      "task": "Create a macro to insert DISPLAYBARCODE fields with predefined switches for various barcode types.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "word-field-only",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 5,
+      "file_name": "configure-barcode-height-and-width-via-field-switches-in-the-displaybarcode-field-definiti.cs",
+      "task": "Configure barcode height and width via field switches in the DISPLAYBARCODE field definition.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 6,
+      "file_name": "customize-barcode-color-and-background-via-additional-field-switches-and-verify-visual-app.cs",
+      "task": "Customize barcode color and background via additional field switches and verify visual appearance in saved PDF.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 7,
+      "file_name": "set-barcode-orientation-to-vertical-via-field-switches-and-verify-correct-rendering-in-pdf.cs",
+      "task": "Set barcode orientation to vertical via field switches and verify correct rendering in PDF output.",
+      "winner": "llm",
+      "selected_engine": "llm",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 8,
+      "file_name": "apply-different-barcode-types-to-separate-displaybarcode-fields-in-the-same-document-and-v.cs",
+      "task": "Apply different barcode types to separate DISPLAYBARCODE fields in the same document and verify correct rendering.",
+      "winner": "llm",
+      "selected_engine": "llm",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 9,
+      "file_name": "replace-placeholder-text-in-a-displaybarcode-field-with-dynamic-values-prior-to-barcode-ge.cs",
+      "task": "Replace placeholder text in a DISPLAYBARCODE field with dynamic values prior to barcode generation.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "word-field-only",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 10,
+      "file_name": "use-document-range-replace-to-update-the-data-string-of-an-existing-displaybarcode-field-b.cs",
+      "task": "Use Document.Range.Replace to update the data string of an existing DISPLAYBARCODE field before rendering.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "word-field-only",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 11,
+      "file_name": "implement-error-handling-for-missing-barcode-data-in-displaybarcode-fields-to-avoid-docume.cs",
+      "task": "Implement error handling for missing barcode data in DISPLAYBARCODE fields to avoid document save failures.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 12,
+      "file_name": "implement-the-ibarcodegenerator-interface-to-generate-code128-barcodes-from-field-data.cs",
+      "task": "Implement the IBarcodeGenerator interface to generate Code128 barcodes from field data.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 13,
+      "file_name": "integrate-the-aspose-barcode-library-to-enable-qr-code-generation-for-displaybarcode-field.cs",
+      "task": "Integrate the Aspose.BarCode library to enable QR code generation for DISPLAYBARCODE fields.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 14,
+      "file_name": "configure-the-custom-barcode-generator-to-cache-images-for-repeated-field-values-improving.cs",
+      "task": "Configure the custom barcode generator to cache images for repeated field values, improving performance.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 15,
+      "file_name": "configure-the-barcode-generator-to-produce-high-resolution-images-suitable-for-large-forma.cs",
+      "task": "Configure the barcode generator to produce high‑resolution images suitable for large‑format PDF printing.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 16,
+      "file_name": "generate-barcode-images-on-the-fly-during-save-by-assigning-the-custom-generator-to-docume.cs",
+      "task": "Generate barcode images on the fly during save by assigning the custom generator to Document.BarcodeGenerator.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 17,
+      "file_name": "load-an-rtf-document-assign-a-custom-generator-and-save-the-result-as-docx-with-barcodes.cs",
+      "task": "Load an RTF document, assign a custom generator, and save the result as DOCX with barcodes.",
+      "winner": "llm",
+      "selected_engine": "llm",
+      "workflow": "custom-generator",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 18,
+      "file_name": "load-an-existing-docx-with-displaybarcode-fields-assign-a-custom-generator-and-export-to-p.cs",
+      "task": "Load an existing DOCX with DISPLAYBARCODE fields, assign a custom generator, and export to PDF.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "docx",
+        "pdf"
+      ]
+    },
+    {
+      "id": 19,
+      "file_name": "load-a-docx-template-populate-displaybarcode-fields-with-user-data-and-export-the-document.cs",
+      "task": "Load a DOCX template, populate DISPLAYBARCODE fields with user data, and export the document as PDF.",
+      "winner": "llm",
+      "selected_engine": "llm",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 20,
+      "file_name": "batch-process-a-folder-of-doc-files-render-barcodes-and-save-each-document-as-pdf.cs",
+      "task": "Batch process a folder of DOC files, render barcodes, and save each document as PDF.",
+      "winner": "llm",
+      "selected_engine": "llm",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 21,
+      "file_name": "process-multiple-docx-files-in-parallel-each-with-its-own-barcode-generator-and-output-pdf.cs",
+      "task": "Process multiple DOCX files in parallel, each with its own barcode generator, and output PDFs concurrently.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "docx",
+        "pdf"
+      ]
+    },
+    {
+      "id": 22,
+      "file_name": "create-a-console-application-that-accepts-a-directory-path-processes-supported-files-and-g.cs",
+      "task": "Create a console application that accepts a directory path, processes supported files, and generates PDFs with barcodes.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "docx",
+        "pdf"
+      ]
+    },
+    {
+      "id": 23,
+      "file_name": "save-a-document-with-displaybarcode-fields-as-rtf-ensuring-barcodes-render-as-images-in-ou.cs",
+      "task": "Save a document with DISPLAYBARCODE fields as RTF, ensuring barcodes render as images in output.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "rtf"
+      ]
+    },
+    {
+      "id": 24,
+      "file_name": "validate-barcode-images-are-correctly-embedded-in-pdf-by-extracting-them-and-comparing-dim.cs",
+      "task": "Validate barcode images are correctly embedded in PDF by extracting them and comparing dimensions.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 25,
+      "file_name": "validate-that-barcode-images-maintain-correct-aspect-ratio-after-converting-a-document-fro.cs",
+      "task": "Validate that barcode images maintain correct aspect ratio after converting a document from DOC to PDF.",
+      "winner": "llm",
+      "selected_engine": "llm",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 26,
+      "file_name": "test-barcode-rendering-when-saving-a-document-to-pdf-a-format-ensuring-archival-compliance.cs",
+      "task": "Test barcode rendering when saving a document to PDF/A format, ensuring archival compliance.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 27,
+      "file_name": "add-a-logging-mechanism-to-record-each-barcode-generation-event-with-field-name-and-image.cs",
+      "task": "Add a logging mechanism to record each barcode generation event with field name and image size.",
+      "winner": "llm",
+      "selected_engine": "llm",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 28,
+      "file_name": "create-a-unit-test-that-loads-a-doc-file-renders-barcodes-and-asserts-pdf-output-contains.cs",
+      "task": "Create a unit test that loads a DOC file, renders barcodes, and asserts PDF output contains expected images.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 29,
+      "file_name": "generate-barcodes-with-variable-widths-based-on-input-string-length-by-programmatically-ad.cs",
+      "task": "Generate barcodes with variable widths based on input string length by programmatically adjusting field switch parameters.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 30,
+      "file_name": "implement-a-feature-to-disable-barcode-rendering-for-specific-fields-during-pdf-export-whi.cs",
+      "task": "Implement a feature to disable barcode rendering for specific fields during PDF export while retaining them in DOCX.",
+      "winner": "both",
+      "selected_engine": "mcp",
+      "workflow": "custom-generator",
+      "outputs": [
+        "docx",
+        "pdf"
+      ]
+    }
+  ]
+}
