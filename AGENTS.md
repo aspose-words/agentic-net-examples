@@ -23,14 +23,14 @@ When working in this repository:
 
 This repository contains **1534** verified code examples demonstrating Aspose.Words for .NET capabilities.
 
-**Statistics** (as of 2026-03-24):
-- Total Examples: 1534
+**Statistics** (as of 2026-04-03):
+- Total Examples: 1543
 - Categories: 29
 
 ## Category Details
 
 ### barcode-image
-- Examples: 21
+- Examples: 30
 - Guide: [AGENTS.md](./barcode-image/AGENTS.md)
 
 ### charts
