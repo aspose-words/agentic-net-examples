@@ -38,7 +38,7 @@ This repository contains **1534** verified code examples demonstrating Aspose.Wo
 - Guide: [AGENTS.md](./charts/AGENTS.md)
 
 ### comments
-- Examples: 22
+- Examples: 30
 - Guide: [AGENTS.md](./comments/AGENTS.md)
 
 ### comparison

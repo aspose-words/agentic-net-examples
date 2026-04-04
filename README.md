@@ -22,7 +22,7 @@ Top-level folders are categories. Examples are stored **directly inside category
 
 - `barcode-image/` (30 examples)
 - `charts/` (31 examples)
-- `comments/` (22 examples)
+- `comments/` (30 examples)
 - `comparison/` (30 examples)
 - `content-control/` (26 examples)
 - `conversion/` (95 examples)
