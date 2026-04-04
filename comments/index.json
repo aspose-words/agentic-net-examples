@@ -1,0 +1,380 @@
+{
+  "category": {
+    "name": "Comments",
+    "slug": "comments",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use native Aspose.Words APIs directly. Prefer simple, verifiable operations over ambitious markup-preservation tricks. Create realistic local sample inputs inside the example whenever external files, folders, streams, or templates are required.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "publish_ready_successful_examples": 30,
+    "workflow_counts": {
+      "native-comment-api": 15,
+      "rendered-output": 5,
+      "export-report": 7,
+      "stream-batch-io": 3
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not use Document.Comments. Enumerate comments with doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>().",
+      "Do not invent an Aspose.Words.Comments namespace or any invented comment collection namespace.",
+      "Do not invent DocumentBuilder.StartComment, DocumentBuilder.EndComment, AddComment, InsertComment, or similar builder shortcut APIs unless the exact Aspose.Words API is known and supported.",
+      "Do not use CommentReference in this category.",
+      "Do not use HtmlSaveOptions.ExportComments."
+    ],
+    "canonical_patterns": [
+      "Enumerate comments with doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>().",
+      "Append at least one Paragraph and Run inside a Comment when creating comment content.",
+      "Use safe ToList copies before deleting or bulk-updating comments.",
+      "For report/export scenarios, extract plain data first and recreate destination content from that data.",
+      "For stream workflows, reset MemoryStream.Position before reloading or resaving."
+    ],
+    "nullable_warning_prevention": [
+      "Avoid CS8600, CS8602, and CS8604 by checking for null before assignment, dereference, indexing, or method calls.",
+      "Do not assign maybe-null values directly to non-nullable variables.",
+      "Declare nullable locals such as Paragraph? when a value may legitimately be null."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Wrong Node.Text usage",
+      "symptom": "error CS1061: 'Node' does not contain a definition for 'Text'",
+      "fix": "Use Comment.GetText() for whole-comment content, or cast to a concrete node type such as Run before reading .Text."
+    },
+    {
+      "pattern": "Invented comment collection APIs",
+      "symptom": "Compile failures caused by Document.Comments or Aspose.Words.Comments usage.",
+      "fix": "Enumerate comments with doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>()."
+    },
+    {
+      "pattern": "Unsupported comment-reference or save-option APIs",
+      "symptom": "Compile failures caused by CommentReference or undocumented save-option flags.",
+      "fix": "Prefer simpler comment workflows and documented Aspose.Words save options only."
+    },
+    {
+      "pattern": "Unsafe live-collection mutation",
+      "symptom": "Unstable behavior while deleting comments during forward iteration over a live collection.",
+      "fix": "Create a ToList copy first, then update or remove matching comments."
+    },
+    {
+      "pattern": "Nullable-reference warnings",
+      "symptom": "CS8600, CS8602, or CS8604 around maybe-null values such as CurrentParagraph or FirstOrDefault results.",
+      "fix": "Use nullable locals where needed and guard maybe-null values before dereference or assignment."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "add-a-comment-containing-a-hyperlink-to-an-external-resource-and-verify-the-link-functions.cs",
+      "task": "Add a comment containing a hyperlink to an external resource and verify the link functions in rendered output.",
+      "workflow": "rendered-output",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "add-a-new-comment-to-a-specific-paragraph-in-a-word-document-and-save-as-docx.cs",
+      "task": "Add a new comment to a specific paragraph in a word document and save as docx.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "apply-a-custom-style-to-all-comment-text-blocks-within-a-document-to-match-corporate-brand.cs",
+      "task": "Apply a custom style to all comment text blocks within a document to match corporate branding.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "compare-two-versions-of-a-document-and-list-comments-that-were-added-modified-or-deleted.cs",
+      "task": "Compare two versions of a document and list comments that were added modified or deleted.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "convert-a-doc-file-to-pdf-while-retaining-all-comment-annotations-visible-in-the-output.cs",
+      "task": "Convert a doc file to pdf while retaining all comment annotations visible in the output.",
+      "workflow": "rendered-output",
+      "outputs": [
+        "docx",
+        "pdf",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "convert-a-document-with-comments-to-xps-format-ensuring-comments-appear-as-markup-annotati.cs",
+      "task": "Convert a document with comments to XPS format, ensuring comments appear as markup annotations.",
+      "workflow": "rendered-output",
+      "outputs": [
+        "xps"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "create-a-batch-process-that-adds-a-standardized-disclaimer-comment-to-every-document-in-a.cs",
+      "task": "Create a batch process that adds a standardized disclaimer comment to every document in a.",
+      "workflow": "stream-batch-io",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "create-a-reply-to-an-existing-comment-and-ensure-the-reply-appears-nested-under-the-origin.cs",
+      "task": "Create a reply to an existing comment and ensure the reply appears nested under the original comment.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "create-a-utility-that-reads-comment-data-from-a-database-and-inserts-corresponding-comment.cs",
+      "task": "Create a utility that reads comment data from a database and inserts corresponding comments into a document.",
+      "workflow": "stream-batch-io",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "delete-all-comments-authored-by-a-particular-user-from-the-loaded-document-before-exportin.cs",
+      "task": "Delete all comments authored by a particular user from the loaded document before exporting.",
+      "workflow": "export-report",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "export-all-comments-from-a-docx-file-to-a-csv-file-with-author-date-and-text-columns.cs",
+      "task": "Export all comments from a docx file to a csv file with author date and text columns.",
+      "workflow": "export-report",
+      "outputs": [
+        "docx",
+        "csv"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "extract-comment-metadata-author-date-and-text-and-write-it-to-a-json-file.cs",
+      "task": "Extract comment metadata author date and text and write it to a json file.",
+      "workflow": "export-report",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "extract-comment-text-and-embed-it-as-footnotes-within-the-same-document-for-alternative-pr.cs",
+      "task": "Extract comment text and embed it as footnotes within the same document for alternative presentation.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "filter-comments-by-author-and-export-only-those-comments-to-a-separate-word-document-for-r.cs",
+      "task": "Filter comments by author and export only those comments to a separate Word document for review.",
+      "workflow": "export-report",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "generate-a-printable-report-listing-all-comments-with-page-numbers-and-associated-paragrap.cs",
+      "task": "Generate a printable report listing all comments with page numbers and associated paragraphs.",
+      "workflow": "export-report",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "implement-a-feature-that-hides-all-comments-in-the-document-view-without-removing-them-fro.cs",
+      "task": "Implement a feature that hides all comments in the document view without removing them from the document.",
+      "workflow": "rendered-output",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "import-comments-from-an-exported-xml-file-and-attach-them-to-appropriate-locations-in-a-ne.cs",
+      "task": "Import comments from an exported XML file and attach them to appropriate locations in a new document.",
+      "workflow": "export-report",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "iterate-through-the-comment-collection-and-remove-comments-older-than-a-specified-date-thr.cs",
+      "task": "Iterate through the comment collection and remove comments older than a specified date threshold.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "load-a-document-change-comment-author-names-to-uppercase-and-save-the-updated-file.cs",
+      "task": "Load a document change comment author names to uppercase and save the updated file.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "load-a-document-from-a-stream-add-comments-and-save-the-modified-document-back-to-a-memory.cs",
+      "task": "Load a document from a stream, add comments, and save the modified document back to a memory stream.",
+      "workflow": "stream-batch-io",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "load-a-docx-file-enumerate-all-comments-and-print-each-author-and-text-to-console.cs",
+      "task": "Load a docx file enumerate all comments and print each author and text to console.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "load-multiple-word-documents-from-a-folder-aggregate-their-comments-and-generate-a-summary.cs",
+      "task": "Load multiple Word documents from a folder, aggregate their comments, and generate a summary report.",
+      "workflow": "export-report",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "preserve-comment-formatting-such-as-bold-and-italic-text-when-converting-a-document-to-htm.cs",
+      "task": "Preserve comment formatting such as bold and italic text when converting a document to HTML.",
+      "workflow": "rendered-output",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "programmatically-accept-or-reject-comments-based-on-author-name-and-generate-a-revised-doc.cs",
+      "task": "Programmatically accept or reject comments based on author name and generate a revised document version.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "search-comments-containing-a-specific-keyword-and-highlight-the-corresponding-text-range-i.cs",
+      "task": "Search comments containing a specific keyword and highlight the corresponding text range in the document.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "set-custom-author-name-and-initials-for-programmatically-added-comments-in-a-document.cs",
+      "task": "Set custom author name and initials for programmatically added comments in a document.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "synchronize-comment-positions-after-document-sections-are-reordered-to-maintain-accurate-c.cs",
+      "task": "Synchronize comment positions after document sections are reordered to maintain accurate comment placement.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "update-the-text-of-an-existing-comment-identified-by-its-index-while-preserving-original-f.cs",
+      "task": "Update the text of an existing comment identified by its index while preserving original formatting.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "use-comment-collection-events-to-trigger-custom-logging-whenever-a-comment-is-added-or-rem.cs",
+      "task": "Use comment collection events or equivalent wrapper-based logging to capture add and remove operations.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "validate-that-comment-reference-ids-update-correctly-after-inserting-new-paragraphs-into-t.cs",
+      "task": "Validate that comment reference IDs update correctly after inserting new paragraphs into the document.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
