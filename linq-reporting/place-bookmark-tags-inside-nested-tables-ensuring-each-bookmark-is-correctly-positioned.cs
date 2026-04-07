@@ -1,113 +1,93 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
+using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
 
-namespace BookmarkInNestedTables
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        // Begin a foreach loop over the Items collection.
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // ----- Outer table ------------------------------------------------
+        Table outerTable = builder.StartTable();
+
+        // First cell of the outer table.
+        builder.InsertCell();
+        builder.Writeln("Outer cell 1");
+
+        // Second cell will contain the inner table.
+        builder.InsertCell();
+        builder.Writeln("Outer cell 2 with inner table:");
+
+        // ----- Inner table (nested) --------------------------------------
+        Table innerTable = builder.StartTable();
+
+        // Single cell in the inner table that holds a bookmark.
+        builder.InsertCell();
+        builder.Writeln("<<bookmark [item.BookmarkName]>>");
+        builder.Writeln("<<[item.Title]>>");
+        builder.Writeln("<</bookmark>>");
+
+        // End the inner table.
+        builder.EndRow();
+        builder.EndTable();
+
+        // End the outer table row and the outer table itself.
+        builder.EndRow();
+        builder.EndTable();
+
+        // End the foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "BookmarkNestedTableTemplate.docx";
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
+
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            Items = new List<SectionItem>
+            {
+                new SectionItem { BookmarkName = "BM_First", Title = "First Item Title" },
+                new SectionItem { BookmarkName = "BM_Second", Title = "Second Item Title" },
+                new SectionItem { BookmarkName = "BM_Third", Title = "Third Item Title" }
+            }
+        };
 
-            // ------------------------------------------------------------
-            // Build the outer table (2 rows x 2 columns).
-            // ------------------------------------------------------------
-            builder.StartTable();
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-            // First row, first cell.
-            builder.InsertCell();
-            // Insert a bookmark that starts before the inner table.
-            builder.StartBookmark("OuterCell1_BeforeInner");
-            builder.Writeln("Before inner table");
-            // End the bookmark.
-            builder.EndBookmark("OuterCell1_BeforeInner");
-
-            // Insert the inner table inside this cell.
-            InsertInnerTable(builder, "InnerTable1");
-
-            // First row, second cell.
-            builder.InsertCell();
-            // Insert a bookmark that starts after the inner table.
-            builder.StartBookmark("OuterCell2_AfterInner");
-            builder.Writeln("After inner table");
-            builder.EndBookmark("OuterCell2_AfterInner");
-
-            // End first row.
-            builder.EndRow();
-
-            // ------------------------------------------------------------
-            // Second row – demonstrate a bookmark that spans the whole cell.
-            // ------------------------------------------------------------
-            // Second row, first cell.
-            builder.InsertCell();
-            // Bookmark that encloses the entire cell content (including inner table).
-            builder.StartBookmark("OuterCell3_FullSpan");
-            builder.Writeln("Start of full-span cell");
-            InsertInnerTable(builder, "InnerTable2");
-            builder.Writeln("End of full-span cell");
-            builder.EndBookmark("OuterCell3_FullSpan");
-
-            // Second row, second cell – empty cell with a simple bookmark.
-            builder.InsertCell();
-            builder.StartBookmark("OuterCell4_Simple");
-            builder.Writeln("Simple bookmark content");
-            builder.EndBookmark("OuterCell4_Simple");
-
-            // End the outer table.
-            builder.EndTable();
-
-            // ------------------------------------------------------------
-            // Save the document.
-            // ------------------------------------------------------------
-            doc.Save("BookmarksInNestedTables.docx");
-        }
-
-        /// <summary>
-        /// Inserts a 2x2 inner table into the current cell.
-        /// Each cell of the inner table receives its own bookmark.
-        /// </summary>
-        /// <param name="builder">The DocumentBuilder positioned inside a cell.</param>
-        /// <param name="innerTableId">A unique identifier used to name the bookmarks.</param>
-        private static void InsertInnerTable(DocumentBuilder builder, string innerTableId)
-        {
-            // Start the inner table.
-            builder.StartTable();
-
-            // Row 1, Cell 1
-            builder.InsertCell();
-            builder.StartBookmark($"{innerTableId}_R1C1");
-            builder.Writeln("Inner R1C1");
-            builder.EndBookmark($"{innerTableId}_R1C1");
-
-            // Row 1, Cell 2
-            builder.InsertCell();
-            builder.StartBookmark($"{innerTableId}_R1C2");
-            builder.Writeln("Inner R1C2");
-            builder.EndBookmark($"{innerTableId}_R1C2");
-
-            // End first row.
-            builder.EndRow();
-
-            // Row 2, Cell 1
-            builder.InsertCell();
-            builder.StartBookmark($"{innerTableId}_R2C1");
-            builder.Writeln("Inner R2C1");
-            builder.EndBookmark($"{innerTableId}_R2C1");
-
-            // Row 2, Cell 2
-            builder.InsertCell();
-            builder.StartBookmark($"{innerTableId}_R2C2");
-            builder.Writeln("Inner R2C2");
-            builder.EndBookmark($"{innerTableId}_R2C2");
-
-            // End second row.
-            builder.EndRow();
-
-            // End the inner table.
-            builder.EndTable();
-        }
+        // Save the final document.
+        const string outputPath = "BookmarkNestedTableReport.docx";
+        reportDoc.Save(outputPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes (must be public with public properties).
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<SectionItem> Items { get; set; } = new();
+}
+
+public class SectionItem
+{
+    public string BookmarkName { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
 }

@@ -1,68 +1,76 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts; // Needed for chart detection
+using Aspose.Words.Lists;
+using Aspose.Words.Reporting;
 
-class AddBookmarksToListItems
+public class Program
 {
-    static void Main()
+    public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // -----------------------------------------------------------------
-        // 1. Build a numbered list with several items.
-        // -----------------------------------------------------------------
-        builder.ListFormat.ApplyNumberDefault(); // start numbering
-        for (int i = 1; i <= 5; i++)
+        // Prepare sample data.
+        ReportModel model = new ReportModel
         {
-            // Insert a paragraph that is part of the list.
-            builder.Writeln($"List item {i}");
-        }
-        builder.ListFormat.RemoveNumbers(); // stop list formatting
-
-        // -----------------------------------------------------------------
-        // 2. Iterate through all paragraphs that belong to the list.
-        //    For each paragraph that does NOT contain a chart shape,
-        //    insert a bookmark that surrounds the whole paragraph.
-        // -----------------------------------------------------------------
-        int bookmarkIndex = 1;
-        foreach (Paragraph para in doc.FirstSection.Body.Paragraphs)
-        {
-            // Ensure the paragraph is a list item.
-            if (!para.IsListItem) continue;
-
-            // Detect whether the paragraph (or any of its descendants) contains a chart.
-            bool containsChart = false;
-            NodeCollection shapes = para.GetChildNodes(NodeType.Shape, true);
-            foreach (Shape shape in shapes)
+            Items = new List<Item>
             {
-                // In Aspose.Words a chart is stored as a Shape with HasChart == true.
-                if (shape.HasChart)
-                {
-                    containsChart = true;
-                    break;
-                }
+                new Item { Title = "First item", BookmarkName = "bmFirst" },
+                new Item { Title = "Second item", BookmarkName = "bmSecond" },
+                new Item { Title = "Third item", BookmarkName = "bmThird" }
             }
-
-            // Skip bookmark creation if a chart is present.
-            if (containsChart) continue;
-
-            // Move the builder's cursor to the start of the paragraph.
-            builder.MoveTo(para);
-            string bookmarkName = $"ListItem_{bookmarkIndex}_BM";
-
-            // Insert the bookmark start and end around the paragraph.
-            builder.StartBookmark(bookmarkName);
-            builder.EndBookmark(bookmarkName);
-
-            bookmarkIndex++;
-        }
+        };
 
         // -----------------------------------------------------------------
-        // 3. Save the document.
+        // 1. Create a template document programmatically.
         // -----------------------------------------------------------------
-        doc.Save("ListItemsWithBookmarks.docx");
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Create a bullet list.
+        List list = template.Lists.Add(ListTemplate.BulletDefault);
+        builder.ListFormat.List = list;
+
+        // Insert LINQ Reporting tags.
+        // The foreach iterates over Items, and each list item contains a bookmark.
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Open bookmark tag, the expression returns the bookmark name.
+        builder.Writeln("<<bookmark [item.BookmarkName]>>");
+        // The actual text of the list item.
+        builder.Writeln("<<[item.Title]>>");
+        // Close bookmark tag.
+        builder.Writeln("<</bookmark>>");
+        // End of foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document report = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+
+        // Build the report using the model as the root data source named "model".
+        engine.BuildReport(report, model, "model");
+
+        // Save the final document.
+        const string outputPath = "Report.docx";
+        report.Save(outputPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model used by the LINQ Reporting engine.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    // Initialize the collection to avoid nullable warnings.
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Title { get; set; } = string.Empty;
+    public string BookmarkName { get; set; } = string.Empty;
 }

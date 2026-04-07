@@ -1,0 +1,4269 @@
+{
+  "category": {
+    "name": "LINQ Reporting",
+    "slug": "linq-reporting",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Create the template document programmatically inside the example unless an external template file is explicitly bootstrapped by the example. Create realistic local sample data and local sample assets before calling ReportingEngine.BuildReport. Keep root object, root name, public model classes, and template references fully aligned.",
+    "required_packages": [
+      "Aspose.Words",
+      "Newtonsoft.Json",
+      "System.Text.Encoding.CodePages"
+    ],
+    "secondary_rules_file": "linq-reporting-rules-secondary.json",
+    "secondary_rules_purpose": "This is a secondary delta rules file. It should be combined with the main linq-reporting rules only when a task fails completely under the primary rules. Preserve the existing safest primary rule: when using foreach for repeated tabular content, start foreach first, start table after foreach starts, end table just before foreach ends, then close foreach."
+  },
+  "stats": {
+    "total_examples_in_input": 404,
+    "publish_ready_successful_examples": 403,
+    "remaining_not_publish_ready": 1,
+    "workflow_counts": {
+      "template-syntax-and-expressions": 73,
+      "core-report-generation": 108,
+      "rich-content-and-formatting": 63,
+      "engine-options-and-extensibility": 45,
+      "structured-data-source": 111,
+      "batch-stream-io": 3
+    }
+  },
+  "rules_summary": {
+    "primary_core_rules": [
+      "Use Aspose.Words.Reporting.ReportingEngine for all LINQ Reporting examples.",
+      "Always insert real LINQ Reporting tags into the document template before calling BuildReport.",
+      "Use only valid Aspose.Words LINQ Reporting syntax with <<...>> tags.",
+      "Close foreach blocks using <</foreach>> exactly; do not use </foreach> or any HTML/XML-style closing syntax.",
+      "Do not use mustache syntax like {{...}} for LINQ Reporting templates.",
+      "Do not call BuildReport until the template content has been fully created and saved or loaded."
+    ],
+    "primary_template_rules": [
+      "If a template file is required by the scenario, create it programmatically inside the example first, then save it locally, then load it again for report generation if needed.",
+      "Do not assume any template file already exists on disk.",
+      "When the task mentions DOCX templates, create a valid DOCX template in the example using Document and DocumentBuilder.",
+      "When creating tags with DocumentBuilder.Writeln or Write, use the exact <<...>> syntax required by the LINQ Reporting Engine.",
+      "Do not introduce malformed tags, mismatched opening/closing tags, or invalid in-tag expressions."
+    ],
+    "primary_alignment_rules": [
+      "Keep the BuildReport root object, root name, and template references fully aligned.",
+      "If the template uses <<[order.CustomerName]>>, call BuildReport(doc, order, \"order\").",
+      "If the template uses <<[model.CustomerName]>>, call BuildReport(doc, model, \"model\").",
+      "If a wrapper object is passed, template expressions must reference that wrapper explicitly instead of assuming the wrapped object is the root.",
+      "Avoid anonymous root data sources; use a public wrapper class when needed."
+    ],
+    "primary_tag_rules": [
+      "Use valid tags such as <<foreach [p in persons]>>, <<if [condition]>>, <<var [x = expr]>>, <<[expr]>>, and matching closing tags like <</foreach>> and <</if>> when supported by the engine.",
+      "Do not place pseudo-C# code outside valid tag syntax and expect the engine to interpret it.",
+      "Do not write malformed tag examples such as {{foreach p in Model}}...{{end}}.",
+      "When nesting loops or conditions, ensure closing tags are properly balanced.",
+      "Use only valid in-tag expressions that the LINQ Reporting Engine can evaluate.",
+      "Do not use pseudo-format suffixes like <<[value]:date>> or <<[value]:currency>>.",
+      "Do not use composite format placeholders like <<[value]:{0:C}>> or <<[dateValue]:{0:yyyy-MM-dd}>>.",
+      "For formatted output, use expression-based formatting such as <<[value.ToString(\"C\")]>> or <<[dateValue.ToString(\"yyyy-MM-dd\")]>>.",
+      "For sorting, filtering, projection, grouping, and aggregate scenarios, keep expressions simple and valid for the actual model shape."
+    ],
+    "primary_runtime_prevention": [
+      "Do not assume templates already exist; generate them.",
+      "Do not leave model properties inaccessible to the reporting engine.",
+      "Do not mismatch BuildReport root name and template references.",
+      "Do not create malformed LINQ Reporting tags.",
+      "Do not forget to create sample input files referenced by insert, image, JSON, XML, or CSV scenarios."
+    ],
+    "secondary_delta_focus": [
+      "Secondary activation rules",
+      "Foreach story and table-boundary rules",
+      "XML hierarchy and namespace rules",
+      "Nested XML repeating-section rules",
+      "Merge and grouped-table rules",
+      "Reflection optimization and XML-array rules",
+      "Hard bans for recurring wrong XML and data-shape mistakes"
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Malformed or invented tag syntax",
+      "symptom": "Parser errors caused by malformed tags, mismatched closing tags, extra colons/commas, invented switches, or pseudo-tag variants.",
+      "fix": "Use only exact LINQ Reporting tag syntax and valid in-tag expressions. Keep opening and closing tags matched and avoid invented switches."
+    },
+    {
+      "pattern": "Unsafe table and foreach structure",
+      "symptom": "Errors such as EndTable while not building a table, or foreach crossing table/story boundaries.",
+      "fix": "Use the safest repeated-table structure: start foreach first, start the table after foreach starts, end the table just before foreach ends, then close foreach. Keep each opening and closing tag within the same valid table/story structure."
+    },
+    {
+      "pattern": "Image tag placement errors",
+      "symptom": "Image tag not well formed, image-container errors, or malformed image-in-table structure.",
+      "fix": "Place image tags only inside a textbox prepared as the image container. For image-in-table tasks, create the table safely and place the textbox inside the required cell."
+    },
+    {
+      "pattern": "Root object or data-shape mismatch",
+      "symptom": "Template paths do not match the actual root object, root name, or source shape, especially for XML, DataTable, DataView, or DataRow sources.",
+      "fix": "Keep the BuildReport root object, root name, and template expressions fully aligned. Use public model types and match template paths to the real source hierarchy."
+    },
+    {
+      "pattern": "Unsupported XML namespace handling",
+      "symptom": "Compile or runtime failures caused by unsupported XML namespace APIs or incorrect XmlDataSource constructor usage.",
+      "fix": "Use supported XmlDataSource constructors together with XmlDataLoadOptions when needed. Do not pass XmlNamespaceManager to XmlDataSource constructors and do not call unavailable namespace helper APIs."
+    },
+    {
+      "pattern": "Nullable and style warnings",
+      "symptom": "Warnings such as CS8618, CS8600, CS8602, CS8604, or IDE0090.",
+      "fix": "Initialize non-nullable properties, guard maybe-null values before dereference, use nullable locals when appropriate, and prefer target-typed new where the simplified form is obvious."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "create-a-docx-template-with-opening-and-closing-tags-to-bind-a-data-collection.cs",
+      "task": "Create a DOCX template with opening and closing tags to bind a data collection.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "bind-a-net-business-object-list-as-the-primary-data-source-for-the-linq-reporting-engine.cs",
+      "task": "Bind a .NET business object list as the primary data source for the LINQ reporting engine.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "define-a-data-band-tag-that-iterates-over-items-and-generates-a-table-row-for-each.cs",
+      "task": "Define a data band tag that iterates over items and generates a table row for each.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "insert-an-external-word-document-into-the-template-using-the-insert-tag-with-a-runtime-exp.cs",
+      "task": "Insert an external Word document into the template using the insert tag with a runtime expression.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "render-html-snippets-dynamically-inside-a-paragraph-by-applying-the-html-tag-with-a-bound.cs",
+      "task": "Render HTML snippets dynamically inside a paragraph by applying the html tag with a bound string expression.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "display-product-images-dynamically-using-the-image-tag-and-a-path-expression-derived-from.cs",
+      "task": "Display product images dynamically using the image tag and a path expression derived from the data source.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "apply-conditional-block-tags-to-show-discount-information-only-when-the-discount-percentag.cs",
+      "task": "Apply conditional block tags to show discount information only when the discount percentage exceeds zero.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "set-run-text-color-based-on-status-using-setcolor-tag-with-a-color-expression.cs",
+      "task": "Set run text color based on status using setColor tag with a color expression.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "merge-table-cells-horizontally-by-adding-merge-attributes-to-appropriate-table-cell-tags-w.cs",
+      "task": "Merge table cells horizontally by adding merge attributes to appropriate table cell tags within the template.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "restart-list-numbering-for-a-new-section-by-inserting-the-restartnumbering-tag-before-the.cs",
+      "task": "Restart list numbering for a new section by inserting the restartNumbering tag before the list begins.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "store-intermediate-calculation-results-in-a-variable-tag-for-reuse-in-subsequent-expressio.cs",
+      "task": "Store intermediate calculation results in a variable tag for reuse in subsequent expression tags.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "call-a-custom-extension-method-within-an-expression-tag-to-format-dates-according-to-local.cs",
+      "task": "Call a custom extension method within an expression tag to format dates according to locale settings.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "access-static-members-of-system-math-inside-an-expression-to-compute-rounded-values-for-fi.cs",
+      "task": "Access static members of System.Math inside an expression to compute rounded values for financial fields.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "write-a-lambda-function-inside-an-expression-to-filter-orders-where-total-amount-exceeds-a.cs",
+      "task": "Write a lambda function inside an expression to filter orders where total amount exceeds a threshold.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "escape-the-reserved-keyword-new-in-an-expression-by-prefixing-it-with-the-symbol.cs",
+      "task": "Escape the reserved keyword new in an expression by prefixing it with the @ symbol.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "resolve-member-names-without-specifying-object-reference-inside-a-data-band-using-contextu.cs",
+      "task": "Resolve member names without specifying object reference inside a data band using contextual object member access.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "validate-that-each-opening-tag-has-a-matching-closing-tag-before-rendering-the-document.cs",
+      "task": "Validate that each opening tag has a matching closing tag before rendering the document.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "ensure-tag-bodies-are-placed-outside-markup-elements-by-scanning-the-document-structure-du.cs",
+      "task": "Ensure tag bodies are placed outside markup elements by scanning the document structure during preprocessing.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "avoid-unicode-escape-sequences-in-identifiers-by-writing-literal-characters-directly-in-te.cs",
+      "task": "Avoid Unicode escape sequences in identifiers by writing literal characters directly in template expressions.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "create-a-batch-script-that-generates-personalized-reports-for-each-customer-listed-in-a-cs.cs",
+      "task": "Create a batch script that generates personalized reports for each customer listed in a CSV file.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "load-customer-data-from-a-json-file-and-bind-it-to-the-template-to-produce-word-documents.cs",
+      "task": "Load customer data from a JSON file and bind it to the template to produce Word documents.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "configure-the-reporting-engine-to-use-a-custom-culture-for-number-formatting-during-expres.cs",
+      "task": "Configure the reporting engine to use a custom culture for number formatting during expression evaluation.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "implement-error-handling-to-catch-expression-evaluation-exceptions-and-replace-faulty-outp.cs",
+      "task": "Implement error handling to catch expression evaluation exceptions and replace faulty output with placeholder text.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "generate-a-summary-section-by-aggregating-order-totals-using-linq-methods-inside-a-variabl.cs",
+      "task": "Generate a summary section by aggregating order totals using LINQ methods inside a variable tag expression.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "insert-a-hyperlink-dynamically-using-the-hyperlink-tag-with-url-and-display-text-derived-f.cs",
+      "task": "Insert a hyperlink dynamically using the hyperlink tag with URL and display text derived from data fields.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "apply-background-color-to-a-table-row-based-on-status-using-the-setbackgroundcolor-tag-wit.cs",
+      "task": "Apply background color to a table row based on status using the setBackgroundColor tag with a conditional expression.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "create-nested-data-band-tags-to-represent-master-detail-relationships-between-orders-and-t.cs",
+      "task": "Create nested data band tags to represent master‑detail relationships between orders and their line items.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "implement-a-custom-extension-method-that-converts-enum-values-to-user-friendly-strings-for.cs",
+      "task": "Implement a custom extension method that converts enum values to user‑friendly strings for template display.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "generate-reports-in-parallel-by-processing-multiple-data-sources-concurrently-using-asynch.cs",
+      "task": "Generate reports in parallel by processing multiple data sources concurrently using asynchronous template rendering methods.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "export-the-rendered-document-to-pdf-format-after-applying-all-linq-reporting-transformatio.cs",
+      "task": "Export the rendered document to PDF format after applying all LINQ reporting transformations to the original template.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 31,
+      "file_name": "create-a-reusable-template-fragment-containing-common-header-information-and-insert-it-usi.cs",
+      "task": "Create a reusable template fragment containing common header information and insert it using the include tag.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 32,
+      "file_name": "implement-a-logging-mechanism-that-records-each-expression-evaluation-result-for-debugging.cs",
+      "task": "Implement a logging mechanism that records each expression evaluation result for debugging during report generation.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 33,
+      "file_name": "use-the-type-member-access-syntax-to-call-static-methods-of-a-utility-class-within-an-expr.cs",
+      "task": "Use the type member access syntax to call static methods of a utility class within an expression tag.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 34,
+      "file_name": "apply-conditional-formatting-to-table-rows-by-evaluating-a-boolean-expression-checking-if.cs",
+      "task": "Apply conditional formatting to table rows by evaluating a boolean expression checking if row index is even.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 35,
+      "file_name": "insert-a-bookmark-dynamically-at-a-calculated-position-using-bookmark-tag-with-name-derive.cs",
+      "task": "Insert a bookmark dynamically at a calculated position using bookmark tag with name derived from data fields.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 36,
+      "file_name": "generate-a-table-of-contents-automatically-by-placing-a-toc-tag-at-the-beginning-of-the-do.cs",
+      "task": "Generate a table of contents automatically by placing a toc tag at the beginning of the document template.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 37,
+      "file_name": "create-a-custom-data-source-implementing-ienumerable-and-bind-it-to-the-engine-to-stream-l.cs",
+      "task": "Create a custom data source implementing IEnumerable and bind it to the engine to stream large datasets efficiently.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 38,
+      "file_name": "use-the-image-tag-with-a-base64-string-expression-to-embed-images-directly-without-externa.cs",
+      "task": "Use the image tag with a base64 string expression to embed images directly without external file references.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 39,
+      "file_name": "apply-a-custom-number-format-to-currency-values-using-the-format-tag-with-a-net-format-str.cs",
+      "task": "Apply a custom number format to currency values using the format tag with a .NET format string expression.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 40,
+      "file_name": "implement-a-fallback-mechanism-that-substitutes-default-text-when-an-expression-evaluates.cs",
+      "task": "Implement a fallback mechanism that substitutes default text when an expression evaluates to null during rendering.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 41,
+      "file_name": "register-system-math-type-in-the-engine-s-knowntypes-collection-to-expose-its-static-membe.cs",
+      "task": "Register System.Math type in the engine's KnownTypes collection to expose its static members.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 42,
+      "file_name": "add-system-datetime-to-knowntypes-so-templates-can-call-datetime-now-directly.cs",
+      "task": "Add System.DateTime to KnownTypes so templates can call DateTime::Now directly.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 43,
+      "file_name": "enable-missing-member-handling-globally-to-return-null-for-undefined-properties-during-ren.cs",
+      "task": "Enable missing-member handling globally to return null for undefined properties during rendering.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 44,
+      "file_name": "register-custom-utility-class-myutilities-to-allow-its-static-methods-as-extension-methods.cs",
+      "task": "Register custom utility class MyUtilities to allow its static methods as extension methods.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 45,
+      "file_name": "call-math-sqrt-within-a-template-expression-to-compute-square-roots-of-numeric-fields.cs",
+      "task": "Call Math::Sqrt within a template expression to compute square roots of numeric fields.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 46,
+      "file_name": "reference-datetime-utcnow-in-a-template-to-display-the-current-universal-coordinated-time.cs",
+      "task": "Reference DateTime::UtcNow in a template to display the current universal coordinated time.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 47,
+      "file_name": "invoke-myutilities-formatcurrency-on-price-values-to-format-them-as-currency-strings.cs",
+      "task": "Invoke MyUtilities.FormatCurrency on price values to format them as currency strings.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 48,
+      "file_name": "apply-built-in-where-extension-method-on-orders-collection-to-filter-records-with-status-p.cs",
+      "task": "Apply built-in Where extension method on $orders$ collection to filter records with status 'Pending'.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 49,
+      "file_name": "use-select-extension-method-on-items-to-project-name-and-quantity-fields-for-reporting.cs",
+      "task": "Use Select extension method on $items$ to project Name and Quantity fields for reporting.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 50,
+      "file_name": "chain-orderbydescending-and-thenby-on-employees-to-sort-by-seniority-then-by-name.cs",
+      "task": "Chain OrderByDescending and ThenBy on $employees$ to sort by seniority then by name.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 51,
+      "file_name": "combine-where-select-and-orderby-in-a-single-expression-to-generate-filtered-sorted-list.cs",
+      "task": "Combine Where, Select, and OrderBy in a single expression to generate filtered, sorted list.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 52,
+      "file_name": "implement-custom-extension-method-returning-boolean-for-use-within-if-conditional-blocks-i.cs",
+      "task": "Implement custom extension method returning boolean for use within if conditional blocks in templates.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 53,
+      "file_name": "create-public-static-class-stringhelpers-with-totitlecase-method-and-call-it-from-a-templa.cs",
+      "task": "Create public static class StringHelpers with ToTitleCase method and call it from a template.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 54,
+      "file_name": "use-arithmetic-operators-in-template-price-quantity-to-calculate-total-line-amount.cs",
+      "task": "Use arithmetic operators in template: $price$ * $quantity$ to calculate total line amount.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 55,
+      "file_name": "insert-logical-expression-stock-0-price-100-to-display-items-meeting-both-criteria.cs",
+      "task": "Insert logical expression $stock$ > 0 && $price$ < 100 to display items meeting both criteria.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 56,
+      "file_name": "apply-lifted-addition-operator-on-nullable-decimal-fields-discount-and-tax-to-compute-comb.cs",
+      "task": "Apply lifted addition operator on nullable decimal fields $discount$ and $tax$ to compute combined value.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 57,
+      "file_name": "use-explicit-cast-int-on-quantity-when-passing-to-method-expecting-integer-parameter.cs",
+      "task": "Use explicit cast (int) on $quantity$ when passing to method expecting integer parameter.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 58,
+      "file_name": "define-user-defined-conversion-operator-in-custom-type-and-cast-it-explicitly-within-templ.cs",
+      "task": "Define user-defined conversion operator in custom type and cast it explicitly within template expression.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 59,
+      "file_name": "output-result-of-price-taxrate-expression-using-delimiters-to-insert-calculated-tax-into-d.cs",
+      "task": "Output result of $price$ * $taxRate$ expression using delimiters to insert calculated tax into document.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 60,
+      "file_name": "insert-conditional-block-using-if-stock-0-to-show-in-stock-message-when-true.cs",
+      "task": "Insert conditional block using if $stock$ > 0 to show 'In stock' message when true.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 61,
+      "file_name": "add-else-clause-after-if-block-to-display-out-of-stock-when-stock-quantity-equals-zero.cs",
+      "task": "Add else clause after if block to display 'Out of stock' when stock quantity equals zero.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 62,
+      "file_name": "dynamically-insert-external-html-fragment-using-include-directive-based-on-category-expres.cs",
+      "task": "Dynamically insert external HTML fragment using INCLUDE directive based on $category$ expression result.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 63,
+      "file_name": "merge-another-docx-document-into-current-template-when-includeappendix-flag-evaluates-to-t.cs",
+      "task": "Merge another DOCX document into current template when $includeAppendix$ flag evaluates to true.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 64,
+      "file_name": "utilize-lambda-function-within-where-clause-to-filter-orders-where-order-date-falls-within.cs",
+      "task": "Utilize lambda function within Where clause to filter $orders$ where order date falls within last month.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 65,
+      "file_name": "pass-custom-delegate-to-select-method-in-template-to-transform-each-item-into-formatted-st.cs",
+      "task": "Pass custom delegate to Select method in template to transform each item into formatted string.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 66,
+      "file_name": "combine-mail-merge-data-source-with-linq-reporting-engine-to-populate-template-using-custo.cs",
+      "task": "Combine mail merge data source with LINQ Reporting engine to populate template using $customer$ fields.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 67,
+      "file_name": "register-external-type-customerinfo-to-allow-direct-access-to-its-properties-within-mail-m.cs",
+      "task": "Register external type CustomerInfo to allow direct access to its properties within mail merge templates.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 68,
+      "file_name": "iterate-over-products-collection-in-template-to-generate-table-rows-for-each-product-entry.cs",
+      "task": "Iterate over $products$ collection in template to generate table rows for each product entry.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 69,
+      "file_name": "create-nested-foreach-loops-using-categories-and-items-to-display-hierarchical-data-in-doc.cs",
+      "task": "Create nested foreach loops using $categories$ and $items$ to display hierarchical data in document.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 70,
+      "file_name": "apply-built-in-firstordefault-extension-method-to-retrieve-first-matching-record-from-empl.cs",
+      "task": "Apply built-in FirstOrDefault extension method to retrieve first matching record from $employees$ collection.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 71,
+      "file_name": "implement-custom-extension-method-ishighvalue-that-returns-true-for-amounts-exceeding-limi.cs",
+      "task": "Implement custom extension method IsHighValue that returns true for amounts exceeding $limit$ and call it.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 72,
+      "file_name": "combine-arithmetic-and-conditional-operators-to-compute-discount-total-500-total-0-1-0.cs",
+      "task": "Combine arithmetic and conditional operators to compute discount: ($total$ > 500) ? $total$ * 0.1 : 0.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 73,
+      "file_name": "apply-lifted-logical-and-operator-on-isactive-and-haslicense-to-determine-feature-availabi.cs",
+      "task": "Apply lifted logical AND operator on $isActive$ and $hasLicense$ to determine feature availability.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 74,
+      "file_name": "register-system-timespan-type-to-enable-static-parsing-of-duration-strings-within-template.cs",
+      "task": "Register System.TimeSpan type to enable static parsing of duration strings within templates.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 75,
+      "file_name": "use-timespan-parse-static-method-to-convert-duration-string-from-data-into-timespan-object.cs",
+      "task": "Use TimeSpan::Parse static method to convert duration string from data into TimeSpan object.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 76,
+      "file_name": "create-conditional-block-that-checks-if-deadline-timespan-fromdays-7-to-flag-upcoming-task.cs",
+      "task": "Create conditional block that checks if $deadline$ < TimeSpan::FromDays(7) to flag upcoming tasks.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 77,
+      "file_name": "apply-built-in-min-method-on-prices-to-find-lowest-price-and-display-as-discount-benchmark.cs",
+      "task": "Apply built-in Min method on $prices$ to find lowest price and display as discount benchmark.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 78,
+      "file_name": "register-system-text-regularexpressions-regex-type-to-allow-pattern-matching-within-templa.cs",
+      "task": "Register System.Text.RegularExpressions.Regex type to allow pattern matching within template expressions for validation.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 79,
+      "file_name": "use-regex-ismatch-static-method-to-test-if-phonenumber-matches-required-format-before-rend.cs",
+      "task": "Use Regex::IsMatch static method to test if $phoneNumber$ matches required format before rendering.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 80,
+      "file_name": "apply-built-in-any-method-on-tags-collection-to-display-tag-list-only-when-tags-exist.cs",
+      "task": "Apply built-in Any method on $tags$ collection to display tag list only when tags exist.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 81,
+      "file_name": "create-custom-static-method-calculateage-in-datehelper-class-and-invoke-it-with-birthdate.cs",
+      "task": "Create custom static method CalculateAge in DateHelper class and invoke it with $birthDate$.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 82,
+      "file_name": "enable-missing-member-handling-and-verify-that-accessing-nonexistent-returns-null-without.cs",
+      "task": "Enable missing-member handling and verify that accessing $nonexistent$ returns null without error.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 83,
+      "file_name": "apply-built-in-groupby-on-orders-by-customerid-to-group-orders-per-customer-in-report.cs",
+      "task": "Apply built-in GroupBy on $orders$ by CustomerId to group orders per customer in report.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 84,
+      "file_name": "iterate-over-grouped-results-using-nested-foreach-to-list-orders-under-each-customer-headi.cs",
+      "task": "Iterate over grouped results using nested foreach to list orders under each customer heading.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 85,
+      "file_name": "use-custom-extension-method-tocurrencystring-to-format-amount-with-currency-symbol-and-two.cs",
+      "task": "Use custom extension method ToCurrencyString to format $amount$ with currency symbol and two decimals.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 86,
+      "file_name": "register-system-globalization-cultureinfo-type-to-enable-culture-specific-formatting-withi.cs",
+      "task": "Register System.Globalization.CultureInfo type to enable culture-specific formatting within template expressions for dates and numbers.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 87,
+      "file_name": "use-cultureinfo-currentculture-static-property-to-format-numbers-according-to-user-locale.cs",
+      "task": "Use CultureInfo::CurrentCulture static property to format numbers according to user locale in report.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 88,
+      "file_name": "register-newtonsoft-json-jsonconvert-type-to-enable-static-serializeobject-method-within-t.cs",
+      "task": "Register Newtonsoft.Json.JsonConvert type to enable static SerializeObject method within template expressions for serialization.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 89,
+      "file_name": "use-jsonconvert-serializeobject-to-embed-json-representation-of-order-object-into-document.cs",
+      "task": "Use JsonConvert::SerializeObject to embed JSON representation of $order$ object into document for debugging.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 90,
+      "file_name": "apply-built-in-count-method-on-items-where-quantity-0-to-count-available-items.cs",
+      "task": "Apply built-in Count method on $items$ where $quantity$ > 0 to count available items.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 91,
+      "file_name": "create-a-linq-reporting-template-that-outputs-customer-names-using-a-formatted-expression.cs",
+      "task": "Create a LINQ Reporting template that outputs customer names using a formatted expression tag.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 92,
+      "file_name": "insert-a-foreach-data-band-to-list-order-items-from-an-orderdetail-collection.cs",
+      "task": "Insert a foreach data band to list order items from an OrderDetail collection.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 93,
+      "file_name": "apply-the-fraction-number-format-to-product-quantities-with-the-quantity-fraction-expressi.cs",
+      "task": "Apply the fraction number format to product quantities with the {=Quantity:fraction} expression tag.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 94,
+      "file_name": "render-product-price-as-currency-by-specifying-a-standard-net-format-string-in-the-express.cs",
+      "task": "Render product price as currency by specifying a standard .NET format string in the expression tag.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 95,
+      "file_name": "nest-a-foreach-band-for-invoices-inside-a-customer-band-to-generate-a-hierarchical-master.cs",
+      "task": "Nest a foreach band for invoices inside a customer band to generate a hierarchical master‑detail report.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 96,
+      "file_name": "declare-an-iteration-variable-with-explicit-type-inside-the-foreach-tag-to-access-strongly.cs",
+      "task": "Declare an iteration variable with explicit type inside the foreach tag to access strongly typed properties.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 97,
+      "file_name": "use-the-html-switch-in-an-expression-tag-to-embed-a-formatted-html-snippet-within-the-docu.cs",
+      "task": "Use the html switch in an expression tag to embed a formatted HTML snippet within the document.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 98,
+      "file_name": "insert-an-external-word-document-dynamically-into-a-placeholder-using-the-inserting-docume.cs",
+      "task": "Insert an external Word document dynamically into a placeholder using the inserting‑documents‑dynamically workflow.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 99,
+      "file_name": "configure-a-conditional-block-to-display-a-discount-label-only-when-order-total-exceeds-a.cs",
+      "task": "Configure a conditional block to display a discount label only when Order.Total exceeds a specified threshold.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 100,
+      "file_name": "provide-a-default-template-option-inside-a-conditional-block-to-handle-cases-where-no-cond.cs",
+      "task": "Provide a default template option inside a conditional block to handle cases where no conditions evaluate true.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 101,
+      "file_name": "remove-a-conditional-block-entirely-during-rendering-when-none-of-the-boolean-expressions.cs",
+      "task": "Remove a conditional block entirely during rendering when none of the Boolean expressions evaluate to true.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 102,
+      "file_name": "force-movement-to-the-next-item-inside-a-data-band-by-using-a-true-conditional-expression.cs",
+      "task": "Force movement to the next item inside a data band by using a true conditional expression.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 103,
+      "file_name": "apply-lower-case-roman-numeral-format-to-chapter-numbers-using-the-chapternumber-roman-exp.cs",
+      "task": "Apply lower‑case Roman numeral format to chapter numbers using the {=ChapterNumber:roman} expression.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 104,
+      "file_name": "convert-integer-values-to-upper-case-alphabetic-letters-for-section-headings-with-the-sect.cs",
+      "task": "Convert integer values to upper‑case alphabetic letters for section headings with the {=Section:letter} tag.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 105,
+      "file_name": "format-a-datetime-property-as-iso-8601-using-the-createddate-yyyy-mm-ddthh-mm-ss-expressio.cs",
+      "task": "Format a DateTime property as ISO 8601 using the {=CreatedDate:yyyy-MM-ddTHH:mm:ss} expression tag.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 106,
+      "file_name": "insert-html-content-from-a-database-field-into-the-document-using-the-html-switch-in-an-ex.cs",
+      "task": "Insert HTML content from a database field into the document using the html switch in an expression tag.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 107,
+      "file_name": "generate-a-table-of-contents-automatically-by-inserting-expression-tags-that-reference-hea.cs",
+      "task": "Generate a table of contents automatically by inserting expression tags that reference heading styles.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 108,
+      "file_name": "create-a-nested-data-band-to-list-employee-projects-under-each-department-for-a-hierarchic.cs",
+      "task": "Create a nested data band to list employee projects under each department for a hierarchical report.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 109,
+      "file_name": "use-the-foreach-tag-with-explicit-generic-type-to-iterate-over-a-list-invoice-collection.cs",
+      "task": "Use the foreach tag with explicit generic type to iterate over a List<Invoice> collection.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 110,
+      "file_name": "apply-ordinal-number-format-to-rank-positions-displaying-first-second-third-within-the-ran.cs",
+      "task": "Apply ordinal number format to rank positions, displaying First, Second, Third within the ranking section.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 111,
+      "file_name": "conditionally-include-a-signature-block-only-when-the-signatory-property-is-not-null-using.cs",
+      "task": "Conditionally include a signature block only when the Signatory property is not null using a conditional block.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 112,
+      "file_name": "generate-a-summary-paragraph-that-calculates-total-sales-and-average-order-value-using-exp.cs",
+      "task": "Generate a summary paragraph that calculates total sales and average order value using expression tags.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 113,
+      "file_name": "insert-a-dynamic-footer-displaying-the-current-page-number-with-the-pagenumber-expression.cs",
+      "task": "Insert a dynamic footer displaying the current page number with the {=PageNumber} expression tag.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 114,
+      "file_name": "concatenate-first-and-last-name-properties-with-a-space-separator-using-expression-tags.cs",
+      "task": "Concatenate first and last name properties with a space separator using expression tags.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 115,
+      "file_name": "apply-custom-font-styling-to-expression-results-by-omitting-the-html-switch-and-using-firs.cs",
+      "task": "Apply custom font styling to expression results by omitting the html switch and using first‑character formatting.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 116,
+      "file_name": "create-a-data-band-that-iterates-over-datatable-rows-and-outputs-each-column-value.cs",
+      "task": "Create a data band that iterates over DataTable rows and outputs each column value.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 117,
+      "file_name": "use-a-conditional-block-to-display-a-promotional-banner-only-for-customers-with-loyalty-st.cs",
+      "task": "Use a conditional block to display a promotional banner only for customers with loyalty status.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 118,
+      "file_name": "embed-a-styled-table-generated-from-json-data-into-the-word-document-using-the-html-switch.cs",
+      "task": "Embed a styled table generated from JSON data into the Word document using the html switch.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 119,
+      "file_name": "apply-fraction-format-to-measurement-values-such-as-1-2-and-3-4-in-the-specifications-tabl.cs",
+      "task": "Apply fraction format to measurement values such as 1/2 and 3/4 in the specifications table.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 120,
+      "file_name": "conditionally-format-overdue-invoice-rows-with-red-font-using-a-conditional-block.cs",
+      "task": "Conditionally format overdue invoice rows with red font using a conditional block.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 121,
+      "file_name": "insert-an-external-html-snippet-stored-in-a-file-by-reading-its-content-and-using-the-html.cs",
+      "task": "Insert an external HTML snippet stored in a file by reading its content and using the html switch.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 122,
+      "file_name": "calculate-line-total-within-a-foreach-band-by-referencing-iteration-variable-properties-in.cs",
+      "task": "Calculate line total within a foreach band by referencing iteration variable properties in an expression tag.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 123,
+      "file_name": "apply-ordinal-format-to-display-ranking-positions-as-first-second-third-within-the-leaderb.cs",
+      "task": "Apply ordinal format to display ranking positions as First, Second, Third within the leaderboard section.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 124,
+      "file_name": "select-between-full-address-and-po-box-templates-using-a-conditional-block-based-on-addres.cs",
+      "task": "Select between full address and PO box templates using a conditional block based on address type.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 125,
+      "file_name": "aggregate-values-from-nested-data-bands-using-expression-tags-with-a-sum-function-to-gener.cs",
+      "task": "Aggregate values from nested data bands using expression tags with a sum function to generate a summary table.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 126,
+      "file_name": "add-image-expression-tags-to-a-docx-template-for-dynamic-image-insertion.cs",
+      "task": "Add <<image [Expression]>> tags to a DOCX template for dynamic image insertion.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 127,
+      "file_name": "provide-a-stream-source-expression-and-apply-the-fitsizelim-switch-to-control-image-scalin.cs",
+      "task": "Provide a Stream source expression and apply the fitSizeLim switch to control image scaling.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 128,
+      "file_name": "supply-a-byte-array-expression-and-use-the-fitsize-switch-to-preserve-aspect-ratio.cs",
+      "task": "Supply a byte array expression and use the fitSize switch to preserve aspect ratio.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 129,
+      "file_name": "use-a-uri-string-expression-with-the-fitheight-switch-to-fit-images-within-paragraph-heigh.cs",
+      "task": "Use a URI string expression with the fitHeight switch to fit images within paragraph height.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 130,
+      "file_name": "pass-image-object-expressions-and-apply-the-fitwidth-switch-to-limit-image-width.cs",
+      "task": "Pass Image object expressions and apply the fitWidth switch to limit image width.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 131,
+      "file_name": "ensure-image-stream-objects-are-automatically-closed-after-insertion-during-report-buildin.cs",
+      "task": "Ensure image Stream objects are automatically closed after insertion during report building.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 132,
+      "file_name": "place-image-tags-inside-table-cells-to-insert-images-within-tabular-data-structures.cs",
+      "task": "Place image tags inside table cells to insert images within tabular data structures.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 133,
+      "file_name": "configure-image-tags-with-fitsize-scaling-to-stretch-images-and-fill-the-containing-paragr.cs",
+      "task": "Configure image tags with fitSize scaling to stretch images and fill the containing paragraph.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 134,
+      "file_name": "insert-bookmark-expression-tags-where-bookmark-names-are-derived-from-non-empty-string-exp.cs",
+      "task": "Insert <<bookmark [Expression]>> tags where bookmark names are derived from non‑empty string expressions.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 135,
+      "file_name": "add-bookmarks-inside-list-items-ensuring-they-are-not-placed-within-chart-elements.cs",
+      "task": "Add bookmarks inside list items, ensuring they are not placed within chart elements.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 136,
+      "file_name": "skip-bookmark-creation-when-the-evaluated-name-expression-returns-an-empty-string.cs",
+      "task": "Skip bookmark creation when the evaluated name expression returns an empty string.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 137,
+      "file_name": "generate-unique-bookmark-names-for-each-table-row-to-avoid-duplicate-identifiers.cs",
+      "task": "Generate unique bookmark names for each table row to avoid duplicate identifiers.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 138,
+      "file_name": "insert-link-expression-tags-with-external-url-expressions-for-dynamic-hyperlink-creation.cs",
+      "task": "Insert <<link [Expression]>> tags with external URL expressions for dynamic hyperlink creation.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 139,
+      "file_name": "create-internal-document-links-by-providing-bookmark-name-expressions-as-hyperlink-targets.cs",
+      "task": "Create internal document links by providing bookmark name expressions as hyperlink targets.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 140,
+      "file_name": "add-optional-display-text-to-link-tags-defaulting-to-the-target-url-when-omitted.cs",
+      "task": "Add optional display text to link tags, defaulting to the target URL when omitted.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 141,
+      "file_name": "convert-hyperlink-target-objects-to-strings-using-object-tostring-before-inserting-them.cs",
+      "task": "Convert hyperlink target objects to strings using Object.ToString() before inserting them.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 142,
+      "file_name": "build-multiple-reports-in-batch-each-containing-dynamically-inserted-images-from-varied-da.cs",
+      "task": "Build multiple reports in batch, each containing dynamically inserted images from varied data sources.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 143,
+      "file_name": "read-image-files-into-byte-arrays-and-supply-them-to-image-tags-via-linq-expressions.cs",
+      "task": "Read image files into byte arrays and supply them to image tags via LINQ expressions.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 144,
+      "file_name": "handle-invalid-or-unreachable-image-uri-strings-with-error-handling-during-report-generati.cs",
+      "task": "Handle invalid or unreachable image URI strings with error handling during report generation.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 145,
+      "file_name": "log-a-warning-when-a-bookmark-name-expression-evaluates-to-an-empty-string.cs",
+      "task": "Log a warning when a bookmark name expression evaluates to an empty string.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 146,
+      "file_name": "place-link-tags-inside-paragraph-runs-ensuring-they-are-not-located-within-chart-elements.cs",
+      "task": "Place link tags inside paragraph runs, ensuring they are not located within chart elements.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 147,
+      "file_name": "insert-background-color-dynamically-using-content-control-tags-with-evaluated-color-expres.cs",
+      "task": "Insert background color dynamically using content control tags with evaluated color expressions.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 148,
+      "file_name": "apply-dynamic-text-color-changes-with-setcolor-expression-tags-on-document-run-elements.cs",
+      "task": "Apply dynamic text color changes with <<setColor [Expression]>> tags on document run elements.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 149,
+      "file_name": "populate-content-controls-from-a-datatable-using-linq-expressions-for-each-control-value.cs",
+      "task": "Populate content controls from a DataTable using LINQ expressions for each control value.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 150,
+      "file_name": "convert-base64-image-strings-to-byte-arrays-for-dynamic-image-insertion-via-image-tags.cs",
+      "task": "Convert Base64 image strings to byte arrays for dynamic image insertion via image tags.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 151,
+      "file_name": "write-a-unit-test-verifying-graceful-failure-when-a-null-image-stream-is-provided.cs",
+      "task": "Write a unit test verifying graceful failure when a null image Stream is provided.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 152,
+      "file_name": "derive-hyperlink-display-text-from-a-database-field-falling-back-to-the-url-if-empty.cs",
+      "task": "Derive hyperlink display text from a database field, falling back to the URL if empty.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 153,
+      "file_name": "use-bookmark-expression-tags-inside-nested-lists-to-preserve-proper-bookmark-hierarchy.cs",
+      "task": "Use <<bookmark [Expression]>> tags inside nested lists to preserve proper bookmark hierarchy.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 154,
+      "file_name": "implement-a-custom-image-loader-that-returns-stream-objects-from-a-web-service-for-image-t.cs",
+      "task": "Implement a custom image loader that returns Stream objects from a web service for image tags.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 155,
+      "file_name": "extract-bookmark-names-from-a-generated-document-to-verify-they-match-expected-values.cs",
+      "task": "Extract bookmark names from a generated document to verify they match expected values.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 156,
+      "file_name": "insert-images-into-header-sections-using-image-tags-with-the-fitwidth-scaling-switch.cs",
+      "task": "Insert images into header sections using image tags with the fitWidth scaling switch.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 157,
+      "file_name": "validate-template-structure-to-prevent-image-tags-from-being-placed-inside-chart-elements.cs",
+      "task": "Validate template structure to prevent image tags from being placed inside chart elements.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 158,
+      "file_name": "add-bookmarks-to-table-rows-and-create-hyperlinks-that-navigate-to-those-bookmarks.cs",
+      "task": "Add bookmarks to table rows and create hyperlinks that navigate to those bookmarks.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 159,
+      "file_name": "convert-image-uris-to-image-objects-before-passing-them-to-the-linq-reporting-engine.cs",
+      "task": "Convert image URIs to Image objects before passing them to the LINQ reporting engine.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 160,
+      "file_name": "check-hyperlink-target-expressions-for-emptiness-and-log-errors-before-building-the-report.cs",
+      "task": "Check hyperlink target expressions for emptiness and log errors before building the report.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 161,
+      "file_name": "apply-fitheight-scaling-to-images-while-preserving-original-width-proportionally.cs",
+      "task": "Apply fitHeight scaling to images while preserving original width proportionally.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 162,
+      "file_name": "place-link-expression-tags-inside-table-cells-to-ensure-functional-hyperlinks-after-export.cs",
+      "task": "Place <<link [Expression]>> tags inside table cells to ensure functional hyperlinks after export.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 163,
+      "file_name": "generate-bookmark-names-by-concatenating-two-data-fields-using-a-linq-expression.cs",
+      "task": "Generate bookmark names by concatenating two data fields using a LINQ expression.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 164,
+      "file_name": "create-hyperlink-display-text-from-a-localized-resource-file-for-multilingual-support.cs",
+      "task": "Create hyperlink display text from a localized resource file for multilingual support.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 165,
+      "file_name": "set-text-color-dynamically-based-on-numeric-thresholds-using-conditional-expressions-in-se.cs",
+      "task": "Set text color dynamically based on numeric thresholds using conditional expressions in setColor tags.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 166,
+      "file_name": "scan-generated-documents-for-broken-hyperlinks-and-report-any-missing-targets.cs",
+      "task": "Scan generated documents for broken hyperlinks and report any missing targets.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "txt"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 167,
+      "file_name": "place-bookmark-tags-inside-nested-tables-ensuring-each-bookmark-is-correctly-positioned.cs",
+      "task": "Place bookmark tags inside nested tables, ensuring each bookmark is correctly positioned.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 168,
+      "file_name": "construct-hyperlink-target-uris-from-a-base-url-and-query-parameters-dynamically.cs",
+      "task": "Construct hyperlink target URIs from a base URL and query parameters dynamically.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 169,
+      "file_name": "apply-background-color-to-entire-sections-using-content-control-tags-with-evaluated-color.cs",
+      "task": "Apply background color to entire sections using content control tags with evaluated color expressions.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 170,
+      "file_name": "insert-images-into-footers-using-image-tags-with-fitsize-scaling-to-match-footer-height.cs",
+      "task": "Insert images into footers using image tags with fitSize scaling to match footer height.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 171,
+      "file_name": "validate-that-no-image-bookmark-or-link-tags-are-placed-inside-chart-elements.cs",
+      "task": "Validate that no image, bookmark, or link tags are placed inside chart elements.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 172,
+      "file_name": "load-json-data-source-and-bind-to-template-using-foreach-for-array-items.cs",
+      "task": "Load JSON data source and bind to template using <<foreach>> for array items.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 173,
+      "file_name": "load-xml-data-source-and-populate-table-rows-using-foreach-tag-in-the-template.cs",
+      "task": "Load XML data source and populate table rows using <<foreach>> tag in the template.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 174,
+      "file_name": "load-csv-data-source-and-map-columns-to-var-tags-for-each-record.cs",
+      "task": "Load CSV data source and map columns to <<var>> tags for each record.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 175,
+      "file_name": "configure-engine-to-restrict-member-access-for-security-using-restrictmembers-setting.cs",
+      "task": "Configure engine to restrict member access for security using <<restrictMembers>> setting.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 176,
+      "file_name": "enable-engine-caching-to-store-compiled-templates-for-faster-repeated-processing.cs",
+      "task": "Enable engine caching to store compiled templates for faster repeated processing.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 177,
+      "file_name": "declare-a-variable-in-the-template-using-var-name-total-value-var-syntax.cs",
+      "task": "Declare a variable in the template using <<var name=\"Total\">>value<</var>> syntax.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 178,
+      "file_name": "redefine-the-variable-inside-nested-foreach-loops-to-calculate-subtotals-per-category.cs",
+      "task": "Redefine the variable inside nested <<foreach>> loops to calculate subtotals per category.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 179,
+      "file_name": "place-restartnum-tag-before-foreach-to-restart-list-numbering-for-each-group.cs",
+      "task": "Place <<restartNum>> tag before <<foreach>> to restart list numbering for each group.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 180,
+      "file_name": "insert-an-external-html-snippet-at-runtime-using-html-tag-placeholder.cs",
+      "task": "Insert an external HTML snippet at runtime using <<html>> tag placeholder.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 181,
+      "file_name": "insert-an-external-docx-file-at-a-bookmark-location-using-include-tag.cs",
+      "task": "Insert an external DOCX file at a bookmark location using <<include>> tag.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 182,
+      "file_name": "insert-a-dynamic-image-from-a-url-using-image-src-url-placeholder.cs",
+      "task": "Insert a dynamic image from a URL using <<image src=\"url\">> placeholder.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 183,
+      "file_name": "create-a-hyperlink-to-an-external-website-using-hyperlink-tag-with-url-parameter.cs",
+      "task": "Create a hyperlink to an external website using <<hyperlink>> tag with URL parameter.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 184,
+      "file_name": "wrap-content-in-a-conditional-block-using-if-condition-if-to-display-discounts.cs",
+      "task": "Wrap content in a conditional block using <<if condition>>...<</if>> to display discounts.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 185,
+      "file_name": "apply-conditional-visibility-to-sections-based-on-user-role-using-if-role-admin-tag.cs",
+      "task": "Apply conditional visibility to sections based on user role using <<if role=='Admin'>> tag.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 186,
+      "file_name": "set-text-color-dynamically-to-blue-for-high-priority-items-using-setcolor-color-blue-tag.cs",
+      "task": "Set text color dynamically to blue for high‑priority items using <<setColor color=\"blue\">> tag.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 187,
+      "file_name": "set-background-color-dynamically-to-yellow-for-qualifying-rows-using-setbackground-tag.cs",
+      "task": "Set background color dynamically to yellow for qualifying rows using <<setBackground>> tag.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 188,
+      "file_name": "set-paragraph-alignment-dynamically-using-setalignment-alignment-center-tag-inside-loop.cs",
+      "task": "Set paragraph alignment dynamically using <<setAlignment alignment=\"center\">> tag inside loop.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 189,
+      "file_name": "set-heading-font-size-dynamically-to-fourteen-points-using-setfontsize-size-14-tag.cs",
+      "task": "Set heading font size dynamically to fourteen points using <<setFontSize size=\"14\">> tag.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 190,
+      "file_name": "apply-predefined-word-style-to-paragraphs-using-setstyle-style-heading1-tag.cs",
+      "task": "Apply predefined Word style to paragraphs using <<setStyle style=\"Heading1\">> tag.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 191,
+      "file_name": "merge-table-cells-dynamically-in-header-rows-using-mergecells-tag.cs",
+      "task": "Merge table cells dynamically in header rows using <<mergeCells>> tag.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 192,
+      "file_name": "merge-cells-horizontally-across-variable-columns-using-mergecells-expression-with-calculat.cs",
+      "task": "Merge cells horizontally across variable columns using <<mergeCells>> expression with calculated range.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 193,
+      "file_name": "configure-engine-to-remove-paragraphs-containing-only-template-tags-for-cleaner-final-outp.cs",
+      "task": "Configure engine to remove paragraphs containing only template tags for cleaner final output.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 194,
+      "file_name": "insert-page-break-before-each-new-section-using-pagebreak-tag-inside-outer-foreach-loop.cs",
+      "task": "Insert page break before each new section using <<pageBreak>> tag inside outer <<foreach>> loop.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 195,
+      "file_name": "add-dynamic-footer-displaying-current-date-and-page-number-using-field-tags.cs",
+      "task": "Add dynamic footer displaying current date and page number using <<field>> tags.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 196,
+      "file_name": "generate-pdf-output-from-docx-template-after-applying-all-linq-tags-and-formatting.cs",
+      "task": "Generate PDF output from DOCX template after applying all LINQ tags and formatting.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 197,
+      "file_name": "export-final-document-to-html-format-while-preserving-dynamic-color-settings-applied-via-t.cs",
+      "task": "Export final document to HTML format while preserving dynamic color settings applied via tags.",
+      "workflow": "rich-content-and-formatting",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 198,
+      "file_name": "build-multi-section-report-using-separate-data-sources-for-header-body-and-footer-via-api.cs",
+      "task": "Build multi‑section report using separate data sources for header, body, and footer via API.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 199,
+      "file_name": "create-a-content-control-that-repeats-for-each-employee-record-using-foreach-inside-contro.cs",
+      "task": "Create a content control that repeats for each employee record using <<foreach>> inside control.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 200,
+      "file_name": "enable-reflection-call-optimization-through-engine-caching-options-for-large-data-set-proc.cs",
+      "task": "Enable reflection call optimization through engine caching options for large data set processing.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 201,
+      "file_name": "configure-engine-to-treat-unknown-include-file-paths-as-optional-skipping-them-without-err.cs",
+      "task": "Configure engine to treat unknown <<include>> file paths as optional, skipping them without errors.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 202,
+      "file_name": "load-a-docx-template-from-file-and-build-a-report-using-a-dataset-then-save-as-pdf.cs",
+      "task": "Load a DOCX template from file and build a report using a DataSet, then save as PDF.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 203,
+      "file_name": "load-a-template-document-from-a-stream-create-a-jsondatasource-build-the-report-and-save-a.cs",
+      "task": "Load a template document from a stream, create a JsonDataSource, build the report, and save as RTF.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "rtf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 204,
+      "file_name": "create-an-xml-data-source-from-a-file-generate-a-report-and-export-the-result-to-docx-form.cs",
+      "task": "Create an XML data source from a file, generate a report, and export the result to DOCX format.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 205,
+      "file_name": "instantiate-a-jsondatasource-from-a-json-string-build-a-report-and-write-the-output-to-a-m.cs",
+      "task": "Instantiate a JsonDataSource from a JSON string, build a report, and write the output to a memory stream.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 206,
+      "file_name": "configure-csvdataloadoptions-with-headers-custom-separator-and-comment-character-before-bu.cs",
+      "task": "Configure CsvDataLoadOptions with headers, custom separator, and comment character before building the report.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 207,
+      "file_name": "configure-csvdataloadoptions-to-recognize-boolean-values-represented-as-true-or-false-stri.cs",
+      "task": "Configure CsvDataLoadOptions to recognize boolean values represented as true or false strings during report generation.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 208,
+      "file_name": "configure-csvdataloadoptions-to-ignore-lines-starting-with-a-comment-character-while-strea.cs",
+      "task": "Configure CsvDataLoadOptions to ignore lines starting with a comment character while streaming large CSV files.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 209,
+      "file_name": "set-up-a-custom-culture-for-type-parsing-to-correctly-interpret-european-date-formats-in-c.cs",
+      "task": "Set up a custom culture for type parsing to correctly interpret European date formats in CSV data.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 210,
+      "file_name": "enable-type-inference-for-xml-numeric-values-by-providing-invariant-culture-formatted-stri.cs",
+      "task": "Enable type inference for XML numeric values by providing invariant culture formatted strings in the source.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 211,
+      "file_name": "parse-json-date-values-using-iso-8601-format-to-ensure-correct-date-fields-in-the-generate.cs",
+      "task": "Parse JSON date values using ISO 8601 format to ensure correct date fields in the generated report.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 212,
+      "file_name": "use-reportingengine-buildreport-overload-specifying-a-collection-name-to-target-a-specific.cs",
+      "task": "Use ReportingEngine.BuildReport overload specifying a collection name to target a specific data set.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 213,
+      "file_name": "apply-known-external-type-configuration-to-allow-safe-member-access-from-custom-objects-in.cs",
+      "task": "Apply known external type configuration to allow safe member access from custom objects in the template.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 214,
+      "file_name": "use-contextual-object-member-access-to-bind-a-single-person-object-s-properties-to-placeho.cs",
+      "task": "Use contextual object member access to bind a single Person object's properties to placeholders in the template.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 215,
+      "file_name": "create-a-dataset-with-multiple-related-tables-then-build-a-report-that-merges-data-across.cs",
+      "task": "Create a DataSet with multiple related tables, then build a report that merges data across those tables.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 216,
+      "file_name": "generate-separate-reports-for-each-row-in-a-dataset-table-by-iterating-with-reportingengin.cs",
+      "task": "Generate separate reports for each row in a DataSet table by iterating with ReportingEngine in a loop.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 217,
+      "file_name": "stream-a-large-csv-file-with-csvdatasource-to-generate-a-report-without-loading-the-entire.cs",
+      "task": "Stream a large CSV file with CsvDataSource to generate a report without loading the entire file into memory.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 218,
+      "file_name": "create-a-csv-data-source-with-quoted-fields-containing-commas-and-generate-a-report-preser.cs",
+      "task": "Create a CSV data source with quoted fields containing commas and generate a report preserving those values.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 219,
+      "file_name": "create-a-csv-data-source-with-custom-quote-character-and-generate-a-report-preserving-quot.cs",
+      "task": "Create a CSV data source with custom quote character and generate a report preserving quoted text exactly.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 220,
+      "file_name": "create-an-xml-data-source-from-an-xdocument-then-generate-a-report-that-reads-attribute-va.cs",
+      "task": "Create an XML data source from an XDocument, then generate a report that reads attribute values as fields.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 221,
+      "file_name": "create-an-xml-data-source-from-a-string-containing-cdata-sections-and-generate-a-report-pr.cs",
+      "task": "Create an XML data source from a string containing CDATA sections and generate a report preserving those values.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 222,
+      "file_name": "create-an-xml-data-source-with-namespaces-and-generate-a-report-that-correctly-resolves-pr.cs",
+      "task": "Create an XML data source with namespaces and generate a report that correctly resolves prefixed elements.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 223,
+      "file_name": "create-a-jsondatasource-from-a-file-stream-build-a-report-and-upload-the-output-to-azure-b.cs",
+      "task": "Create a JsonDataSource from a file stream, build a report, and upload the output to Azure Blob storage.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 224,
+      "file_name": "create-a-jsondatasource-from-a-file-enable-type-inference-and-generate-a-report-with-corre.cs",
+      "task": "Create a JsonDataSource from a file, enable type inference, and generate a report with correctly typed fields.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 225,
+      "file_name": "create-a-jsondatasource-from-a-string-containing-a-root-array-flatten-the-root-and-build-t.cs",
+      "task": "Create a JsonDataSource from a string containing a root array, flatten the root, and build the report.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 226,
+      "file_name": "apply-custom-number-format-provider-to-format-currency-fields-when-building-a-report-from.cs",
+      "task": "Apply custom number format provider to format currency fields when building a report from XML data source.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 227,
+      "file_name": "generate-a-docx-report-from-a-json-source-and-apply-custom-number-formatting-for-currency.cs",
+      "task": "Generate a DOCX report from a JSON source and apply custom number formatting for currency fields.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 228,
+      "file_name": "build-a-report-with-conditional-sections-that-appear-only-when-a-numeric-field-exceeds-a-s.cs",
+      "task": "Build a report with conditional sections that appear only when a numeric field exceeds a specified threshold.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 229,
+      "file_name": "build-a-report-that-applies-conditional-sections-based-on-boolean-flags-from-an-xml-data-s.cs",
+      "task": "Build a report that applies conditional sections based on boolean flags from an XML data source.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 230,
+      "file_name": "build-a-report-with-dynamic-page-breaks-based-on-the-number-of-items-in-a-json-array.cs",
+      "task": "Build a report with dynamic page breaks based on the number of items in a JSON array.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 231,
+      "file_name": "build-a-report-with-nested-repeating-sections-for-orders-and-their-line-items-using-xml-da.cs",
+      "task": "Build a report with nested repeating sections for orders and their line items using XML data source.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 232,
+      "file_name": "build-a-report-that-includes-a-chart-populated-with-numeric-data-extracted-from-a-dataset.cs",
+      "task": "Build a report that includes a chart populated with numeric data extracted from a DataSet table.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 233,
+      "file_name": "build-a-report-that-includes-a-chart-populated-with-data-from-a-json-array-representing-qu.cs",
+      "task": "Build a report that includes a chart populated with data from a JSON array representing quarterly results.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 234,
+      "file_name": "build-a-report-that-includes-a-calculated-field-summing-two-numeric-values-from-a-csv-row.cs",
+      "task": "Build a report that includes a calculated field summing two numeric values from a CSV row.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 235,
+      "file_name": "build-a-report-that-includes-a-calculated-field-using-arithmetic-expression-combining-two.cs",
+      "task": "Build a report that includes a calculated field using arithmetic expression combining two numeric JSON properties.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 236,
+      "file_name": "generate-a-pdf-a-compliant-report-by-building-from-an-xml-data-source-and-specifying-pdf-a.cs",
+      "task": "Generate a PDF/A compliant report by building from an XML data source and specifying PDF/A output options.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "pdf",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 237,
+      "file_name": "generate-a-pdf-a-report-from-an-xml-source-and-ensure-all-fonts-are-embedded-for-complianc.cs",
+      "task": "Generate a PDF/A report from an XML source and ensure all fonts are embedded for compliance.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "pdf",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 238,
+      "file_name": "generate-a-pdf-report-from-a-csv-source-and-apply-custom-page-margins-defined-in-the-templ.cs",
+      "task": "Generate a PDF report from a CSV source and apply custom page margins defined in the template.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 239,
+      "file_name": "generate-a-docx-report-from-a-csv-source-and-apply-custom-page-margins-defined-in-the-temp.cs",
+      "task": "Generate a DOCX report from a CSV source and apply custom page margins defined in the template.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 240,
+      "file_name": "generate-a-docx-report-from-a-csv-source-and-apply-a-custom-table-style-defined-in-the-tem.cs",
+      "task": "Generate a DOCX report from a CSV source and apply a custom table style defined in the template.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 241,
+      "file_name": "generate-a-docx-report-from-a-json-source-and-apply-multilingual-unicode-text-from-various.cs",
+      "task": "Generate a DOCX report from a JSON source and apply multilingual Unicode text from various language fields.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 242,
+      "file_name": "use-reportingengine-to-generate-a-report-and-embed-a-file-attachment-from-data-stored-in-a.cs",
+      "task": "Use ReportingEngine to generate a report and embed a file attachment from data stored in a JSON field.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json",
+        "txt"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 243,
+      "file_name": "use-reportingengine-to-generate-a-report-and-write-the-output-directly-to-an-http-response.cs",
+      "task": "Use ReportingEngine to generate a report and write the output directly to an HTTP response stream.",
+      "workflow": "batch-stream-io",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 244,
+      "file_name": "use-reportingengine-to-generate-a-report-and-set-custom-header-and-footer-fields-based-on.cs",
+      "task": "Use ReportingEngine to generate a report and set custom header and footer fields based on JSON data.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 245,
+      "file_name": "use-reportingengine-to-generate-a-report-and-set-custom-document-properties-based-on-value.cs",
+      "task": "Use ReportingEngine to generate a report and set custom document properties based on values from a DataSet.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 246,
+      "file_name": "implement-a-progress-callback-to-monitor-report-generation-status-when-processing-large-xm.cs",
+      "task": "Implement a progress callback to monitor report generation status when processing large XML data sets.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 247,
+      "file_name": "use-a-cancellation-token-to-abort-report-building-if-the-operation-exceeds-a-predefined-ti.cs",
+      "task": "Use a cancellation token to abort report building if the operation exceeds a predefined time limit.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 248,
+      "file_name": "generate-a-report-with-a-table-of-contents-automatically-created-from-heading-styles-in-th.cs",
+      "task": "Generate a report with a table of contents automatically created from heading styles in the template.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 249,
+      "file_name": "instantiate-a-reportingengine-object-and-load-a-docx-template-from-the-project-directory.cs",
+      "task": "Instantiate a ReportingEngine object and load a DOCX template from the project directory.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 250,
+      "file_name": "enable-reportbuildoptions-removeemptyparagraphs-before-building-the-report-to-delete-empty.cs",
+      "task": "Enable ReportBuildOptions.RemoveEmptyParagraphs before building the report to delete empty paragraphs.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 251,
+      "file_name": "set-reportbuildoptions-allowmissingmembers-to-true-so-missing-data-fields-are-treated-as-n.cs",
+      "task": "Set ReportBuildOptions.AllowMissingMembers to true so missing data fields are treated as null.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 252,
+      "file_name": "disable-reportbuildoptions-allowmissingmembers-to-cause-exceptions-when-data-members-are-a.cs",
+      "task": "Disable ReportBuildOptions.AllowMissingMembers to cause exceptions when data members are absent.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 253,
+      "file_name": "configure-a-custom-fallback-message-for-missing-members-using-the-reporting-engine-options.cs",
+      "task": "Configure a custom fallback message for missing members using the reporting engine options.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 254,
+      "file_name": "activate-reportbuildoptions-inlineerrormessages-and-capture-the-boolean-success-flag-from.cs",
+      "task": "Activate ReportBuildOptions.InlineErrorMessages and capture the Boolean success flag from BuildReport.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 255,
+      "file_name": "call-reportingengine-setrestrictedtypes-with-prohibited-net-types-prior-to-any-report-gene.cs",
+      "task": "Call ReportingEngine.SetRestrictedTypes with prohibited .NET types prior to any report generation.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 256,
+      "file_name": "verify-that-the-restricted-type-list-becomes-immutable-after-the-first-buildreport-executi.cs",
+      "task": "Verify that the restricted type list becomes immutable after the first BuildReport execution.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 257,
+      "file_name": "combine-removeemptyparagraphs-and-inlineerrormessages-options-in-a-single-build-to-clean-o.cs",
+      "task": "Combine RemoveEmptyParagraphs and InlineErrorMessages options in a single build to clean output and embed errors.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 258,
+      "file_name": "apply-custom-prefix-and-suffix-delimiters-for-template-tags-to-avoid-tag-collisions.cs",
+      "task": "Apply custom prefix and suffix delimiters for template tags to avoid tag collisions.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 259,
+      "file_name": "define-alternative-tag-delimiters-such-as-and-to-prevent-conflicts-with-document-content.cs",
+      "task": "Define alternative tag delimiters such as [[ and ]] to prevent conflicts with document content.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 260,
+      "file_name": "generate-a-report-using-an-xml-data-source-while-allowmissingmembers-remains-disabled.cs",
+      "task": "Generate a report using an XML data source while AllowMissingMembers remains disabled.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 261,
+      "file_name": "generate-a-report-from-a-json-data-source-with-allowmissingmembers-enabled-to-treat-missin.cs",
+      "task": "Generate a report from a JSON data source with AllowMissingMembers enabled to treat missing fields as null.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 262,
+      "file_name": "validate-that-missing-members-are-returned-as-null-literals-when-allowmissingmembers-is-en.cs",
+      "task": "Validate that missing members are returned as null literals when AllowMissingMembers is enabled.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 263,
+      "file_name": "log-syntax-errors-to-a-file-when-inlineerrormessages-is-disabled-and-the-template-contains.cs",
+      "task": "Log syntax errors to a file when InlineErrorMessages is disabled and the template contains invalid expressions.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 264,
+      "file_name": "write-a-unit-test-confirming-that-empty-paragraphs-are-removed-when-removeemptyparagraphs.cs",
+      "task": "Write a unit test confirming that empty paragraphs are removed when RemoveEmptyParagraphs is enabled.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 265,
+      "file_name": "write-an-integration-test-ensuring-that-restricted-type-enforcement-throws-the-expected-ex.cs",
+      "task": "Write an integration test ensuring that restricted type enforcement throws the expected exception during report generation.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 266,
+      "file_name": "load-reporting-options-from-an-external-json-configuration-file-at-runtime-to-modify-engin.cs",
+      "task": "Load reporting options from an external JSON configuration file at runtime to modify engine behavior.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 267,
+      "file_name": "benchmark-report-generation-time-with-removeemptyparagraphs-enabled-versus-disabled-on-lar.cs",
+      "task": "Benchmark report generation time with RemoveEmptyParagraphs enabled versus disabled on large documents.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 268,
+      "file_name": "compare-output-file-size-when-inlineerrormessages-is-enabled-versus-disabled-to-assess-ove.cs",
+      "task": "Compare output file size when InlineErrorMessages is enabled versus disabled to assess overhead.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 269,
+      "file_name": "create-a-custom-inline-error-message-template-that-appears-for-syntax-errors-in-the-genera.cs",
+      "task": "Create a custom inline error message template that appears for syntax errors in the generated document.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 270,
+      "file_name": "process-a-batch-of-docx-templates-in-a-loop-applying-identical-reporting-options-to-each-f.cs",
+      "task": "Process a batch of DOCX templates in a loop, applying identical reporting options to each file.",
+      "workflow": "batch-stream-io",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 271,
+      "file_name": "capture-the-boolean-success-flag-when-inlineerrormessages-is-enabled-and-no-syntax-errors.cs",
+      "task": "Capture the Boolean success flag when InlineErrorMessages is enabled and no syntax errors occur.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 272,
+      "file_name": "capture-the-boolean-success-flag-when-inlineerrormessages-is-enabled-and-syntax-errors-are.cs",
+      "task": "Capture the Boolean success flag when InlineErrorMessages is enabled and syntax errors are present.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 273,
+      "file_name": "log-each-occurrence-of-missing-members-when-allowmissingmembers-is-enabled-for-later-analy.cs",
+      "task": "Log each occurrence of missing members when AllowMissingMembers is enabled for later analysis.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx",
+        "txt"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 274,
+      "file_name": "write-a-unit-test-verifying-that-the-custom-fallback-message-appears-for-missing-members.cs",
+      "task": "Write a unit test verifying that the custom fallback message appears for missing members.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 275,
+      "file_name": "write-an-integration-test-that-validates-inlineerrormessages-embeds-error-text-correctly-a.cs",
+      "task": "Write an integration test that validates InlineErrorMessages embeds error text correctly and returns appropriate success flag.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 276,
+      "file_name": "measure-memory-consumption-during-report-generation-with-removeemptyparagraphs-enabled-to.cs",
+      "task": "Measure memory consumption during report generation with RemoveEmptyParagraphs enabled to identify resource impact.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 277,
+      "file_name": "ensure-that-custom-tag-delimiters-are-correctly-applied-to-template-placeholders-before-bu.cs",
+      "task": "Ensure that custom tag delimiters are correctly applied to template placeholders before building the report.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 278,
+      "file_name": "enable-both-allowmissingmembers-and-inlineerrormessages-to-treat-missing-fields-as-null-an.cs",
+      "task": "Enable both AllowMissingMembers and InlineErrorMessages to treat missing fields as null and embed syntax errors.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 279,
+      "file_name": "test-that-calling-setrestrictedtypes-after-the-first-buildreport-throws-an-exception-as-do.cs",
+      "task": "Test that calling SetRestrictedTypes after the first BuildReport throws an exception as documented.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 280,
+      "file_name": "create-isolated-reportingengine-instances-per-request-to-guarantee-security-isolation-betw.cs",
+      "task": "Create isolated ReportingEngine instances per request to guarantee security isolation between users.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 281,
+      "file_name": "serialize-the-generated-report-to-a-memory-stream-for-further-processing-such-as-emailing.cs",
+      "task": "Serialize the generated report to a memory stream for further processing such as emailing.",
+      "workflow": "batch-stream-io",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 282,
+      "file_name": "implement-retry-logic-that-attempts-report-generation-up-to-three-times-when-transient-err.cs",
+      "task": "Implement retry logic that attempts report generation up to three times when transient errors occur.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 283,
+      "file_name": "use-the-asynchronous-buildreport-method-to-avoid-blocking-the-calling-thread-during-length.cs",
+      "task": "Use the asynchronous BuildReport method to avoid blocking the calling thread during lengthy generation.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 284,
+      "file_name": "disable-reflection-optimization-for-small-data-sets-by-setting-usereflectionoptimization-t.cs",
+      "task": "Disable reflection optimization for small data sets by setting UseReflectionOptimization to false.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 285,
+      "file_name": "enable-reflection-optimization-to-improve-performance-when-processing-large-collections-us.cs",
+      "task": "Enable reflection optimization to improve performance when processing large collections using runtime proxy generation.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 286,
+      "file_name": "register-a-custom-external-type-with-knownexternaltypes-to-allow-template-access-without-r.cs",
+      "task": "Register a custom external type with KnownExternalTypes to allow template access without reflection.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 287,
+      "file_name": "configure-restrictedmembers-to-limit-accessible-members-and-enhance-security-of-generated.cs",
+      "task": "Configure RestrictedMembers to limit accessible members and enhance security of generated reports.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 288,
+      "file_name": "enable-removeemptyparagraphs-option-to-delete-paragraphs-containing-only-template-tags-dur.cs",
+      "task": "Enable RemoveEmptyParagraphs option to delete paragraphs containing only template tags during generation.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 289,
+      "file_name": "insert-the-error-placeholder-in-templates-to-inline-syntax-error-messages-directly-into-ou.cs",
+      "task": "Insert the <<error>> placeholder in templates to inline syntax error messages directly into output.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 290,
+      "file_name": "apply-a-single-row-list-template-to-generate-a-simple-report-from-a-collection-of-objects.cs",
+      "task": "Apply a single‑row list template to generate a simple report from a collection of objects.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 291,
+      "file_name": "use-an-in-table-list-template-to-render-tabular-data-within-a-document-generated-from-json.cs",
+      "task": "Use an in‑table list template to render tabular data within a document generated from JSON source.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 292,
+      "file_name": "iterate-over-xml-data-in-a-template-using-foreach-in-xmldata-syntax-to-populate-sections.cs",
+      "task": "Iterate over XML data in a template using <<foreach [in xmlData]>> syntax to populate sections.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 293,
+      "file_name": "iterate-over-json-data-in-a-template-using-foreach-in-jsondata-syntax-for-dynamic-lists.cs",
+      "task": "Iterate over JSON data in a template using <<foreach [in jsonData]>> syntax for dynamic lists.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 294,
+      "file_name": "iterate-over-csv-data-in-a-template-using-foreach-in-csvdata-syntax-to-generate-rows.cs",
+      "task": "Iterate over CSV data in a template using <<foreach [in csvData]>> syntax to generate rows.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 295,
+      "file_name": "filter-a-collection-within-a-template-using-persons-where-p-p-age-18-to-include-adults.cs",
+      "task": "Filter a collection within a template using persons.Where(p => p.Age > 18) to include adults.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 296,
+      "file_name": "retrieve-the-fourth-element-of-a-collection-in-a-template-using-persons-elementat-3-for-di.cs",
+      "task": "Retrieve the fourth element of a collection in a template using persons.ElementAt(3) for display.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 297,
+      "file_name": "group-a-collection-by-department-in-a-template-using-persons-groupby-p-p-department-to-cre.cs",
+      "task": "Group a collection by department in a template using persons.GroupBy(p => p.Department) to create sections.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 298,
+      "file_name": "omit-explicit-enumeration-type-in-foreach-loops-to-let-the-engine-infer-item-type-automati.cs",
+      "task": "Omit explicit enumeration type in foreach loops to let the engine infer item type automatically.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 299,
+      "file_name": "add-the-required-assembly-attribute-to-merge-the-reporting-engine-with-another-assembly-fo.cs",
+      "task": "Add the required assembly attribute to merge the reporting engine with another assembly for deployment.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 300,
+      "file_name": "configure-the-engine-to-disable-reflection-optimization-when-processing-fewer-than-one-tho.cs",
+      "task": "Configure the engine to disable reflection optimization when processing fewer than one thousand records.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 301,
+      "file_name": "enable-reflection-optimization-and-register-multiple-external-types-to-improve-performance.cs",
+      "task": "Enable reflection optimization and register multiple external types to improve performance for complex hierarchical data.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 302,
+      "file_name": "use-built-in-enumeration-extension-methods-in-templates-to-perform-inline-sorting-before-r.cs",
+      "task": "Use built‑in enumeration extension methods in templates to perform inline sorting before rendering.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 303,
+      "file_name": "apply-a-bulleted-list-template-to-generate-a-bullet-point-summary-from-a-filtered-json-arr.cs",
+      "task": "Apply a bulleted list template to generate a bullet‑point summary from a filtered JSON array.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 304,
+      "file_name": "generate-a-numbered-list-report-by-applying-the-numbered-list-template-to-an-xml-data-coll.cs",
+      "task": "Generate a numbered list report by applying the numbered list template to an XML data collection.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 305,
+      "file_name": "create-a-multi-section-document-by-nesting-foreach-loops-over-xml-and-json-data-sources-wi.cs",
+      "task": "Create a multi‑section document by nesting foreach loops over XML and JSON data sources within the same template.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 306,
+      "file_name": "implement-batch-processing-by-loading-multiple-csv-files-iterating-each-with-a-foreach-loo.cs",
+      "task": "Implement batch processing by loading multiple CSV files, iterating each with a foreach loop, and merging results.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 307,
+      "file_name": "configure-the-engine-to-remove-empty-paragraphs-after-each-foreach-iteration-to-keep-the-f.cs",
+      "task": "Configure the engine to remove empty paragraphs after each foreach iteration to keep the final document tidy.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 308,
+      "file_name": "set-usereflectionoptimization-to-true-for-large-csv-datasets-to-accelerate-property-access.cs",
+      "task": "Set UseReflectionOptimization to true for large CSV datasets to accelerate property access during templating.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 309,
+      "file_name": "limit-member-access-to-public-properties-only-by-adding-those-names-to-restrictedmembers-l.cs",
+      "task": "Limit member access to public properties only by adding those names to RestrictedMembers list.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 310,
+      "file_name": "generate-a-report-that-includes-error-messages-inline-by-placing-error-tags-where-data-con.cs",
+      "task": "Generate a report that includes error messages inline by placing <<error>> tags where data conversion may fail.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 311,
+      "file_name": "create-a-template-that-automatically-determines-enumeration-item-type-without-specifying-g.cs",
+      "task": "Create a template that automatically determines enumeration item type without specifying generic type parameters.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 312,
+      "file_name": "use-the-where-extension-method-in-a-template-to-filter-records-based-on-dynamic-runtime-cr.cs",
+      "task": "Use the Where extension method in a template to filter records based on dynamic runtime criteria.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 313,
+      "file_name": "apply-a-list-in-table-template-to-render-csv-data-as-rows-within-a-pre-formatted-word-tabl.cs",
+      "task": "Apply a list‑in‑table template to render CSV data as rows within a pre‑formatted Word table.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 314,
+      "file_name": "combine-xml-and-csv-data-sources-in-a-single-template-to-produce-a-composite-report-with-m.cs",
+      "task": "Combine XML and CSV data sources in a single template to produce a composite report with mixed content.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 315,
+      "file_name": "disable-reflection-optimization-temporarily-for-a-specific-template-by-setting-usereflecti.cs",
+      "task": "Disable reflection optimization temporarily for a specific template by setting UseReflectionOptimization property within a scoped block.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 316,
+      "file_name": "register-external-types-from-multiple-assemblies-to-allow-templates-to-access-properties-a.cs",
+      "task": "Register external types from multiple assemblies to allow templates to access properties across different libraries.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 317,
+      "file_name": "configure-the-engine-to-treat-missing-members-as-null-values-to-prevent-runtime-errors-dur.cs",
+      "task": "Configure the engine to treat missing members as null values to prevent runtime errors during report generation.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 318,
+      "file_name": "use-the-groupby-extension-method-in-a-template-to-create-sections-grouped-by-department-fo.cs",
+      "task": "Use the GroupBy extension method in a template to create sections grouped by department for employee listings.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 319,
+      "file_name": "apply-a-bulleted-list-template-to-a-filtered-xml-node-set-to-produce-a-hierarchical-bullet.cs",
+      "task": "Apply a bulleted list template to a filtered XML node set to produce a hierarchical bullet structure.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 320,
+      "file_name": "iterate-over-a-json-array-of-orders-and-calculate-total-amount-using-inline-arithmetic-exp.cs",
+      "task": "Iterate over a JSON array of orders and calculate total amount using inline arithmetic expressions within the template.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 321,
+      "file_name": "enable-removal-of-empty-paragraphs-after-each-foreach-loop-to-avoid-blank-lines-in-the-fin.cs",
+      "task": "Enable removal of empty paragraphs after each foreach loop to avoid blank lines in the final document.",
+      "workflow": "template-syntax-and-expressions",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 322,
+      "file_name": "set-usereflectionoptimization-to-false-when-processing-a-single-small-csv-file-to-minimize.cs",
+      "task": "Set UseReflectionOptimization to false when processing a single small CSV file to minimize overhead.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 323,
+      "file_name": "add-custom-security-restrictions-by-populating-restrictedmembers-with-property-names-that.cs",
+      "task": "Add custom security restrictions by populating RestrictedMembers with property names that should be hidden.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 324,
+      "file_name": "create-a-template-that-uses-elementat-to-display-the-fifth-item-of-a-collection-without-lo.cs",
+      "task": "Create a template that uses ElementAt to display the fifth item of a collection without looping.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 325,
+      "file_name": "generate-a-report-that-merges-data-from-xml-json-and-csv-sources-using-separate-foreach-se.cs",
+      "task": "Generate a report that merges data from XML, JSON, and CSV sources using separate foreach sections.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx",
+        "json",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 326,
+      "file_name": "apply-a-numbered-list-template-to-a-collection-of-tasks-to-produce-an-ordered-checklist-in.cs",
+      "task": "Apply a numbered list template to a collection of tasks to produce an ordered checklist in the document.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 327,
+      "file_name": "use-the-where-method-with-a-complex-predicate-combining-multiple-fields-to-filter-json-rec.cs",
+      "task": "Use the Where method with a complex predicate combining multiple fields to filter JSON records dynamically.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 328,
+      "file_name": "configure-the-engine-to-inline-syntax-error-messages-by-placing-error-tags-at-potential-fa.cs",
+      "task": "Configure the engine to inline syntax error messages by placing <<error>> tags at potential failure points.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 329,
+      "file_name": "register-a-known-external-type-and-enable-reflection-optimization-to-achieve-maximum-perfo.cs",
+      "task": "Register a known external type and enable reflection optimization to achieve maximum performance for large data sets.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 330,
+      "file_name": "iterate-over-xml-elements-using-foreach-syntax-and-concatenate-attribute-values-to-form-a.cs",
+      "task": "Iterate over XML elements using foreach syntax and concatenate attribute values to form a composite string.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 331,
+      "file_name": "apply-a-single-row-template-to-each-item-in-a-csv-file-to-generate-individual-documents-pe.cs",
+      "task": "Apply a single‑row template to each item in a CSV file to generate individual documents per record.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 332,
+      "file_name": "use-groupby-in-a-template-to-create-separate-sections-for-each-unique-category-present-in.cs",
+      "task": "Use GroupBy in a template to create separate sections for each unique category present in JSON data.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 333,
+      "file_name": "enable-reflection-optimization-and-benchmark-processing-time-for-large-xml-arrays-to-quant.cs",
+      "task": "Enable reflection optimization and benchmark processing time for large XML arrays to quantify performance gains.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 334,
+      "file_name": "configure-restrictedmembers-to-block-access-to-methods-that-could-modify-underlying-data-s.cs",
+      "task": "Configure RestrictedMembers to block access to methods that could modify underlying data sources.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 335,
+      "file_name": "remove-empty-paragraphs-after-template-rendering-to-ensure-no-leftover-placeholder-lines-a.cs",
+      "task": "Remove empty paragraphs after template rendering to ensure no leftover placeholder lines appear in final output.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 336,
+      "file_name": "apply-an-in-table-list-template-to-json-data-to-produce-a-formatted-table-with-dynamic-row.cs",
+      "task": "Apply an in‑table list template to JSON data to produce a formatted table with dynamic rows.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 337,
+      "file_name": "use-the-elementat-method-to-fetch-a-specific-record-from-a-csv-collection-for-detailed-dis.cs",
+      "task": "Use the ElementAt method to fetch a specific record from a CSV collection for detailed display.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 338,
+      "file_name": "create-a-template-that-automatically-infers-enumeration-item-type-when-iterating-over-a-ge.cs",
+      "task": "Create a template that automatically infers enumeration item type when iterating over a generic list.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 339,
+      "file_name": "set-usereflectionoptimization-to-true-globally-then-override-to-false-for-a-particular-sma.cs",
+      "task": "Set UseReflectionOptimization to true globally, then override to false for a particular small data source.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 340,
+      "file_name": "add-assembly-attribute-to-merge-reporting-engine-with-custom-logging-assembly-for-unified.cs",
+      "task": "Add assembly attribute to merge reporting engine with custom logging assembly for unified error handling.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 341,
+      "file_name": "iterate-over-a-json-array-and-use-inline-arithmetic-to-calculate-and-display-discounted-pr.cs",
+      "task": "Iterate over a JSON array and use inline arithmetic to calculate and display discounted prices.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 342,
+      "file_name": "apply-a-bulleted-list-template-to-xml-nodes-representing-tasks-to-generate-a-bullet-point.cs",
+      "task": "Apply a bulleted list template to XML nodes representing tasks to generate a bullet‑point task list.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 343,
+      "file_name": "configure-the-engine-to-treat-missing-collection-items-as-empty-strings-to-avoid-null-refe.cs",
+      "task": "Configure the engine to treat missing collection items as empty strings to avoid null reference errors.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 344,
+      "file_name": "use-the-where-extension-method-with-a-lambda-that-references-external-type-properties-afte.cs",
+      "task": "Use the Where extension method with a lambda that references external type properties after registering the type.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 345,
+      "file_name": "generate-a-report-that-includes-a-numbered-list-of-filtered-csv-rows-applying-custom-forma.cs",
+      "task": "Generate a report that includes a numbered list of filtered CSV rows, applying custom formatting to each item.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 346,
+      "file_name": "enable-removal-of-empty-paragraphs-only-for-sections-generated-from-json-data-to-keep-othe.cs",
+      "task": "Enable removal of empty paragraphs only for sections generated from JSON data to keep other sections untouched.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 347,
+      "file_name": "register-multiple-external-types-from-different-namespaces-to-allow-templates-to-access-di.cs",
+      "task": "Register multiple external types from different namespaces to allow templates to access diverse object models.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 348,
+      "file_name": "apply-a-single-row-template-repeatedly-using-a-foreach-loop-over-csv-records-to-produce-ba.cs",
+      "task": "Apply a single‑row template repeatedly using a foreach loop over CSV records to produce batch documents.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 349,
+      "file_name": "use-groupby-in-a-template-to-summarize-xml-data-by-category-and-display-totals-per-group.cs",
+      "task": "Use GroupBy in a template to summarize XML data by category and display totals per group.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 350,
+      "file_name": "configure-usereflectionoptimization-based-on-collection-size-threshold-to-balance-performa.cs",
+      "task": "Configure UseReflectionOptimization based on collection size threshold to balance performance and memory usage.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 351,
+      "file_name": "insert-error-tags-in-conditional-sections-to-capture-and-display-template-evaluation-failu.cs",
+      "task": "Insert <<error>> tags in conditional sections to capture and display template evaluation failures during generation.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 352,
+      "file_name": "apply-an-in-table-list-template-to-xml-data-to-create-a-table-with-header-rows-from-elemen.cs",
+      "task": "Apply an in‑table list template to XML data to create a table with header rows from element names.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 353,
+      "file_name": "use-the-where-method-to-filter-csv-rows-where-the-status-column-equals-active-before-rende.cs",
+      "task": "Use the Where method to filter CSV rows where the status column equals 'Active' before rendering.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 354,
+      "file_name": "enable-reflection-optimization-and-benchmark-processing-time-for-large-json-arrays-to-quan.cs",
+      "task": "Enable reflection optimization and benchmark processing time for large JSON arrays to quantify performance gains.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 355,
+      "file_name": "configure-restrictedmembers-to-exclude-sensitive-fields-like-salary-from-being-accessed-in.cs",
+      "task": "Configure RestrictedMembers to exclude sensitive fields like Salary from being accessed in templates for security.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 356,
+      "file_name": "apply-a-bulleted-list-template-to-each-group-produced-by-groupby-to-create-nested-bullet-s.cs",
+      "task": "Apply a bulleted list template to each group produced by GroupBy to create nested bullet sections.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 357,
+      "file_name": "iterate-over-json-objects-and-use-inline-string-concatenation-to-build-full-address-lines.cs",
+      "task": "Iterate over JSON objects and use inline string concatenation to build full address lines in the report.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 358,
+      "file_name": "set-usereflectionoptimization-to-false-for-a-specific-template-by-modifying-engine-setting.cs",
+      "task": "Set UseReflectionOptimization to false for a specific template by modifying engine settings within a using block.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 359,
+      "file_name": "register-external-type-myclass-and-enable-reflection-optimization-to-allow-fast-property-a.cs",
+      "task": "Register external type MyClass and enable reflection optimization to allow fast property access in templates.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 360,
+      "file_name": "create-a-template-that-uses-groupby-to-organize-xml-items-by-attribute-and-display-each-gr.cs",
+      "task": "Create a template that uses GroupBy to organize XML items by attribute and display each group header.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 361,
+      "file_name": "apply-a-numbered-list-template-to-json-array-of-steps-to-produce-an-ordered-instruction-ma.cs",
+      "task": "Apply a numbered list template to JSON array of steps to produce an ordered instruction manual.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 362,
+      "file_name": "enable-removal-of-empty-paragraphs-after-processing-csv-data-to-prevent-blank-lines-betwee.cs",
+      "task": "Enable removal of empty paragraphs after processing CSV data to prevent blank lines between generated rows.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 363,
+      "file_name": "use-elementat-in-a-template-to-display-the-last-item-of-a-collection-by-calculating-collec.cs",
+      "task": "Use ElementAt in a template to display the last item of a collection by calculating collection length.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 364,
+      "file_name": "configure-engine-to-inline-syntax-errors-using-error-placeholder-allowing-end-users-to-see.cs",
+      "task": "Configure engine to inline syntax errors using <<error>> placeholder, allowing end users to see exact failure locations.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 365,
+      "file_name": "apply-a-single-row-template-to-each-element-of-an-xml-node-list-to-generate-separate-secti.cs",
+      "task": "Apply a single‑row template to each element of an XML node list to generate separate sections per item.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 366,
+      "file_name": "use-where-with-a-compound-condition-combining-age-and-department-fields-to-filter-json-emp.cs",
+      "task": "Use Where with a compound condition combining age and department fields to filter JSON employee records.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 367,
+      "file_name": "enable-reflection-optimization-globally-then-disable-it-for-a-specific-small-csv-import-to.cs",
+      "task": "Enable reflection optimization globally, then disable it for a specific small CSV import to reduce overhead.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 368,
+      "file_name": "register-multiple-known-external-types-and-verify-that-templates-can-access-their-public-p.cs",
+      "task": "Register multiple known external types and verify that templates can access their public properties without reflection.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 369,
+      "file_name": "apply-a-bulleted-list-template-to-grouped-json-data-to-create-nested-bullet-points-for-eac.cs",
+      "task": "Apply a bulleted list template to grouped JSON data to create nested bullet points for each category.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 370,
+      "file_name": "configure-restrictedmembers-to-allow-only-getter-methods-preventing-templates-from-invokin.cs",
+      "task": "Configure RestrictedMembers to allow only getter methods, preventing templates from invoking setters on data objects.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 371,
+      "file_name": "iterate-over-csv-rows-and-use-inline-calculations-to-compute-totals-and-display-them-in-th.cs",
+      "task": "Iterate over CSV rows and use inline calculations to compute totals and display them in the report.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 372,
+      "file_name": "use-groupby-to-aggregate-xml-data-by-category-and-display-total-counts-for-each-group-in-t.cs",
+      "task": "Use GroupBy to aggregate XML data by category and display total counts for each group in the report.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 373,
+      "file_name": "enable-removal-of-empty-paragraphs-after-processing-each-data-source-to-keep-the-final-doc.cs",
+      "task": "Enable removal of empty paragraphs after processing each data source to keep the final document clean.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 374,
+      "file_name": "apply-a-single-row-template-to-each-json-object-to-generate-individual-sections-with-detai.cs",
+      "task": "Apply a single‑row template to each JSON object to generate individual sections with detailed information.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 375,
+      "file_name": "set-usereflectionoptimization-to-false-for-a-specific-csv-import-to-avoid-unnecessary-prox.cs",
+      "task": "Set UseReflectionOptimization to false for a specific CSV import to avoid unnecessary proxy generation.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 376,
+      "file_name": "configure-restrictedmembers-to-block-access-to-methods-that-could-execute-arbitrary-code-f.cs",
+      "task": "Configure RestrictedMembers to block access to methods that could execute arbitrary code for security.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 377,
+      "file_name": "insert-error-placeholders-in-optional-template-sections-to-capture-and-display-missing-dat.cs",
+      "task": "Insert <<error>> placeholders in optional template sections to capture and display missing data warnings.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 378,
+      "file_name": "apply-an-in-table-list-template-to-grouped-xml-nodes-mapping-each-group-to-a-separate-tabl.cs",
+      "task": "Apply an in‑table list template to grouped XML nodes, mapping each group to a separate table section.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 379,
+      "file_name": "use-the-where-method-with-a-case-insensitive-comparison-to-filter-json-entries-based-on-a.cs",
+      "task": "Use the Where method with a case‑insensitive comparison to filter JSON entries based on a string field.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 380,
+      "file_name": "benchmark-processing-time-with-reflection-optimization-enabled-for-large-json-datasets-to.cs",
+      "task": "Benchmark processing time with reflection optimization enabled for large JSON datasets to evaluate performance impact.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 381,
+      "file_name": "disable-reflection-optimization-within-a-scoped-block-for-a-particular-template-to-avoid-p.cs",
+      "task": "Disable reflection optimization within a scoped block for a particular template to avoid proxy generation overhead.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 382,
+      "file_name": "register-external-types-from-both-core-and-third-party-assemblies-to-enable-comprehensive.cs",
+      "task": "Register external types from both core and third‑party assemblies to enable comprehensive data access in templates.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 383,
+      "file_name": "apply-a-bulleted-list-template-to-each-group-generated-by-groupby-to-produce-nested-bullet.cs",
+      "task": "Apply a bulleted list template to each group generated by GroupBy to produce nested bullet sections.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 384,
+      "file_name": "use-elementat-in-a-template-to-display-the-third-item-of-a-collection-without-iterating-th.cs",
+      "task": "Use ElementAt in a template to display the third item of a collection without iterating the entire list.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 385,
+      "file_name": "configure-the-engine-to-treat-missing-xml-elements-as-empty-strings-to-prevent-null-refere.cs",
+      "task": "Configure the engine to treat missing XML elements as empty strings to prevent null reference errors.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 386,
+      "file_name": "enable-removal-of-empty-paragraphs-only-after-processing-csv-sections-to-keep-other-sectio.cs",
+      "task": "Enable removal of empty paragraphs only after processing CSV sections to keep other sections unchanged.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 387,
+      "file_name": "add-the-assembly-attribute-required-for-merging-the-reporting-engine-with-a-custom-authent.cs",
+      "task": "Add the assembly attribute required for merging the reporting engine with a custom authentication module.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 388,
+      "file_name": "use-the-where-extension-method-with-a-lambda-referencing-a-registered-external-type-proper.cs",
+      "task": "Use the Where extension method with a lambda referencing a registered external type property for advanced filtering.",
+      "workflow": "engine-options-and-extensibility",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 389,
+      "file_name": "apply-a-numbered-list-template-to-a-filtered-xml-node-set-to-generate-an-ordered-hierarchi.cs",
+      "task": "Apply a numbered list template to a filtered XML node set to generate an ordered hierarchical report.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 390,
+      "file_name": "configure-restrictedmembers-to-exclude-methods-that-could-write-to-files-enhancing-templat.cs",
+      "task": "Configure RestrictedMembers to exclude methods that could write to files, enhancing template security.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx",
+        "txt"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 391,
+      "file_name": "iterate-over-xml-data-and-use-inline-arithmetic-to-calculate-totals-for-each-grouped-categ.cs",
+      "task": "Iterate over XML data and use inline arithmetic to calculate totals for each grouped category.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 392,
+      "file_name": "enable-reflection-optimization-globally-then-selectively-disable-it-for-small-json-arrays.cs",
+      "task": "Enable reflection optimization globally, then selectively disable it for small JSON arrays to balance performance.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 393,
+      "file_name": "use-groupby-in-a-template-to-summarize-csv-data-by-status-and-display-count-per-group.cs",
+      "task": "Use GroupBy in a template to summarize CSV data by status and display count per group.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 394,
+      "file_name": "apply-an-in-table-list-template-to-json-data-to-create-a-table-with-column-headers-derived.cs",
+      "task": "Apply an in‑table list template to JSON data to create a table with column headers derived from keys.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 395,
+      "file_name": "insert-error-tags-in-optional-loops-to-capture-and-display-evaluation-failures-for-missing.cs",
+      "task": "Insert <<error>> tags in optional loops to capture and display evaluation failures for missing data.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 396,
+      "file_name": "configure-the-engine-to-treat-absent-enumeration-items-as-null-preventing-exceptions-durin.cs",
+      "task": "Configure the engine to treat absent enumeration items as null, preventing exceptions during template execution.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 397,
+      "file_name": "use-the-elementat-method-to-fetch-the-second-to-last-item-of-a-collection-by-calculating-l.cs",
+      "task": "Use the ElementAt method to fetch the second-to-last item of a collection by calculating length.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 398,
+      "file_name": "apply-a-single-row-template-to-each-element-of-a-json-array-to-generate-individual-detaile.cs",
+      "task": "Apply a single‑row template to each element of a JSON array to generate individual detailed sections.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 399,
+      "file_name": "enable-removal-of-empty-paragraphs-after-processing-each-data-source-to-ensure-a-clean-fin.cs",
+      "task": "Enable removal of empty paragraphs after processing each data source to ensure a clean final document.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 400,
+      "file_name": "register-a-known-external-type-and-enable-reflection-optimization-to-achieve-optimal-perfo.cs",
+      "task": "Register a known external type and enable reflection optimization to achieve optimal performance for large XML datasets.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 401,
+      "file_name": "use-the-where-method-with-case-insensitive-comparison-to-filter-xml-nodes-based-on-attribu.cs",
+      "task": "Use the Where method with case‑insensitive comparison to filter XML nodes based on attribute values.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 402,
+      "file_name": "configure-restrictedmembers-to-allow-only-properties-marked-with-a-custom-attribute-enhanc.cs",
+      "task": "Configure RestrictedMembers to allow only properties marked with a custom attribute, enhancing data exposure control.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 403,
+      "file_name": "apply-a-bulleted-list-template-to-grouped-csv-data-to-create-nested-bullet-points-for-each.cs",
+      "task": "Apply a bulleted list template to grouped CSV data to create nested bullet points for each category.",
+      "workflow": "structured-data-source",
+      "outputs": [
+        "csv",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
