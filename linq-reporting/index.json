@@ -15,11 +15,11 @@
   },
   "stats": {
     "total_examples_in_input": 404,
-    "publish_ready_successful_examples": 403,
-    "remaining_not_publish_ready": 1,
+    "publish_ready_successful_examples": 404,
+    "remaining_not_publish_ready": 0,
     "workflow_counts": {
       "template-syntax-and-expressions": 73,
-      "core-report-generation": 108,
+      "core-report-generation": 109,
       "rich-content-and-formatting": 63,
       "engine-options-and-extensibility": 45,
       "structured-data-source": 111,
@@ -4256,6 +4256,16 @@
     },
     {
       "id": 403,
+      "file_name": "insert-multiple-images-sequentially-by-iterating-over-a-collection-of-byte-arrays-with-ima.cs",
+      "task": "Insert multiple images sequentially by iterating over a collection of byte arrays with image tags.",
+      "workflow": "core-report-generation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 404,
       "file_name": "apply-a-bulleted-list-template-to-grouped-csv-data-to-create-nested-bullet-points-for-each.cs",
       "task": "Apply a bulleted list template to grouped CSV data to create nested bullet points for each category.",
       "workflow": "structured-data-source",

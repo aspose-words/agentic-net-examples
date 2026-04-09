@@ -27,7 +27,7 @@ This folder is a **live, curated example set** for LINQ Reporting scenarios. Tre
 ## Recommended workflow selection
 
 - **template-syntax-and-expressions**: 73 examples
-- **core-report-generation**: 108 examples
+- **core-report-generation**: 109 examples
 - **rich-content-and-formatting**: 63 examples
 - **engine-options-and-extensibility**: 45 examples
 - **structured-data-source**: 111 examples
@@ -2054,6 +2054,11 @@ Use the simplest workflow that satisfies the task. Use the secondary-rule edge-c
   - Selected engine: verified
 - `configure-restrictedmembers-to-allow-only-properties-marked-with-a-custom-attribute-enhanc.cs`
   - Task: Configure RestrictedMembers to allow only properties marked with a custom attribute, enhancing data exposure control.
+  - Workflow: core-report-generation
+  - Outputs: docx
+  - Selected engine: verified
+- `insert-multiple-images-sequentially-by-iterating-over-a-collection-of-byte-arrays-with-ima.cs`
+  - Task: Insert multiple images sequentially by iterating over a collection of byte arrays with image tags.
   - Workflow: core-report-generation
   - Outputs: docx
   - Selected engine: verified

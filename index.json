@@ -1544,6 +1544,7 @@
         "register-a-known-external-type-and-enable-reflection-optimization-to-achieve-optimal-perfo.cs",
         "use-the-where-method-with-case-insensitive-comparison-to-filter-xml-nodes-based-on-attribu.cs",
         "configure-restrictedmembers-to-allow-only-properties-marked-with-a-custom-attribute-enhanc.cs",
+	"insert-multiple-images-sequentially-by-iterating-over-a-collection-of-byte-arrays-with-ima.cs",
         "apply-a-bulleted-list-template-to-grouped-csv-data-to-create-nested-bullet-points-for-each.cs"
       ],
       "required_namespaces": [

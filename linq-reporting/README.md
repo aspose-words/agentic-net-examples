@@ -7,10 +7,10 @@ This folder contains the **live, publish-ready** C# examples for the **LINQ Repo
 - Category: **LINQ Reporting**
 - Slug: **linq-reporting**
 - Total tasks in input: **404**
-- Publish-ready successful examples: **403 / 404**
+- Publish-ready successful examples: **404 / 404**
 - Remaining not publish-ready: **1**
 - Template Syntax And Expressions examples: **73**
-- Core Report Generation examples: **108**
+- Core Report Generation examples: **109**
 - Rich Content And Formatting examples: **63**
 - Engine Options And Extensibility examples: **45**
 - Structured Data Source examples: **111**
@@ -480,7 +480,8 @@ dotnet run --configuration Release --no-build
 | 400 | `register-a-known-external-type-and-enable-reflection-optimization-to-achieve-optimal-perfo.cs` | Register a known external type and enable reflection optimization to achieve optimal performance for large XML datasets. | structured-data-source | docx, xml | verified |
 | 401 | `use-the-where-method-with-case-insensitive-comparison-to-filter-xml-nodes-based-on-attribu.cs` | Use the Where method with case‑insensitive comparison to filter XML nodes based on attribute values. | structured-data-source | docx | verified |
 | 402 | `configure-restrictedmembers-to-allow-only-properties-marked-with-a-custom-attribute-enhanc.cs` | Configure RestrictedMembers to allow only properties marked with a custom attribute, enhancing data exposure control. | core-report-generation | docx | verified |
-| 403 | `apply-a-bulleted-list-template-to-grouped-csv-data-to-create-nested-bullet-points-for-each.cs` | Apply a bulleted list template to grouped CSV data to create nested bullet points for each category. | structured-data-source | csv, docx | verified |
+| 403 | `insert-multiple-images-sequentially-by-iterating-over-a-collection-of-byte-arrays-with-ima.cs` | Insert multiple images sequentially by iterating over a collection of byte arrays with image tags. | core-report-generation | docx | verified |
+| 404 | `apply-a-bulleted-list-template-to-grouped-csv-data-to-create-nested-bullet-points-for-each.cs` | Apply a bulleted list template to grouped CSV data to create nested bullet points for each category. | structured-data-source | csv, docx | verified |
 
 ## Common failure patterns seen during generation and how they were corrected
 
