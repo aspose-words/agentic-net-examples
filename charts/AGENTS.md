@@ -1,119 +1,297 @@
 ---
 name: charts
-description: C# examples for charts using Aspose.Words for .NET
+description: Verified C# examples for charts scenarios in Aspose.Words for .NET
 language: csharp
 framework: net8.0
-parent: ../AGENTS.md
+product: Aspose.Words
 ---
 
-# AGENTS - charts
+# AGENTS.md - Charts
 
-## Persona
+## Purpose
 
-You are a C# developer specializing in Word processing using Aspose.Words for .NET,
-working within the **charts** category.
-This folder contains standalone C# examples for charts operations.
-See the root [AGENTS.md](../AGENTS.md) for repository-wide conventions and boundaries.
+This folder is a **live, curated example set** for charts scenarios. Treat every file as a standalone console example. The main goal is correct, warning-free chart insertion, configuration, validation, and export workflows using direct Aspose.Words APIs.
 
-## Scope
-- This folder contains examples for **charts**.
-- Files are standalone `.cs` examples stored directly in this folder.
+## Non-negotiable conventions
 
-## Required Namespaces
+- Use `Shape` + `Chart` APIs directly and validate `shape.HasChart` before modification.
+- Insert charts with `DocumentBuilder.InsertChart` using the required `ChartType`.
+- Bootstrap local sample DOCX inputs for existing-file, folder, and stream workflows.
+- Prefer simple, verifiable chart workflows over speculative formatting shortcuts.
+- Guard maybe-null values to avoid nullable-reference warnings such as `CS8600`, `CS8602`, and `CS8604`.
 
-- `using Aspose.Words;` (30/31 files) ← category-specific
-- `using Aspose.Words.Drawing.Charts;` (30/31 files)
-- `using Aspose.Words.Drawing;` (29/31 files)
-- `using System;` (24/31 files)
-- `using System.Drawing;` (11/31 files)
-- `using System.IO;` (6/31 files)
-- `using Aspose.Words.Tables;` (2/31 files)
-- `using Aspose.Words.Saving;` (1/31 files)
-- `using System.Linq;` (1/31 files)
+## Recommended workflow selection
 
-## Common Code Pattern
+- **Native chart API workflow**: 28 examples
+- **Existing DOCX / export workflow**: 5 examples
+- **Validation workflow**: 3 examples
+- **Stream / batch / input-bootstrap workflow**: 3 examples
 
-Most files follow this pattern:
+Use the simplest workflow that satisfies the task.
 
-```csharp
-Document doc = new Document();
-DocumentBuilder builder = new DocumentBuilder(doc);
-// ... operations ...
-doc.Save("output.docx");
-```
+## Validation priorities
 
-## Files in this folder
+1. The code must compile and run without manual input.
+2. Chart operations must target actual chart shapes and preserve valid chart data structure.
+3. Exported outputs (DOCX/PDF/HTML/etc.) must actually be written by the example.
+4. Validation scenarios must inspect actual chart series and point collections.
+5. Examples that depend on files, folders, streams, or existing-docx style inputs should bootstrap those inputs locally during the example run.
 
-| File | Key APIs | Description |
-|------|----------|-------------|
-| [add-border-stroke-chart-legend-specified-thickness-dash...](./add-border-stroke-chart-legend-specified-thickness-dash-style-emphasis.cs) | `Legend`, `Format`, `Stroke` | Add border stroke chart legend specified thickness dash style emphasis |
-| [add-multiple-chartdatapoint-objects-series-set-each-poi...](./add-multiple-chartdatapoint-objects-series-set-each-point-s-color-fill-property.cs) | `Color`, `Document`, `DocumentBuilder` | Add multiple chartdatapoint objects series set each point s color fill property |
-| [add-scatter-chart-existing-paragraph-calling-documentbu...](./add-scatter-chart-existing-paragraph-calling-documentbuilder-insertchart-appropriate.cs) | `Document`, `DocumentBuilder`, `Series` | Add scatter chart existing paragraph calling documentbuilder insertchart appr... |
-| [adjust-chart-legend-position-top-right-corner-set-its-b...](./adjust-chart-legend-position-top-right-corner-set-its-background-fill-light-gray.cs) | `Document`, `DocumentBuilder`, `Drawing` | Adjust chart legend position top right corner set its background fill light gray |
-| [adjust-primary-y-axis-scaling-fixed-minimum-maximum-val...](./adjust-primary-y-axis-scaling-fixed-minimum-maximum-values-set-major-unit-intervals.cs) | `Document`, `DocumentBuilder`, `AxisBound` | Adjust primary y axis scaling fixed minimum maximum values set major unit int... |
-| [align-multi-line-chart-data-labels-center-enable-text-w...](./align-multi-line-chart-data-labels-center-enable-text-wrapping-better-readability.cs) | `Document`, `DocumentBuilder`, `Series` | Align multi line chart data labels center enable text wrapping better readabi... |
-| [apply-predefined-chart-style-template-newly-inserted-ch...](./apply-predefined-chart-style-template-newly-inserted-chart-ensure-consistent-visual.cs) | `Title`, `Document`, `DocumentBuilder` | Apply predefined chart style template newly inserted chart ensure consistent... |
-| [apply-three-dimensional-rotation-effect-column-chart-en...](./apply-three-dimensional-rotation-effect-column-chart-enhance-visual-perspective.cs) | `DocumentBuilder`, `Document`, `Series` | Apply three dimensional rotation effect column chart enhance visual perspective |
-| [batch-process-folder-word-files-adding-predefined-bar-c...](./batch-process-folder-word-files-adding-predefined-bar-chart-each-document-s-first-page.cs) | `Document`, `DocumentBuilder`, `Series` | Batch process folder word files adding predefined bar chart each document s f... |
-| [chartseriescollection-add-overload-accepting-name-value...](./chartseriescollection-add-overload-accepting-name-values-labeled-series-one-step.cs) | `Document`, `DocumentBuilder`, `Series` | Chartseriescollection add overload accepting name values labeled series one step |
-| [clone-chart-shape-one-document-section-insert-duplicate...](./clone-chart-shape-one-document-section-insert-duplicate-another-paragraph.cs) | `Document`, `DocumentBuilder`, `ConvertUtil` | Clone chart shape one document section insert duplicate another paragraph |
-| [configure-chart-display-data-labels-only-points-exceedi...](./configure-chart-display-data-labels-only-points-exceeding-specified-threshold-value.cs) | `Document`, `DocumentBuilder`, `Series` | Configure chart display data labels only points exceeding specified threshold... |
-| [customize-chart-s-data-label-font-specific-typeface-siz...](./customize-chart-s-data-label-font-specific-typeface-size-bold-styling-emphasis.cs) | `Font`, `Document`, `DocumentBuilder` | Customize chart s data label font specific typeface size bold styling emphasis |
-| [define-default-chartdatalabel-options-apply-consistent-...](./define-default-chartdatalabel-options-apply-consistent-font-size-color-across-all.cs) | `DocumentBuilder`, `Series`, `Document` | Define default chartdatalabel options apply consistent font size color across... |
-| [enable-automatic-resizing-chart-elements-when-document-...](./enable-automatic-resizing-chart-elements-when-document-page-size-changes-maintain.cs) | `Series`, `Document`, `DocumentBuilder` | Enable automatic resizing chart elements when document page size changes main... |
-| [enable-data-label-leader-lines-pie-chart-customize-thei...](./enable-data-label-leader-lines-pie-chart-customize-their-length-better-placement.cs) | `Document`, `DocumentBuilder`, `Series` | Enable data label leader lines pie chart customize their length better placement |
-| [existing-docx-file-locate-chart-shape-its-title-replace...](./existing-docx-file-locate-chart-shape-its-title-replace-its-data-source.cs) | `Document`, `Drawing`, `InputDocument` | Existing docx file locate chart shape its title replace its data source |
-| [implement-error-handling-catch-exceptions-when-insertin...](./implement-error-handling-catch-exceptions-when-inserting-chart-read-only-document.cs) | `Document`, `DocumentBuilder`, `Series` | Implement error handling catch exceptions when inserting chart read only docu... |
-| [insert-chart-table-cell-ensure-it-scales-proportionally...](./insert-chart-table-cell-ensure-it-scales-proportionally-cell-dimensions.cs) | `Document`, `DocumentBuilder`, `CellFormat` | Insert chart table cell ensure it scales proportionally cell dimensions |
-| [insert-chart-two-dimensional-array-as-custom-data-sourc...](./insert-chart-two-dimensional-array-as-custom-data-source-mapping-series-categories.cs) | `Document`, `DocumentBuilder`, `Series` | Insert chart two dimensional array as custom data source mapping series categ... |
-| [insert-column-chart-new-document-documentbuilder-insert...](./insert-column-chart-new-document-documentbuilder-insertchart-default-data.cs) | `Document`, `DocumentBuilder`, `Drawing` | Insert column chart new document documentbuilder insertchart default data |
-| [new-chart-series-set-its-values-via-series-values-prope...](./new-chart-series-set-its-values-via-series-values-property-assign-custom-category.cs) | `Document`, `DocumentBuilder`, `Series` | New chart series set its values via series values property assign custom cate... |
-| [programmatically-change-chart-s-plot-area-border-dashed...](./programmatically-change-chart-s-plot-area-border-dashed-line-specific-color-width.cs) | `DocumentBuilder`, `Format`, `Stroke` | Programmatically change chart s plot area border dashed line specific color w... |
-| [programmatically-set-chart-s-background-fill-semi-trans...](./programmatically-set-chart-s-background-fill-semi-transparent-color-watermark-effect.cs) | `Document`, `DocumentBuilder`, `Series` | Programmatically set chart s background fill semi transparent color watermark... |
-| [remove-specific-series-chart-chartseriescollection-remo...](./remove-specific-series-chart-chartseriescollection-removeat-correct-index.cs) | `Series`, `Document`, `DocumentBuilder` | Remove specific series chart chartseriescollection removeat correct index |
-| [retrieve-existing-chart-series-modify-their-data-points...](./retrieve-existing-chart-series-modify-their-data-points-refresh-chart-display.cs) | `ChartYValue`, `ChartXValue`, `YValues` | Retrieve existing chart series modify their data points refresh chart display |
-| [retrieve-shape-chart-object-inserted-chart-modify-its-t...](./retrieve-shape-chart-object-inserted-chart-modify-its-title-text-programmatically.cs) | `Document`, `DocumentBuilder`, `Font` | Retrieve shape chart object inserted chart modify its title text programmatic... |
-| [set-secondary-y-axis-number-format-currency-two-decimal...](./set-secondary-y-axis-number-format-currency-two-decimal-places-financial-charts.cs) | `Series`, `Document`, `DocumentBuilder` | Set secondary y axis number format currency two decimal places financial charts |
-| [update-chart-title-text-toggle-legend-visibility-based-...](./update-chart-title-text-toggle-legend-visibility-based-user-preferences.cs) | `FileNotFoundException`, `InputChart`, `OutputChart` | Update chart title text toggle legend visibility based user preferences |
-| [validate-that-all-chart-series-have-matching-category-c...](./validate-that-all-chart-series-have-matching-category-counts-prevent-data.cs) | `Series`, `InvalidOperationException`, `Document` | Validate that all chart series have matching category counts prevent data |
-| ... | | *and 1 more files* |
+## File-to-task reference
 
-## Category Statistics
-- Total examples: 31
+- `load-an-existing-docx-file-locate-a-chart-shape-by-its-title-and-replace-its-data-source.cs`
+  - Task: Load an existing DOCX file, locate a chart shape by its title, and replace its data source.
+  - Workflow: existing-docx-and-export
+  - Outputs: docx
+  - Selected engine: verified
+- `insert-a-column-chart-into-a-new-document-using-documentbuilder-insertchart-with-default-d.cs`
+  - Task: Insert a column chart into a new document using DocumentBuilder.InsertChart with default data.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `add-a-scatter-chart-to-an-existing-paragraph-by-calling-documentbuilder-insertchart-with-t.cs`
+  - Task: Add a scatter chart to an existing paragraph by calling DocumentBuilder.InsertChart with the appropriate overload.
+  - Workflow: existing-docx-and-export
+  - Outputs: docx
+  - Selected engine: verified
+- `insert-a-chart-using-a-two-dimensional-array-as-a-custom-data-source-mapping-series-and-ca.cs`
+  - Task: Insert a chart using a two‑dimensional array as a custom data source, mapping series and categories.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `insert-a-chart-into-a-table-cell-and-ensure-it-scales-proportionally-with-the-cell-dimensi.cs`
+  - Task: Insert a chart into a table cell and ensure it scales proportionally with the cell dimensions.
+  - Workflow: validation
+  - Outputs: docx
+  - Selected engine: verified
+- `clone-a-chart-shape-from-one-document-section-and-insert-the-duplicate-into-another-paragr.cs`
+  - Task: Clone a chart shape from one document section and insert the duplicate into another paragraph.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `retrieve-the-shape-chart-object-from-an-inserted-chart-and-modify-its-title-text-programma.cs`
+  - Task: Retrieve the Shape.Chart object from an inserted chart and modify its title text programmatically.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `create-a-new-chart-series-set-its-values-via-the-series-values-property-and-assign-custom.cs`
+  - Task: Create a new chart series, set its values via the series.Values property, and assign custom category labels.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `use-chartseriescollection-add-overload-accepting-a-name-and-values-to-create-a-labeled-ser.cs`
+  - Task: Use ChartSeriesCollection.Add overload accepting a name and values to create a labeled series in one step.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `add-multiple-chartdatapoint-objects-to-a-series-and-set-each-point-s-color-using-the-fill.cs`
+  - Task: Add multiple ChartDataPoint objects to a series and set each point's color using the Fill property.
+  - Workflow: stream-batch-io
+  - Outputs: docx
+  - Selected engine: verified
+- `change-the-chart-type-from-column-to-line-after-populating-data-to-demonstrate-dynamic-tra.cs`
+  - Task: Change the chart type from column to line after populating data to demonstrate dynamic transformation.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `add-a-trendline-to-a-scatter-chart-series-and-configure-its-type-color-and-display-equatio.cs`
+  - Task: Add a trendline to a scatter chart series and configure its type, color, and display equation.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `configure-chartdatalabel-number-format-to-display-percentages-with-one-decimal-place-for-a.cs`
+  - Task: Configure ChartDataLabel number format to display percentages with one decimal place for all series data points.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `align-multi-line-chart-data-labels-to-the-center-and-enable-text-wrapping-for-better-reada.cs`
+  - Task: Align multi‑line chart data labels to the center and enable text wrapping for better readability.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `define-default-chartdatalabel-options-to-apply-consistent-font-size-and-color-across-all-c.cs`
+  - Task: Define default ChartDataLabel options to apply consistent font size and color across all chart series.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `customize-the-chart-s-data-label-font-to-use-a-specific-typeface-size-and-bold-styling-for.cs`
+  - Task: Customize the chart's data label font to use a specific typeface, size, and bold styling for emphasis.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `enable-data-label-leader-lines-for-a-pie-chart-and-customize-their-length-for-better-place.cs`
+  - Task: Enable data label leader lines for a pie chart and customize their length for better placement.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `configure-the-chart-to-display-data-labels-only-for-points-exceeding-a-specified-threshold.cs`
+  - Task: Configure the chart to display data labels only for points exceeding a specified threshold value.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `set-major-gridlines-visibility-on-the-primary-x-axis-and-customize-their-line-color-and-th.cs`
+  - Task: Set major gridlines visibility on the primary X‑axis and customize their line color and thickness.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `adjust-the-primary-y-axis-scaling-to-fixed-minimum-and-maximum-values-and-set-major-unit-i.cs`
+  - Task: Adjust the primary Y‑axis scaling to fixed minimum and maximum values and set major unit intervals.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `set-display-units-for-the-secondary-x-axis-to-thousands-and-format-axis-labels-with-a-cust.cs`
+  - Task: Set display units for the secondary X‑axis to thousands and format axis labels with a custom number format.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `set-the-secondary-y-axis-number-format-to-currency-with-two-decimal-places-for-financial-c.cs`
+  - Task: Set the secondary Y‑axis number format to currency with two decimal places for financial charts.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `apply-a-solid-fill-color-to-the-chart-plot-area-and-add-a-gradient-overlay-for-visual-dept.cs`
+  - Task: Apply a solid fill color to the chart plot area and add a gradient overlay for visual depth.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `programmatically-set-the-chart-s-background-fill-to-a-semi-transparent-color-to-create-a-w.cs`
+  - Task: Programmatically set the chart's background fill to a semi‑transparent color to create a watermark effect.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `add-a-border-stroke-to-the-chart-legend-with-specified-thickness-and-dash-style-for-emphas.cs`
+  - Task: Add a border stroke to the chart legend with specified thickness and dash style for emphasis.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `adjust-the-chart-legend-position-to-the-top-right-corner-and-set-its-background-fill-to-li.cs`
+  - Task: Adjust the chart legend position to the top right corner and set its background fill to light gray.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `update-the-chart-title-text-and-toggle-legend-visibility-based-on-user-preferences.cs`
+  - Task: Update the chart title text and toggle legend visibility based on user preferences.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `apply-a-predefined-chart-style-template-to-a-newly-inserted-chart-to-ensure-consistent-vis.cs`
+  - Task: Apply a predefined chart style template to a newly inserted chart to ensure consistent visual branding.
+  - Workflow: validation
+  - Outputs: docx
+  - Selected engine: verified
+- `apply-a-three-dimensional-rotation-effect-to-a-column-chart-to-enhance-visual-perspective.cs`
+  - Task: Apply a three‑dimensional rotation effect to a column chart to enhance visual perspective.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `programmatically-change-the-chart-s-plot-area-border-to-a-dashed-line-with-specific-color.cs`
+  - Task: Programmatically change the chart's plot area border to a dashed line with specific color and width.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `programmatically-hide-the-chart-s-plot-area-border-while-keeping-axis-lines-visible-for-a.cs`
+  - Task: Programmatically hide the chart's plot area border while keeping axis lines visible for a clean appearance.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `enable-automatic-resizing-of-chart-elements-when-the-document-page-size-changes-to-maintai.cs`
+  - Task: Enable automatic resizing of chart elements when the document page size changes to maintain layout integrity.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `retrieve-existing-chart-series-modify-their-data-points-and-refresh-the-chart-display.cs`
+  - Task: Retrieve existing chart series, modify their data points, and refresh the chart display.
+  - Workflow: existing-docx-and-export
+  - Outputs: docx
+  - Selected engine: verified
+- `remove-a-specific-series-from-a-chart-using-chartseriescollection-removeat-with-the-correc.cs`
+  - Task: Remove a specific series from a chart using ChartSeriesCollection.RemoveAt with the correct index.
+  - Workflow: native-chart-api
+  - Outputs: docx
+  - Selected engine: verified
+- `validate-that-a-chart-contains-the-expected-number-of-series-and-data-points-before-saving.cs`
+  - Task: Validate that a chart contains the expected number of series and data points before saving.
+  - Workflow: validation
+  - Outputs: docx
+  - Selected engine: verified
+- `validate-that-all-chart-series-have-matching-category-counts-to-prevent-data-misalignment.cs`
+  - Task: Validate that all chart series have matching category counts to prevent data misalignment errors during rendering.
+  - Workflow: existing-docx-and-export
+  - Outputs: docx
+  - Selected engine: verified
+- `export-a-word-document-containing-multiple-charts-to-pdf-while-preserving-chart-formatting.cs`
+  - Task: Export a Word document containing multiple charts to PDF while preserving chart formatting and data labels.
+  - Workflow: stream-batch-io
+  - Outputs: pdf, docx
+  - Selected engine: verified
+- `implement-error-handling-to-catch-exceptions-when-inserting-a-chart-into-a-read-only-docum.cs`
+  - Task: Implement error handling to catch exceptions when inserting a chart into a read‑only document stream.
+  - Workflow: existing-docx-and-export
+  - Outputs: docx
+  - Selected engine: verified
+- `batch-process-a-folder-of-word-files-adding-a-predefined-bar-chart-to-each-document-s-firs.cs`
+  - Task: Batch process a folder of Word files, adding a predefined bar chart to each document's first page.
+  - Workflow: stream-batch-io
+  - Outputs: docx
+  - Selected engine: verified
 
-## General Tips
-- See parent [AGENTS.md](../AGENTS.md) for repository-wide boundaries and testing guidance.
-- Review code examples in this folder for charts patterns.
+## Common failure patterns and preferred agent fixes
 
+- **Invalid chart shape assumption**
+  - Symptom: Code treats a generic Shape as a chart without checking HasChart.
+  - Preferred fix: Validate shape.HasChart before accessing the Chart property.
 
-## Command Reference
+- **Series/data misalignment**
+  - Symptom: Category count and series values do not match expected chart structure.
+  - Preferred fix: Clear default data if needed and add aligned categories and series values deterministically.
 
-### Build and Run
+- **Invalid table insertion state**
+  - Symptom: Chart insertion in a table cell fails because the builder is left in an unbalanced table state.
+  - Preferred fix: Balance StartTable, InsertCell, EndRow, and EndTable before saving.
 
-Files in this folder are standalone `.cs` examples. Run one example at a time by copying it into a temporary console project as `Program.cs`.
+- **Missing local bootstrap inputs**
+  - Symptom: Existing DOCX, folder, or stream scenarios assume inputs already exist.
+  - Preferred fix: Create local sample input documents or folders inside the example first.
+
+- **Nullable warnings**
+  - Symptom: CS8600, CS8602, or CS8604 around maybe-null chart shapes or located nodes.
+  - Preferred fix: Use nullable locals and guard maybe-null values before dereference.
+
+## Build and run contract
+
+- Target framework: `net8.0`
+- Primary package: `Aspose.Words` `26.3.0`
+
+## Command reference
+
+### Create a temporary console project
 
 ```bash
-# Create a temporary console project from the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+```
+
+### Add required packages
+
+```bash
 dotnet add package Aspose.Words --version 26.3.0
+```
 
-# Copy one example from this folder into the project as Program.cs
-# PowerShell:
+### Copy a category example into the temp project
+
+```powershell
 Copy-Item ..\charts\<example-file>.cs .\Program.cs
+```
 
-# Build and run
+### Build and run
+
+```bash
 dotnet build --configuration Release --verbosity minimal
 dotnet run --configuration Release --no-build
 ```
 
-### Notes for Agents and Developers
+## Category update guidance
 
-- Treat every `.cs` file in `charts/` as a full console program, not a snippet.
-- Run one file at a time by copying it to `Program.cs`.
-- If a sample needs input documents, images, fonts, or data files, place them in the temporary project directory before running.
-- See the root [AGENTS.md](../AGENTS.md) for repository-wide prerequisites, project file template, and testing guidance.
-
-<!-- AUTOGENERATED:START -->
-Updated: 2026-03-24 | Run: `20260315_203408_65134f`
-<!-- AUTOGENERATED:END -->
+- Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
+- When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
+- Keep examples standalone, bootstrap missing inputs locally, and prefer direct Aspose.Words APIs over speculative shortcuts.
