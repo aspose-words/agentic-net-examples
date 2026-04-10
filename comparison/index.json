@@ -1,0 +1,369 @@
+{
+  "category": {
+    "name": "Comparison",
+    "slug": "comparison",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use native Aspose.Words document comparison APIs directly. Create realistic local sample source documents inside the example whenever the task references existing files, folders, streams, or multiple document versions. Perform comparison with supported Compare APIs and then inspect, accept, reject, filter, export, or report revisions using documented Aspose.Words revision objects and options.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "publish_ready_successful_examples": 30,
+    "workflow_counts": {
+      "revision-processing": 19,
+      "stream-batch-io": 2,
+      "native-comparison-api": 9
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not invent comparison APIs, compare options, or revision members that are not part of Aspose.Words.",
+      "Do not assume input files or version folders already exist; create local sample inputs when needed.",
+      "Do not report revision counts or types without actually inspecting the revisions collection."
+    ],
+    "canonical_patterns": [
+      "Use Document.Compare with a real author name and comparison timestamp.",
+      "Create meaningful differences between local source documents before comparing them.",
+      "Inspect and process actual document.Revisions items for filtering, counting, acceptance, or rejection.",
+      "Reset MemoryStream.Position before reloading or comparing stream-backed documents."
+    ],
+    "nullable_warning_prevention": [
+      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
+      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
+      "Declare nullable locals when a value may legitimately be null and check them before use."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Identical document comparison",
+      "symptom": "Comparison yields no revisions when differences were expected.",
+      "fix": "Create deterministic local source documents with meaningful differences before calling Compare."
+    },
+    {
+      "pattern": "Invented revision reporting",
+      "symptom": "Counts or revision metadata are reported without inspecting the real revisions collection.",
+      "fix": "Use document.Revisions directly and filter actual revision items."
+    },
+    {
+      "pattern": "Missing local source documents",
+      "symptom": "Existing DOCX/DOC/folder/stream inputs are assumed to exist.",
+      "fix": "Bootstrap local versions, folders, or MemoryStream-backed documents in the example."
+    },
+    {
+      "pattern": "Incorrect post-processing assumption",
+      "symptom": "Accept/reject workflows do not verify the final revision state.",
+      "fix": "Check document.Revisions.Count after accepting or rejecting revisions."
+    },
+    {
+      "pattern": "Nullable warnings",
+      "symptom": "CS8600, CS8602, or CS8604 around maybe-null nodes or filtered results.",
+      "fix": "Use nullable locals and null-check before dereference or assignment."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "load-two-docx-files-compare-them-and-save-the-resulting-document-with-revisions-applied.cs",
+      "task": "Load two DOCX files, compare them, and save the resulting document with revisions applied.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "load-a-doc-file-compare-it-with-another-doc-and-save-the-result-with-revisions-included.cs",
+      "task": "Load a DOC file, compare it with another DOC, and save the result with revisions included.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "use-a-memorystream-to-load-documents-perform-comparison-and-write-the-result-to-a-byte-arr.cs",
+      "task": "Use a MemoryStream to load documents, perform comparison, and write the result to a byte array.",
+      "workflow": "stream-batch-io",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "batch-process-a-folder-of-document-pairs-generating-compared-versions-with-revision-tracki.cs",
+      "task": "Batch process a folder of document pairs, generating compared versions with revision tracking for each pair.",
+      "workflow": "stream-batch-io",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "apply-custom-author-name-and-timestamp-when-calling-compare-to-attribute-revisions-to-a-sp.cs",
+      "task": "Apply custom author name and timestamp when calling Compare to attribute revisions to a specific user.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "configure-comparisonoptions-to-ignore-formatting-changes-before-performing-document-compar.cs",
+      "task": "Configure ComparisonOptions to ignore formatting changes before performing document comparison on large legal contracts.",
+      "workflow": "native-comparison-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "configure-comparisonoptions-to-ignore-case-differences-when-comparing-textual-content-acro.cs",
+      "task": "Configure ComparisonOptions to ignore case differences when comparing textual content across documents.",
+      "workflow": "native-comparison-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "configure-comparisonoptions-to-ignore-whitespace-changes-when-comparing-source-code-docume.cs",
+      "task": "Configure ComparisonOptions to ignore whitespace changes when comparing source code documentation files.",
+      "workflow": "native-comparison-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "enable-detection-of-moved-paragraphs-by-setting-appropriate-flags-in-comparisonoptions-bef.cs",
+      "task": "Enable detection of moved paragraphs by setting appropriate flags in ComparisonOptions before comparison.",
+      "workflow": "native-comparison-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "set-comparisontarget-to-new-document-so-that-revisions-appear-in-the-second-file.cs",
+      "task": "Set ComparisonTarget to new document so that revisions appear in the second file.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "set-comparisonoptions-showdeletedcontent-to-true-to-retain-deleted-text-in-the-comparison.cs",
+      "task": "Set ComparisonOptions.ShowDeletedContent to true to retain deleted text in the comparison output.",
+      "workflow": "native-comparison-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "use-comparisonoptions-to-limit-comparison-to-specific-sections-of-the-document-for-targete.cs",
+      "task": "Use ComparisonOptions to limit comparison to specific sections of the document for targeted analysis.",
+      "workflow": "native-comparison-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "compare-a-doc-file-with-a-docx-file-and-verify-that-table-structure-differences-are-detect.cs",
+      "task": "Compare a DOC file with a DOCX file and verify that table structure differences are detected.",
+      "workflow": "native-comparison-api",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "compare-documents-with-different-page-orientations-and-verify-that-orientation-changes-app.cs",
+      "task": "Compare documents with different page orientations and verify that orientation changes appear as revisions.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "compare-documents-containing-embedded-charts-and-ensure-that-chart-data-changes-are-captur.cs",
+      "task": "Compare documents containing embedded charts and ensure that chart data changes are captured as revisions.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "compare-a-document-against-itself-to-confirm-that-no-revisions-are-generated.cs",
+      "task": "Compare a document against itself to confirm that no revisions are generated.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "iterate-through-doc1-revisions-collection-and-log-each-revision-type-and-affected-text.cs",
+      "task": "Iterate through doc1.Revisions collection and log each revision type and affected text.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "detect-changes-in-table-cell-formatting-and-log-the-specific-cell-coordinates-for-each-rev.cs",
+      "task": "Detect changes in table cell formatting and log the specific cell coordinates for each revision.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "create-a-custom-logger-that-records-revision-type-author-and-timestamp-for-each-detected-c.cs",
+      "task": "Create a custom logger that records revision type, author, and timestamp for each detected change.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "check-doc1-revisions-count-equals-zero-to-determine-that-two-documents-are-identical-after.cs",
+      "task": "Check doc1.Revisions.Count equals zero to determine that two documents are identical after comparison.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "accept-only-formatting-revisions-while-rejecting-all-content-changes-in-the-compared-docum.cs",
+      "task": "Accept only formatting revisions while rejecting all content changes in the compared document.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "reject-revisions-related-to-header-modifications-and-preserve-footer-changes-in-the-final.cs",
+      "task": "Reject revisions related to header modifications and preserve footer changes in the final output.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "after-comparison-programmatically-accept-all-revisions-and-save-the-cleaned-document-as-do.cs",
+      "task": "After comparison, programmatically accept all revisions and save the cleaned document as DOCX.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "after-accepting-revisions-remove-all-revision-marks-by-clearing-the-revisions-collection.cs",
+      "task": "After accepting revisions, remove all revision marks by clearing the Revisions collection.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "generate-a-summary-report-of-added-deleted-and-modified-paragraphs-using-the-revisions-col.cs",
+      "task": "Generate a summary report of added, deleted, and modified paragraphs using the Revisions collection.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "save-the-compared-document-as-doc-format-while-preserving-all-revision-metadata.cs",
+      "task": "Save the compared document as DOC format while preserving all revision metadata.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "save-the-compared-document-as-docx-format-while-preserving-all-revision-metadata.cs",
+      "task": "Save the compared document as DOCX format while preserving all revision metadata.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "implement-error-handling-to-catch-exceptions-thrown-when-loading-unsupported-file-formats.cs",
+      "task": "Implement error handling to catch exceptions thrown when loading unsupported file formats during comparison.",
+      "workflow": "native-comparison-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "use-a-disposable-pattern-to-ensure-document-objects-are-properly-released-after-comparison.cs",
+      "task": "Use a disposable pattern to ensure Document objects are properly released after comparison operations.",
+      "workflow": "native-comparison-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "validate-that-the-comparison-output-matches-the-online-tool-results-by-comparing-revision.cs",
+      "task": "Validate that the comparison output matches the online tool results by comparing revision counts and types.",
+      "workflow": "revision-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
