@@ -1,0 +1,420 @@
+{
+  "category": {
+    "name": "Content Control",
+    "slug": "content-control",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use native Aspose.Words structured document tag APIs directly. Create realistic local sample DOCX inputs inside the example whenever the task references an existing file, stream, folder, XML part, or batch of documents. Insert or locate real StructuredDocumentTag nodes and configure supported properties and child content through documented Aspose.Words APIs only.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 35,
+    "publish_ready_successful_examples": 35,
+    "workflow_counts": {
+      "input-bootstrap": 3,
+      "native-sdt-api": 22,
+      "xml-json-export": 10
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not invent content control APIs, XML mapping members, placeholder helpers, or locking members that are not part of Aspose.Words.",
+      "Do not modify a node as if it were a StructuredDocumentTag unless it actually is one.",
+      "Do not assume source DOCX, images, XML parts, or batch folders already exist; create local sample inputs when needed."
+    ],
+    "canonical_patterns": [
+      "Create StructuredDocumentTag nodes directly with valid SdtType and MarkupLevel combinations.",
+      "Insert inline SDTs into valid paragraph/run contexts and block SDTs into valid block containers.",
+      "Use Newtonsoft.Json for JSON tasks and Aspose.Drawing instead of System.Drawing when drawing-related types are needed.",
+      "Create local custom XML parts before applying XML mappings."
+    ],
+    "nullable_warning_prevention": [
+      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
+      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
+      "Declare nullable locals when a value may legitimately be null and check them before use."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Invented SDT builder helpers",
+      "symptom": "Code uses unsupported helpers such as StartStructuredDocumentTag or unsupported InsertStructuredDocumentTag overloads.",
+      "fix": "Create StructuredDocumentTag nodes directly and insert them into valid parent nodes."
+    },
+    {
+      "pattern": "Invalid SDT insertion location",
+      "symptom": "Runtime error such as 'Cannot insert a node of this type at this location'.",
+      "fix": "Use valid SdtType and MarkupLevel combinations and insert SDTs into supported block or inline containers."
+    },
+    {
+      "pattern": "Wrong drawing or JSON library",
+      "symptom": "Examples use System.Drawing or unsupported JSON serialization assumptions.",
+      "fix": "Use Aspose.Drawing when needed and Newtonsoft.Json for JSON tasks."
+    },
+    {
+      "pattern": "Invented repeating-section members",
+      "symptom": "Code assumes convenience members such as SdtContent or unsupported repeating-section helpers.",
+      "fix": "Enumerate actual StructuredDocumentTag nodes and inspect their child nodes through the normal document tree."
+    },
+    {
+      "pattern": "Nullable warnings",
+      "symptom": "CS8600, CS8602, or CS8604 around maybe-null nodes, paragraphs, or lookups.",
+      "fix": "Use nullable locals and guard maybe-null values before dereference or assignment."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "insert-a-plain-text-content-control-at-a-specific-bookmark-in-a-docx-document.cs",
+      "task": "Insert a plain text content control at a specific bookmark in a DOCX document.",
+      "workflow": "input-bootstrap",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "add-a-picture-content-control-that-references-an-external-image-file-and-embed-it-on-save.cs",
+      "task": "Add a picture content control that references an external image file and embed it on save.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "batch-process-a-folder-of-word-files-inserting-a-header-content-control-with-document-meta.cs",
+      "task": "Batch process a folder of Word files, inserting a header content control with document metadata.",
+      "workflow": "input-bootstrap",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "load-a-doc-file-add-a-date-picker-content-control-and-save-the-result-as-docx.cs",
+      "task": "Load a DOC file, add a date picker content control, and save the result as DOCX.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "use-a-content-control-to-embed-an-ole-object-and-ensure-it-renders-correctly-after-convers.cs",
+      "task": "Use a content control to embed an OLE object and ensure it renders correctly after conversion to PDF.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "use-a-content-control-to-embed-a-hyperlink-and-verify-its-target-url-after-document-conver.cs",
+      "task": "Use a content control to embed a hyperlink and verify its target URL after document conversion.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "create-a-repeating-section-content-control-that-repeats-a-table-row-for-each-item-in-a-col.cs",
+      "task": "Create a repeating section content control that repeats a table row for each item in a collection.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "create-a-content-control-that-repeats-a-paragraph-for-each-entry-in-a-json-array-during-im.cs",
+      "task": "Create a content control that repeats a paragraph for each entry in a JSON array during import.",
+      "workflow": "xml-json-export",
+      "outputs": [
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "bind-a-dropdown-list-content-control-to-an-xml-data-source-and-populate-options-dynamicall.cs",
+      "task": "Bind a dropdown list content control to an XML data source and populate options dynamically.",
+      "workflow": "xml-json-export",
+      "outputs": [
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "apply-custom-xml-mapping-to-a-plain-text-content-control-to-synchronize-with-external-data.cs",
+      "task": "Apply custom XML mapping to a plain text content control to synchronize with external data fields.",
+      "workflow": "xml-json-export",
+      "outputs": [
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "apply-a-custom-style-to-the-text-inside-a-rich-text-content-control-programmatically.cs",
+      "task": "Apply a custom style to the text inside a rich text content control programmatically.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "programmatically-set-the-title-and-tag-properties-of-a-content-control-for-later-identific.cs",
+      "task": "Programmatically set the title and tag properties of a content control for later identification.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "update-the-tag-of-all-content-controls-in-a-document-to-follow-a-standardized-naming-conve.cs",
+      "task": "Update the tag of all content controls in a document to follow a standardized naming convention.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "configure-a-content-control-to-allow-only-numeric-input-and-enforce-validation-during-edit.cs",
+      "task": "Configure a content control to allow only numeric input and enforce validation during editing.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "validate-that-required-content-controls-contain-non-empty-text-before-saving-the-document.cs",
+      "task": "Validate that required content controls contain non‑empty text before saving the document.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "lock-a-content-control-to-prevent-user-editing-and-enforce-read-only-behavior-in-the-final.cs",
+      "task": "Lock a content control to prevent user editing and enforce read‑only behavior in the final document.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "set-the-placeholder-text-color-inside-a-content-control-to-match-the-document-theme.cs",
+      "task": "Set the placeholder text color inside a content control to match the document theme.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "replace-placeholder-text-in-a-content-control-with-values-from-a-dictionary-of-user-inputs.cs",
+      "task": "Replace placeholder text in a content control with values from a dictionary of user inputs.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "replace-the-contents-of-a-rich-text-content-control-with-formatted-html-retrieved-from-a-w.cs",
+      "task": "Replace the contents of a rich text content control with formatted HTML retrieved from a web service.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "programmatically-clear-the-contents-of-a-content-control-without-deleting-the-control-itse.cs",
+      "task": "Programmatically clear the contents of a content control without deleting the control itself.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "programmatically-duplicate-a-content-control-and-insert-the-copy-at-a-different-location-i.cs",
+      "task": "Programmatically duplicate a content control and insert the copy at a different location in the document.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "remove-all-picture-content-controls-from-a-document-and-replace-them-with-inline-images.cs",
+      "task": "Remove all picture content controls from a document and replace them with inline images.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "detect-and-list-any-nested-content-controls-within-a-repeating-section-for-structural-insp.cs",
+      "task": "Detect and list any nested content controls within a repeating section for structural inspection.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "iterate-through-all-content-controls-in-a-document-and-generate-a-summary-report-of-their.cs",
+      "task": "Iterate through all content controls in a document and generate a summary report of their types.",
+      "workflow": "xml-json-export",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "retrieve-the-inner-xml-of-a-content-control-and-transform-it-using-an-xslt-stylesheet.cs",
+      "task": "Retrieve the inner XML of a content control and transform it using an XSLT stylesheet.",
+      "workflow": "xml-json-export",
+      "outputs": [
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "serialize-the-xml-mapping-of-all-content-controls-to-an-external-xsd-schema-file.cs",
+      "task": "Serialize the XML mapping of all content controls to an external XSD schema file.",
+      "workflow": "xml-json-export",
+      "outputs": [
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "export-the-contents-of-all-checkbox-content-controls-to-a-csv-file-for-data-analysis.cs",
+      "task": "Export the contents of all checkbox content controls to a CSV file for data analysis.",
+      "workflow": "xml-json-export",
+      "outputs": [
+        "csv"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "convert-a-docx-document-containing-content-controls-to-pdf-while-preserving-control-placeh.cs",
+      "task": "Convert a DOCX document containing content controls to PDF while preserving control placeholders.",
+      "workflow": "input-bootstrap",
+      "outputs": [
+        "pdf",
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "generate-a-pdf-a-compliant-document-from-a-word-file-while-keeping-content-control-tags-in.cs",
+      "task": "Generate a PDF/A compliant document from a Word file while keeping content control tags intact.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "export-a-document-containing-content-controls-to-xps-format-while-preserving-control-bound.cs",
+      "task": "Export a document containing content controls to XPS format while preserving control boundaries.",
+      "workflow": "xml-json-export",
+      "outputs": [
+        "xps"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 31,
+      "file_name": "convert-a-document-with-content-controls-to-html-while-maintaining-control-attributes-as-d.cs",
+      "task": "Convert a document with content controls to HTML while maintaining control attributes as data‑attributes.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 32,
+      "file_name": "merge-multiple-word-documents-preserving-existing-content-controls-and-updating-their-ids.cs",
+      "task": "Merge multiple Word documents, preserving existing content controls and updating their IDs.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 33,
+      "file_name": "extract-all-repeating-section-content-controls-from-a-word-file-and-serialize-each-instanc.cs",
+      "task": "Extract all repeating section content controls from a Word file and serialize each instance to JSON.",
+      "workflow": "xml-json-export",
+      "outputs": [
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 34,
+      "file_name": "implement-error-handling-for-missing-xml-nodes-when-binding-data-to-a-content-control.cs",
+      "task": "Implement error handling for missing XML nodes when binding data to a content control.",
+      "workflow": "xml-json-export",
+      "outputs": [
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 35,
+      "file_name": "use-a-content-control-to-store-custom-metadata-and-extract-it-for-indexing-in-a-search-eng.cs",
+      "task": "Use a content control to store custom metadata and extract it for indexing in a search engine.",
+      "workflow": "native-sdt-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
