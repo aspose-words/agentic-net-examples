@@ -21,10 +21,10 @@ When working in this repository:
 
 ## Repository Overview
 
-This repository contains **1728** verified code examples demonstrating Aspose.Words for .NET capabilities.
+This repository contains **1741** verified code examples demonstrating Aspose.Words for .NET capabilities.
 
 **Statistics** (as of 2026-04-09):
-- Total Examples: 1728
+- Total Examples: 1741
 - Categories: 29
 
 ## Category Details
@@ -50,7 +50,7 @@ This repository contains **1728** verified code examples demonstrating Aspose.Wo
 - Guide: [AGENTS.md](./content-control/AGENTS.md)
 
 ### conversion
-- Examples: 95
+- Examples: 108
 - Guide: [AGENTS.md](./conversion/AGENTS.md)
 
 ### extraction
