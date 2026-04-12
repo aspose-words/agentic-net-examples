@@ -1,0 +1,703 @@
+{
+  "category": {
+    "name": "Find and Replace",
+    "slug": "find-and-replace",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use native Aspose.Words find and replace APIs directly. Create realistic local sample DOC, DOCX, HTML, TXT, stream, or folder inputs inside the example whenever the task references an existing file, stream, folder, or batch of documents. Perform replacements through Range.Replace with supported options, callbacks, and regex only.",
+    "required_packages": [
+      "Aspose.Words",
+      "Aspose.Drawing.Common",
+      "Newtonsoft.Json"
+    ]
+  },
+  "stats": {
+    "total_examples": 63,
+    "publish_ready_successful_examples": 63,
+    "workflow_counts": {
+      "plain-replace": 41,
+      "formatting-aware-replace": 7,
+      "regex-replace": 7,
+      "callback-reporting": 6,
+      "input-bootstrap": 2
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not use System.Drawing in this category.",
+      "Do not assume source documents or folders already exist; bootstrap them locally when needed.",
+      "Do not invent unsupported find-replace APIs or callback hooks.",
+      "Do not skip writing the requested output artifact when the task expects one."
+    ],
+    "canonical_patterns": [
+      "Use Range.Replace with the correct FindReplaceOptions or Regex only when the task requires it.",
+      "Implement IReplacingCallback only through documented Aspose.Words APIs when custom replacement logic is required.",
+      "Bootstrap local DOC, DOCX, HTML, TXT, stream, or folder inputs whenever the task implies an existing source.",
+      "Use Newtonsoft.Json for JSON reporting tasks and Aspose.Drawing instead of System.Drawing when drawing-related types are needed."
+    ],
+    "nullable_warning_prevention": [
+      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
+      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
+      "Declare nullable locals when a value may legitimately be null and null-check before use."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Invented find-replace APIs",
+      "symptom": "Code tries to use unsupported helpers such as Document.ReplaceAll or Paragraph.Replace.",
+      "fix": "Use Document.Range.Replace with supported FindReplaceOptions and callback APIs only."
+    },
+    {
+      "pattern": "Callback misuse",
+      "symptom": "Custom replacement logic fails because IReplacingCallback or ReplacingArgs are used incorrectly.",
+      "fix": "Implement IReplacingCallback with the documented Replacing method and assign it through FindReplaceOptions.ReplacingCallback."
+    },
+    {
+      "pattern": "Metacharacter source content mismatch",
+      "symptom": "Line-break or metacharacter replacement finds no matches because the source document was built with plain literal text instead of real control structures.",
+      "fix": "Create real line breaks or control characters in the source document and validate that Range.Replace returns a replacement count greater than zero."
+    },
+    {
+      "pattern": "Invalid formatting insertion",
+      "symptom": "Replacement logic inserts formatted content into invalid node parents or assumes every match belongs to a single Run.",
+      "fix": "Use supported run, font, paragraph, or builder logic and preserve valid parent-child insertion structure."
+    },
+    {
+      "pattern": "Drawing ambiguity",
+      "symptom": "Compile errors caused by System.Drawing usage or ambiguous Font references.",
+      "fix": "Use Aspose.Drawing only and prefer explicit Aspose.Drawing type names when ambiguity is possible."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "load-a-docx-file-into-a-document-object-and-replace-all-literal-string-occurrences.cs",
+      "task": "Load a DOCX file into a Document object and replace all literal string occurrences.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "perform-a-case-sensitive-replace-using-findreplaceoptions-with-matchcase-enabled-on-the-lo.cs",
+      "task": "Perform a case‑sensitive replace using FindReplaceOptions with MatchCase enabled on the loaded document.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "replace-whole-words-only-by-setting-findreplaceoptions-matchwholeword-to-true-during-repla.cs",
+      "task": "Replace whole words only by setting FindReplaceOptions.MatchWholeWord to true during replacement.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "execute-a-regular-expression-replace-that-converts-dates-from-mm-dd-yyyy-to-yyyy-mm-dd-for.cs",
+      "task": "Execute a regular expression replace that converts dates from MM‑DD‑YYYY to YYYY‑MM‑DD format.",
+      "workflow": "formatting-aware-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "apply-metacharacters-in-the-replacement-string-to-insert-line-breaks-after-each-replaced-p.cs",
+      "task": "Apply metacharacters in the replacement string to insert line breaks after each replaced paragraph.",
+      "workflow": "regex-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "search-and-replace-text-within-header-sections-by-accessing-the-document-s-headersfooters.cs",
+      "task": "Search and replace text within header sections by accessing the document's HeadersFooters collection.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "search-and-replace-text-within-footer-sections-while-preserving-existing-page-numbers-usin.cs",
+      "task": "Search and replace text within footer sections while preserving existing page numbers using FindReplaceOptions.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "ignore-field-codes-during-replacement-by-enabling-findreplaceoptions-ignorefields-before-c.cs",
+      "task": "Ignore field codes during replacement by enabling FindReplaceOptions.IgnoreFields before calling Replace.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "implement-a-custom-replaceevaluator-delegate-to-replace-only-words-longer-than-ten-charact.cs",
+      "task": "Implement a custom ReplaceEvaluator delegate to replace only words longer than ten characters.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "count-the-number-of-replacements-performed-by-storing-the-integer-result-returned-from-the.cs",
+      "task": "Count the number of replacements performed by storing the integer result returned from the Replace method.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "chain-multiple-replace-calls-to-sequentially-replace-email-addresses-phone-numbers-and-url.cs",
+      "task": "Chain multiple Replace calls to sequentially replace email addresses, phone numbers, and URLs in the document.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "combine-findreplaceoptions-with-documentbuilder-to-insert-dynamic-content-after-each-succe.cs",
+      "task": "Combine FindReplaceOptions with DocumentBuilder to insert dynamic content after each successful replacement.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "enable-regex-mode-by-setting-findreplaceoptions-useregularexpressions-to-true-for-pattern.cs",
+      "task": "Enable regex mode by setting FindReplaceOptions.UseRegularExpressions to true for pattern‑based replacements.",
+      "workflow": "regex-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "replace-tab-characters-with-four-spaces-using-a-regular-expression-pattern-matching-the-t.cs",
+      "task": "Replace tab characters with four spaces using a regular expression pattern matching the \\t escape sequence.",
+      "workflow": "regex-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "replace-placeholder-tokens-like-name-with-actual-values-using-a-dictionary-inside-a-replac.cs",
+      "task": "Replace placeholder tokens like {{Name}} with actual values using a dictionary inside a ReplaceEvaluator.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "execute-a-case-insensitive-replace-that-changes-all-instances-of-color-to-colour-throughou.cs",
+      "task": "Execute a case‑insensitive replace that changes all instances of ‘color’ to ‘colour’ throughout the document.",
+      "workflow": "formatting-aware-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "apply-whole-word-matching-to-avoid-partial-replacements-inside-longer-words-such-as-catalo.cs",
+      "task": "Apply whole‑word matching to avoid partial replacements inside longer words such as ‘catalogue’.",
+      "workflow": "callback-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "replace-multiple-line-break-sequences-with-a-single-paragraph-break-using-the-metacharacte.cs",
+      "task": "Replace multiple line break sequences with a single paragraph break using the metacharacter \\n in the replacement.",
+      "workflow": "regex-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "perform-find-and-replace-on-a-document-loaded-from-a-memory-stream-without-writing-to-disk.cs",
+      "task": "Perform find and replace on a document loaded from a memory stream without writing to disk.",
+      "workflow": "input-bootstrap",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "configure-findreplaceoptions-replacingcallback-to-log-each-replacement-occurrence-to-a-cus.cs",
+      "task": "Configure FindReplaceOptions.ReplacingCallback to log each replacement occurrence to a custom logger.",
+      "workflow": "callback-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "use-a-regular-expression-to-locate-and-replace-all-html-tags-embedded-in-the-document-text.cs",
+      "task": "Use a regular expression to locate and replace all HTML tags embedded in the document text.",
+      "workflow": "input-bootstrap",
+      "outputs": [
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "update-the-copyright-year-in-headers-and-footers-by-replacing-the-old-year-with-the-curren.cs",
+      "task": "Update the copyright year in headers and footers by replacing the old year with the current year.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "set-matchcase-false-and-matchwholeword-true-to-replace-whole-words-case-insensitively-acro.cs",
+      "task": "Set MatchCase false and MatchWholeWord true to replace whole words case‑insensitively across the document.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "implement-a-progress-reporter-that-receives-the-replacement-count-after-each-replace-call.cs",
+      "task": "Implement a progress reporter that receives the replacement count after each Replace call.",
+      "workflow": "callback-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "replace-unicode-em-dashes-with-standard-hyphens-using-a-regular-expression-for-the-dash-ch.cs",
+      "task": "Replace Unicode em dashes with standard hyphens using a regular expression for the dash character.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "mask-phone-numbers-by-finding-them-with-a-regular-expression-and-replacing-with-asterisks.cs",
+      "task": "Mask phone numbers by finding them with a regular expression and replacing with asterisks for privacy.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "apply-findreplaceoptions-ignorefields-to-skip-replacing-field-result-texts-while-updating.cs",
+      "task": "Apply FindReplaceOptions.IgnoreFields to skip replacing field result texts while updating field codes.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "add-a-prefix-to-each-matched-word-using-a-custom-replaceevaluator-delegate-during-replacem.cs",
+      "task": "Add a prefix to each matched word using a custom ReplaceEvaluator delegate during replacement.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "replace-deprecated-terms-with-new-equivalents-across-multiple-languages-using-culture-spec.cs",
+      "task": "Replace deprecated terms with new equivalents across multiple languages using culture‑specific regular expressions.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "perform-conditional-replacement-that-only-changes-text-appearing-after-a-specific-heading.cs",
+      "task": "Perform conditional replacement that only changes text appearing after a specific heading using a callback.",
+      "workflow": "callback-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 31,
+      "file_name": "replace-double-spaces-with-a-single-space-throughout-the-document-using-a-simple-regular-e.cs",
+      "task": "Replace double spaces with a single space throughout the document using a simple regular expression.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 32,
+      "file_name": "add-a-suffix-to-each-matched-numeric-value-using-a-custom-replaceevaluator-during-the-repl.cs",
+      "task": "Add a suffix to each matched numeric value using a custom ReplaceEvaluator during the replace operation.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 33,
+      "file_name": "replace-language-code-tags-with-full-language-names-using-a-regular-expression-for-accurat.cs",
+      "task": "Replace language code tags with full language names using a regular expression for accurate localization.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 34,
+      "file_name": "replace-placeholder-merge-fields-with-actual-data-by-evaluating-each-field-inside-a-replac.cs",
+      "task": "Replace placeholder merge fields with actual data by evaluating each field inside a ReplaceEvaluator delegate.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 35,
+      "file_name": "replace-the-word-foo-only-when-it-appears-at-the-start-of-a-paragraph-using-a-custom-evalu.cs",
+      "task": "Replace the word ‘foo’ only when it appears at the start of a paragraph using a custom evaluator.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 36,
+      "file_name": "replace-the-first-page-header-differently-from-other-headers-by-checking-section-propertie.cs",
+      "task": "Replace the first page header differently from other headers by checking section properties during replacement.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 37,
+      "file_name": "insert-a-page-break-after-each-replaced-heading-using-the-metacharacter-f-in-the-replaceme.cs",
+      "task": "Insert a page break after each replaced heading using the metacharacter \\f in the replacement string.",
+      "workflow": "regex-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 38,
+      "file_name": "replace-color-names-with-their-hexadecimal-representations-using-a-regular-expression-for.cs",
+      "task": "Replace color names with their hexadecimal representations using a regular expression for color conversion.",
+      "workflow": "formatting-aware-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 39,
+      "file_name": "update-version-numbers-from-1-0-0-to-2-0-0-across-the-document-using-a-regular-expression.cs",
+      "task": "Update version numbers from 1.0.0 to 2.0.0 across the document using a regular expression.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 40,
+      "file_name": "replace-a-custom-delimiter-with-a-comma-while-preserving-surrounding-whitespace-using-a-re.cs",
+      "task": "Replace a custom delimiter with a comma while preserving surrounding whitespace using a regular expression.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 41,
+      "file_name": "mask-email-addresses-by-locating-them-with-a-regular-expression-and-replacing-with-a-maske.cs",
+      "task": "Mask email addresses by locating them with a regular expression and replacing with a masked version.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 42,
+      "file_name": "expand-macro-names-to-their-full-code-using-a-custom-replaceevaluator-delegate-during-repl.cs",
+      "task": "Expand macro names to their full code using a custom ReplaceEvaluator delegate during replacement.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 43,
+      "file_name": "convert-date-strings-from-january-1-2020-to-01-01-2020-using-a-regular-expression.cs",
+      "task": "Convert date strings from ‘January 1, 2020’ to ‘01/01/2020’ using a regular expression.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 44,
+      "file_name": "replace-abbreviations-with-their-full-forms-while-preserving-surrounding-punctuation-using.cs",
+      "task": "Replace abbreviations with their full forms while preserving surrounding punctuation using a regular expression.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 45,
+      "file_name": "replace-placeholders-surrounded-by-double-brackets-with-values-from-a-json-configuration-f.cs",
+      "task": "Replace placeholders surrounded by double brackets with values from a JSON configuration file using a callback.",
+      "workflow": "callback-reporting",
+      "outputs": [
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 46,
+      "file_name": "replace-text-in-headers-containing-a-specific-keyword-while-leaving-other-headers-unchange.cs",
+      "task": "Replace text in headers containing a specific keyword while leaving other headers unchanged.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 47,
+      "file_name": "convert-all-uppercase-words-to-title-case-using-a-custom-replaceevaluator-during-the-repla.cs",
+      "task": "Convert all uppercase words to title case using a custom ReplaceEvaluator during the replacement process.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 48,
+      "file_name": "replace-a-specific-bullet-character-with-a-different-bullet-style-throughout-the-document.cs",
+      "task": "Replace a specific bullet character with a different bullet style throughout the document using a regular expression.",
+      "workflow": "formatting-aware-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 49,
+      "file_name": "replace-a-custom-tag-attribute-value-across-the-entire-document-using-a-regular-expression.cs",
+      "task": "Replace a custom tag attribute value across the entire document using a regular expression.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 50,
+      "file_name": "change-url-scheme-from-http-to-https-while-preserving-the-rest-of-each-hyperlink-using-a-r.cs",
+      "task": "Change URL scheme from http to https while preserving the rest of each hyperlink using a regular expression.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 51,
+      "file_name": "convert-markdown-style-headings-to-word-heading-styles-throughout-the-document-using-a-reg.cs",
+      "task": "Convert markdown style headings to Word heading styles throughout the document using a regular expression.",
+      "workflow": "formatting-aware-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 52,
+      "file_name": "replace-the-copyright-symbol-with-the-unicode-character-using-a-regular-expression.cs",
+      "task": "Replace the copyright symbol with the Unicode © character using a regular expression.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 53,
+      "file_name": "insert-a-page-number-field-after-each-replaced-heading-using-documentbuilder-for-automatic.cs",
+      "task": "Insert a page number field after each replaced heading using DocumentBuilder for automatic numbering.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 54,
+      "file_name": "replace-numeric-formats-like-1-234-56-with-a-localized-format-using-a-regular-expression.cs",
+      "task": "Replace numeric formats like 1,234.56 with a localized format using a regular expression.",
+      "workflow": "formatting-aware-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 55,
+      "file_name": "add-a-hyperlink-to-each-replaced-email-address-using-documentbuilder-during-the-replacemen.cs",
+      "task": "Add a hyperlink to each replaced email address using DocumentBuilder during the replacement operation.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 56,
+      "file_name": "ignore-case-and-match-whole-words-when-updating-product-names-across-the-document-using-fi.cs",
+      "task": "Ignore case and match whole words when updating product names across the document using FindReplaceOptions.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 57,
+      "file_name": "replace-placeholders-surrounded-by-percent-signs-with-environment-variable-values-using-a.cs",
+      "task": "Replace placeholders surrounded by percent signs with environment variable values using a custom callback.",
+      "workflow": "callback-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 58,
+      "file_name": "replace-multiple-consecutive-spaces-with-a-single-space-throughout-the-document-using-a-re.cs",
+      "task": "Replace multiple consecutive spaces with a single space throughout the document using a regular expression.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 59,
+      "file_name": "add-a-custom-style-to-each-replaced-paragraph-using-documentbuilder-during-the-replacement.cs",
+      "task": "Add a custom style to each replaced paragraph using DocumentBuilder during the replacement process.",
+      "workflow": "formatting-aware-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 60,
+      "file_name": "standardize-date-range-patterns-to-a-unified-format-across-the-document-using-a-regular-ex.cs",
+      "task": "Standardize date range patterns to a unified format across the document using a regular expression.",
+      "workflow": "regex-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 61,
+      "file_name": "insert-a-table-of-figures-after-each-replaced-figure-caption-using-documentbuilder-for-aut.cs",
+      "task": "Insert a table of figures after each replaced figure caption using DocumentBuilder for automatic generation.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 62,
+      "file_name": "use-a-custom-replaceevaluator-to-replace-only-the-first-occurrence-of-a-pattern-in-each-se.cs",
+      "task": "Use a custom ReplaceEvaluator to replace only the first occurrence of a pattern in each section.",
+      "workflow": "regex-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 63,
+      "file_name": "replace-a-placeholder-with-a-generated-qr-code-image-using-documentbuilder-during-the-repl.cs",
+      "task": "Replace a placeholder with a generated QR code image using DocumentBuilder during the replacement.",
+      "workflow": "plain-replace",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
