@@ -1,0 +1,374 @@
+{
+  "category": {
+    "name": "Extraction",
+    "slug": "extraction",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use native Aspose.Words APIs directly. Create realistic local sample DOC, DOCX, TXT, HTML, XML, image, or stream inputs inside the example whenever the task references an existing file, stream, folder, or batch of documents. Locate and extract content through actual document nodes, ranges, fields, shapes, comments, bookmarks, tables, sections, headers, footers, and metadata objects using documented Aspose.Words APIs only.",
+    "required_packages": [
+      "Aspose.Words",
+      "Aspose.Drawing.Common",
+      "Newtonsoft.Json"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "publish_ready_successful_examples": 30,
+    "workflow_counts": {
+      "text-range-extraction": 11,
+      "targeted-node-extraction": 9,
+      "table-structured-extraction": 6,
+      "input-bootstrap": 1,
+      "image-shape-extraction": 3
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not use System.Drawing in this category.",
+      "Do not assume source documents or assets already exist; bootstrap them locally when needed.",
+      "Do not invent helper APIs for extracting tables, images, comments, bookmarks, or metadata.",
+      "Do not skip writing the requested output artifact when the task expects one."
+    ],
+    "canonical_patterns": [
+      "Enumerate actual document nodes and validate node types before extracting content.",
+      "Create local sample DOC, DOCX, TXT, HTML, XML, image, stream, or folder inputs whenever the task implies an existing source.",
+      "Use Aspose.Words.Tables for Table, Row, and Cell types when structured extraction is needed.",
+      "Use Newtonsoft.Json for JSON serialization tasks and Aspose.Drawing instead of System.Drawing when drawing-related types are needed."
+    ],
+    "nullable_warning_prevention": [
+      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
+      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
+      "Declare nullable locals when a value may legitimately be null and null-check before use."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Invalid node insertion in destination document",
+      "symptom": "Runtime failures such as 'Cannot insert a node of this type at this location'.",
+      "fix": "Rebuild a valid destination document structure explicitly and insert cloned inline or block nodes only into supported parents."
+    },
+    {
+      "pattern": "Table namespace assumptions",
+      "symptom": "Compile errors because Table, Row, or Cell were used without Aspose.Words.Tables.",
+      "fix": "Import Aspose.Words.Tables or use fully qualified table node type names."
+    },
+    {
+      "pattern": "Weak bookmark boundary logic",
+      "symptom": "Bookmark-bounded extraction or replacement fails because the wrong nodes are used or placeholder insertion is invalid.",
+      "fix": "Use real BookmarkStart and BookmarkEnd boundaries and insert a valid placeholder Paragraph into a supported block container."
+    },
+    {
+      "pattern": "Footnote-specific API issues",
+      "symptom": "Footnote export or enumeration fails because footnote APIs or namespaces are used incorrectly.",
+      "fix": "Use Aspose.Words.Notes.Footnote and Aspose.Words.Notes.FootnoteType explicitly and enumerate actual footnote nodes."
+    },
+    {
+      "pattern": "Font or drawing ambiguity",
+      "symptom": "Compile errors due to System.Drawing usage or ambiguous Font references.",
+      "fix": "Use Aspose.Drawing only and prefer explicit Aspose.Drawing type names when ambiguity is possible."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "load-a-docx-file-extract-content-between-two-paragraphs-and-save-the-result-as-a-new-docx.cs",
+      "task": "Load a DOCX file, extract content between two paragraphs, and save the result as a new DOCX.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "load-a-docm-file-extract-content-between-a-macro-enabled-field-and-a-paragraph-and-save-as.cs",
+      "task": "Load a DOCM file, extract content between a macro-enabled field and a paragraph, and save as DOCX.",
+      "workflow": "targeted-node-extraction",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "identify-a-start-run-node-and-an-end-bookmark-node-then-extract-the-intervening-nodes-into.cs",
+      "task": "Identify a start run node and an end bookmark node, then extract the intervening nodes into a document.",
+      "workflow": "targeted-node-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "programmatically-determine-start-and-end-nodes-based-on-paragraph-styles-then-extract-the.cs",
+      "task": "Programmatically determine start and end nodes based on paragraph styles, then extract the styled content segment.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "extract-a-mixed-node-range-that-starts-with-a-table-cell-and-ends-with-a-paragraph-maintai.cs",
+      "task": "Extract a mixed node range that starts with a table cell and ends with a paragraph, maintaining layout.",
+      "workflow": "table-structured-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "extract-a-range-of-nodes-that-includes-tables-images-and-fields-preserving-original-hierar.cs",
+      "task": "Extract a range of nodes that includes tables, images, and fields, preserving original hierarchy in the output.",
+      "workflow": "table-structured-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "extract-content-between-a-run-node-and-the-next-bookmark-then-convert-the-extracted-segmen.cs",
+      "task": "Extract content between a run node and the next bookmark, then convert the extracted segment to HTML format.",
+      "workflow": "targeted-node-extraction",
+      "outputs": [
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "extract-content-between-a-run-node-and-the-following-table-then-convert-the-extracted-port.cs",
+      "task": "Extract content between a run node and the following table, then convert the extracted portion to XPS format.",
+      "workflow": "table-structured-extraction",
+      "outputs": [
+        "xps"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "use-the-extraction-api-to-copy-content-between-two-headings-and-insert-it-into-a-template.cs",
+      "task": "Use the extraction API to copy content between two headings and insert it into a template document.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "use-documentbuilder-to-prepend-extracted-node-collection-to-the-beginning-of-a-new-documen.cs",
+      "task": "Use DocumentBuilder to prepend extracted node collection to the beginning of a new document before saving.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "use-documentbuilder-to-insert-extracted-node-collection-into-a-new-document-at-a-custom-bo.cs",
+      "task": "Use DocumentBuilder to insert extracted node collection into a new document at a custom bookmark location.",
+      "workflow": "targeted-node-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "duplicate-extracted-content-between-a-table-and-a-field-node-within-the-original-document.cs",
+      "task": "Duplicate extracted content between a table and a field node within the original document without altering formatting.",
+      "workflow": "table-structured-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "save-extracted-content-as-a-docx-file-while-preserving-embedded-fields-and-their-evaluatio.cs",
+      "task": "Save extracted content as a DOCX file while preserving embedded fields and their evaluation results.",
+      "workflow": "targeted-node-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "batch-process-multiple-word-files-extracting-content-between-specified-nodes-and-saving-ea.cs",
+      "task": "Batch process multiple Word files, extracting content between specified nodes and saving each extraction as an individual PDF.",
+      "workflow": "input-bootstrap",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "batch-extract-images-from-shape-nodes-in-documents-and-generate-a-csv-manifest-listing-ima.cs",
+      "task": "Batch extract images from shape nodes in documents and generate a CSV manifest listing image names and sources.",
+      "workflow": "table-structured-extraction",
+      "outputs": [
+        "csv"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "extract-all-images-from-shape-nodes-across-a-document-collection-and-compile-them-into-a-s.cs",
+      "task": "Extract all images from shape nodes across a document collection and compile them into a single ZIP archive.",
+      "workflow": "image-shape-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "extract-a-document-segment-that-includes-nested-tables-and-ensure-nested-structures-are-re.cs",
+      "task": "Extract a document segment that includes nested tables and ensure nested structures are retained in the new file.",
+      "workflow": "table-structured-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "create-a-reusable-extraction-utility-that-accepts-node-identifiers-and-returns-a-document.cs",
+      "task": "Create a reusable extraction utility that accepts node identifiers and returns a Document containing the selected content.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "implement-error-handling-for-cases-where-the-start-node-appears-after-the-end-node-during.cs",
+      "task": "Implement error handling for cases where the start node appears after the end node during extraction.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "implement-a-custom-node-filter-to-exclude-comments-while-extracting-content-between-two-pa.cs",
+      "task": "Implement a custom node filter to exclude comments while extracting content between two paragraphs.",
+      "workflow": "targeted-node-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "extract-content-between-two-bookmark-nodes-and-replace-the-original-range-with-a-placehold.cs",
+      "task": "Extract content between two bookmark nodes and replace the original range with a placeholder paragraph.",
+      "workflow": "targeted-node-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "extract-content-between-a-paragraph-and-a-comment-node-then-log-the-extracted-text-to-a-mo.cs",
+      "task": "Extract content between a paragraph and a comment node, then log the extracted text to a monitoring system.",
+      "workflow": "targeted-node-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "automate-extraction-of-footnote-content-between-specified-nodes-and-export-each-footnote-a.cs",
+      "task": "Automate extraction of footnote content between specified nodes and export each footnote as a separate text file.",
+      "workflow": "targeted-node-extraction",
+      "outputs": [
+        "txt"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "create-a-command-line-tool-that-accepts-start-and-end-node-ids-and-outputs-the-extracted-s.cs",
+      "task": "Create a command‑line tool that accepts start and end node IDs and outputs the extracted segment as PDF.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "create-a-unit-test-that-verifies-extraction-of-content-between-two-specific-paragraphs-ret.cs",
+      "task": "Create a unit test that verifies extraction of content between two specific paragraphs retains original text styling.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "develop-a-macro-that-calls-the-extraction-api-to-copy-selected-content-into-the-clipboard.cs",
+      "task": "Develop a macro that calls the extraction API to copy selected content into the clipboard for pasting elsewhere.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "extract-a-range-that-starts-inside-a-shape-s-image-and-ends-at-a-field-preserving-both-ele.cs",
+      "task": "Extract a range that starts inside a shape's image and ends at a field, preserving both elements.",
+      "workflow": "image-shape-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "extract-content-between-two-nodes-in-a-document-then-encrypt-the-resulting-file-using-a-pa.cs",
+      "task": "Extract content between two nodes in a document, then encrypt the resulting file using a password.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "implement-parallel-processing-to-extract-node-ranges-from-multiple-documents-simultaneousl.cs",
+      "task": "Implement parallel processing to extract node ranges from multiple documents simultaneously, improving performance.",
+      "workflow": "text-range-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "extract-images-from-shape-nodes-and-embed-them-directly-into-a-new-docx-document.cs",
+      "task": "Extract images from shape nodes and embed them directly into a new DOCX document.",
+      "workflow": "image-shape-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
