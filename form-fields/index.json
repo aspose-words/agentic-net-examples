@@ -1,0 +1,365 @@
+{
+  "category": {
+    "name": "Form Fields",
+    "slug": "form-fields",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use Aspose.Words DocumentBuilder form field APIs and FormField collection directly. Create local sample documents when required and operate on real form field nodes.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "publish_ready_successful_examples": 30,
+    "workflow_counts": {
+      "text-form-field": 7,
+      "general-form-field": 17,
+      "dropdown-form-field": 4,
+      "inspection-and-reporting": 2
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not assume form fields already exist in a document.",
+      "Do not mix StructuredDocumentTag unless the task explicitly requires content controls.",
+      "Do not invent unsupported form-field helper APIs.",
+      "Do not skip validation of field existence when the task expects an existing field."
+    ],
+    "canonical_patterns": [
+      "Use DocumentBuilder.InsertTextInput, InsertCheckBox, and InsertComboBox to create legacy form fields.",
+      "Access legacy fields through Document.Range.FormFields.",
+      "Use FormField.Result for text-based values and FormField.Checked for checkboxes.",
+      "Bootstrap local source documents whenever the task implies an existing file or pre-existing fields."
+    ],
+    "nullable_warning_prevention": [
+      "Check for null before accessing form fields or lookup results.",
+      "Avoid CS8600, CS8602, and CS8604 by guarding values before dereference.",
+      "Do not rely on maybe-null field lookups without validation."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Mixing legacy form fields with content controls",
+      "symptom": "Examples use StructuredDocumentTag when the task is about legacy form fields.",
+      "fix": "Use DocumentBuilder legacy form-field APIs and Document.Range.FormFields unless the task explicitly requires content controls."
+    },
+    {
+      "pattern": "Wrong field access pattern",
+      "symptom": "Code assumes unsupported helpers or reads the wrong property for the field type.",
+      "fix": "Access legacy fields through Range.FormFields and use Result, Checked, or DropDownItems according to the field type."
+    },
+    {
+      "pattern": "Missing bootstrap input",
+      "symptom": "Examples assume an existing document with form fields already exists.",
+      "fix": "Create a local sample document and seed the required form fields before reading or updating them."
+    },
+    {
+      "pattern": "Weak validation",
+      "symptom": "The example saves output but does not verify that the form field exists or that its value changed.",
+      "fix": "Validate field existence and the final assigned value before finishing."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "insert-a-text-input-form-field-with-placeholder-text-using-documentbuilder-in-a-new-docume.cs",
+      "task": "Insert a text input form field with placeholder text using DocumentBuilder in a new document.",
+      "workflow": "text-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "add-a-check-box-form-field-set-default-checked-state-and-custom-size-via-documentbuilder.cs",
+      "task": "Add a check box form field, set default checked state and custom size via DocumentBuilder.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "create-a-combo-box-form-field-containing-three-items-and-set-default-selected-index-using.cs",
+      "task": "Create a combo box form field containing three items and set default selected index using DocumentBuilder.",
+      "workflow": "dropdown-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "specify-a-name-when-inserting-a-text-input-field-to-automatically-generate-a-matching-book.cs",
+      "task": "Specify a name when inserting a text input field to automatically generate a matching bookmark.",
+      "workflow": "text-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "insert-a-text-input-field-with-maximum-length-of-50-characters-and-numeric-format-using-do.cs",
+      "task": "Insert a text input field with maximum length of 50 characters and numeric format using DocumentBuilder.",
+      "workflow": "text-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "insert-a-text-input-field-with-custom-date-format-and-default-current-date-value-using-doc.cs",
+      "task": "Insert a text input field with custom date format and default current date value using DocumentBuilder.",
+      "workflow": "text-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "implement-a-reusable-method-that-adds-a-combo-box-form-field-with-customizable-items-and-d.cs",
+      "task": "Implement a reusable method that adds a combo box form field with customizable items and default index.",
+      "workflow": "dropdown-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "assign-a-unique-name-to-each-inserted-form-field-to-ensure-distinct-automatic-bookmarks.cs",
+      "task": "Assign a unique name to each inserted form field to ensure distinct automatic bookmarks.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "batch-insert-multiple-text-input-form-fields-into-a-template-using-a-loop-over-field-defin.cs",
+      "task": "Batch insert multiple text input form fields into a template using a loop over field definitions.",
+      "workflow": "text-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "load-a-docx-file-change-combo-box-selections-programmatically-and-save-the-modified-docume.cs",
+      "task": "Load a DOCX file, change combo box selections programmatically, and save the modified document.",
+      "workflow": "dropdown-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "update-result-values-of-several-check-box-form-fields-based-on-external-json-configuration.cs",
+      "task": "Update result values of several check box form fields based on external JSON configuration data.",
+      "workflow": "inspection-and-reporting",
+      "outputs": [
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "set-the-result-property-of-a-text-input-form-field-to-a-predefined-string-value.cs",
+      "task": "Set the Result property of a text input form field to a predefined string value.",
+      "workflow": "text-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "read-the-result-property-of-a-check-box-form-field-to-determine-whether-it-is-checked.cs",
+      "task": "Read the Result property of a check box form field to determine whether it is checked.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "toggle-the-checked-state-of-a-specific-check-box-form-field-based-on-external-configuratio.cs",
+      "task": "Toggle the checked state of a specific check box form field based on external configuration settings.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "change-the-size-of-an-existing-check-box-form-field-programmatically-to-improve-visual-con.cs",
+      "task": "Change the size of an existing check box form field programmatically to improve visual consistency.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "retrieve-a-form-field-by-its-name-from-a-loaded-document-and-read-its-result-property.cs",
+      "task": "Retrieve a form field by its name from a loaded document and read its Result property.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "access-a-form-field-by-index-from-the-formfields-collection-and-modify-its-result-value.cs",
+      "task": "Access a form field by index from the FormFields collection and modify its Result value.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "use-formfield-type-enumeration-to-differentiate-between-text-input-check-box-and-combo-box.cs",
+      "task": "Use FormField.Type enumeration to differentiate between text input, check box, and combo box fields.",
+      "workflow": "dropdown-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "iterate-over-all-form-fields-in-a-document-and-list-each-field-s-name-and-type.cs",
+      "task": "Iterate over all form fields in a document and list each field's name and type.",
+      "workflow": "inspection-and-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "count-the-number-of-each-form-field-type-by-iterating-through-the-formfields-collection.cs",
+      "task": "Count the number of each form field type by iterating through the FormFields collection.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "iterate-through-form-fields-and-log-each-field-s-result-value-for-debugging-purposes.cs",
+      "task": "Iterate through form fields and log each field's Result value for debugging purposes.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "extract-automatically-generated-bookmark-names-for-all-form-fields-and-store-them-in-a-loo.cs",
+      "task": "Extract automatically generated bookmark names for all form fields and store them in a lookup dictionary.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "navigate-to-a-form-field-using-its-automatically-created-bookmark-and-extract-surrounding.cs",
+      "task": "Navigate to a form field using its automatically created bookmark and extract surrounding paragraph text.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "protect-a-word-document-with-allowonlyformfields-option-allowing-only-form-fields-to-be-ed.cs",
+      "task": "Protect a Word document with AllowOnlyFormFields option, allowing only form fields to be edited.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "apply-document-protection-levels-ensuring-only-form-fields-remain-editable-while-other-sec.cs",
+      "task": "Apply document protection levels ensuring only form fields remain editable while other sections are read‑only.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "verify-that-protected-document-still-permits-editing-of-form-fields-after-saving-and-reope.cs",
+      "task": "Verify that protected document still permits editing of form fields after saving and reopening.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "after-inserting-fields-protect-the-document-and-then-verify-that-non-field-content-cannot.cs",
+      "task": "After inserting fields, protect the document and then verify that non‑field content cannot be edited.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "disable-all-check-box-form-fields-programmatically-when-a-specific-document-condition-is-m.cs",
+      "task": "Disable all check box form fields programmatically when a specific document condition is met.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "implement-error-handling-for-attempts-to-insert-a-form-field-with-an-empty-name-logging-a.cs",
+      "task": "Implement error handling for attempts to insert a form field with an empty name, logging a warning.",
+      "workflow": "general-form-field",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "build-a-console-application-that-reads-a-csv-file-and-populates-corresponding-text-input-f.cs",
+      "task": "Build a console application that reads a CSV file and populates corresponding text input fields in a template.",
+      "workflow": "text-form-field",
+      "outputs": [
+        "csv"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
