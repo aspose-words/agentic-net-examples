@@ -21,10 +21,10 @@ When working in this repository:
 
 ## Repository Overview
 
-This repository contains **1746** verified code examples demonstrating Aspose.Words for .NET capabilities.
+This repository contains **1796** verified code examples demonstrating Aspose.Words for .NET capabilities.
 
-**Statistics** (as of 2026-04-12):
-- Total Examples: 1746
+**Statistics** (as of 2026-04-13):
+- Total Examples: 1796
 - Categories: 29
 
 ## Category Details
@@ -66,15 +66,15 @@ This repository contains **1746** verified code examples demonstrating Aspose.Wo
 - Guide: [AGENTS.md](./fonts/AGENTS.md)
 
 ### form-fields
-- Examples: 28
+- Examples: 30
 - Guide: [AGENTS.md](./form-fields/AGENTS.md)
 
 ### hyphenation
-- Examples: 37
+- Examples: 40
 - Guide: [AGENTS.md](./hyphenation/AGENTS.md)
 
 ### images
-- Examples: 75
+- Examples: 120
 - Guide: [AGENTS.md](./images/AGENTS.md)
 
 ### join-documents
