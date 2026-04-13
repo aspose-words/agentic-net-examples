@@ -1,0 +1,469 @@
+{
+  "category": {
+    "name": "Hyphenation",
+    "slug": "hyphenation",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use native Aspose.Words hyphenation APIs directly with local deterministic sample inputs and local dictionary files where needed.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 40,
+    "publish_ready_successful_examples": 40,
+    "workflow_counts": {
+      "dictionary-registration": 14,
+      "document-setup-and-validation": 18,
+      "rendering-and-export": 8
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not assume source documents, folders, or hyphenation dictionary files already exist.",
+      "Do not invent unsupported hyphenation APIs or callback hooks.",
+      "Do not depend on external dictionary downloads for live examples.",
+      "Do not skip writing the requested output artifact when the task expects one."
+    ],
+    "canonical_patterns": [
+      "Use documented Aspose.Words hyphenation APIs directly.",
+      "Create local sample documents and local deterministic dictionary files whenever a task implies an existing source or dictionary.",
+      "Use narrow layout or other deterministic formatting only when the task requires visible hyphenation behavior.",
+      "Validate that the configured result, report, or rendered output actually exists."
+    ],
+    "nullable_warning_prevention": [
+      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
+      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
+      "Declare nullable locals when a value may legitimately be null and null-check before use."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Remote dictionary dependency",
+      "symptom": "Example depends on a GitHub or other external URL for a hyphenation dictionary file.",
+      "fix": "Create a deterministic local dictionary file inside the example and register that local file instead."
+    },
+    {
+      "pattern": "Wrong or invented hyphenation API usage",
+      "symptom": "Compile failures or ineffective behavior because unsupported hyphenation helpers or callback hooks are used.",
+      "fix": "Use only documented Aspose.Words hyphenation registration and callback APIs."
+    },
+    {
+      "pattern": "Visible hyphenation not triggered",
+      "symptom": "Example configures hyphenation but the layout never becomes narrow enough for hyphenation to matter.",
+      "fix": "Use deterministic page or layout settings and sufficiently long sample text so hyphenation can realistically occur."
+    },
+    {
+      "pattern": "Missing local bootstrap input",
+      "symptom": "Example assumes an existing document, stream, folder, or dictionary already exists.",
+      "fix": "Create local sample documents, source files, folders, and dictionary files inside the example."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "load-a-docx-file-register-a-custom-hunspell-dictionary-and-enable-automatic-hyphenation.cs",
+      "task": "Load a DOCX file, register a custom Hunspell dictionary, and enable automatic hyphenation.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "register-an-external-libreoffice-dictionary-from-github-and-apply-it-to-documents-written.cs",
+      "task": "Register an external LibreOffice dictionary from GitHub and apply it to documents written in Spanish.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "create-a-script-that-downloads-the-latest-libreoffice-hyphenation-dictionaries-and-registe.cs",
+      "task": "Create a script that downloads the latest LibreOffice hyphenation dictionaries and registers them automatically.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "update-an-existing-hunspell-dictionary-by-adding-custom-hyphenation-patterns-for-technical.cs",
+      "task": "Update an existing Hunspell dictionary by adding custom hyphenation patterns for technical terminology.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "set-the-hyphenation-language-to-en-us-and-verify-word-breaking-matches-microsoft-word-beha.cs",
+      "task": "Set the hyphenation language to en‑US and verify word breaking matches Microsoft Word behavior.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "load-a-docx-containing-mixed-languages-set-appropriate-hyphenation-language-for-each-secti.cs",
+      "task": "Load a DOCX containing mixed languages, set appropriate hyphenation language for each section.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "set-hyphenation-to-respect-word-boundaries-in-arabic-script-by-loading-appropriate-right-t.cs",
+      "task": "Set hyphenation to respect word boundaries in Arabic script by loading appropriate right‑to‑left dictionary.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "configure-hyphenation-to-respect-compound-word-rules-of-microsoft-word-for-german-language.cs",
+      "task": "Configure hyphenation to respect compound‑word rules of Microsoft Word for German language documents.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "set-minimum-word-length-for-hyphenation-to-five-characters-and-observe-its-effect-on-short.cs",
+      "task": "Set minimum word length for hyphenation to five characters and observe its effect on short words.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "validate-that-hyphenation-does-not-occur-for-words-shorter-than-the-configured-minimum-len.cs",
+      "task": "Validate that hyphenation does not occur for words shorter than the configured minimum length.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "enable-hyphenation-globally-for-a-document-then-override-it-for-a-single-table-cell.cs",
+      "task": "Enable hyphenation globally for a document, then override it for a single table cell.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "disable-hyphenation-for-headings-while-keeping-it-enabled-for-body-paragraphs-in-a-report.cs",
+      "task": "Disable hyphenation for headings while keeping it enabled for body paragraphs in a report.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "apply-hyphenation-only-to-a-selected-range-using-documentbuilder-and-verify-layout-changes.cs",
+      "task": "Apply hyphenation only to a selected range using DocumentBuilder and verify layout changes.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "apply-hyphenation-to-a-specific-paragraph-by-disabling-it-for-the-surrounding-sections.cs",
+      "task": "Apply hyphenation to a specific paragraph by disabling it for the surrounding sections.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "load-a-pdf-file-enable-hyphenation-and-render-the-result-to-an-image-for-visual-inspection.cs",
+      "task": "Load a PDF file, enable hyphenation, and render the result to an image for visual inspection.",
+      "workflow": "rendering-and-export",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "use-the-api-to-query-hyphenation-status-of-each-word-in-a-paragraph-and-log-the-results.cs",
+      "task": "Use the API to query hyphenation status of each word in a paragraph and log the results.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "check-whether-the-word-hyphenation-will-be-hyphenated-using-the-api-before-document-genera.cs",
+      "task": "Check whether the word 'hyphenation' will be hyphenated using the API before document generation.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "develop-a-function-that-returns-true-if-a-given-word-will-be-hyphenated-under-current-sett.cs",
+      "task": "Develop a function that returns true if a given word will be hyphenated under current settings.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "retrieve-the-hyphenation-patterns-for-french-language-and-log-them-for-debugging-purposes.cs",
+      "task": "Retrieve the hyphenation patterns for French language and log them for debugging purposes.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "list-all-available-hyphenation-dictionaries-on-the-system-and-display-their-language-codes.cs",
+      "task": "List all available hyphenation dictionaries on the system and display their language codes.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "programmatically-adjust-paragraph-justification-after-hyphenation-to-prevent-excessive-whi.cs",
+      "task": "Programmatically adjust paragraph justification after hyphenation to prevent excessive white space gaps.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "apply-hyphenation-to-a-document-then-programmatically-adjust-line-spacing-to-improve-reada.cs",
+      "task": "Apply hyphenation to a document, then programmatically adjust line spacing to improve readability.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "measure-pagination-differences-after-enabling-hyphenation-on-a-multi-section-report-docume.cs",
+      "task": "Measure pagination differences after enabling hyphenation on a multi‑section report document for analysis.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "compare-layout-differences-between-a-document-saved-with-hyphenation-disabled-and-the-same.cs",
+      "task": "Compare layout differences between a document saved with hyphenation disabled and the same document with hyphenation enabled.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "load-multiple-documents-from-a-folder-enable-hyphenation-and-save-each-as-a-hyphenated-pdf.cs",
+      "task": "Load multiple documents from a folder, enable hyphenation, and save each as a hyphenated PDF.",
+      "workflow": "rendering-and-export",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "batch-process-a-collection-of-docx-files-applying-language-specific-hyphenation-and-export.cs",
+      "task": "Batch process a collection of DOCX files, applying language‑specific hyphenation and exporting each to PDF.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "batch-convert-docx-files-to-pdf-while-preserving-hyphenation-and-log-any-documents-that-fa.cs",
+      "task": "Batch convert DOCX files to PDF while preserving hyphenation, and log any documents that fail.",
+      "workflow": "rendering-and-export",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "create-a-new-document-enable-automatic-hyphenation-from-the-start-and-save-it-as-a-docx-fi.cs",
+      "task": "Create a new document, enable automatic hyphenation from the start, and save it as a DOCX file.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "load-a-docx-enable-hyphenation-and-export-the-document-to-docx-preserving-hyphenation-mark.cs",
+      "task": "Load a DOCX, enable hyphenation, and export the document to DOCX preserving hyphenation marks.",
+      "workflow": "rendering-and-export",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "enable-hyphenation-for-a-document-then-export-to-docx-and-verify-hyphenation-marks-are-ret.cs",
+      "task": "Enable hyphenation for a document, then export to DOCX and verify hyphenation marks are retained.",
+      "workflow": "rendering-and-export",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 31,
+      "file_name": "export-a-hyphenated-document-to-pdf-and-compare-file-size-with-a-non-hyphenated-version.cs",
+      "task": "Export a hyphenated document to PDF and compare file size with a non‑hyphenated version.",
+      "workflow": "rendering-and-export",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 32,
+      "file_name": "generate-a-pdf-from-a-hyphenated-document-and-ensure-that-hyphenation-marks-are-not-visibl.cs",
+      "task": "Generate a PDF from a hyphenated document and ensure that hyphenation marks are not visible in the output.",
+      "workflow": "rendering-and-export",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 33,
+      "file_name": "load-a-docx-set-hyphenation-language-to-ru-ru-and-save-the-result-as-pdf.cs",
+      "task": "Load a DOCX, set hyphenation language to ru‑RU, and save the result as PDF.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 34,
+      "file_name": "measure-rendering-time-differences-between-pdf-generation-with-and-without-hyphenation-ena.cs",
+      "task": "Measure rendering time differences between PDF generation with and without hyphenation enabled.",
+      "workflow": "rendering-and-export",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 35,
+      "file_name": "create-a-console-application-that-accepts-a-document-path-hyphenation-language-code-and-ou.cs",
+      "task": "Create a console application that accepts a document path, hyphenation language code, and outputs a hyphenated PDF.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 36,
+      "file_name": "implement-error-handling-for-loading-incompatible-hyphenation-dictionaries-and-provide-des.cs",
+      "task": "Implement error handling for loading incompatible hyphenation dictionaries and provide descriptive messages.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 37,
+      "file_name": "integrate-hyphenation-dictionary-updates-into-a-ci-pipeline-to-keep-language-patterns-curr.cs",
+      "task": "Integrate hyphenation dictionary updates into a CI pipeline to keep language patterns current.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 38,
+      "file_name": "test-hyphenation-impact-on-page-count-by-generating-a-long-report-with-and-without-hyphena.cs",
+      "task": "Test hyphenation impact on page count by generating a long report with and without hyphenation.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 39,
+      "file_name": "load-a-docx-disable-hyphenation-for-footnotes-only-and-compare-footnote-layout-before-and.cs",
+      "task": "Load a DOCX, disable hyphenation for footnotes only, and compare footnote layout before and after.",
+      "workflow": "document-setup-and-validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 40,
+      "file_name": "create-a-unit-test-that-verifies-hyphenation-patterns-are-applied-correctly-for-italian-la.cs",
+      "task": "Create a unit test that verifies hyphenation patterns are applied correctly for Italian language documents.",
+      "workflow": "dictionary-registration",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
