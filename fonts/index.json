@@ -1,0 +1,419 @@
+{
+  "category": {
+    "name": "Fonts",
+    "slug": "fonts",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use Aspose.Words font APIs with correct type usage and explicit namespace disambiguation.",
+    "required_packages": [
+      "Aspose.Words",
+      "Aspose.Drawing.Common",
+      "Newtonsoft.Json"
+    ]
+  },
+  "stats": {
+    "total_examples": 35,
+    "publish_ready_successful_examples": 35,
+    "workflow_counts": {
+      "document-formatting": 27,
+      "font-settings-and-sources": 4,
+      "embedding-and-rendering": 2,
+      "reporting-and-inspection": 1,
+      "input-bootstrap": 1
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not use using System.Drawing in this category.",
+      "Do not use bare Color or bare Font when ambiguity is possible.",
+      "Do not assume source documents, folders, or external font files already exist.",
+      "Do not invent unsupported font APIs, embedding APIs, or substitution hooks."
+    ],
+    "canonical_patterns": [
+      "Use Aspose.Words.Font for document text formatting through Run, Style, Paragraph, or DocumentBuilder objects.",
+      "Use Aspose.Drawing.Font only for true drawing-font scenarios, with an explicit fully qualified type name.",
+      "Use fully qualified Aspose.Drawing.Color and explicit System.Drawing.Color only where the target API requires disambiguation.",
+      "Bootstrap local sample documents and validate that requested outputs are written."
+    ],
+    "nullable_warning_prevention": []
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Font type ambiguity",
+      "symptom": "Compile errors because Font is ambiguous between Aspose.Drawing.Font and Aspose.Words.Font.",
+      "fix": "Use fully qualified names and use Aspose.Words.Font for document formatting versus Aspose.Drawing.Font only for real drawing scenarios."
+    },
+    {
+      "pattern": "Color type ambiguity",
+      "symptom": "Compile or assignment issues because Color is ambiguous or the wrong color type is used for the target property.",
+      "fix": "Use fully qualified Aspose.Drawing.Color or explicit System.Drawing.Color conversion only where the Aspose.Words API expects it."
+    },
+    {
+      "pattern": "Wrong formatting object",
+      "symptom": "A drawing font object is treated as if it were a document text-formatting object.",
+      "fix": "Apply document font values through Run.Font, Style.Font, ParagraphBreakFont, or DocumentBuilder.Font."
+    },
+    {
+      "pattern": "Missing local bootstrap inputs",
+      "symptom": "Examples assume existing documents, folders, or font resources already exist.",
+      "fix": "Create local sample documents and deterministic local scenarios inside the example."
+    },
+    {
+      "pattern": "Weak validation",
+      "symptom": "Examples save output but do not verify that the intended font change, report, or render actually occurred.",
+      "fix": "Validate the changed font property, configured font setting, or output file existence before finishing."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "retrieve-the-font-object-from-a-paragraph-s-first-run-using-paragraph-runs-0-font.cs",
+      "task": "Retrieve the Font object from a Paragraph's first Run using Paragraph.Runs[0].Font.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "use-documentbuilder-font-name-to-set-default-font-for-newly-inserted-content-before-adding.cs",
+      "task": "Use DocumentBuilder.Font.Name to set default font for newly inserted content before adding text.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "use-documentbuilder-to-set-default-font-size-for-all-subsequently-inserted-paragraphs.cs",
+      "task": "Use DocumentBuilder to set default font size for all subsequently inserted paragraphs.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "define-a-style-that-sets-font-name-size-and-color-then-apply-it-to-selected-text.cs",
+      "task": "Define a style that sets font name, size, and color, then apply it to selected text.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "apply-a-predefined-style-that-includes-specific-font-settings-to-a-range-of-paragraphs.cs",
+      "task": "Apply a predefined style that includes specific font settings to a range of paragraphs.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "set-the-font-name-of-a-run-to-arial-via-the-font-name-property.cs",
+      "task": "Set the font name of a Run to Arial via the Font.Name property.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "change-the-font-size-of-a-run-to-fourteen-points-using-the-font-size-property.cs",
+      "task": "Change the font size of a Run to fourteen points using the Font.Size property.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "assign-a-blue-color-to-a-run-s-font-by-setting-font-color-to-system-drawing-color-blue.cs",
+      "task": "Assign a blue color to a Run's font by setting Font.Color to System.Drawing.Color.Blue.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "apply-bold-and-italic-styles-to-a-run-by-setting-font-bold-and-font-italic-to-true.cs",
+      "task": "Apply bold and italic styles to a Run by setting Font.Bold and Font.Italic to true.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "apply-underline-style-to-a-run-by-setting-font-underline-to-underlinetype-single.cs",
+      "task": "Apply underline style to a Run by setting Font.Underline to UnderlineType.Single.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "apply-bold-italic-and-underline-simultaneously-to-a-run-using-respective-font-properties.cs",
+      "task": "Apply bold, italic, and underline simultaneously to a Run using respective Font properties.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "set-text-fill-color-to-red-and-thirty-percent-transparency-using-font-fill-color-and-font.cs",
+      "task": "Set text fill color to red and thirty percent transparency using Font.Fill.Color and Font.Fill.Transparency.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "apply-a-semi-transparent-fill-to-text-by-setting-font-fill-color-and-font-fill-transparenc.cs",
+      "task": "Apply a semi‑transparent fill to text by setting Font.Fill.Color and Font.Fill.Transparency together.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "set-the-underline-type-to-double-wave-for-a-run-by-assigning-font-underline-to-underlinety.cs",
+      "task": "Set the underline type to double wave for a Run by assigning Font.Underline to UnderlineType.DoubleWave.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "adjust-a-paragraph-s-line-spacing-to-1-5-lines-by-assigning-font-linespacing-to-1-5.cs",
+      "task": "Adjust a paragraph's line spacing to 1.5 lines by assigning Font.LineSpacing to 1.5.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "set-line-spacing-to-double-for-a-paragraph-by-assigning-font-linespacing-to-2-0.cs",
+      "task": "Set line spacing to double for a paragraph by assigning Font.LineSpacing to 2.0.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "programmatically-reset-line-spacing-to-default-for-all-paragraphs-by-setting-font-linespac.cs",
+      "task": "Programmatically reset line spacing to default for all paragraphs by setting Font.LineSpacing to 0.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "apply-east-asian-emphasis-mark-dot-to-a-run-by-setting-font-emphasismark-to-emphasismark-d.cs",
+      "task": "Apply East Asian emphasis mark Dot to a Run by setting Font.EmphasisMark to EmphasisMark.Dot.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "apply-east-asian-emphasis-mark-only-when-document-language-is-japanese-by-checking-languag.cs",
+      "task": "Apply East Asian emphasis mark only when document language is Japanese by checking language before setting Font.EmphasisMark.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "retrieve-and-display-the-emphasismark-value-of-a-run-for-debugging-east-asian-formatting.cs",
+      "task": "Retrieve and display the EmphasisMark value of a Run for debugging East Asian formatting.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "retrieve-and-display-the-current-font-size-of-a-run-for-debugging-purposes.cs",
+      "task": "Retrieve and display the current font size of a Run for debugging purposes.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "define-a-custom-font-substitution-rule-that-replaces-missing-times-new-roman-with-calibri.cs",
+      "task": "Define a custom font substitution rule that replaces missing Times New Roman with Calibri.",
+      "workflow": "font-settings-and-sources",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "configure-font-substitution-to-map-missing-garamond-to-a-locally-installed-georgia-font.cs",
+      "task": "Configure font substitution to map missing Garamond to a locally installed Georgia font.",
+      "workflow": "font-settings-and-sources",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "enable-automatic-font-substitution-for-missing-fonts-during-document-loading-by-configurin.cs",
+      "task": "Enable automatic font substitution for missing fonts during document loading by configuring FontSettings.",
+      "workflow": "font-settings-and-sources",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "create-a-custom-font-substitution-table-and-load-it-from-an-xml-configuration-file.cs",
+      "task": "Create a custom font substitution table and load it from an XML configuration file.",
+      "workflow": "font-settings-and-sources",
+      "outputs": [
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "embed-all-used-fonts-into-the-document-when-saving-by-enabling-the-embedfullfonts-option.cs",
+      "task": "Embed all used fonts into the document when saving by enabling the EmbedFullFonts option.",
+      "workflow": "embedding-and-rendering",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "enable-font-embedding-when-saving-documents-to-pdf-to-ensure-visual-fidelity-across-platfo.cs",
+      "task": "Enable font embedding when saving documents to PDF to ensure visual fidelity across platforms.",
+      "workflow": "embedding-and-rendering",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "reset-all-font-attributes-of-a-run-to-defaults-by-calling-font-clearformatting.cs",
+      "task": "Reset all font attributes of a Run to defaults by calling Font.ClearFormatting.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "copy-font-formatting-from-one-run-to-another-using-run-font-clone-method.cs",
+      "task": "Copy font formatting from one Run to another using Run.Font.Clone method.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "create-a-reusable-method-that-applies-a-specific-font-name-and-size-to-any-given-run.cs",
+      "task": "Create a reusable method that applies a specific font name and size to any given Run.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 31,
+      "file_name": "create-a-font-object-set-its-size-and-color-then-assign-it-to-multiple-runs-for-consistenc.cs",
+      "task": "Create a Font object, set its size and color, then assign it to multiple Runs for consistency.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 32,
+      "file_name": "programmatically-replace-all-occurrences-of-a-specific-font-with-another-across-the-entire.cs",
+      "task": "Programmatically replace all occurrences of a specific font with another across the entire document.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 33,
+      "file_name": "adjust-font-color-dynamically-based-on-paragraph-index-using-a-loop-and-conditional-logic.cs",
+      "task": "Adjust font color dynamically based on paragraph index using a loop and conditional logic.",
+      "workflow": "reporting-and-inspection",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 34,
+      "file_name": "implement-batch-processing-to-set-helvetica-font-for-all-runs-in-a-collection-of-documents.cs",
+      "task": "Implement batch processing to set Helvetica font for all Runs in a collection of documents.",
+      "workflow": "input-bootstrap",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 35,
+      "file_name": "load-a-document-change-all-headings-to-use-a-bold-sixteen-point-font-then-save.cs",
+      "task": "Load a document, change all headings to use a bold sixteen‑point font, then save.",
+      "workflow": "document-formatting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
