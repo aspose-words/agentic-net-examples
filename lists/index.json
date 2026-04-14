@@ -1,0 +1,365 @@
+{
+  "category": {
+    "name": "Lists",
+    "slug": "lists",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use Aspose.Words List and ListFormat APIs through DocumentBuilder with explicit list assignment, explicit nested levels, and RemoveNumbers after completion.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "publish_ready_successful_examples": 30,
+    "workflow_counts": {
+      "general-list-workflow": 4,
+      "nested-list-workflow": 17,
+      "bulleted-list-workflow": 1,
+      "list-formatting-workflow": 5,
+      "numbered-list-workflow": 2,
+      "numbering-control-workflow": 1
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not invent unsupported list APIs.",
+      "Do not skip assigning ListFormat.List before writing list items.",
+      "Do not forget to remove list formatting."
+    ],
+    "canonical_patterns": [
+      "Create lists with doc.Lists.Add(ListTemplate).",
+      "Apply the list through builder.ListFormat.List before writing list items.",
+      "Use builder.ListFormat.ListLevelNumber for nested list levels.",
+      "Call builder.ListFormat.RemoveNumbers() after finishing a list."
+    ],
+    "nullable_warning_prevention": [
+      "Avoid maybe-null dereference when reusing list references.",
+      "Guard document nodes before reading list-related properties."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Invented list APIs",
+      "symptom": "Code uses unsupported helpers such as CreateList or AddListItem.",
+      "fix": "Use doc.Lists.Add(ListTemplate) and builder.ListFormat.List only."
+    },
+    {
+      "pattern": "List formatting not applied",
+      "symptom": "Paragraphs are written but they are not actual list items.",
+      "fix": "Assign builder.ListFormat.List before writing each list sequence."
+    },
+    {
+      "pattern": "Nested level drift",
+      "symptom": "Nested items appear at the wrong level or never return to the parent level.",
+      "fix": "Set builder.ListFormat.ListLevelNumber explicitly before each nested level transition."
+    },
+    {
+      "pattern": "List mode not cleared",
+      "symptom": "Subsequent paragraphs continue as list items unintentionally.",
+      "fix": "Call builder.ListFormat.RemoveNumbers() immediately after the list is complete."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "add-a-new-list-to-the-document-s-listcollection-and-assign-it-to-multiple-paragraphs-to-sh.cs",
+      "task": "add a new list to the document s listcollection and assign it to multiple paragraphs to sh",
+      "workflow": "general-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "adjust-listlevel-indentation-by-setting-listlevel-indentation-to-36-points-for-proper-alig.cs",
+      "task": "adjust listlevel indentation by setting listlevel indentation to 36 points for proper alig",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "apply-a-custom-bullet-character-to-a-list-by-setting-listlevel-numberstyle-to-bullet-and-d.cs",
+      "task": "apply a custom bullet character to a list by setting listlevel numberstyle to bullet and d",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "apply-a-custom-tab-stop-to-list-levels-to-align-text-after-numbers-using-listlevel-tabposi.cs",
+      "task": "apply a custom tab stop to list levels to align text after numbers using listlevel tabposi",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "apply-a-default-bulleted-list-to-paragraphs-with-documentbuilder-listformat-applybulletdef.cs",
+      "task": "apply a default bulleted list to paragraphs with documentbuilder listformat applybulletdef",
+      "workflow": "bulleted-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "apply-a-uniform-list-style-to-all-lists-by-iterating-over-document-lists-and-updating-each.cs",
+      "task": "apply a uniform list style to all lists by iterating over document lists and updating each",
+      "workflow": "list-formatting-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "assign-an-existing-list-to-a-paragraph-by-setting-paragraph-listformat-list-property-to-ap.cs",
+      "task": "assign an existing list to a paragraph by setting paragraph listformat list property to ap",
+      "workflow": "list-formatting-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "check-document-ooxmlcompliance-property-and-set-to-higher-than-ecma376-when-modifying-list.cs",
+      "task": "check document ooxmlcompliance property and set to higher than ecma376 when modifying list",
+      "workflow": "general-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "clone-an-existing-list-modify-its-level-start-values-and-apply-the-cloned-list-to-new-sect.cs",
+      "task": "clone an existing list modify its level start values and apply the cloned list to new sect",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "configure-tabposition-of-a-listlevel-to-72-points-to-align-text-after-list-number.cs",
+      "task": "configure tabposition of a listlevel to 72 points to align text after list number",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "create-a-custom-list-object-configure-its-levels-and-add-it-to-document-lists-collection.cs",
+      "task": "create a custom list object configure its levels and add it to document lists collection",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "create-a-default-numbered-list-in-a-word-document-using-documentbuilder-listformat-applynu.cs",
+      "task": "create a default numbered list in a word document using documentbuilder listformat applynu",
+      "workflow": "numbered-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "create-a-multi-level-list-with-alternating-bullet-and-number-styles-by-configuring-each-li.cs",
+      "task": "create a multi level list with alternating bullet and number styles by configuring each li",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "create-a-nine-level-hierarchical-list-by-defining-properties-for-each-listlevel-up-to-leve.cs",
+      "task": "create a nine level hierarchical list by defining properties for each listlevel up to leve",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "create-a-numbered-list-that-restarts-numbering-at-each-new-chapter-by-resetting-startingnu.cs",
+      "task": "create a numbered list that restarts numbering at each new chapter by resetting startingnu",
+      "workflow": "numbering-control-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "decrease-list-indent-with-documentbuilder-listformat-decreaseindent-to-promote-paragraph-t.cs",
+      "task": "decrease list indent with documentbuilder listformat decreaseindent to promote paragraph t",
+      "workflow": "list-formatting-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "define-startingnumber-for-a-listlevel-to-begin-numbering-at-five-instead-of-default-one.cs",
+      "task": "define startingnumber for a listlevel to begin numbering at five instead of default one",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "ensure-ooxmlcompliance-is-set-higher-than-ecma376-before-saving-document-to-retain-custom.cs",
+      "task": "ensure ooxmlcompliance is set higher than ecma376 before saving document to retain custom",
+      "workflow": "general-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "implement-error-handling-for-attempts-to-create-more-than-nine-list-levels-catching-the-re.cs",
+      "task": "implement error handling for attempts to create more than nine list levels catching the re",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "increase-list-indent-programmatically-using-documentbuilder-listformat-increaseindent-to-m.cs",
+      "task": "increase list indent programmatically using documentbuilder listformat increaseindent to m",
+      "workflow": "list-formatting-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "iterate-through-document-lists-collection-to-modify-all-list-definitions-uniformly-across.cs",
+      "task": "iterate through document lists collection to modify all list definitions uniformly across",
+      "workflow": "general-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "programmatically-decrease-list-level-depth-for-a-paragraph-using-documentbuilder-listforma.cs",
+      "task": "programmatically decrease list level depth for a paragraph using documentbuilder listforma",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "programmatically-increase-list-level-depth-for-a-paragraph-using-documentbuilder-listforma.cs",
+      "task": "programmatically increase list level depth for a paragraph using documentbuilder listforma",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "programmatically-remove-list-formatting-from-selected-paragraphs-while-preserving-their-in.cs",
+      "task": "programmatically remove list formatting from selected paragraphs while preserving their in",
+      "workflow": "list-formatting-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "remove-numbering-from-a-paragraph-by-calling-documentbuilder-listformat-removenumbers-meth.cs",
+      "task": "remove numbering from a paragraph by calling documentbuilder listformat removenumbers meth",
+      "workflow": "numbered-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "restart-numbering-for-each-new-section-by-resetting-listlevel-startingnumber-before-applyi.cs",
+      "task": "restart numbering for each new section by resetting listlevel startingnumber before applyi",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "retrieve-a-specific-list-from-document-lists-by-its-id-and-adjust-its-level-properties-pro.cs",
+      "task": "retrieve a specific list from document lists by its id and adjust its level properties pro",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "set-listlevelnumber-to-three-before-adding-a-paragraph-to-create-a-third-level-list-item-i.cs",
+      "task": "set listlevelnumber to three before adding a paragraph to create a third level list item i",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "set-numberstyle-of-a-listlevel-to-upperroman-to-generate-roman-numeral-list-items.cs",
+      "task": "set numberstyle of a listlevel to upperroman to generate roman numeral list items",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "validate-that-each-list-in-a-document-does-not-exceed-nine-levels-to-comply-with-api-const.cs",
+      "task": "validate that each list in a document does not exceed nine levels to comply with api const",
+      "workflow": "nested-list-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
