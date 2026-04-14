@@ -1,0 +1,462 @@
+{
+  "category": {
+    "name": "Join Documents",
+    "slug": "join-documents",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use native Aspose.Words document append and insert APIs directly with local sample documents, explicit ImportFormatMode, and documented mail-merge insertion workflows when needed.",
+    "required_packages": [
+      "Aspose.Words",
+      "Newtonsoft.Json"
+    ]
+  },
+  "stats": {
+    "total_examples": 36,
+    "publish_ready_successful_examples": 36,
+    "workflow_counts": {
+      "insert-document": 18,
+      "append-document": 12,
+      "general-join-workflow": 1,
+      "mail-merge-insert": 2,
+      "section-and-format-preservation": 3
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not assume source documents or folders already exist.",
+      "Do not invent unsupported document-join APIs.",
+      "Do not append or insert a node into an invalid location.",
+      "Do not skip saving the requested merged output."
+    ],
+    "canonical_patterns": [
+      "Create all required local source documents before joining them.",
+      "Use AppendDocument for whole-document joins and specify ImportFormatMode explicitly.",
+      "Use InsertDocument or InsertDocumentInline only when inserting at a specific cursor position or inside a documented mail-merge workflow.",
+      "Validate that the merged output contains content from all expected source documents."
+    ],
+    "nullable_warning_prevention": [
+      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
+      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
+      "Declare nullable locals when a value may legitimately be null and null-check before use."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Missing source document bootstrap",
+      "symptom": "Examples assume source DOC or DOCX files already exist.",
+      "fix": "Create all source documents locally inside the example before joining them."
+    },
+    {
+      "pattern": "Wrong join API choice",
+      "symptom": "Code invents unsupported APIs or uses append logic where insertion is required.",
+      "fix": "Use AppendDocument for whole-document appends and InsertDocument or InsertDocumentInline only for real insertion scenarios."
+    },
+    {
+      "pattern": "Invalid node insertion",
+      "symptom": "Runtime failures due to inserting imported sections or nodes into an invalid parent location.",
+      "fix": "Import content into valid containers only and never append a node to itself."
+    },
+    {
+      "pattern": "Mail merge insertion misuse",
+      "symptom": "Document insertion during mail merge is treated like a plain append or uses invented merge helpers.",
+      "fix": "Use the documented mail-merge event-handler insertion workflow with InsertDocument or InsertDocumentInline."
+    },
+    {
+      "pattern": "Weak merged-output validation",
+      "symptom": "The example saves output but does not prove the result contains content from all expected sources.",
+      "fix": "Validate using actual markers, paragraph text, section counts, or output file existence."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "load-a-docx-template-insert-a-source-docx-at-a-bookmark-and-save-the-result-as-pdf.cs",
+      "task": "Load a DOCX template, insert a source DOCX at a bookmark, and save the result as PDF.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "load-a-docx-insert-a-pdf-converted-docx-at-a-bookmark-and-save-the-merged-document-as-odt.cs",
+      "task": "Load a DOCX, insert a PDF‑converted DOCX at a bookmark, and save the merged document as ODT.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "load-a-password-protected-docx-insert-a-source-docx-at-a-bookmark-then-remove-protection-a.cs",
+      "task": "Load a password‑protected DOCX, insert a source DOCX at a bookmark, then remove protection and save as DOCX.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "protect-a-destination-docx-with-password-before-inserting-a-source-docx-then-remove-protec.cs",
+      "task": "Protect a destination DOCX with password before inserting a source DOCX, then remove protection and save as DOCX.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "protect-a-destination-docx-with-read-only-restriction-before-appending-source-docx-then-re.cs",
+      "task": "Protect a destination DOCX with read‑only restriction before appending source DOCX, then remove restriction and save as PDF.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "use-documentbuilder-movetobookmark-to-navigate-to-a-bookmark-named-content-then-insert-a-s.cs",
+      "task": "Use DocumentBuilder.MoveToBookmark to navigate to a bookmark named “Content”, then insert a source DOCX with KeepSourceFormatting.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "insert-a-docx-at-a-bookmark-inside-a-header-then-save-the-document-as-docx-preserving-head.cs",
+      "task": "Insert a DOCX at a bookmark inside a header, then save the document as DOCX preserving header formatting.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "insert-a-docx-at-a-bookmark-inside-a-table-cell-then-export-document-to-odt-preserving-tab.cs",
+      "task": "Insert a DOCX at a bookmark inside a table cell, then export document to ODT preserving table structure.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "insert-a-docx-at-multiple-bookmarks-named-header-and-footer-then-export-the-final-document.cs",
+      "task": "Insert a DOCX at multiple bookmarks named Header and Footer, then export the final document to HTML format.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "use-documentbuilder-insertdocument-to-insert-a-docx-at-the-current-cursor-position-with-ke.cs",
+      "task": "Use DocumentBuilder.InsertDocument to insert a DOCX at the current cursor position with KeepSourceFormatting, saving as HTML.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "use-documentbuilder-insertdocument-with-importformatmode-usedestinationstyles-to-insert-a.cs",
+      "task": "Use DocumentBuilder.InsertDocument with ImportFormatMode.UseDestinationStyles to insert a DOCX into a styled template, then save as HTML.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "insert-a-docx-during-a-find-replace-operation-that-matches-the-word-insertme-then-save-as.cs",
+      "task": "Insert a DOCX during a find‑replace operation that matches the word “INSERTME”, then save as DOCX.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "use-findreplaceoptions-to-replace-the-phrase-placeholder-with-a-docx-document-then-save-as.cs",
+      "task": "Use FindReplaceOptions to replace the phrase “PLACEHOLDER” with a DOCX document, then save as ODT.",
+      "workflow": "general-join-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "use-findreplaceoptions-with-a-replacingcallback-to-insert-a-docx-whenever-phrase-insert-he.cs",
+      "task": "Use FindReplaceOptions with a ReplacingCallback to insert a DOCX whenever phrase “INSERT_HERE” is found, then save as DOCX.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "insert-a-docx-during-a-find-replace-operation-that-replaces-an-xml-tag-then-save-the-docum.cs",
+      "task": "Insert a DOCX during a find‑replace operation that replaces an XML tag, then save the document as DOCX.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "doc",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "set-mailmerge-insertdocument-event-to-inject-a-docx-for-each-data-row-and-generate-a-combi.cs",
+      "task": "Set MailMerge.InsertDocument event to inject a DOCX for each data row, and generate a combined PDF file.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "insert-a-docx-during-mail-merge-for-record-then-apply-importlanguageinfo-to-preserve-langu.cs",
+      "task": "Insert a DOCX during mail merge for record, then apply ImportLanguageInfo to preserve language settings, save as PDF.",
+      "workflow": "mail-merge-insert",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "use-importlanguageinfo-option-to-preserve-language-settings-when-appending-a-source-docx-t.cs",
+      "task": "Use ImportLanguageInfo option to preserve language settings when appending a source DOCX to a destination DOCX.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "manually-import-specific-tables-from-a-source-docx-using-nodeimporter-and-insert-them-into.cs",
+      "task": "Manually import specific tables from a source DOCX using NodeImporter and insert them into a destination DOCX.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "use-nodeimporter-to-import-only-paragraph-nodes-from-a-source-docx-and-insert-them-after-a.cs",
+      "task": "Use NodeImporter to import only paragraph nodes from a source DOCX and insert them after a specific bookmark.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "append-an-rtf-document-to-an-existing-docx-using-usedestinationstyles-then-export-the-comb.cs",
+      "task": "Append an RTF document to an existing DOCX using UseDestinationStyles, then export the combined file to DOCX.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "append-a-docx-containing-custom-styles-to-a-destination-docx-using-importformatmode-usedes.cs",
+      "task": "Append a DOCX containing custom styles to a destination DOCX, using ImportFormatMode.UseDestinationStyles, then export to PDF.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "append-a-docx-generated-from-a-mail-merge-operation-to-an-existing-pdf-converted-docx-pres.cs",
+      "task": "Append a DOCX generated from a mail merge operation to an existing PDF‑converted DOCX, preserving destination styles.",
+      "workflow": "mail-merge-insert",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "append-a-docx-with-video-files-to-a-destination-docx-ensuring-videos-remain-functional-aft.cs",
+      "task": "Append a DOCX with video files to a destination DOCX, ensuring videos remain functional after saving as PDF.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "append-a-docx-containing-footnotes-to-a-destination-docx-and-ensure-footnote-numbering-con.cs",
+      "task": "Append a DOCX containing footnotes to a destination DOCX and ensure footnote numbering continues, then save as PDF.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "append-a-docx-containing-a-bibliography-to-a-research-paper-docx-then-update-fields-and-ex.cs",
+      "task": "Append a DOCX containing a bibliography to a research paper DOCX, then update fields and export to PDF.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "combine-three-odt-files-into-one-docx-applying-importformatmode-keepsourceformatting-then.cs",
+      "task": "Combine three ODT files into one DOCX, applying ImportFormatMode.KeepSourceFormatting, then save as DOCX.",
+      "workflow": "section-and-format-preservation",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "combine-a-docx-and-an-odt-file-into-a-single-pdf-using-importformatmode-keepsourceformatti.cs",
+      "task": "Combine a DOCX and an ODT file into a single PDF, using ImportFormatMode.KeepSourceFormatting for the ODT content.",
+      "workflow": "section-and-format-preservation",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "combine-multiple-docx-files-into-a-single-pdf-ensuring-each-source-document-retains-its-or.cs",
+      "task": "Combine multiple DOCX files into a single PDF, ensuring each source document retains its original formatting.",
+      "workflow": "section-and-format-preservation",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "append-multiple-docx-files-in-a-loop-each-with-different-importformatmode-settings-and-out.cs",
+      "task": "Append multiple DOCX files in a loop, each with different ImportFormatMode settings, and output combined file as PDF.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 31,
+      "file_name": "batch-process-a-directory-of-docx-files-appending-each-to-a-master-document-and-saving-res.cs",
+      "task": "Batch process a directory of DOCX files, appending each to a master document and saving result as PDF.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 32,
+      "file_name": "batch-append-docx-files-from-multiple-subfolders-into-a-single-master-document-applying-im.cs",
+      "task": "Batch append DOCX files from multiple subfolders into a single master document, applying ImportFormatMode.UseDestinationStyles, then export to PDF.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 33,
+      "file_name": "use-documentbuilder-to-insert-a-docx-at-end-of-sections-in-a-destination-docx-then-export.cs",
+      "task": "Use DocumentBuilder to insert a DOCX at end of sections in a destination DOCX, then export to DOCX.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 34,
+      "file_name": "validate-that-all-inserted-sections-contain-correct-page-numbers-by-iterating-through-dest.cs",
+      "task": "Validate that all inserted sections contain correct page numbers by iterating through destination document nodes after insertion.",
+      "workflow": "insert-document",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 35,
+      "file_name": "append-a-docx-generated-from-a-web-service-to-an-existing-docx-then-encrypt-final-pdf-with.cs",
+      "task": "Append a DOCX generated from a web service to an existing DOCX, then encrypt final PDF with password.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 36,
+      "file_name": "append-a-docx-generated-from-a-rest-api-to-an-existing-docx-then-encrypt-final-pdf-with-pa.cs",
+      "task": "Append a DOCX generated from a REST API to an existing DOCX, then encrypt final PDF with password.",
+      "workflow": "append-document",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
