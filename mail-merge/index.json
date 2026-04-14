@@ -1,0 +1,369 @@
+{
+  "category": {
+    "name": "Mail Merge",
+    "slug": "mail-merge",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use Aspose.Words MailMerge API with locally created templates, explicit MERGEFIELD insertion, exact data-field matching, and Execute or ExecuteWithRegions as appropriate.",
+    "required_packages": [
+      "Aspose.Words",
+      "Newtonsoft.Json"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "publish_ready_successful_examples": 30,
+    "workflow_counts": {
+      "simple-mail-merge": 17,
+      "region-mail-merge": 7,
+      "image-mail-merge": 4,
+      "input-bootstrap": 1,
+      "table-mail-merge": 1
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not assume template files already exist.",
+      "Do not mismatch merge field names and data field names.",
+      "Do not invent unsupported mail-merge APIs.",
+      "Do not leave merge fields unresolved unless explicitly required by the task."
+    ],
+    "canonical_patterns": [
+      "Create the template locally with DocumentBuilder.",
+      "Insert merge fields explicitly with builder.InsertField(\"MERGEFIELD FieldName\").",
+      "Use MailMerge.Execute for simple merges and ExecuteWithRegions for region-based merges.",
+      "Use MailMergeCleanupOptions when the task requires a clean merged result."
+    ],
+    "nullable_warning_prevention": [
+      "Validate arrays, tables, and lookup results before executing mail merge.",
+      "Avoid maybe-null dereference when reading field names, table values, or merge results."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Template and data mismatch",
+      "symptom": "Merge fields remain unresolved because field names do not match provided data keys or columns.",
+      "fix": "Ensure merge field names exactly match the field-name array or DataTable column names."
+    },
+    {
+      "pattern": "Missing local template bootstrap",
+      "symptom": "Examples assume an existing mail merge template document already exists.",
+      "fix": "Create the mail merge template locally using DocumentBuilder before execution."
+    },
+    {
+      "pattern": "Wrong API choice for regions",
+      "symptom": "Region merges are attempted with simple Execute instead of ExecuteWithRegions.",
+      "fix": "Use TableStart/TableEnd fields and ExecuteWithRegions with a matching DataTable."
+    },
+    {
+      "pattern": "Cleanup options omitted",
+      "symptom": "Unused merge fields or regions remain in the output unexpectedly.",
+      "fix": "Apply MailMergeCleanupOptions when the task requires unused fields or empty regions to be removed."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "create-a-mail-merge-template-programmatically-using-documentbuilder-and-add-static-header.cs",
+      "task": "Create a mail merge template programmatically using DocumentBuilder and add static header text.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "insert-merge-fields-for-customer-name-and-address-into-the-template-with-documentbuilder.cs",
+      "task": "Insert merge fields for customer name and address into the template with DocumentBuilder.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "define-a-mail-merge-region-for-order-items-by-inserting-start-and-end-merge-fields.cs",
+      "task": "Define a mail merge region for order items by inserting start and end merge fields.",
+      "workflow": "region-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "insert-a-table-placeholder-and-define-a-mail-merge-region-for-table-rows-using-documentbui.cs",
+      "task": "Insert a table placeholder and define a mail merge region for table rows using DocumentBuilder.",
+      "workflow": "region-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "handle-the-imagefieldmerging-event-to-customize-image-insertion-using-imagefieldmergingarg.cs",
+      "task": "Handle the ImageFieldMerging event to customize image insertion using ImageFieldMergingArgs.",
+      "workflow": "image-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "insert-a-company-logo-into-each-merged-document-by-handling-imagefieldmerging-with-a-stati.cs",
+      "task": "Insert a company logo into each merged document by handling ImageFieldMerging with a static image path.",
+      "workflow": "image-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "apply-conditional-logic-in-imagefieldmerging-to-select-different-images-based-on-field-nam.cs",
+      "task": "Apply conditional logic in ImageFieldMerging to select different images based on field name.",
+      "workflow": "image-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "set-the-text-property-of-a-merge-field-to-apply-bold-formatting-to-inserted-names.cs",
+      "task": "Set the Text property of a merge field to apply bold formatting to inserted names.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "set-the-text-property-to-insert-formatted-dates-using-a-specific-culture-format-in-merge-f.cs",
+      "task": "Set the Text property to insert formatted dates using a specific culture format in merge fields.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "load-xml-data-into-a-dataset-using-the-readxml-method-for-mail-merge-source.cs",
+      "task": "Load XML data into a DataSet using the ReadXml method for mail merge source.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "execute-a-simple-mail-merge-with-a-single-data-object-and-save-the-result-as-docx.cs",
+      "task": "Execute a simple mail merge with a single data object and save the result as DOCX.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "execute-a-simple-mail-merge-for-multiple-records-and-generate-separate-pdf-files-for-each.cs",
+      "task": "Execute a simple mail merge for multiple records and generate separate PDF files for each record.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "use-mailmerge-execute-with-a-collection-of-objects-to-create-a-batch-of-merged-documents.cs",
+      "task": "Use MailMerge.Execute with a collection of objects to create a batch of merged documents.",
+      "workflow": "input-bootstrap",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "execute-a-mail-merge-with-regions-to-repeat-a-product-list-for-each-order-record.cs",
+      "task": "Execute a mail merge with regions to repeat a product list for each order record.",
+      "workflow": "region-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "use-mailmerge-executewithregions-to-merge-data-into-multiple-nested-regions-within-the-tem.cs",
+      "task": "Use MailMerge.ExecuteWithRegions to merge data into multiple nested regions within the template.",
+      "workflow": "region-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "clone-the-template-document-after-each-merge-to-produce-independent-output-files.cs",
+      "task": "Clone the template document after each merge to produce independent output files.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "retrieve-mail-merge-region-metadata-using-mailmergeregioninfo-to-verify-start-and-end-posi.cs",
+      "task": "Retrieve mail merge region metadata using MailMergeRegionInfo to verify start and end positions.",
+      "workflow": "region-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "save-the-merged-document-as-pdf-using-document-save-with-saveformat-pdf-after-mail-merge.cs",
+      "task": "Save the merged document as PDF using Document.Save with SaveFormat.Pdf after mail merge.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "save-the-merged-document-as-docx-using-document-save-with-saveformat-docx-after-mail-merge.cs",
+      "task": "Save the merged document as DOCX using Document.Save with SaveFormat.Docx after mail merge.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "perform-mail-merge-using-xml-data-source-loaded-into-a-dataset-and-generate-docx-output.cs",
+      "task": "Perform mail merge using XML data source loaded into a DataSet and generate DOCX output.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "add-static-footer-text-to-the-template-using-documentbuilder-before-executing-mail-merge.cs",
+      "task": "Add static footer text to the template using DocumentBuilder before executing mail merge.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "insert-a-page-break-field-before-each-region-to-start-new-pages-for-each-repeat.cs",
+      "task": "Insert a PAGE_BREAK field before each region to start new pages for each repeat.",
+      "workflow": "region-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "handle-missingfieldevent-to-implement-error-handling-for-absent-merge-fields-before-execut.cs",
+      "task": "Handle MissingFieldEvent to implement error handling for absent merge fields before execution.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "adjust-image-size-during-insertion-by-modifying-imagescale-property-in-imagefieldmergingar.cs",
+      "task": "Adjust image size during insertion by modifying ImageScale property in ImageFieldMergingArgs.",
+      "workflow": "image-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "use-mailmergeregioninfo-to-obtain-region-start-and-end-positions-for-validation-purposes.cs",
+      "task": "Use MailMergeRegionInfo to obtain region start and end positions for validation purposes.",
+      "workflow": "region-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "perform-mail-merge-with-xml-data-source-by-loading-xml-schema-and-data-into-a-dataset.cs",
+      "task": "Perform mail merge with XML data source by loading XML schema and data into a DataSet.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "execute-simple-mail-merge-for-a-collection-of-records-and-clone-template-to-create-separat.cs",
+      "task": "Execute simple mail merge for a collection of records and clone template to create separate documents.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "customize-text-insertion-by-setting-the-text-property-with-formatted-strings-for-each-merg.cs",
+      "task": "Customize text insertion by setting the Text property with formatted strings for each merge field.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "generate-multiple-merged-documents-by-cloning-the-template-after-each-mail-merge-operation.cs",
+      "task": "Generate multiple merged documents by cloning the template after each mail merge operation.",
+      "workflow": "simple-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "use-documentbuilder-to-add-a-static-table-of-contents-that-updates-after-mail-merge-execut.cs",
+      "task": "Use DocumentBuilder to add a static table of contents that updates after mail merge execution.",
+      "workflow": "table-mail-merge",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
