@@ -1,0 +1,1337 @@
+{
+  "category": {
+    "name": "Images",
+    "slug": "images",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use Aspose.Words Shape and DocumentBuilder image APIs with deterministic local image creation using Aspose.Drawing, validated outputs, and container-aware image traversal.",
+    "required_packages": [
+      "Aspose.Words",
+      "Aspose.Drawing.Common",
+      "Newtonsoft.Json"
+    ]
+  },
+  "stats": {
+    "total_examples": 120,
+    "publish_ready_successful_examples": 120,
+    "workflow_counts": {
+      "image-extraction": 109,
+      "image-insertion-and-shape": 4,
+      "image-conversion-and-manipulation": 2,
+      "input-bootstrap": 1,
+      "general-image-workflow": 4
+    }
+  },
+  "rules_summary": {
+    "strict_api_bans": [
+      "Do not use System.Drawing in this category.",
+      "Do not download images from the internet.",
+      "Do not assume image files, folders, or source documents already exist.",
+      "Do not invent unsupported image APIs."
+    ],
+    "canonical_patterns": [
+      "Create deterministic local sample images with Aspose.Drawing before using them.",
+      "Use DocumentBuilder.InsertImage for standard insertion and Shape.ImageData for shape-based scenarios.",
+      "Enumerate Shape nodes and check HasImage before accessing ImageData.",
+      "Use local deterministic output names and validate that requested output files are written."
+    ],
+    "nullable_warning_prevention": [
+      "Initialize all non-nullable reference type properties to avoid CS8618 warnings.",
+      "Avoid CS8600, CS8602, and CS8604 by guarding maybe-null values before dereference or assignment.",
+      "Declare nullable locals when a value may legitimately be null and null-check before use."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Missing local image bootstrap",
+      "symptom": "Examples assume an existing image file or source document already exists.",
+      "fix": "Create deterministic local sample images and source documents before insertion, extraction, or conversion."
+    },
+    {
+      "pattern": "Shape insertion at invalid location",
+      "symptom": "Runtime failures such as invalid insertion location or self-append mistakes.",
+      "fix": "Append image shapes only once and only into valid containers such as Paragraph."
+    },
+    {
+      "pattern": "Unsafe image extraction",
+      "symptom": "Code accesses ImageData on nodes that are not image-bearing shapes.",
+      "fix": "Enumerate Shape nodes and require shape.HasImage before accessing or saving ImageData."
+    },
+    {
+      "pattern": "Stream reuse bugs",
+      "symptom": "Image or document stream operations fail because MemoryStream.Position was not reset.",
+      "fix": "Always reset stream.Position = 0 before reuse."
+    },
+    {
+      "pattern": "Context-specific image container mistakes",
+      "symptom": "Comment, content-control, footnote, or property-based image tasks fail due to wrong document structure assumptions.",
+      "fix": "Traverse the actual container nodes first, then shapes inside them, and insert shapes only through valid child containers."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "load-a-docx-file-and-extract-all-embedded-images-into-a-specified-output-folder.cs",
+      "task": "Load a DOCX file and extract all embedded images into a specified output folder.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "convert-each-extracted-png-image-to-jpeg-format-while-preserving-its-original-dimensions.cs",
+      "task": "Convert each extracted PNG image to JPEG format while preserving its original dimensions.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png",
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "batch-process-a-folder-of-doc-files-extracting-images-and-saving-them-as-bmp-files.cs",
+      "task": "Batch process a folder of DOC files, extracting images and saving them as BMP files.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "doc",
+        "bmp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "resize-all-jpeg-images-extracted-from-a-word-document-to-a-maximum-width-of-800-pixels.cs",
+      "task": "Resize all JPEG images extracted from a Word document to a maximum width of 800 pixels.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "apply-lossless-compression-to-tiff-images-extracted-from-rtf-files-and-store-them-in-an-ar.cs",
+      "task": "Apply lossless compression to TIFF images extracted from RTF files and store them in an archive.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "tiff"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "insert-a-high-resolution-png-image-into-a-specific-paragraph-of-an-existing-docx-file.cs",
+      "task": "Insert a high‑resolution PNG image into a specific paragraph of an existing DOCX file.",
+      "workflow": "image-insertion-and-shape",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "replace-all-gif-images-in-a-word-document-with-equivalent-png-versions-using-a-custom-mapp.cs",
+      "task": "Replace all GIF images in a Word document with equivalent PNG versions using a custom mapping.",
+      "workflow": "image-conversion-and-manipulation",
+      "outputs": [
+        "docx",
+        "png",
+        "gif"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "export-images-from-the-header-and-footer-sections-of-an-odt-document-into-separate-folders.cs",
+      "task": "Export images from the header and footer sections of an ODT document into separate folders.",
+      "workflow": "input-bootstrap",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "load-a-pdf-file-extract-embedded-images-and-convert-them-to-jpeg-with-85-quality.cs",
+      "task": "Load a PDF file, extract embedded images, and convert them to JPEG with 85% quality.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "pdf",
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "create-a-memory-stream-containing-a-bmp-image-extracted-from-a-docx-and-pass-it-to-the-api.cs",
+      "task": "Create a memory stream containing a BMP image extracted from a DOCX and pass it to the API.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "bmp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "generate-a-thumbnail-png-for-each-image-extracted-from-an-html-document-while-maintaining.cs",
+      "task": "Generate a thumbnail PNG for each image extracted from an HTML document while maintaining aspect ratio.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "html",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "batch-convert-all-extracted-images-from-a-collection-of-word-files-to-webp-format-for-web.cs",
+      "task": "Batch convert all extracted images from a collection of Word files to WebP format for web use.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "webp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "apply-a-grayscale-filter-to-all-jpeg-images-extracted-from-doc-files-before-saving-them.cs",
+      "task": "Apply a grayscale filter to all JPEG images extracted from DOC files before saving them.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "doc",
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "extract-images-from-tables-within-a-docx-document-and-store-them-in-a-zip-archive.cs",
+      "task": "Extract images from tables within a DOCX document and store them in a zip archive.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "load-a-docm-file-extract-embedded-images-and-rename-each-file-using-its-original-shape-nam.cs",
+      "task": "Load a DOCM file, extract embedded images, and rename each file using its original shape name.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "convert-extracted-bmp-images-to-png-format-while-reducing-color-depth-to-256-colors.cs",
+      "task": "Convert extracted BMP images to PNG format while reducing color depth to 256 colors.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png",
+        "bmp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "extract-images-from-footnotes-in-a-word-document-and-save-them-as-separate-jpeg-files.cs",
+      "task": "Extract images from footnotes in a Word document and save them as separate JPEG files.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "batch-process-multiple-docx-files-extracting-images-and-generating-a-csv-report-of-image-m.cs",
+      "task": "Batch process multiple DOCX files, extracting images and generating a CSV report of image metadata.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "csv"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "resize-extracted-png-images-to-a-fixed-height-of-600-pixels-while-preserving-width-proport.cs",
+      "task": "Resize extracted PNG images to a fixed height of 600 pixels while preserving width proportionally.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "apply-exif-orientation-correction-to-jpeg-images-extracted-from-scanned-pdf-documents-befo.cs",
+      "task": "Apply EXIF orientation correction to JPEG images extracted from scanned PDF documents before saving.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "pdf",
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "load-a-docx-template-replace-placeholder-images-with-dynamically-generated-charts-and-save.cs",
+      "task": "Load a DOCX template, replace placeholder images with dynamically generated charts, and save the document.",
+      "workflow": "general-image-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "extract-images-from-smartart-shapes-in-a-word-document-and-convert-them-to-svg-format.cs",
+      "task": "Extract images from SmartArt shapes in a Word document and convert them to SVG format.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "svg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "batch-extract-images-from-a-set-of-odt-files-and-organize-them-by-original-document-name.cs",
+      "task": "Batch extract images from a set of ODT files and organize them by original document name.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "compress-extracted-jpeg-images-using-progressive-encoding-to-reduce-file-size-for-web-deli.cs",
+      "task": "Compress extracted JPEG images using progressive encoding to reduce file size for web delivery.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "load-a-docx-file-extract-images-and-embed-them-into-a-new-html-page-using-base64-data.cs",
+      "task": "Load a DOCX file, extract images, and embed them into a new HTML page using base64 data.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "convert-extracted-gif-animations-to-individual-png-frames-and-store-them-in-sequentially-n.cs",
+      "task": "Convert extracted GIF animations to individual PNG frames and store them in sequentially numbered files.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png",
+        "gif"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "apply-a-watermark-text-overlay-to-all-png-images-extracted-from-a-collection-of-word-docum.cs",
+      "task": "Apply a watermark text overlay to all PNG images extracted from a collection of Word documents.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "extract-images-from-comments-in-a-docx-file-and-save-them-using-the-comment-identifier-as.cs",
+      "task": "Extract images from comments in a DOCX file and save them using the comment identifier as filename.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "batch-convert-extracted-tiff-images-to-jpeg-with-90-quality-and-store-them-in-the-output-d.cs",
+      "task": "Batch convert extracted TIFF images to JPEG with 90% quality and store them in the output directory.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg",
+        "tiff"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "load-a-doc-file-extract-all-embedded-vector-images-and-convert-them-to-emf-format.cs",
+      "task": "Load a DOC file, extract all embedded vector images, and convert them to EMF format.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "doc",
+        "emf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 31,
+      "file_name": "resize-extracted-bmp-images-to-a-maximum-file-size-of-200-kilobytes-using-quality-scaling.cs",
+      "task": "Resize extracted BMP images to a maximum file size of 200 kilobytes using quality scaling.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "bmp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 32,
+      "file_name": "extract-images-from-a-docx-document-s-custom-xml-parts-and-save-them-with-original-filenam.cs",
+      "task": "Extract images from a DOCX document's custom XML parts and save them with original filenames.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 33,
+      "file_name": "batch-process-docx-files-extracting-images-and-generating-a-json-manifest-containing-image.cs",
+      "task": "Batch process DOCX files, extracting images and generating a JSON manifest containing image dimensions.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 34,
+      "file_name": "convert-extracted-png-images-to-grayscale-bmp-files-for-archival-purposes-in-a-secure-fold.cs",
+      "task": "Convert extracted PNG images to grayscale BMP files for archival purposes in a secure folder.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png",
+        "bmp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 35,
+      "file_name": "load-a-word-document-replace-all-low-resolution-images-with-high-resolution-versions-from.cs",
+      "task": "Load a Word document, replace all low‑resolution images with high‑resolution versions from a library.",
+      "workflow": "general-image-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 36,
+      "file_name": "extract-images-from-a-docx-file-s-background-settings-and-store-them-as-separate-png-files.cs",
+      "task": "Extract images from a DOCX file's background settings and store them as separate PNG files.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 37,
+      "file_name": "batch-extract-images-from-a-set-of-pdf-files-and-rename-them-using-the-source-document-tit.cs",
+      "task": "Batch extract images from a set of PDF files and rename them using the source document title.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 38,
+      "file_name": "apply-a-blur-filter-to-all-extracted-jpeg-images-before-re-embedding-them-into-a-new-word.cs",
+      "task": "Apply a blur filter to all extracted JPEG images before re‑embedding them into a new Word file.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 39,
+      "file_name": "extract-images-from-a-docx-file-s-chart-objects-and-convert-them-to-high-resolution-png.cs",
+      "task": "Extract images from a DOCX file's chart objects and convert them to high‑resolution PNG.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 40,
+      "file_name": "resize-extracted-images-to-square-dimensions-of-500-by-500-pixels-adding-padding-where-nec.cs",
+      "task": "Resize extracted images to square dimensions of 500 by 500 pixels, adding padding where necessary.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 41,
+      "file_name": "batch-convert-extracted-gif-images-to-animated-webp-files-while-preserving-original-frame.cs",
+      "task": "Batch convert extracted GIF images to animated WebP files while preserving original frame delays.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "gif",
+        "webp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 42,
+      "file_name": "load-a-docx-file-extract-images-and-generate-an-excel-spreadsheet-listing-image-metadata.cs",
+      "task": "Load a DOCX file, extract images, and generate an Excel spreadsheet listing image metadata.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 43,
+      "file_name": "extract-images-from-a-word-document-s-equation-objects-and-save-them-as-png-for-external-u.cs",
+      "task": "Extract images from a Word document's equation objects and save them as PNG for external use.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 44,
+      "file_name": "apply-lossless-png-compression-to-all-extracted-images-and-compare-file-size-reduction-sta.cs",
+      "task": "Apply lossless PNG compression to all extracted images and compare file size reduction statistics.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 45,
+      "file_name": "batch-extract-images-from-doc-files-and-organize-them-into-subfolders-based-on-image-forma.cs",
+      "task": "Batch extract images from DOC files and organize them into subfolders based on image format type.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 46,
+      "file_name": "convert-extracted-tiff-images-to-pdf-pages-each-image-occupying-a-full-page-in-the-output.cs",
+      "task": "Convert extracted TIFF images to PDF pages, each image occupying a full page in the output.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "pdf",
+        "tiff"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 47,
+      "file_name": "load-a-docx-document-replace-all-images-larger-than-2-mb-with-compressed-jpeg-equivalents.cs",
+      "task": "Load a DOCX document, replace all images larger than 2 MB with compressed JPEG equivalents.",
+      "workflow": "image-conversion-and-manipulation",
+      "outputs": [
+        "docx",
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 48,
+      "file_name": "extract-images-from-a-word-document-s-embedded-ole-objects-and-save-them-using-the-ole-ide.cs",
+      "task": "Extract images from a Word document's embedded OLE objects and save them using the OLE identifier.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 49,
+      "file_name": "batch-process-a-collection-of-docx-files-extracting-images-and-creating-a-summary-pdf-cata.cs",
+      "task": "Batch process a collection of DOCX files, extracting images and creating a summary PDF catalog.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 50,
+      "file_name": "resize-extracted-jpeg-images-to-1024x768-resolution-while-maintaining-original-aspect-rati.cs",
+      "task": "Resize extracted JPEG images to 1024x768 resolution while maintaining original aspect ratio.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 51,
+      "file_name": "apply-a-sepia-tone-effect-to-all-png-images-extracted-from-a-set-of-word-documents.cs",
+      "task": "Apply a sepia tone effect to all PNG images extracted from a set of Word documents.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 52,
+      "file_name": "extract-images-from-a-docx-file-s-custom-document-properties-and-store-them-with-property.cs",
+      "task": "Extract images from a DOCX file's custom document properties and store them with property names.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 53,
+      "file_name": "batch-convert-extracted-bmp-images-to-jpeg-with-80-quality-and-log-conversion-results.cs",
+      "task": "Batch convert extracted BMP images to JPEG with 80% quality and log conversion results.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg",
+        "bmp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 54,
+      "file_name": "load-a-word-document-extract-images-and-embed-them-into-a-powerpoint-presentation-automati.cs",
+      "task": "Load a Word document, extract images, and embed them into a PowerPoint presentation automatically.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 55,
+      "file_name": "extract-images-from-a-docx-file-s-content-controls-and-rename-files-using-control-identifi.cs",
+      "task": "Extract images from a DOCX file's content controls and rename files using control identifiers.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 56,
+      "file_name": "resize-extracted-gif-images-to-a-maximum-width-of-300-pixels-while-preserving-animation-fr.cs",
+      "task": "Resize extracted GIF images to a maximum width of 300 pixels while preserving animation frames.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "gif"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 57,
+      "file_name": "apply-a-contrast-enhancement-filter-to-all-extracted-png-images-before-saving-them-to-disk.cs",
+      "task": "Apply a contrast enhancement filter to all extracted PNG images before saving them to disk.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 58,
+      "file_name": "batch-extract-images-from-a-set-of-odt-files-and-generate-a-markdown-gallery-with-thumbnai.cs",
+      "task": "Batch extract images from a set of ODT files and generate a markdown gallery with thumbnails.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 59,
+      "file_name": "convert-extracted-jpeg-images-to-grayscale-bmp-files-and-store-them-in-a-secure-archive.cs",
+      "task": "Convert extracted JPEG images to grayscale BMP files and store them in a secure archive.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg",
+        "bmp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 60,
+      "file_name": "load-a-docx-template-programmatically-insert-images-from-a-database-and-save-the-result.cs",
+      "task": "Load a DOCX template, programmatically insert images from a database, and save the result.",
+      "workflow": "image-insertion-and-shape",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 61,
+      "file_name": "extract-images-from-a-word-document-s-footnote-references-and-name-files-using-footnote-nu.cs",
+      "task": "Extract images from a Word document's footnote references and name files using footnote numbers.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 62,
+      "file_name": "batch-process-doc-files-extracting-images-and-creating-a-zip-archive-containing-all-extrac.cs",
+      "task": "Batch process DOC files, extracting images and creating a zip archive containing all extracted files.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 63,
+      "file_name": "resize-extracted-png-images-to-50-of-original-dimensions-for-quick-preview-generation.cs",
+      "task": "Resize extracted PNG images to 50% of original dimensions for quick preview generation.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 64,
+      "file_name": "apply-a-vignette-effect-to-all-jpeg-images-extracted-from-a-collection-of-word-documents.cs",
+      "task": "Apply a vignette effect to all JPEG images extracted from a collection of Word documents.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 65,
+      "file_name": "extract-images-from-a-docx-file-s-embedded-video-thumbnails-and-save-them-as-png-files.cs",
+      "task": "Extract images from a DOCX file's embedded video thumbnails and save them as PNG files.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 66,
+      "file_name": "batch-convert-extracted-tiff-images-to-lossless-png-while-preserving-metadata-such-as-dpi.cs",
+      "task": "Batch convert extracted TIFF images to lossless PNG while preserving metadata such as DPI.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png",
+        "tiff"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 67,
+      "file_name": "load-a-word-document-extract-images-and-generate-an-html-gallery-page-with-lightbox-suppor.cs",
+      "task": "Load a Word document, extract images, and generate an HTML gallery page with lightbox support.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 68,
+      "file_name": "extract-images-from-a-docx-file-s-custom-xml-schema-and-map-them-to-external-resource-ids.cs",
+      "task": "Extract images from a DOCX file's custom XML schema and map them to external resource IDs.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 69,
+      "file_name": "resize-extracted-bmp-images-to-a-fixed-1024-pixel-width-adjusting-height-proportionally.cs",
+      "task": "Resize extracted BMP images to a fixed 1024 pixel width, adjusting height proportionally.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "bmp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 70,
+      "file_name": "apply-a-sharpening-filter-to-all-png-images-extracted-from-word-documents-before-re-saving.cs",
+      "task": "Apply a sharpening filter to all PNG images extracted from Word documents before re‑saving them.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 71,
+      "file_name": "batch-extract-images-from-a-set-of-docx-files-and-create-a-pdf-catalog-with-thumbnails.cs",
+      "task": "Batch extract images from a set of DOCX files and create a PDF catalog with thumbnails.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 72,
+      "file_name": "convert-extracted-jpeg-images-to-high-resolution-tiff-for-archival-storage-with-lzw-compre.cs",
+      "task": "Convert extracted JPEG images to high‑resolution TIFF for archival storage with LZW compression.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg",
+        "tiff"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 73,
+      "file_name": "load-a-docx-document-replace-all-images-with-placeholders-and-export-the-modified-document.cs",
+      "task": "Load a DOCX document, replace all images with placeholders, and export the modified document.",
+      "workflow": "general-image-workflow",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 74,
+      "file_name": "extract-images-from-a-word-document-s-section-breaks-and-save-them-using-section-identifie.cs",
+      "task": "Extract images from a Word document's section breaks and save them using section identifiers.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 75,
+      "file_name": "batch-process-multiple-odt-files-extracting-images-and-generating-a-consolidated-json-mani.cs",
+      "task": "Batch process multiple ODT files, extracting images and generating a consolidated JSON manifest.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 76,
+      "file_name": "resize-extracted-gif-images-to-200x200-pixels-and-convert-them-to-static-png-format.cs",
+      "task": "Resize extracted GIF images to 200x200 pixels and convert them to static PNG format.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png",
+        "gif"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 77,
+      "file_name": "apply-a-color-inversion-filter-to-all-extracted-png-images-for-visual-effect-testing.cs",
+      "task": "Apply a color inversion filter to all extracted PNG images for visual effect testing.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 78,
+      "file_name": "extract-images-from-a-docx-file-s-embedded-audio-cover-art-and-store-them-as-jpeg-files.cs",
+      "task": "Extract images from a DOCX file's embedded audio cover art and store them as JPEG files.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 79,
+      "file_name": "batch-convert-extracted-bmp-images-to-webp-with-lossless-compression-and-log-conversion-de.cs",
+      "task": "Batch convert extracted BMP images to WebP with lossless compression and log conversion details.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "bmp",
+        "webp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 80,
+      "file_name": "load-a-word-document-extract-images-and-create-a-powershell-script-to-re-embed-them-later.cs",
+      "task": "Load a Word document, extract images, and create a PowerShell script to re‑embed them later.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 81,
+      "file_name": "extract-images-from-a-docx-file-s-embedded-map-objects-and-save-them-as-high-resolution-pn.cs",
+      "task": "Extract images from a DOCX file's embedded map objects and save them as high‑resolution PNG.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 82,
+      "file_name": "resize-extracted-jpeg-images-to-a-maximum-file-size-of-500kb-using-adaptive-quality.cs",
+      "task": "Resize extracted JPEG images to a maximum file size of 500KB using adaptive quality.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 83,
+      "file_name": "apply-a-border-of-5-pixels-in-red-color-to-all-extracted-png-images-before-saving.cs",
+      "task": "Apply a border of 5 pixels in red color to all extracted PNG images before saving.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 84,
+      "file_name": "batch-extract-images-from-a-collection-of-doc-files-and-generate-an-excel-index-with-file.cs",
+      "task": "Batch extract images from a collection of DOC files and generate an Excel index with file paths.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 85,
+      "file_name": "convert-extracted-tiff-images-to-grayscale-jpeg-for-use-in-low-bandwidth-environments.cs",
+      "task": "Convert extracted TIFF images to grayscale JPEG for use in low‑bandwidth environments.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg",
+        "tiff"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 86,
+      "file_name": "load-a-docx-template-programmatically-insert-images-from-a-rest-api-and-save-as-pdf.cs",
+      "task": "Load a DOCX template, programmatically insert images from a REST API, and save as PDF.",
+      "workflow": "image-insertion-and-shape",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 87,
+      "file_name": "extract-images-from-a-word-document-s-embedded-chart-data-and-export-them-as-svg-files.cs",
+      "task": "Extract images from a Word document's embedded chart data and export them as SVG files.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "svg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 88,
+      "file_name": "batch-process-docx-files-extracting-images-and-creating-a-summary-csv-containing-image-siz.cs",
+      "task": "Batch process DOCX files, extracting images and creating a summary CSV containing image sizes.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "csv"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 89,
+      "file_name": "resize-extracted-png-images-to-75-of-original-dimensions-for-quick-preview-generation.cs",
+      "task": "Resize extracted PNG images to 75% of original dimensions for quick preview generation.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 90,
+      "file_name": "apply-a-gaussian-blur-to-all-extracted-jpeg-images-before-embedding-them-into-a-new-docume.cs",
+      "task": "Apply a Gaussian blur to all extracted JPEG images before embedding them into a new document.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 91,
+      "file_name": "extract-images-from-a-docx-file-s-embedded-3d-model-thumbnails-and-save-as-png.cs",
+      "task": "Extract images from a DOCX file's embedded 3D model thumbnails and save as PNG.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 92,
+      "file_name": "batch-convert-extracted-gif-animations-to-mp4-video-clips-while-preserving-frame-order.cs",
+      "task": "Batch convert extracted GIF animations to MP4 video clips while preserving frame order.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "gif"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 93,
+      "file_name": "load-a-word-document-extract-images-and-generate-a-latex-file-referencing-each-image.cs",
+      "task": "Load a Word document, extract images, and generate a LaTeX file referencing each image.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 94,
+      "file_name": "extract-images-from-a-docx-file-s-custom-xml-data-and-map-them-to-database-records.cs",
+      "task": "Extract images from a DOCX file's custom XML data and map them to database records.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "xml"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 95,
+      "file_name": "resize-extracted-bmp-images-to-640x480-resolution-for-use-in-legacy-applications.cs",
+      "task": "Resize extracted BMP images to 640x480 resolution for use in legacy applications.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "bmp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 96,
+      "file_name": "apply-a-hue-rotation-of-180-degrees-to-all-extracted-png-images-for-color-testing.cs",
+      "task": "Apply a hue rotation of 180 degrees to all extracted PNG images for color testing.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 97,
+      "file_name": "batch-extract-images-from-a-set-of-odt-files-and-create-a-searchable-pdf-catalog.cs",
+      "task": "Batch extract images from a set of ODT files and create a searchable PDF catalog.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 98,
+      "file_name": "convert-extracted-jpeg-images-to-high-quality-webp-for-optimized-web-delivery.cs",
+      "task": "Convert extracted JPEG images to high‑quality WebP for optimized web delivery.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg",
+        "webp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 99,
+      "file_name": "load-a-docx-file-replace-all-images-with-placeholders-and-export-to-html-preserving-layout.cs",
+      "task": "Load a DOCX file, replace all images with placeholders, and export to HTML preserving layout.",
+      "workflow": "general-image-workflow",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 100,
+      "file_name": "extract-images-from-a-word-document-s-embedded-audio-tracks-and-save-them-as-jpeg-thumbnai.cs",
+      "task": "Extract images from a Word document's embedded audio tracks and save them as JPEG thumbnails.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 101,
+      "file_name": "batch-process-multiple-doc-files-extracting-images-and-generating-a-consolidated-pdf-repor.cs",
+      "task": "Batch process multiple DOC files, extracting images and generating a consolidated PDF report.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "doc",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 102,
+      "file_name": "resize-extracted-png-images-to-a-maximum-dimension-of-1200-pixels-maintaining-aspect-ratio.cs",
+      "task": "Resize extracted PNG images to a maximum dimension of 1200 pixels, maintaining aspect ratio.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 103,
+      "file_name": "apply-a-motion-blur-effect-to-all-extracted-jpeg-images-before-re-embedding-them.cs",
+      "task": "Apply a motion blur effect to all extracted JPEG images before re‑embedding them.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 104,
+      "file_name": "extract-images-from-a-docx-file-s-embedded-spreadsheet-charts-and-save-them-as-png-files.cs",
+      "task": "Extract images from a DOCX file's embedded spreadsheet charts and save them as PNG files.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 105,
+      "file_name": "batch-convert-extracted-bmp-images-to-lossless-png-and-generate-a-checksum-file-for-verifi.cs",
+      "task": "Batch convert extracted BMP images to lossless PNG and generate a checksum file for verification.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png",
+        "bmp"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 106,
+      "file_name": "load-a-word-document-extract-images-and-create-a-markdown-file-with-image-links.cs",
+      "task": "Load a Word document, extract images, and create a Markdown file with image links.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 107,
+      "file_name": "extract-images-from-a-docx-file-s-embedded-video-frames-and-store-them-as-high-resolution.cs",
+      "task": "Extract images from a DOCX file's embedded video frames and store them as high‑resolution PNG.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 108,
+      "file_name": "resize-extracted-jpeg-images-to-50-width-and-height-for-thumbnail-generation-in-galleries.cs",
+      "task": "Resize extracted JPEG images to 50% width and height for thumbnail generation in galleries.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 109,
+      "file_name": "apply-a-color-balance-adjustment-to-all-extracted-png-images-before-saving-them-to-the-out.cs",
+      "task": "Apply a color balance adjustment to all extracted PNG images before saving them to the output folder.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 110,
+      "file_name": "batch-extract-images-from-a-collection-of-docx-files-and-generate-an-html-index-page.cs",
+      "task": "Batch extract images from a collection of DOCX files and generate an HTML index page.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 111,
+      "file_name": "convert-extracted-tiff-images-to-pdf-with-each-image-on-a-separate-page-and-embed-metadata.cs",
+      "task": "Convert extracted TIFF images to PDF with each image on a separate page and embed metadata.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "pdf",
+        "tiff"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 112,
+      "file_name": "load-a-docx-template-programmatically-insert-images-from-a-file-system-and-save-as-docx.cs",
+      "task": "Load a DOCX template, programmatically insert images from a file system, and save as DOCX.",
+      "workflow": "image-insertion-and-shape",
+      "outputs": [
+        "docx",
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 113,
+      "file_name": "extract-images-from-a-word-document-s-embedded-qr-codes-and-decode-them-for-data-extractio.cs",
+      "task": "Extract images from a Word document's embedded QR codes and decode them for data extraction.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 114,
+      "file_name": "batch-process-doc-files-extracting-images-and-creating-a-compressed-zip-archive-with-passw.cs",
+      "task": "Batch process DOC files, extracting images and creating a compressed ZIP archive with password protection.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "doc"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 115,
+      "file_name": "resize-extracted-png-images-to-300x300-pixels-and-add-a-watermark-text-overlay.cs",
+      "task": "Resize extracted PNG images to 300x300 pixels and add a watermark text overlay.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 116,
+      "file_name": "apply-a-saturation-increase-of-20-to-all-extracted-jpeg-images-before-re-saving-them.cs",
+      "task": "Apply a saturation increase of 20% to all extracted JPEG images before re‑saving them.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "jpeg"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 117,
+      "file_name": "extract-images-from-a-docx-file-s-embedded-audio-waveform-visualizations-and-save-as-png.cs",
+      "task": "Extract images from a DOCX file's embedded audio waveform visualizations and save as PNG.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "png"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 118,
+      "file_name": "batch-convert-extracted-gif-images-to-animated-png-while-preserving-original-frame-timing.cs",
+      "task": "Batch convert extracted GIF images to animated PNG while preserving original frame timing.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "png",
+        "gif"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 119,
+      "file_name": "load-a-word-document-extract-images-and-generate-a-json-file-containing-base64-encoded-dat.cs",
+      "task": "Load a Word document, extract images, and generate a JSON file containing base64 encoded data.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 120,
+      "file_name": "extract-images-from-a-docx-file-s-embedded-map-tiles-and-store-them-using-tile-coordinates.cs",
+      "task": "Extract images from a DOCX file's embedded map tiles and store them using tile coordinates.",
+      "workflow": "image-extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
