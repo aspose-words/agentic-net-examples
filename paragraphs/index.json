@@ -1,0 +1,470 @@
+{
+  "category": {
+    "name": "Paragraphs",
+    "slug": "paragraphs",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Prefer simple DocumentBuilder workflows for paragraph insertion and formatting tasks. Use direct Paragraph DOM traversal for counting, filtering, reporting, text import/export, and structural edits.",
+    "required_packages": [
+      "Aspose.Words",
+      "Newtonsoft.Json",
+      "Aspose.Drawing.Common"
+    ]
+  },
+  "stats": {
+    "total_examples": 35,
+    "winner_counts": {
+      "both": 0,
+      "mcp": 35,
+      "llm": 0,
+      "none": 0
+    },
+    "workflow_counts": {
+      "insertion": 6,
+      "paragraph-formatting": 16,
+      "traversal-reporting": 6,
+      "text-export": 4,
+      "editing": 3
+    }
+  },
+  "rules_summary": {
+    "minimal_primary_rules": [
+      "Use native Aspose.Words APIs directly.",
+      "Bootstrap all DOC, DOCX, and TXT inputs locally.",
+      "Keep validation narrow and task-specific.",
+      "Do not invent unsupported paragraph or layout APIs.",
+      "Prefer DocumentBuilder for simple insertion and formatting tasks."
+    ],
+    "paragraph_formatting_rules": [
+      "Use Paragraph.ParagraphFormat for alignment, spacing, indent, bidi, shading, outline level, page break, and style changes.",
+      "For built-in styles, prefer ParagraphFormat.StyleIdentifier.",
+      "For custom styles, prefer ParagraphFormat.StyleName.",
+      "Validate the exact target paragraph instead of broad paragraph counts."
+    ],
+    "editing_rules": [
+      "Do not call Run.Replace; update Run.Text while preserving formatting.",
+      "For merge and split tasks, edit real Paragraph nodes and keep the surrounding document structure valid.",
+      "For replacement tasks, preserve existing run formatting unless the task explicitly changes it."
+    ],
+    "api_safety_bans": [
+      "Do not use fake namespaces such as Aspose.Words.Paragraphs.",
+      "Do not call Paragraph.GetLinesCount().",
+      "Do not call Run.Replace().",
+      "Do not invent layout APIs for paragraph line counts."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Fake Paragraph namespace",
+      "seen_count": 1,
+      "symptom": "Compiler error that Aspose.Words.Paragraphs does not exist.",
+      "fix": "Use only documented Aspose.Words namespaces."
+    },
+    {
+      "pattern": "Unsupported paragraph line-count API",
+      "seen_count": 2,
+      "symptom": "Compiler errors around Paragraph.GetLinesCount and invented layout helpers.",
+      "fix": "Use a compile-safe approximation for line-count tasks rather than unsupported APIs."
+    },
+    {
+      "pattern": "Invalid run replacement API",
+      "seen_count": 1,
+      "symptom": "Compiler error that Run does not expose Replace.",
+      "fix": "Edit Run.Text while preserving run formatting."
+    },
+    {
+      "pattern": "Over-broad paragraph count validation",
+      "seen_count": 2,
+      "symptom": "Runtime failures caused by asserting total paragraph counts for tasks that only required a targeted insertion or formatting change.",
+      "fix": "Validate the exact target paragraph or target scope only."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "insert-a-new-paragraph-with-custom-text-using-documentbuilder-writeln-inside-a-document-lo.cs",
+      "task": "Insert a new paragraph with custom text using DocumentBuilder.Writeln inside a document loop.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "insertion",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 2,
+      "file_name": "insert-an-empty-paragraph-at-a-specific-node-using-documentbuilder-insertparagraph-for-pre.cs",
+      "task": "Insert an empty paragraph at a specific node using DocumentBuilder.InsertParagraph for precise placement.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "insertion",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 3,
+      "file_name": "set-paragraph-alignment-to-center-by-modifying-builder-currentparagraph-paragraphformat-al.cs",
+      "task": "Set paragraph alignment to center by modifying builder.CurrentParagraph.ParagraphFormat.Alignment property for the current paragraph.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 4,
+      "file_name": "adjust-paragraph-line-spacing-to-1-5-lines-by-setting-builder-currentparagraph-paragraphfo.cs",
+      "task": "Adjust paragraph line spacing to 1.5 lines by setting builder.CurrentParagraph.ParagraphFormat.LineSpacing to 1.5.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 5,
+      "file_name": "set-first-line-indent-of-a-paragraph-to-half-an-inch-using-paragraphformat-firstlineindent.cs",
+      "task": "Set first line indent of a paragraph to half an inch using ParagraphFormat.FirstLineIndent property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 6,
+      "file_name": "apply-built-in-heading1-style-to-the-current-paragraph-by-assigning-paragraphformat-stylei.cs",
+      "task": "Apply built‑in Heading1 style to the current paragraph by assigning ParagraphFormat.StyleIdentifier to StyleIdentifier.Heading1.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 7,
+      "file_name": "apply-a-custom-paragraph-style-named-mystyle-by-setting-paragraphformat-stylename-property.cs",
+      "task": "Apply a custom paragraph style named MyStyle by setting ParagraphFormat.StyleName property to the style name.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 8,
+      "file_name": "use-styleidentifier-enumeration-to-select-a-locale-independent-style-for-a-paragraph-ensur.cs",
+      "task": "Use StyleIdentifier enumeration to select a locale‑independent style for a paragraph, ensuring consistent formatting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 9,
+      "file_name": "retrieve-the-number-of-lines-in-a-paragraph-by-calling-paragraph-getlinescount-and-store-t.cs",
+      "task": "Retrieve the number of lines in a paragraph by calling Paragraph.GetLinesCount() and store the result.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "traversal-reporting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 10,
+      "file_name": "log-each-paragraph-s-line-count-to-the-console-for-debugging-paragraph-layout-issues.cs",
+      "task": "Log each paragraph’s line count to the console for debugging paragraph layout issues.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "traversal-reporting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 11,
+      "file_name": "insert-a-style-separator-run-between-two-text-runs-to-combine-different-paragraph-styles-w.cs",
+      "task": "Insert a style separator run between two text runs to combine different paragraph styles within one paragraph.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 12,
+      "file_name": "search-document-runs-for-styleidentifier-styleseparator-to-identify-existing-style-separat.cs",
+      "task": "Search document runs for StyleIdentifier.StyleSeparator to identify existing style separators for further processing.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "traversal-reporting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 13,
+      "file_name": "enable-bi-directional-marks-before-saving-to-plain-text-by-setting-document-addbidimarks-p.cs",
+      "task": "Enable bi‑directional marks before saving to plain text by setting Document.AddBidiMarks property to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 14,
+      "file_name": "export-a-document-to-txt-format-while-preserving-headers-and-footers-by-enabling-exporthea.cs",
+      "task": "Export a document to TXT format while preserving headers and footers by enabling ExportHeadersFooters option during save.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "text-export",
+      "outputs": [
+        "txt"
+      ]
+    },
+    {
+      "id": 15,
+      "file_name": "export-a-document-to-txt-without-headers-and-footers-by-setting-exportheadersfooters-optio.cs",
+      "task": "Export a document to TXT without headers and footers by setting ExportHeadersFooters option to false.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "text-export",
+      "outputs": [
+        "txt"
+      ]
+    },
+    {
+      "id": 16,
+      "file_name": "load-a-plain-text-file-with-detectnumberingwithwhitespaces-enabled-to-automatically-recogn.cs",
+      "task": "Load a plain‑text file with DetectNumberingWithWhitespaces enabled to automatically recognize list items.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 17,
+      "file_name": "convert-detected-plain-text-list-numbering-into-word-list-structures-after-loading-the-doc.cs",
+      "task": "Convert detected plain‑text list numbering into Word list structures after loading the document successfully.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 18,
+      "file_name": "navigate-to-a-specific-paragraph-index-using-documentbuilder-movetoparagraph-before-applyi.cs",
+      "task": "Navigate to a specific paragraph index using DocumentBuilder.MoveToParagraph before applying formatting changes programmatically.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 19,
+      "file_name": "modify-paragraph-spacing-before-and-after-by-setting-paragraphformat-spacebefore-and-space.cs",
+      "task": "Modify paragraph spacing before and after by setting ParagraphFormat.SpaceBefore and SpaceAfter properties appropriately.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 20,
+      "file_name": "set-paragraph-shading-background-color-to-light-gray-using-paragraphformat-shading-backgro.cs",
+      "task": "Set paragraph shading background color to light gray using ParagraphFormat.Shading.BackgroundPatternColor property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 21,
+      "file_name": "apply-right-to-left-paragraph-direction-by-setting-paragraphformat-bidi-property-to-true-f.cs",
+      "task": "Apply right‑to‑left paragraph direction by setting ParagraphFormat.Bidi property to true for Arabic text.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 22,
+      "file_name": "insert-an-empty-paragraph-after-a-bookmark-by-moving-the-builder-to-the-bookmark-and-calli.cs",
+      "task": "Insert an empty paragraph after a bookmark by moving the builder to the bookmark and calling InsertParagraph.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "insertion",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 23,
+      "file_name": "remove-all-paragraphs-that-use-a-specific-style-identifier-such-as-styleidentifier-quote-f.cs",
+      "task": "Remove all paragraphs that use a specific style identifier, such as StyleIdentifier.Quote, from the document.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "traversal-reporting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 24,
+      "file_name": "replace-text-within-a-paragraph-while-preserving-its-original-formatting-by-using-run-repl.cs",
+      "task": "Replace text within a paragraph while preserving its original formatting by using Run.Replace method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "editing",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 25,
+      "file_name": "merge-consecutive-paragraphs-that-share-identical-formatting-into-a-single-paragraph-to-si.cs",
+      "task": "Merge consecutive paragraphs that share identical formatting into a single paragraph to simplify document structure.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "editing",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 26,
+      "file_name": "split-a-long-paragraph-into-multiple-shorter-paragraphs-at-specified-character-positions-t.cs",
+      "task": "Split a long paragraph into multiple shorter paragraphs at specified character positions to improve readability.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "editing",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 27,
+      "file_name": "insert-a-paragraph-with-a-page-break-before-it-by-setting-paragraphformat-pagebreakbefore.cs",
+      "task": "Insert a paragraph with a page break before it by setting ParagraphFormat.PageBreakBefore property to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "insertion",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 28,
+      "file_name": "set-paragraph-outline-level-to-2-for-subheadings-to-ensure-proper-inclusion-in-generated-t.cs",
+      "task": "Set paragraph outline level to 2 for subheadings to ensure proper inclusion in generated table of contents.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 29,
+      "file_name": "apply-a-specific-paragraph-style-to-all-heading-paragraphs-using-a-style-selector-loop-acr.cs",
+      "task": "Apply a specific paragraph style to all heading paragraphs using a style selector loop across the document.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "paragraph-formatting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 30,
+      "file_name": "count-the-number-of-paragraphs-that-contain-a-given-keyword-and-output-the-total-count-res.cs",
+      "task": "Count the number of paragraphs that contain a given keyword and output the total count result.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "traversal-reporting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 31,
+      "file_name": "add-a-paragraph-containing-a-hyperlink-run-and-assign-the-built-in-hyperlink-style-to-it.cs",
+      "task": "Add a paragraph containing a hyperlink run and assign the built‑in Hyperlink style to it.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "insertion",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 32,
+      "file_name": "insert-a-paragraph-with-a-field-code-such-as-date-and-format-the-field-result-using-paragr.cs",
+      "task": "Insert a paragraph with a field code such as DATE and format the field result using paragraph formatting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "insertion",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 33,
+      "file_name": "determine-whether-a-paragraph-resides-inside-a-table-by-checking-paragraph-isintable-prope.cs",
+      "task": "Determine whether a paragraph resides inside a table by checking Paragraph.IsInTable property value.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "traversal-reporting",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 34,
+      "file_name": "export-paragraphs-to-plain-text-with-line-numbers-prefixed-by-enabling-line-numbering-opti.cs",
+      "task": "Export paragraphs to plain text with line numbers prefixed by enabling line numbering option in SaveOptions.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "text-export",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 35,
+      "file_name": "load-a-txt-file-with-list-detection-disabled-and-compare-the-resulting-document-s-list-for.cs",
+      "task": "Load a TXT file with list detection disabled and compare the resulting document's list formatting to enabled mode.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "text-export",
+      "outputs": [
+        "txt",
+        "docx"
+      ]
+    }
+  ]
+}
