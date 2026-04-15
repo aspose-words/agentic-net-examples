@@ -1,0 +1,375 @@
+{
+  "category": {
+    "name": "Range",
+    "slug": "range",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use Document.Range and node-scoped Range APIs for search, replace, extraction, bookmarks, and fields. Keep validation narrow and task-specific. Bootstrap all inputs locally.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "winner_counts": {
+      "both": 0,
+      "mcp": 30,
+      "llm": 0,
+      "none": 0
+    },
+    "workflow_examples": {
+      "range-workflow": 30
+    }
+  },
+  "rules_summary": {
+    "core_rules": [
+      "Use native Aspose.Words APIs directly.",
+      "Create local sample source documents when a task refers to an existing file, folder, stream, or template.",
+      "Do not assume external files or folders already exist.",
+      "Always save requested outputs.",
+      "Keep validation narrow and task-specific."
+    ],
+    "range_rules": [
+      "Use Document.Range for whole-document operations and node-specific Range for scoped tasks.",
+      "Use Range.Replace for search/replace; use callbacks only when required.",
+      "Use Range.Text for plain text extraction when formatting is not required.",
+      "Use Document.Range.Bookmarks and Document.Range.Fields for bookmark/field tasks."
+    ],
+    "api_safety_rules": [
+      "Do not invent unsupported APIs or fake namespaces.",
+      "Use documented Range, Bookmark, Field, and FindReplaceOptions APIs only."
+    ]
+  },
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "extract-plain-unformatted-text-from-a-document-using-the-range-text-property.cs",
+      "task": "Extract plain unformatted text from a document using the Range.Text property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 2,
+      "file_name": "extract-plain-text-of-each-section-via-each-section-s-range-text-property.cs",
+      "task": "Extract plain text of each section via each section's Range.Text property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 3,
+      "file_name": "use-the-range-object-to-extract-plain-text-from-a-header-and-footer-for-indexing.cs",
+      "task": "Use the Range object to extract plain text from a header and footer for indexing.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 4,
+      "file_name": "generate-a-plain-text-version-of-a-document-by-extracting-each-section-s-range-text.cs",
+      "task": "Generate a plain‑text version of a document by extracting each section's Range.Text.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 5,
+      "file_name": "retrieve-the-count-of-bookmarks-within-a-range.cs",
+      "task": "Retrieve the count of bookmarks within a range.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 6,
+      "file_name": "retrieve-the-count-of-form-fields-within-a-range.cs",
+      "task": "Retrieve the count of form fields within a range.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 7,
+      "file_name": "iterate-through-each-bookmark-in-a-range-and-output-its-name.cs",
+      "task": "Iterate through each bookmark in a range and output its name.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 8,
+      "file_name": "iterate-over-bookmarks-in-a-range-and-modify-their-names.cs",
+      "task": "Iterate over bookmarks in a range and modify their names.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 9,
+      "file_name": "add-a-new-bookmark-at-the-start-of-the-document-using-range-bookmarks.cs",
+      "task": "Add a new bookmark at the start of the document using Range.Bookmarks.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 10,
+      "file_name": "remove-a-specific-bookmark-by-locating-its-range-and-calling-remove.cs",
+      "task": "Remove a specific bookmark by locating its range and calling Remove.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 11,
+      "file_name": "clear-the-text-of-a-specific-bookmark-s-range-without-deleting-the-bookmark.cs",
+      "task": "Clear the text of a specific bookmark's range without deleting the bookmark.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 12,
+      "file_name": "replace-text-within-a-range-by-assigning-a-new-string-to-the-range-text-property.cs",
+      "task": "Replace text within a range by assigning a new string to the Range.Text property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 13,
+      "file_name": "search-for-a-specific-phrase-within-a-range-and-replace-it-with-another-string.cs",
+      "task": "Search for a specific phrase within a range and replace it with another string.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 14,
+      "file_name": "perform-a-case-insensitive-search-within-a-range-and-collect-matching-paragraph-indices.cs",
+      "task": "Perform a case‑insensitive search within a range and collect matching paragraph indices.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 15,
+      "file_name": "insert-new-text-at-the-beginning-of-a-range.cs",
+      "task": "Insert new text at the beginning of a range.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 16,
+      "file_name": "append-text-to-the-end-of-a-range.cs",
+      "task": "Append text to the end of a range.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 17,
+      "file_name": "copy-paragraph-s-range-content-into-a-string-variable-for-further-processing.cs",
+      "task": "Copy paragraph's range content into a string variable for further processing.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 18,
+      "file_name": "delete-all-characters-in-a-document-s-body-by-calling-delete-on-doc-range.cs",
+      "task": "Delete all characters in a document's body by calling Delete on doc.Range.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 19,
+      "file_name": "save-the-document-after-removing-all-content-from-its-range-to-create-an-empty-template.cs",
+      "task": "Save the document after removing all content from its range to create an empty template.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 20,
+      "file_name": "implement-a-batch-process-that-clears-the-content-of-multiple-documents-using-doc-range-de.cs",
+      "task": "Implement a batch process that clears the content of multiple documents using doc.Range.Delete.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 21,
+      "file_name": "iterate-over-form-fields-in-a-range-and-list-their-names-and-types.cs",
+      "task": "Iterate over form fields in a range and list their names and types.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 22,
+      "file_name": "create-a-checkbox-form-field-inside-a-specific-range-and-set-its-default-state.cs",
+      "task": "Create a checkbox form field inside a specific range and set its default state.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 23,
+      "file_name": "update-the-value-of-a-text-input-form-field-located-in-a-given-range.cs",
+      "task": "Update the value of a text input form field located in a given range.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 24,
+      "file_name": "delete-all-form-fields-within-a-document-by-iterating-over-range-formfields-and-calling-re.cs",
+      "task": "Delete all form fields within a document by iterating over Range.FormFields and calling Remove.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 25,
+      "file_name": "validate-that-a-range-contains-no-form-fields-before-performing-a-text-replacement-operati.cs",
+      "task": "Validate that a range contains no form fields before performing a text replacement operation.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 26,
+      "file_name": "generate-a-summary-report-of-bookmark-names-and-their-corresponding-text-extracted-from-ra.cs",
+      "task": "Generate a summary report of bookmark names and their corresponding text extracted from ranges.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 27,
+      "file_name": "replace-placeholder-text-inside-a-range-with-dynamic-data-retrieved-from-a-database.cs",
+      "task": "Replace placeholder text inside a range with dynamic data retrieved from a database.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 28,
+      "file_name": "implement-a-script-that-removes-all-bookmarks-and-form-fields-from-a-document-range-before.cs",
+      "task": "Implement a script that removes all bookmarks and form fields from a document range before publishing.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 29,
+      "file_name": "log-the-names-of-all-bookmarks-found-in-a-range-for-debugging.cs",
+      "task": "Log the names of all bookmarks found in a range for debugging.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 30,
+      "file_name": "export-the-extracted-plain-text-from-a-range-to-a-txt-file-while-preserving-line-breaks.cs",
+      "task": "Export the extracted plain text from a range to a .txt file while preserving line breaks.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "range-workflow",
+      "outputs": [
+        "txt"
+      ]
+    }
+  ]
+}
