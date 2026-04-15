@@ -1,0 +1,364 @@
+{
+  "category": {
+    "name": "OLE Objects",
+    "slug": "ole-objects",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use DocumentBuilder.InsertOleObject for insertion, Shape.OleFormat for inspection and extraction, insert-then-remove for replacement, and self-bootstrapped local assets for all file-based workflows.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "publish_ready_examples": 30,
+    "workflow_counts": {
+      "inspection": 8,
+      "batch-processing": 2,
+      "online-video": 3,
+      "extraction": 7,
+      "ole-package": 3,
+      "validation": 3,
+      "insertion": 3,
+      "replacement": 1
+    }
+  },
+  "rules_summary": {
+    "core_rules": [
+      "Always bootstrap local sample input files before embedding or inspecting OLE objects.",
+      "Use DocumentBuilder.InsertOleObject(...) or documented APIs for insertion rather than speculative constructors or undocumented helpers.",
+      "Inspect OLE objects through Shape nodes and shape.OleFormat only.",
+      "Keep extraction and reporting workflows deterministic by writing outputs to local files and validating their existence.",
+      "Use replacement by insert-then-remove at the correct parent level instead of mutating undocumented internals."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Missing local input asset",
+      "symptom": "Runtime failure because a sample spreadsheet, PDF, DOCX, icon, or binary file does not exist.",
+      "fix": "Create the input locally inside the example before loading or embedding it."
+    },
+    {
+      "pattern": "Accessing OleFormat on a non-OLE shape",
+      "symptom": "Null-reference failures when iterating shapes.",
+      "fix": "Always check shape.OleFormat != null before reading metadata or raw data."
+    },
+    {
+      "pattern": "Wrong replacement strategy",
+      "symptom": "Invalid node manipulation or broken document structure during OLE replacement.",
+      "fix": "Insert the replacement object at the correct parent level, then remove the old shape."
+    },
+    {
+      "pattern": "Unstable external dependency assumption",
+      "symptom": "Examples fail because they rely on software handlers, shared folders, or user-specific files.",
+      "fix": "Keep examples self-contained and local to the run."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "adjust-ole-object-icon-dimensions-to-maintain-aspect-ratio-after-resizing-for-document-lay.cs",
+      "task": "Adjust OLE object icon dimensions to maintain aspect ratio after resizing for document layout.",
+      "workflow": "inspection",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 2,
+      "file_name": "batch-insert-identical-excel-ole-object-into-multiple-word-files-using-a-foreach-loop.cs",
+      "task": "Batch insert identical Excel OLE object into multiple Word files using a foreach loop.",
+      "workflow": "batch-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 3,
+      "file_name": "batch-insert-the-same-excel-ole-object-into-multiple-word-documents-within-a-folder-using.cs",
+      "task": "Batch insert the same Excel OLE object into multiple Word documents within a folder using a loop.",
+      "workflow": "batch-processing",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 4,
+      "file_name": "batch-process-a-collection-of-word-files-to-embed-a-common-online-video-into-each-document.cs",
+      "task": "Batch process a collection of Word files to embed a common online video into each document.",
+      "workflow": "online-video",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 5,
+      "file_name": "clone-an-ole-object-from-one-document-and-insert-it-into-another-using-insertoleobject-wit.cs",
+      "task": "Clone an OLE object from one document and insert it into another using InsertOleObject with extracted data.",
+      "workflow": "extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 6,
+      "file_name": "create-a-utility-that-extracts-ole-objects-from-documents-and-stores-them-in-a-database-as.cs",
+      "task": "Create a utility that extracts OLE objects from documents and stores them in a database as BLOBs.",
+      "workflow": "extraction",
+      "outputs": [
+        "docx",
+        "bin"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 7,
+      "file_name": "embed-a-legacy-ole-package-when-the-handler-is-unknown-using-the-packager-approach.cs",
+      "task": "Embed a legacy OLE package when the handler is unknown using the Packager approach.",
+      "workflow": "ole-package",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 8,
+      "file_name": "export-all-ole-objects-from-a-document-into-separate-files-preserving-original-extensions.cs",
+      "task": "Export all OLE objects from a document into separate files preserving original extensions.",
+      "workflow": "extraction",
+      "outputs": [
+        "docx",
+        "bin"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 9,
+      "file_name": "extract-ole-object-metadata-such-as-source-file-name-and-size-and-write-to-a-csv-report.cs",
+      "task": "Extract OLE object metadata, such as source file name and size, and write to a CSV report.",
+      "workflow": "extraction",
+      "outputs": [
+        "docx",
+        "csv"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 10,
+      "file_name": "extract-the-ole-object-stream-from-a-document-and-save-it-to-a-binary-file.cs",
+      "task": "Extract the OLE object stream from a document and save it to a binary file.",
+      "workflow": "extraction",
+      "outputs": [
+        "docx",
+        "bin"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 11,
+      "file_name": "implement-error-handling-for-insertoleobject-when-the-specified-progid-is-not-registered-o.cs",
+      "task": "Implement error handling for InsertOleObject when the specified ProgId is not registered on the system.",
+      "workflow": "validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 12,
+      "file_name": "insert-a-pdf-file-as-an-ole-icon-specifying-custom-icon-image-and-display-size.cs",
+      "task": "Insert a PDF file as an OLE icon, specifying custom icon image and display size.",
+      "workflow": "insertion",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 13,
+      "file_name": "insert-a-spreadsheet-ole-object-into-a-docx-using-documentbuilder-insertoleobject-with-its.cs",
+      "task": "Insert a spreadsheet OLE object into a DOCX using DocumentBuilder.InsertOleObject with its ProgId.",
+      "workflow": "inspection",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 14,
+      "file_name": "insert-an-ole-object-as-an-icon-using-default-system-icon-without-specifying-custom-image.cs",
+      "task": "Insert an OLE object as an icon using default system icon without specifying custom image.",
+      "workflow": "insertion",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 15,
+      "file_name": "insert-an-online-video-with-specified-width-and-height-parameters-for-precise-placement.cs",
+      "task": "Insert an online video with specified width and height parameters for precise placement.",
+      "workflow": "online-video",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 16,
+      "file_name": "insert-an-online-youtube-video-into-a-word-document-using-documentbuilder-insertonlinevide.cs",
+      "task": "Insert an online YouTube video into a Word document using DocumentBuilder.InsertOnlineVideo.",
+      "workflow": "online-video",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 17,
+      "file_name": "iterate-through-all-ole-objects-in-a-docx-file-and-log-their-progids-and-display-sizes.cs",
+      "task": "Iterate through all OLE objects in a DOCX file and log their ProgIds and display sizes.",
+      "workflow": "inspection",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 18,
+      "file_name": "read-the-file-name-property-of-an-ole-package-and-compare-it-with-the-original-source-file.cs",
+      "task": "Read the file name property of an OLE package and compare it with the original source file.",
+      "workflow": "inspection",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 19,
+      "file_name": "replace-an-existing-ole-object-in-a-doc-file-with-a-new-image-ole-object-using-insertoleob.cs",
+      "task": "Replace an existing OLE object in a DOC file with a new image OLE object using InsertOleObject.",
+      "workflow": "replacement",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 20,
+      "file_name": "retrieve-display-width-and-height-of-an-ole-object-and-adjust-its-size-after-insertion.cs",
+      "task": "Retrieve display width and height of an OLE object and adjust its size after insertion.",
+      "workflow": "inspection",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 21,
+      "file_name": "retrieve-ole-object-display-width-and-height-after-insertion-and-store-dimensions-for-layo.cs",
+      "task": "Retrieve OLE object display width and height after insertion and store dimensions for layout calculations.",
+      "workflow": "inspection",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 22,
+      "file_name": "retrieve-raw-binary-data-from-an-ole-object-via-its-data-property-for-custom-processing.cs",
+      "task": "Retrieve raw binary data from an OLE object via its Data property for custom processing.",
+      "workflow": "extraction",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 23,
+      "file_name": "retrieve-the-progid-of-an-inserted-ole-object-and-log-it-for-diagnostic-purposes.cs",
+      "task": "Retrieve the ProgId of an inserted OLE object and log it for diagnostic purposes.",
+      "workflow": "inspection",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 24,
+      "file_name": "save-raw-binary-data-of-an-ole-object-to-a-temporary-file-for-external-analysis.cs",
+      "task": "Save raw binary data of an OLE object to a temporary file for external analysis.",
+      "workflow": "extraction",
+      "outputs": [
+        "docx",
+        "bin"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 25,
+      "file_name": "set-the-file-name-and-extension-for-an-inserted-ole-object-to-preserve-original-metadata.cs",
+      "task": "Set the file name and extension for an inserted OLE object to preserve original metadata.",
+      "workflow": "inspection",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 26,
+      "file_name": "use-documentbuilder-to-insert-an-ole-object-with-custom-width-and-height-parameters-for-pr.cs",
+      "task": "Use DocumentBuilder to insert an OLE object with custom width and height parameters for precise layout control.",
+      "workflow": "insertion",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 27,
+      "file_name": "use-olepackage-class-to-enumerate-all-parts-of-a-legacy-ole-package-for-inspection.cs",
+      "task": "Use OlePackage class to enumerate all parts of a legacy OLE package for inspection.",
+      "workflow": "ole-package",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 28,
+      "file_name": "use-olepackage-class-to-read-and-modify-properties-of-a-legacy-ole-package-in-net.cs",
+      "task": "Use OlePackage class to read and modify properties of a legacy OLE package in .NET.",
+      "workflow": "ole-package",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 29,
+      "file_name": "validate-the-progid-of-an-ole-object-before-insertion-to-avoid-runtime-errors.cs",
+      "task": "Validate the ProgId of an OLE object before insertion to avoid runtime errors.",
+      "workflow": "validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    },
+    {
+      "id": 30,
+      "file_name": "verify-successful-ole-object-insertion-by-checking-the-returned-object-reference-is-not-nu.cs",
+      "task": "Verify successful OLE object insertion by checking the returned object reference is not null.",
+      "workflow": "validation",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "publish-ready"
+    }
+  ]
+}
