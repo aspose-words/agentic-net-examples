@@ -1,0 +1,1260 @@
+{
+  "category": {
+    "name": "Programming with Documents",
+    "slug": "programming-with-documents",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use simple documented document-level Aspose.Words workflows. Keep validation narrow and task-specific. Prefer Document and DocumentBuilder APIs and create all input assets locally.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 110,
+    "winner_counts": {
+      "both": 0,
+      "mcp": 110,
+      "llm": 0,
+      "none": 0
+    },
+    "workflow_examples": {
+      "document-workflow": 110
+    }
+  },
+  "rules_summary": {
+    "core_rules": [
+      "Use native Aspose.Words APIs directly.",
+      "Always create local sample source documents if a task refers to an existing file, folder, stream, or template.",
+      "Do not assume external files or folders already exist.",
+      "Always save the requested output document or report when the task expects one.",
+      "Keep validation narrow and task-specific."
+    ],
+    "minimal_workflow_rules": [
+      "Prefer simple documented Document and DocumentBuilder workflows.",
+      "Do not add broad document-count or structure assertions unless the task explicitly requires them.",
+      "For file or conversion tasks, verify the requested output file exists and can be reopened when appropriate."
+    ],
+    "api_safety_rules": [
+      "Do not invent unsupported Aspose.Words APIs.",
+      "Do not use fake namespaces.",
+      "Use documented save, load, protection, property, and conversion APIs only."
+    ]
+  },
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "create-a-first-page-header-with-a-centered-logo-image-using-documentbuilder.cs",
+      "task": "Create a first‑page header with a centered logo image using DocumentBuilder.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 2,
+      "file_name": "add-an-odd-page-header-containing-a-right-aligned-chapter-title-in-a-custom-font.cs",
+      "task": "Add an odd‑page header containing a right‑aligned chapter title in a custom font.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 3,
+      "file_name": "insert-an-even-page-footer-that-shows-page-numbers-in-roman-numerals-via-insertfield.cs",
+      "task": "Insert an even‑page footer that shows page numbers in Roman numerals via InsertField.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "rtf"
+      ]
+    },
+    {
+      "id": 4,
+      "file_name": "configure-header-types-for-first-odd-and-even-pages-by-setting-headerfooter-type.cs",
+      "task": "Configure header types for first, odd, and even pages by setting HeaderFooter.Type.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 5,
+      "file_name": "place-an-absolutely-positioned-image-in-the-header-using-insertimage-with-left-and-top-off.cs",
+      "task": "Place an absolutely positioned image in the header using InsertImage with left and top offsets.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 6,
+      "file_name": "enable-unique-first-page-header-content-by-setting-differentfirstpageheaderfooter-to-true.cs",
+      "task": "Enable unique first‑page header content by setting DifferentFirstPageHeaderFooter to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 7,
+      "file_name": "activate-odd-and-even-page-headers-by-setting-section-pagesetup-differentoddandevenpages-p.cs",
+      "task": "Activate odd and even page headers by setting Section.PageSetup.DifferentOddAndEvenPages property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 8,
+      "file_name": "copy-header-content-from-the-previous-section-into-the-current-section-using-headerfooterc.cs",
+      "task": "Copy header content from the previous section into the current section using HeaderFooterCollection.Add.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 9,
+      "file_name": "remove-all-footers-from-a-section-by-clearing-its-section-footers-collection.cs",
+      "task": "Remove all footers from a section by clearing its Section.Footers collection.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 10,
+      "file_name": "insert-a-footnote-at-the-current-cursor-position-with-custom-text-via-insertfootnote.cs",
+      "task": "Insert a footnote at the current cursor position with custom text via InsertFootnote.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "rtf"
+      ]
+    },
+    {
+      "id": 11,
+      "file_name": "add-an-endnote-with-reference-text-using-insertfootnote-and-specify-endnote-type.cs",
+      "task": "Add an endnote with reference text using InsertFootnote and specify Endnote type.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "rtf"
+      ]
+    },
+    {
+      "id": 12,
+      "file_name": "change-footnote-numbering-style-to-lower-case-roman-numerals-by-setting-document-footnoteo.cs",
+      "task": "Change footnote numbering style to lower‑case Roman numerals by setting Document.FootnoteOptions.NumberStyle.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 13,
+      "file_name": "configure-footnote-layout-to-use-three-columns-by-assigning-document-footnoteoptions-colum.cs",
+      "task": "Configure footnote layout to use three columns by assigning Document.FootnoteOptions.Columns.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 14,
+      "file_name": "position-footnotes-at-the-bottom-of-the-page-by-adjusting-footnoteoptions-position.cs",
+      "task": "Position footnotes at the bottom of the page by adjusting FootnoteOptions.Position.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 15,
+      "file_name": "update-all-footnote-and-endnote-references-after-modifications-by-calling-document-updatef.cs",
+      "task": "Update all footnote and endnote references after modifications by calling Document.UpdateFields.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 16,
+      "file_name": "insert-a-table-of-contents-at-the-document-start-using-inserttableofcontents-with-default.cs",
+      "task": "Insert a table of contents at the document start using InsertTableOfContents with default switches.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 17,
+      "file_name": "customize-toc-entry-levels-to-include-headings-1-3-by-specifying-the-o-1-3-switch.cs",
+      "task": "Customize TOC entry levels to include headings 1‑3 by specifying the \\o \"1-3\" switch.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 18,
+      "file_name": "include-only-specific-styles-in-the-toc-by-using-the-t-switch-with-a-comma-separated-list.cs",
+      "task": "Include only specific styles in the TOC by using the \\t switch with a comma‑separated list.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 19,
+      "file_name": "update-existing-toc-fields-after-adding-sections-by-invoking-document-updatefields.cs",
+      "task": "Update existing TOC fields after adding sections by invoking Document.UpdateFields.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 20,
+      "file_name": "rebuild-toc-page-numbers-by-calling-document-updatepagelayout-method-following-updatefield.cs",
+      "task": "Rebuild TOC page numbers by calling Document.UpdatePageLayout method following UpdateFields.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 21,
+      "file_name": "extract-all-toc-entries-by-iterating-over-document-range-fields-where-field-type-equals-fi.cs",
+      "task": "Extract all TOC entries by iterating over Document.Range.Fields where Field.Type equals FieldType.TOC.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 22,
+      "file_name": "remove-a-specific-toc-field-by-locating-it-and-calling-its-remove-method.cs",
+      "task": "Remove a specific TOC field by locating it and calling its Remove method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 23,
+      "file_name": "apply-a-custom-paragraph-style-to-toc-entries-by-modifying-the-toc-field-s-style-property.cs",
+      "task": "Apply a custom paragraph style to TOC entries by modifying the TOC field’s style property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 24,
+      "file_name": "insert-a-bookmark-named-chapterstart-at-the-beginning-of-each-chapter-using-documentbuilde.cs",
+      "task": "Insert a bookmark named \"ChapterStart\" at the beginning of each chapter using DocumentBuilder.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 25,
+      "file_name": "navigate-to-a-bookmark-called-conclusion-and-insert-a-summary-paragraph-with-documentbuild.cs",
+      "task": "Navigate to a bookmark called \"Conclusion\" and insert a summary paragraph with DocumentBuilder.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 26,
+      "file_name": "delete-a-bookmark-named-draft-and-its-content-by-using-document-range-bookmarks-remove.cs",
+      "task": "Delete a bookmark named \"Draft\" and its content by using Document.Range.Bookmarks.Remove.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 27,
+      "file_name": "list-all-bookmark-names-by-iterating-through-document-range-bookmarks-collection-in-the-do.cs",
+      "task": "List all bookmark names by iterating through Document.Range.Bookmarks collection in the document.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 28,
+      "file_name": "create-a-multi-section-document-where-each-section-has-distinct-header-and-footer-configur.cs",
+      "task": "Create a multi‑section document where each section has distinct header and footer configurations.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 29,
+      "file_name": "set-page-orientation-to-landscape-for-sections-containing-wide-tables-via-section-pagesetu.cs",
+      "task": "Set page orientation to landscape for sections containing wide tables via Section.PageSetup.Orientation.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 30,
+      "file_name": "adjust-the-left-margin-of-the-first-page-header-to-align-with-the-main-text-margin.cs",
+      "task": "Adjust the left margin of the first‑page header to align with the main text margin.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 31,
+      "file_name": "insert-a-page-number-field-formatted-as-page-x-of-y-into-the-footer-using-insertfield-with.cs",
+      "task": "Insert a page number field formatted as \"Page X of Y\" into the footer using InsertField with switches.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "rtf"
+      ]
+    },
+    {
+      "id": 32,
+      "file_name": "apply-bold-and-underline-formatting-to-header-text-by-configuring-documentbuilder-font-bef.cs",
+      "task": "Apply bold and underline formatting to header text by configuring DocumentBuilder.Font before insertion.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 33,
+      "file_name": "create-an-even-page-footer-that-displays-the-document-title-aligned-left-using-documentbui.cs",
+      "task": "Create an even‑page footer that displays the document title aligned left using DocumentBuilder.InsertField.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc",
+        "rtf"
+      ]
+    },
+    {
+      "id": 34,
+      "file_name": "copy-an-existing-header-from-one-document-to-another-by-exporting-headerfooter-as-a-node-a.cs",
+      "task": "Copy an existing header from one document to another by exporting HeaderFooter as a node and importing.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 35,
+      "file_name": "remove-all-footnotes-while-preserving-endnotes-by-clearing-document-footnotes-collection.cs",
+      "task": "Remove all footnotes while preserving endnotes by clearing Document.Footnotes collection.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 36,
+      "file_name": "create-a-new-word-document-and-insert-a-table-with-five-rows-and-three-columns.cs",
+      "task": "Create a new Word document and insert a table with five rows and three columns.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 37,
+      "file_name": "merge-the-first-two-cells-of-the-second-row-in-the-table-to-form-a-single-cell.cs",
+      "task": "Merge the first two cells of the second row in the table to form a single cell.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 38,
+      "file_name": "split-the-merged-cell-back-into-two-separate-cells-using-the-splitcell-method.cs",
+      "task": "Split the merged cell back into two separate cells using the SplitCell method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 39,
+      "file_name": "apply-the-built-in-grid-table-5-dark-style-to-the-entire-table-for-consistent-formatting.cs",
+      "task": "Apply the built‑in 'Grid Table 5 Dark' style to the entire table for consistent formatting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 40,
+      "file_name": "set-a-custom-background-color-for-the-header-row-of-the-table-using-tablestyle-properties.cs",
+      "task": "Set a custom background color for the header row of the table using TableStyle properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 41,
+      "file_name": "populate-a-table-directly-from-a-net-datatable-containing-employee-records-and-format-head.cs",
+      "task": "Populate a table directly from a .NET DataTable containing employee records and format header row.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 42,
+      "file_name": "adjust-column-widths-proportionally-to-fit-content-after-loading-data-into-the-table.cs",
+      "task": "Adjust column widths proportionally to fit content after loading data into the table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 43,
+      "file_name": "insert-a-new-row-at-the-end-of-the-table-and-fill-each-cell-with-placeholder-text.cs",
+      "task": "Insert a new row at the end of the table and fill each cell with placeholder text.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 44,
+      "file_name": "delete-the-third-column-from-the-table-while-preserving-remaining-cell-data.cs",
+      "task": "Delete the third column from the table while preserving remaining cell data.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 45,
+      "file_name": "create-a-nested-table-inside-a-cell-of-the-outer-table-to-display-detailed-information.cs",
+      "task": "Create a nested table inside a cell of the outer table to display detailed information.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 46,
+      "file_name": "export-the-constructed-table-to-an-html-fragment-while-preserving-cell-borders.cs",
+      "task": "Export the constructed table to an HTML fragment while preserving cell borders.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "html"
+      ]
+    },
+    {
+      "id": 47,
+      "file_name": "load-an-existing-docx-file-locate-the-first-table-and-change-its-border-thickness.cs",
+      "task": "Load an existing DOCX file, locate the first table, and change its border thickness.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx",
+        "doc"
+      ]
+    },
+    {
+      "id": 48,
+      "file_name": "iterate-through-all-tables-in-a-document-and-apply-a-uniform-cell-padding-of-five-points.cs",
+      "task": "Iterate through all tables in a document and apply a uniform cell padding of five points.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 49,
+      "file_name": "convert-a-datatable-with-numeric-values-into-a-table-and-format-numeric-cells-as-currency.cs",
+      "task": "Convert a DataTable with numeric values into a table and format numeric cells as currency.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 50,
+      "file_name": "add-a-caption-below-the-table-using-a-paragraph-styled-as-caption-and-reference-it.cs",
+      "task": "Add a caption below the table using a paragraph styled as 'Caption' and reference it.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 51,
+      "file_name": "create-a-bulleted-list-with-three-items-and-customize-the-bullet-character-to-a-dash.cs",
+      "task": "Create a bulleted list with three items and customize the bullet character to a dash.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 52,
+      "file_name": "generate-a-numbered-list-with-roman-numeral-formatting-for-the-first-level-items.cs",
+      "task": "Generate a numbered list with Roman numeral formatting for the first level items.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 53,
+      "file_name": "define-a-second-list-level-with-alphabetic-lower-case-numbering-and-increased-indentation.cs",
+      "task": "Define a second list level with alphabetic lower‑case numbering and increased indentation.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 54,
+      "file_name": "restart-list-numbering-at-1-for-a-new-section-after-a-heading-paragraph.cs",
+      "task": "Restart list numbering at 1 for a new section after a heading paragraph.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 55,
+      "file_name": "limit-list-nesting-to-nine-levels-and-verify-that-deeper-levels-default-to-plain-text.cs",
+      "task": "Limit list nesting to nine levels and verify that deeper levels default to plain text.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 56,
+      "file_name": "apply-the-listformat-removenumbers-method-to-convert-a-numbered-list-back-to-plain-paragra.cs",
+      "task": "Apply the ListFormat.RemoveNumbers method to convert a numbered list back to plain paragraphs.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 57,
+      "file_name": "insert-a-multi-level-list-where-each-level-uses-a-different-list-style-defined-in-the-docu.cs",
+      "task": "Insert a multi‑level list where each level uses a different list style defined in the document.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 58,
+      "file_name": "set-the-document-s-ooxmlcompliance-property-to-ooxmlcompliance-strict-to-preserve-advanced.cs",
+      "task": "Set the document's OoxmlCompliance property to OoxmlCompliance.Strict to preserve advanced list settings.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc",
+        "xml"
+      ]
+    },
+    {
+      "id": 59,
+      "file_name": "create-a-paragraph-write-a-long-sentence-and-count-the-number-of-lines-it-occupies.cs",
+      "task": "Create a paragraph, write a long sentence, and count the number of lines it occupies.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 60,
+      "file_name": "apply-the-built-in-heading-2-style-to-a-paragraph-and-adjust-its-spacing-before-and-after.cs",
+      "task": "Apply the built‑in 'Heading 2' style to a paragraph and adjust its spacing before and after.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 61,
+      "file_name": "set-paragraph-alignment-to-justified-and-enable-word-wrap-for-better-layout-on-narrow-page.cs",
+      "task": "Set paragraph alignment to justified and enable word wrap for better layout on narrow pages.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 62,
+      "file_name": "insert-a-paragraph-containing-a-hyperlink-and-configure-it-to-open-in-a-new-browser-tab.cs",
+      "task": "Insert a paragraph containing a hyperlink and configure it to open in a new browser tab.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 63,
+      "file_name": "apply-a-custom-paragraph-style-that-includes-a-left-indent-of-0-5-inches-and-line-spacing.cs",
+      "task": "Apply a custom paragraph style that includes a left indent of 0.5 inches and line spacing of 1.5.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 64,
+      "file_name": "add-a-paragraph-with-a-drop-cap-character-and-specify-the-number-of-lines-it-spans.cs",
+      "task": "Add a paragraph with a drop cap character and specify the number of lines it spans.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 65,
+      "file_name": "apply-a-custom-style-to-a-paragraph-that-includes-a-border-background-color-and-indentatio.cs",
+      "task": "Apply a custom style to a paragraph that includes a border, background color, and indentation.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 66,
+      "file_name": "create-a-paragraph-with-a-custom-tab-stop-at-2-inches-and-insert-text-that-aligns-to-it.cs",
+      "task": "Create a paragraph with a custom tab stop at 2 inches and insert text that aligns to it.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 67,
+      "file_name": "insert-a-table-of-contents-paragraph-that-automatically-reflects-headings-and-list-items.cs",
+      "task": "Insert a table of contents paragraph that automatically reflects headings and list items.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 68,
+      "file_name": "apply-a-conditional-formatting-rule-to-table-cells-that-highlights-values-above-a-threshol.cs",
+      "task": "Apply a conditional formatting rule to table cells that highlights values above a threshold.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 69,
+      "file_name": "add-a-paragraph-with-a-background-shading-of-light-yellow-to-highlight-important-informati.cs",
+      "task": "Add a paragraph with a background shading of light yellow to highlight important information.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 70,
+      "file_name": "insert-a-paragraph-that-contains-a-field-for-page-number-and-format-it-as-roman-numerals.cs",
+      "task": "Insert a paragraph that contains a field for page number and format it as Roman numerals.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 71,
+      "file_name": "apply-a-built-in-quote-style-to-a-paragraph-and-increase-its-left-indent-for-emphasis.cs",
+      "task": "Apply a built‑in 'Quote' style to a paragraph and increase its left indent for emphasis.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 72,
+      "file_name": "add-a-paragraph-with-a-custom-field-that-displays-the-document-s-author-name-dynamically.cs",
+      "task": "Add a paragraph with a custom field that displays the document's author name dynamically.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 73,
+      "file_name": "insert-a-paragraph-with-a-custom-line-height-of-150-percent-and-verify-visual-appearance.cs",
+      "task": "Insert a paragraph with a custom line height of 150 percent and verify visual appearance.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 74,
+      "file_name": "add-a-paragraph-with-a-hanging-indent-of-0-25-inches-for-citation-formatting.cs",
+      "task": "Add a paragraph with a hanging indent of 0.25 inches for citation formatting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 75,
+      "file_name": "create-a-text-box-set-its-internal-margins-and-insert-a-paragraph-with-bold-text-inside.cs",
+      "task": "Create a text box, set its internal margins, and insert a paragraph with bold text inside.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 76,
+      "file_name": "link-two-text-boxes-sequentially-so-that-text-flows-from-the-first-to-the-second-automatic.cs",
+      "task": "Link two text boxes sequentially so that text flows from the first to the second automatically.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 77,
+      "file_name": "check-whether-a-given-text-box-is-the-head-of-a-linked-sequence-using-its-ishead-property.cs",
+      "task": "Check whether a given text box is the head of a linked sequence using its IsHead property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 78,
+      "file_name": "break-the-forward-link-of-a-middle-text-box-to-stop-text-flow-to-the-subsequent-box.cs",
+      "task": "Break the forward link of a middle text box to stop text flow to the subsequent box.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 79,
+      "file_name": "retrieve-the-parent-shape-of-a-text-box-and-change-its-rotation-angle-to-45-degrees.cs",
+      "task": "Retrieve the parent Shape of a text box and change its rotation angle to 45 degrees.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 80,
+      "file_name": "add-a-text-box-to-a-document-header-and-ensure-it-appears-on-every-page-of-the-section.cs",
+      "task": "Add a text box to a document header and ensure it appears on every page of the section.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 81,
+      "file_name": "insert-a-text-box-inside-a-table-cell-and-adjust-the-cell-s-padding-to-accommodate-the-box.cs",
+      "task": "Insert a text box inside a table cell and adjust the cell's padding to accommodate the box.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 82,
+      "file_name": "programmatically-duplicate-a-text-box-and-place-the-copy-at-a-specified-absolute-position.cs",
+      "task": "Programmatically duplicate a text box and place the copy at a specified absolute position.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 83,
+      "file_name": "apply-a-shadow-effect-to-a-text-box-shape-and-export-the-document-as-a-pdf.cs",
+      "task": "Apply a shadow effect to a text box shape and export the document as a PDF.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc",
+        "pdf"
+      ]
+    },
+    {
+      "id": 84,
+      "file_name": "link-a-text-box-to-a-paragraph-so-that-overflow-text-automatically-continues-in-the-box.cs",
+      "task": "Link a text box to a paragraph so that overflow text automatically continues in the box.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 85,
+      "file_name": "insert-a-text-box-inside-a-header-shape-and-ensure-it-appears-only-on-the-first-page.cs",
+      "task": "Insert a text box inside a header shape and ensure it appears only on the first page.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 86,
+      "file_name": "create-a-text-box-set-its-text-direction-to-right-to-left-and-insert-arabic-characters.cs",
+      "task": "Create a text box, set its text direction to right‑to‑left, and insert Arabic characters.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 87,
+      "file_name": "apply-a-gradient-fill-to-a-text-box-and-ensure-the-gradient-renders-correctly-in-pdf.cs",
+      "task": "Apply a gradient fill to a text box and ensure the gradient renders correctly in PDF.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 88,
+      "file_name": "insert-a-text-box-then-set-its-anchor-position-to-be-relative-to-the-page-margin.cs",
+      "task": "Insert a text box, then set its anchor position to be relative to the page margin.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 89,
+      "file_name": "batch-process-a-set-of-documents-to-replace-all-tables-with-a-predefined-style-and-margin.cs",
+      "task": "Batch process a set of documents to replace all tables with a predefined style and margin settings.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 90,
+      "file_name": "iterate-through-each-document-in-a-collection-and-convert-all-numbered-lists-to-bulleted-l.cs",
+      "task": "Iterate through each document in a collection and convert all numbered lists to bulleted lists.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 91,
+      "file_name": "create-a-macro-like-routine-that-inserts-a-table-a-paragraph-and-a-linked-text-box-in-one.cs",
+      "task": "Create a macro‑like routine that inserts a table, a paragraph, and a linked text box in one operation.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 92,
+      "file_name": "generate-a-report-document-by-merging-data-rows-into-a-table-and-adding-a-summary-paragrap.cs",
+      "task": "Generate a report document by merging data rows into a table and adding a summary paragraph.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 93,
+      "file_name": "apply-a-custom-list-template-to-all-document-lists-and-enforce-a-maximum-of-nine-nesting-l.cs",
+      "task": "Apply a custom list template to all document lists and enforce a maximum of nine nesting levels.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 94,
+      "file_name": "export-a-document-containing-tables-and-text-boxes-to-an-xps-file-while-preserving-layout.cs",
+      "task": "Export a document containing tables and text boxes to an XPS file while preserving layout.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc",
+        "xps"
+      ]
+    },
+    {
+      "id": 95,
+      "file_name": "insert-a-paragraph-with-a-field-code-that-displays-the-current-date-in-mmmm-dd-yyyy-format.cs",
+      "task": "Insert a paragraph with a field code that displays the current date in 'MMMM dd, yyyy' format.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 96,
+      "file_name": "set-the-document-s-compatibility-mode-to-word2010-before-adding-complex-list-structures.cs",
+      "task": "Set the document's compatibility mode to Word2010 before adding complex list structures.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 97,
+      "file_name": "set-the-document-s-compatibility-level-to-word2016-before-adding-complex-table-structures.cs",
+      "task": "Set the document's compatibility level to Word2016 before adding complex table structures.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 98,
+      "file_name": "set-the-document-s-default-font-to-calibri-size-11-and-apply-it-to-all-new-paragraphs.cs",
+      "task": "Set the document's default font to Calibri, size 11, and apply it to all new paragraphs.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 99,
+      "file_name": "set-the-document-s-language-property-to-french-and-adjust-paragraph-direction-for-right-to.cs",
+      "task": "Set the document's language property to French and adjust paragraph direction for right‑to‑left scripts.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 100,
+      "file_name": "apply-a-built-in-title-style-to-the-first-paragraph-and-ensure-it-appears-in-the-document.cs",
+      "task": "Apply a built‑in 'Title' style to the first paragraph and ensure it appears in the document outline.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 101,
+      "file_name": "add-a-comment-to-a-paragraph-and-programmatically-retrieve-the-comment-text-for-review.cs",
+      "task": "Add a comment to a paragraph and programmatically retrieve the comment text for review.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 102,
+      "file_name": "insert-a-paragraph-with-a-custom-field-that-calculates-the-sum-of-numbers-in-a-table-colum.cs",
+      "task": "Insert a paragraph with a custom field that calculates the sum of numbers in a table column.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 103,
+      "file_name": "generate-a-document-that-contains-a-table-a-list-and-a-paragraph-then-save-as-odt-format.cs",
+      "task": "Generate a document that contains a table, a list, and a paragraph, then save as ODT format.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 104,
+      "file_name": "iterate-through-all-shapes-in-a-document-and-change-any-text-box-fill-color-to-light-gray.cs",
+      "task": "Iterate through all shapes in a document and change any text box fill color to light gray.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 105,
+      "file_name": "add-a-page-break-before-each-new-heading-paragraph-and-ensure-the-heading-style-remains-ap.cs",
+      "task": "Add a page break before each new heading paragraph and ensure the heading style remains applied.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 106,
+      "file_name": "create-a-table-with-alternating-row-shading-using-a-custom-table-style-defined-programmati.cs",
+      "task": "Create a table with alternating row shading using a custom table style defined programmatically.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 107,
+      "file_name": "apply-a-table-style-that-includes-a-top-border-bottom-border-and-no-side-borders.cs",
+      "task": "Apply a table style that includes a top border, bottom border, and no side borders.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 108,
+      "file_name": "apply-a-table-style-that-includes-alternating-column-shading-for-better-readability.cs",
+      "task": "Apply a table style that includes alternating column shading for better readability.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 109,
+      "file_name": "apply-a-custom-paragraph-style-that-includes-both-left-and-right-borders-and-a-light-gray.cs",
+      "task": "Apply a custom paragraph style that includes both left and right borders and a light gray background.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 110,
+      "file_name": "create-a-numbered-list-where-each-level-uses-a-different-numbering-scheme-such-as-decimal.cs",
+      "task": "Create a numbered list where each level uses a different numbering scheme, such as decimal and lower‑roman.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "document-workflow",
+      "outputs": [
+        "docx"
+      ]
+    }
+  ]
+}
