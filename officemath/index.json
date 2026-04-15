@@ -1,0 +1,380 @@
+{
+  "category": {
+    "name": "OfficeMath",
+    "slug": "officemath",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use native Aspose.Words OfficeMath APIs directly. Create realistic local DOC or DOCX inputs inside the example whenever the task references an existing file, stream, folder, or source document. Work with real OfficeMath nodes discovered through NodeType.OfficeMath, and use documented OfficeMath properties such as DisplayType, Justification, and MathObjectType only.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "workflow_counts": {
+      "formatting-display": 11,
+      "export-validation": 3,
+      "creation-modification": 7,
+      "inspection-reporting": 7,
+      "native-officemath": 2
+    }
+  },
+  "rules_summary": {
+    "office_math_core_rules": [
+      "Always use native Aspose.Words OfficeMath APIs directly.",
+      "Always work with real OfficeMath nodes discovered through NodeType.OfficeMath.",
+      "Always create local sample source documents inside the example if the task refers to an existing DOC, DOCX, stream, folder, template, or source document.",
+      "Always save the requested output document or report when the task expects one."
+    ],
+    "formatting_rules": [
+      "Use documented OfficeMath properties such as DisplayType, Justification, and MathObjectType only.",
+      "For top-level equation operations, target only nodes whose MathObjectType is OMathPara.",
+      "Never set DisplayType on nested OfficeMath nodes."
+    ],
+    "safety_rules": [
+      "Do not invent unsupported equation creation, import, or conversion helpers.",
+      "Do not append or insert a null OfficeMath node.",
+      "Do not validate logical equation counts using all nested OfficeMath descendants unless that is explicitly the task.",
+      "Do not assume source documents, folders, templates, or streams already exist."
+    ]
+  },
+  "common_failure_patterns": [
+    {
+      "pattern": "Invented OfficeMath creation APIs",
+      "symptom": "Compiler errors around InsertMathObject, InsertEquation, StartMath, EndMath, MathParser, MathMLImporter, LoadMathML, LoadOoxml, or new OfficeMath(document).",
+      "fix": "Use only documented Aspose.Words OfficeMath APIs and follow the verified bootstrap pattern already used in this category."
+    },
+    {
+      "pattern": "Invalid OfficeMath type or property names",
+      "symptom": "Compiler errors around unsupported members such as OfficeMath.Start, IsInline, OfficeMathObjectType, or OMathObjectType.",
+      "fix": "Use real OfficeMath nodes and valid members such as DisplayType, Justification, and MathObjectType."
+    },
+    {
+      "pattern": "Nested OfficeMath formatting mistakes",
+      "symptom": "Runtime exceptions when changing DisplayType or Justification on nested OfficeMath nodes.",
+      "fix": "Restrict display-mode and justification changes to top-level OfficeMath nodes whose MathObjectType is OMathPara."
+    },
+    {
+      "pattern": "Null OfficeMath insertion or replacement",
+      "symptom": "Runtime failures such as Cannot insert a null node or failed replacement after an invalid bootstrap attempt.",
+      "fix": "Null-check created or imported nodes before insertion and only replace valid top-level OfficeMath targets."
+    },
+    {
+      "pattern": "Verifier missing input asset or path",
+      "symptom": "Runtime failures caused by missing sample files, folders, or streams during sandbox verification.",
+      "fix": "Create temporary local assets inside the example before loading or processing them."
+    },
+    {
+      "pattern": "Brittle logical equation counts",
+      "symptom": "Validation failures caused by counting all nested OfficeMath descendants instead of logical top-level equations.",
+      "fix": "Validate against the exact intended top-level nodes for formatting, replacement, cloning, and display-mode workflows."
+    }
+  ],
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "apply-a-uniform-justification-setting-to-all-officemath-equations-across-multiple-sections.cs",
+      "task": "Apply a uniform justification setting to all OfficeMath equations across multiple sections of a large document.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 2,
+      "file_name": "batch-convert-a-collection-of-docx-files-containing-officemath-to-pdf-while-preserving-equ.cs",
+      "task": "Batch convert a collection of DOCX files containing OfficeMath to PDF while preserving equation fidelity.",
+      "workflow": "export-validation",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 3,
+      "file_name": "clone-an-existing-officemath-object-and-insert-the-clone-at-a-new-location.cs",
+      "task": "Clone an existing OfficeMath object and insert the clone at a new location.",
+      "workflow": "creation-modification",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 4,
+      "file_name": "configure-an-officemath-object-to-display-on-a-separate-line-rather-than-inline-within-the.cs",
+      "task": "Configure an OfficeMath object to display on a separate line rather than inline within the paragraph.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 5,
+      "file_name": "create-a-batch-process-that-inserts-a-predefined-officemath-equation-into-each-paragraph-o.cs",
+      "task": "Create a batch process that inserts a predefined OfficeMath equation into each paragraph of a document.",
+      "workflow": "creation-modification",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 6,
+      "file_name": "create-a-function-that-returns-true-if-an-officemath-node-matches-a-specified-mathobjectty.cs",
+      "task": "Create a function that returns true if an OfficeMath node matches a specified MathObjectType criteria.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 7,
+      "file_name": "create-a-macro-that-toggles-the-display-mode-of-selected-officemath-equations-between-inli.cs",
+      "task": "Create a macro that toggles the display mode of selected OfficeMath equations between inline and separate line.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 8,
+      "file_name": "create-a-new-officemath-object-with-documentbuilder-and-insert-it-as-an-inline-equation.cs",
+      "task": "Create a new OfficeMath object with DocumentBuilder and insert it as an inline equation.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 9,
+      "file_name": "delete-an-unwanted-officemath-node-from-the-document-and-adjust-surrounding-paragraph-spac.cs",
+      "task": "Delete an unwanted OfficeMath node from the document and adjust surrounding paragraph spacing.",
+      "workflow": "creation-modification",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 10,
+      "file_name": "export-the-document-containing-officemath-equations-to-pdf-and-verify-equation-layout-rema.cs",
+      "task": "Export the document containing OfficeMath equations to PDF and verify equation layout remains intact.",
+      "workflow": "export-validation",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 11,
+      "file_name": "extract-all-officemath-equations-from-a-document-and-write-them-to-a-text-file.cs",
+      "task": "Extract all OfficeMath equations from a document and write them to a text file.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "txt"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 12,
+      "file_name": "generate-a-report-listing-each-officemath-equation-s-mathobjecttype-and-its-position-withi.cs",
+      "task": "Generate a report listing each OfficeMath equation's MathObjectType and its position within the document.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx",
+        "txt"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 13,
+      "file_name": "insert-an-officemath-equation-from-a-latex-string-representation-into-a-specific-document.cs",
+      "task": "Insert an OfficeMath equation from a LaTeX string representation into a specific document location.",
+      "workflow": "creation-modification",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 14,
+      "file_name": "insert-an-officemath-equation-from-a-mathml-string-into-a-paragraph-using-documentbuilder.cs",
+      "task": "Insert an OfficeMath equation from a MathML string into a paragraph using DocumentBuilder.",
+      "workflow": "creation-modification",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 15,
+      "file_name": "iterate-over-all-officemath-nodes-in-a-document-to-count-the-total-number-of-equations.cs",
+      "task": "Iterate over all OfficeMath nodes in a document to count the total number of equations.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 16,
+      "file_name": "load-a-docx-document-containing-officemath-equations-and-enumerate-each-equation-node.cs",
+      "task": "Load a DOCX document containing OfficeMath equations and enumerate each equation node.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx",
+        "txt"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 17,
+      "file_name": "load-a-docx-file-replace-specific-officemath-equations-based-on-identifier-and-save-as-doc.cs",
+      "task": "Load a DOCX file, replace specific OfficeMath equations based on identifier, and save as DOCX.",
+      "workflow": "creation-modification",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 18,
+      "file_name": "load-multiple-docx-files-iterate-officemath-equations-and-standardize-justification-across.cs",
+      "task": "Load multiple DOCX files, iterate OfficeMath equations, and standardize justification across all documents.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 19,
+      "file_name": "programmatically-change-all-officemath-equations-from-inline-to-separate-line-display-in-a.cs",
+      "task": "Programmatically change all OfficeMath equations from inline to separate line display in a large report.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 20,
+      "file_name": "programmatically-set-the-display-mode-of-officemath-equations-to-inline-for-compact-docume.cs",
+      "task": "Programmatically set the display mode of OfficeMath equations to inline for compact document layout.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 21,
+      "file_name": "read-mathobjecttype-of-officemath-nodes-and-log-any-unsupported-equation-types-for-review.cs",
+      "task": "Read MathObjectType of OfficeMath nodes and log any unsupported equation types for review.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 22,
+      "file_name": "replace-all-inline-officemath-equations-with-separate-line-display-to-enhance-visual-clari.cs",
+      "task": "Replace all inline OfficeMath equations with separate line display to enhance visual clarity in presentations.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 23,
+      "file_name": "replace-the-content-of-an-existing-officemath-object-with-a-new-equation-defined-by-a-stri.cs",
+      "task": "Replace the content of an existing OfficeMath object with a new equation defined by a string.",
+      "workflow": "creation-modification",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 24,
+      "file_name": "retrieve-the-mathobjecttype-of-each-officemath-node-to-determine-whether-it-is-a-fraction.cs",
+      "task": "Retrieve the MathObjectType of each OfficeMath node to determine whether it is a fraction or radical.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 25,
+      "file_name": "save-the-modified-document-as-docx-while-preserving-all-officemath-equations-and-their-for.cs",
+      "task": "Save the modified document as DOCX while preserving all OfficeMath equations and their formatting.",
+      "workflow": "native-officemath",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 26,
+      "file_name": "set-the-justification-of-an-officemath-equation-to-center-alignment-using-the-justificatio.cs",
+      "task": "Set the justification of an OfficeMath equation to center alignment using the Justification property.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 27,
+      "file_name": "update-the-justification-of-all-officemath-equations-to-right-alignment-in-a-template-docu.cs",
+      "task": "Update the justification of all OfficeMath equations to right alignment in a template document.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 28,
+      "file_name": "validate-that-after-bulk-justification-changes-no-officemath-equation-exceeds-the-page-mar.cs",
+      "task": "Validate that after bulk justification changes, no OfficeMath equation exceeds the page margin limits.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 29,
+      "file_name": "validate-that-each-officemath-object-conforms-to-expected-mathobjecttype-after-performing.cs",
+      "task": "Validate that each OfficeMath object conforms to expected MathObjectType after performing bulk updates.",
+      "workflow": "native-officemath",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "verified"
+    },
+    {
+      "id": 30,
+      "file_name": "validate-that-exported-pdf-retains-the-exact-positioning-of-officemath-equations-as-in-the.cs",
+      "task": "Validate that exported PDF retains the exact positioning of OfficeMath equations as in the source DOCX.",
+      "workflow": "export-validation",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "verified"
+    }
+  ]
+}
