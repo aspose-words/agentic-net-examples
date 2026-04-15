@@ -21,10 +21,10 @@ When working in this repository:
 
 ## Repository Overview
 
-This repository contains **1799** verified code examples demonstrating Aspose.Words for .NET capabilities.
+This repository contains **1834** verified code examples demonstrating Aspose.Words for .NET capabilities.
 
 **Statistics** (as of 2026-04-14):
-- Total Examples: 1799
+- Total Examples: 1834
 - Categories: 29
 
 ## Category Details
@@ -94,27 +94,27 @@ This repository contains **1799** verified code examples demonstrating Aspose.Wo
 - Guide: [AGENTS.md](./mail-merge/AGENTS.md)
 
 ### officemath
-- Examples: 18
+- Examples: 30
 - Guide: [AGENTS.md](./officemath/AGENTS.md)
 
 ### ole-objects
-- Examples: 27
+- Examples: 30
 - Guide: [AGENTS.md](./ole-objects/AGENTS.md)
 
 ### paragraphs
-- Examples: 33
+- Examples: 35
 - Guide: [AGENTS.md](./paragraphs/AGENTS.md)
 
 ### programming-with-documents
-- Examples: 106
+- Examples: 110
 - Guide: [AGENTS.md](./programming-with-documents/AGENTS.md)
 
 ### range
-- Examples: 29
+- Examples: 30
 - Guide: [AGENTS.md](./range/AGENTS.md)
 
 ### rendering
-- Examples: 57
+- Examples: 70
 - Guide: [AGENTS.md](./rendering/AGENTS.md)
 
 ### security-and-protection
