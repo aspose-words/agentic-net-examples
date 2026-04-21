@@ -1,0 +1,376 @@
+{
+  "category": {
+    "name": "Security and Protection",
+    "slug": "security-and-protection",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use simple documented Aspose.Words security workflows. Prefer Document.Protect, Document.Unprotect, LoadOptions, and format-specific save options only when directly relevant, and keep validation narrow and task-specific.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "winner_counts": {
+      "both": 0,
+      "mcp": 30,
+      "llm": 0,
+      "none": 0
+    },
+    "workflow_examples": {
+      "security-workflow": 30
+    }
+  },
+  "rules_summary": {
+    "core_rules": [
+      "Use native Aspose.Words APIs directly.",
+      "Create local sample source documents when a task refers to an existing file, folder, stream, or template.",
+      "Do not assume external files or folders already exist.",
+      "Always save the requested protected or unprotected output document.",
+      "Keep validation narrow and task-specific."
+    ],
+    "protection_rules": [
+      "Use Document.Protect and Document.Unprotect for document protection workflows.",
+      "Use documented ProtectionType values only.",
+      "Use documented load and save options for password-protected workflows.",
+      "Do not invent protection, encryption, or permission APIs."
+    ],
+    "api_safety_rules": [
+      "Do not invent unsupported Aspose.Words security or protection APIs.",
+      "Do not use fake namespaces.",
+      "Use documented protection, password, load, and save APIs only."
+    ]
+  },
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "create-a-cancellationtokensource-and-pass-its-token-to-document-load-to-enable-interruptio.cs",
+      "task": "Create a CancellationTokenSource and pass its token to Document.Load to enable interruption.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 2,
+      "file_name": "attach-a-callback-to-documentloadingargs-throwifcancellationrequested-during-loading-to-en.cs",
+      "task": "Attach a callback to DocumentLoadingArgs.ThrowIfCancellationRequested during loading to ensure proper response.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 3,
+      "file_name": "use-token-throwifcancellationrequested-inside-a-field-update-loop-to-abort-long-running-op.cs",
+      "task": "Use token.ThrowIfCancellationRequested inside a field update loop to abort long‑running operations efficiently.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 4,
+      "file_name": "implement-a-low-code-ui-button-that-calls-cancellationtokensource-cancel-to-stop-processin.cs",
+      "task": "Implement a low‑code UI button that calls CancellationTokenSource.Cancel to stop processing immediately.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 5,
+      "file_name": "combine-a-cancellationtoken-with-document-saveasync-to-allow-asynchronous-saving-cancellat.cs",
+      "task": "Combine a CancellationToken with Document.SaveAsync to allow asynchronous saving cancellation by checking token status.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 6,
+      "file_name": "monitor-token-iscancellationrequested-during-layout-building-and-exit-the-layout-routine-p.cs",
+      "task": "Monitor token.IsCancellationRequested during layout building and exit the layout routine promptly if needed.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 7,
+      "file_name": "handle-operationcanceledexception-after-a-cancelled-document-load-to-perform-necessary-cle.cs",
+      "task": "Handle OperationCanceledException after a cancelled Document.Load to perform necessary cleanup properly.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 8,
+      "file_name": "log-cancellation-events-with-timestamps-to-an-audit-file-for-compliance-tracking.cs",
+      "task": "Log cancellation events with timestamps to an audit file for compliance tracking.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 9,
+      "file_name": "pass-the-same-cancellationtoken-to-both-loading-and-saving-methods-for-consistent-interrup.cs",
+      "task": "Pass the same CancellationToken to both loading and saving methods for consistent interruption control.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 10,
+      "file_name": "use-token-iscancellationrequested-in-a-custom-linq-reporting-engine-query-to-abort-large-r.cs",
+      "task": "Use token.IsCancellationRequested in a custom LINQ Reporting Engine query to abort large reports.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 11,
+      "file_name": "wrap-a-batch-of-document-load-calls-in-a-foreach-loop-that-checks-token-cancellation-befor.cs",
+      "task": "Wrap a batch of Document.Load calls in a foreach loop that checks token cancellation before each load.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 12,
+      "file_name": "configure-documentloadingargs-to-invoke-a-user-defined-method-when-cancellation-is-request.cs",
+      "task": "Configure DocumentLoadingArgs to invoke a user‑defined method when cancellation is requested during loading.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 13,
+      "file_name": "integrate-cancellationtoken-into-a-background-worker-that-processes-documents-without-bloc.cs",
+      "task": "Integrate CancellationToken into a background worker that processes documents without blocking the UI.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 14,
+      "file_name": "validate-that-long-running-field-updates-respect-the-token-by-inserting-periodic-cancellat.cs",
+      "task": "Validate that long‑running field updates respect the token by inserting periodic cancellation checks.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 15,
+      "file_name": "create-a-reusable-helper-method-accepting-a-cancellationtoken-to-perform-safe-document-pro.cs",
+      "task": "Create a reusable helper method accepting a CancellationToken to perform safe document processing.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 16,
+      "file_name": "ensure-resource-leaks-are-prevented-by-disposing-the-document-object-after-catching-operat.cs",
+      "task": "Ensure resource leaks are prevented by disposing the Document object after catching OperationCanceledException.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 17,
+      "file_name": "use-token-throwifcancellationrequested-inside-a-custom-image-extraction-routine-to-stop-ea.cs",
+      "task": "Use token.ThrowIfCancellationRequested inside a custom image extraction routine to stop early if needed.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 18,
+      "file_name": "combine-token-monitoring-with-progress-reporting-to-inform-users-when-cancellation-occurs.cs",
+      "task": "Combine token monitoring with progress reporting to inform users when cancellation occurs during processing.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 19,
+      "file_name": "implement-a-timeout-mechanism-that-triggers-cancellationtokensource-cancel-after-a-predefi.cs",
+      "task": "Implement a timeout mechanism that triggers CancellationTokenSource.Cancel after a predefined duration automatically.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 20,
+      "file_name": "pass-the-token-to-documentbuilder-operations-to-allow-interruption-while-constructing-comp.cs",
+      "task": "Pass the token to DocumentBuilder operations to allow interruption while constructing complex documents.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 21,
+      "file_name": "test-cancellation-behavior-by-simulating-user-aborts-during-document-layout-generation-in.cs",
+      "task": "Test cancellation behavior by simulating user aborts during document layout generation in unit tests.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 22,
+      "file_name": "document-the-required-net-version-for-cancellationtoken-support-in-the-project-s-readme-fi.cs",
+      "task": "Document the required .NET version for CancellationToken support in the project’s README file.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 23,
+      "file_name": "use-token-iscancellationrequested-within-a-while-loop-processing-document-nodes-to-enable.cs",
+      "task": "Use token.IsCancellationRequested within a while loop processing document nodes to enable graceful exit.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 24,
+      "file_name": "provide-a-configuration-setting-that-enables-or-disables-cancellation-support-for-specific.cs",
+      "task": "Provide a configuration setting that enables or disables cancellation support for specific processing stages.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 25,
+      "file_name": "capture-and-log-the-stack-trace-when-operationcanceledexception-is-thrown-for-debugging-pu.cs",
+      "task": "Capture and log the stack trace when OperationCanceledException is thrown for debugging purposes.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 26,
+      "file_name": "apply-token-checks-before-invoking-external-resource-retrieval-to-avoid-unnecessary-networ.cs",
+      "task": "Apply token checks before invoking external resource retrieval to avoid unnecessary network calls.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 27,
+      "file_name": "create-an-extension-method-that-adds-cancellation-support-to-existing-synchronous-document.cs",
+      "task": "Create an extension method that adds cancellation support to existing synchronous Document.Save calls.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 28,
+      "file_name": "ensure-that-the-cancellationtokensource-is-disposed-after-processing-completes-to-free-sys.cs",
+      "task": "Ensure that the CancellationTokenSource is disposed after processing completes to free system resources.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 29,
+      "file_name": "demonstrate-chaining-multiple-cancellationtokens-using-cancellationtokensource-createlinke.cs",
+      "task": "Demonstrate chaining multiple CancellationTokens using CancellationTokenSource.CreateLinkedTokenSource for complex workflows in applications.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 30,
+      "file_name": "verify-that-document-processing-pipelines-respect-cancellation-when-integrated-with-third.cs",
+      "task": "Verify that document processing pipelines respect cancellation when integrated with third‑party reporting tools.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "security-workflow",
+      "outputs": [
+        "doc"
+      ]
+    }
+  ]
+}
