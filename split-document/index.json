@@ -1,0 +1,389 @@
+{
+  "category": {
+    "name": "Split Document",
+    "slug": "split-document",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use simple documented Aspose.Words splitting workflows. Create local sample source documents when needed, use Document, Section, Node, page extraction APIs, or import/clone workflows only when directly required by the task, and keep validation narrow and task-specific.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 30,
+    "winner_counts": {
+      "both": 0,
+      "mcp": 30,
+      "llm": 0,
+      "none": 0
+    },
+    "workflow_examples": {
+      "split-workflow": 30
+    }
+  },
+  "rules_summary": {
+    "core_rules": [
+      "Use native Aspose.Words APIs directly.",
+      "Create local sample source documents when a task refers to an existing file, folder, stream, or template.",
+      "Do not assume external files or folders already exist.",
+      "Always save the requested split output documents, files, or reports.",
+      "Keep validation narrow and task-specific."
+    ],
+    "split_rules": [
+      "Use section, node, bookmark, heading, or page extraction workflows only when relevant to the task.",
+      "For page-based splitting, use documented page extraction APIs only.",
+      "Use import, clone, or NodeImporter workflows when moving content between documents.",
+      "Preserve the intended content scope only."
+    ],
+    "api_safety_rules": [
+      "Do not invent unsupported Aspose.Words splitting APIs.",
+      "Do not use fake namespaces.",
+      "Do not append cross-document nodes without importing or cloning them correctly."
+    ]
+  },
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "load-a-docx-source-document-using-the-document-class-before-splitting.cs",
+      "task": "Load a DOCX source document using the Document class before splitting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "docx",
+        "doc"
+      ]
+    },
+    {
+      "id": 2,
+      "file_name": "create-a-documentsplitcriteria-object-and-set-split-mode-to-headings.cs",
+      "task": "Create a DocumentSplitCriteria object and set split mode to headings.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 3,
+      "file_name": "create-a-documentsplitcriteria-object-and-set-split-mode-to-sections.cs",
+      "task": "Create a DocumentSplitCriteria object and set split mode to sections.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 4,
+      "file_name": "create-a-documentsplitcriteria-object-and-set-split-mode-to-individual-pages.cs",
+      "task": "Create a DocumentSplitCriteria object and set split mode to individual pages.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 5,
+      "file_name": "create-a-documentsplitcriteria-object-and-set-split-mode-to-custom-page-ranges.cs",
+      "task": "Create a DocumentSplitCriteria object and set split mode to custom page ranges.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 6,
+      "file_name": "combine-heading-and-section-flags-in-documentsplitcriteria-to-split-by-both-structures.cs",
+      "task": "Combine heading and section flags in DocumentSplitCriteria to split by both structures.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 7,
+      "file_name": "combine-page-and-heading-flags-in-documentsplitcriteria-to-start-each-part-on-a-new-page.cs",
+      "task": "Combine page and heading flags in DocumentSplitCriteria to start each part on a new page.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 8,
+      "file_name": "call-document-split-criteria-to-obtain-a-collection-of-split-document-objects.cs",
+      "task": "Call Document.Split(criteria) to obtain a collection of split Document objects.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 9,
+      "file_name": "iterate-over-the-split-document-collection-and-save-each-part-using-documentpartsavingcall.cs",
+      "task": "Iterate over the split Document collection and save each part using DocumentPartSavingCallback.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 10,
+      "file_name": "implement-documentpartsavingcallback-to-assign-filenames-based-on-original-heading-text.cs",
+      "task": "Implement DocumentPartSavingCallback to assign filenames based on original heading text.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 11,
+      "file_name": "implement-documentpartsavingcallback-to-select-docx-for-even-parts-and-pdf-for-odd-parts.cs",
+      "task": "Implement DocumentPartSavingCallback to select DOCX for even parts and PDF for odd parts.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "docx",
+        "doc",
+        "pdf"
+      ]
+    },
+    {
+      "id": 12,
+      "file_name": "save-split-parts-as-pdf-files-while-preserving-original-document-styles-and-layout.cs",
+      "task": "Save split parts as PDF files while preserving original document styles and layout.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc",
+        "pdf"
+      ]
+    },
+    {
+      "id": 13,
+      "file_name": "save-split-parts-as-docx-files-preserving-original-formatting-and-page-orientation.cs",
+      "task": "Save split parts as DOCX files preserving original formatting and page orientation.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "docx",
+        "doc"
+      ]
+    },
+    {
+      "id": 14,
+      "file_name": "handle-exceptions-when-attempting-to-split-to-unsupported-mhtml-format.cs",
+      "task": "Handle exceptions when attempting to split to unsupported MHTML format.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "html",
+        "mhtml"
+      ]
+    },
+    {
+      "id": 15,
+      "file_name": "after-splitting-open-each-output-document-programmatically-to-verify-headers-and-footers.cs",
+      "task": "After splitting, open each output document programmatically to verify headers and footers.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 16,
+      "file_name": "merge-selected-split-documents-by-loading-them-and-using-appenddocument-to-create-combined.cs",
+      "task": "Merge selected split documents by loading them and using AppendDocument to create combined file.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 17,
+      "file_name": "process-a-batch-of-docx-files-splitting-each-by-pages-and-saving-pdfs-to-a-folder.cs",
+      "task": "Process a batch of DOCX files, splitting each by pages and saving PDFs to a folder.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "docx",
+        "doc",
+        "pdf"
+      ]
+    },
+    {
+      "id": 18,
+      "file_name": "split-an-epub-source-into-chapters-and-save-each-chapter-as-html-preserving-layout.cs",
+      "task": "Split an EPUB source into chapters and save each chapter as HTML preserving layout.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "html",
+        "epub"
+      ]
+    },
+    {
+      "id": 19,
+      "file_name": "split-an-html-source-into-chapters-and-save-each-as-docx-while-preserving-inline-styles.cs",
+      "task": "Split an HTML source into chapters and save each as DOCX while preserving inline styles.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "docx",
+        "doc",
+        "html"
+      ]
+    },
+    {
+      "id": 20,
+      "file_name": "split-a-document-by-custom-page-ranges-like-1-3-5-7-and-export-each-range-as-pdf.cs",
+      "task": "Split a document by custom page ranges like 1-3,5-7 and export each range as PDF.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc",
+        "pdf"
+      ]
+    },
+    {
+      "id": 21,
+      "file_name": "split-a-large-word-file-into-50-page-chunks-and-save-each-chunk-as-pdf.cs",
+      "task": "Split a large Word file into 50‑page chunks and save each chunk as PDF.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "pdf"
+      ]
+    },
+    {
+      "id": 22,
+      "file_name": "ensure-split-parts-retain-complete-table-rows-when-original-document-contains-spanning-tab.cs",
+      "task": "Ensure split parts retain complete table rows when original document contains spanning tables.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 23,
+      "file_name": "retain-original-page-orientation-for-each-split-part-preserving-landscape-pages.cs",
+      "task": "Retain original page orientation for each split part, preserving landscape pages.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 24,
+      "file_name": "load-a-source-document-define-split-criteria-and-execute-split-operation-in-a-single-workf.cs",
+      "task": "Load a source document, define split criteria, and execute split operation in a single workflow.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 25,
+      "file_name": "use-documentsplitcriteria-enumeration-to-split-by-sections-and-then-merge-selected-parts.cs",
+      "task": "Use DocumentSplitCriteria enumeration to split by sections and then merge selected parts.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 26,
+      "file_name": "apply-documentpartsavingcallback-to-customize-file-naming-convention-for-each-split-output.cs",
+      "task": "Apply DocumentPartSavingCallback to customize file naming convention for each split output.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 27,
+      "file_name": "validate-that-each-split-docx-file-maintains-original-header-and-footer-content-after-savi.cs",
+      "task": "Validate that each split DOCX file maintains original header and footer content after saving.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "docx",
+        "doc"
+      ]
+    },
+    {
+      "id": 28,
+      "file_name": "execute-split-operation-on-multiple-documents-sequentially-storing-results-in-designated-o.cs",
+      "task": "Execute split operation on multiple documents sequentially, storing results in designated output directories.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 29,
+      "file_name": "combine-page-range-and-heading-criteria-to-produce-parts-that-start-at-each-heading-on-new.cs",
+      "task": "Combine page range and heading criteria to produce parts that start at each heading on new page.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 30,
+      "file_name": "use-documentsplitcriteria-to-split-by-sections-then-save-each-part-to-a-network-share-loca.cs",
+      "task": "Use DocumentSplitCriteria to split by sections, then save each part to a network share location.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "split-workflow",
+      "outputs": [
+        "doc"
+      ]
+    }
+  ]
+}
