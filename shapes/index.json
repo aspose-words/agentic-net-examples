@@ -1,0 +1,434 @@
+{
+  "category": {
+    "name": "Shapes",
+    "slug": "shapes",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use simple documented Shape workflows using DocumentBuilder.InsertShape, InsertImage, and Shape or GroupShape APIs only when directly required. Keep validation narrow and task-specific and bootstrap all input assets locally.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 35,
+    "winner_counts": {
+      "both": 0,
+      "mcp": 35,
+      "llm": 0,
+      "none": 0
+    },
+    "workflow_examples": {
+      "shape-workflow": 35
+    }
+  },
+  "rules_summary": {
+    "core_rules": [
+      "Use native Aspose.Words APIs directly.",
+      "Create local sample documents and images when a task needs them.",
+      "Do not assume external files already exist.",
+      "Always save the requested output.",
+      "Keep validation narrow and task-specific."
+    ],
+    "shape_rules": [
+      "Prefer DocumentBuilder.InsertShape for basic shape insertion.",
+      "Use ShapeType, WrapType, positioning, fill, stroke, and size APIs only when relevant to the task.",
+      "Use GroupShape only when the task explicitly requires grouping.",
+      "For image-based tasks, create a local sample image first."
+    ],
+    "api_safety_rules": [
+      "Do not invent unsupported Aspose.Words.Drawing APIs.",
+      "Do not use fake namespaces.",
+      "Use documented Shape, GroupShape, ImageData, and rendering APIs only."
+    ]
+  },
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "insert-an-image-shape-using-documentbuilder-insertimage-with-specified-size-wrap-type-and.cs",
+      "task": "Insert an image shape using DocumentBuilder.InsertImage with specified size, wrap type, and positioning.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 2,
+      "file_name": "insert-a-textbox-shape-with-defined-dimensions-border-style-and-interior-formatting-applie.cs",
+      "task": "Insert a textbox shape with defined dimensions, border style, and interior formatting applied.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 3,
+      "file_name": "insert-a-rectangle-autoshape-set-its-fill-color-to-blue-and-define-line-weight.cs",
+      "task": "Insert a rectangle AutoShape, set its fill color to blue, and define line weight.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 4,
+      "file_name": "insert-an-ole-object-shape-and-lock-its-aspect-ratio-to-preserve-original-proportions.cs",
+      "task": "Insert an OLE object shape and lock its aspect ratio to preserve original proportions.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 5,
+      "file_name": "insert-a-picture-shape-into-a-table-cell-and-enable-islayoutincell-for-proper-layout.cs",
+      "task": "Insert a picture shape into a table cell and enable IsLayoutInCell for proper layout.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 6,
+      "file_name": "lock-aspect-ratio-for-shapes-by-setting-shape-aspectratiolocked-property-to-true.cs",
+      "task": "Lock aspect ratio for shapes by setting Shape.AspectRatioLocked property to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 7,
+      "file_name": "set-shape-layout-inside-table-cells-by-configuring-islayoutincell-property-to-true.cs",
+      "task": "Set shape layout inside table cells by configuring IsLayoutInCell property to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 8,
+      "file_name": "create-a-custom-snip-corner-rectangle-shape-with-defined-corner-radius-and-light-gray-fill.cs",
+      "task": "Create a custom snip corner rectangle shape with defined corner radius and light gray fill.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 9,
+      "file_name": "retrieve-actual-bounds-of-a-shape-using-shape-getactualbounds-and-log-coordinate-points.cs",
+      "task": "Retrieve actual bounds of a shape using Shape.GetActualBounds and log coordinate points.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 10,
+      "file_name": "set-vertical-anchor-of-a-shape-to-top-middle-or-bottom-based-on-design-requirements.cs",
+      "task": "Set vertical anchor of a shape to top, middle, or bottom based on design requirements.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 11,
+      "file_name": "detect-smartart-shapes-using-shape-issmartart-property-and-replace-them-with-alternative-d.cs",
+      "task": "Detect SmartArt shapes using Shape.IsSmartArt property and replace them with alternative diagrams.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 12,
+      "file_name": "insert-a-horizontal-rule-shape-with-custom-width-thickness-and-color-to-separate-sections.cs",
+      "task": "Insert a horizontal rule shape with custom width, thickness, and color to separate sections.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 13,
+      "file_name": "import-mathml-content-as-shapes-position-them-inline-and-adjust-baseline-alignment.cs",
+      "task": "Import MathML content as shapes, position them inline, and adjust baseline alignment.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 14,
+      "file_name": "create-a-groupshape-instance-add-a-picture-textbox-and-autoshape-then-arrange-them.cs",
+      "task": "Create a GroupShape instance, add a picture, textbox, and AutoShape, then arrange them.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 15,
+      "file_name": "append-a-new-shape-to-an-existing-groupshape-and-update-group-bounds-accordingly.cs",
+      "task": "Append a new shape to an existing GroupShape and update group bounds accordingly.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 16,
+      "file_name": "iterate-through-all-shapes-in-a-document-and-output-each-shape-s-type-using-shapetype-enum.cs",
+      "task": "Iterate through all shapes in a document and output each shape's type using ShapeType enumeration.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 17,
+      "file_name": "change-a-picture-shape-to-an-autoshape-programmatically-by-setting-shapetype-while-preserv.cs",
+      "task": "Change a picture shape to an AutoShape programmatically by setting ShapeType while preserving size.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 18,
+      "file_name": "apply-a-uniform-fill-color-to-every-shape-in-a-document-for-consistent-visual-branding.cs",
+      "task": "Apply a uniform fill color to every shape in a document for consistent visual branding.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 19,
+      "file_name": "export-each-shape-s-image-to-a-separate-file-naming-files-based-on-shape-index-and-type.cs",
+      "task": "Export each shape's image to a separate file, naming files based on shape index and type.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 20,
+      "file_name": "load-a-docx-template-insert-required-shapes-and-save-the-modified-document-as-a-new-docx-f.cs",
+      "task": "Load a DOCX template, insert required shapes, and save the modified document as a new DOCX file.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx",
+        "doc"
+      ]
+    },
+    {
+      "id": 21,
+      "file_name": "save-a-document-containing-shapes-as-pdf-while-preserving-exact-layout-and-visual-fidelity.cs",
+      "task": "Save a document containing shapes as PDF while preserving exact layout and visual fidelity.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "doc",
+        "pdf"
+      ]
+    },
+    {
+      "id": 22,
+      "file_name": "batch-process-a-folder-of-docx-files-inserting-a-semi-transparent-watermark-shape-into-eac.cs",
+      "task": "Batch process a folder of DOCX files, inserting a semi‑transparent watermark shape into each document.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx",
+        "doc"
+      ]
+    },
+    {
+      "id": 23,
+      "file_name": "move-documentbuilder-cursor-to-a-bookmark-before-inserting-a-shape-at-the-bookmarked-locat.cs",
+      "task": "Move DocumentBuilder cursor to a bookmark before inserting a shape at the bookmarked location.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 24,
+      "file_name": "insert-a-shape-with-relative-positioning-to-the-preceding-paragraph-to-maintain-flow-withi.cs",
+      "task": "Insert a shape with relative positioning to the preceding paragraph to maintain flow within the text.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 25,
+      "file_name": "set-a-shape-s-rotation-angle-to-45-degrees-and-verify-visual-result-in-rendered-document.cs",
+      "task": "Set a shape's rotation angle to 45 degrees and verify visual result in rendered document.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 26,
+      "file_name": "configure-text-wrapping-around-a-shape-on-both-sides-of-the-page-using-shape-wraptype-prop.cs",
+      "task": "Configure text wrapping around a shape on both sides of the page using Shape.WrapType property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 27,
+      "file_name": "insert-a-shape-inside-a-table-cell-then-adjust-the-cell-s-left-and-right-margins-for-prope.cs",
+      "task": "Insert a shape inside a table cell, then adjust the cell's left and right margins for proper spacing.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 28,
+      "file_name": "clone-an-existing-shape-modify-its-fill-color-and-insert-the-clone-at-a-different-location.cs",
+      "task": "Clone an existing shape, modify its fill color, and insert the clone at a different location.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 29,
+      "file_name": "convert-a-floating-shape-to-an-inline-shape-and-later-revert-it-back-to-floating-using-pro.cs",
+      "task": "Convert a floating shape to an inline shape and later revert it back to floating using properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 30,
+      "file_name": "apply-a-hyperlink-to-a-shape-that-points-to-an-external-website-and-test-navigation-functi.cs",
+      "task": "Apply a hyperlink to a shape that points to an external website and test navigation functionality.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 31,
+      "file_name": "set-alternative-text-for-a-shape-to-improve-accessibility-for-screen-readers-and-assistive.cs",
+      "task": "Set alternative text for a shape to improve accessibility for screen readers and assistive technologies.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 32,
+      "file_name": "store-custom-metadata-in-a-shape-s-title-property-for-later-retrieval-during-document-proc.cs",
+      "task": "Store custom metadata in a shape's Title property for later retrieval during document processing.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 33,
+      "file_name": "retrieve-a-shape-s-z-order-index-and-bring-the-shape-to-the-front-of-the-document-layering.cs",
+      "task": "Retrieve a shape's Z‑order index and bring the shape to the front of the document layering.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 34,
+      "file_name": "send-a-shape-to-the-back-of-the-document-s-layering-order-to-ensure-underlying-content-rem.cs",
+      "task": "Send a shape to the back of the document's layering order to ensure underlying content remains visible.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 35,
+      "file_name": "group-multiple-shapes-together-and-apply-a-collective-rotation-of-30-degrees-to-the-entire.cs",
+      "task": "Group multiple shapes together and apply a collective rotation of 30 degrees to the entire group.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "shape-workflow",
+      "outputs": [
+        "docx"
+      ]
+    }
+  ]
+}
