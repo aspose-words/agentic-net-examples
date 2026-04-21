@@ -1,0 +1,2238 @@
+{
+  "category": {
+    "name": "Working with Table",
+    "slug": "working-with-table",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use simple documented table workflows. Prefer DocumentBuilder.StartTable and related builder methods for creation tasks, and use Table, Row, Cell, and CellFormat APIs directly for modification or inspection tasks. Keep validation narrow and task-specific.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 198,
+    "winner_counts": {
+      "both": 0,
+      "mcp": 198,
+      "llm": 0,
+      "none": 0
+    },
+    "workflow_examples": {
+      "table-workflow": 198
+    }
+  },
+  "notes": {
+    "duplicate_file_mappings": [
+      "insert-a-table-into-a-header-footer-by-moving-documentbuilder-to-the-respective-section-an.cs"
+    ]
+  },
+  "rules_summary": {
+    "core_rules": [
+      "Use native Aspose.Words APIs directly.",
+      "Create local sample documents when a task refers to an existing file, stream, template, or input asset.",
+      "Do not assume external files or folders already exist.",
+      "Always save the requested output document, report, or exported file.",
+      "Keep validation narrow and task-specific."
+    ],
+    "table_rules": [
+      "Use DocumentBuilder.StartTable, InsertCell, EndRow, and EndTable for builder-based creation.",
+      "Use Table, Row, Cell, and collection APIs for modification workflows.",
+      "Use import or clone workflows when moving table content across documents.",
+      "Use paragraph formatting inside cells for horizontal text alignment when required."
+    ],
+    "api_safety_rules": [
+      "Do not use DocumentBuilder.InsertTable.",
+      "Do not invent unsupported table, row, or cell APIs.",
+      "Do not assume unsupported TableStyleOptions or cell-format members exist in the current package version."
+    ]
+  },
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "create-a-table-with-three-rows-and-four-columns-using-documentbuilder-in-a-new-document.cs",
+      "task": "Create a table with three rows and four columns using DocumentBuilder in a new document.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 2,
+      "file_name": "create-a-table-using-the-dom-api-by-instantiating-table-row-and-cell-nodes-and-appending-t.cs",
+      "task": "Create a table using the DOM API by instantiating Table, Row, and Cell nodes and appending them.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 3,
+      "file_name": "add-a-new-row-to-an-existing-table-by-calling-table-rows-add-and-then-inserting-cells-with.cs",
+      "task": "Add a new row to an existing table by calling Table.Rows.Add and then inserting cells with Row.Cells.Add.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 4,
+      "file_name": "insert-a-table-at-a-bookmark-location-by-moving-the-documentbuilder-cursor-to-the-bookmark.cs",
+      "task": "Insert a table at a bookmark location by moving the DocumentBuilder cursor to the bookmark and calling InsertTable.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 5,
+      "file_name": "insert-a-table-into-a-header-by-moving-documentbuilder-to-the-header-and-inserting-the-tab.cs",
+      "task": "Insert a table into a header by moving DocumentBuilder to the header and inserting the table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 6,
+      "file_name": "insert-a-table-into-a-header-footer-by-moving-documentbuilder-to-the-respective-section-an.cs",
+      "task": "Insert a table into a header/footer by moving DocumentBuilder to the respective section and calling InsertTable.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 7,
+      "file_name": "insert-a-table-into-a-document-end-by-moving-documentbuilder-to-the-end-and-calling-insert.cs",
+      "task": "Insert a table into a document end by moving DocumentBuilder to the end and calling InsertTable.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 8,
+      "file_name": "insert-a-table-after-a-specific-paragraph-by-locating-the-paragraph-node-and-using-inserta.cs",
+      "task": "Insert a table after a specific paragraph by locating the paragraph node and using InsertAfter.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 9,
+      "file_name": "insert-a-table-after-a-heading-paragraph-by-locating-the-heading-node-and-using-insertafte.cs",
+      "task": "Insert a table after a heading paragraph by locating the heading node and using InsertAfter with the table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 10,
+      "file_name": "insert-a-table-after-each-heading-paragraph-by-iterating-headings-and-using-insertafter-fo.cs",
+      "task": "Insert a table after each heading paragraph by iterating headings and using InsertAfter for each table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 11,
+      "file_name": "insert-a-table-after-a-paragraph-containing-a-specific-keyword-by-searching-nodes-and-usin.cs",
+      "task": "Insert a table after a paragraph containing a specific keyword by searching nodes and using InsertAfter.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 12,
+      "file_name": "insert-an-empty-paragraph-after-a-table-to-prevent-automatic-merging-with-the-following-ta.cs",
+      "task": "Insert an empty paragraph after a table to prevent automatic merging with the following table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 13,
+      "file_name": "clone-an-existing-table-node-and-insert-the-copy-after-a-specific-paragraph-using-node-ins.cs",
+      "task": "Clone an existing Table node and insert the copy after a specific paragraph using Node.InsertAfter.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 14,
+      "file_name": "clone-a-table-from-a-template-document-and-replace-placeholder-text-in-each-cell-using-fin.cs",
+      "task": "Clone a table from a template document and replace placeholder text in each cell using FindReplaceOptions.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 15,
+      "file_name": "load-an-html-file-with-a-complex-table-and-convert-it-to-a-word-document-preserving-merged.cs",
+      "task": "Load an HTML file with a complex table and convert it to a Word document preserving merged cells.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc",
+        "html"
+      ]
+    },
+    {
+      "id": 16,
+      "file_name": "insert-a-table-from-an-html-string-using-documentbuilder-inserthtml-while-preserving-cell.cs",
+      "task": "Insert a table from an HTML string using DocumentBuilder.InsertHtml while preserving cell formatting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc",
+        "html"
+      ]
+    },
+    {
+      "id": 17,
+      "file_name": "set-table-autofit-to-autofitbehavior-autofittowindow-to-automatically-adjust-column-widths.cs",
+      "task": "Set Table.AutoFit to AutoFitBehavior.AutoFitToWindow to automatically adjust column widths to page margins.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 18,
+      "file_name": "enable-automatic-resizing-of-table-columns-to-fit-content-by-setting-table-autofit-to-auto.cs",
+      "task": "Enable automatic resizing of table columns to fit content by setting Table.AutoFit to AutoFitBehavior.AutoFitToContents.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 19,
+      "file_name": "prevent-automatic-resizing-of-a-table-after-content-changes-by-disabling-table-autofit-and.cs",
+      "task": "Prevent automatic resizing of a table after content changes by disabling Table.AutoFit and fixing column widths.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 20,
+      "file_name": "set-a-table-s-left-indent-to-two-centimeters-using-the-table-leftindent-property-for-preci.cs",
+      "task": "Set a table's left indent to two centimeters using the Table.LeftIndent property for precise positioning.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 21,
+      "file_name": "set-the-table-s-left-and-right-margins-to-one-centimeter-each-by-configuring-table-leftind.cs",
+      "task": "Set the table's left and right margins to one centimeter each by configuring Table.LeftIndent and Table.RightIndent.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 22,
+      "file_name": "define-a-table-s-preferred-width-as-100-percent-of-the-page-width-by-assigning-preferredwi.cs",
+      "task": "Define a table's preferred width as 100 percent of the page width by assigning PreferredWidth type and value.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 23,
+      "file_name": "create-a-table-with-a-fixed-width-of-fifteen-centimeters-by-setting-preferredwidth-type-an.cs",
+      "task": "Create a table with a fixed width of fifteen centimeters by setting PreferredWidth type and value accordingly.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 24,
+      "file_name": "create-a-table-with-a-fixed-width-and-centered-alignment-by-setting-preferredwidth-and-tab.cs",
+      "task": "Create a table with a fixed width and centered alignment by setting PreferredWidth and Table.Alignment properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 25,
+      "file_name": "set-the-table-s-vertical-alignment-within-the-page-by-adjusting-table-verticalalignment-pr.cs",
+      "task": "Set the table's vertical alignment within the page by adjusting Table.VerticalAlignment property to Middle.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 26,
+      "file_name": "align-a-table-to-the-center-of-the-page-by-setting-table-alignment-to-tablealignment-cente.cs",
+      "task": "Align a table to the center of the page by setting Table.Alignment to TableAlignment.Center.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 27,
+      "file_name": "apply-the-built-in-grid-table-5-dark-style-to-a-table-after-inserting-its-rows.cs",
+      "task": "Apply the built‑in \"Grid Table 5 Dark\" style to a table after inserting its rows.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 28,
+      "file_name": "iterate-all-tables-in-a-document-and-set-each-style-to-table-grid-using-a-foreach-loop.cs",
+      "task": "Iterate all tables in a document and set each style to \"Table Grid\" using a foreach loop.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 29,
+      "file_name": "apply-a-table-style-that-includes-header-row-formatting-by-enabling-table-styleoptions-fir.cs",
+      "task": "Apply a table style that includes header row formatting by enabling Table.StyleOptions.FirstRow.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 30,
+      "file_name": "apply-a-table-style-that-includes-bold-text-for-the-first-row-by-enabling-table-styleoptio.cs",
+      "task": "Apply a table style that includes bold text for the first row by enabling Table.StyleOptions.FirstRowBold.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 31,
+      "file_name": "apply-a-table-style-that-includes-bold-formatting-for-the-first-column-by-enabling-table-s.cs",
+      "task": "Apply a table style that includes bold formatting for the first column by enabling Table.StyleOptions.FirstColumnBold.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 32,
+      "file_name": "apply-a-table-style-that-includes-alternating-row-shading-by-enabling-table-styleoptions-r.cs",
+      "task": "Apply a table style that includes alternating row shading by enabling Table.StyleOptions.RowBanding.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 33,
+      "file_name": "apply-a-table-style-that-adds-a-thick-top-border-and-thin-bottom-border-by-configuring-tab.cs",
+      "task": "Apply a table style that adds a thick top border and thin bottom border by configuring Table.Borders.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 34,
+      "file_name": "apply-a-table-style-that-hides-borders-by-setting-table-styleoptions-to-tablestyleoptions.cs",
+      "task": "Apply a table style that hides borders by setting Table.StyleOptions to TableStyleOptions.NoBorders.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 35,
+      "file_name": "apply-a-table-style-that-disables-all-cell-shading-by-setting-table-styleoptions-to-tables.cs",
+      "task": "Apply a table style that disables all cell shading by setting Table.StyleOptions to TableStyleOptions.NoShading.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 36,
+      "file_name": "apply-a-table-style-that-disables-row-banding-by-setting-table-styleoptions-to-tablestyleo.cs",
+      "task": "Apply a table style that disables row banding by setting Table.StyleOptions to TableStyleOptions.NoRowBanding.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 37,
+      "file_name": "apply-a-table-style-that-enforces-fixed-column-widths-by-disabling-autofit-and-defining-pr.cs",
+      "task": "Apply a table style that enforces fixed column widths by disabling AutoFit and defining PreferredWidth for each column.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 38,
+      "file_name": "apply-a-custom-border-thickness-of-two-points-to-all-sides-of-a-table-by-setting-table-bor.cs",
+      "task": "Apply a custom border thickness of two points to all sides of a table by setting Table.Borders.LineWidth.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 39,
+      "file_name": "apply-a-custom-border-color-to-the-top-edge-of-a-table-by-setting-table-borders-top-color.cs",
+      "task": "Apply a custom border color to the top edge of a table by setting Table.Borders.Top.Color property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 40,
+      "file_name": "remove-all-borders-from-a-table-by-setting-each-table-borders-linestyle-to-linestyle-none.cs",
+      "task": "Remove all borders from a table by setting each Table.Borders.LineStyle to LineStyle.None.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 41,
+      "file_name": "set-cell-background-shading-to-light-gray-by-assigning-a-shading-pattern-and-color-to-cell.cs",
+      "task": "Set cell background shading to light gray by assigning a shading pattern and color to CellFormat.Shading.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 42,
+      "file_name": "set-the-table-s-background-color-to-light-blue-by-assigning-a-shading-pattern-and-color-to.cs",
+      "task": "Set the table's background color to light blue by assigning a shading pattern and color to Table.Shading.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 43,
+      "file_name": "set-cell-text-alignment-to-center-horizontally-and-vertically-by-configuring-cellformat-ho.cs",
+      "task": "Set cell text alignment to center horizontally and vertically by configuring CellFormat.HorizontalAlignment and VerticalAlignment.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 44,
+      "file_name": "set-cell-vertical-alignment-to-bottom-by-configuring-cellformat-verticalalignment-property.cs",
+      "task": "Set cell vertical alignment to bottom by configuring CellFormat.VerticalAlignment property for each cell.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 45,
+      "file_name": "set-cell-text-direction-to-right-to-left-for-arabic-content-by-configuring-cellformat-text.cs",
+      "task": "Set cell text direction to right‑to‑left for Arabic content by configuring CellFormat.TextDirection property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 46,
+      "file_name": "set-the-table-s-text-direction-to-right-to-left-for-languages-requiring-bidirectional-layo.cs",
+      "task": "Set the table's text direction to right‑to‑left for languages requiring bidirectional layout.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 47,
+      "file_name": "set-the-table-s-text-direction-to-top-to-bottom-for-vertical-asian-scripts-by-configuring.cs",
+      "task": "Set the table's text direction to top‑to‑bottom for vertical Asian scripts by configuring Table.TextDirection property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 48,
+      "file_name": "set-individual-cell-margins-to-five-points-on-all-sides-by-adjusting-cellformat-margintop.cs",
+      "task": "Set individual cell margins to five points on all sides by adjusting CellFormat.MarginTop, Bottom, Left, and Right.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 49,
+      "file_name": "adjust-cell-padding-to-three-points-on-all-sides-by-setting-cellformat-paddingtop-bottom-l.cs",
+      "task": "Adjust cell padding to three points on all sides by setting CellFormat.PaddingTop, Bottom, Left, and Right.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 50,
+      "file_name": "set-the-table-s-default-cell-margins-to-two-points-by-configuring-table-defaultcellmargin.cs",
+      "task": "Set the table's default cell margins to two points by configuring Table.DefaultCellMargin globally.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 51,
+      "file_name": "set-row-height-to-exactly-twenty-points-by-assigning-row-height-and-row-heightrule-propert.cs",
+      "task": "Set row height to exactly twenty points by assigning Row.Height and Row.HeightRule properties appropriately.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 52,
+      "file_name": "set-the-table-s-row-height-to-auto-by-assigning-row-heightrule-to-heightrule-auto-without.cs",
+      "task": "Set the table's row height to auto by assigning Row.HeightRule to HeightRule.Auto without specifying Height.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 53,
+      "file_name": "set-the-table-s-row-spacing-to-ten-points-by-adjusting-row-height-and-row-heightrule-to-ex.cs",
+      "task": "Set the table's row spacing to ten points by adjusting Row.Height and Row.HeightRule to Exactly.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 54,
+      "file_name": "set-the-table-s-row-spacing-to-double-line-spacing-by-adjusting-row-heightrule-to-auto-and.cs",
+      "task": "Set the table's row spacing to double line spacing by adjusting Row.HeightRule to Auto and setting Height accordingly.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 55,
+      "file_name": "set-the-table-s-bottom-margin-to-five-points-by-configuring-table-bottommargin-property-fo.cs",
+      "task": "Set the table's bottom margin to five points by configuring Table.BottomMargin property for precise layout control.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 56,
+      "file_name": "set-the-table-s-top-margin-to-three-points-by-configuring-table-topmargin-property-for-pre.cs",
+      "task": "Set the table's top margin to three points by configuring Table.TopMargin property for precise vertical placement.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 57,
+      "file_name": "set-the-table-s-row-height-rule-to-atleast-and-specify-a-minimum-height-of-fifteen-points.cs",
+      "task": "Set the table's row height rule to AtLeast and specify a minimum height of fifteen points.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 58,
+      "file_name": "disable-row-breaking-across-pages-by-setting-row-allowbreakacrosspages-to-false-for-each-r.cs",
+      "task": "Disable row breaking across pages by setting Row.AllowBreakAcrossPages to false for each row.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 59,
+      "file_name": "configure-a-table-to-avoid-breaking-across-pages-by-setting-table-allowbreakacrosspages-to.cs",
+      "task": "Configure a table to avoid breaking across pages by setting Table.AllowBreakAcrossPages to false.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 60,
+      "file_name": "prevent-a-table-from-being-split-across-pages-by-setting-the-first-row-s-allowbreakacrossp.cs",
+      "task": "Prevent a table from being split across pages by setting the first row's AllowBreakAcrossPages to false.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 61,
+      "file_name": "prevent-a-table-from-being-split-across-columns-in-a-multi-column-layout-by-setting-allowb.cs",
+      "task": "Prevent a table from being split across columns in a multi‑column layout by setting AllowBreakAcrossColumns to false.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 62,
+      "file_name": "merge-two-adjacent-cells-horizontally-by-setting-the-first-cell-s-mergehorizontal-property.cs",
+      "task": "Merge two adjacent cells horizontally by setting the first cell's MergeHorizontal property to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 63,
+      "file_name": "merge-a-group-of-cells-vertically-by-setting-the-top-cell-s-mergevertical-property-to-true.cs",
+      "task": "Merge a group of cells vertically by setting the top cell's MergeVertical property to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 64,
+      "file_name": "merge-cells-vertically-across-three-rows-by-setting-the-top-cell-s-mergevertical-property.cs",
+      "task": "Merge cells vertically across three rows by setting the top cell's MergeVertical property to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 65,
+      "file_name": "add-a-row-of-cells-with-varying-column-spans-by-merging-cells-horizontally-across-multiple.cs",
+      "task": "Add a row of cells with varying column spans by merging cells horizontally across multiple columns.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 66,
+      "file_name": "insert-a-table-with-merged-header-cells-spanning-three-columns-by-setting-mergehorizontal.cs",
+      "task": "Insert a table with merged header cells spanning three columns by setting MergeHorizontal on the first row's cells.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 67,
+      "file_name": "create-a-table-with-one-cell-spanning-full-width-by-merging-all-first-row-cells-horizontal.cs",
+      "task": "Create a table with one cell spanning full width by merging all first‑row cells horizontally.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 68,
+      "file_name": "create-a-table-with-a-merged-cell-spanning-the-entire-first-row-by-merging-all-first-row-c.cs",
+      "task": "Create a table with a merged cell spanning the entire first row by merging all first‑row cells horizontally.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 69,
+      "file_name": "insert-a-table-with-a-cell-spanning-two-rows-and-three-columns-by-setting-mergehorizontal.cs",
+      "task": "Insert a table with a cell spanning two rows and three columns by setting MergeHorizontal and MergeVertical.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 70,
+      "file_name": "split-a-merged-cell-back-into-individual-cells-by-resetting-its-mergehorizontal-and-mergev.cs",
+      "task": "Split a merged cell back into individual cells by resetting its MergeHorizontal and MergeVertical properties to false.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 71,
+      "file_name": "split-a-table-into-two-separate-tables-at-the-third-row-using-the-table-split-method.cs",
+      "task": "Split a table into two separate tables at the third row using the Table.Split method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 72,
+      "file_name": "split-a-table-into-three-parts-by-calling-table-split-twice-at-specified-row-indices-for-c.cs",
+      "task": "Split a table into three parts by calling Table.Split twice at specified row indices for custom pagination.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 73,
+      "file_name": "join-adjacent-tables-by-inserting-an-empty-paragraph-between-them.cs",
+      "task": "Join adjacent tables by inserting an empty paragraph between them.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 74,
+      "file_name": "set-the-table-s-text-wrapping-mode-to-around-surrounding-text-by-configuring-table-wraparo.cs",
+      "task": "Set the table's text wrapping mode to around surrounding text by configuring Table.WrapAround property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 75,
+      "file_name": "add-a-row-with-cells-containing-rich-text-formatting-by-inserting-formatted-runs-into-each.cs",
+      "task": "Add a row with cells containing rich text formatting by inserting formatted runs into each cell's paragraphs.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 76,
+      "file_name": "create-a-table-with-a-header-row-that-repeats-on-each-page-by-setting-the-first-row-s-head.cs",
+      "task": "Create a table with a header row that repeats on each page by setting the first row's HeadingFormat to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 77,
+      "file_name": "create-a-table-with-alternating-header-and-data-row-colors-by-applying-shading-based-on-ro.cs",
+      "task": "Create a table with alternating header and data row colors by applying shading based on row index parity.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 78,
+      "file_name": "create-a-table-with-alternating-row-colors-by-applying-a-shading-pattern-to-every-second-r.cs",
+      "task": "Create a table with alternating row colors by applying a shading pattern to every second row in a loop.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 79,
+      "file_name": "create-a-table-with-alternating-column-shading-by-applying-a-shading-pattern-to-every-seco.cs",
+      "task": "Create a table with alternating column shading by applying a shading pattern to every second column.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 80,
+      "file_name": "create-a-table-with-a-single-column-and-multiple-rows-then-merge-every-second-cell-vertica.cs",
+      "task": "Create a table with a single column and multiple rows, then merge every second cell vertically for grouping.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 81,
+      "file_name": "create-a-table-with-a-fixed-number-of-columns-and-dynamically-add-rows-from-a-data-source.cs",
+      "task": "Create a table with a fixed number of columns and dynamically add rows from a data source collection.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 82,
+      "file_name": "insert-a-table-using-documentbuilder-specify-column-count-and-define-initial-rows.cs",
+      "task": "Insert a table using DocumentBuilder, specify column count, and define initial rows.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 83,
+      "file_name": "build-a-table-from-a-datatable-by-iterating-rows-and-inserting-cells-with-documentbuilder.cs",
+      "task": "Build a table from a DataTable by iterating rows and inserting cells with DocumentBuilder.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 84,
+      "file_name": "insert-a-table-with-a-caption-that-automatically-updates-numbering-when-new-tables-are-add.cs",
+      "task": "Insert a table with a caption that automatically updates numbering when new tables are added.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 85,
+      "file_name": "insert-a-table-at-a-specific-bookmark-location-by-moving-documentbuilder-to-the-bookmark-b.cs",
+      "task": "Insert a table at a specific bookmark location by moving DocumentBuilder to the bookmark before building.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 86,
+      "file_name": "insert-a-table-into-the-header-section-by-moving-documentbuilder-to-the-header-and-buildin.cs",
+      "task": "Insert a table into the header section by moving DocumentBuilder to the header and building the table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 87,
+      "file_name": "insert-a-nested-table-inside-a-cell-by-creating-a-table-and-adding-it-to-the-parent-cell.cs",
+      "task": "Insert a nested table inside a cell by creating a Table and adding it to the parent cell.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 88,
+      "file_name": "insert-a-table-into-a-floating-textbox-by-moving-documentbuilder-to-the-textbox-and-buildi.cs",
+      "task": "Insert a table into a floating textbox by moving DocumentBuilder to the textbox and building the table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 89,
+      "file_name": "insert-a-table-into-a-styled-paragraph-by-moving-documentbuilder-to-the-paragraph-and-buil.cs",
+      "task": "Insert a table into a styled paragraph by moving DocumentBuilder to the paragraph and building the table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 90,
+      "file_name": "insert-a-table-into-a-footnote-by-moving-documentbuilder-to-the-footnote-and-building-the.cs",
+      "task": "Insert a table into a footnote by moving DocumentBuilder to the footnote and building the table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 91,
+      "file_name": "insert-a-table-into-a-header-footer-by-moving-documentbuilder-to-the-respective-section-an.cs",
+      "task": "Insert a table into a header/footer by moving DocumentBuilder to the respective section and building the table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 92,
+      "file_name": "set-table-preferredwidth-to-half-page-and-enable-auto-fit-to-adjust-columns-dynamically.cs",
+      "task": "Set table PreferredWidth to half page and enable auto‑fit to adjust columns dynamically.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 93,
+      "file_name": "disable-table-auto-fit-by-setting-allowautofit-property-to-false-keeping-column-widths-fix.cs",
+      "task": "Disable table auto‑fit by setting AllowAutoFit property to false, keeping column widths fixed.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 94,
+      "file_name": "configure-row-height-to-exactly-20-points-using-row-rowformat-height-and-heightrule-exact.cs",
+      "task": "Configure row height to exactly 20 points using Row.RowFormat.Height and HeightRule Exact.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 95,
+      "file_name": "apply-light-gray-shading-to-header-row-cells-via-cell-cellformat-shading-backgroundpattern.cs",
+      "task": "Apply light gray shading to header row cells via Cell.CellFormat.Shading.BackgroundPatternColor.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 96,
+      "file_name": "set-cell-padding-to-five-points-on-all-sides-by-modifying-cell-cellformat-padding-values.cs",
+      "task": "Set cell padding to five points on all sides by modifying Cell.CellFormat.Padding values.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 97,
+      "file_name": "add-a-double-border-around-the-entire-table-by-configuring-table-border-for-each-side.cs",
+      "task": "Add a double border around the entire table by configuring Table.Border for each side.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 98,
+      "file_name": "create-a-custom-tablestyle-named-customstyle-define-shading-and-borders-and-add-to-documen.cs",
+      "task": "Create a custom TableStyle named CustomStyle, define shading and borders, and add to document styles.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 99,
+      "file_name": "copy-an-existing-tablestyle-from-a-source-document-using-document-styles-addcopy-method.cs",
+      "task": "Copy an existing TableStyle from a source document using document.Styles.AddCopy method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 100,
+      "file_name": "apply-a-tablestyle-to-a-table-by-setting-the-table-style-property-to-the-style-name.cs",
+      "task": "Apply a TableStyle to a table by setting the Table.Style property to the style name.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 101,
+      "file_name": "translate-a-tablestyle-into-direct-formatting-by-reading-its-properties-and-applying-them.cs",
+      "task": "Translate a TableStyle into direct formatting by reading its properties and applying them to Table, Row, and Cell.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 102,
+      "file_name": "join-two-adjacent-tables-into-a-single-continuous-table-using-the-table-join-method.cs",
+      "task": "Join two adjacent tables into a single continuous table using the Table.Join method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 103,
+      "file_name": "split-a-large-table-at-a-specific-row-index-into-smaller-tables-using-table-split.cs",
+      "task": "Split a large table at a specific row index into smaller tables using Table.Split.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 104,
+      "file_name": "apply-distinct-border-styles-to-first-row-last-row-and-inner-cells-via-rowformat-and-cellf.cs",
+      "task": "Apply distinct border styles to first row, last row, and inner cells via RowFormat and CellFormat.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 105,
+      "file_name": "center-the-table-on-the-page-by-setting-table-alignment-property-to-center.cs",
+      "task": "Center the table on the page by setting Table.Alignment property to Center.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 106,
+      "file_name": "enable-table-text-wrapping-around-images-by-setting-table-allowoverlap-to-true-and-adjusti.cs",
+      "task": "Enable table text wrapping around images by setting Table.AllowOverlap to true and adjusting layout.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 107,
+      "file_name": "prevent-row-deletion-by-setting-row-rowformat-allowbreakacrosspages-to-false-in-the-docume.cs",
+      "task": "Prevent row deletion by setting Row.RowFormat.AllowBreakAcrossPages to false in the document.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 108,
+      "file_name": "apply-conditional-cell-shading-based-on-numeric-values-by-iterating-cells-and-setting-cell.cs",
+      "task": "Apply conditional cell shading based on numeric values by iterating cells and setting CellFormat.Shading.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 109,
+      "file_name": "merge-cells-horizontally-across-multiple-columns-using-cell-merge-on-adjacent-cells.cs",
+      "task": "Merge cells horizontally across multiple columns using Cell.Merge on adjacent cells.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 110,
+      "file_name": "merge-cells-vertically-within-a-column-by-calling-cell-merge-on-consecutive-rows.cs",
+      "task": "Merge cells vertically within a column by calling Cell.Merge on consecutive rows.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 111,
+      "file_name": "set-table-direction-to-right-to-left-for-arabic-text-by-enabling-table-righttoleft-propert.cs",
+      "task": "Set table direction to right‑to‑left for Arabic text by enabling Table.RightToLeft property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 112,
+      "file_name": "preserve-original-table-formatting-when-loading-a-document-by-disabling-loadoptions-preser.cs",
+      "task": "Preserve original table formatting when loading a document by disabling LoadOptions.PreserveFormatting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 113,
+      "file_name": "optimize-table-rendering-performance-for-large-documents-by-turning-off-layout-updates-dur.cs",
+      "task": "Optimize table rendering performance for large documents by turning off layout updates during batch modifications.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 114,
+      "file_name": "generate-a-pdf-from-a-docx-containing-tables-while-maintaining-all-table-styles-and-format.cs",
+      "task": "Generate a PDF from a DOCX containing tables while maintaining all table styles and formatting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx",
+        "doc",
+        "pdf"
+      ]
+    },
+    {
+      "id": 115,
+      "file_name": "convert-a-docx-with-complex-tables-to-html-ensuring-borders-and-cell-padding-are-retained.cs",
+      "task": "Convert a DOCX with complex tables to HTML, ensuring borders and cell padding are retained.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx",
+        "doc",
+        "html"
+      ]
+    },
+    {
+      "id": 116,
+      "file_name": "serialize-a-table-s-structure-and-content-to-json-by-iterating-rows-and-cells-and-capturin.cs",
+      "task": "Serialize a table's structure and content to JSON by iterating rows and cells and capturing formatting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "json"
+      ]
+    },
+    {
+      "id": 117,
+      "file_name": "deserialize-json-table-data-back-into-a-word-document-by-creating-a-table-and-applying-sto.cs",
+      "task": "Deserialize JSON table data back into a Word document by creating a table and applying stored formatting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc",
+        "json"
+      ]
+    },
+    {
+      "id": 118,
+      "file_name": "apply-gradient-shading-to-cells-by-setting-cellformat-shading-texture-and-backgroundpatter.cs",
+      "task": "Apply gradient shading to cells by setting CellFormat.Shading.Texture and BackgroundPatternColor properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 119,
+      "file_name": "set-uniform-column-widths-for-all-cells-by-iterating-columns-and-assigning-cellformat-widt.cs",
+      "task": "Set uniform column widths for all cells by iterating columns and assigning CellFormat.Width values.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 120,
+      "file_name": "adjust-row-spacing-by-configuring-row-rowformat-spaceafter-and-spacebefore-properties-for.cs",
+      "task": "Adjust row spacing by configuring Row.RowFormat.SpaceAfter and SpaceBefore properties for each row.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 121,
+      "file_name": "insert-a-caption-above-a-table-using-documentbuilder-insertcaption-with-appropriate-label.cs",
+      "task": "Insert a caption above a table using DocumentBuilder.InsertCaption with appropriate label and numbering.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 122,
+      "file_name": "update-all-table-captions-after-adding-new-tables-by-iterating-tables-and-refreshing-capti.cs",
+      "task": "Update all table captions after adding new tables by iterating tables and refreshing caption numbers.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 123,
+      "file_name": "protect-a-table-from-editing-by-applying-a-read-only-restriction-using-document-protect-wi.cs",
+      "task": "Protect a table from editing by applying a read‑only restriction using Document.Protect with editing type.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 124,
+      "file_name": "export-a-table-as-an-image-by-rendering-the-table-node-to-a-bitmap-and-saving-as-png.cs",
+      "task": "Export a table as an image by rendering the table node to a bitmap and saving as PNG.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 125,
+      "file_name": "replace-an-existing-table-with-a-template-by-locating-the-original-table-node-and-insertin.cs",
+      "task": "Replace an existing table with a template by locating the original Table node and inserting the new one.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 126,
+      "file_name": "apply-different-cell-background-colors-based-on-column-index-by-iterating-cells-and-settin.cs",
+      "task": "Apply different cell background colors based on column index by iterating cells and setting CellFormat.Shading.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 127,
+      "file_name": "set-table-to-repeat-header-row-on-each-page-by-enabling-row-isheader-property-for-the-firs.cs",
+      "task": "Set table to repeat header row on each page by enabling Row.IsHeader property for the first row.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 128,
+      "file_name": "remove-all-empty-rows-from-a-table-by-checking-row-rowformat-height-and-deleting-rows-with.cs",
+      "task": "Remove all empty rows from a table by checking Row.RowFormat.Height and deleting rows with zero height.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 129,
+      "file_name": "convert-a-table-with-merged-cells-into-a-flat-structure-by-unmerging-cells-and-redistribut.cs",
+      "task": "Convert a table with merged cells into a flat structure by unmerging cells and redistributing content appropriately.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 130,
+      "file_name": "add-a-footer-row-with-totals-by-calculating-column-sums-and-inserting-a-new-formatted-row.cs",
+      "task": "Add a footer row with totals by calculating column sums and inserting a new formatted row.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 131,
+      "file_name": "implement-pagination-for-a-large-table-by-setting-table-allowbreakacrosspages-to-true-and.cs",
+      "task": "Implement pagination for a large table by setting Table.AllowBreakAcrossPages to true and adjusting row heights.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 132,
+      "file_name": "create-a-table-with-alternating-row-colors-for-readability-by-applying-shading-based-on-ro.cs",
+      "task": "Create a table with alternating row colors for readability by applying shading based on row index parity.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 133,
+      "file_name": "export-table-layout-to-xml-by-iterating-rows-and-cells-and-writing-attributes-for-widths-a.cs",
+      "task": "Export table layout to XML by iterating rows and cells and writing attributes for widths and styles.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "xml"
+      ]
+    },
+    {
+      "id": 134,
+      "file_name": "import-a-table-definition-from-xml-by-parsing-elements-and-constructing-a-table-with-colum.cs",
+      "task": "Import a table definition from XML by parsing elements and constructing a table with column widths and styles.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "xml"
+      ]
+    },
+    {
+      "id": 135,
+      "file_name": "apply-a-custom-border-color-to-the-first-column-cells-by-setting-cellformat-border-color-p.cs",
+      "task": "Apply a custom border color to the first column cells by setting CellFormat.Border.Color property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 136,
+      "file_name": "set-table-to-automatically-resize-columns-to-fit-content-by-enabling-table-autofit-behavio.cs",
+      "task": "Set table to automatically resize columns to fit content by enabling Table.AutoFit behavior.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 137,
+      "file_name": "disable-automatic-column-resizing-while-preserving-existing-widths-by-setting-table-autofi.cs",
+      "task": "Disable automatic column resizing while preserving existing widths by setting Table.AutoFit property to false.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 138,
+      "file_name": "add-a-toc-entry-for-a-table-by-inserting-a-bookmark-and-referencing-it-in-the-toc-field.cs",
+      "task": "Add a TOC entry for a table by inserting a bookmark and referencing it in the TOC field.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 139,
+      "file_name": "update-table-style-definitions-programmatically-by-iterating-document-styles-and-modifying.cs",
+      "task": "Update table style definitions programmatically by iterating document.Styles and modifying TableStyle properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 140,
+      "file_name": "clone-an-existing-table-modify-its-content-and-insert-it-at-a-different-location-in-the-sa.cs",
+      "task": "Clone an existing table, modify its content, and insert it at a different location in the same document.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 141,
+      "file_name": "apply-a-diagonal-line-across-a-cell-by-setting-cellformat-diagonaldown-and-diagonalup-prop.cs",
+      "task": "Apply a diagonal line across a cell by setting CellFormat.DiagonalDown and DiagonalUp properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 142,
+      "file_name": "set-cell-text-direction-to-vertical-for-east-asian-languages-by-configuring-cellformat-tex.cs",
+      "task": "Set cell text direction to vertical for East Asian languages by configuring CellFormat.TextDirection property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 143,
+      "file_name": "apply-a-custom-margin-around-the-entire-table-by-setting-table-leftindent-and-table-righti.cs",
+      "task": "Apply a custom margin around the entire table by setting Table.LeftIndent and Table.RightIndent properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 144,
+      "file_name": "set-table-vertical-alignment-within-the-page-by-adjusting-table-verticalalignment-property.cs",
+      "task": "Set table vertical alignment within the page by adjusting Table.VerticalAlignment property to Center.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 145,
+      "file_name": "apply-a-table-style-that-includes-banded-rows-and-columns-by-configuring-tablestyle-banded.cs",
+      "task": "Apply a table style that includes banded rows and columns by configuring TableStyle.BandedRows and BandedColumns.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 146,
+      "file_name": "generate-a-report-with-multiple-tables-each-using-a-distinct-tablestyle-and-ensure-consist.cs",
+      "task": "Generate a report with multiple tables, each using a distinct TableStyle, and ensure consistent spacing between them.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 147,
+      "file_name": "convert-a-table-with-complex-merged-cells-to-plain-html-by-calculating-appropriate-colspan.cs",
+      "task": "Convert a table with complex merged cells to plain HTML by calculating appropriate colspan and rowspan attributes.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "html"
+      ]
+    },
+    {
+      "id": 148,
+      "file_name": "apply-a-watermark-behind-a-table-by-inserting-a-shape-with-text-and-positioning-it-behind.cs",
+      "task": "Apply a watermark behind a table by inserting a Shape with text and positioning it behind table nodes.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 149,
+      "file_name": "set-table-text-wrapping-style-to-square-by-configuring-table-textwrapping-property-accordi.cs",
+      "task": "Set table text wrapping style to square by configuring Table.TextWrapping property accordingly.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 150,
+      "file_name": "enable-table-overlapping-with-other-floating-objects-by-setting-table-allowoverlap-to-true.cs",
+      "task": "Enable table overlapping with other floating objects by setting Table.AllowOverlap to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 151,
+      "file_name": "add-a-comment-to-a-specific-table-cell-by-locating-the-cell-and-using-documentbuilder-inse.cs",
+      "task": "Add a comment to a specific table cell by locating the cell and using DocumentBuilder.InsertComment.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 152,
+      "file_name": "retrieve-the-list-of-all-tables-in-a-document-by-iterating-nodes-of-type-nodetype-table.cs",
+      "task": "Retrieve the list of all tables in a document by iterating nodes of type NodeType.Table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 153,
+      "file_name": "delete-a-table-that-contains-a-specific-keyword-by-searching-its-range-text-and-removing-t.cs",
+      "task": "Delete a table that contains a specific keyword by searching its Range.Text and removing the node.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 154,
+      "file_name": "apply-custom-cell-margins-by-setting-cell-cellformat-margintop-marginbottom-marginleft-and.cs",
+      "task": "Apply custom cell margins by setting Cell.CellFormat.MarginTop, MarginBottom, MarginLeft, and MarginRight properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 155,
+      "file_name": "set-table-background-shading-to-light-blue-by-configuring-table-shading-backgroundpatternc.cs",
+      "task": "Set table background shading to light blue by configuring Table.Shading.BackgroundPatternColor property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 156,
+      "file_name": "export-each-table-in-a-document-to-separate-docx-files-while-preserving-their-individual-s.cs",
+      "task": "Export each table in a document to separate DOCX files while preserving their individual styles.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx",
+        "doc"
+      ]
+    },
+    {
+      "id": 157,
+      "file_name": "import-multiple-tables-from-separate-docx-files-and-merge-them-into-a-single-document-main.cs",
+      "task": "Import multiple tables from separate DOCX files and merge them into a single document maintaining original formatting.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx",
+        "doc"
+      ]
+    },
+    {
+      "id": 158,
+      "file_name": "apply-a-table-style-with-a-bold-header-row-and-italic-footer-row-by-customizing-style-prop.cs",
+      "task": "Apply a table style with a bold header row and italic footer row by customizing style properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 159,
+      "file_name": "set-table-left-and-right-margins-to-align-with-page-margins-by-calculating-page-width-and.cs",
+      "task": "Set table left and right margins to align with page margins by calculating page width and adjusting indents.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 160,
+      "file_name": "add-a-conditional-row-that-appears-only-when-a-data-value-exceeds-a-threshold-using-if-fie.cs",
+      "task": "Add a conditional row that appears only when a data value exceeds a threshold using IF fields.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 161,
+      "file_name": "apply-a-table-style-with-alternating-column-shading-by-setting-tablestyle-bandedcolumns-pr.cs",
+      "task": "Apply a table style with alternating column shading by setting TableStyle.BandedColumns property to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 162,
+      "file_name": "insert-a-table-with-a-fixed-number-of-rows-and-columns-then-populate-cells-from-a-json-arr.cs",
+      "task": "Insert a table with a fixed number of rows and columns, then populate cells from a JSON array.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "json"
+      ]
+    },
+    {
+      "id": 163,
+      "file_name": "update-cell-formulas-after-inserting-new-rows-by-recalculating-fields-using-document-updat.cs",
+      "task": "Update cell formulas after inserting new rows by recalculating fields using Document.UpdateFields method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 164,
+      "file_name": "apply-a-custom-outer-border-style-while-disabling-inner-borders-by-configuring-table-borde.cs",
+      "task": "Apply a custom outer border style while disabling inner borders by configuring Table.Border settings appropriately.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 165,
+      "file_name": "set-table-text-direction-to-right-to-left-for-the-entire-table-by-enabling-table-righttole.cs",
+      "task": "Set table text direction to right‑to‑left for the entire table by enabling Table.RightToLeft property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 166,
+      "file_name": "apply-a-table-style-with-a-thick-outer-border-and-thin-inner-borders-by-configuring-style.cs",
+      "task": "Apply a table style with a thick outer border and thin inner borders by configuring style Border properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 167,
+      "file_name": "generate-a-table-of-contents-for-tables-only-by-creating-a-custom-toc-field-that-reference.cs",
+      "task": "Generate a table of contents for tables only by creating a custom TOC field that references table captions.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 168,
+      "file_name": "configure-rows-to-expand-automatically-with-content-by-setting-each-row-rowformat-heightru.cs",
+      "task": "Configure rows to expand automatically with content by setting each Row.RowFormat.HeightRule to Auto.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 169,
+      "file_name": "apply-a-custom-cell-border-style-with-different-line-widths-for-each-side-by-setting-cellf.cs",
+      "task": "Apply a custom cell border style with different line widths for each side by setting CellFormat.Border properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 170,
+      "file_name": "apply-a-table-style-with-a-header-row-using-a-larger-font-size-by-customizing-the-style-s.cs",
+      "task": "Apply a table style with a header row using a larger font size by customizing the style's FontSize.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 171,
+      "file_name": "set-table-column-widths-to-match-data-length-by-measuring-text-width-and-assigning-cellfor.cs",
+      "task": "Set table column widths to match data length by measuring text width and assigning CellFormat.Width accordingly.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 172,
+      "file_name": "add-a-table-with-a-footer-row-that-calculates-totals-using-field-codes-for-column-sums.cs",
+      "task": "Add a table with a footer row that calculates totals using field codes for column sums.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 173,
+      "file_name": "apply-a-table-style-with-a-light-gray-background-for-all-cells-by-setting-tablestyle-shadi.cs",
+      "task": "Apply a table style with a light gray background for all cells by setting TableStyle.Shading property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 174,
+      "file_name": "insert-a-table-with-alternating-column-background-colors-by-iterating-columns-and-applying.cs",
+      "task": "Insert a table with alternating column background colors by iterating columns and applying CellFormat.Shading.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 175,
+      "file_name": "set-table-text-direction-to-vertical-for-all-cells-by-configuring-cellformat-textdirection.cs",
+      "task": "Set table text direction to vertical for all cells by configuring CellFormat.TextDirection globally.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 176,
+      "file_name": "apply-a-custom-table-style-that-includes-a-double-line-border-around-the-table-and-single.cs",
+      "task": "Apply a custom table style that includes a double line border around the table and single lines inside.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 177,
+      "file_name": "apply-a-table-style-with-bold-header-row-and-italic-footer-row-by-customizing-style-proper.cs",
+      "task": "Apply a table style with bold header row and italic footer row by customizing style properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 178,
+      "file_name": "set-cell-vertical-alignment-to-middle-using-cell-cellformat-verticalalignment-property-for.cs",
+      "task": "Set cell vertical alignment to middle using Cell.CellFormat.VerticalAlignment property for better presentation.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 179,
+      "file_name": "apply-text-alignment-within-cells-by-setting-cell-cellformat-alignment-to-center-for-unifo.cs",
+      "task": "Apply text alignment within cells by setting Cell.CellFormat.Alignment to Center for uniform appearance.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 180,
+      "file_name": "define-cell-margins-by-configuring-cell-cellformat-margintop-marginbottom-marginleft-and-m.cs",
+      "task": "Define cell margins by configuring Cell.CellFormat.MarginTop, MarginBottom, MarginLeft, and MarginRight.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 181,
+      "file_name": "set-table-top-and-bottom-spacing-using-table-spacebefore-and-table-spaceafter-properties.cs",
+      "task": "Set table top and bottom spacing using Table.SpaceBefore and Table.SpaceAfter properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 182,
+      "file_name": "apply-table-background-shading-to-the-entire-table-by-setting-table-shading-backgroundpatt.cs",
+      "task": "Apply table background shading to the entire table by setting Table.Shading.BackgroundPatternColor.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 183,
+      "file_name": "prevent-rows-from-breaking-across-pages-by-setting-row-rowformat-keeptogether-to-true.cs",
+      "task": "Prevent rows from breaking across pages by setting Row.RowFormat.KeepTogether to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 184,
+      "file_name": "set-table-to-use-fixed-layout-by-disabling-table-autofit-and-specifying-explicit-column-wi.cs",
+      "task": "Set table to use fixed layout by disabling Table.AutoFit and specifying explicit column widths.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 185,
+      "file_name": "apply-a-predefined-built-in-tablestyle-by-setting-table-style-to-tablegrid.cs",
+      "task": "Apply a predefined built‑in TableStyle by setting Table.Style to \"TableGrid\".",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 186,
+      "file_name": "retrieve-the-number-of-rows-and-columns-in-a-table-using-table-rows-count-and-table-rows-0.cs",
+      "task": "Retrieve the number of rows and columns in a table using Table.Rows.Count and Table.Rows[0].Cells.Count.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 187,
+      "file_name": "insert-a-new-row-at-a-specific-index-using-table-insertrow-method.cs",
+      "task": "Insert a new row at a specific index using Table.InsertRow method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 188,
+      "file_name": "delete-a-specific-row-from-a-table-using-table-rows-index-remove-method.cs",
+      "task": "Delete a specific row from a table using Table.Rows[index].Remove method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 189,
+      "file_name": "insert-a-new-column-at-a-specific-position-using-table-insertcolumn-method.cs",
+      "task": "Insert a new column at a specific position using Table.InsertColumn method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 190,
+      "file_name": "delete-a-specific-column-from-a-table-using-table-columns-index-remove-method.cs",
+      "task": "Delete a specific column from a table using Table.Columns[index].Remove method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 191,
+      "file_name": "merge-cells-across-a-row-by-calling-cell-merge-on-adjacent-cells.cs",
+      "task": "Merge cells across a row by calling Cell.Merge on adjacent cells.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 192,
+      "file_name": "split-a-merged-cell-back-into-separate-cells-using-cell-split-method.cs",
+      "task": "Split a merged cell back into separate cells using Cell.Split method.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 193,
+      "file_name": "apply-a-table-style-that-includes-a-header-row-with-a-different-background-color-by-settin.cs",
+      "task": "Apply a table style that includes a header row with a different background color by setting TableStyle.HeaderRow properties.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 194,
+      "file_name": "set-table-left-and-right-indents-to-align-with-paragraph-indentation-using-table-leftinden.cs",
+      "task": "Set table left and right indents to align with paragraph indentation using Table.LeftIndent and Table.RightIndent.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 195,
+      "file_name": "keep-the-entire-table-on-a-single-page-by-setting-row-rowformat-keeptogether-to-true-for-a.cs",
+      "task": "Keep the entire table on a single page by setting Row.RowFormat.KeepTogether to true for all rows.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 196,
+      "file_name": "apply-a-custom-table-style-that-includes-alternating-row-shading-by-setting-tablestyle-ban.cs",
+      "task": "Apply a custom table style that includes alternating row shading by setting TableStyle.BandedRows to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 197,
+      "file_name": "enable-table-to-allow-overlapping-with-other-floating-objects-by-setting-table-allowoverla.cs",
+      "task": "Enable table to allow overlapping with other floating objects by setting Table.AllowOverlap to true.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 198,
+      "file_name": "update-table-fields-after-modifying-content-by-calling-document-updatefields-to-recalculat.cs",
+      "task": "Update table fields after modifying content by calling Document.UpdateFields to recalculate any embedded calculations.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "table-workflow",
+      "outputs": [
+        "doc"
+      ]
+    }
+  ]
+}

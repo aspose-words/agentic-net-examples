@@ -1,0 +1,1078 @@
+---
+name: working-with-table
+description: Verified C# examples for table creation and manipulation workflows in Aspose.Words for .NET
+language: csharp
+framework: net8.0
+product: Aspose.Words
+---
+
+# AGENTS.md - Working with Table
+
+## Purpose
+
+This folder is a **live, curated example set** for table scenarios. Treat every file as a standalone console example. The main goal is correct, warning-free use of documented Aspose.Words APIs for creating, inserting, formatting, traversing, importing, cloning, and exporting tables.
+
+## Non-negotiable conventions
+
+- Always use documented Aspose.Words APIs directly.
+- Always create local sample source documents when a task refers to an existing file, folder, stream, template, or input asset.
+- Prefer `DocumentBuilder.StartTable`, `InsertCell`, `EndRow`, and `EndTable` for builder-based creation.
+- Keep validation narrow and task-specific.
+- Do not invent unsupported table, row, cell, or style-option APIs.
+
+## Recommended workflow selection
+
+- **Table workflow**: 198 examples
+
+This category performed best with light primary rules plus a narrow patch for builder insertion, property correctness, and validation scope.
+
+## Validation priorities
+
+1. The code must compile and run without manual input.
+2. Required sample inputs must be bootstrapped locally inside the example.
+3. Requested table or output results must be produced successfully.
+4. Validation should focus only on the exact requested structure, formatting, merge state, shading, border effect, alignment, or saved output.
+
+## File-to-task reference
+
+- `create-a-table-with-three-rows-and-four-columns-using-documentbuilder-in-a-new-document.cs`
+  - Task: Create a table with three rows and four columns using DocumentBuilder in a new document.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `create-a-table-using-the-dom-api-by-instantiating-table-row-and-cell-nodes-and-appending-t.cs`
+  - Task: Create a table using the DOM API by instantiating Table, Row, and Cell nodes and appending them.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `add-a-new-row-to-an-existing-table-by-calling-table-rows-add-and-then-inserting-cells-with.cs`
+  - Task: Add a new row to an existing table by calling Table.Rows.Add and then inserting cells with Row.Cells.Add.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-at-a-bookmark-location-by-moving-the-documentbuilder-cursor-to-the-bookmark.cs`
+  - Task: Insert a table at a bookmark location by moving the DocumentBuilder cursor to the bookmark and calling InsertTable.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `insert-a-table-into-a-header-by-moving-documentbuilder-to-the-header-and-inserting-the-tab.cs`
+  - Task: Insert a table into a header by moving DocumentBuilder to the header and inserting the table.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `insert-a-table-into-a-header-footer-by-moving-documentbuilder-to-the-respective-section-an.cs`
+  - Task: Insert a table into a header/footer by moving DocumentBuilder to the respective section and calling InsertTable.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `insert-a-table-into-a-document-end-by-moving-documentbuilder-to-the-end-and-calling-insert.cs`
+  - Task: Insert a table into a document end by moving DocumentBuilder to the end and calling InsertTable.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `insert-a-table-after-a-specific-paragraph-by-locating-the-paragraph-node-and-using-inserta.cs`
+  - Task: Insert a table after a specific paragraph by locating the paragraph node and using InsertAfter.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-after-a-heading-paragraph-by-locating-the-heading-node-and-using-insertafte.cs`
+  - Task: Insert a table after a heading paragraph by locating the heading node and using InsertAfter with the table.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-after-each-heading-paragraph-by-iterating-headings-and-using-insertafter-fo.cs`
+  - Task: Insert a table after each heading paragraph by iterating headings and using InsertAfter for each table.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-after-a-paragraph-containing-a-specific-keyword-by-searching-nodes-and-usin.cs`
+  - Task: Insert a table after a paragraph containing a specific keyword by searching nodes and using InsertAfter.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-an-empty-paragraph-after-a-table-to-prevent-automatic-merging-with-the-following-ta.cs`
+  - Task: Insert an empty paragraph after a table to prevent automatic merging with the following table.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `clone-an-existing-table-node-and-insert-the-copy-after-a-specific-paragraph-using-node-ins.cs`
+  - Task: Clone an existing Table node and insert the copy after a specific paragraph using Node.InsertAfter.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `clone-a-table-from-a-template-document-and-replace-placeholder-text-in-each-cell-using-fin.cs`
+  - Task: Clone a table from a template document and replace placeholder text in each cell using FindReplaceOptions.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `load-an-html-file-with-a-complex-table-and-convert-it-to-a-word-document-preserving-merged.cs`
+  - Task: Load an HTML file with a complex table and convert it to a Word document preserving merged cells.
+  - Workflow: table-workflow
+  - Outputs: doc, html
+  - Selected engine: mcp
+- `insert-a-table-from-an-html-string-using-documentbuilder-inserthtml-while-preserving-cell.cs`
+  - Task: Insert a table from an HTML string using DocumentBuilder.InsertHtml while preserving cell formatting.
+  - Workflow: table-workflow
+  - Outputs: doc, html
+  - Selected engine: mcp
+- `set-table-autofit-to-autofitbehavior-autofittowindow-to-automatically-adjust-column-widths.cs`
+  - Task: Set Table.AutoFit to AutoFitBehavior.AutoFitToWindow to automatically adjust column widths to page margins.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `enable-automatic-resizing-of-table-columns-to-fit-content-by-setting-table-autofit-to-auto.cs`
+  - Task: Enable automatic resizing of table columns to fit content by setting Table.AutoFit to AutoFitBehavior.AutoFitToContents.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `prevent-automatic-resizing-of-a-table-after-content-changes-by-disabling-table-autofit-and.cs`
+  - Task: Prevent automatic resizing of a table after content changes by disabling Table.AutoFit and fixing column widths.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-a-table-s-left-indent-to-two-centimeters-using-the-table-leftindent-property-for-preci.cs`
+  - Task: Set a table's left indent to two centimeters using the Table.LeftIndent property for precise positioning.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-left-and-right-margins-to-one-centimeter-each-by-configuring-table-leftind.cs`
+  - Task: Set the table's left and right margins to one centimeter each by configuring Table.LeftIndent and Table.RightIndent.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `define-a-table-s-preferred-width-as-100-percent-of-the-page-width-by-assigning-preferredwi.cs`
+  - Task: Define a table's preferred width as 100 percent of the page width by assigning PreferredWidth type and value.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-a-fixed-width-of-fifteen-centimeters-by-setting-preferredwidth-type-an.cs`
+  - Task: Create a table with a fixed width of fifteen centimeters by setting PreferredWidth type and value accordingly.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-a-fixed-width-and-centered-alignment-by-setting-preferredwidth-and-tab.cs`
+  - Task: Create a table with a fixed width and centered alignment by setting PreferredWidth and Table.Alignment properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-vertical-alignment-within-the-page-by-adjusting-table-verticalalignment-pr.cs`
+  - Task: Set the table's vertical alignment within the page by adjusting Table.VerticalAlignment property to Middle.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `align-a-table-to-the-center-of-the-page-by-setting-table-alignment-to-tablealignment-cente.cs`
+  - Task: Align a table to the center of the page by setting Table.Alignment to TableAlignment.Center.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-the-built-in-grid-table-5-dark-style-to-a-table-after-inserting-its-rows.cs`
+  - Task: Apply the built‑in "Grid Table 5 Dark" style to a table after inserting its rows.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `iterate-all-tables-in-a-document-and-set-each-style-to-table-grid-using-a-foreach-loop.cs`
+  - Task: Iterate all tables in a document and set each style to "Table Grid" using a foreach loop.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `apply-a-table-style-that-includes-header-row-formatting-by-enabling-table-styleoptions-fir.cs`
+  - Task: Apply a table style that includes header row formatting by enabling Table.StyleOptions.FirstRow.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-that-includes-bold-text-for-the-first-row-by-enabling-table-styleoptio.cs`
+  - Task: Apply a table style that includes bold text for the first row by enabling Table.StyleOptions.FirstRowBold.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-that-includes-bold-formatting-for-the-first-column-by-enabling-table-s.cs`
+  - Task: Apply a table style that includes bold formatting for the first column by enabling Table.StyleOptions.FirstColumnBold.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-that-includes-alternating-row-shading-by-enabling-table-styleoptions-r.cs`
+  - Task: Apply a table style that includes alternating row shading by enabling Table.StyleOptions.RowBanding.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-that-adds-a-thick-top-border-and-thin-bottom-border-by-configuring-tab.cs`
+  - Task: Apply a table style that adds a thick top border and thin bottom border by configuring Table.Borders.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-that-hides-borders-by-setting-table-styleoptions-to-tablestyleoptions.cs`
+  - Task: Apply a table style that hides borders by setting Table.StyleOptions to TableStyleOptions.NoBorders.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-that-disables-all-cell-shading-by-setting-table-styleoptions-to-tables.cs`
+  - Task: Apply a table style that disables all cell shading by setting Table.StyleOptions to TableStyleOptions.NoShading.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-that-disables-row-banding-by-setting-table-styleoptions-to-tablestyleo.cs`
+  - Task: Apply a table style that disables row banding by setting Table.StyleOptions to TableStyleOptions.NoRowBanding.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-that-enforces-fixed-column-widths-by-disabling-autofit-and-defining-pr.cs`
+  - Task: Apply a table style that enforces fixed column widths by disabling AutoFit and defining PreferredWidth for each column.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-custom-border-thickness-of-two-points-to-all-sides-of-a-table-by-setting-table-bor.cs`
+  - Task: Apply a custom border thickness of two points to all sides of a table by setting Table.Borders.LineWidth.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-custom-border-color-to-the-top-edge-of-a-table-by-setting-table-borders-top-color.cs`
+  - Task: Apply a custom border color to the top edge of a table by setting Table.Borders.Top.Color property.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `remove-all-borders-from-a-table-by-setting-each-table-borders-linestyle-to-linestyle-none.cs`
+  - Task: Remove all borders from a table by setting each Table.Borders.LineStyle to LineStyle.None.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-cell-background-shading-to-light-gray-by-assigning-a-shading-pattern-and-color-to-cell.cs`
+  - Task: Set cell background shading to light gray by assigning a shading pattern and color to CellFormat.Shading.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-background-color-to-light-blue-by-assigning-a-shading-pattern-and-color-to.cs`
+  - Task: Set the table's background color to light blue by assigning a shading pattern and color to Table.Shading.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-cell-text-alignment-to-center-horizontally-and-vertically-by-configuring-cellformat-ho.cs`
+  - Task: Set cell text alignment to center horizontally and vertically by configuring CellFormat.HorizontalAlignment and VerticalAlignment.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-cell-vertical-alignment-to-bottom-by-configuring-cellformat-verticalalignment-property.cs`
+  - Task: Set cell vertical alignment to bottom by configuring CellFormat.VerticalAlignment property for each cell.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-cell-text-direction-to-right-to-left-for-arabic-content-by-configuring-cellformat-text.cs`
+  - Task: Set cell text direction to right‑to‑left for Arabic content by configuring CellFormat.TextDirection property.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-text-direction-to-right-to-left-for-languages-requiring-bidirectional-layo.cs`
+  - Task: Set the table's text direction to right‑to‑left for languages requiring bidirectional layout.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-text-direction-to-top-to-bottom-for-vertical-asian-scripts-by-configuring.cs`
+  - Task: Set the table's text direction to top‑to‑bottom for vertical Asian scripts by configuring Table.TextDirection property.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-individual-cell-margins-to-five-points-on-all-sides-by-adjusting-cellformat-margintop.cs`
+  - Task: Set individual cell margins to five points on all sides by adjusting CellFormat.MarginTop, Bottom, Left, and Right.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `adjust-cell-padding-to-three-points-on-all-sides-by-setting-cellformat-paddingtop-bottom-l.cs`
+  - Task: Adjust cell padding to three points on all sides by setting CellFormat.PaddingTop, Bottom, Left, and Right.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-default-cell-margins-to-two-points-by-configuring-table-defaultcellmargin.cs`
+  - Task: Set the table's default cell margins to two points by configuring Table.DefaultCellMargin globally.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-row-height-to-exactly-twenty-points-by-assigning-row-height-and-row-heightrule-propert.cs`
+  - Task: Set row height to exactly twenty points by assigning Row.Height and Row.HeightRule properties appropriately.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-row-height-to-auto-by-assigning-row-heightrule-to-heightrule-auto-without.cs`
+  - Task: Set the table's row height to auto by assigning Row.HeightRule to HeightRule.Auto without specifying Height.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-row-spacing-to-ten-points-by-adjusting-row-height-and-row-heightrule-to-ex.cs`
+  - Task: Set the table's row spacing to ten points by adjusting Row.Height and Row.HeightRule to Exactly.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-row-spacing-to-double-line-spacing-by-adjusting-row-heightrule-to-auto-and.cs`
+  - Task: Set the table's row spacing to double line spacing by adjusting Row.HeightRule to Auto and setting Height accordingly.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-bottom-margin-to-five-points-by-configuring-table-bottommargin-property-fo.cs`
+  - Task: Set the table's bottom margin to five points by configuring Table.BottomMargin property for precise layout control.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-top-margin-to-three-points-by-configuring-table-topmargin-property-for-pre.cs`
+  - Task: Set the table's top margin to three points by configuring Table.TopMargin property for precise vertical placement.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-row-height-rule-to-atleast-and-specify-a-minimum-height-of-fifteen-points.cs`
+  - Task: Set the table's row height rule to AtLeast and specify a minimum height of fifteen points.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `disable-row-breaking-across-pages-by-setting-row-allowbreakacrosspages-to-false-for-each-r.cs`
+  - Task: Disable row breaking across pages by setting Row.AllowBreakAcrossPages to false for each row.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `configure-a-table-to-avoid-breaking-across-pages-by-setting-table-allowbreakacrosspages-to.cs`
+  - Task: Configure a table to avoid breaking across pages by setting Table.AllowBreakAcrossPages to false.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `prevent-a-table-from-being-split-across-pages-by-setting-the-first-row-s-allowbreakacrossp.cs`
+  - Task: Prevent a table from being split across pages by setting the first row's AllowBreakAcrossPages to false.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `prevent-a-table-from-being-split-across-columns-in-a-multi-column-layout-by-setting-allowb.cs`
+  - Task: Prevent a table from being split across columns in a multi‑column layout by setting AllowBreakAcrossColumns to false.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `merge-two-adjacent-cells-horizontally-by-setting-the-first-cell-s-mergehorizontal-property.cs`
+  - Task: Merge two adjacent cells horizontally by setting the first cell's MergeHorizontal property to true.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `merge-a-group-of-cells-vertically-by-setting-the-top-cell-s-mergevertical-property-to-true.cs`
+  - Task: Merge a group of cells vertically by setting the top cell's MergeVertical property to true.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `merge-cells-vertically-across-three-rows-by-setting-the-top-cell-s-mergevertical-property.cs`
+  - Task: Merge cells vertically across three rows by setting the top cell's MergeVertical property to true.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `add-a-row-of-cells-with-varying-column-spans-by-merging-cells-horizontally-across-multiple.cs`
+  - Task: Add a row of cells with varying column spans by merging cells horizontally across multiple columns.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-with-merged-header-cells-spanning-three-columns-by-setting-mergehorizontal.cs`
+  - Task: Insert a table with merged header cells spanning three columns by setting MergeHorizontal on the first row's cells.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-one-cell-spanning-full-width-by-merging-all-first-row-cells-horizontal.cs`
+  - Task: Create a table with one cell spanning full width by merging all first‑row cells horizontally.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-a-merged-cell-spanning-the-entire-first-row-by-merging-all-first-row-c.cs`
+  - Task: Create a table with a merged cell spanning the entire first row by merging all first‑row cells horizontally.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-with-a-cell-spanning-two-rows-and-three-columns-by-setting-mergehorizontal.cs`
+  - Task: Insert a table with a cell spanning two rows and three columns by setting MergeHorizontal and MergeVertical.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `split-a-merged-cell-back-into-individual-cells-by-resetting-its-mergehorizontal-and-mergev.cs`
+  - Task: Split a merged cell back into individual cells by resetting its MergeHorizontal and MergeVertical properties to false.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `split-a-table-into-two-separate-tables-at-the-third-row-using-the-table-split-method.cs`
+  - Task: Split a table into two separate tables at the third row using the Table.Split method.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `split-a-table-into-three-parts-by-calling-table-split-twice-at-specified-row-indices-for-c.cs`
+  - Task: Split a table into three parts by calling Table.Split twice at specified row indices for custom pagination.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `join-adjacent-tables-by-inserting-an-empty-paragraph-between-them.cs`
+  - Task: Join adjacent tables by inserting an empty paragraph between them.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-the-table-s-text-wrapping-mode-to-around-surrounding-text-by-configuring-table-wraparo.cs`
+  - Task: Set the table's text wrapping mode to around surrounding text by configuring Table.WrapAround property.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `add-a-row-with-cells-containing-rich-text-formatting-by-inserting-formatted-runs-into-each.cs`
+  - Task: Add a row with cells containing rich text formatting by inserting formatted runs into each cell's paragraphs.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-a-header-row-that-repeats-on-each-page-by-setting-the-first-row-s-head.cs`
+  - Task: Create a table with a header row that repeats on each page by setting the first row's HeadingFormat to true.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-alternating-header-and-data-row-colors-by-applying-shading-based-on-ro.cs`
+  - Task: Create a table with alternating header and data row colors by applying shading based on row index parity.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-alternating-row-colors-by-applying-a-shading-pattern-to-every-second-r.cs`
+  - Task: Create a table with alternating row colors by applying a shading pattern to every second row in a loop.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-alternating-column-shading-by-applying-a-shading-pattern-to-every-seco.cs`
+  - Task: Create a table with alternating column shading by applying a shading pattern to every second column.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-a-single-column-and-multiple-rows-then-merge-every-second-cell-vertica.cs`
+  - Task: Create a table with a single column and multiple rows, then merge every second cell vertically for grouping.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-a-fixed-number-of-columns-and-dynamically-add-rows-from-a-data-source.cs`
+  - Task: Create a table with a fixed number of columns and dynamically add rows from a data source collection.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-using-documentbuilder-specify-column-count-and-define-initial-rows.cs`
+  - Task: Insert a table using DocumentBuilder, specify column count, and define initial rows.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `build-a-table-from-a-datatable-by-iterating-rows-and-inserting-cells-with-documentbuilder.cs`
+  - Task: Build a table from a DataTable by iterating rows and inserting cells with DocumentBuilder.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `insert-a-table-with-a-caption-that-automatically-updates-numbering-when-new-tables-are-add.cs`
+  - Task: Insert a table with a caption that automatically updates numbering when new tables are added.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-at-a-specific-bookmark-location-by-moving-documentbuilder-to-the-bookmark-b.cs`
+  - Task: Insert a table at a specific bookmark location by moving DocumentBuilder to the bookmark before building.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `insert-a-table-into-the-header-section-by-moving-documentbuilder-to-the-header-and-buildin.cs`
+  - Task: Insert a table into the header section by moving DocumentBuilder to the header and building the table.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `insert-a-nested-table-inside-a-cell-by-creating-a-table-and-adding-it-to-the-parent-cell.cs`
+  - Task: Insert a nested table inside a cell by creating a Table and adding it to the parent cell.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-into-a-floating-textbox-by-moving-documentbuilder-to-the-textbox-and-buildi.cs`
+  - Task: Insert a table into a floating textbox by moving DocumentBuilder to the textbox and building the table.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `insert-a-table-into-a-styled-paragraph-by-moving-documentbuilder-to-the-paragraph-and-buil.cs`
+  - Task: Insert a table into a styled paragraph by moving DocumentBuilder to the paragraph and building the table.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `insert-a-table-into-a-footnote-by-moving-documentbuilder-to-the-footnote-and-building-the.cs`
+  - Task: Insert a table into a footnote by moving DocumentBuilder to the footnote and building the table.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `insert-a-table-into-a-header-footer-by-moving-documentbuilder-to-the-respective-section-an.cs`
+  - Task: Insert a table into a header/footer by moving DocumentBuilder to the respective section and building the table.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `set-table-preferredwidth-to-half-page-and-enable-auto-fit-to-adjust-columns-dynamically.cs`
+  - Task: Set table PreferredWidth to half page and enable auto‑fit to adjust columns dynamically.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `disable-table-auto-fit-by-setting-allowautofit-property-to-false-keeping-column-widths-fix.cs`
+  - Task: Disable table auto‑fit by setting AllowAutoFit property to false, keeping column widths fixed.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `configure-row-height-to-exactly-20-points-using-row-rowformat-height-and-heightrule-exact.cs`
+  - Task: Configure row height to exactly 20 points using Row.RowFormat.Height and HeightRule Exact.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-light-gray-shading-to-header-row-cells-via-cell-cellformat-shading-backgroundpattern.cs`
+  - Task: Apply light gray shading to header row cells via Cell.CellFormat.Shading.BackgroundPatternColor.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-cell-padding-to-five-points-on-all-sides-by-modifying-cell-cellformat-padding-values.cs`
+  - Task: Set cell padding to five points on all sides by modifying Cell.CellFormat.Padding values.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `add-a-double-border-around-the-entire-table-by-configuring-table-border-for-each-side.cs`
+  - Task: Add a double border around the entire table by configuring Table.Border for each side.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-custom-tablestyle-named-customstyle-define-shading-and-borders-and-add-to-documen.cs`
+  - Task: Create a custom TableStyle named CustomStyle, define shading and borders, and add to document styles.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `copy-an-existing-tablestyle-from-a-source-document-using-document-styles-addcopy-method.cs`
+  - Task: Copy an existing TableStyle from a source document using document.Styles.AddCopy method.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `apply-a-tablestyle-to-a-table-by-setting-the-table-style-property-to-the-style-name.cs`
+  - Task: Apply a TableStyle to a table by setting the Table.Style property to the style name.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `translate-a-tablestyle-into-direct-formatting-by-reading-its-properties-and-applying-them.cs`
+  - Task: Translate a TableStyle into direct formatting by reading its properties and applying them to Table, Row, and Cell.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `join-two-adjacent-tables-into-a-single-continuous-table-using-the-table-join-method.cs`
+  - Task: Join two adjacent tables into a single continuous table using the Table.Join method.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `split-a-large-table-at-a-specific-row-index-into-smaller-tables-using-table-split.cs`
+  - Task: Split a large table at a specific row index into smaller tables using Table.Split.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-distinct-border-styles-to-first-row-last-row-and-inner-cells-via-rowformat-and-cellf.cs`
+  - Task: Apply distinct border styles to first row, last row, and inner cells via RowFormat and CellFormat.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `center-the-table-on-the-page-by-setting-table-alignment-property-to-center.cs`
+  - Task: Center the table on the page by setting Table.Alignment property to Center.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `enable-table-text-wrapping-around-images-by-setting-table-allowoverlap-to-true-and-adjusti.cs`
+  - Task: Enable table text wrapping around images by setting Table.AllowOverlap to true and adjusting layout.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `prevent-row-deletion-by-setting-row-rowformat-allowbreakacrosspages-to-false-in-the-docume.cs`
+  - Task: Prevent row deletion by setting Row.RowFormat.AllowBreakAcrossPages to false in the document.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `apply-conditional-cell-shading-based-on-numeric-values-by-iterating-cells-and-setting-cell.cs`
+  - Task: Apply conditional cell shading based on numeric values by iterating cells and setting CellFormat.Shading.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `merge-cells-horizontally-across-multiple-columns-using-cell-merge-on-adjacent-cells.cs`
+  - Task: Merge cells horizontally across multiple columns using Cell.Merge on adjacent cells.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `merge-cells-vertically-within-a-column-by-calling-cell-merge-on-consecutive-rows.cs`
+  - Task: Merge cells vertically within a column by calling Cell.Merge on consecutive rows.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-direction-to-right-to-left-for-arabic-text-by-enabling-table-righttoleft-propert.cs`
+  - Task: Set table direction to right‑to‑left for Arabic text by enabling Table.RightToLeft property.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `preserve-original-table-formatting-when-loading-a-document-by-disabling-loadoptions-preser.cs`
+  - Task: Preserve original table formatting when loading a document by disabling LoadOptions.PreserveFormatting.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `optimize-table-rendering-performance-for-large-documents-by-turning-off-layout-updates-dur.cs`
+  - Task: Optimize table rendering performance for large documents by turning off layout updates during batch modifications.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `generate-a-pdf-from-a-docx-containing-tables-while-maintaining-all-table-styles-and-format.cs`
+  - Task: Generate a PDF from a DOCX containing tables while maintaining all table styles and formatting.
+  - Workflow: table-workflow
+  - Outputs: docx, doc, pdf
+  - Selected engine: mcp
+- `convert-a-docx-with-complex-tables-to-html-ensuring-borders-and-cell-padding-are-retained.cs`
+  - Task: Convert a DOCX with complex tables to HTML, ensuring borders and cell padding are retained.
+  - Workflow: table-workflow
+  - Outputs: docx, doc, html
+  - Selected engine: mcp
+- `serialize-a-table-s-structure-and-content-to-json-by-iterating-rows-and-cells-and-capturin.cs`
+  - Task: Serialize a table's structure and content to JSON by iterating rows and cells and capturing formatting.
+  - Workflow: table-workflow
+  - Outputs: json
+  - Selected engine: mcp
+- `deserialize-json-table-data-back-into-a-word-document-by-creating-a-table-and-applying-sto.cs`
+  - Task: Deserialize JSON table data back into a Word document by creating a table and applying stored formatting.
+  - Workflow: table-workflow
+  - Outputs: doc, json
+  - Selected engine: mcp
+- `apply-gradient-shading-to-cells-by-setting-cellformat-shading-texture-and-backgroundpatter.cs`
+  - Task: Apply gradient shading to cells by setting CellFormat.Shading.Texture and BackgroundPatternColor properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-uniform-column-widths-for-all-cells-by-iterating-columns-and-assigning-cellformat-widt.cs`
+  - Task: Set uniform column widths for all cells by iterating columns and assigning CellFormat.Width values.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `adjust-row-spacing-by-configuring-row-rowformat-spaceafter-and-spacebefore-properties-for.cs`
+  - Task: Adjust row spacing by configuring Row.RowFormat.SpaceAfter and SpaceBefore properties for each row.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-caption-above-a-table-using-documentbuilder-insertcaption-with-appropriate-label.cs`
+  - Task: Insert a caption above a table using DocumentBuilder.InsertCaption with appropriate label and numbering.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `update-all-table-captions-after-adding-new-tables-by-iterating-tables-and-refreshing-capti.cs`
+  - Task: Update all table captions after adding new tables by iterating tables and refreshing caption numbers.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `protect-a-table-from-editing-by-applying-a-read-only-restriction-using-document-protect-wi.cs`
+  - Task: Protect a table from editing by applying a read‑only restriction using Document.Protect with editing type.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `export-a-table-as-an-image-by-rendering-the-table-node-to-a-bitmap-and-saving-as-png.cs`
+  - Task: Export a table as an image by rendering the table node to a bitmap and saving as PNG.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `replace-an-existing-table-with-a-template-by-locating-the-original-table-node-and-insertin.cs`
+  - Task: Replace an existing table with a template by locating the original Table node and inserting the new one.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-different-cell-background-colors-based-on-column-index-by-iterating-cells-and-settin.cs`
+  - Task: Apply different cell background colors based on column index by iterating cells and setting CellFormat.Shading.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-to-repeat-header-row-on-each-page-by-enabling-row-isheader-property-for-the-firs.cs`
+  - Task: Set table to repeat header row on each page by enabling Row.IsHeader property for the first row.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `remove-all-empty-rows-from-a-table-by-checking-row-rowformat-height-and-deleting-rows-with.cs`
+  - Task: Remove all empty rows from a table by checking Row.RowFormat.Height and deleting rows with zero height.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `convert-a-table-with-merged-cells-into-a-flat-structure-by-unmerging-cells-and-redistribut.cs`
+  - Task: Convert a table with merged cells into a flat structure by unmerging cells and redistributing content appropriately.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `add-a-footer-row-with-totals-by-calculating-column-sums-and-inserting-a-new-formatted-row.cs`
+  - Task: Add a footer row with totals by calculating column sums and inserting a new formatted row.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `implement-pagination-for-a-large-table-by-setting-table-allowbreakacrosspages-to-true-and.cs`
+  - Task: Implement pagination for a large table by setting Table.AllowBreakAcrossPages to true and adjusting row heights.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `create-a-table-with-alternating-row-colors-for-readability-by-applying-shading-based-on-ro.cs`
+  - Task: Create a table with alternating row colors for readability by applying shading based on row index parity.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `export-table-layout-to-xml-by-iterating-rows-and-cells-and-writing-attributes-for-widths-a.cs`
+  - Task: Export table layout to XML by iterating rows and cells and writing attributes for widths and styles.
+  - Workflow: table-workflow
+  - Outputs: xml
+  - Selected engine: mcp
+- `import-a-table-definition-from-xml-by-parsing-elements-and-constructing-a-table-with-colum.cs`
+  - Task: Import a table definition from XML by parsing elements and constructing a table with column widths and styles.
+  - Workflow: table-workflow
+  - Outputs: xml
+  - Selected engine: mcp
+- `apply-a-custom-border-color-to-the-first-column-cells-by-setting-cellformat-border-color-p.cs`
+  - Task: Apply a custom border color to the first column cells by setting CellFormat.Border.Color property.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-to-automatically-resize-columns-to-fit-content-by-enabling-table-autofit-behavio.cs`
+  - Task: Set table to automatically resize columns to fit content by enabling Table.AutoFit behavior.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `disable-automatic-column-resizing-while-preserving-existing-widths-by-setting-table-autofi.cs`
+  - Task: Disable automatic column resizing while preserving existing widths by setting Table.AutoFit property to false.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `add-a-toc-entry-for-a-table-by-inserting-a-bookmark-and-referencing-it-in-the-toc-field.cs`
+  - Task: Add a TOC entry for a table by inserting a bookmark and referencing it in the TOC field.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `update-table-style-definitions-programmatically-by-iterating-document-styles-and-modifying.cs`
+  - Task: Update table style definitions programmatically by iterating document.Styles and modifying TableStyle properties.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `clone-an-existing-table-modify-its-content-and-insert-it-at-a-different-location-in-the-sa.cs`
+  - Task: Clone an existing table, modify its content, and insert it at a different location in the same document.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `apply-a-diagonal-line-across-a-cell-by-setting-cellformat-diagonaldown-and-diagonalup-prop.cs`
+  - Task: Apply a diagonal line across a cell by setting CellFormat.DiagonalDown and DiagonalUp properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-cell-text-direction-to-vertical-for-east-asian-languages-by-configuring-cellformat-tex.cs`
+  - Task: Set cell text direction to vertical for East Asian languages by configuring CellFormat.TextDirection property.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-custom-margin-around-the-entire-table-by-setting-table-leftindent-and-table-righti.cs`
+  - Task: Apply a custom margin around the entire table by setting Table.LeftIndent and Table.RightIndent properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-vertical-alignment-within-the-page-by-adjusting-table-verticalalignment-property.cs`
+  - Task: Set table vertical alignment within the page by adjusting Table.VerticalAlignment property to Center.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-that-includes-banded-rows-and-columns-by-configuring-tablestyle-banded.cs`
+  - Task: Apply a table style that includes banded rows and columns by configuring TableStyle.BandedRows and BandedColumns.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `generate-a-report-with-multiple-tables-each-using-a-distinct-tablestyle-and-ensure-consist.cs`
+  - Task: Generate a report with multiple tables, each using a distinct TableStyle, and ensure consistent spacing between them.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `convert-a-table-with-complex-merged-cells-to-plain-html-by-calculating-appropriate-colspan.cs`
+  - Task: Convert a table with complex merged cells to plain HTML by calculating appropriate colspan and rowspan attributes.
+  - Workflow: table-workflow
+  - Outputs: html
+  - Selected engine: mcp
+- `apply-a-watermark-behind-a-table-by-inserting-a-shape-with-text-and-positioning-it-behind.cs`
+  - Task: Apply a watermark behind a table by inserting a Shape with text and positioning it behind table nodes.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-text-wrapping-style-to-square-by-configuring-table-textwrapping-property-accordi.cs`
+  - Task: Set table text wrapping style to square by configuring Table.TextWrapping property accordingly.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `enable-table-overlapping-with-other-floating-objects-by-setting-table-allowoverlap-to-true.cs`
+  - Task: Enable table overlapping with other floating objects by setting Table.AllowOverlap to true.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `add-a-comment-to-a-specific-table-cell-by-locating-the-cell-and-using-documentbuilder-inse.cs`
+  - Task: Add a comment to a specific table cell by locating the cell and using DocumentBuilder.InsertComment.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `retrieve-the-list-of-all-tables-in-a-document-by-iterating-nodes-of-type-nodetype-table.cs`
+  - Task: Retrieve the list of all tables in a document by iterating nodes of type NodeType.Table.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `delete-a-table-that-contains-a-specific-keyword-by-searching-its-range-text-and-removing-t.cs`
+  - Task: Delete a table that contains a specific keyword by searching its Range.Text and removing the node.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-custom-cell-margins-by-setting-cell-cellformat-margintop-marginbottom-marginleft-and.cs`
+  - Task: Apply custom cell margins by setting Cell.CellFormat.MarginTop, MarginBottom, MarginLeft, and MarginRight properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-background-shading-to-light-blue-by-configuring-table-shading-backgroundpatternc.cs`
+  - Task: Set table background shading to light blue by configuring Table.Shading.BackgroundPatternColor property.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `export-each-table-in-a-document-to-separate-docx-files-while-preserving-their-individual-s.cs`
+  - Task: Export each table in a document to separate DOCX files while preserving their individual styles.
+  - Workflow: table-workflow
+  - Outputs: docx, doc
+  - Selected engine: mcp
+- `import-multiple-tables-from-separate-docx-files-and-merge-them-into-a-single-document-main.cs`
+  - Task: Import multiple tables from separate DOCX files and merge them into a single document maintaining original formatting.
+  - Workflow: table-workflow
+  - Outputs: docx, doc
+  - Selected engine: mcp
+- `apply-a-table-style-with-a-bold-header-row-and-italic-footer-row-by-customizing-style-prop.cs`
+  - Task: Apply a table style with a bold header row and italic footer row by customizing style properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-left-and-right-margins-to-align-with-page-margins-by-calculating-page-width-and.cs`
+  - Task: Set table left and right margins to align with page margins by calculating page width and adjusting indents.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `add-a-conditional-row-that-appears-only-when-a-data-value-exceeds-a-threshold-using-if-fie.cs`
+  - Task: Add a conditional row that appears only when a data value exceeds a threshold using IF fields.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-with-alternating-column-shading-by-setting-tablestyle-bandedcolumns-pr.cs`
+  - Task: Apply a table style with alternating column shading by setting TableStyle.BandedColumns property to true.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-with-a-fixed-number-of-rows-and-columns-then-populate-cells-from-a-json-arr.cs`
+  - Task: Insert a table with a fixed number of rows and columns, then populate cells from a JSON array.
+  - Workflow: table-workflow
+  - Outputs: json
+  - Selected engine: mcp
+- `update-cell-formulas-after-inserting-new-rows-by-recalculating-fields-using-document-updat.cs`
+  - Task: Update cell formulas after inserting new rows by recalculating fields using Document.UpdateFields method.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+- `apply-a-custom-outer-border-style-while-disabling-inner-borders-by-configuring-table-borde.cs`
+  - Task: Apply a custom outer border style while disabling inner borders by configuring Table.Border settings appropriately.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-text-direction-to-right-to-left-for-the-entire-table-by-enabling-table-righttole.cs`
+  - Task: Set table text direction to right‑to‑left for the entire table by enabling Table.RightToLeft property.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-with-a-thick-outer-border-and-thin-inner-borders-by-configuring-style.cs`
+  - Task: Apply a table style with a thick outer border and thin inner borders by configuring style Border properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `generate-a-table-of-contents-for-tables-only-by-creating-a-custom-toc-field-that-reference.cs`
+  - Task: Generate a table of contents for tables only by creating a custom TOC field that references table captions.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `configure-rows-to-expand-automatically-with-content-by-setting-each-row-rowformat-heightru.cs`
+  - Task: Configure rows to expand automatically with content by setting each Row.RowFormat.HeightRule to Auto.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-custom-cell-border-style-with-different-line-widths-for-each-side-by-setting-cellf.cs`
+  - Task: Apply a custom cell border style with different line widths for each side by setting CellFormat.Border properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-with-a-header-row-using-a-larger-font-size-by-customizing-the-style-s.cs`
+  - Task: Apply a table style with a header row using a larger font size by customizing the style's FontSize.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-column-widths-to-match-data-length-by-measuring-text-width-and-assigning-cellfor.cs`
+  - Task: Set table column widths to match data length by measuring text width and assigning CellFormat.Width accordingly.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `add-a-table-with-a-footer-row-that-calculates-totals-using-field-codes-for-column-sums.cs`
+  - Task: Add a table with a footer row that calculates totals using field codes for column sums.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-with-a-light-gray-background-for-all-cells-by-setting-tablestyle-shadi.cs`
+  - Task: Apply a table style with a light gray background for all cells by setting TableStyle.Shading property.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-table-with-alternating-column-background-colors-by-iterating-columns-and-applying.cs`
+  - Task: Insert a table with alternating column background colors by iterating columns and applying CellFormat.Shading.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-text-direction-to-vertical-for-all-cells-by-configuring-cellformat-textdirection.cs`
+  - Task: Set table text direction to vertical for all cells by configuring CellFormat.TextDirection globally.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-custom-table-style-that-includes-a-double-line-border-around-the-table-and-single.cs`
+  - Task: Apply a custom table style that includes a double line border around the table and single lines inside.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-with-bold-header-row-and-italic-footer-row-by-customizing-style-proper.cs`
+  - Task: Apply a table style with bold header row and italic footer row by customizing style properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-cell-vertical-alignment-to-middle-using-cell-cellformat-verticalalignment-property-for.cs`
+  - Task: Set cell vertical alignment to middle using Cell.CellFormat.VerticalAlignment property for better presentation.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-text-alignment-within-cells-by-setting-cell-cellformat-alignment-to-center-for-unifo.cs`
+  - Task: Apply text alignment within cells by setting Cell.CellFormat.Alignment to Center for uniform appearance.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `define-cell-margins-by-configuring-cell-cellformat-margintop-marginbottom-marginleft-and-m.cs`
+  - Task: Define cell margins by configuring Cell.CellFormat.MarginTop, MarginBottom, MarginLeft, and MarginRight.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-top-and-bottom-spacing-using-table-spacebefore-and-table-spaceafter-properties.cs`
+  - Task: Set table top and bottom spacing using Table.SpaceBefore and Table.SpaceAfter properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-table-background-shading-to-the-entire-table-by-setting-table-shading-backgroundpatt.cs`
+  - Task: Apply table background shading to the entire table by setting Table.Shading.BackgroundPatternColor.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `prevent-rows-from-breaking-across-pages-by-setting-row-rowformat-keeptogether-to-true.cs`
+  - Task: Prevent rows from breaking across pages by setting Row.RowFormat.KeepTogether to true.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-to-use-fixed-layout-by-disabling-table-autofit-and-specifying-explicit-column-wi.cs`
+  - Task: Set table to use fixed layout by disabling Table.AutoFit and specifying explicit column widths.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-predefined-built-in-tablestyle-by-setting-table-style-to-tablegrid.cs`
+  - Task: Apply a predefined built‑in TableStyle by setting Table.Style to "TableGrid".
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `retrieve-the-number-of-rows-and-columns-in-a-table-using-table-rows-count-and-table-rows-0.cs`
+  - Task: Retrieve the number of rows and columns in a table using Table.Rows.Count and Table.Rows[0].Cells.Count.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-new-row-at-a-specific-index-using-table-insertrow-method.cs`
+  - Task: Insert a new row at a specific index using Table.InsertRow method.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `delete-a-specific-row-from-a-table-using-table-rows-index-remove-method.cs`
+  - Task: Delete a specific row from a table using Table.Rows[index].Remove method.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `insert-a-new-column-at-a-specific-position-using-table-insertcolumn-method.cs`
+  - Task: Insert a new column at a specific position using Table.InsertColumn method.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `delete-a-specific-column-from-a-table-using-table-columns-index-remove-method.cs`
+  - Task: Delete a specific column from a table using Table.Columns[index].Remove method.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `merge-cells-across-a-row-by-calling-cell-merge-on-adjacent-cells.cs`
+  - Task: Merge cells across a row by calling Cell.Merge on adjacent cells.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `split-a-merged-cell-back-into-separate-cells-using-cell-split-method.cs`
+  - Task: Split a merged cell back into separate cells using Cell.Split method.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-table-style-that-includes-a-header-row-with-a-different-background-color-by-settin.cs`
+  - Task: Apply a table style that includes a header row with a different background color by setting TableStyle.HeaderRow properties.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `set-table-left-and-right-indents-to-align-with-paragraph-indentation-using-table-leftinden.cs`
+  - Task: Set table left and right indents to align with paragraph indentation using Table.LeftIndent and Table.RightIndent.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `keep-the-entire-table-on-a-single-page-by-setting-row-rowformat-keeptogether-to-true-for-a.cs`
+  - Task: Keep the entire table on a single page by setting Row.RowFormat.KeepTogether to true for all rows.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `apply-a-custom-table-style-that-includes-alternating-row-shading-by-setting-tablestyle-ban.cs`
+  - Task: Apply a custom table style that includes alternating row shading by setting TableStyle.BandedRows to true.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `enable-table-to-allow-overlapping-with-other-floating-objects-by-setting-table-allowoverla.cs`
+  - Task: Enable table to allow overlapping with other floating objects by setting Table.AllowOverlap to true.
+  - Workflow: table-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `update-table-fields-after-modifying-content-by-calling-document-updatefields-to-recalculat.cs`
+  - Task: Update table fields after modifying content by calling Document.UpdateFields to recalculate any embedded calculations.
+  - Workflow: table-workflow
+  - Outputs: doc
+  - Selected engine: mcp
+
+## Common failure patterns and preferred agent fixes
+
+- **Unsupported builder insertion APIs**
+  - Symptom: Build failures from `DocumentBuilder.InsertTable`.
+  - Preferred fix: Use `StartTable`, `InsertCell`, `EndRow`, and `EndTable`, or build the table at a valid paragraph location.
+- **Unsupported table or cell properties**
+  - Symptom: Build failures from properties such as unsupported `Table` border/text-direction members or unsupported `CellFormat` members.
+  - Preferred fix: Use only the exact package-version-safe alternatives already proven in the environment.
+- **Over-brittle formatting validation**
+  - Symptom: The table is created correctly, but validation fails because exact imported HTML formatting or color interpretation differs slightly.
+  - Preferred fix: Validate only the required structural or formatting crux of the task.
+
+## Build and run contract
+
+- Target framework: `net8.0`
+- Primary package: `Aspose.Words` `26.3.0`
+
+## Command reference
+
+### Create a temporary console project
+
+```bash
+dotnet new console -n ExampleProject --framework net8.0
+cd ExampleProject
+```
+
+### Add required package
+
+```bash
+dotnet add package Aspose.Words --version 26.3.0
+```
+
+### Copy a category example into the temp project
+
+```powershell
+Copy-Item ..\working-with-table\<example-file>.cs .\Program.cs
+```
+
+### Build and run
+
+```bash
+dotnet build --configuration Release --verbosity minimal
+dotnet run --configuration Release --no-build
+```
+
+## Category update guidance
+
+- Preserve exact file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
+- When replacing a file, prefer the verified winner from the latest batch report rather than a merely compiling draft.
+- Bootstrap file-based inputs locally instead of depending on machine-specific paths.
