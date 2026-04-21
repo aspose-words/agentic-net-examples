@@ -1,0 +1,487 @@
+{
+  "category": {
+    "name": "Track Changes",
+    "slug": "track-changes",
+    "product": "Aspose.Words",
+    "language": "csharp",
+    "preferred_workflow": "Use simple documented revision workflows. Enable tracking when required, modify the document to generate revisions, then inspect, accept, reject, or validate revisions using RevisionCollection APIs. Keep validation narrow and task-specific.",
+    "required_packages": [
+      "Aspose.Words"
+    ]
+  },
+  "stats": {
+    "total_examples": 40,
+    "winner_counts": {
+      "both": 0,
+      "mcp": 40,
+      "llm": 0,
+      "none": 0
+    },
+    "workflow_examples": {
+      "track-changes-workflow": 40
+    }
+  },
+  "rules_summary": {
+    "core_rules": [
+      "Use native Aspose.Words APIs directly.",
+      "Create local sample documents when a task refers to an existing file or document.",
+      "Do not assume external files already exist.",
+      "Always save the requested output when needed.",
+      "Keep validation narrow and task-specific."
+    ],
+    "track_changes_rules": [
+      "Use Document.StartTrackRevisions and StopTrackRevisions when relevant.",
+      "Generate revisions by modifying content while tracking is enabled.",
+      "Use Document.Revisions to inspect revisions.",
+      "Use accept and reject workflows only through documented revision APIs."
+    ],
+    "api_safety_rules": [
+      "Do not invent unsupported revision APIs.",
+      "Do not use fake namespaces.",
+      "Use documented Document, Revision, RevisionCollection, and related APIs only."
+    ]
+  },
+  "examples": [
+    {
+      "id": 1,
+      "file_name": "load-a-document-from-a-stream-start-tracking-add-a-header-and-stop-tracking-before-saving.cs",
+      "task": "Load a document from a stream, start tracking, add a header, and stop tracking before saving.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 2,
+      "file_name": "create-a-new-document-start-tracking-revisions-insert-a-paragraph-then-stop-tracking.cs",
+      "task": "Create a new document, start tracking revisions, insert a paragraph, then stop tracking.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 3,
+      "file_name": "enable-revision-tracking-modify-a-table-cell-and-verify-the-revision-appears-in-the-collec.cs",
+      "task": "Enable revision tracking, modify a table cell, and verify the revision appears in the collection.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 4,
+      "file_name": "enable-tracking-apply-a-style-change-to-multiple-paragraphs-stop-tracking-and-verify-a-sin.cs",
+      "task": "Enable tracking, apply a style change to multiple paragraphs, stop tracking, and verify a single revision group.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 5,
+      "file_name": "start-tracking-revisions-insert-an-image-stop-tracking-and-verify-the-image-insertion-appe.cs",
+      "task": "Start tracking revisions, insert an image, stop tracking, and verify the image insertion appears as a revision.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 6,
+      "file_name": "load-a-document-start-tracking-insert-a-table-stop-tracking-then-accept-the-table-insertio.cs",
+      "task": "Load a document, start tracking, insert a table, stop tracking, then accept the table insertion revision.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 7,
+      "file_name": "start-tracking-delete-a-sentence-stop-tracking-then-accept-the-deletion-revision-individua.cs",
+      "task": "Start tracking, delete a sentence, stop tracking, then accept the deletion revision individually.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 8,
+      "file_name": "load-a-document-enable-tracking-perform-a-find-and-replace-operation-and-list-the-generate.cs",
+      "task": "Load a document, enable tracking, perform a find-and-replace operation, and list the generated revisions.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 9,
+      "file_name": "load-a-document-enable-revision-tracking-apply-formatting-changes-and-list-resulting-revis.cs",
+      "task": "Load a document, enable revision tracking, apply formatting changes, and list resulting revision types.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 10,
+      "file_name": "stop-tracking-revisions-then-make-additional-edits-and-confirm-no-new-revisions-are-record.cs",
+      "task": "Stop tracking revisions, then make additional edits and confirm no new revisions are recorded.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 11,
+      "file_name": "determine-if-a-document-contains-any-revisions-before-further-processing-by-checking-the-h.cs",
+      "task": "Determine if a document contains any revisions before further processing by checking the HasRevisions property.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 12,
+      "file_name": "use-the-hasrevisions-property-to-conditionally-apply-a-watermark-indicating-pending-change.cs",
+      "task": "Use the HasRevisions property to conditionally apply a watermark indicating pending changes.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 13,
+      "file_name": "iterate-through-all-revisions-in-the-document-and-log-each-revision-s-author-and-timestamp.cs",
+      "task": "Iterate through all revisions in the document and log each revision's author and timestamp.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 14,
+      "file_name": "iterate-over-revisions-group-them-by-type-and-output-a-summary-of-insertion-and-deletion-c.cs",
+      "task": "Iterate over revisions, group them by type, and output a summary of insertion and deletion counts.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 15,
+      "file_name": "group-sequential-insertions-using-revisiongroup-and-accept-the-entire-group-with-a-single.cs",
+      "task": "Group sequential insertions using RevisionGroup and accept the entire group with a single call.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 16,
+      "file_name": "use-revisiongroup-to-merge-consecutive-deletions-into-a-single-revision-before-accepting-i.cs",
+      "task": "Use RevisionGroup to merge consecutive deletions into a single revision before accepting it.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 17,
+      "file_name": "accept-revisions-only-for-paragraphs-authored-by-a-specific-user-while-rejecting-others.cs",
+      "task": "Accept revisions only for paragraphs authored by a specific user while rejecting others.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 18,
+      "file_name": "reject-a-specific-revision-based-on-author-name-then-confirm-the-change-is-no-longer-prese.cs",
+      "task": "Reject a specific revision based on author name, then confirm the change is no longer present.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 19,
+      "file_name": "reject-all-formatting-revisions-but-keep-content-insertions-and-deletions-still-intact.cs",
+      "task": "Reject all formatting revisions but keep content insertions and deletions still intact.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 20,
+      "file_name": "programmatically-reject-all-deletions-while-keeping-insertions-and-formatting-changes-stil.cs",
+      "task": "Programmatically reject all deletions while keeping insertions and formatting changes still intact.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 21,
+      "file_name": "reject-revisions-older-than-a-specific-date-while-preserving-newer-changes-in-the-document.cs",
+      "task": "Reject revisions older than a specific date while preserving newer changes in the document.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 22,
+      "file_name": "accept-all-revisions-in-a-loaded-docx-file-and-save-the-cleaned-document-to-a-new-file.cs",
+      "task": "Accept all revisions in a loaded DOCX file and save the cleaned document to a new file.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx",
+        "doc"
+      ]
+    },
+    {
+      "id": 23,
+      "file_name": "accept-all-revisions-in-a-document-then-re-enable-tracking-to-capture-subsequent-changes-s.cs",
+      "task": "Accept all revisions in a document, then re-enable tracking to capture subsequent changes separately.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 24,
+      "file_name": "after-accepting-all-revisions-lock-the-document-to-prevent-further-editing-without-trackin.cs",
+      "task": "After accepting all revisions, lock the document to prevent further editing without tracking.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 25,
+      "file_name": "reject-all-tracked-changes-in-a-document-then-verify-the-hasrevisions-property-returns-fal.cs",
+      "task": "Reject all tracked changes in a document, then verify the HasRevisions property returns false.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 26,
+      "file_name": "compare-two-word-documents-to-generate-revision-differences-specifying-author-name-and-com.cs",
+      "task": "Compare two Word documents to generate revision differences, specifying author name and comparison date.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 27,
+      "file_name": "use-doc-compare-to-create-a-revision-document-that-highlights-differences-between-two-vers.cs",
+      "task": "Use doc.Compare to create a revision document that highlights differences between two versions.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 28,
+      "file_name": "programmatically-compare-a-document-against-its-previous-version-and-generate-a-revision-r.cs",
+      "task": "Programmatically compare a document against its previous version and generate a revision report in memory.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 29,
+      "file_name": "compare-three-versions-of-a-contract-sequentially-generating-cumulative-revision-sets-for.cs",
+      "task": "Compare three versions of a contract sequentially, generating cumulative revision sets for each comparison.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 30,
+      "file_name": "generate-a-report-listing-each-revision-s-type-author-and-the-paragraph-number-where-it-oc.cs",
+      "task": "Generate a report listing each revision's type, author, and the paragraph number where it occurs.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 31,
+      "file_name": "develop-a-utility-to-export-revision-metadata-to-a-csv-file-for-external-analysis.cs",
+      "task": "Develop a utility to export revision metadata to a CSV file for external analysis.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "csv"
+      ]
+    },
+    {
+      "id": 32,
+      "file_name": "create-a-custom-logger-that-captures-revision-metadata-during-document-editing-for-audit-p.cs",
+      "task": "Create a custom logger that captures revision metadata during document editing for audit purposes.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 33,
+      "file_name": "create-a-function-that-returns-true-if-any-revision-author-matches-a-specified-list-of-nam.cs",
+      "task": "Create a function that returns true if any revision author matches a specified list of names.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 34,
+      "file_name": "create-a-utility-that-accepts-revisions-only-when-they-meet-a-minimum-word-count-threshold.cs",
+      "task": "Create a utility that accepts revisions only when they meet a minimum word count threshold.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 35,
+      "file_name": "batch-process-a-folder-of-documents-rejecting-revisions-authored-by-a-given-user-across-al.cs",
+      "task": "Batch process a folder of documents, rejecting revisions authored by a given user across all files.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 36,
+      "file_name": "create-a-batch-process-that-opens-multiple-documents-accepts-all-revisions-and-saves-them.cs",
+      "task": "Create a batch process that opens multiple documents, accepts all revisions, and saves them in place.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 37,
+      "file_name": "accept-revisions-in-a-specific-section-of-the-document-while-leaving-other-sections-unchan.cs",
+      "task": "Accept revisions in a specific section of the document while leaving other sections unchanged.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 38,
+      "file_name": "after-rejecting-all-revisions-verify-that-the-document-s-original-content-matches-a-baseli.cs",
+      "task": "After rejecting all revisions, verify that the document's original content matches a baseline file.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 39,
+      "file_name": "implement-error-handling-for-attempts-to-accept-a-revision-that-has-already-been-rejected.cs",
+      "task": "Implement error handling for attempts to accept a revision that has already been rejected.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 40,
+      "file_name": "create-a-script-that-toggles-tracking-on-and-off-based-on-user-input-during-runtime.cs",
+      "task": "Create a script that toggles tracking on and off based on user input during runtime.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "track-changes-workflow",
+      "outputs": [
+        "docx"
+      ]
+    }
+  ]
+}
