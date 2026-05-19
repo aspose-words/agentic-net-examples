@@ -1,10 +1,10 @@
 {
   "category": {
-    "name": "VBA Macros",
-    "slug": "vba-macros",
+    "name": "Watermark",
+    "slug": "watermark",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented VBA project workflows. Load or create macro-enabled documents, access or create VbaProject, modify modules if required, then save the document. Keep validation narrow and task-specific.",
+    "preferred_workflow": "Use simple documented watermark workflows. Prefer Document.Watermark APIs when they directly match the task. For lower-level or cell-scoped scenarios, use compile-safe shape or image placement only when needed. Keep validation narrow and task-specific.",
     "required_packages": [
       "Aspose.Words"
     ]
@@ -18,408 +18,407 @@
       "none": 0
     },
     "workflow_examples": {
-      "vba-workflow": 34
+      "watermark-workflow": 34
     }
   },
   "rules_summary": {
     "core_rules": [
       "Use native Aspose.Words APIs directly.",
-      "Create local sample macro-enabled documents when a task refers to an existing file or template.",
-      "Do not assume external files already exist.",
-      "Always save VBA content in a macro-enabled format.",
+      "Create local sample source documents or images when a task refers to an existing file, folder, stream, template, or input asset.",
+      "Do not assume external files or folders already exist.",
+      "Always save the requested output document or report when the task expects one.",
       "Keep validation narrow and task-specific."
     ],
-    "vba_rules": [
-      "Use Document.VbaProject to access the VBA project.",
-      "Create a new VbaProject when needed before adding modules.",
-      "Guard against null or empty module source code before performing text operations.",
-      "Prefer clone or template-preserving workflows for reference-sensitive VBA tasks when direct reference construction APIs are not available."
+    "watermark_rules": [
+      "Use Document.Watermark.SetText and SetImage when those APIs directly fit the task.",
+      "Avoid unsupported System.Drawing-based image generation in this environment.",
+      "For cell-level or merged-cell scenarios, use compile-safe shape or image insertion patterns only.",
+      "Use stream-based or local-file image workflows for image watermarks."
     ],
     "api_safety_rules": [
-      "Do not invent unsupported VBA APIs.",
-      "Do not instantiate VbaReference directly.",
-      "Do not assume unsupported VbaModule constructors.",
-      "Use documented VbaProject, VbaModule, and related APIs only."
+      "Do not invent unsupported watermark APIs.",
+      "Do not use fake namespaces.",
+      "Do not use unsupported WordArt or TextPath members in cell-level watermark tasks."
     ]
   },
   "examples": [
     {
       "id": 1,
-      "file_name": "load-a-docx-file-containing-vba-macros-and-enumerate-all-modules-in-the-vbaproject.cs",
-      "task": "Load a DOCX file containing VBA macros and enumerate all modules in the VbaProject.",
+      "file_name": "load-a-word-document-from-a-file-path-and-add-a-text-watermark-using-watermark-settext.cs",
+      "task": "Load a Word document from a file path and add a text watermark using Watermark.SetText.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docx",
         "doc"
       ]
     },
     {
       "id": 2,
-      "file_name": "validate-that-a-loaded-document-s-vbaproject-contains-at-least-one-module-before-attemptin.cs",
-      "task": "Validate that a loaded document's VbaProject contains at least one module before attempting modifications.",
+      "file_name": "load-a-word-document-from-a-file-path-and-add-an-image-watermark-using-watermark-setimage.cs",
+      "task": "Load a Word document from a file path and add an image watermark using Watermark.SetImage.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
         "doc"
       ]
     },
     {
       "id": 3,
-      "file_name": "enumerate-vbaproject-references-filter-out-com-references-and-log-remaining-references-to.cs",
-      "task": "Enumerate VbaProject.References, filter out COM references, and log remaining references to console.",
+      "file_name": "load-a-word-document-from-a-memory-stream-and-apply-a-text-watermark-without-writing-to-di.cs",
+      "task": "Load a Word document from a memory stream and apply a text watermark without writing to disk.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
-      "outputs": [
-        "docm"
-      ]
-    },
-    {
-      "id": 4,
-      "file_name": "retrieve-the-source-code-of-a-specific-vbamodule-and-write-it-to-a-text-file-for-analysis.cs",
-      "task": "Retrieve the source code of a specific VbaModule and write it to a text file for analysis.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
-      "workflow": "vba-workflow",
-      "outputs": [
-        "docm"
-      ]
-    },
-    {
-      "id": 5,
-      "file_name": "iterate-through-all-vbamodules-in-a-document-and-replace-deprecated-api-calls-with-updated.cs",
-      "task": "Iterate through all VbaModules in a document and replace deprecated API calls with updated equivalents.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
         "doc"
       ]
     },
     {
-      "id": 6,
-      "file_name": "perform-a-case-insensitive-search-across-all-vba-modules-for-deprecated-function-names-and.cs",
-      "task": "Perform a case‑insensitive search across all VBA modules for deprecated function names and replace them.",
+      "id": 4,
+      "file_name": "insert-a-text-watermark-into-a-specific-table-cell-within-a-word-document-using-the-waterm.cs",
+      "task": "Insert a text watermark into a specific table cell within a Word document using the Watermark class.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "doc"
+      ]
+    },
+    {
+      "id": 5,
+      "file_name": "add-a-watermark-to-a-table-cell-that-spans-multiple-rows-and-columns-in-a-complex-word-tab.cs",
+      "task": "Add a watermark to a table cell that spans multiple rows and columns in a complex Word table.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "watermark-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 6,
+      "file_name": "insert-a-watermark-into-a-table-cell-that-contains-merged-cells-without-disrupting-the-tab.cs",
+      "task": "Insert a watermark into a table cell that contains merged cells without disrupting the table layout.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "watermark-workflow",
+      "outputs": [
+        "docx"
       ]
     },
     {
       "id": 7,
-      "file_name": "replace-hard-coded-file-paths-in-macro-source-code-with-relative-paths-using-string-manipu.cs",
-      "task": "Replace hard‑coded file paths in macro source code with relative paths using string manipulation functions.",
+      "file_name": "insert-a-watermark-into-each-cell-of-the-first-row-of-a-table-using-the-watermark-class.cs",
+      "task": "Insert a watermark into each cell of the first row of a table using the Watermark class.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "docx"
       ]
     },
     {
       "id": 8,
-      "file_name": "update-the-sourcecode-of-a-vbamodule-to-include-error-handling-using-on-error-resume-next.cs",
-      "task": "Update the SourceCode of a VbaModule to include error handling using On Error Resume Next statements.",
+      "file_name": "add-a-text-watermark-to-a-docx-document-using-watermark-settext-with-custom-font-settings.cs",
+      "task": "Add a text watermark to a DOCX document using Watermark.SetText with custom font settings.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "docx",
+        "doc"
       ]
     },
     {
       "id": 9,
-      "file_name": "iterate-through-all-vbamodules-prepend-a-comment-header-containing-author-and-date-informa.cs",
-      "task": "Iterate through all VbaModules, prepend a comment header containing author and date information to each source code.",
+      "file_name": "use-watermark-settext-with-textwatermarkoptions-to-set-watermark-font-size-color-and-spaci.cs",
+      "task": "Use Watermark.SetText with TextWatermarkOptions to set watermark font size, color, and spacing.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "docx"
       ]
     },
     {
       "id": 10,
-      "file_name": "add-error-logging-code-to-each-vba-module-by-inserting-a-standardized-logging-routine-at-t.cs",
-      "task": "Add error logging code to each VBA module by inserting a standardized logging routine at the beginning.",
+      "file_name": "add-a-confidential-text-watermark-to-all-new-documents-created-by-an-automated-report-gene.cs",
+      "task": "Add a confidential text watermark to all new documents created by an automated report generator.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "doc"
       ]
     },
     {
       "id": 11,
-      "file_name": "create-a-new-vbaproject-add-a-standard-module-and-assign-custom-macro-code-to-its-sourceco.cs",
-      "task": "Create a new VbaProject, add a standard module, and assign custom macro code to its SourceCode property.",
+      "file_name": "combine-text-and-image-watermarks-by-first-setting-a-text-watermark-then-overlaying-an-ima.cs",
+      "task": "Combine text and image watermarks by first setting a text watermark then overlaying an image watermark.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "docx"
       ]
     },
     {
       "id": 12,
-      "file_name": "create-a-vba-project-with-a-class-module-define-a-public-method-and-invoke-it-from-another.cs",
-      "task": "Create a VBA project with a class module, define a public method, and invoke it from another module.",
+      "file_name": "customize-image-watermark-opacity-and-scaling-by-configuring-imagewatermarkoptions-before.cs",
+      "task": "Customize image watermark opacity and scaling by configuring ImageWatermarkOptions before insertion.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "docx"
       ]
     },
     {
       "id": 13,
-      "file_name": "add-a-reference-to-the-microsoft-excel-object-library-in-a-vbaproject-and-verify-its-prese.cs",
-      "task": "Add a reference to the Microsoft Excel Object Library in a VbaProject and verify its presence.",
+      "file_name": "insert-an-image-watermark-from-a-system-drawing-image-object-into-a-document-after-calling.cs",
+      "task": "Insert an image watermark from a System.Drawing.Image object into a document after calling Optimize.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "doc"
       ]
     },
     {
       "id": 14,
-      "file_name": "add-a-reference-to-the-microsoft-scripting-runtime-library-and-use-its-dictionary-object-w.cs",
-      "task": "Add a reference to the Microsoft Scripting Runtime library and use its Dictionary object within a macro.",
+      "file_name": "insert-an-image-watermark-from-a-file-path-into-a-word-document-after-optimizing-the-docum.cs",
+      "task": "Insert an image watermark from a file path into a Word document after optimizing the document.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "doc"
       ]
     },
     {
       "id": 15,
-      "file_name": "add-a-reference-to-a-custom-com-library-then-call-its-methods-from-a-newly-added-vba-modul.cs",
-      "task": "Add a reference to a custom COM library, then call its methods from a newly added VBA module.",
+      "file_name": "use-watermark-setimage-with-a-stream-to-embed-a-logo-watermark-into-a-document-stored-in-a.cs",
+      "task": "Use Watermark.SetImage with a stream to embed a logo watermark into a document stored in Azure Blob storage.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "doc"
       ]
     },
     {
       "id": 16,
-      "file_name": "remove-an-existing-reference-from-a-vbaproject-s-references-collection-and-confirm-the-ref.cs",
-      "task": "Remove an existing reference from a VbaProject's References collection and confirm the reference count decreases.",
+      "file_name": "use-watermark-setimage-with-a-byte-array-stream-to-embed-a-dynamically-generated-barcode-w.cs",
+      "task": "Use Watermark.SetImage with a byte array stream to embed a dynamically generated barcode watermark.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "docx"
       ]
     },
     {
       "id": 17,
-      "file_name": "remove-all-standard-modules-from-a-vbaproject-leaving-only-class-modules-and-save-the-docu.cs",
-      "task": "Remove all standard modules from a VbaProject, leaving only class modules, and save the document.",
+      "file_name": "optimize-a-large-docx-file-before-applying-an-image-watermark-to-improve-performance-and-m.cs",
+      "task": "Optimize a large DOCX file before applying an image watermark to improve performance and memory usage.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
+        "docx",
         "doc"
       ]
     },
     {
       "id": 18,
-      "file_name": "clone-the-entire-vba-project-from-one-word-document-to-another-and-save-the-target-documen.cs",
-      "task": "Clone the entire VBA project from one Word document to another and save the target document.",
+      "file_name": "remove-all-existing-watermarks-from-a-loaded-word-document-using-the-watermark-remove-meth.cs",
+      "task": "Remove all existing watermarks from a loaded Word document using the Watermark.Remove method.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
         "doc"
       ]
     },
     {
       "id": 19,
-      "file_name": "use-the-clonevbaproject-method-to-duplicate-a-vba-project-while-preserving-module-order-an.cs",
-      "task": "Use the CloneVbaProject method to duplicate a VBA project while preserving module order and references.",
+      "file_name": "create-a-utility-method-that-removes-all-watermarks-from-a-document-using-watermark-remove.cs",
+      "task": "Create a utility method that removes all watermarks from a Document using Watermark.Remove.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm"
+        "doc"
       ]
     },
     {
       "id": 20,
-      "file_name": "clone-a-vba-project-from-a-template-document-into-newly-generated-reports-to-ensure-consis.cs",
-      "task": "Clone a VBA project from a template document into newly generated reports to ensure consistent macros.",
+      "file_name": "validate-that-a-document-contains-no-watermarks-before-publishing-by-using-watermarktype-n.cs",
+      "task": "Validate that a document contains no watermarks before publishing by using WatermarkType.None check.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
         "doc"
       ]
     },
     {
       "id": 21,
-      "file_name": "clone-a-vba-project-then-remove-all-references-to-external-libraries-to-create-a-self-cont.cs",
-      "task": "Clone a VBA project, then remove all references to external libraries to create a self‑contained macro set.",
+      "file_name": "use-watermarktype-enumeration-to-verify-a-document-has-no-watermark-before-adding-a-new-on.cs",
+      "task": "Use WatermarkType enumeration to verify a document has no watermark before adding a new one.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
-      "outputs": [
-        "docm"
-      ]
-    },
-    {
-      "id": 22,
-      "file_name": "copy-a-single-vbamodule-from-a-source-document-s-vba-project-into-a-destination-document-s.cs",
-      "task": "Copy a single VbaModule from a source document's VBA project into a destination document's project.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
         "doc"
       ]
     },
     {
-      "id": 23,
-      "file_name": "load-a-docx-file-create-a-new-vba-project-and-copy-selected-modules-from-another-document.cs",
-      "task": "Load a DOCX file, create a new VBA project, and copy selected modules from another document into it.",
+      "id": 22,
+      "file_name": "use-watermarktype-enumeration-to-switch-between-text-and-image-watermarks-based-on-user-se.cs",
+      "task": "Use WatermarkType enumeration to switch between text and image watermarks based on user selection.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
+      "outputs": [
+        "docx"
+      ]
+    },
+    {
+      "id": 23,
+      "file_name": "save-a-watermarked-word-document-directly-to-pdf-format-while-preserving-watermark-appeara.cs",
+      "task": "Save a watermarked Word document directly to PDF format while preserving watermark appearance.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "watermark-workflow",
+      "outputs": [
+        "doc",
+        "pdf"
+      ]
+    },
+    {
+      "id": 24,
+      "file_name": "apply-a-text-watermark-to-a-word-document-and-then-save-the-document-as-docx.cs",
+      "task": "Apply a text watermark to a Word document and then save the document as DOCX.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "watermark-workflow",
       "outputs": [
         "docx",
         "doc"
       ]
     },
     {
-      "id": 24,
-      "file_name": "use-a-configuration-file-to-specify-which-vba-modules-to-copy-between-documents-during-bat.cs",
-      "task": "Use a configuration file to specify which VBA modules to copy between documents during batch processing.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
-      "workflow": "vba-workflow",
-      "outputs": [
-        "doc"
-      ]
-    },
-    {
       "id": 25,
-      "file_name": "import-a-vba-module-from-an-external-bas-file-into-a-document-s-vbaproject-and-set-its-nam.cs",
-      "task": "Import a VBA module from an external .bas file into a document's VbaProject and set its name.",
+      "file_name": "apply-an-image-watermark-to-a-word-document-and-then-save-the-document-as-docx.cs",
+      "task": "Apply an image watermark to a Word document and then save the document as DOCX.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
+        "docx",
         "doc"
       ]
     },
     {
       "id": 26,
-      "file_name": "import-macro-definitions-from-a-json-file-create-corresponding-vbamodules-and-assign-their.cs",
-      "task": "Import macro definitions from a JSON file, create corresponding VbaModules, and assign their source code.",
+      "file_name": "batch-process-a-folder-of-doc-files-to-add-the-same-image-watermark-to-each-document.cs",
+      "task": "Batch process a folder of DOC files to add the same image watermark to each document.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "json"
-      ]
-    },
-    {
-      "id": 27,
-      "file_name": "export-all-vba-modules-from-a-document-to-a-zip-archive-maintaining-original-module-filena.cs",
-      "task": "Export all VBA modules from a document to a ZIP archive, maintaining original module filenames.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
-      "workflow": "vba-workflow",
-      "outputs": [
-        "doc",
-        "zip"
-      ]
-    },
-    {
-      "id": 28,
-      "file_name": "export-macro-source-code-to-json-format-including-module-names-and-code-strings-for-extern.cs",
-      "task": "Export macro source code to JSON format, including module names and code strings, for external processing.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
-      "workflow": "vba-workflow",
-      "outputs": [
-        "json"
-      ]
-    },
-    {
-      "id": 29,
-      "file_name": "load-multiple-docm-files-in-a-batch-extract-each-macro-s-source-code-and-store-them-in-sep.cs",
-      "task": "Load multiple DOCM files in a batch, extract each macro's source code, and store them in separate files.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
-      "workflow": "vba-workflow",
-      "outputs": [
-        "docm",
         "doc"
       ]
     },
     {
-      "id": 30,
-      "file_name": "batch-process-a-folder-of-docm-files-extracting-macro-names-and-writing-them-to-a-csv-summ.cs",
-      "task": "Batch process a folder of DOCM files, extracting macro names and writing them to a CSV summary file.",
+      "id": 27,
+      "file_name": "batch-process-multiple-word-documents-in-a-directory-to-add-a-text-watermark-to-each-file.cs",
+      "task": "Batch process multiple Word documents in a directory to add a text watermark to each file.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docm",
+        "doc"
+      ]
+    },
+    {
+      "id": 28,
+      "file_name": "batch-process-multiple-word-documents-in-a-directory-to-remove-existing-watermarks-from-ea.cs",
+      "task": "Batch process multiple Word documents in a directory to remove existing watermarks from each file.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "watermark-workflow",
+      "outputs": [
+        "doc"
+      ]
+    },
+    {
+      "id": 29,
+      "file_name": "batch-convert-docx-files-to-pdf-while-adding-a-corporate-logo-image-watermark-to-each-pdf.cs",
+      "task": "Batch convert DOCX files to PDF while adding a corporate logo image watermark to each PDF.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "watermark-workflow",
+      "outputs": [
+        "docx",
         "doc",
-        "csv"
+        "pdf"
+      ]
+    },
+    {
+      "id": 30,
+      "file_name": "create-a-command-line-tool-that-accepts-a-directory-path-and-adds-a-specified-watermark-to.cs",
+      "task": "Create a command‑line tool that accepts a directory path and adds a specified watermark to each file.",
+      "winner": "mcp",
+      "selected_engine": "mcp",
+      "workflow": "watermark-workflow",
+      "outputs": [
+        "docx"
       ]
     },
     {
       "id": 31,
-      "file_name": "compare-the-source-code-of-two-vbamodules-from-different-documents-and-generate-a-diff-rep.cs",
-      "task": "Compare the source code of two VbaModules from different documents and generate a diff report.",
+      "file_name": "use-a-configuration-file-to-define-watermark-text-font-and-opacity-then-apply-it-to-multip.cs",
+      "task": "Use a configuration file to define watermark text, font, and opacity, then apply it to multiple documents.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
         "doc"
       ]
     },
     {
       "id": 32,
-      "file_name": "generate-a-documentation-report-listing-each-vba-module-its-type-and-the-number-of-lines-o.cs",
-      "task": "Generate a documentation report listing each VBA module, its type, and the number of lines of code.",
+      "file_name": "implement-a-unit-test-that-verifies-watermark-remove-successfully-deletes-a-previously-add.cs",
+      "task": "Implement a unit test that verifies Watermark.Remove successfully deletes a previously added text watermark.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "doc"
+        "docx"
       ]
     },
     {
       "id": 33,
-      "file_name": "load-a-docx-file-add-a-new-vba-module-that-automates-table-formatting-and-save-the-updated.cs",
-      "task": "Load a DOCX file, add a new VBA module that automates table formatting, and save the updated document.",
+      "file_name": "add-a-watermark-to-a-document-opened-from-a-network-share-ensuring-proper-disposal-of-file.cs",
+      "task": "Add a watermark to a document opened from a network share, ensuring proper disposal of file handles.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
-        "docx",
         "doc"
       ]
     },
     {
       "id": 34,
-      "file_name": "use-the-document-vbaproject-property-to-replace-an-existing-vba-project-with-a-pre-configu.cs",
-      "task": "Use the Document.VbaProject property to replace an existing VBA project with a pre‑configured project template.",
+      "file_name": "create-a-reusable-method-that-adds-a-configurable-text-watermark-to-any-document-object.cs",
+      "task": "Create a reusable method that adds a configurable text watermark to any Document object.",
       "winner": "mcp",
       "selected_engine": "mcp",
-      "workflow": "vba-workflow",
+      "workflow": "watermark-workflow",
       "outputs": [
         "doc"
       ]

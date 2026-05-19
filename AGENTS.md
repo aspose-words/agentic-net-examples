@@ -16,16 +16,17 @@ You are a C# developer specializing in Word processing using Aspose.Words for .N
 When working in this repository:
 - Each `.cs` file is a **standalone Console Application** — do not create multi-file projects
 - All examples must **compile and run** without errors using `dotnet build` and `dotnet run`
-- Follow the conventions, boundaries, and anti-patterns documented below exactly
+- Follow the category-level `AGENTS.md` files for feature-specific rules
 - Use the **Command Reference** section for build/run commands
 
 ## Repository Overview
 
-This repository contains **1834** verified code examples demonstrating Aspose.Words for .NET capabilities.
+This repository contains **1795** working code examples demonstrating Aspose.Words for .NET capabilities.
 
-**Statistics** (as of 2026-04-14):
-- Total Examples: 1834
+**Statistics** (as of 2026-05-19):
+- Total Examples: 1795
 - Categories: 29
+- Overall Pass Rate: 100.0%
 
 ## Category Details
 
@@ -118,7 +119,7 @@ This repository contains **1834** verified code examples demonstrating Aspose.Wo
 - Guide: [AGENTS.md](./rendering/AGENTS.md)
 
 ### security-and-protection
-- Examples: 27
+- Examples: 30
 - Guide: [AGENTS.md](./security-and-protection/AGENTS.md)
 
 ### shapes
@@ -126,217 +127,155 @@ This repository contains **1834** verified code examples demonstrating Aspose.Wo
 - Guide: [AGENTS.md](./shapes/AGENTS.md)
 
 ### split-document
-- Examples: 23
+- Examples: 30
 - Guide: [AGENTS.md](./split-document/AGENTS.md)
 
 ### track-changes
-- Examples: 37
+- Examples: 40
 - Guide: [AGENTS.md](./track-changes/AGENTS.md)
 
 ### vba-macros
-- Examples: 30
+- Examples: 34
 - Guide: [AGENTS.md](./vba-macros/AGENTS.md)
 
 ### watermark
-- Examples: 28
+- Examples: 34
 - Guide: [AGENTS.md](./watermark/AGENTS.md)
 
 ### working-with-table
-- Examples: 189
+- Examples: 197
 - Guide: [AGENTS.md](./working-with-table/AGENTS.md)
 
 ## Boundaries
 
-### ✅ Always
-
-These rules are mandatory for every example.
+### Always
 
 - Use public `Aspose.Words` APIs and keep examples self-contained.
-- Build with the configured .NET target framework and package version.
-- Save the resulting document after completing modifications.
+- Keep each example as a single `.cs` console application.
+- Build with `net8.0` and the configured package version.
+- Save the resulting document or output file when the task requires output.
 - Keep input and output paths explicit and easy to follow.
+- Prefer category-level guidance from each folder’s `AGENTS.md`.
 
-### ⚠️ Ask First
+### Ask First
 
-- Adding extra NuGet packages beyond `Aspose.Words`.
+- Adding extra NuGet packages beyond the known verifier package set.
 - Changing shared repository infrastructure or project templates.
 - Introducing platform-specific behavior not already present in the examples.
 
-### 🚫 Never
+### Never
 
-- Never use excluded namespaces in generated code.
 - Never create multi-file example projects for a single example.
-- Never modify generated `AGENTS.md` or `index.json` by hand.
+- Never use invented or unsupported Aspose.Words APIs.
+- Never modify generated `AGENTS.md` or `index.json` by hand without regenerating related metadata.
+- Never rely on missing external input files; bootstrap sample inputs locally when possible.
 
-## Common Mistakes (Anti-Patterns)
+## Repository Structure
 
-### CS0246: Shape type not found
-Add the missing using directive for the Aspose.Words.Drawing namespace, which defines the Shape class used by DocumentBuilder.InsertChart. The Chart class lives in Aspose.Words.Drawing.Charts, which was already imported.
-
-```csharp
-using Aspose.Words.Drawing; // required for Shape
-// existing using Aspose.Words.Drawing.Charts; stays unchanged
+```text
+AGENTS.md
+README.md
+index.json
++-- barcode-image/
++-- charts/
++-- comments/
++-- comparison/
++-- content-control/
++-- conversion/
++-- extraction/
++-- find-and-replace/
++-- fonts/
++-- form-fields/
++-- hyphenation/
++-- images/
++-- join-documents/
++-- linq-reporting/
++-- lists/
++-- mail-merge/
++-- officemath/
++-- ole-objects/
++-- paragraphs/
++-- programming-with-documents/
++-- range/
++-- rendering/
++-- security-and-protection/
++-- shapes/
++-- split-document/
++-- track-changes/
++-- vba-macros/
++-- watermark/
++-- working-with-table/
 ```
 
-Shape is part of Aspose.Words.Drawing, not Aspose.Words.Drawing.Charts. Without the directive the compiler cannot resolve the type. This fix works with Aspose.Words for .NET 23.10+ on all supported platforms.
+## Category Index
 
-### Missing static Main entry point
-Added a Program class with a static Main method that serves as the application entry point. The Main method demonstrates how to load two DOCX files into byte arrays, invoke the RevisionReportGenerator, and output the generated report to the console. This satisfies the compiler requirement for an executable project.
-
-```csharp
-class Program
-{
-    static void Main(string[] args)
-    {
-        // usage example
-    }
-}
-```
-
-The original file only defined a helper class; a console application must expose a static Main method. No changes to Aspose.Words APIs were required.
-
-### CS0246: Missing Shape type
-Add a reference to the Aspose.Words.Drawing namespace, which contains the Shape class used for chart manipulation. If you do not need to manipulate the chart programmatically, you can simply remove the Shape‑related code.
-
-```csharp
-using Aspose.Words.Drawing; // <-- added
-// ... later, if needed:
-Shape chartShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
-```
-
-Shape is part of Aspose.Words.Drawing. The project must reference the Aspose.Words NuGet package (which includes this namespace).
-
-### CS5001: Missing static Main method
-Added a public static Main(string[] args) method. This satisfies the compiler requirement for an executable entry point.
-
-```csharp
-public static void Main(string[] args)
-{
-    if (args.Length != 2)
-    {
-        Console.WriteLine("Usage: DocxToHtmlConverter <input.docx> <output.html>");
-        return;
-    }
-    ConvertComplexTablesToHtml(args[0], args[1]);
-}
-```
-
-Console applications compiled with `dotnet build` need a static Main method. Adding it makes the example runnable from the command line. No change to Aspose.Words API is required.
-
-### BookmarkCollection.Exists method not found
-Replace the non‑existent Exists call with the indexer accessor. The BookmarkCollection indexer returns null when a bookmark is missing, so a simple null‑check is sufficient.
-
-```csharp
-Bookmark startBookmark = sourceDoc.Range.Bookmarks[startBookmarkName];
-Bookmark endBookmark = sourceDoc.Range.Bookmarks[endBookmarkName];
-if (startBookmark == null || endBookmark == null) continue;
-```
-
-Aspose.Words for .NET removed the Exists method in recent versions. Using the indexer is the recommended, version‑agnostic way to test for a bookmark's presence.
-
-### CS0246: Missing using directive or assembly reference for Aspose.Words types
-Add the Aspose.Words namespace with a using directive and ensure the Aspose.Words NuGet package (or DLL) is referenced by the project. The types Document and DocumentBuilder are defined in the Aspose.Words assembly.
-
-```csharp
-using Aspose.Words; // add this at the top of the file
-
-// In the .csproj file add:
-<ItemGroup>
-  <PackageReference Include="Aspose.Words" Version="26.3.0" />
-</ItemGroup>
-```
-
-Without the using directive the compiler cannot resolve the types. Adding the NuGet package also supplies the required assembly at runtime. 
-
-## Domain Knowledge
-
-Cross-cutting rules and API-specific gotchas.
-
-- Keep examples minimal, strongly typed, and easy to compile.
+| Category | Examples | Pass Rate | Details |
+|----------|----------|-----------|---------|
+| [BarCode Image](./barcode-image/) | 30 | 100.0% | [AGENTS.md](./barcode-image/AGENTS.md) |
+| [Charts](./charts/) | 39 | 100.0% | [AGENTS.md](./charts/AGENTS.md) |
+| [Comments](./comments/) | 30 | 100.0% | [AGENTS.md](./comments/AGENTS.md) |
+| [Comparison](./comparison/) | 30 | 100.0% | [AGENTS.md](./comparison/AGENTS.md) |
+| [Content Control](./content-control/) | 35 | 100.0% | [AGENTS.md](./content-control/AGENTS.md) |
+| [Conversion](./conversion/) | 108 | 100.0% | [AGENTS.md](./conversion/AGENTS.md) |
+| [Extraction](./extraction/) | 30 | 100.0% | [AGENTS.md](./extraction/AGENTS.md) |
+| [Find and Replace](./find-and-replace/) | 63 | 100.0% | [AGENTS.md](./find-and-replace/AGENTS.md) |
+| [Fonts](./fonts/) | 35 | 100.0% | [AGENTS.md](./fonts/AGENTS.md) |
+| [Form Fields](./form-fields/) | 30 | 100.0% | [AGENTS.md](./form-fields/AGENTS.md) |
+| [Hyphenation](./hyphenation/) | 40 | 100.0% | [AGENTS.md](./hyphenation/AGENTS.md) |
+| [Images](./images/) | 120 | 100.0% | [AGENTS.md](./images/AGENTS.md) |
+| [Join Documents](./join-documents/) | 36 | 100.0% | [AGENTS.md](./join-documents/AGENTS.md) |
+| [LINQ Reporting](./linq-reporting/) | 404 | 100.0% | [AGENTS.md](./linq-reporting/AGENTS.md) |
+| [Lists](./lists/) | 30 | 100.0% | [AGENTS.md](./lists/AGENTS.md) |
+| [Mail Merge](./mail-merge/) | 30 | 100.0% | [AGENTS.md](./mail-merge/AGENTS.md) |
+| [OfficeMath](./officemath/) | 30 | 100.0% | [AGENTS.md](./officemath/AGENTS.md) |
+| [OLE Objects](./ole-objects/) | 30 | 100.0% | [AGENTS.md](./ole-objects/AGENTS.md) |
+| [Paragraphs](./paragraphs/) | 35 | 100.0% | [AGENTS.md](./paragraphs/AGENTS.md) |
+| [Programming With Documents](./programming-with-documents/) | 110 | 100.0% | [AGENTS.md](./programming-with-documents/AGENTS.md) |
+| [Range](./range/) | 30 | 100.0% | [AGENTS.md](./range/AGENTS.md) |
+| [Rendering](./rendering/) | 70 | 100.0% | [AGENTS.md](./rendering/AGENTS.md) |
+| [Security and Protection](./security-and-protection/) | 30 | 100.0% | [AGENTS.md](./security-and-protection/AGENTS.md) |
+| [Shapes](./shapes/) | 35 | 100.0% | [AGENTS.md](./shapes/AGENTS.md) |
+| [Split Document](./split-document/) | 30 | 100.0% | [AGENTS.md](./split-document/AGENTS.md) |
+| [Track Changes](./track-changes/) | 40 | 100.0% | [AGENTS.md](./track-changes/AGENTS.md) |
+| [VBA Macros](./vba-macros/) | 34 | 100.0% | [AGENTS.md](./vba-macros/AGENTS.md) |
+| [Watermark](./watermark/) | 34 | 100.0% | [AGENTS.md](./watermark/AGENTS.md) |
+| [Working With Table](./working-with-table/) | 197 | 100.0% | [AGENTS.md](./working-with-table/AGENTS.md) |
 
 ## Command Reference
 
-### Build and Run
-
-Each repository example is a standalone `.cs` file. Run examples by creating a temporary console project and copying the desired example to `Program.cs`.
+### Create a temporary console project
 
 ```bash
-# Create a new project
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
+```
 
-# Add Aspose.Words
+### Add required packages
+
+```bash
 dotnet add package Aspose.Words --version 26.3.0
+```
 
-# Copy a repository example into the project as Program.cs
-# PowerShell:
+Add other packages only when an example requires them, for example:
+
+```bash
+dotnet add package Aspose.BarCode --version 26.3.0
+dotnet add package Aspose.Drawing.Common --version 25.11.0
+dotnet add package Newtonsoft.Json
+dotnet add package SkiaSharp --version 3.119.0
+dotnet add package System.Text.Encoding.CodePages --version 9.0.2
+```
+
+### Copy and run one example
+
+```powershell
 Copy-Item ..\<category-folder>\<example-file>.cs .\Program.cs
-
-# Build
 dotnet build --configuration Release --verbosity minimal
-
-# Run
 dotnet run --configuration Release --no-build
 ```
 
-### Project File (.csproj)
+## Notes for Agents
 
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="Aspose.Words" Version="26.3.0" />
-  </ItemGroup>
-</Project>
-```
-
-### Environment
-
-- .NET SDK: net8.0 or higher
-- NuGet: Aspose.Words 26.3.0
-- All examples are standalone Console Applications
-- Each `.cs` file must be compiled and run independently inside a temporary console project
-
-## Testing Guide
-
-Every example must pass these verification steps.
-
-### Build Verification
-
-```bash
-dotnet build --configuration Release --verbosity minimal
-```
-
-- Success: exit code `0` and no `CS####` compiler errors
-- Failure: any `error CS####` line indicates a build failure
-
-### Run Verification
-
-```bash
-dotnet run --configuration Release --no-build
-```
-
-- Success: exit code `0`, no unhandled exception, and expected output file(s) created where applicable
-- Failure: non-zero exit code, `Unhandled exception`, or missing expected output
-
-## How to Use These Examples
-
-### Prerequisites
-
-- .NET SDK (net8.0 or higher)
-- Aspose.Words for .NET (26.3.0 or higher)
-- NuGet package restore enabled
-- Any required input files available in the temporary project working directory
-
-### Running an Example
-
-1. Choose a category folder and a single `.cs` example file
-2. Create a temporary console project targeting `net8.0`
-3. Add `Aspose.Words` version `26.3.0`
-4. Copy the selected example file into the project as `Program.cs`
-5. Build and run the project
-
-Updated: 2026-03-26 | Run: `20260315_203408_65134f` | Examples: 1534 | Categories: 29
+- Root files provide navigation and repository-wide constraints.
+- Category folders are the source of truth for feature-specific behavior.
+- Use each category’s `README.md`, `AGENTS.md`, and `index.json` before editing or regenerating examples.
