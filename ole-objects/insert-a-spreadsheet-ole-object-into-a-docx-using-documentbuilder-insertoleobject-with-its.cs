@@ -7,24 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Create a temporary minimal Excel file (ZIP header) to act as the OLE data source.
+        string tempExcelPath = Path.Combine(Path.GetTempPath(), "DummySpreadsheet.xlsx");
+        File.WriteAllBytes(tempExcelPath, new byte[] { 0x50, 0x4B, 0x03, 0x04 }); // Minimal ZIP header.
 
-        // Initialize DocumentBuilder for the document.
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Path where the resulting DOCX will be saved.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "SpreadsheetOleObject.docx");
 
-        // Prepare dummy spreadsheet data.
-        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Dummy spreadsheet content");
-
-        // Insert the OLE object using a stream and the Excel ProgId.
-        using (MemoryStream stream = new MemoryStream(dummyData))
+        // Open the temporary Excel file as a stream and insert it as an OLE object.
+        using (FileStream excelStream = File.OpenRead(tempExcelPath))
         {
-            // asIcon = false (display content), presentation = null (default icon if needed).
-            builder.InsertOleObject(stream, "Excel.Sheet", false, null);
+            // Create a new blank document.
+            Document doc = new Document();
+
+            // Initialize a DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Add a description paragraph.
+            builder.Writeln("Spreadsheet OLE object:");
+
+            // Insert the OLE object using its ProgId ("Excel.Sheet").
+            // asIcon = false (display the content), presentation = null (use default icon if needed).
+            builder.InsertOleObject(excelStream, "Excel.Sheet", false, null);
+
+            // Save the document.
+            doc.Save(outputPath);
         }
 
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SpreadsheetOleObject.docx");
-        doc.Save(outputPath);
+        // Clean up the temporary Excel file.
+        if (File.Exists(tempExcelPath))
+        {
+            File.Delete(tempExcelPath);
+        }
     }
 }

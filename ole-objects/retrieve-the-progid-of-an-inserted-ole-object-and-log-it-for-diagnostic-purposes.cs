@@ -3,39 +3,35 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class OleProgIdDemo
+public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary folder for the demo files.
-        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeOleDemo");
-        Directory.CreateDirectory(tempFolder);
-
-        // Create a simple text file that will be embedded as an OLE object.
-        string sampleFilePath = Path.Combine(tempFolder, "sample.txt");
-        File.WriteAllText(sampleFilePath, "This is a sample text file for OLE embedding.");
-
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the text file as an OLE object (embedded, not linked, displayed as content).
-        // Use the "Package" ProgID which is suitable for generic file packages.
-        Shape oleShape = builder.InsertOleObject(
-            sampleFilePath,   // file to embed
-            "Package",        // ProgID
-            false,            // isLinked
-            false,            // asIcon
-            null);            // no custom presentation image
+        // Prepare some dummy data to embed as an OLE object.
+        byte[] dummyData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+        using (MemoryStream stream = new MemoryStream(dummyData))
+        {
+            // Insert the OLE object using the "Package" ProgID.
+            // Parameters: stream, progId, asIcon, presentation (null for default icon).
+            Shape oleShape = builder.InsertOleObject(stream, "Package", true, null);
 
-        // Retrieve the ProgID of the inserted OLE object.
-        string progId = oleShape.OleFormat.ProgId;
+            // Retrieve the OleFormat from the inserted shape.
+            OleFormat oleFormat = oleShape.OleFormat;
 
-        // Log the ProgID to the console.
-        Console.WriteLine($"Inserted OLE object's ProgId: {progId}");
+            // Get the ProgId of the OLE object.
+            string progId = oleFormat.ProgId;
 
-        // Save the document to the temporary folder.
-        string outputPath = Path.Combine(tempFolder, "OleDemo.docx");
-        doc.Save(outputPath);
+            // Log the ProgId for diagnostic purposes.
+            Console.WriteLine($"Inserted OLE object's ProgId: {progId}");
+        }
+
+        // Save the document to verify the OLE object was inserted.
+        doc.Save("InsertedOleObject.docx");
     }
 }

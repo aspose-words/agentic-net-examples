@@ -3,36 +3,35 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class AdjustOleIconAspectRatio
+public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary folder for the example files.
-        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeOleExample");
-        Directory.CreateDirectory(tempFolder);
+        // Create a temporary text file to embed as an OLE object.
+        string tempFilePath = Path.Combine(Path.GetTempPath(), "SampleOleObject.txt");
+        File.WriteAllText(tempFilePath, "This is a sample OLE object content.");
 
-        // Create a simple text file that will be embedded as an OLE object.
-        string oleFilePath = Path.Combine(tempFolder, "Sample.txt");
-        File.WriteAllText(oleFilePath, "This is sample content for the OLE object.");
-
-        // Create a new document and a builder to insert content.
+        // Initialize a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the OLE object as an icon. Passing null for the icon file lets Aspose.Words use a default icon.
-        // The caption will be the file name.
-        Shape oleShape = builder.InsertOleObjectAsIcon(oleFilePath, false, null, "Sample.txt");
+        // Insert the OLE object as an icon. No custom icon file is provided (null),
+        // so Aspose.Words will use a predefined icon based on the file type.
+        // The caption for the icon is set to the file name.
+        Shape oleShape = builder.InsertOleObjectAsIcon(
+            tempFilePath,          // fileName
+            false,                 // isLinked
+            null,                  // iconFile (use default)
+            "Sample OLE Object");  // iconCaption
 
-        // Lock the aspect ratio so that changing one dimension automatically updates the other.
+        // Lock the aspect ratio so that resizing the width automatically adjusts the height.
         oleShape.AspectRatioLocked = true;
 
-        // Resize the icon width; the height will adjust to preserve the original aspect ratio.
-        oleShape.Width = 100.0; // Width in points (1 point = 1/72 inch)
+        // Resize the icon to a desired width (in points). Height will scale proportionally.
+        oleShape.Width = 150; // 150 points ≈ 2.08 inches.
 
-        // Save the document to the temporary folder.
-        string outputPath = Path.Combine(tempFolder, "OleIconAdjusted.docx");
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleIconAspectRatio.docx");
         doc.Save(outputPath);
-
-        // The example finishes without waiting for user input.
     }
 }

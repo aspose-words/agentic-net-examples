@@ -11,23 +11,22 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare some dummy data to embed as an OLE package.
-        // In a real scenario this could be any file (e.g., a ZIP archive).
-        byte[] packageData = System.Text.Encoding.UTF8.GetBytes("Hello, this is the content of the OLE package.");
+        // Prepare a simple byte array that mimics a ZIP file (PK header).
+        byte[] zipFileBytes = new byte[] { 0x50, 0x4B, 0x03, 0x04 };
 
-        // Insert the OLE object from the memory stream.
-        using (MemoryStream stream = new MemoryStream(packageData))
+        // Insert the OLE package from the byte array.
+        using (MemoryStream stream = new MemoryStream(zipFileBytes))
         {
-            // Insert as an icon (asIcon = true) with the generic "Package" progId.
-            Shape oleShape = builder.InsertOleObject(stream, "Package", true, null);
+            // Insert as an OLE object displayed as an icon.
+            Shape shape = builder.InsertOleObject(stream, "Package", true, null);
 
-            // Preserve original file name and extension metadata.
-            oleShape.OleFormat.OlePackage.FileName = "SamplePackage.txt";
-            oleShape.OleFormat.OlePackage.DisplayName = "SamplePackage.txt";
+            // Set the original file name and display name to preserve metadata.
+            shape.OleFormat.OlePackage.FileName = "Package file name.zip";
+            shape.OleFormat.OlePackage.DisplayName = "Package display name.zip";
         }
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OlePackageExample.docx");
+        // Ensure the output directory exists.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
         doc.Save(outputPath);
     }
 }

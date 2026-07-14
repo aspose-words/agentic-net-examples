@@ -12,10 +12,13 @@ public class Program
         // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an online YouTube video with specified width and height (in points).
+        // Insert an online YouTube video. Width and height are specified in points.
         builder.InsertOnlineVideo("https://youtu.be/g1N9ke8Prmk", 360, 270);
 
-        // Save the document to a file in the current directory.
+        // Add a paragraph break after the video (optional).
+        builder.Writeln();
+
+        // Save the document to the local file system.
         doc.Save("OnlineVideo.docx");
     }
 }

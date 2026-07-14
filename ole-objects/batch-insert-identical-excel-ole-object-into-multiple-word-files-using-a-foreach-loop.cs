@@ -1,59 +1,49 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 
 public class BatchOleInsert
 {
     public static void Main()
     {
-        // Base directory of the running application.
-        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        // Path to the Excel file that will be embedded as an OLE object.
+        const string excelFilePath = "Sample.xlsx";
 
-        // Folder that contains the source Word documents and the Excel file to embed.
-        string dataDir = Path.Combine(baseDir, "Data");
-
-        // Folder where the modified documents will be saved.
-        string outputDir = Path.Combine(baseDir, "Output");
-
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputDir);
-
-        // Full path to the Excel file that will be inserted as an OLE object.
-        string excelPath = Path.Combine(dataDir, "Sample.xlsx");
-
-        // Verify that the Excel file exists; if not, abort with a clear message.
-        if (!File.Exists(excelPath))
+        // List of Word document file names to create and populate.
+        List<string> wordFileNames = new List<string>
         {
-            Console.WriteLine($"Excel file not found: {excelPath}");
-            return;
+            "Document1.docx",
+            "Document2.docx",
+            "Document3.docx"
+        };
+
+        // Ensure the Excel file exists; otherwise the example cannot run.
+        if (!File.Exists(excelFilePath))
+        {
+            // Create a minimal Excel file for demonstration purposes.
+            // In a real scenario the file would already exist.
+            File.WriteAllBytes(excelFilePath, new byte[] { 0x50, 0x4B, 0x03, 0x04 }); // placeholder ZIP header
         }
 
-        // Get all Word documents (*.docx) in the data directory.
-        string[] wordFiles = Directory.GetFiles(dataDir, "*.docx");
-
-        foreach (string wordFilePath in wordFiles)
+        // Process each Word file.
+        foreach (string wordFilePath in wordFileNames)
         {
-            // Load the existing Word document.
-            Document doc = new Document(wordFilePath);
+            // Create a new blank Word document.
+            Document doc = new Document();
 
-            // Create a DocumentBuilder to modify the document.
+            // Initialize a DocumentBuilder for the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Optional description paragraph.
-            builder.Writeln("Embedded Excel OLE object:");
+            // Add a paragraph indicating which file is being processed.
+            builder.Writeln($"This document contains an embedded Excel OLE object: {Path.GetFileName(excelFilePath)}");
 
             // Insert the Excel file as an embedded OLE object (not as an icon).
-            // Parameters: fileName, isLinked (false = embed), asIcon (false = show content), presentation (null = default icon).
-            builder.InsertOleObject(excelPath, false, false, null);
+            // Using the overload that takes a file name: (fileName, isLinked, asIcon, presentation)
+            builder.InsertOleObject(excelFilePath, false, false, null);
 
-            // Build the output file name.
-            string outputFileName = Path.GetFileNameWithoutExtension(wordFilePath) + "_WithOle.docx";
-            string outputPath = Path.Combine(outputDir, outputFileName);
-
-            // Save the modified document.
-            doc.Save(outputPath);
+            // Save the document to the specified path.
+            doc.Save(wordFilePath);
         }
-
-        Console.WriteLine("Processing completed.");
     }
 }

@@ -7,32 +7,30 @@ public class OleExtractor
 {
     public static void Main()
     {
-        // Path to the source Word document containing OLE objects.
-        const string sourceDocPath = "InputDocument.docx";
+        // Prepare a sample file that will be embedded as an OLE object.
+        const string sampleTextPath = "sample.txt";
+        File.WriteAllText(sampleTextPath, "Hello from embedded OLE object!");
 
-        // Folder where extracted OLE objects will be saved.
-        const string outputFolder = "ExtractedOleObjects";
+        // Create a new Word document and embed the sample file as an OLE object.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert the OLE object (embedded, not linked, displayed as content).
+        builder.InsertOleObject(sampleTextPath, false, false, null);
+        // Save the document to disk – this uses the provided save rule.
+        const string docPath = "sample.docx";
+        doc.Save(docPath);
 
-        // Ensure the source document exists.
-        if (!File.Exists(sourceDocPath))
-        {
-            Console.WriteLine($"Source document not found: {sourceDocPath}");
-            return;
-        }
+        // Load the document back – this uses the provided load rule.
+        Document loadedDoc = new Document(docPath);
 
-        // Load the Word document using Aspose.Words.
-        Document doc = new Document(sourceDocPath);
+        // Directory to store extracted OLE objects (simulating a BLOB database).
+        const string storageDir = "OleBlobs";
+        Directory.CreateDirectory(storageDir);
 
-        // Create the output folder if it does not exist.
-        Directory.CreateDirectory(outputFolder);
-
-        // Iterate over all shapes in the document.
-        var shapes = doc.GetChildNodes(NodeType.Shape, true);
+        // Iterate through all shapes in the document.
         int oleIndex = 0;
-
-        foreach (Shape shape in shapes)
+        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
         {
-            // Access the OLE format of the shape.
             OleFormat oleFormat = shape.OleFormat;
             if (oleFormat == null)
                 continue; // Not an OLE object.
@@ -41,26 +39,24 @@ public class OleExtractor
             byte[] oleData = oleFormat.GetRawData();
 
             // Determine a file name for the extracted object.
-            string fileName = oleFormat.SuggestedFileName;
-            if (string.IsNullOrEmpty(fileName))
+            string suggestedName = oleFormat.SuggestedFileName;
+            if (string.IsNullOrEmpty(suggestedName))
             {
-                // Fallback to a generated name using the suggested extension.
+                // Fallback to a generated name using suggested extension.
                 string extension = oleFormat.SuggestedExtension ?? ".bin";
-                fileName = $"OleObject_{oleIndex}{extension}";
+                suggestedName = $"OleObject_{oleIndex}{extension}";
             }
 
-            // Build the full path for the output file.
-            string outputPath = Path.Combine(outputFolder, fileName);
-
-            // Write the OLE data to the file.
+            // Save the OLE data to a file in the storage directory.
+            string outputPath = Path.Combine(storageDir, suggestedName);
             File.WriteAllBytes(outputPath, oleData);
-
             Console.WriteLine($"Extracted OLE object saved to: {outputPath}");
 
             oleIndex++;
         }
 
-        // Indicate completion.
-        Console.WriteLine("OLE extraction completed.");
+        // Clean up temporary files used for the demonstration.
+        File.Delete(sampleTextPath);
+        File.Delete(docPath);
     }
 }

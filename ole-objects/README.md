@@ -1,22 +1,22 @@
 # OLE Objects Examples for Aspose.Words for .NET
 
-This folder contains the **live, publish-ready** C# examples for the **OLE Objects** category. Each file is a standalone example selected from the latest verified publish-ready set and aligned with the active category rules.
+This folder contains the live, publish-ready C# examples for the OLE Objects category. Each file is a standalone console example selected from the verified 26.5.0 run.
 
 ## Snapshot
 
-- Category: **OLE Objects**
-- Slug: **ole-objects**
-- Total examples: **30**
-- Verified publish-ready examples: **30 / 30**
-- Inspection workflow examples: **8**
-- Extraction workflow examples: **7**
-- Online Video workflow examples: **3**
-- Ole Package workflow examples: **3**
-- Validation workflow examples: **3**
-- Insertion workflow examples: **3**
-- Batch Processing workflow examples: **2**
-- Replacement workflow examples: **1**
-
+- Category: OLE Objects
+- Slug: ole-objects
+- Total examples: 30
+- Publish-ready successful examples: 30 / 30
+- Source run: 20260619_131835_59df5f
+- Batch Processing examples: 2
+- Extraction examples: 7
+- Insertion examples: 3
+- Inspection examples: 8
+- Ole Package examples: 3
+- Online Video examples: 3
+- Replacement examples: 1
+- Validation examples: 3
 
 ## Category rules that shaped these examples
 
@@ -29,17 +29,16 @@ This folder contains the **live, publish-ready** C# examples for the **OLE Objec
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words for .NET `26.4.0`
+- Aspose.Words 26.5.0
 
 ## Running Examples
 
-Each file in this folder is a **single, standalone `.cs` console example**. To run one example:
+Each file in this folder is a single, standalone `.cs` console example. To run one example:
 
 ```bash
-# From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.4.0
+dotnet add package Aspose.Words --version 26.5.0
 
 # Copy one example from this folder into the project as Program.cs
 # PowerShell:
@@ -60,7 +59,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.4.0
+dotnet add package Aspose.Words --version 26.5.0
 
 # PowerShell example
 Copy-Item ..\ole-objects\insert-a-spreadsheet-ole-object-into-a-docx-using-documentbuilder-insertoleobject-with-its.cs .\Program.cs
@@ -73,36 +72,36 @@ dotnet run --configuration Release --no-build
 
 | # | File | Original task | Workflow | Outputs | Selected engine |
 |---|---|---|---|---|---|
-| 1 | `adjust-ole-object-icon-dimensions-to-maintain-aspect-ratio-after-resizing-for-document-lay.cs` | Adjust OLE object icon dimensions to maintain aspect ratio after resizing for document layout. | inspection | docx | mcp |
-| 2 | `batch-insert-identical-excel-ole-object-into-multiple-word-files-using-a-foreach-loop.cs` | Batch insert identical Excel OLE object into multiple Word files using a foreach loop. | batch-processing | docx | mcp |
-| 3 | `batch-insert-the-same-excel-ole-object-into-multiple-word-documents-within-a-folder-using.cs` | Batch insert the same Excel OLE object into multiple Word documents within a folder using a loop. | batch-processing | docx | mcp |
-| 4 | `batch-process-a-collection-of-word-files-to-embed-a-common-online-video-into-each-document.cs` | Batch process a collection of Word files to embed a common online video into each document. | online-video | docx | mcp |
-| 5 | `clone-an-ole-object-from-one-document-and-insert-it-into-another-using-insertoleobject-wit.cs` | Clone an OLE object from one document and insert it into another using InsertOleObject with extracted data. | extraction | docx | mcp |
-| 6 | `create-a-utility-that-extracts-ole-objects-from-documents-and-stores-them-in-a-database-as.cs` | Create a utility that extracts OLE objects from documents and stores them in a database as BLOBs. | extraction | docx, bin | mcp |
-| 7 | `embed-a-legacy-ole-package-when-the-handler-is-unknown-using-the-packager-approach.cs` | Embed a legacy OLE package when the handler is unknown using the Packager approach. | ole-package | docx | mcp |
-| 8 | `export-all-ole-objects-from-a-document-into-separate-files-preserving-original-extensions.cs` | Export all OLE objects from a document into separate files preserving original extensions. | extraction | docx, bin | mcp |
-| 9 | `extract-ole-object-metadata-such-as-source-file-name-and-size-and-write-to-a-csv-report.cs` | Extract OLE object metadata, such as source file name and size, and write to a CSV report. | extraction | docx, csv | mcp |
-| 10 | `extract-the-ole-object-stream-from-a-document-and-save-it-to-a-binary-file.cs` | Extract the OLE object stream from a document and save it to a binary file. | extraction | docx, bin | mcp |
-| 11 | `implement-error-handling-for-insertoleobject-when-the-specified-progid-is-not-registered-o.cs` | Implement error handling for InsertOleObject when the specified ProgId is not registered on the system. | validation | docx | mcp |
-| 12 | `insert-a-pdf-file-as-an-ole-icon-specifying-custom-icon-image-and-display-size.cs` | Insert a PDF file as an OLE icon, specifying custom icon image and display size. | insertion | docx | mcp |
-| 13 | `insert-a-spreadsheet-ole-object-into-a-docx-using-documentbuilder-insertoleobject-with-its.cs` | Insert a spreadsheet OLE object into a DOCX using DocumentBuilder.InsertOleObject with its ProgId. | inspection | docx | mcp |
-| 14 | `insert-an-ole-object-as-an-icon-using-default-system-icon-without-specifying-custom-image.cs` | Insert an OLE object as an icon using default system icon without specifying custom image. | insertion | docx | mcp |
-| 15 | `insert-an-online-video-with-specified-width-and-height-parameters-for-precise-placement.cs` | Insert an online video with specified width and height parameters for precise placement. | online-video | docx | mcp |
-| 16 | `insert-an-online-youtube-video-into-a-word-document-using-documentbuilder-insertonlinevide.cs` | Insert an online YouTube video into a Word document using DocumentBuilder.InsertOnlineVideo. | online-video | docx | mcp |
-| 17 | `iterate-through-all-ole-objects-in-a-docx-file-and-log-their-progids-and-display-sizes.cs` | Iterate through all OLE objects in a DOCX file and log their ProgIds and display sizes. | inspection | docx | mcp |
-| 18 | `read-the-file-name-property-of-an-ole-package-and-compare-it-with-the-original-source-file.cs` | Read the file name property of an OLE package and compare it with the original source file. | inspection | docx | mcp |
-| 19 | `replace-an-existing-ole-object-in-a-doc-file-with-a-new-image-ole-object-using-insertoleob.cs` | Replace an existing OLE object in a DOC file with a new image OLE object using InsertOleObject. | replacement | docx | mcp |
-| 20 | `retrieve-display-width-and-height-of-an-ole-object-and-adjust-its-size-after-insertion.cs` | Retrieve display width and height of an OLE object and adjust its size after insertion. | inspection | docx | mcp |
-| 21 | `retrieve-ole-object-display-width-and-height-after-insertion-and-store-dimensions-for-layo.cs` | Retrieve OLE object display width and height after insertion and store dimensions for layout calculations. | inspection | docx | mcp |
-| 22 | `retrieve-raw-binary-data-from-an-ole-object-via-its-data-property-for-custom-processing.cs` | Retrieve raw binary data from an OLE object via its Data property for custom processing. | extraction | docx | mcp |
-| 23 | `retrieve-the-progid-of-an-inserted-ole-object-and-log-it-for-diagnostic-purposes.cs` | Retrieve the ProgId of an inserted OLE object and log it for diagnostic purposes. | inspection | docx | mcp |
-| 24 | `save-raw-binary-data-of-an-ole-object-to-a-temporary-file-for-external-analysis.cs` | Save raw binary data of an OLE object to a temporary file for external analysis. | extraction | docx, bin | mcp |
-| 25 | `set-the-file-name-and-extension-for-an-inserted-ole-object-to-preserve-original-metadata.cs` | Set the file name and extension for an inserted OLE object to preserve original metadata. | inspection | docx | mcp |
-| 26 | `use-documentbuilder-to-insert-an-ole-object-with-custom-width-and-height-parameters-for-pr.cs` | Use DocumentBuilder to insert an OLE object with custom width and height parameters for precise layout control. | insertion | docx | mcp |
-| 27 | `use-olepackage-class-to-enumerate-all-parts-of-a-legacy-ole-package-for-inspection.cs` | Use OlePackage class to enumerate all parts of a legacy OLE package for inspection. | ole-package | docx | mcp |
-| 28 | `use-olepackage-class-to-read-and-modify-properties-of-a-legacy-ole-package-in-net.cs` | Use OlePackage class to read and modify properties of a legacy OLE package in .NET. | ole-package | docx | mcp |
-| 29 | `validate-the-progid-of-an-ole-object-before-insertion-to-avoid-runtime-errors.cs` | Validate the ProgId of an OLE object before insertion to avoid runtime errors. | validation | docx | mcp |
-| 30 | `verify-successful-ole-object-insertion-by-checking-the-returned-object-reference-is-not-nu.cs` | Verify successful OLE object insertion by checking the returned object reference is not null. | validation | docx | mcp |
+| 1 | `insert-a-spreadsheet-ole-object-into-a-docx-using-documentbuilder-insertoleobject-with-its.cs` | Insert a spreadsheet OLE object into a DOCX using DocumentBuilder.InsertOleObject with its ProgId. | Inspection | docx | mcp |
+| 2 | `insert-a-pdf-file-as-an-ole-icon-specifying-custom-icon-image-and-display-size.cs` | Insert a PDF file as an OLE icon, specifying custom icon image and display size. | Insertion | docx | existing_repo |
+| 3 | `insert-an-ole-object-as-an-icon-using-default-system-icon-without-specifying-custom-image.cs` | Insert an OLE object as an icon using default system icon without specifying custom image. | Insertion | docx | mcp |
+| 4 | `set-the-file-name-and-extension-for-an-inserted-ole-object-to-preserve-original-metadata.cs` | Set the file name and extension for an inserted OLE object to preserve original metadata. | Inspection | docx | mcp |
+| 5 | `use-documentbuilder-to-insert-an-ole-object-with-custom-width-and-height-parameters-for-pr.cs` | Use DocumentBuilder to insert an OLE object with custom width and height parameters for precise layout control. | Insertion | docx | mcp |
+| 6 | `insert-an-online-youtube-video-into-a-word-document-using-documentbuilder-insertonlinevide.cs` | Insert an online YouTube video into a Word document using DocumentBuilder.InsertOnlineVideo. | Online Video | docx | mcp |
+| 7 | `insert-an-online-video-with-specified-width-and-height-parameters-for-precise-placement.cs` | Insert an online video with specified width and height parameters for precise placement. | Online Video | docx | mcp |
+| 8 | `embed-a-legacy-ole-package-when-the-handler-is-unknown-using-the-packager-approach.cs` | Embed a legacy OLE package when the handler is unknown using the Packager approach. | Ole Package | docx | mcp |
+| 9 | `retrieve-the-progid-of-an-inserted-ole-object-and-log-it-for-diagnostic-purposes.cs` | Retrieve the ProgId of an inserted OLE object and log it for diagnostic purposes. | Inspection | docx | mcp |
+| 10 | `retrieve-ole-object-display-width-and-height-after-insertion-and-store-dimensions-for-layo.cs` | Retrieve OLE object display width and height after insertion and store dimensions for layout calculations. | Inspection | docx | mcp |
+| 11 | `adjust-ole-object-icon-dimensions-to-maintain-aspect-ratio-after-resizing-for-document-lay.cs` | Adjust OLE object icon dimensions to maintain aspect ratio after resizing for document layout. | Inspection | docx | mcp |
+| 12 | `retrieve-display-width-and-height-of-an-ole-object-and-adjust-its-size-after-insertion.cs` | Retrieve display width and height of an OLE object and adjust its size after insertion. | Inspection | docx | mcp |
+| 13 | `retrieve-raw-binary-data-from-an-ole-object-via-its-data-property-for-custom-processing.cs` | Retrieve raw binary data from an OLE object via its Data property for custom processing. | Extraction | docx | mcp |
+| 14 | `save-raw-binary-data-of-an-ole-object-to-a-temporary-file-for-external-analysis.cs` | Save raw binary data of an OLE object to a temporary file for external analysis. | Extraction | docx, bin | mcp |
+| 15 | `use-olepackage-class-to-read-and-modify-properties-of-a-legacy-ole-package-in-net.cs` | Use OlePackage class to read and modify properties of a legacy OLE package in .NET. | Ole Package | docx | mcp |
+| 16 | `use-olepackage-class-to-enumerate-all-parts-of-a-legacy-ole-package-for-inspection.cs` | Use OlePackage class to enumerate all parts of a legacy OLE package for inspection. | Ole Package | docx | mcp |
+| 17 | `read-the-file-name-property-of-an-ole-package-and-compare-it-with-the-original-source-file.cs` | Read the file name property of an OLE package and compare it with the original source file. | Inspection | docx | mcp |
+| 18 | `extract-the-ole-object-stream-from-a-document-and-save-it-to-a-binary-file.cs` | Extract the OLE object stream from a document and save it to a binary file. | Extraction | docx, bin | mcp |
+| 19 | `clone-an-ole-object-from-one-document-and-insert-it-into-another-using-insertoleobject-wit.cs` | Clone an OLE object from one document and insert it into another using InsertOleObject with extracted data. | Extraction | docx | mcp |
+| 20 | `replace-an-existing-ole-object-in-a-doc-file-with-a-new-image-ole-object-using-insertoleob.cs` | Replace an existing OLE object in a DOC file with a new image OLE object using InsertOleObject. | Replacement | docx | mcp |
+| 21 | `batch-insert-the-same-excel-ole-object-into-multiple-word-documents-within-a-folder-using.cs` | Batch insert the same Excel OLE object into multiple Word documents within a folder using a loop. | Batch Processing | docx | mcp |
+| 22 | `batch-insert-identical-excel-ole-object-into-multiple-word-files-using-a-foreach-loop.cs` | Batch insert identical Excel OLE object into multiple Word files using a foreach loop. | Batch Processing | docx | mcp |
+| 23 | `batch-process-a-collection-of-word-files-to-embed-a-common-online-video-into-each-document.cs` | Batch process a collection of Word files to embed a common online video into each document. | Online Video | docx | mcp |
+| 24 | `validate-the-progid-of-an-ole-object-before-insertion-to-avoid-runtime-errors.cs` | Validate the ProgId of an OLE object before insertion to avoid runtime errors. | Validation | docx | mcp |
+| 25 | `implement-error-handling-for-insertoleobject-when-the-specified-progid-is-not-registered-o.cs` | Implement error handling for InsertOleObject when the specified ProgId is not registered on the system. | Validation | docx | mcp |
+| 26 | `verify-successful-ole-object-insertion-by-checking-the-returned-object-reference-is-not-nu.cs` | Verify successful OLE object insertion by checking the returned object reference is not null. | Validation | docx | mcp |
+| 27 | `extract-ole-object-metadata-such-as-source-file-name-and-size-and-write-to-a-csv-report.cs` | Extract OLE object metadata, such as source file name and size, and write to a CSV report. | Extraction | docx, csv | mcp |
+| 28 | `create-a-utility-that-extracts-ole-objects-from-documents-and-stores-them-in-a-database-as.cs` | Create a utility that extracts OLE objects from documents and stores them in a database as BLOBs. | Extraction | docx, bin | mcp |
+| 29 | `export-all-ole-objects-from-a-document-into-separate-files-preserving-original-extensions.cs` | Export all OLE objects from a document into separate files preserving original extensions. | Extraction | docx, bin | mcp |
+| 30 | `iterate-through-all-ole-objects-in-a-docx-file-and-log-their-progids-and-display-sizes.cs` | Iterate through all OLE objects in a DOCX file and log their ProgIds and display sizes. | Inspection | docx | mcp |
 
 ## Common failure patterns seen during generation and how they were corrected
 
@@ -114,7 +113,7 @@ dotnet run --configuration Release --no-build
 ### Accessing OleFormat on a non-OLE shape
 
 - Symptom: Null-reference failures when iterating shapes.
-- Fix: Always check `shape.OleFormat != null` before reading metadata or raw data.
+- Fix: Always check shape.OleFormat != null before reading metadata or raw data.
 
 ### Wrong replacement strategy
 
@@ -126,8 +125,17 @@ dotnet run --configuration Release --no-build
 - Symptom: Examples fail because they rely on software handlers, shared folders, or user-specific files.
 - Fix: Keep examples self-contained and local to the run.
 
+## See Also
+
+- [`AGENTS.md`](./AGENTS.md) -- category-specific anti-patterns, API surface, and conventions for AI coding agents
+- [`../AGENTS.md`](../AGENTS.md) -- repository-wide agent guide
+- [`../README.md`](../README.md) -- full category index and project overview
+- [Aspose.Words for .NET docs](https://docs.aspose.com/words/net/)
+
+> Each `.cs` file is a standalone, build-validated console example. Drop into a fresh `dotnet new console` project, add the `Aspose.Words` NuGet version listed above, and run.
+
 ## Notes for maintainers
 
-- The selected file for each task is the verified publish-ready file in the category folder.
-- When updating this category, preserve local asset bootstrapping and `Shape`/`OleFormat`-based inspection conventions.
-- Template-, icon-, and file-based samples should create temporary local assets for verification instead of assuming machine-specific paths.
+- This category is 100% publish-ready for the 26.5.0 run.
+- Preserve file-to-task traceability when updating this folder.
+- Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

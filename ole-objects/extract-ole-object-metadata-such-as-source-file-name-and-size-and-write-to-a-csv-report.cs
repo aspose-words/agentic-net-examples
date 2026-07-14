@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -9,50 +8,44 @@ public class Program
 {
     public static void Main()
     {
-        // Input and output file paths.
-        string inputPath = "InputDocument.docx";
-        string csvReportPath = "OleMetadataReport.csv";
+        // Path to the Word document that may contain OLE objects.
+        string docPath = "InputDocument.docx";
 
-        // If the input document does not exist, create a minimal document so the program can run.
-        if (!File.Exists(inputPath))
-        {
-            // Create a new blank document and add a simple paragraph.
-            Document emptyDoc = new Document();
-            emptyDoc.FirstSection.Body.FirstParagraph.AppendChild(new Run(emptyDoc, "This document contains no OLE objects."));
-            emptyDoc.Save(inputPath);
-        }
+        // Path for the CSV report that will be generated.
+        string csvPath = "OleMetadataReport.csv";
 
-        // Load the Word document.
-        Document doc = new Document(inputPath);
+        // Load the document if it exists; otherwise create an empty document.
+        Document doc = File.Exists(docPath) ? new Document(docPath) : new Document();
 
-        // Prepare CSV content.
+        // Prepare a StringBuilder to compose CSV content.
+        // Header: SourceFileName,SizeInBytes
         StringBuilder csvBuilder = new StringBuilder();
-        csvBuilder.AppendLine("Index,SourceFileName,SizeBytes");
+        csvBuilder.AppendLine("SourceFileName,SizeInBytes");
 
-        // Find all shapes that contain OLE objects.
-        var oleShapes = doc.GetChildNodes(NodeType.Shape, true)
-                           .OfType<Shape>()
-                           .Where(s => s.OleFormat != null)
-                           .ToList();
-
-        for (int i = 0; i < oleShapes.Count; i++)
+        // Iterate through all shapes in the document.
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
-            Shape shape = oleShapes[i];
-            OleFormat ole = shape.OleFormat;
+            // Check if the shape contains an OLE object.
+            OleFormat oleFormat = shape.OleFormat;
+            if (oleFormat == null)
+                continue;
 
-            // Determine the source file name.
-            string sourceFileName = string.IsNullOrEmpty(ole.SourceFullName)
-                ? ole.SuggestedFileName ?? "EmbeddedObject"
-                : Path.GetFileName(ole.SourceFullName);
+            // Retrieve the source file name. For embedded objects this may be empty.
+            string sourceFileName = oleFormat.SourceFullName ?? string.Empty;
 
-            // Get the size of the raw OLE data.
-            long sizeBytes = ole.GetRawData()?.Length ?? 0;
+            // Retrieve the raw data of the OLE object to determine its size.
+            // GetRawData returns a byte array; its Length is the size in bytes.
+            byte[] rawData = oleFormat.GetRawData();
+            long sizeInBytes = rawData?.LongLength ?? 0;
+
+            // Escape any double quotes in the file name and wrap it in quotes.
+            string escapedFileName = $"\"{sourceFileName.Replace("\"", "\"\"")}\"";
 
             // Append a line to the CSV.
-            csvBuilder.AppendLine($"{i + 1},\"{sourceFileName}\",{sizeBytes}");
+            csvBuilder.AppendLine($"{escapedFileName},{sizeInBytes}");
         }
 
-        // Write the CSV report to disk.
-        File.WriteAllText(csvReportPath, csvBuilder.ToString(), Encoding.UTF8);
+        // Write the CSV content to the output file.
+        File.WriteAllText(csvPath, csvBuilder.ToString(), Encoding.UTF8);
     }
 }
