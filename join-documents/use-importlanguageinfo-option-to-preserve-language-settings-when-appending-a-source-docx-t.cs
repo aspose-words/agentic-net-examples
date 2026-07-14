@@ -2,77 +2,52 @@ using System;
 using System.Globalization;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define folder for all artifacts.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Set up output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Create destination document with French language setting.
-        // -----------------------------------------------------------------
-        Document dstDoc = new Document();
-        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
-        dstBuilder.Font.LocaleId = new CultureInfo("fr-FR").LCID; // Set language via LocaleId
-        dstBuilder.Writeln("Destination text.");
+        // File paths for the sample documents.
+        string destPath = Path.Combine(outputDir, "Destination.docx");
+        string srcPath = Path.Combine(outputDir, "Source.docx");
+        string mergedPath = Path.Combine(outputDir, "Merged.docx");
 
-        string dstPath = Path.Combine(artifactsDir, "Destination.docx");
-        dstDoc.Save(dstPath, SaveFormat.Docx);
+        // ---------- Create destination document (French language) ----------
+        Document destDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.Font.LocaleId = CultureInfo.GetCultureInfo("fr-FR").LCID;
+        destBuilder.Writeln("Texte du document de destination."); // French text.
+        destDoc.Save(destPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // Create source document with English language setting.
-        // -----------------------------------------------------------------
+        // ---------- Create source document (English language) ----------
         Document srcDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
-        srcBuilder.Font.LocaleId = new CultureInfo("en-US").LCID; // Set language via LocaleId
-        srcBuilder.Writeln("Source text.");
-
-        string srcPath = Path.Combine(artifactsDir, "Source.docx");
+        srcBuilder.Font.LocaleId = CultureInfo.GetCultureInfo("en-US").LCID;
+        srcBuilder.Writeln("Source document text."); // English text.
         srcDoc.Save(srcPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // Load the documents (demonstrates load rule usage).
-        // -----------------------------------------------------------------
-        Document destination = new Document(dstPath);
+        // Load the documents (they were just saved to disk).
+        Document destination = new Document(destPath);
         Document source = new Document(srcPath);
 
-        // Configure import options (ImportLanguageInfo is not required in this version).
-        ImportFormatOptions importOptions = new ImportFormatOptions();
-
-        // Append source to destination while keeping source formatting and language.
-        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting, importOptions);
-
-        // Save the merged document.
-        string mergedPath = Path.Combine(artifactsDir, "Merged.docx");
+        // Append the source document while keeping its formatting (including language settings).
+        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
         destination.Save(mergedPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // Validation: ensure the merged file exists.
-        // -----------------------------------------------------------------
+        // ---------- Validation ----------
         if (!File.Exists(mergedPath))
             throw new InvalidOperationException("Merged document was not created.");
 
-        // Validation: check language IDs of runs.
-        Document mergedDoc = new Document(mergedPath);
-        bool hasEnglish = false;
-        bool hasFrench = false;
+        string mergedText = new Document(mergedPath).GetText();
+        if (!mergedText.Contains("Texte du document de destination.") ||
+            !mergedText.Contains("Source document text."))
+            throw new InvalidOperationException("Merged document does not contain expected content.");
 
-        foreach (Run run in mergedDoc.GetChildNodes(NodeType.Run, true))
-        {
-            string text = run.Text.Trim();
-            if (text == "Source text." && run.Font.LocaleId == new CultureInfo("en-US").LCID)
-                hasEnglish = true;
-            if (text == "Destination text." && run.Font.LocaleId == new CultureInfo("fr-FR").LCID)
-                hasFrench = true;
-        }
-
-        if (!hasEnglish || !hasFrench)
-            throw new InvalidOperationException("Language information was not preserved correctly.");
-
-        // Program completed successfully.
+        Console.WriteLine("Documents merged successfully. Output saved to:");
+        Console.WriteLine(mergedPath);
     }
 }

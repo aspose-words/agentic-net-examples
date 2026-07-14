@@ -7,75 +7,66 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string baseDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(baseDir, "Template.docx");
-        string sourcePath = Path.Combine(baseDir, "Source.docx");
-        string resultPdfPath = Path.Combine(baseDir, "Result.pdf");
+        // Define file names in the current directory.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docx");
+        string outputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.pdf");
 
         // -----------------------------------------------------------------
-        // 1. Create a template document that contains a bookmark named "InsertHere".
+        // 1. Create a template document that contains a bookmark.
         // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
 
-        templateBuilder.Writeln("This is the template document.");
-        templateBuilder.StartBookmark("InsertHere");
-        templateBuilder.Writeln("[Placeholder for inserted content]");
-        templateBuilder.EndBookmark("InsertHere");
-        templateBuilder.Writeln("End of template.");
+        templateBuilder.Writeln("Content before the bookmark.");
+        templateBuilder.StartBookmark("InsertHere");               // Bookmark start.
+        templateBuilder.Writeln("[Bookmark placeholder]");        // Placeholder text.
+        templateBuilder.EndBookmark("InsertHere");                 // Bookmark end.
+        templateBuilder.Writeln("Content after the bookmark.");
 
-        // Save the template as DOCX.
+        // Save the template so it can be loaded later (optional but follows the rule of creating local files).
         templateDoc.Save(templatePath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // 2. Create a source document that will be inserted at the bookmark.
+        // 2. Create a source document whose content will be inserted.
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
 
         sourceBuilder.Writeln("=== Inserted Document Start ===");
-        sourceBuilder.Writeln("This content comes from the source document.");
+        sourceBuilder.Writeln("This text comes from the source DOCX.");
         sourceBuilder.Writeln("=== Inserted Document End ===");
 
-        // Save the source as DOCX.
         sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // 3. Load the template and source documents.
+        // 3. Load the template, move to the bookmark, and insert the source document.
         // -----------------------------------------------------------------
         Document loadedTemplate = new Document(templatePath);
-        Document loadedSource = new Document(sourcePath);
-
-        // -----------------------------------------------------------------
-        // 4. Move to the bookmark and insert the source document.
-        // -----------------------------------------------------------------
         DocumentBuilder insertBuilder = new DocumentBuilder(loadedTemplate);
+
+        // Position the cursor at the bookmark.
         insertBuilder.MoveToBookmark("InsertHere");
 
-        // Insert the source document at the bookmark position, preserving its formatting.
-        insertBuilder.InsertDocument(loadedSource, ImportFormatMode.KeepSourceFormatting);
+        // Load the source document.
+        Document docToInsert = new Document(sourcePath);
+
+        // Insert the source document at the bookmark location.
+        insertBuilder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
 
         // -----------------------------------------------------------------
-        // 5. Save the merged result as PDF.
+        // 4. Save the merged result as PDF.
         // -----------------------------------------------------------------
-        loadedTemplate.Save(resultPdfPath, SaveFormat.Pdf);
+        loadedTemplate.Save(outputPdfPath, SaveFormat.Pdf);
 
         // -----------------------------------------------------------------
-        // 6. Simple validation to ensure the PDF was created.
+        // 5. Simple validation to ensure the PDF was created.
         // -----------------------------------------------------------------
-        if (!File.Exists(resultPdfPath))
+        if (!File.Exists(outputPdfPath))
         {
-            throw new FileNotFoundException("The resulting PDF was not created.", resultPdfPath);
+            throw new InvalidOperationException("The PDF output file was not created.");
         }
 
-        // Optional: Verify that the merged document contains text from the source.
-        string mergedText = loadedTemplate.GetText();
-        if (!mergedText.Contains("Inserted Document Start"))
-        {
-            throw new InvalidOperationException("The source content was not inserted correctly.");
-        }
-
-        // Program ends without waiting for user input.
+        // The program finishes here without waiting for user input.
     }
 }

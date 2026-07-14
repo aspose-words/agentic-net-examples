@@ -7,68 +7,89 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directory and file paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define folder for temporary files.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "AsposeJoinDemo");
+        Directory.CreateDirectory(workDir);
 
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
-        string resultPath = Path.Combine(outputDir, "Result.html");
+        // Paths for the template and the document to be inserted.
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string sourcePath = Path.Combine(workDir, "Source.docx");
+        string outputHtmlPath = Path.Combine(workDir, "Result.html");
 
-        // ---------- Create the template document ----------
+        // -----------------------------------------------------------------
+        // 1. Create a styled template document.
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
 
-        // Define a custom style named "MyStyle" with specific formatting.
+        // Define a custom paragraph style in the template.
         Style templateStyle = templateDoc.Styles.Add(StyleType.Paragraph, "MyStyle");
+        templateStyle.Font.Name = "Arial";
         templateStyle.Font.Size = 16;
         templateStyle.Font.Color = System.Drawing.Color.Blue;
-        templateStyle.Font.Name = "Arial";
 
         // Apply the style and write some content.
         templateBuilder.ParagraphFormat.StyleName = templateStyle.Name;
-        templateBuilder.Writeln("Template heading using MyStyle.");
+        templateBuilder.Writeln("This is the template document.");
 
-        // Save the template as DOCX.
-        templateDoc.Save(templatePath, SaveFormat.Docx);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // ---------- Create the source document ----------
+        // -----------------------------------------------------------------
+        // 2. Create a source document that will be inserted.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
 
-        // Define a style with the same name but different formatting.
+        // Create a style with the same name but different formatting.
         Style sourceStyle = sourceDoc.Styles.Add(StyleType.Paragraph, "MyStyle");
-        sourceStyle.Font.Size = 12;
-        sourceStyle.Font.Color = System.Drawing.Color.Red;
         sourceStyle.Font.Name = "Times New Roman";
+        sourceStyle.Font.Size = 14;
+        sourceStyle.Font.Color = System.Drawing.Color.Red;
 
         // Apply the style and write some content.
         sourceBuilder.ParagraphFormat.StyleName = sourceStyle.Name;
-        sourceBuilder.Writeln("Source paragraph using MyStyle.");
+        sourceBuilder.Writeln("This is the inserted document.");
 
-        // Save the source as DOCX.
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
+        // Save the source document.
+        sourceDoc.Save(sourcePath);
 
-        // ---------- Load documents and insert source into template ----------
-        Document template = new Document(templatePath);
-        Document source = new Document(sourcePath);
+        // -----------------------------------------------------------------
+        // 3. Load the template and insert the source document using
+        //    ImportFormatMode.UseDestinationStyles.
+        // -----------------------------------------------------------------
+        Document resultDoc = new Document(templatePath);
+        DocumentBuilder resultBuilder = new DocumentBuilder(resultDoc);
 
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.MoveToDocumentEnd();
+        // Move the cursor to the end of the template document.
+        resultBuilder.MoveToDocumentEnd();
 
-        // Insert the source document using destination styles.
-        builder.InsertDocument(source, ImportFormatMode.UseDestinationStyles);
+        // Insert a page break for visual separation (optional).
+        resultBuilder.InsertBreak(BreakType.PageBreak);
 
-        // Save the combined document as HTML.
-        template.Save(resultPath, SaveFormat.Html);
+        // Load the source document to be inserted.
+        Document docToInsert = new Document(sourcePath);
 
-        // Validate that the HTML file was created.
-        if (!File.Exists(resultPath))
+        // Insert the source document, forcing the use of destination styles.
+        resultBuilder.InsertDocument(docToInsert, ImportFormatMode.UseDestinationStyles);
+
+        // -----------------------------------------------------------------
+        // 4. Save the combined document as HTML.
+        // -----------------------------------------------------------------
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
+        resultDoc.Save(outputHtmlPath, htmlOptions);
+
+        // -----------------------------------------------------------------
+        // 5. Simple validation that the HTML file was created.
+        // -----------------------------------------------------------------
+        if (File.Exists(outputHtmlPath))
         {
-            throw new Exception("Failed to create the HTML output file.");
+            Console.WriteLine("HTML file successfully created at:");
+            Console.WriteLine(outputHtmlPath);
         }
-
-        // Optional: indicate success (no interactive prompts required).
-        Console.WriteLine("Document merged and saved as HTML successfully.");
+        else
+        {
+            throw new InvalidOperationException("Failed to create the HTML output file.");
+        }
     }
 }

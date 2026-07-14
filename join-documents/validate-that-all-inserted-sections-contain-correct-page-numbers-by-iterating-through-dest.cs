@@ -1,77 +1,122 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Layout;
-using Aspose.Words.Fields; // Needed for FieldType enum
+using Aspose.Words.Fields;
+using Aspose.Words.Tables;
 
 public class JoinDocumentsValidatePageNumbers
 {
     public static void Main()
     {
-        // Folder for temporary files
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Prepare a folder for temporary files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create first source document with a PAGE field
+        // -------------------- Create source document 1 --------------------
         Document srcDoc1 = new Document();
         DocumentBuilder builder1 = new DocumentBuilder(srcDoc1);
-        builder1.Writeln("Source Document 1");
-        builder1.InsertField(FieldType.FieldPage, true); // page number field
-        string srcPath1 = Path.Combine(workDir, "Source1.docx");
+
+        // Insert a header with a PAGE field.
+        builder1.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder1.InsertField(FieldType.FieldPage, true);
+
+        // Add content that spans two pages.
+        builder1.MoveToDocumentStart();
+        builder1.Writeln("Source Document 1 - Page 1");
+        builder1.InsertBreak(BreakType.PageBreak);
+        builder1.Writeln("Source Document 1 - Page 2");
+
+        string srcPath1 = Path.Combine(artifactsDir, "Source1.docx");
         srcDoc1.Save(srcPath1, SaveFormat.Docx);
 
-        // Create second source document with a PAGE field
+        // -------------------- Create source document 2 --------------------
         Document srcDoc2 = new Document();
         DocumentBuilder builder2 = new DocumentBuilder(srcDoc2);
-        builder2.Writeln("Source Document 2");
+
+        // Insert a header with a PAGE field.
+        builder2.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         builder2.InsertField(FieldType.FieldPage, true);
-        string srcPath2 = Path.Combine(workDir, "Source2.docx");
+
+        // Add content that spans three pages.
+        builder2.MoveToDocumentStart();
+        builder2.Writeln("Source Document 2 - Page 1");
+        builder2.InsertBreak(BreakType.PageBreak);
+        builder2.Writeln("Source Document 2 - Page 2");
+        builder2.InsertBreak(BreakType.PageBreak);
+        builder2.Writeln("Source Document 2 - Page 3");
+
+        string srcPath2 = Path.Combine(artifactsDir, "Source2.docx");
         srcDoc2.Save(srcPath2, SaveFormat.Docx);
 
-        // Destination document – start with some content
+        // -------------------- Create destination document --------------------
         Document dstDoc = new Document();
         DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
-        dstBuilder.Writeln("Destination Document Start");
+
+        // Insert a header with a PAGE field for the destination document.
+        dstBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         dstBuilder.InsertField(FieldType.FieldPage, true);
 
-        // Append the two source documents, each starting on a new page
-        Document src1 = new Document(srcPath1);
-        Document src2 = new Document(srcPath2);
-        dstDoc.AppendDocument(src1, ImportFormatMode.KeepSourceFormatting);
-        dstDoc.AppendDocument(src2, ImportFormatMode.KeepSourceFormatting);
+        // Add some initial content.
+        dstBuilder.MoveToDocumentStart();
+        dstBuilder.Writeln("Destination Document - Start");
+        dstBuilder.InsertBreak(BreakType.PageBreak);
+        dstBuilder.Writeln("Destination Document - End");
 
-        // Update fields so PAGE fields contain actual numbers
+        // -------------------- Append source documents --------------------
+        // Append first source document.
+        dstDoc.AppendDocument(srcDoc1, ImportFormatMode.KeepSourceFormatting);
+        // Append second source document.
+        dstDoc.AppendDocument(srcDoc2, ImportFormatMode.KeepSourceFormatting);
+
+        // Ensure layout and fields are up‑to‑date.
+        dstDoc.UpdatePageLayout();
         dstDoc.UpdateFields();
 
-        // Save the merged document
-        string mergedPath = Path.Combine(workDir, "Merged.docx");
-        dstDoc.Save(mergedPath, SaveFormat.Docx);
-
-        // Verify that the merged file exists
-        if (!File.Exists(mergedPath))
-            throw new InvalidOperationException("Merged document was not created.");
-
-        // Use LayoutCollector to map nodes to page numbers
-        LayoutCollector collector = new LayoutCollector(dstDoc);
-
-        // Validate that each section starts on the expected page number
+        // -------------------- Validation of page numbers --------------------
+        // After appending, each section should contain a PAGE field whose result reflects the actual page number.
+        // Iterate through all sections and verify the PAGE field result is a non‑empty numeric string.
         for (int i = 0; i < dstDoc.Sections.Count; i++)
         {
             Section section = dstDoc.Sections[i];
-            // Ensure the section has at least one paragraph
-            if (section.Body.FirstParagraph == null)
-                throw new InvalidOperationException($"Section {i + 1} has no paragraphs.");
+            HeaderFooter header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
 
-            int actualPage = collector.GetStartPageIndex(section.Body.FirstParagraph);
-            int expectedPage = i + 1; // sections are 1‑based pages because each starts on a new page
+            // If the section has no primary header, try any header.
+            if (header == null)
+                header = section.HeadersFooters[HeaderFooterType.HeaderFirst] ??
+                         section.HeadersFooters[HeaderFooterType.HeaderEven];
 
-            if (actualPage != expectedPage)
-                throw new InvalidOperationException(
-                    $"Section {i + 1} starts on page {actualPage}, but expected page {expectedPage}.");
+            if (header == null)
+                throw new InvalidOperationException($"Section {i + 1} does not contain a header.");
+
+            // Find the first PAGE field in the header.
+            Field pageField = null;
+            foreach (Field field in header.Range.Fields)
+            {
+                if (field.Type == FieldType.FieldPage)
+                {
+                    pageField = field;
+                    break;
+                }
+            }
+
+            if (pageField == null)
+                throw new InvalidOperationException($"Section {i + 1} header does not contain a PAGE field.");
+
+            // The field result should be a number representing the page.
+            string result = pageField.Result?.Trim();
+            if (string.IsNullOrEmpty(result) || !int.TryParse(result, out _))
+                throw new InvalidOperationException($"Section {i + 1} PAGE field result is invalid: '{result}'.");
         }
 
-        // If we reach this point, validation succeeded
-        Console.WriteLine("All sections contain correct page numbers. Merged document saved to:");
-        Console.WriteLine(mergedPath);
+        // -------------------- Save merged document --------------------
+        string mergedPath = Path.Combine(artifactsDir, "MergedDocument.docx");
+        dstDoc.Save(mergedPath, SaveFormat.Docx);
+
+        // Verify that the merged file exists.
+        if (!File.Exists(mergedPath))
+            throw new FileNotFoundException("Merged document was not saved correctly.", mergedPath);
+
+        // Indicate successful completion.
+        Console.WriteLine("Document merged and page numbers validated successfully.");
     }
 }

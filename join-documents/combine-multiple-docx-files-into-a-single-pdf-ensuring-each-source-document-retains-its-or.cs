@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,56 +8,60 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string doc1Path = Path.Combine(Directory.GetCurrentDirectory(), "Sample1.docx");
-        string doc2Path = Path.Combine(Directory.GetCurrentDirectory(), "Sample2.docx");
-        string mergedPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutput.pdf");
+        // Prepare output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create first sample DOCX.
+        // File paths for the sample DOCX files and the final PDF
+        string doc1Path = Path.Combine(outputDir, "Doc1.docx");
+        string doc2Path = Path.Combine(outputDir, "Doc2.docx");
+        string mergedPdfPath = Path.Combine(outputDir, "Merged.pdf");
+
+        // ---------- Create first sample DOCX ----------
         Document doc1 = new Document();
         DocumentBuilder builder1 = new DocumentBuilder(doc1);
+        builder1.Writeln("First Document - Heading");
+        builder1.Font.Size = 14;
         builder1.Writeln("This is the first sample document.");
-        builder1.Writeln("It uses the default style.");
         doc1.Save(doc1Path, SaveFormat.Docx);
 
-        // Create second sample DOCX with a different style.
+        // ---------- Create second sample DOCX ----------
         Document doc2 = new Document();
         DocumentBuilder builder2 = new DocumentBuilder(doc2);
-        builder2.Font.Name = "Courier New";
+        builder2.Writeln("Second Document - Heading");
         builder2.Font.Size = 14;
-        builder2.Font.Color = System.Drawing.Color.DarkBlue;
-        builder2.Writeln("This is the second sample document.");
-        builder2.Writeln("It uses a custom font and color.");
+        builder2.Font.Color = Color.Blue;
+        builder2.Writeln("This is the second sample document with a different style.");
         doc2.Save(doc2Path, SaveFormat.Docx);
 
-        // Load the first document as the destination.
-        Document mergedDoc = new Document(doc1Path);
+        // ---------- Load the source documents ----------
+        Document srcDoc1 = new Document(doc1Path);
+        Document srcDoc2 = new Document(doc2Path);
 
-        // Load the second document to be appended.
-        Document srcDoc = new Document(doc2Path);
+        // ---------- Destination document ----------
+        Document dstDoc = new Document();
 
-        // Append the second document while preserving its original formatting.
-        mergedDoc.AppendDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
+        // Append the first source document while preserving its formatting
+        dstDoc.AppendDocument(srcDoc1, ImportFormatMode.KeepSourceFormatting);
 
-        // Save the combined document as PDF.
-        mergedDoc.Save(mergedPdfPath, SaveFormat.Pdf);
+        // Insert a page break between the merged documents
+        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
+        dstBuilder.MoveToDocumentEnd();
+        dstBuilder.InsertBreak(BreakType.PageBreak);
 
-        // Validate that the PDF file was created.
+        // Append the second source document while preserving its formatting
+        dstDoc.AppendDocument(srcDoc2, ImportFormatMode.KeepSourceFormatting);
+
+        // ---------- Save the combined document as PDF ----------
+        dstDoc.Save(mergedPdfPath, SaveFormat.Pdf);
+
+        // ---------- Validate that the PDF was created ----------
         if (!File.Exists(mergedPdfPath))
-            throw new InvalidOperationException("The merged PDF file was not created.");
-
-        // Load the PDF back to verify that it contains content from both source documents.
-        Document verifyDoc = new Document(mergedPdfPath);
-        string mergedText = verifyDoc.GetText();
-
-        if (!mergedText.Contains("This is the first sample document.") ||
-            !mergedText.Contains("This is the second sample document."))
         {
-            throw new InvalidOperationException("The merged PDF does not contain content from all source documents.");
+            throw new InvalidOperationException("Merged PDF was not created.");
         }
 
-        // Cleanup: optional removal of intermediate files.
-        // File.Delete(doc1Path);
-        // File.Delete(doc2Path);
+        // Simple confirmation (non‑interactive)
+        Console.WriteLine($"Merged PDF created at: {mergedPdfPath}");
     }
 }

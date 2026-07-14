@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,60 +8,65 @@ public class Program
 {
     public static void Main()
     {
-        // Folder to hold temporary source documents.
-        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        Directory.CreateDirectory(dataDir);
-
-        // Text that will be written to each source document.
-        string[] sourceTexts = { "First source document content.", "Second source document content.", "Third source document content." };
-        // Corresponding file names.
-        string[] sourceFiles = { Path.Combine(dataDir, "Source0.docx"), Path.Combine(dataDir, "Source1.docx"), Path.Combine(dataDir, "Source2.docx") };
+        // Directory for temporary source documents and final output.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "JoinDocsExample");
+        Directory.CreateDirectory(workDir);
 
         // Create sample source DOCX files.
-        for (int i = 0; i < sourceTexts.Length; i++)
+        string[] sourceFiles = CreateSampleDocuments(workDir);
+
+        // Destination document that will hold the merged content.
+        var destination = new Document();
+
+        // Different ImportFormatMode values to use for each append operation.
+        ImportFormatMode[] importModes = new[]
         {
-            Document srcDoc = new();
-            DocumentBuilder builder = new(srcDoc);
-            builder.Writeln(sourceTexts[i]);
-            srcDoc.Save(sourceFiles[i]); // Save as DOCX (extension determines format).
-        }
+            ImportFormatMode.UseDestinationStyles,
+            ImportFormatMode.KeepSourceFormatting,
+            ImportFormatMode.KeepDifferentStyles
+        };
 
-        // Destination document that will receive the appended content.
-        Document dstDoc = new();
-
-        // Append each source document using a different ImportFormatMode.
+        // Append each source document with a corresponding ImportFormatMode.
         for (int i = 0; i < sourceFiles.Length; i++)
         {
-            Document srcDoc = new(sourceFiles[i]); // Load the source document.
-
-            // Choose ImportFormatMode based on the index.
-            ImportFormatMode mode = i switch
-            {
-                0 => ImportFormatMode.UseDestinationStyles,
-                1 => ImportFormatMode.KeepSourceFormatting,
-                _ => ImportFormatMode.KeepDifferentStyles
-            };
-
-            // Append the source document to the destination.
-            dstDoc.AppendDocument(srcDoc, mode);
+            var srcDoc = new Document(sourceFiles[i]);
+            ImportFormatMode mode = importModes[i % importModes.Length];
+            destination.AppendDocument(srcDoc, mode);
         }
 
-        // Validate that the combined document contains text from all source documents.
-        string combinedText = dstDoc.GetText();
-        foreach (string txt in sourceTexts)
-        {
-            if (!combinedText.Contains(txt))
-                throw new InvalidOperationException($"Combined document is missing expected text: \"{txt}\"");
-        }
+        // Validate that the expected number of sections are present.
+        // Each source document adds one section; the destination started with one.
+        int expectedSections = sourceFiles.Length + 1;
+        if (destination.Sections.Count != expectedSections)
+            throw new InvalidOperationException($"Expected {expectedSections} sections after merging, but found {destination.Sections.Count}.");
 
-        // Output PDF path.
-        string outputPdf = Path.Combine(Directory.GetCurrentDirectory(), "CombinedOutput.pdf");
-
-        // Save the combined document as PDF.
-        dstDoc.Save(outputPdf, SaveFormat.Pdf);
+        // Save the merged document as PDF.
+        string pdfPath = Path.Combine(workDir, "MergedDocument.pdf");
+        destination.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF file was created.
-        if (!File.Exists(outputPdf))
-            throw new FileNotFoundException("The combined PDF file was not created.", outputPdf);
+        if (!File.Exists(pdfPath))
+            throw new FileNotFoundException("The merged PDF file was not created.", pdfPath);
+
+        // Optional: output the location of the generated PDF.
+        Console.WriteLine($"Merged PDF created at: {pdfPath}");
+    }
+
+    // Creates a few sample DOCX files with simple text and returns their file paths.
+    private static string[] CreateSampleDocuments(string folder)
+    {
+        var filePaths = new string[3];
+
+        for (int i = 0; i < filePaths.Length; i++)
+        {
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is the content of source document #{i + 1}.");
+            string filePath = Path.Combine(folder, $"SourceDoc{i + 1}.docx");
+            doc.Save(filePath, SaveFormat.Docx);
+            filePaths[i] = filePath;
+        }
+
+        return filePaths;
     }
 }

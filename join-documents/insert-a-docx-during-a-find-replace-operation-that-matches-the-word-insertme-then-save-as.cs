@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -9,117 +7,87 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for temporary documents.
-        string docsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
-        Directory.CreateDirectory(docsFolder);
+        // Create a temporary working folder.
+        string workFolder = Path.Combine(Path.GetTempPath(), "AsposeJoinExample");
+        Directory.CreateDirectory(workFolder);
 
-        // Paths for the main document, the document to insert, and the final output.
-        string mainDocPath = Path.Combine(docsFolder, "Main.docx");
-        string insertDocPath = Path.Combine(docsFolder, "Insert.docx");
-        string outputPath = Path.Combine(docsFolder, "Result.docx");
+        // Paths for the documents.
+        string mainDocPath = Path.Combine(workFolder, "Main.docx");
+        string insertDocPath = Path.Combine(workFolder, "Insert.docx");
+        string resultDocPath = Path.Combine(workFolder, "Result.docx");
 
         // -----------------------------------------------------------------
-        // Create the main document containing the placeholder "INSERTME".
+        // Create the main document containing the placeholder.
         // -----------------------------------------------------------------
         Document mainDoc = new Document();
         DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
-        mainBuilder.Writeln("This is the beginning of the main document.");
-        mainBuilder.Writeln("INSERTME"); // Placeholder to be replaced.
-        mainBuilder.Writeln("This is the end of the main document.");
-        mainDoc.Save(mainDocPath);
+        mainBuilder.Writeln("This is the main document.");
+        mainBuilder.Writeln("INSERTME");
+        mainBuilder.Writeln("End of the main document.");
+        mainDoc.Save(mainDocPath, SaveFormat.Docx);
 
-        // ---------------------------------------------------------------
-        // Create the document whose content will be inserted at the placeholder.
-        // ---------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // Create the document to be inserted.
+        // -----------------------------------------------------------------
         Document insertDoc = new Document();
         DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
-        insertBuilder.Writeln("=== Inserted Document Start ===");
-        insertBuilder.Writeln("Hello from the inserted document!");
-        insertBuilder.Writeln("=== Inserted Document End ===");
-        insertDoc.Save(insertDocPath);
+        insertBuilder.Writeln("=== Inserted Content Start ===");
+        insertBuilder.Writeln("This content comes from the inserted document.");
+        insertBuilder.Writeln("=== Inserted Content End ===");
+        insertDoc.Save(insertDocPath, SaveFormat.Docx);
 
-        // ---------------------------------------------------------------
-        // Load the main document and perform a find‑replace with a callback.
-        // ---------------------------------------------------------------
-        Document loadedMain = new Document(mainDocPath);
+        // -----------------------------------------------------------------
+        // Load the main document for processing and set up the replace.
+        // -----------------------------------------------------------------
+        Document srcDoc = new Document(mainDocPath);
+        Document docToInsert = new Document(insertDocPath);
+
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new InsertDocumentAtReplaceHandler(insertDocPath)
+            ReplacingCallback = new InsertDocumentCallback(docToInsert)
         };
 
-        // Replace the placeholder text. The callback will insert the document.
-        loadedMain.Range.Replace(new Regex("INSERTME"), string.Empty, options);
+        // Perform the replacement – the placeholder will be replaced by the whole document.
+        srcDoc.Range.Replace("INSERTME", string.Empty, options);
 
         // Save the resulting document.
-        loadedMain.Save(outputPath, SaveFormat.Docx);
+        srcDoc.Save(resultDocPath, SaveFormat.Docx);
 
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
-
-        // (Optional) Clean up temporary files if desired.
-        // File.Delete(mainDocPath);
-        // File.Delete(insertDocPath);
+        // Validate that the result file was created.
+        if (!File.Exists(resultDocPath))
+        {
+            throw new InvalidOperationException("Result document was not created.");
+        }
     }
 
     // -----------------------------------------------------------------
-    // Callback that inserts a document at the location of each match.
+    // Callback that inserts a document at the location of the matched text.
     // -----------------------------------------------------------------
-    private class InsertDocumentAtReplaceHandler : IReplacingCallback
+    private class InsertDocumentCallback : IReplacingCallback
     {
-        private readonly string _documentToInsertPath;
+        private readonly Document _documentToInsert;
 
-        public InsertDocumentAtReplaceHandler(string documentToInsertPath)
+        public InsertDocumentCallback(Document documentToInsert)
         {
-            _documentToInsertPath = documentToInsertPath;
+            _documentToInsert = documentToInsert ?? throw new ArgumentNullException(nameof(documentToInsert));
         }
 
-        public ReplaceAction Replacing(ReplacingArgs args)
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs e)
         {
-            // Load the document that will be inserted.
-            Document subDoc = new Document(_documentToInsertPath);
-
-            // The match is inside a paragraph; insert after that paragraph.
-            Paragraph para = (Paragraph)args.MatchNode.ParentNode;
-            InsertDocument(para, subDoc);
-
-            // Remove the placeholder paragraph.
-            para.Remove();
-
-            // Skip further processing of this match.
-            return ReplaceAction.Skip;
-        }
-
-        // Inserts all nodes of another document after a paragraph or table.
-        private static void InsertDocument(Node insertionDestination, Document docToInsert)
-        {
-            if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
-                throw new ArgumentException("The destination node must be either a paragraph or a table.");
-
-            CompositeNode dstStory = insertionDestination.ParentNode;
-
-            NodeImporter importer = new NodeImporter(
-                docToInsert,
-                insertionDestination.Document,
-                ImportFormatMode.KeepSourceFormatting);
-
-            foreach (Section srcSection in docToInsert.Sections)
+            // The match node is a Run that contains the placeholder text.
+            if (e.MatchNode is Run run && run.Document != null)
             {
-                foreach (Node srcNode in srcSection.Body)
-                {
-                    // Skip the last empty paragraph of a section.
-                    if (srcNode.NodeType == NodeType.Paragraph)
-                    {
-                        Paragraph para = (Paragraph)srcNode;
-                        if (para.IsEndOfSection && !para.HasChildNodes)
-                            continue;
-                    }
+                // Remove the placeholder text.
+                run.Text = string.Empty;
 
-                    Node newNode = importer.ImportNode(srcNode, true);
-                    dstStory.InsertAfter(newNode, insertionDestination);
-                    insertionDestination = newNode;
-                }
+                // Move a builder to the run's position and insert the document.
+                DocumentBuilder builder = new DocumentBuilder(run.Document as Document);
+                builder.MoveTo(run);
+                builder.InsertDocument(_documentToInsert, ImportFormatMode.KeepSourceFormatting);
             }
+
+            // Skip the default replace action because we have already handled insertion.
+            return ReplaceAction.Skip;
         }
     }
 }
