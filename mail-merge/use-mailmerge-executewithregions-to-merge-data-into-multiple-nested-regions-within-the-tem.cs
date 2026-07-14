@@ -15,40 +15,37 @@ namespace NestedMailMergeExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert the start of the outer mail merge region "Customers".
+            // Define the outer mail merge region for customers.
             builder.InsertField(" MERGEFIELD TableStart:Customers");
 
-            // Fields inside the "Customers" region.
+            // Fields inside the Customers region.
             builder.Write("Full name:\t");
             builder.InsertField(" MERGEFIELD FullName ");
             builder.Write("\nAddress:\t");
             builder.InsertField(" MERGEFIELD Address ");
             builder.Write("\nOrders:\n");
 
-            // Insert the start of the nested mail merge region "Orders".
+            // Define the inner mail merge region for orders (nested inside Customers).
             builder.InsertField(" MERGEFIELD TableStart:Orders");
-
-            // Fields inside the "Orders" region.
             builder.Write("\tItem name:\t");
             builder.InsertField(" MERGEFIELD Name ");
             builder.Write("\n\tQuantity:\t");
             builder.InsertField(" MERGEFIELD Quantity ");
             builder.InsertParagraph();
 
-            // End tags for the nested and outer regions.
+            // Close the Orders region.
             builder.InsertField(" MERGEFIELD TableEnd:Orders");
+            // Close the Customers region.
             builder.InsertField(" MERGEFIELD TableEnd:Customers");
 
-            // Prepare hierarchical data: customers each with a list of orders.
+            // Prepare hierarchical data.
             CustomerList customers = new CustomerList();
             customers.Add(new Customer("Thomas Hardy", "120 Hanover Sq., London"));
             customers.Add(new Customer("Paolo Accorti", "Via Monte Bianco 34, Torino"));
 
-            // Add orders for the first customer.
+            // Add orders for each customer.
             customers[0].Orders.Add(new Order("Rugby World Cup Cap", 2));
             customers[0].Orders.Add(new Order("Rugby World Cup Ball", 1));
-
-            // Add an order for the second customer.
             customers[1].Orders.Add(new Order("Rugby World Cup Guide", 1));
 
             // Wrap the data in a custom mail merge data source.
@@ -57,12 +54,12 @@ namespace NestedMailMergeExample
             // Perform the mail merge with nested regions.
             doc.MailMerge.ExecuteWithRegions(customersDataSource);
 
-            // Save the result to a file in the current directory.
+            // Save the resulting document.
             doc.Save("NestedMailMerge.docx");
         }
     }
 
-    // Simple data entity representing a customer.
+    // Represents a customer (master record).
     public class Customer
     {
         public Customer(string fullName, string address)
@@ -77,7 +74,17 @@ namespace NestedMailMergeExample
         public List<Order> Orders { get; }
     }
 
-    // Simple data entity representing an order.
+    // Collection of customers required by the custom data source.
+    public class CustomerList : ArrayList
+    {
+        public new Customer this[int index]
+        {
+            get { return (Customer)base[index]; }
+            set { base[index] = value; }
+        }
+    }
+
+    // Represents an order (detail record).
     public class Order
     {
         public Order(string name, int quantity)
@@ -90,17 +97,7 @@ namespace NestedMailMergeExample
         public int Quantity { get; set; }
     }
 
-    // Collection of Customer objects that derives from ArrayList.
-    public class CustomerList : ArrayList
-    {
-        public new Customer this[int index]
-        {
-            get { return (Customer)base[index]; }
-            set { base[index] = value; }
-        }
-    }
-
-    // Custom mail merge data source for the "Customers" region.
+    // Custom data source for the Customers region.
     public class CustomerMailMergeDataSource : IMailMergeDataSource
     {
         private readonly CustomerList _customers;
@@ -111,10 +108,18 @@ namespace NestedMailMergeExample
             _customers = customers;
         }
 
-        // Name of the data source (used by Aspose.Words for region matching).
+        // Name of the data source (must match the region name).
         public string TableName => "Customers";
 
-        // Provides values for fields in the "Customers" region.
+        // Move to the next customer record.
+        public bool MoveNext()
+        {
+            if (!IsEof)
+                _recordIndex++;
+            return !IsEof;
+        }
+
+        // Provide field values for the current customer.
         public bool GetValue(string fieldName, out object fieldValue)
         {
             switch (fieldName)
@@ -125,22 +130,17 @@ namespace NestedMailMergeExample
                 case "Address":
                     fieldValue = _customers[_recordIndex].Address;
                     return true;
+                case "Order":
+                    // Not used directly; child region will request "Orders".
+                    fieldValue = null;
+                    return false;
                 default:
                     fieldValue = null;
                     return false;
             }
         }
 
-        // Moves to the next customer record.
-        public bool MoveNext()
-        {
-            if (!IsEof)
-                _recordIndex++;
-
-            return !IsEof;
-        }
-
-        // Returns a child data source for the nested "Orders" region.
+        // Return a child data source when the mail merge engine encounters a nested region.
         public IMailMergeDataSource GetChildDataSource(string tableName)
         {
             if (tableName.Equals("Orders", StringComparison.OrdinalIgnoreCase))
@@ -151,7 +151,7 @@ namespace NestedMailMergeExample
         private bool IsEof => _recordIndex >= _customers.Count;
     }
 
-    // Custom mail merge data source for the "Orders" region.
+    // Custom data source for the Orders region.
     public class OrderMailMergeDataSource : IMailMergeDataSource
     {
         private readonly List<Order> _orders;
@@ -163,6 +163,13 @@ namespace NestedMailMergeExample
         }
 
         public string TableName => "Orders";
+
+        public bool MoveNext()
+        {
+            if (!IsEof)
+                _recordIndex++;
+            return !IsEof;
+        }
 
         public bool GetValue(string fieldName, out object fieldValue)
         {
@@ -180,17 +187,9 @@ namespace NestedMailMergeExample
             }
         }
 
-        public bool MoveNext()
-        {
-            if (!IsEof)
-                _recordIndex++;
-
-            return !IsEof;
-        }
-
         public IMailMergeDataSource GetChildDataSource(string tableName)
         {
-            // No further nested regions.
+            // No further nesting.
             return null;
         }
 

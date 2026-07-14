@@ -6,23 +6,57 @@
     "language": "csharp",
     "preferred_workflow": "Use Aspose.Words MailMerge API with locally created templates, explicit MERGEFIELD insertion, exact data-field matching, and Execute or ExecuteWithRegions as appropriate.",
     "required_packages": [
-      "Aspose.Words",
-      "Newtonsoft.Json"
+      "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.4.0",
-      "Newtonsoft.Json": ""
-    }
+      "Aspose.Words": "26.5.0"
+    },
+    "required_namespaces": [
+      "System",
+      "System.IO",
+      "Aspose.Words",
+      "System.Data",
+      "Aspose.Words.Fields",
+      "Aspose.Words.MailMerging",
+      "Aspose.Words.Tables",
+      "System.Collections.Generic",
+      "System.Globalization",
+      "System.Threading",
+      "Aspose.Words.Reporting",
+      "Aspose.Words.Saving",
+      "System.Collections",
+      "Aspose.Words.Drawing"
+    ],
+    "key_apis": [
+      "Document",
+      "DocumentBuilder",
+      "Path",
+      "Font",
+      "DataTable",
+      "Directory",
+      "File",
+      "Field",
+      "Range",
+      "SaveFormat",
+      "NodeType",
+      "FieldType",
+      "StyleIdentifier",
+      "Table"
+    ]
   },
   "stats": {
     "total_examples": 30,
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
-      "simple-mail-merge": 17,
-      "region-mail-merge": 7,
       "image-mail-merge": 4,
       "input-bootstrap": 1,
+      "region-mail-merge": 7,
+      "simple-mail-merge": 17,
       "table-mail-merge": 1
+    },
+    "winner_counts": {
+      "llm": 1,
+      "mcp": 29
     }
   },
   "rules_summary": {
@@ -140,8 +174,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 8,
