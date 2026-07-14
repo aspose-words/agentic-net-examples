@@ -7,64 +7,57 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for all generated files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Paths for temporary and final files
+        string sourceDocPath = "Source.docx";
+        string resultPath = "Result.odt";
 
         // -----------------------------------------------------------------
-        // 1. Create a source DOCX document that will be inserted later.
+        // 1. Create the source DOCX that will be inserted later.
         // -----------------------------------------------------------------
-        string sourceDocPath = Path.Combine(artifactsDir, "Source.docx");
         Document sourceDoc = new Document();
-        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
-        sourceBuilder.Writeln("This is the inserted document content.");
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("This is the content of the inserted DOCX document.");
         sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // 2. Create the destination document containing a table with a bookmark.
+        // 2. Create the destination document with a table and a bookmark.
         // -----------------------------------------------------------------
         Document destDoc = new Document();
-        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        DocumentBuilder builder = new DocumentBuilder(destDoc);
 
-        // Start a table and add a single cell.
-        destBuilder.StartTable();
-        destBuilder.InsertCell();
+        // Start a table.
+        builder.StartTable();
 
-        // Define a bookmark inside the cell where the source document will be inserted.
-        const string bookmarkName = "InsertHere";
-        destBuilder.StartBookmark(bookmarkName);
-        destBuilder.Writeln("Placeholder before insertion.");
-        destBuilder.EndBookmark(bookmarkName);
+        // First cell – contains a bookmark where the source document will be inserted.
+        builder.InsertCell();
+        builder.StartBookmark("InsertHere");
+        builder.Writeln("Placeholder text before insertion.");
+        builder.EndBookmark("InsertHere");
 
-        // Close the row and the table.
-        destBuilder.EndRow();
-        destBuilder.EndTable();
+        // Second cell – just for demonstration.
+        builder.InsertCell();
+        builder.Writeln("Second cell content.");
+
+        // End the row and the table.
+        builder.EndRow();
+        builder.EndTable();
 
         // -----------------------------------------------------------------
         // 3. Load the source document and insert it at the bookmark.
         // -----------------------------------------------------------------
-        Document srcToInsert = new Document(sourceDocPath);
-        destBuilder.MoveToBookmark(bookmarkName);
-        destBuilder.InsertDocument(srcToInsert, ImportFormatMode.KeepSourceFormatting);
+        Document docToInsert = new Document(sourceDocPath);
+        builder.MoveToBookmark("InsertHere");
+        builder.InsertDocumentInline(docToInsert, ImportFormatMode.UseDestinationStyles, new ImportFormatOptions());
 
         // -----------------------------------------------------------------
         // 4. Save the merged document as ODT, preserving the table structure.
         // -----------------------------------------------------------------
-        string outputPath = Path.Combine(artifactsDir, "Merged.odt");
-        destDoc.Save(outputPath, SaveFormat.Odt);
+        destDoc.Save(resultPath, SaveFormat.Odt);
 
         // -----------------------------------------------------------------
-        // 5. Simple validation to ensure the operation succeeded.
+        // 5. Verify that the output file was created.
         // -----------------------------------------------------------------
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The merged ODT file was not created.");
-
-        // Verify that the inserted text is present in the final document.
-        string mergedText = destDoc.GetText();
-        if (!mergedText.Contains("This is the inserted document content."))
-            throw new InvalidOperationException("The source document content was not found in the merged output.");
-
-        // Optional: indicate success (no interactive input required).
-        Console.WriteLine("Document merged and saved successfully to: " + outputPath);
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException($"Failed to create the output file: {resultPath}");
     }
 }

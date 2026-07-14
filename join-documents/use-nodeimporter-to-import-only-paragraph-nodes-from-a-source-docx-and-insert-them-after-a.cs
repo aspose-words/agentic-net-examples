@@ -7,52 +7,80 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders and file names.
+        // Prepare file paths.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-
         string sourcePath = Path.Combine(outputDir, "Source.docx");
         string destinationPath = Path.Combine(outputDir, "Destination.docx");
-        string mergedPath = Path.Combine(outputDir, "Merged.docx");
+        string resultPath = Path.Combine(outputDir, "Result.docx");
 
-        // ---------- Create source document ----------
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("Source Paragraph 1");
-        srcBuilder.Writeln("Source Paragraph 2");
-        srcBuilder.Writeln("Source Paragraph 3");
-        sourceDoc.Save(sourcePath, SaveFormat.Docx);
+        // Create a source DOCX with a few paragraphs.
+        Document srcDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("First paragraph from source.");
+        srcBuilder.Writeln("Second paragraph from source.");
+        srcBuilder.Writeln("Third paragraph from source.");
+        srcDoc.Save(sourcePath);
 
-        // ---------- Create destination document with a bookmark ----------
-        Document destDoc = new Document();
-        DocumentBuilder dstBuilder = new DocumentBuilder(destDoc);
+        // Create a destination document that contains a bookmark.
+        Document dstDoc = new Document();
+        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
         dstBuilder.Writeln("Destination start.");
         dstBuilder.StartBookmark("InsertHere");
         dstBuilder.Writeln("Bookmark placeholder.");
         dstBuilder.EndBookmark("InsertHere");
         dstBuilder.Writeln("Destination end.");
-        destDoc.Save(destinationPath, SaveFormat.Docx);
+        dstDoc.Save(destinationPath);
 
-        // ---------- Load documents ----------
-        Document src = new Document(sourcePath);
-        Document dst = new Document(destinationPath);
+        // Insert only paragraph nodes from the source document after the bookmark.
+        InsertParagraphsAfterBookmark(dstDoc, srcDoc, "InsertHere");
 
-        // Locate the bookmark where content will be inserted.
-        Bookmark bookmark = dst.Range.Bookmarks["InsertHere"];
-        if (bookmark == null)
-            throw new InvalidOperationException("Bookmark 'InsertHere' not found.");
+        // Save the merged result.
+        dstDoc.Save(resultPath);
 
-        // The node after which we will insert imported paragraphs.
-        Node insertionNode = bookmark.BookmarkStart.ParentNode;
+        // Simple validation.
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException("Result document was not created.");
 
-        // Initialize NodeImporter with KeepSourceFormatting to preserve source styles.
-        NodeImporter importer = new NodeImporter(src, dst, ImportFormatMode.KeepSourceFormatting);
-
-        // Import only paragraph nodes from the source document.
-        foreach (Section srcSection in src.Sections)
+        string resultText = dstDoc.GetText();
+        if (!resultText.Contains("First paragraph from source.") ||
+            !resultText.Contains("Second paragraph from source.") ||
+            !resultText.Contains("Third paragraph from source."))
         {
+            throw new InvalidOperationException("Source paragraphs were not inserted correctly.");
+        }
+
+        // Indicate successful completion.
+        Console.WriteLine("Document merged successfully. Result saved to: " + resultPath);
+    }
+
+    /// <summary>
+    /// Inserts only paragraph nodes from <paramref name="srcDoc"/> after the bookmark
+    /// identified by <paramref name="bookmarkName"/> in <paramref name="dstDoc"/>.
+    /// </summary>
+    private static void InsertParagraphsAfterBookmark(Document dstDoc, Document srcDoc, string bookmarkName)
+    {
+        // Locate the bookmark.
+        Bookmark bookmark = dstDoc.Range.Bookmarks[bookmarkName];
+        if (bookmark == null)
+            throw new ArgumentException($"Bookmark '{bookmarkName}' not found in destination document.");
+
+        // The node after which new content will be inserted.
+        Node insertionDestination = bookmark.BookmarkStart.ParentNode;
+
+        // Parent container for the insertion (paragraph or table).
+        CompositeNode destinationParent = insertionDestination.ParentNode;
+
+        // Prepare the importer with the desired formatting mode.
+        NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
+
+        // Iterate through all sections of the source document.
+        foreach (Section srcSection in srcDoc.Sections)
+        {
+            // Iterate through the body nodes of each section.
             foreach (Node srcNode in srcSection.Body)
             {
+                // Process only paragraph nodes.
                 if (srcNode.NodeType != NodeType.Paragraph)
                     continue;
 
@@ -62,21 +90,13 @@ public class Program
                 if (para.IsEndOfSection && !para.HasChildNodes)
                     continue;
 
-                // Import the paragraph node (deep clone) into the destination document.
-                Node importedNode = importer.ImportNode(para, true);
+                // Import the paragraph into the destination document.
+                Node importedNode = importer.ImportNode(srcNode, true);
 
                 // Insert the imported paragraph after the current insertion point.
-                CompositeNode parent = insertionNode.ParentNode;
-                parent.InsertAfter(importedNode, insertionNode);
-                insertionNode = importedNode; // Move insertion point forward.
+                destinationParent.InsertAfter(importedNode, insertionDestination);
+                insertionDestination = importedNode;
             }
         }
-
-        // Save the merged document.
-        dst.Save(mergedPath, SaveFormat.Docx);
-
-        // Simple validation that the merged file was created.
-        if (!File.Exists(mergedPath))
-            throw new FileNotFoundException("Merged document was not saved.", mergedPath);
     }
 }

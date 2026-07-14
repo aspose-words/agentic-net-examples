@@ -7,54 +7,64 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define file paths in the current directory.
+        string destDocPath = Path.Combine(Directory.GetCurrentDirectory(), "Destination.docx");
+        string srcDocPath = Path.Combine(Directory.GetCurrentDirectory(), "SourceWithVideo.docx");
+        string mergedDocPath = Path.Combine(Directory.GetCurrentDirectory(), "Merged.docx");
+        string pdfPath = Path.Combine(Directory.GetCurrentDirectory(), "Merged.pdf");
 
-        // Paths for the sample documents.
-        string sourceDocPath = Path.Combine(outputDir, "Source.docx");
-        string destinationDocPath = Path.Combine(outputDir, "Destination.docx");
-        string mergedDocPath = Path.Combine(outputDir, "Merged.docx");
-        string mergedPdfPath = Path.Combine(outputDir, "Merged.pdf");
+        // -----------------------------------------------------------------
+        // 1. Create the destination document.
+        // -----------------------------------------------------------------
+        Document destDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.Writeln("This is the destination document.");
+        destDoc.Save(destDocPath);
 
-        // ---------- Create source DOCX containing an online video ----------
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("Source document with an embedded online video:");
-        // Insert an online video (YouTube or any public video URL). Size is in points.
-        srcBuilder.InsertOnlineVideo(
-            "https://sample-videos.com/video123/mp4/720/big_buck_bunny_720p_1mb.mp4",
-            400,
-            300);
-        sourceDoc.Save(sourceDocPath, SaveFormat.Docx);
+        // -----------------------------------------------------------------
+        // 2. Create the source document that contains an online video.
+        // -----------------------------------------------------------------
+        Document srcDoc = new Document();
+        DocumentBuilder srcBuilder = new DocumentBuilder(srcDoc);
+        srcBuilder.Writeln("This document contains an online video.");
 
-        // ---------- Create destination DOCX ----------
-        Document destinationDoc = new Document();
-        DocumentBuilder dstBuilder = new DocumentBuilder(destinationDoc);
-        dstBuilder.Writeln("Destination document – introductory text.");
-        destinationDoc.Save(destinationDocPath, SaveFormat.Docx);
+        // Insert an online video (YouTube example). The video will be embedded as a shape.
+        // The URL must be a supported online video URL; YouTube works in Word.
+        string videoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+        srcBuilder.InsertOnlineVideo(videoUrl, 320, 240);
+        srcDoc.Save(srcDocPath);
 
-        // ---------- Append source document to destination document ----------
-        // Load the documents (already in memory, but loading from file demonstrates the workflow).
-        Document dstDoc = new Document(destinationDocPath);
-        Document srcDoc = new Document(sourceDocPath);
-        dstDoc.AppendDocument(srcDoc, ImportFormatMode.KeepSourceFormatting);
-        dstDoc.Save(mergedDocPath, SaveFormat.Docx);
+        // -----------------------------------------------------------------
+        // 3. Append the source document to the destination document.
+        // -----------------------------------------------------------------
+        // Reload the documents to ensure they are read from disk.
+        Document destination = new Document(destDocPath);
+        Document source = new Document(srcDocPath);
 
-        // ---------- Convert the merged document to PDF, preserving the video ----------
+        // Append while keeping the source formatting (including the video shape).
+        destination.AppendDocument(source, ImportFormatMode.KeepSourceFormatting);
+        destination.Save(mergedDocPath);
+
+        // -----------------------------------------------------------------
+        // 4. Convert the merged document to PDF, embedding attachments (videos).
+        // -----------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Embed video as an annotation so it remains functional in the PDF.
+            // Embed video objects as annotations so they remain functional in the PDF.
             AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.Annotations
         };
-        dstDoc.Save(mergedPdfPath, pdfOptions);
+        destination.Save(pdfPath, pdfOptions);
 
-        // ---------- Validation ----------
-        if (!File.Exists(mergedPdfPath))
-        {
-            throw new InvalidOperationException("The merged PDF was not created.");
-        }
+        // -----------------------------------------------------------------
+        // 5. Validate that the output files were created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(mergedDocPath))
+            throw new InvalidOperationException($"Merged DOCX was not created at '{mergedDocPath}'.");
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException($"PDF was not created at '{pdfPath}'.");
 
-        // The example finishes without requiring user interaction.
+        // Optional: Output the paths for verification (no interactive input required).
+        Console.WriteLine($"Merged DOCX saved to: {mergedDocPath}");
+        Console.WriteLine($"PDF with embedded video saved to: {pdfPath}");
     }
 }

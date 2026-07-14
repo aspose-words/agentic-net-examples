@@ -1,79 +1,81 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define output directory and file paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        string researchPath = Path.Combine(outputDir, "ResearchPaper.docx");
-        string bibliographyPath = Path.Combine(outputDir, "Bibliography.docx");
-        string mergedPath = Path.Combine(outputDir, "MergedDocument.docx");
-        string pdfPath = Path.Combine(outputDir, "MergedDocument.pdf");
+        // Define file names for the sample documents and the results.
+        const string researchPath = "ResearchPaper.docx";
+        const string bibliographyPath = "Bibliography.docx";
+        const string mergedPath = "MergedResearchPaper.docx";
+        const string pdfPath = "MergedResearchPaper.pdf";
 
         // -----------------------------------------------------------------
-        // Create a sample research paper document.
+        // 1. Create a sample research paper document.
         // -----------------------------------------------------------------
         Document researchDoc = new Document();
         DocumentBuilder researchBuilder = new DocumentBuilder(researchDoc);
         researchBuilder.Writeln("Research Paper Title");
-        researchBuilder.Writeln("Introduction");
-        researchBuilder.Writeln("This is the content of the research paper.");
+        researchBuilder.Writeln("This is the introduction of the research paper.");
+        researchBuilder.Writeln("Main content goes here...");
+        // Save the research paper as DOCX.
         researchDoc.Save(researchPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // Create a sample bibliography document containing a BIBLIOGRAPHY field.
+        // 2. Create a sample bibliography document.
         // -----------------------------------------------------------------
-        Document bibDoc = new Document();
-        DocumentBuilder bibBuilder = new DocumentBuilder(bibDoc);
+        Document bibliographyDoc = new Document();
+        DocumentBuilder bibBuilder = new DocumentBuilder(bibliographyDoc);
         bibBuilder.Writeln("Bibliography");
-        // Insert a bibliography field (will be updated later).
-        bibBuilder.InsertField(FieldType.FieldBibliography, true);
-        bibDoc.Save(bibliographyPath, SaveFormat.Docx);
+        // Insert a BIBLIOGRAPHY field to demonstrate field updating.
+        bibBuilder.InsertField("BIBLIOGRAPHY");
+        // Add a placeholder reference.
+        bibBuilder.Writeln("Reference 1: Example Book, Author, 2020.");
+        // Save the bibliography as DOCX.
+        bibliographyDoc.Save(bibliographyPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // Load the two documents.
+        // 3. Load the created documents.
         // -----------------------------------------------------------------
         Document research = new Document(researchPath);
         Document bibliography = new Document(bibliographyPath);
 
         // -----------------------------------------------------------------
-        // Append the bibliography document to the research paper.
-        // Keep the source formatting to preserve the bibliography field.
+        // 4. Append the bibliography document to the research paper.
         // -----------------------------------------------------------------
         research.AppendDocument(bibliography, ImportFormatMode.KeepSourceFormatting);
 
         // -----------------------------------------------------------------
-        // Update all fields (including the bibliography field) in the merged document.
+        // 5. Update all fields (e.g., the BIBLIOGRAPHY field).
         // -----------------------------------------------------------------
         research.UpdateFields();
 
         // -----------------------------------------------------------------
-        // Save the merged document as DOCX.
+        // 6. Save the merged document in DOCX format.
         // -----------------------------------------------------------------
         research.Save(mergedPath, SaveFormat.Docx);
 
-        // Validate that the merged DOCX was created.
-        if (!File.Exists(mergedPath))
-            throw new InvalidOperationException("Merged DOCX file was not created.");
-
         // -----------------------------------------------------------------
-        // Export the merged document to PDF.
+        // 7. Export the merged document to PDF.
         // -----------------------------------------------------------------
         research.Save(pdfPath, SaveFormat.Pdf);
 
-        // Validate that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+        // -----------------------------------------------------------------
+        // 8. Validation: ensure output files exist and contain expected content.
+        // -----------------------------------------------------------------
+        if (!File.Exists(mergedPath))
+            throw new InvalidOperationException($"Merged DOCX file was not created: {mergedPath}");
 
-        // Optional: write status messages to the console.
-        Console.WriteLine("Documents merged and saved successfully:");
-        Console.WriteLine($"- Merged DOCX: {mergedPath}");
-        Console.WriteLine($"- PDF: {pdfPath}");
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException($"PDF file was not created: {pdfPath}");
+
+        string mergedText = research.GetText();
+        if (!mergedText.Contains("Bibliography"))
+            throw new InvalidOperationException("Merged document does not contain the bibliography section.");
+
+        // All steps completed successfully.
     }
 }

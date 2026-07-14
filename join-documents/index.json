@@ -4,25 +4,75 @@
     "slug": "join-documents",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words document append and insert APIs directly with local sample documents, explicit ImportFormatMode, and documented mail-merge insertion workflows when needed.",
+    "preferred_workflow": "Use native Aspose.Words document append and insert APIs directly. Create realistic local sample DOC, DOCX, stream, folder, or batch inputs inside the example whenever the task references an existing file, stream, folder, or set of source documents. Join documents through documented AppendDocument, InsertDocument, section import, or node import workflows only.",
     "required_packages": [
-      "Aspose.Words",
-      "Newtonsoft.Json"
+      "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.4.0",
-      "Newtonsoft.Json": ""
-    }
+      "Aspose.Words": "26.5.0"
+    },
+    "required_namespaces": [
+      "System",
+      "System.IO",
+      "Aspose.Words",
+      "Aspose.Words.Saving",
+      "Aspose.Words.Loading",
+      "System.Drawing",
+      "Aspose.Words.Replacing",
+      "System.Text.RegularExpressions",
+      "System.Text",
+      "System.Data",
+      "Aspose.Words.MailMerging",
+      "Aspose.Words.Drawing",
+      "System.Globalization",
+      "Aspose.Words.Tables",
+      "Aspose.Words.Markup",
+      "Aspose.Words.Notes",
+      "System.Linq",
+      "Aspose.Words.Fields"
+    ],
+    "key_apis": [
+      "Document",
+      "DocumentBuilder",
+      "SaveFormat",
+      "Directory",
+      "File",
+      "Path",
+      "Bookmark",
+      "LoadOptions",
+      "ProtectionType",
+      "Font",
+      "HtmlSaveOptions",
+      "Paragraph",
+      "Style",
+      "Range",
+      "Run",
+      "FindReplaceOptions",
+      "Node",
+      "CompositeNode",
+      "NodeType",
+      "Table",
+      "DataTable",
+      "PdfSaveOptions",
+      "Footnote",
+      "Field",
+      "FieldType",
+      "MemoryStream"
+    ]
   },
   "stats": {
     "total_examples": 36,
     "publish_ready_successful_examples": 36,
     "workflow_counts": {
-      "insert-document": 18,
       "append-document": 12,
       "general-join-workflow": 1,
+      "insert-document": 18,
       "mail-merge-insert": 2,
       "section-and-format-preservation": 3
+    },
+    "winner_counts": {
+      "llm": 1,
+      "mcp": 35
     }
   },
   "rules_summary": {
@@ -87,7 +137,7 @@
     {
       "id": 2,
       "file_name": "load-a-docx-insert-a-pdf-converted-docx-at-a-bookmark-and-save-the-merged-document-as-odt.cs",
-      "task": "Load a DOCX, insert a PDF‑converted DOCX at a bookmark, and save the merged document as ODT.",
+      "task": "Load a DOCX, insert a PDF-converted DOCX at a bookmark, and save the merged document as ODT.",
       "workflow": "insert-document",
       "outputs": [
         "docx",
@@ -99,7 +149,7 @@
     {
       "id": 3,
       "file_name": "load-a-password-protected-docx-insert-a-source-docx-at-a-bookmark-then-remove-protection-a.cs",
-      "task": "Load a password‑protected DOCX, insert a source DOCX at a bookmark, then remove protection and save as DOCX.",
+      "task": "Load a password-protected DOCX, insert a source DOCX at a bookmark, then remove protection and save as DOCX.",
       "workflow": "insert-document",
       "outputs": [
         "docx",
@@ -123,7 +173,7 @@
     {
       "id": 5,
       "file_name": "protect-a-destination-docx-with-read-only-restriction-before-appending-source-docx-then-re.cs",
-      "task": "Protect a destination DOCX with read‑only restriction before appending source DOCX, then remove restriction and save as PDF.",
+      "task": "Protect a destination DOCX with read-only restriction before appending source DOCX, then remove restriction and save as PDF.",
       "workflow": "append-document",
       "outputs": [
         "docx",
@@ -135,7 +185,7 @@
     {
       "id": 6,
       "file_name": "use-documentbuilder-movetobookmark-to-navigate-to-a-bookmark-named-content-then-insert-a-s.cs",
-      "task": "Use DocumentBuilder.MoveToBookmark to navigate to a bookmark named “Content”, then insert a source DOCX with KeepSourceFormatting.",
+      "task": "Use DocumentBuilder.MoveToBookmark to navigate to a bookmark named \"Content\", then insert a source DOCX with KeepSourceFormatting.",
       "workflow": "insert-document",
       "outputs": [
         "docx"
@@ -205,19 +255,19 @@
     {
       "id": 12,
       "file_name": "insert-a-docx-during-a-find-replace-operation-that-matches-the-word-insertme-then-save-as.cs",
-      "task": "Insert a DOCX during a find‑replace operation that matches the word “INSERTME”, then save as DOCX.",
+      "task": "Insert a DOCX during a find-replace operation that matches the word \"INSERTME\", then save as DOCX.",
       "workflow": "insert-document",
       "outputs": [
         "docx",
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 13,
       "file_name": "use-findreplaceoptions-to-replace-the-phrase-placeholder-with-a-docx-document-then-save-as.cs",
-      "task": "Use FindReplaceOptions to replace the phrase “PLACEHOLDER” with a DOCX document, then save as ODT.",
+      "task": "Use FindReplaceOptions to replace the phrase \"PLACEHOLDER\" with a DOCX document, then save as ODT.",
       "workflow": "general-join-workflow",
       "outputs": [
         "docx"
@@ -228,7 +278,7 @@
     {
       "id": 14,
       "file_name": "use-findreplaceoptions-with-a-replacingcallback-to-insert-a-docx-whenever-phrase-insert-he.cs",
-      "task": "Use FindReplaceOptions with a ReplacingCallback to insert a DOCX whenever phrase “INSERT_HERE” is found, then save as DOCX.",
+      "task": "Use FindReplaceOptions with a ReplacingCallback to insert a DOCX whenever phrase \"INSERT_HERE\" is found, then save as DOCX.",
       "workflow": "insert-document",
       "outputs": [
         "docx",
@@ -240,7 +290,7 @@
     {
       "id": 15,
       "file_name": "insert-a-docx-during-a-find-replace-operation-that-replaces-an-xml-tag-then-save-the-docum.cs",
-      "task": "Insert a DOCX during a find‑replace operation that replaces an XML tag, then save the document as DOCX.",
+      "task": "Insert a DOCX during a find-replace operation that replaces an XML tag, then save the document as DOCX.",
       "workflow": "insert-document",
       "outputs": [
         "docx",
@@ -334,7 +384,7 @@
     {
       "id": 23,
       "file_name": "append-a-docx-generated-from-a-mail-merge-operation-to-an-existing-pdf-converted-docx-pres.cs",
-      "task": "Append a DOCX generated from a mail merge operation to an existing PDF‑converted DOCX, preserving destination styles.",
+      "task": "Append a DOCX generated from a mail merge operation to an existing PDF-converted DOCX, preserving destination styles.",
       "workflow": "mail-merge-insert",
       "outputs": [
         "docx",

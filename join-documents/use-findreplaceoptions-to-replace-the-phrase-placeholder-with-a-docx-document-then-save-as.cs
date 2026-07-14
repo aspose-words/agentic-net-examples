@@ -3,102 +3,110 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
 public class Program
 {
+    // Entry point of the console application.
     public static void Main()
     {
         // Prepare output directory.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create the main document that contains the placeholder.
+        // Create the main document that contains the placeholder text.
         Document mainDoc = new Document();
         DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
         mainBuilder.Writeln("This is the main document.");
-        mainBuilder.Writeln("PLACEHOLDER"); // The text to be replaced.
+        mainBuilder.Writeln("PLACEHOLDER"); // This text will be replaced by another document.
         mainBuilder.Writeln("End of the main document.");
 
         // Create the document that will replace the placeholder.
-        Document insertDoc = new Document();
-        DocumentBuilder insertBuilder = new DocumentBuilder(insertDoc);
-        insertBuilder.Writeln("This text comes from the inserted document.");
-        insertBuilder.Writeln("It can contain multiple paragraphs.");
+        Document subDoc = new Document();
+        DocumentBuilder subBuilder = new DocumentBuilder(subDoc);
+        subBuilder.Writeln("This is the inserted document.");
+        subBuilder.Writeln("It replaces the placeholder.");
 
-        // Set up FindReplaceOptions with a custom callback that inserts the document.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new InsertDocumentHandler(insertDoc);
+        // Save the sub‑document to a temporary file so it can be loaded inside the callback.
+        string subDocPath = Path.Combine(outputDir, "SubDocument.docx");
+        subDoc.Save(subDocPath, SaveFormat.Docx);
 
-        // Perform the replace operation. The placeholder text is removed and the document is inserted.
-        mainDoc.Range.Replace(new Regex("PLACEHOLDER"), string.Empty, options);
+        // Configure FindReplaceOptions with a custom callback that inserts the sub‑document.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new InsertDocumentAtReplaceHandler(subDocPath)
+        };
+
+        // Perform the find‑and‑replace operation. The placeholder text is removed,
+        // and the callback inserts the sub‑document at its location.
+        mainDoc.Range.Replace(new Regex("\\bPLACEHOLDER\\b"), string.Empty, options);
 
         // Save the resulting document as ODT.
-        string outputPath = Path.Combine(outputDir, "Result.odt");
-        mainDoc.Save(outputPath, SaveFormat.Odt);
+        string resultPath = Path.Combine(outputDir, "Result.odt");
+        mainDoc.Save(resultPath, SaveFormat.Odt);
 
-        // Simple validation that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output ODT file was not created.");
+        // Simple validation to ensure the file was created.
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException("The ODT file was not created.");
 
-        // Optionally, you could load the saved ODT to verify its contents.
-        Document verifyDoc = new Document(outputPath);
-        Console.WriteLine("Resulting document text:");
-        Console.WriteLine(verifyDoc.GetText());
+        // The program finishes automatically; no user interaction is required.
     }
 
-    // Callback that inserts a document at the location of each match.
-    private class InsertDocumentHandler : IReplacingCallback
+    // Callback class that inserts a document when a match is found.
+    private class InsertDocumentAtReplaceHandler : IReplacingCallback
     {
-        private readonly Document _docToInsert;
+        private readonly string _subDocumentPath;
 
-        public InsertDocumentHandler(Document docToInsert)
+        public InsertDocumentAtReplaceHandler(string subDocumentPath)
         {
-            _docToInsert = docToInsert ?? throw new ArgumentNullException(nameof(docToInsert));
+            _subDocumentPath = subDocumentPath;
         }
 
         ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
-            // The match node is a Run; its parent is a Paragraph.
-            Paragraph placeholderParagraph = (Paragraph)args.MatchNode.ParentNode;
+            // Load the document that will be inserted.
+            Document subDoc = new Document(_subDocumentPath);
 
-            // Insert the document after the paragraph that contains the placeholder.
-            InsertDocument(placeholderParagraph, _docToInsert);
+            // The match node is a Run inside a Paragraph; get the containing Paragraph.
+            Paragraph para = (Paragraph)args.MatchNode.ParentNode;
+
+            // Insert the sub‑document after the paragraph that held the placeholder.
+            InsertDocument(para, subDoc);
 
             // Remove the original placeholder paragraph.
-            placeholderParagraph.Remove();
+            para.Remove();
 
             // Skip further processing of this match.
             return ReplaceAction.Skip;
         }
+    }
 
-        // Inserts all nodes of the source document after the specified paragraph.
-        private static void InsertDocument(Node insertionDestination, Document docToInsert)
+    // Inserts all nodes of a source document after a given paragraph or table.
+    private static void InsertDocument(Node insertionDestination, Document docToInsert)
+    {
+        if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
+            throw new ArgumentException("The destination node must be a paragraph or a table.");
+
+        CompositeNode dstStory = insertionDestination.ParentNode;
+
+        NodeImporter importer = new NodeImporter(
+            docToInsert, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
+
+        foreach (Section srcSection in docToInsert.Sections)
         {
-            if (insertionDestination.NodeType != NodeType.Paragraph && insertionDestination.NodeType != NodeType.Table)
-                throw new ArgumentException("The destination node must be a paragraph or a table.");
-
-            CompositeNode dstStory = insertionDestination.ParentNode;
-
-            NodeImporter importer = new NodeImporter(docToInsert, insertionDestination.Document, ImportFormatMode.KeepSourceFormatting);
-
-            foreach (Section srcSection in docToInsert.Sections)
+            foreach (Node srcNode in srcSection.Body)
             {
-                foreach (Node srcNode in srcSection.Body)
+                // Skip the last empty paragraph of a section.
+                if (srcNode.NodeType == NodeType.Paragraph)
                 {
-                    // Skip the last empty paragraph of a section.
-                    if (srcNode.NodeType == NodeType.Paragraph)
-                    {
-                        Paragraph para = (Paragraph)srcNode;
-                        if (para.IsEndOfSection && !para.HasChildNodes)
-                            continue;
-                    }
-
-                    Node newNode = importer.ImportNode(srcNode, true);
-                    dstStory.InsertAfter(newNode, insertionDestination);
-                    insertionDestination = newNode;
+                    Paragraph para = (Paragraph)srcNode;
+                    if (para.IsEndOfSection && !para.HasChildNodes)
+                        continue;
                 }
+
+                Node newNode = importer.ImportNode(srcNode, true);
+                dstStory.InsertAfter(newNode, insertionDestination);
+                insertionDestination = newNode;
             }
         }
     }

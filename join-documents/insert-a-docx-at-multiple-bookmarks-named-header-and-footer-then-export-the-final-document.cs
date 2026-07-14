@@ -7,71 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for all generated files.
+        // Prepare output directory.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a source DOCX that will be inserted at the bookmarks.
-        // -----------------------------------------------------------------
+        // Create a source DOCX that will be inserted.
         string sourcePath = Path.Combine(artifactsDir, "Source.docx");
         Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("=== Inserted Content ===");
-        srcBuilder.Writeln("This paragraph comes from the source DOCX.");
+        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
+        sourceBuilder.Writeln("This is the inserted content.");
         sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Create the destination document with two bookmarks: Header and Footer.
-        // -----------------------------------------------------------------
-        string destinationPath = Path.Combine(artifactsDir, "Destination.docx");
+        // Create a destination document with two bookmarks: Header and Footer.
+        string templatePath = Path.Combine(artifactsDir, "Template.docx");
         Document destDoc = new Document();
         DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
 
-        destBuilder.Writeln("Document start.");
         destBuilder.StartBookmark("Header");
-        destBuilder.Writeln("[Header placeholder]");
+        destBuilder.Writeln("Placeholder for header.");
         destBuilder.EndBookmark("Header");
 
-        destBuilder.Writeln("Some middle content.");
+        destBuilder.Writeln(); // Add a blank line between bookmarks.
 
         destBuilder.StartBookmark("Footer");
-        destBuilder.Writeln("[Footer placeholder]");
+        destBuilder.Writeln("Placeholder for footer.");
         destBuilder.EndBookmark("Footer");
 
-        destBuilder.Writeln("Document end.");
-        destDoc.Save(destinationPath, SaveFormat.Docx);
+        destDoc.Save(templatePath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 3. Load the source DOCX (to be inserted) and insert it at each bookmark.
-        // -----------------------------------------------------------------
-        Document insertDoc = new Document(sourcePath);
+        // Load the source document to be inserted.
+        Document docToInsert = new Document(sourcePath);
 
-        // Insert at Header bookmark.
+        // Insert the source document at the Header bookmark.
         destBuilder.MoveToBookmark("Header");
-        destBuilder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
+        destBuilder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
 
-        // Insert at Footer bookmark.
+        // Insert the source document at the Footer bookmark.
         destBuilder.MoveToBookmark("Footer");
-        destBuilder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
+        destBuilder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
 
-        // -----------------------------------------------------------------
-        // 4. Save the merged document as HTML.
-        // -----------------------------------------------------------------
+        // Export the merged document to HTML.
         string htmlPath = Path.Combine(artifactsDir, "Result.html");
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
         destDoc.Save(htmlPath, htmlOptions);
 
-        // -----------------------------------------------------------------
-        // 5. Validate that the HTML file was created.
-        // -----------------------------------------------------------------
+        // Validate that the HTML file was created.
         if (!File.Exists(htmlPath))
-        {
             throw new InvalidOperationException("The HTML output file was not created.");
-        }
 
-        // Optional: indicate success (no interactive input required).
-        Console.WriteLine("Document merged and saved as HTML at:");
-        Console.WriteLine(htmlPath);
+        // Optional: indicate completion.
+        Console.WriteLine("Document merged and saved as HTML at: " + htmlPath);
     }
 }

@@ -1,86 +1,78 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Loading;      // Needed for LoadOptions
 using Aspose.Words.Saving;
+using Aspose.Words.Loading; // Needed for LoadOptions
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for temporary files.
-        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        Directory.CreateDirectory(dataDir);
-
-        // Paths for the documents used in the example.
-        string protectedDocPath = Path.Combine(dataDir, "Protected.docx");
-        string sourceDocPath = Path.Combine(dataDir, "Source.docx");
-        string resultDocPath = Path.Combine(dataDir, "Result.docx");
+        // File names used in the example.
+        const string protectedPath = "Protected.docx";
+        const string sourcePath = "Source.docx";
+        const string resultPath = "Result.docx";
+        const string password = "Secret123";
 
         // -----------------------------------------------------------------
-        // 1. Create a password‑protected DOCX file.
-        // -----------------------------------------------------------------
-        Document protectedDoc = new Document();
-        DocumentBuilder protectedBuilder = new DocumentBuilder(protectedDoc);
-        protectedBuilder.Writeln("This is a password‑protected document.");
-
-        // Insert a bookmark where the source document will be placed.
-        protectedBuilder.StartBookmark("InsertHere");
-        protectedBuilder.Writeln("[Bookmark content will be replaced]");
-        protectedBuilder.EndBookmark("InsertHere");
-
-        // Save the document with encryption password "Secret123".
-        OoxmlSaveOptions protectSaveOptions = new OoxmlSaveOptions
-        {
-            Password = "Secret123"
-        };
-        protectedDoc.Save(protectedDocPath, protectSaveOptions);
-
-        // -----------------------------------------------------------------
-        // 2. Create a simple source DOCX that will be inserted.
+        // 1. Create a source DOCX that will be inserted later.
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
-        DocumentBuilder sourceBuilder = new DocumentBuilder(sourceDoc);
-        sourceBuilder.Writeln("This text comes from the source document.");
-        sourceDoc.Save(sourceDocPath); // saved without password.
+        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
+        srcBuilder.Writeln("This is the source document.");
+        sourceDoc.Save(sourcePath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // 3. Load the protected document using the correct password.
+        // 2. Create a destination DOCX, add a bookmark, and protect it with a password.
         // -----------------------------------------------------------------
-        LoadOptions loadOptions = new LoadOptions("Secret123");
-        Document mainDoc = new Document(protectedDocPath, loadOptions);
+        Document destDoc = new Document();
+        DocumentBuilder destBuilder = new DocumentBuilder(destDoc);
+        destBuilder.StartBookmark("InsertHere");
+        destBuilder.Writeln("Destination before bookmark.");
+        destBuilder.EndBookmark("InsertHere");
+        destBuilder.Writeln("Destination after bookmark.");
+
+        // Save the document with password protection.
+        OoxmlSaveOptions protectOptions = new OoxmlSaveOptions
+        {
+            Password = password
+        };
+        destDoc.Save(protectedPath, protectOptions);
+
+        // -----------------------------------------------------------------
+        // 3. Load the password‑protected document using LoadOptions.
+        // -----------------------------------------------------------------
+        LoadOptions loadOptions = new LoadOptions(password);
+        Document protectedDoc = new Document(protectedPath, loadOptions);
 
         // Load the source document that will be inserted.
-        Document insertDoc = new Document(sourceDocPath);
+        Document docToInsert = new Document(sourcePath);
 
         // -----------------------------------------------------------------
         // 4. Insert the source document at the bookmark.
         // -----------------------------------------------------------------
-        DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
-        mainBuilder.MoveToBookmark("InsertHere");
-        // Insert while keeping the source formatting.
-        mainBuilder.InsertDocument(insertDoc, ImportFormatMode.KeepSourceFormatting);
+        DocumentBuilder insertBuilder = new DocumentBuilder(protectedDoc);
+        insertBuilder.MoveToBookmark("InsertHere");
+        insertBuilder.InsertDocument(docToInsert, ImportFormatMode.KeepSourceFormatting);
 
         // -----------------------------------------------------------------
-        // 5. Remove protection from the document (if any).
+        // 5. Remove protection from the document.
         // -----------------------------------------------------------------
-        mainDoc.Unprotect(); // Removes any protection regardless of password.
+        protectedDoc.Unprotect();
 
         // -----------------------------------------------------------------
         // 6. Save the merged result.
         // -----------------------------------------------------------------
-        mainDoc.Save(resultDocPath);
+        protectedDoc.Save(resultPath, SaveFormat.Docx);
 
         // -----------------------------------------------------------------
-        // 7. Simple validation: ensure the file exists and contains expected text.
+        // 7. Simple validation.
         // -----------------------------------------------------------------
-        if (!File.Exists(resultDocPath))
-            throw new InvalidOperationException("Result document was not created.");
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException("The merged document was not saved.");
 
-        string resultText = mainDoc.GetText();
-        if (!resultText.Contains("This text comes from the source document."))
-            throw new InvalidOperationException("Source content was not inserted correctly.");
-
-        // Example completed successfully.
+        string resultText = protectedDoc.GetText();
+        if (!resultText.Contains("This is the source document."))
+            throw new InvalidOperationException("The source content was not inserted.");
     }
 }
