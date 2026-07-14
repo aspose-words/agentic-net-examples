@@ -1,8 +1,8 @@
 using System;
-using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
 public class CloneShapeExample
 {
@@ -13,40 +13,37 @@ public class CloneShapeExample
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert an original floating rectangle shape.
-        Shape originalShape = builder.InsertShape(
-            ShapeType.Rectangle,
-            RelativeHorizontalPosition.Page, 100,   // 100 points from the left of the page
-            RelativeVerticalPosition.Page, 100,     // 100 points from the top of the page
-            100, 50,                                // width = 100 points, height = 50 points
-            WrapType.None);                         // floating shape, no text wrapping
-
-        // Set the fill color of the original shape.
-        originalShape.FillColor = Color.LightBlue;
+        Shape originalShape = builder.InsertShape(ShapeType.Rectangle, 100, 100);
+        originalShape.FillColor = Color.Red;
+        originalShape.WrapType = WrapType.None;
+        originalShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+        originalShape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+        originalShape.Left = 100;
+        originalShape.Top = 100;
 
         // Clone the original shape (deep clone).
         Shape clonedShape = (Shape)originalShape.Clone(true);
-
         // Change the fill color of the cloned shape.
-        clonedShape.FillColor = Color.Yellow;
+        clonedShape.FillColor = Color.Blue;
+        // Position the cloned shape at a different location.
+        clonedShape.Left = 300;
+        clonedShape.Top = 300;
 
-        // Move the cloned shape to a different location.
-        clonedShape.Left = originalShape.Left + 150; // shift right by 150 points
-        clonedShape.Top = originalShape.Top;        // keep the same vertical position
+        // Insert the cloned shape into the document.
+        // Ensure it is attached to the document tree.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(clonedShape);
 
-        // Insert the cloned shape into the document after the original shape.
-        builder.InsertNode(clonedShape);
-
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CloneShape.docx");
-
-        // Save the document.
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ClonedShape.docx");
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved successfully.");
+        {
+            throw new InvalidOperationException("The output document was not created.");
+        }
 
-        // Optionally, inform that the process completed (no interactive prompts required).
+        // Optionally, inform that the process completed successfully.
         Console.WriteLine("Document saved to: " + outputPath);
     }
 }

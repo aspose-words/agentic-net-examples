@@ -12,33 +12,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First section content.
+        // Write some content before the horizontal rule.
         builder.Writeln("Section 1: Introduction");
         builder.Writeln("This is the first section of the document.");
 
         // Insert a horizontal rule shape.
         Shape horizontalRule = builder.InsertHorizontalRule();
 
-        // Customize the horizontal rule's appearance.
+        // Customize the horizontal rule: 80% width, 5 points thickness, blue color, solid (no shading).
         HorizontalRuleFormat hrFormat = horizontalRule.HorizontalRuleFormat;
-        hrFormat.Alignment = HorizontalRuleAlignment.Center; // Centered on the page.
-        hrFormat.WidthPercent = 80; // Width as 80% of the page width.
-        hrFormat.Height = 5; // Thickness of the rule.
-        hrFormat.Color = Color.DarkBlue; // Rule color.
-        hrFormat.NoShade = true; // Solid color without 3‑D shading.
+        hrFormat.WidthPercent = 80;   // Length as a percentage of the page width.
+        hrFormat.Height = 5;          // Thickness in points.
+        hrFormat.Color = Color.Blue; // Rule color.
+        hrFormat.NoShade = true;      // Use solid color without 3‑D shading.
 
-        // Second section content.
+        // Write content after the horizontal rule.
         builder.Writeln("Section 2: Details");
         builder.Writeln("This is the second section of the document.");
 
-        // Save the document to disk.
-        string outputFile = "HorizontalRule.docx";
+        // Save the document.
+        string outputFile = "HorizontalRuleExample.docx";
         doc.Save(outputFile);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputFile))
         {
-            throw new InvalidOperationException($"The output file '{outputFile}' was not created.");
+            throw new Exception($"Output file was not created: {outputFile}");
         }
     }
 }

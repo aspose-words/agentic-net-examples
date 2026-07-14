@@ -8,44 +8,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will serve as the anchor for the floating shape.
+        // Add the first paragraph of text.
         builder.Writeln("This is the first paragraph. The shape will be positioned relative to this paragraph.");
 
-        // Insert a floating rectangle shape anchored to the preceding paragraph.
-        // The shape is positioned relative to the paragraph (vertical) and the left margin (horizontal).
-        // Top and left offsets are set to 0 to place the shape directly after the paragraph.
+        // Insert a floating rectangle shape.
+        // Position it relative to the preceding paragraph (RelativeVerticalPosition.Paragraph)
+        // and to the left margin (RelativeHorizontalPosition.Margin).
+        // Left and top offsets are set to 0 to align with the paragraph start.
         Shape shape = builder.InsertShape(
             ShapeType.Rectangle,
-            RelativeHorizontalPosition.Margin,   // Horizontal reference.
-            0,                                   // Left offset.
-            RelativeVerticalPosition.Paragraph, // Vertical reference (the paragraph we just wrote).
-            0,                                   // Top offset.
-            100,                                 // Width in points.
-            50,                                  // Height in points.
-            WrapType.None);                      // No text wrapping; shape stays in the flow.
+            RelativeHorizontalPosition.Margin, 0,
+            RelativeVerticalPosition.Paragraph, 0,
+            100,   // width in points
+            50,    // height in points
+            WrapType.Square);
 
-        // Optional formatting to make the shape visible.
+        // Optional formatting for visibility.
         shape.FillColor = Color.LightBlue;
-        shape.StrokeColor = Color.Black;
+        shape.StrokeColor = Color.DarkBlue;
 
-        // Continue with more text to demonstrate that the shape stays in flow.
+        // Continue with more text after the shape.
         builder.Writeln("This is the second paragraph, appearing after the shape.");
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RelativeShapeExample.docx");
-
-        // Save the document.
+        // Save the document to the local file system.
+        string outputPath = "ShapeRelativeToParagraph.docx";
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to save the document.");
+            throw new Exception("The document was not saved successfully.");
 
-        // Optionally, inform that the process completed (no console input required).
-        Console.WriteLine("Document saved to: " + outputPath);
+        // Inform the user (optional, not required for non‑interactive execution).
+        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
     }
 }

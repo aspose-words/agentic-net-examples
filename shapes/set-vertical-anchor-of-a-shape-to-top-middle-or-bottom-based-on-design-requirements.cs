@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class SetVerticalAnchorExample
+public class SetShapeVerticalAnchorExample
 {
     public static void Main()
     {
@@ -11,30 +11,42 @@ public class SetVerticalAnchorExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a textbox shape and set its vertical anchor to Top.
-        Shape topBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        topBox.TextBox.VerticalAnchor = TextBoxAnchor.Top;
-        builder.MoveTo(topBox.FirstParagraph);
-        builder.Write("Top anchor");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "VerticalAnchorDemo.docx");
 
-        // Insert a second textbox shape and set its vertical anchor to Middle.
-        Shape middleBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        middleBox.TextBox.VerticalAnchor = TextBoxAnchor.Middle;
-        builder.MoveTo(middleBox.FirstParagraph);
-        builder.Write("Middle anchor");
+        // Helper to insert a textbox with a specific vertical anchor.
+        void InsertTextBox(double left, double top, TextBoxAnchor anchor, string label)
+        {
+            // Insert a floating textbox.
+            Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
+            textBox.WrapType = WrapType.None;
+            textBox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+            textBox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+            textBox.Left = left;
+            textBox.Top = top;
 
-        // Insert a third textbox shape and set its vertical anchor to Bottom.
-        Shape bottomBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        bottomBox.TextBox.VerticalAnchor = TextBoxAnchor.Bottom;
-        builder.MoveTo(bottomBox.FirstParagraph);
-        builder.Write("Bottom anchor");
+            // Set the vertical anchor of the text inside the textbox.
+            textBox.TextBox.VerticalAnchor = anchor;
 
-        // Save the document to the current directory.
-        string fileName = Path.Combine(Directory.GetCurrentDirectory(), "VerticalAnchor.docx");
-        doc.Save(fileName);
+            // Add a paragraph with label text inside the textbox.
+            builder.MoveTo(textBox.FirstParagraph);
+            builder.Font.Size = 12;
+            builder.Font.Bold = true;
+            builder.Write(label);
+        }
+
+        // Insert three textboxes with Top, Middle, and Bottom vertical anchors.
+        InsertTextBox(100, 100, TextBoxAnchor.Top, "Top Anchor");
+        InsertTextBox(350, 100, TextBoxAnchor.Middle, "Middle Anchor");
+        InsertTextBox(600, 100, TextBoxAnchor.Bottom, "Bottom Anchor");
+
+        // Save the document.
+        doc.Save(outputPath);
 
         // Validate that the file was created.
-        if (!File.Exists(fileName))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

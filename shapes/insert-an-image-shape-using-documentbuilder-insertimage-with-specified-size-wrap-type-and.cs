@@ -2,55 +2,51 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 
-public class InsertImageShapeExample
+public class Program
 {
-    public static void Main()
+    public static void Main(string[] args)
     {
-        // Create an output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Create a temporary PNG image file (1x1 pixel) that will be inserted into the document.
+        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
+        CreateSampleImage(imagePath);
 
-        // Create a simple PNG image from a Base64 string.
-        // This is a 1x1 pixel transparent PNG.
-        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/lK5XAAAAAElFTkSuQmCC";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
-        string imagePath = Path.Combine(outputDir, "sample.png");
-        File.WriteAllBytes(imagePath, imageBytes);
-
-        // Verify the image file was created.
-        if (!File.Exists(imagePath))
-            throw new FileNotFoundException("Failed to create the sample image.", imagePath);
-
-        // Create a new Word document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define positioning and size for the floating image.
-        double left = 50; // points from the left margin
-        double top = 100; // points from the top margin
-        double width = ConvertUtil.PixelToPoint(150); // convert 150 pixels to points
-        double height = ConvertUtil.PixelToPoint(150); // convert 150 pixels to points
-
-        // Insert the image as a floating shape with the specified parameters.
+        // Insert the image as a floating shape with custom size, position and wrap type.
+        // Parameters: file name, horizontal position reference, left offset,
+        // vertical position reference, top offset, width, height, wrap type.
         Shape imageShape = builder.InsertImage(
             imagePath,
-            RelativeHorizontalPosition.Margin, left,
-            RelativeVerticalPosition.Margin, top,
-            width, height,
-            WrapType.Square);
+            RelativeHorizontalPosition.Margin, 50,   // 50 points from the left margin
+            RelativeVerticalPosition.Margin, 100,    // 100 points from the top margin
+            200,                                      // width in points
+            150,                                      // height in points
+            WrapType.Square);                         // text will wrap around the image's bounding box
 
-        // Optional formatting.
+        // Ensure the image appears in front of the text.
         imageShape.BehindText = false;
-        imageShape.WrapType = WrapType.Square;
 
-        // Save the document.
-        string docPath = Path.Combine(outputDir, "ImageShapeExample.docx");
-        doc.Save(docPath, SaveFormat.Docx);
+        // Save the document to disk.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ImageShape.docx");
+        doc.Save(outputPath);
 
-        // Validate that the document was saved.
-        if (!File.Exists(docPath))
-            throw new Exception("The document was not saved correctly.");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Failed to save the output document.");
+
+        // Clean up the temporary image file.
+        File.Delete(imagePath);
+    }
+
+    // Writes a minimal PNG (1x1 pixel) to the specified path.
+    private static void CreateSampleImage(string path)
+    {
+        // Base64-encoded PNG data for a 1x1 pixel transparent image.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(path, pngBytes);
     }
 }

@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -12,36 +12,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three overlapping floating shapes.
-        Shape shape1 = builder.InsertShape(ShapeType.Rectangle, RelativeHorizontalPosition.Page, 100,
-            RelativeVerticalPosition.Page, 100, 200, 200, WrapType.None);
-        shape1.FillColor = System.Drawing.Color.Orange;
+        // Insert the first floating rectangle shape.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 200);
+        rectangle.FillColor = Color.LightBlue;
+        rectangle.Left = 50;   // Position from the left edge of the page.
+        rectangle.Top = 50;    // Position from the top edge of the page.
+        rectangle.WrapType = WrapType.None; // Make it a floating shape.
 
-        Shape shape2 = builder.InsertShape(ShapeType.Ellipse, RelativeHorizontalPosition.Page, 150,
-            RelativeVerticalPosition.Page, 150, 200, 200, WrapType.None);
-        shape2.FillColor = System.Drawing.Color.LightBlue;
+        // Insert the second floating ellipse shape that overlaps the rectangle.
+        Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 200, 200);
+        ellipse.FillColor = Color.LightCoral;
+        ellipse.Left = 100;
+        ellipse.Top = 100;
+        ellipse.WrapType = WrapType.None;
 
-        Shape shape3 = builder.InsertShape(ShapeType.Triangle, RelativeHorizontalPosition.Page, 200,
-            RelativeVerticalPosition.Page, 200, 200, 200, WrapType.None);
-        shape3.FillColor = System.Drawing.Color.LightGreen;
-
-        // Retrieve all shapes in the document.
-        Shape[] shapes = doc.GetChildNodes(NodeType.Shape, true).OfType<Shape>().ToArray();
-
-        // Send the first shape (orange rectangle) to the back of the layering order.
+        // Adjust ZOrder so that the rectangle is behind the ellipse.
         // Lower ZOrder values are rendered behind higher values.
-        shapes[0].ZOrder = 0;
+        rectangle.ZOrder = 0;
+        ellipse.ZOrder = 1;
 
-        // Optional: ensure other shapes have higher ZOrder values.
-        if (shapes.Length > 1) shapes[1].ZOrder = 2;
-        if (shapes.Length > 2) shapes[2].ZOrder = 3;
-
-        // Validate that the first shape is indeed at the back.
-        if (shapes.Any(s => s != shapes[0] && s.ZOrder <= shapes[0].ZOrder))
-            throw new InvalidOperationException("Failed to send the shape to the back of the layering order.");
-
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Shape.SendToBack.docx");
+        // Save the document to the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ShapeBack.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
+
+        // Optionally, inform that the process completed (no interactive prompts required).
+        Console.WriteLine("Document saved to: " + outputPath);
     }
 }

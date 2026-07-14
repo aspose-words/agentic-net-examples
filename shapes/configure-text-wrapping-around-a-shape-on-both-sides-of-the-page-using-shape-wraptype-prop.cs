@@ -1,9 +1,10 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class WrapShapeExample
+public class Program
 {
     public static void Main()
     {
@@ -11,41 +12,35 @@ public class WrapShapeExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some text before the shape.
+        // Add some initial text.
         builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                        "Praesent vitae eros eget tellus tristique bibendum. " +
-                        "Donec rutrum sed sem quis venenatis.");
+                        "Praesent commodo cursus magna, vel scelerisque nisl consectetur et.");
 
-        // Insert a floating rectangle shape with Square wrapping (text wraps on both sides).
-        // Position the shape 100 points from the left and 100 points from the top of the page.
+        // Insert a floating rectangle shape.
+        // The shape is positioned 100 points from the left and top of the page,
+        // has a size of 100x100 points, and uses Square wrapping (text wraps on both sides).
         Shape shape = builder.InsertShape(
             ShapeType.Rectangle,
             RelativeHorizontalPosition.Page, 100,
             RelativeVerticalPosition.Page, 100,
-            150, // width
-            100, // height
+            100, 100,
             WrapType.Square);
 
-        // Optional: give the shape a visible fill and outline.
-        shape.FillColor = System.Drawing.Color.LightBlue;
-        shape.StrokeColor = System.Drawing.Color.DarkBlue;
-        shape.StrokeWeight = 1.5;
+        // Make the shape visible with a light gray fill.
+        shape.FillColor = Color.LightGray;
 
-        // Write more text after the shape to demonstrate wrapping on the right side.
-        builder.Writeln();
-        builder.Writeln("Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
-                        "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris " +
-                        "nisi ut aliquip ex ea commodo consequat.");
+        // Add more text that will wrap around the shape.
+        builder.Writeln("\n" + new string('A', 500));
 
         // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "WrapShape.docx");
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved successfully.");
+            throw new Exception("The output document was not created.");
 
-        // Inform that the process completed.
-        Console.WriteLine($"Document saved successfully to: {outputPath}");
+        // Indicate successful completion.
+        Console.WriteLine("Document saved to: " + outputPath);
     }
 }

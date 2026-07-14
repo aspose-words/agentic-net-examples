@@ -2,39 +2,41 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial text.
-        builder.Writeln("Document start.");
-
-        // Define a bookmark where the shape will be inserted.
-        builder.StartBookmark("MyShapeBookmark");
-        builder.Writeln("Bookmark placeholder.");
-        builder.EndBookmark("MyShapeBookmark");
+        // Insert a bookmark named "MyBookmark" and some placeholder text.
+        builder.StartBookmark("MyBookmark");
+        builder.Writeln("This text is inside the bookmark.");
+        builder.EndBookmark("MyBookmark");
 
         // Move the builder's cursor to the start of the bookmark.
-        if (!builder.MoveToBookmark("MyShapeBookmark"))
-            throw new InvalidOperationException("Bookmark 'MyShapeBookmark' not found.");
+        bool moved = builder.MoveToBookmark("MyBookmark");
+        if (!moved)
+            throw new Exception("Bookmark 'MyBookmark' was not found.");
 
         // Insert a rectangle shape at the bookmark location.
         Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
-        shape.FillColor = Color.LightBlue;
-        shape.Stroke.Color = Color.DarkBlue;
+        shape.FillColor = System.Drawing.Color.LightBlue;
+        shape.Stroke.Color = System.Drawing.Color.DarkBlue;
 
-        // Save the document to the current directory.
+        // Define the output file path.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BookmarkShape.docx");
+
+        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("Failed to create the output document.", outputPath);
+            throw new Exception($"Failed to create the output file at '{outputPath}'.");
+
+        // Optional: indicate success.
+        Console.WriteLine($"Document saved successfully to: {outputPath}");
     }
 }

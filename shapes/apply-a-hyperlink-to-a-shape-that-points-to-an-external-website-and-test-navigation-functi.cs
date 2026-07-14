@@ -3,43 +3,35 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class HyperlinkShapeExample
+public class Program
 {
     public static void Main()
     {
-        // Define output file path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "HyperlinkShape.docx");
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a simple rectangle shape.
         Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 80);
-        // Apply hyperlink properties.
-        shape.HRef = "https://www.example.com/";
-        shape.Target = "New Window";
-        shape.ScreenTip = "Open Example website";
+
+        // Apply a hyperlink that points to an external website.
+        const string url = "https://www.example.com";
+        shape.HRef = url;               // Set the hyperlink address.
+        shape.Target = "New Window";    // Open the link in a new browser window.
+        shape.ScreenTip = "Open Example.com"; // Tooltip shown on hover.
+
+        // Validate that the hyperlink was set correctly.
+        if (shape.HRef != url)
+            throw new InvalidOperationException("Failed to set the shape hyperlink.");
+
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HyperlinkedShape.docx");
 
         // Save the document.
         doc.Save(outputPath);
 
-        // Load the document back to verify the hyperlink.
-        Document loadedDoc = new Document(outputPath);
-        Shape loadedShape = (Shape)loadedDoc.GetChildNodes(NodeType.Shape, true)[0];
-
-        // Validate that the hyperlink address matches the expected value.
-        if (loadedShape.HRef != "https://www.example.com/")
-            throw new InvalidOperationException("Hyperlink address was not set correctly.");
-
-        // Optionally, validate other properties.
-        if (loadedShape.Target != "New Window")
-            throw new InvalidOperationException("Hyperlink target was not set correctly.");
-
-        if (loadedShape.ScreenTip != "Open Example website")
-            throw new InvalidOperationException("Hyperlink screen tip was not set correctly.");
-
-        // Indicate successful completion.
-        Console.WriteLine("Document created and hyperlink verified successfully.");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

@@ -1,8 +1,9 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class FloatingShapeExample
 {
     public static void Main()
     {
@@ -10,49 +11,49 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // 1. Insert a floating rectangle shape.
-        // -----------------------------------------------------------------
+        // Insert a floating rectangle shape.
+        // Parameters: shape type, horizontal position reference, left, vertical position reference, top,
+        // width, height, wrap type (None = floating).
         Shape shape = builder.InsertShape(
-            ShapeType.Rectangle,                     // shape type
-            RelativeHorizontalPosition.Page, 100,    // left position (points) relative to page
-            RelativeVerticalPosition.Page, 100,      // top position (points) relative to page
-            100,                                      // width (points)
-            50,                                       // height (points)
-            WrapType.None);                           // floating (no text wrap)
+            ShapeType.Rectangle,
+            RelativeHorizontalPosition.Page, 100,
+            RelativeVerticalPosition.Page, 100,
+            100, 50,
+            WrapType.None);
 
-        // Verify that the shape is floating.
+        // Verify the shape is floating.
         if (shape.IsInline)
-            throw new Exception("The shape should be floating after insertion.");
+            throw new Exception("Shape should be floating after insertion.");
 
-        // -----------------------------------------------------------------
-        // 2. Convert the floating shape to an inline shape.
-        // -----------------------------------------------------------------
-        shape.WrapType = WrapType.Inline;               // make it inline
-        // Inline shapes ignore positioning, so reset related properties.
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Margin;
-        shape.Left = 0;
-        shape.Top = 0;
+        // Convert the floating shape to an inline shape.
+        shape.WrapType = WrapType.Inline;
 
-        // Verify conversion.
+        // Verify the shape is now inline.
         if (!shape.IsInline)
-            throw new Exception("The shape should be inline after conversion.");
+            throw new Exception("Shape should be inline after conversion.");
 
-        // -----------------------------------------------------------------
-        // 3. Revert the inline shape back to a floating shape.
-        // -----------------------------------------------------------------
-        shape.WrapType = WrapType.None;                 // back to floating
+        // Convert the inline shape back to a floating shape.
+        shape.WrapType = WrapType.None;
         shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
         shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        shape.Left = 150;                               // new left position
-        shape.Top = 150;                                // new top position
+        shape.Left = 100;   // Position from the left edge of the page.
+        shape.Top = 100;    // Position from the top edge of the page.
+        shape.Width = 100;
+        shape.Height = 50;
 
-        // Verify final state.
+        // Verify the shape is floating again.
         if (shape.IsInline)
-            throw new Exception("The shape should be floating after reverting.");
+            throw new Exception("Shape should be floating after reverting.");
 
-        // Save the resulting document.
-        doc.Save("FloatingInlineShape.docx");
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FloatingInlineFloating.docx");
+        doc.Save(outputPath);
+
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to save the output document.");
+
+        // Inform that the process completed successfully.
+        Console.WriteLine("Document saved to: " + outputPath);
     }
 }

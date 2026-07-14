@@ -1,63 +1,66 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+public class ShapeInsertionExample
 {
     public static void Main()
     {
-        // Paths for the template and the output document.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Modified.docx";
+        // Define file names in the current directory.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
 
         // -----------------------------------------------------------------
-        // Create a simple DOCX template if it does not already exist.
+        // 1. Create a simple DOCX template and save it.
         // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
+        templateBuilder.Writeln("This is a template document.");
+        templateDoc.Save(templatePath);
+
+        // Verify that the template was created.
         if (!File.Exists(templatePath))
-        {
-            Document templateDoc = new Document();
-            DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
-            templateBuilder.Writeln("This is a template document.");
-            templateDoc.Save(templatePath);
-        }
+            throw new InvalidOperationException("Failed to create the template document.");
 
         // -----------------------------------------------------------------
-        // Load the template document.
+        // 2. Load the template.
         // -----------------------------------------------------------------
         Document doc = new Document(templatePath);
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // -----------------------------------------------------------------
-        // Insert a rectangle shape (inline).
+        // 3. Insert required shapes.
         // -----------------------------------------------------------------
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 150, 80);
-        rectangle.FillColor = Color.LightCoral;
-        rectangle.Stroke.Color = Color.DarkRed;
+        // Insert an inline rectangle shape.
+        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        rectangle.Stroke.Color = System.Drawing.Color.Blue;
+        rectangle.Fill.Color = System.Drawing.Color.LightGray;
+
+        // Insert a floating text box shape.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        textBox.WrapType = WrapType.None;
+        textBox.Left = 150;   // Position from the left margin (points).
+        textBox.Top = 150;    // Position from the top of the page (points).
+        textBox.Stroke.Color = System.Drawing.Color.DarkGreen;
+        textBox.Fill.Color = System.Drawing.Color.LightYellow;
+
+        // Add text to the text box.
+        Paragraph tbParagraph = textBox.FirstParagraph;
+        tbParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        tbParagraph.AppendChild(new Run(doc, "Hello from a text box!"));
 
         // -----------------------------------------------------------------
-        // Insert a floating ellipse shape with custom positioning.
-        // -----------------------------------------------------------------
-        Shape ellipse = builder.InsertShape(
-            ShapeType.Ellipse,
-            RelativeHorizontalPosition.Page, 100,   // left distance from page
-            RelativeVerticalPosition.Page, 200,     // top distance from page
-            120, 120,                               // width, height
-            WrapType.None);                         // no text wrapping
-
-        ellipse.FillColor = Color.LightBlue;
-        ellipse.Stroke.Color = Color.DarkBlue;
-
-        // -----------------------------------------------------------------
-        // Save the modified document.
+        // 4. Save the modified document.
         // -----------------------------------------------------------------
         doc.Save(outputPath);
 
         // -----------------------------------------------------------------
-        // Validate that the output file was created.
+        // 5. Validate that the output file exists.
         // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException("The output document was not saved correctly.");
+
+        // The program finishes without waiting for user input.
     }
 }

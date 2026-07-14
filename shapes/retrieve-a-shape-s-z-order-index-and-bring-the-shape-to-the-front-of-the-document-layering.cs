@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
@@ -13,58 +13,53 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three overlapping rectangles. Newer shapes are placed on top by default.
-        Shape shape1 = builder.InsertShape(
+        // Insert three overlapping rectangles. The later inserted shape is on top by default.
+        Shape orange = builder.InsertShape(
             ShapeType.Rectangle,
             RelativeHorizontalPosition.LeftMargin, 100,
             RelativeVerticalPosition.TopMargin, 100,
-            200, 200,
-            WrapType.None);
-        shape1.FillColor = Color.Orange;
+            200, 200, WrapType.None);
+        orange.FillColor = Color.Orange;
 
-        Shape shape2 = builder.InsertShape(
+        Shape blue = builder.InsertShape(
             ShapeType.Rectangle,
             RelativeHorizontalPosition.LeftMargin, 150,
             RelativeVerticalPosition.TopMargin, 150,
-            200, 200,
-            WrapType.None);
-        shape2.FillColor = Color.LightBlue;
+            200, 200, WrapType.None);
+        blue.FillColor = Color.LightBlue;
 
-        Shape shape3 = builder.InsertShape(
+        Shape green = builder.InsertShape(
             ShapeType.Rectangle,
             RelativeHorizontalPosition.LeftMargin, 200,
             RelativeVerticalPosition.TopMargin, 200,
-            200, 200,
-            WrapType.None);
-        shape3.FillColor = Color.LightGreen;
+            200, 200, WrapType.None);
+        green.FillColor = Color.LightGreen;
 
         // Retrieve all top‑level shapes in the document.
         Shape[] shapes = doc.GetChildNodes(NodeType.Shape, true)
                             .OfType<Shape>()
                             .ToArray();
 
-        // Choose the first shape (orange rectangle) and read its current Z‑order.
-        Shape targetShape = shapes[0];
-        int originalZOrder = targetShape.ZOrder;
-        Console.WriteLine($"Original ZOrder of target shape: {originalZOrder}");
+        // Display original ZOrder values (for debugging purposes).
+        Console.WriteLine("Original ZOrder values:");
+        foreach (Shape s in shapes)
+            Console.WriteLine($"{s.ShapeType}: {s.ZOrder}");
 
-        // Determine the highest ZOrder among the shapes.
-        int maxZOrder = shapes.Max(s => s.ZOrder);
+        // Bring the green rectangle to the front by assigning it the highest ZOrder.
+        int maxZ = shapes.Max(s => s.ZOrder);
+        green.ZOrder = maxZ + 1; // Higher value means frontmost.
 
-        // Bring the target shape to the front by assigning a higher ZOrder.
-        targetShape.ZOrder = maxZOrder + 1;
-        Console.WriteLine($"New ZOrder of target shape: {targetShape.ZOrder}");
+        // Verify the new ZOrder values.
+        Console.WriteLine("\nAfter bringing green shape to front:");
+        foreach (Shape s in shapes)
+            Console.WriteLine($"{s.ShapeType}: {s.ZOrder}");
 
-        // Save the document to a local folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string outFile = Path.Combine(artifactsDir, "ShapeZOrderDemo.docx");
-        doc.Save(outFile);
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ZOrderDemo.docx");
+        doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outFile))
+        // Simple validation that the file was created.
+        if (!File.Exists(outputPath))
             throw new Exception("Document was not saved correctly.");
-
-        Console.WriteLine($"Document saved to: {outFile}");
     }
 }

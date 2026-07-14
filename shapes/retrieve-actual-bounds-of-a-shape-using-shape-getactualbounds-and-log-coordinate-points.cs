@@ -1,36 +1,44 @@
 using System;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+namespace ShapeActualBoundsExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a floating rectangle shape.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 150, 80);
-        shape.WrapType = WrapType.None; // Make it floating.
-        shape.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        shape.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        shape.Left = 100; // Position from the left edge of the page.
-        shape.Top = 120;  // Position from the top edge of the page.
+            // Insert a floating rectangle shape.
+            Shape shape = builder.InsertShape(
+                ShapeType.Rectangle,               // Shape type.
+                RelativeHorizontalPosition.Page,   // Position relative to the page horizontally.
+                100,                               // Left position (points).
+                RelativeVerticalPosition.Page,     // Position relative to the page vertically.
+                100,                               // Top position (points).
+                200,                               // Width (points).
+                100,                               // Height (points).
+                WrapType.None);                    // No text wrapping.
 
-        // Retrieve the actual bounds of the shape.
-        // BoundsInPoints returns the shape's location and size in points.
-        RectangleF actualBounds = shape.BoundsInPoints;
+            // Retrieve the actual bounds of the shape.
+            // Use the BoundsInPoints property which provides the location and size of the shape.
+            RectangleF actualBounds = shape.BoundsInPoints;
 
-        // Log the coordinate points.
-        Console.WriteLine("Actual Bounds:");
-        Console.WriteLine($"  X      = {actualBounds.X}");
-        Console.WriteLine($"  Y      = {actualBounds.Y}");
-        Console.WriteLine($"  Width  = {actualBounds.Width}");
-        Console.WriteLine($"  Height = {actualBounds.Height}");
+            // Log the coordinate points.
+            Console.WriteLine("Actual Bounds of the Shape:");
+            Console.WriteLine($"X: {actualBounds.X}");
+            Console.WriteLine($"Y: {actualBounds.Y}");
+            Console.WriteLine($"Width: {actualBounds.Width}");
+            Console.WriteLine($"Height: {actualBounds.Height}");
 
-        // Save the document to verify the shape is inserted.
-        doc.Save("ActualBounds.docx");
+            // Save the document to the local file system.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "ShapeActualBounds.docx");
+            doc.Save(outputPath);
+        }
     }
 }

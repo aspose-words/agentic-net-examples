@@ -3,59 +3,65 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Rendering;
 using Aspose.Words.Saving;
+using Aspose.Words.Rendering;
 
-public class Program
+public class ExportShapesExample
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "ShapeImages");
-        Directory.CreateDirectory(outputDir);
+        // Prepare output directories.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        string imagesDir = Path.Combine(artifactsDir, "Images");
+        Directory.CreateDirectory(imagesDir);
 
-        // Create a new document and a builder.
+        // Create a new document and insert several shapes.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a rectangle shape.
-        builder.InsertShape(ShapeType.Rectangle, 150, 80);
+        builder.InsertShape(ShapeType.Rectangle, 120, 60);
 
         // Insert an ellipse shape.
-        builder.InsertShape(ShapeType.Ellipse, 120, 120);
+        builder.InsertShape(ShapeType.Ellipse, 80, 80);
 
-        // Insert a simple 1x1 PNG image shape using a byte array (no System.Drawing dependency).
-        // This is a transparent PNG encoded in base64.
-        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        builder.InsertImage(pngBytes);
+        // Insert a text box shape.
+        builder.InsertShape(ShapeType.TextBox, 150, 50);
 
-        // Optional: save the document for reference.
-        string docPath = Path.Combine(outputDir, "SampleDocument.docx");
+        // Insert an image shape using a minimal in‑memory PNG (1×1 pixel).
+        // This avoids the need for System.Drawing.
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/lK5XAAAAAElFTkSuQmCC");
+        using (MemoryStream ms = new MemoryStream(pngBytes))
+        {
+            // InsertImage returns the Shape that represents the image.
+            builder.InsertImage(ms);
+        }
+
+        // Save the document (optional, just to have a reference file).
+        string docPath = Path.Combine(artifactsDir, "SampleDocument.docx");
         doc.Save(docPath);
 
-        // Traverse all shapes in the document.
+        // Export each shape's visual representation to a separate PNG file.
         var shapes = doc.GetChildNodes(NodeType.Shape, true)
                         .OfType<Shape>()
+                        .Where(s => s.ShapeType != ShapeType.Group) // Skip group shapes (no appearance).
                         .ToList();
 
         for (int i = 0; i < shapes.Count; i++)
         {
             Shape shape = shapes[i];
-            // Use the shape type name for the file name.
-            string fileName = $"Shape_{i}_{shape.ShapeType}.png";
-            string filePath = Path.Combine(outputDir, fileName);
-
-            // Render the shape to a PNG image.
+            // Render the shape to an image.
             ShapeRenderer renderer = shape.GetShapeRenderer();
-            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png);
-            renderer.Save(filePath, options);
+            string fileName = $"shape_{i}_{shape.ShapeType}.png";
+            string filePath = Path.Combine(imagesDir, fileName);
+            renderer.Save(filePath, new ImageSaveOptions(SaveFormat.Png));
 
-            // Validate that the image file was created.
+            // Validate that the file was created.
             if (!File.Exists(filePath))
-                throw new Exception($"Failed to save image for shape index {i}.");
-
-            Console.WriteLine($"Saved {filePath}");
+                throw new InvalidOperationException($"Failed to save shape image: {filePath}");
         }
+
+        // Program ends automatically after Main finishes.
     }
 }

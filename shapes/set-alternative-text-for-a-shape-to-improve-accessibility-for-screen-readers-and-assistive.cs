@@ -3,34 +3,47 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+namespace ShapeAlternativeTextExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Define output directory and file name.
+            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+            Directory.CreateDirectory(artifactsDir);
+            string outputPath = Path.Combine(artifactsDir, "Shape.AltText.docx");
 
-        // Insert a cube shape and set its alternative text.
-        Shape shape = builder.InsertShape(ShapeType.Cube, 150, 150);
-        shape.AlternativeText = "Alt text for MyCube.";
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+            // Insert a cube shape and give it a name.
+            Shape shape = builder.InsertShape(ShapeType.Cube, 150, 150);
+            shape.Name = "MyCube";
 
-        // Save the document.
-        string docPath = Path.Combine(outputDir, "ShapeAltText.docx");
-        doc.Save(docPath);
+            // Set the alternative text for accessibility.
+            string altText = "Alt text for MyCube.";
+            shape.AlternativeText = altText;
 
-        // Verify that the file was created.
-        if (!File.Exists(docPath))
-            throw new Exception("The document was not saved correctly.");
+            // Save the document.
+            doc.Save(outputPath);
 
-        // Reload the document and verify the alternative text.
-        Document loadedDoc = new Document(docPath);
-        Shape loadedShape = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
-        if (loadedShape == null || loadedShape.AlternativeText != "Alt text for MyCube.")
-            throw new Exception("Alternative text was not set correctly.");
+            // Validate that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception($"Failed to create the output file at '{outputPath}'.");
+
+            // Reload the document and verify the alternative text.
+            Document loadedDoc = new Document(outputPath);
+            Shape loadedShape = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
+            if (loadedShape == null)
+                throw new Exception("No shape was found in the saved document.");
+
+            if (loadedShape.AlternativeText != altText)
+                throw new Exception("The alternative text of the shape does not match the expected value.");
+
+            // Indicate success (optional).
+            Console.WriteLine("Shape alternative text set and verified successfully.");
+        }
     }
 }
