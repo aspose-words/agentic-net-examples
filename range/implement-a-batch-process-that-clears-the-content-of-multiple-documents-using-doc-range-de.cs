@@ -6,44 +6,38 @@ public class Program
 {
     public static void Main()
     {
-        // Determine base directory of the application.
+        // Define folders for input and output documents relative to the executable directory.
         string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-
-        // Create folders for input and output documents.
         string inputDir = Path.Combine(baseDir, "InputDocs");
         string outputDir = Path.Combine(baseDir, "OutputDocs");
+
+        // Ensure the directories exist.
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Step 1: Generate sample source documents.
-        // -----------------------------------------------------------------
+        // Create a few sample source documents.
         for (int i = 1; i <= 3; i++)
         {
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"Sample content for document {i}.");
+            builder.Writeln($"This is the content of document {i}.");
             string inputPath = Path.Combine(inputDir, $"Doc{i}.docx");
             sampleDoc.Save(inputPath);
         }
 
-        // -----------------------------------------------------------------
-        // Step 2: Batch process - clear the entire content of each document.
-        // -----------------------------------------------------------------
+        // Process each document: load, clear its entire content, and save to the output folder.
         foreach (string inputPath in Directory.GetFiles(inputDir, "*.docx"))
         {
             // Load the document.
             Document doc = new Document(inputPath);
 
-            // Delete all characters in the document's range (clears content).
+            // Delete all characters in the document's range, effectively clearing its content.
             doc.Range.Delete();
 
-            // Save the cleared document to the output folder, preserving the file name.
-            string outputPath = Path.Combine(outputDir, Path.GetFileName(inputPath));
+            // Save the cleared document to the output folder, preserving the original file name.
+            string fileName = Path.GetFileName(inputPath);
+            string outputPath = Path.Combine(outputDir, fileName);
             doc.Save(outputPath);
         }
-
-        // Optional: indicate completion.
-        Console.WriteLine("Batch clearing of documents completed.");
     }
 }

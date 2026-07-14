@@ -19,14 +19,8 @@ public class Program
             builder.Writeln(); // Move to a new line after each bookmark.
         }
 
-        // Optionally save the document so the file exists on disk.
-        doc.Save("SampleWithBookmarks.docx");
-
-        // Retrieve the collection of bookmarks from the whole‑document range.
-        BookmarkCollection bookmarks = doc.Range.Bookmarks;
-
-        // Iterate through each bookmark and output its name.
-        foreach (Bookmark bookmark in bookmarks)
+        // Iterate through each bookmark in the document's range and output its name.
+        foreach (Bookmark bookmark in doc.Range.Bookmarks)
         {
             Console.WriteLine(bookmark.Name);
         }

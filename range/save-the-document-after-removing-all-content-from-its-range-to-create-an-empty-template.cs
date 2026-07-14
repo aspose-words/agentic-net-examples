@@ -11,25 +11,18 @@ public class Program
 
         // Use DocumentBuilder to add some sample content.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is some sample text that will be removed.");
+        builder.Writeln("This text will be removed.");
+        builder.Writeln("Another line to delete.");
 
-        // Verify that the document currently contains text.
-        // (Optional, just for demonstration; can be omitted in production.)
-        Console.WriteLine("Before deletion: " + doc.GetText().Trim());
-
-        // Delete all characters in the whole document range, leaving an empty template.
+        // Delete all characters in the document's range, leaving an empty template.
         doc.Range.Delete();
 
-        // Verify that the document is now empty.
-        Console.WriteLine("After deletion: '" + doc.GetText().Trim() + "'");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Define the output file path (in the same directory as the executable).
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EmptyTemplate.docx");
-
-        // Save the empty document.
+        // Save the empty template.
+        string outputPath = Path.Combine(outputDir, "EmptyTemplate.docx");
         doc.Save(outputPath);
-
-        // Inform the user where the file was saved.
-        Console.WriteLine("Empty template saved to: " + outputPath);
     }
 }

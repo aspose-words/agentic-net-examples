@@ -5,30 +5,27 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a few bookmarks with some text inside each.
+        // Add sample bookmarks to the document.
         for (int i = 1; i <= 3; i++)
         {
-            string bookmarkName = $"Bookmark_{i}";
+            string bookmarkName = $"MyBookmark_{i}";
             builder.StartBookmark(bookmarkName);
             builder.Write($"Text inside {bookmarkName}.");
             builder.EndBookmark(bookmarkName);
-            builder.Writeln(); // Add a line break after each bookmark.
+            builder.Writeln(); // Move to a new line after each bookmark.
         }
 
-        // Obtain the range that covers the whole document.
-        Aspose.Words.Range range = doc.Range;
+        // Retrieve the collection of bookmarks from the whole‑document range.
+        BookmarkCollection bookmarks = doc.Range.Bookmarks;
 
-        // Log the name of each bookmark found in the range.
-        foreach (Bookmark bookmark in range.Bookmarks)
+        // Log each bookmark's name to the console for debugging.
+        foreach (Bookmark bm in bookmarks)
         {
-            Console.WriteLine($"Bookmark name: {bookmark.Name}");
+            Console.WriteLine($"Bookmark name: {bm.Name}");
         }
-
-        // Save the document (optional, demonstrates full lifecycle).
-        doc.Save("BookmarksDemo.docx");
     }
 }

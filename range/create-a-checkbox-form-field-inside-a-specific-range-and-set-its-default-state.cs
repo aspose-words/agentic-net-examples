@@ -1,40 +1,48 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace AsposeWordsRangeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Add some introductory text.
-        builder.Writeln("Document with a checkbox form field inserted into a specific range.");
+            // Use DocumentBuilder to add initial content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Paragraph before the checkbox.");
 
-        // Insert a paragraph that will serve as the target range.
-        builder.Writeln("Target paragraph: ");
+            // Insert a new paragraph that will contain the checkbox.
+            builder.Writeln("Paragraph with checkbox:");
 
-        // Retrieve the last paragraph (the one we just added).
-        Paragraph targetParagraph = doc.LastSection.Body.Paragraphs[doc.LastSection.Body.Paragraphs.Count - 1];
+            // Move the builder cursor to the newly created paragraph.
+            // The paragraph we just added is the last paragraph in the document body.
+            Paragraph targetParagraph = doc.FirstSection.Body.Paragraphs[doc.FirstSection.Body.Paragraphs.Count - 1];
+            builder.MoveTo(targetParagraph);
 
-        // Move the builder's cursor to the start of the target paragraph.
-        builder.MoveTo(targetParagraph);
+            // Insert a checkbox form field at the current position.
+            // Name: "MyCheckBox", default checked state: true, size: 0 (auto).
+            FormField checkBox = builder.InsertCheckBox("MyCheckBox", true, 0);
 
-        // Insert a checkbox form field at the current position.
-        // Parameters: name, defaultValue (checked state), size (0 = auto).
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
+            // Set the default value of the checkbox (the state it will have when the document is opened).
+            checkBox.Default = true;
 
-        // Set the default value of the checkbox (the state it will have when the document is opened).
-        checkBox.Default = true; // The checkbox will be checked by default.
+            // Optionally set the current checked state (can be different from the default).
+            checkBox.Checked = true;
 
-        // Optionally, set the current checked state (can differ from the default).
-        checkBox.Checked = false; // Currently unchecked.
+            // Add another paragraph after the checkbox for clarity.
+            builder.Writeln();
+            builder.Writeln("Paragraph after the checkbox.");
 
-        // Save the document to the local file system.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "CheckboxInRange.docx");
-        doc.Save(outputPath);
+            // Save the document to a file in the current directory.
+            string outputPath = "CheckboxInRange.docx";
+            doc.Save(outputPath);
+
+            // Indicate completion (no interactive input required).
+            Console.WriteLine($"Document saved to '{outputPath}'.");
+        }
     }
 }

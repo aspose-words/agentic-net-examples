@@ -7,40 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add some bookmarks.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample bookmarks with some text inside each.
         for (int i = 1; i <= 3; i++)
         {
             string bookmarkName = $"MyBookmark_{i}";
+            builder.Write($"Text before {bookmarkName}. ");
             builder.StartBookmark(bookmarkName);
             builder.Write($"Text inside {bookmarkName}.");
             builder.EndBookmark(bookmarkName);
-            builder.Writeln(); // Add a line break after each bookmark.
+            builder.Writeln($" Text after {bookmarkName}.");
         }
-
-        // Save the sample document (optional, for verification).
-        string docPath = Path.Combine(Environment.CurrentDirectory, "SampleDoc.docx");
-        doc.Save(docPath);
 
         // Extract bookmark names and their enclosed text.
-        BookmarkCollection bookmarks = doc.Range.Bookmarks;
-        StringBuilder reportBuilder = new StringBuilder();
-
-        foreach (Bookmark bm in bookmarks)
+        StringBuilder report = new StringBuilder();
+        foreach (Bookmark bm in doc.Range.Bookmarks)
         {
             string line = $"Bookmark: {bm.Name}, Text: {bm.Text}";
-            reportBuilder.AppendLine(line);
+            report.AppendLine(line);
         }
 
-        // Write the summary report to a text file.
+        // Save the report to a local text file.
         string reportPath = Path.Combine(Environment.CurrentDirectory, "BookmarkReport.txt");
-        File.WriteAllText(reportPath, reportBuilder.ToString());
+        File.WriteAllText(reportPath, report.ToString());
 
-        // Output paths so the user can locate the files (no interactive input required).
-        Console.WriteLine($"Document saved to: {docPath}");
-        Console.WriteLine($"Bookmark report saved to: {reportPath}");
+        // Optionally, save the document for inspection.
+        string docPath = Path.Combine(Environment.CurrentDirectory, "SampleDocument.docx");
+        doc.Save(docPath);
     }
 }
