@@ -3,71 +3,80 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
+using Aspose.Words.Saving;
 
-public class OfficeMathSaveExample
+public class Program
 {
     public static void Main()
     {
+        // Path for the output DOCX file.
+        string outputPath = "ModifiedDocument.docx";
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Introductory paragraph.
+        // Add a title paragraph.
         builder.Writeln("Sample document with OfficeMath equations:");
+        builder.Writeln();
 
-        // Insert three safe EQ‑field equations.
-        InsertOfficeMath(builder, @"\f(1,2)");          // Fraction 1/2
-        InsertOfficeMath(builder, @"\r(3,x)");          // Cube root of x
-        InsertOfficeMath(builder, @"\i \su(n=1,5,n)"); // Integral with summation
+        // ------------------------------------------------------------
+        // Insert the first equation using the deterministic EQ-field bootstrap.
+        // ------------------------------------------------------------
+        builder.Writeln("Equation 1 (fraction 1/2):");
 
-        // Save the document as DOCX.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ModifiedDocument.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
-
-        Console.WriteLine("Document saved to: " + outputPath);
-    }
-
-    // Inserts an EQ field, converts it to a real OfficeMath node,
-    // applies display formatting to top‑level equations,
-    // and removes the original field.
-    private static void InsertOfficeMath(DocumentBuilder builder, string eqArguments)
-    {
         // Insert an empty EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        FieldEQ field1 = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Write the EQ arguments after the field separator.
-        builder.MoveTo(field.Separator);
-        builder.Write(eqArguments);
+        // Move to the field separator and write the EQ switch arguments.
+        builder.MoveTo(field1.Separator);
+        builder.Write(@"\f(1,2)"); // Simple fraction 1 over 2.
 
-        // Update the field so that Word evaluates the EQ code.
-        field.Update();
+        // Return the builder to the paragraph that contains the field.
+        builder.MoveTo(field1.Start.ParentNode);
 
-        // Convert the EQ field to an OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
-
-        if (officeMath == null)
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
-
-        // Insert the OfficeMath node before the field start.
-        field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-
-        // Remove the original EQ field.
-        field.Remove();
-
-        // Apply display formatting only to top‑level equations.
-        if (officeMath.MathObjectType == MathObjectType.OMathPara)
+        // Convert the EQ field to a real OfficeMath object.
+        OfficeMath officeMath1 = field1.AsOfficeMath();
+        if (officeMath1 != null)
         {
-            officeMath.DisplayType = OfficeMathDisplayType.Display;
-            officeMath.Justification = OfficeMathJustification.Left;
+            // Insert the OfficeMath node before the field start.
+            field1.Start.ParentNode.InsertBefore(officeMath1, field1.Start);
+            // Remove the original field so only the OfficeMath remains.
+            field1.Remove();
+
+            // Preserve formatting: display the equation on its own line and left‑justify it.
+            officeMath1.DisplayType = OfficeMathDisplayType.Display;
+            officeMath1.Justification = OfficeMathJustification.Left;
         }
 
-        // Move the builder to the paragraph after the inserted equation
-        // so subsequent insertions continue on a new line.
-        builder.MoveTo(officeMath.ParentParagraph);
-        builder.InsertParagraph();
+        // Add a blank line after the equation.
+        builder.Writeln();
+
+        // ------------------------------------------------------------
+        // Insert a second equation (integral with summation) using the same pattern.
+        // ------------------------------------------------------------
+        builder.Writeln("Equation 2 (integral with summation):");
+
+        FieldEQ field2 = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        builder.MoveTo(field2.Separator);
+        builder.Write(@"\i \su(n=1,5,n)"); // Integral with summation from n=1 to 5.
+        builder.MoveTo(field2.Start.ParentNode);
+
+        OfficeMath officeMath2 = field2.AsOfficeMath();
+        if (officeMath2 != null)
+        {
+            field2.Start.ParentNode.InsertBefore(officeMath2, field2.Start);
+            field2.Remove();
+
+            // Keep the default inline display but set justification to center.
+            officeMath2.Justification = OfficeMathJustification.Center;
+        }
+
+        // Save the document as DOCX. All OfficeMath nodes retain their formatting.
+        doc.Save(outputPath, SaveFormat.Docx);
+
+        // Validate that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

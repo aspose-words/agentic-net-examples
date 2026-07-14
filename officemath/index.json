@@ -4,22 +4,57 @@
     "slug": "officemath",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use native Aspose.Words OfficeMath APIs directly. Create realistic local DOC or DOCX inputs inside the example whenever the task references an existing file, stream, folder, or source document. Work with real OfficeMath nodes discovered through NodeType.OfficeMath, and use documented OfficeMath properties such as DisplayType, Justification, and MathObjectType only.",
+    "preferred_workflow": "Prefer a deterministic bootstrap pattern: create a local DOC or DOCX, insert a FieldEQ using builder.InsertField(FieldType.FieldEquation, true), write safe EQ switches at the field separator, convert with FieldEQ.AsOfficeMath(), insert the returned OfficeMath before the field start only if non-null, remove the field, save, reload if needed, then traverse or modify OfficeMath nodes through NodeType.OfficeMath. Only change DisplayType or Justification on top-level OfficeMath nodes whose MathObjectType is OMathPara.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.4.0"
-    }
+      "Aspose.Words": "26.5.0"
+    },
+    "required_namespaces": [
+      "System",
+      "System.IO",
+      "Aspose.Words",
+      "Aspose.Words.Fields",
+      "Aspose.Words.Math",
+      "System.Linq",
+      "Aspose.Words.Tables",
+      "Aspose.Words.Saving",
+      "Aspose.Words.Rendering",
+      "System.Text",
+      "System.Collections.Generic"
+    ],
+    "key_apis": [
+      "Document",
+      "DocumentBuilder",
+      "NodeType",
+      "File",
+      "Path",
+      "FieldType",
+      "Directory",
+      "CompositeNode",
+      "SaveFormat",
+      "Field",
+      "Paragraph",
+      "Node",
+      "Range",
+      "PdfSaveOptions"
+    ]
   },
   "stats": {
     "total_examples": 30,
+    "publish_ready_successful_examples": 30,
     "workflow_counts": {
-      "formatting-display": 11,
-      "export-validation": 3,
       "creation-modification": 7,
+      "export-validation": 3,
+      "formatting-display": 11,
       "inspection-reporting": 7,
       "native-officemath": 2
+    },
+    "winner_counts": {
+      "existing_repo": 5,
+      "llm": 4,
+      "mcp": 21
     }
   },
   "rules_summary": {
@@ -76,174 +111,6 @@
   "examples": [
     {
       "id": 1,
-      "file_name": "apply-a-uniform-justification-setting-to-all-officemath-equations-across-multiple-sections.cs",
-      "task": "Apply a uniform justification setting to all OfficeMath equations across multiple sections of a large document.",
-      "workflow": "formatting-display",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 2,
-      "file_name": "batch-convert-a-collection-of-docx-files-containing-officemath-to-pdf-while-preserving-equ.cs",
-      "task": "Batch convert a collection of DOCX files containing OfficeMath to PDF while preserving equation fidelity.",
-      "workflow": "export-validation",
-      "outputs": [
-        "docx",
-        "pdf"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 3,
-      "file_name": "clone-an-existing-officemath-object-and-insert-the-clone-at-a-new-location.cs",
-      "task": "Clone an existing OfficeMath object and insert the clone at a new location.",
-      "workflow": "creation-modification",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 4,
-      "file_name": "configure-an-officemath-object-to-display-on-a-separate-line-rather-than-inline-within-the.cs",
-      "task": "Configure an OfficeMath object to display on a separate line rather than inline within the paragraph.",
-      "workflow": "formatting-display",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 5,
-      "file_name": "create-a-batch-process-that-inserts-a-predefined-officemath-equation-into-each-paragraph-o.cs",
-      "task": "Create a batch process that inserts a predefined OfficeMath equation into each paragraph of a document.",
-      "workflow": "creation-modification",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 6,
-      "file_name": "create-a-function-that-returns-true-if-an-officemath-node-matches-a-specified-mathobjectty.cs",
-      "task": "Create a function that returns true if an OfficeMath node matches a specified MathObjectType criteria.",
-      "workflow": "inspection-reporting",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 7,
-      "file_name": "create-a-macro-that-toggles-the-display-mode-of-selected-officemath-equations-between-inli.cs",
-      "task": "Create a macro that toggles the display mode of selected OfficeMath equations between inline and separate line.",
-      "workflow": "formatting-display",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 8,
-      "file_name": "create-a-new-officemath-object-with-documentbuilder-and-insert-it-as-an-inline-equation.cs",
-      "task": "Create a new OfficeMath object with DocumentBuilder and insert it as an inline equation.",
-      "workflow": "formatting-display",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 9,
-      "file_name": "delete-an-unwanted-officemath-node-from-the-document-and-adjust-surrounding-paragraph-spac.cs",
-      "task": "Delete an unwanted OfficeMath node from the document and adjust surrounding paragraph spacing.",
-      "workflow": "creation-modification",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 10,
-      "file_name": "export-the-document-containing-officemath-equations-to-pdf-and-verify-equation-layout-rema.cs",
-      "task": "Export the document containing OfficeMath equations to PDF and verify equation layout remains intact.",
-      "workflow": "export-validation",
-      "outputs": [
-        "docx",
-        "pdf"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 11,
-      "file_name": "extract-all-officemath-equations-from-a-document-and-write-them-to-a-text-file.cs",
-      "task": "Extract all OfficeMath equations from a document and write them to a text file.",
-      "workflow": "inspection-reporting",
-      "outputs": [
-        "txt"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 12,
-      "file_name": "generate-a-report-listing-each-officemath-equation-s-mathobjecttype-and-its-position-withi.cs",
-      "task": "Generate a report listing each OfficeMath equation's MathObjectType and its position within the document.",
-      "workflow": "inspection-reporting",
-      "outputs": [
-        "docx",
-        "txt"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 13,
-      "file_name": "insert-an-officemath-equation-from-a-latex-string-representation-into-a-specific-document.cs",
-      "task": "Insert an OfficeMath equation from a LaTeX string representation into a specific document location.",
-      "workflow": "creation-modification",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 14,
-      "file_name": "insert-an-officemath-equation-from-a-mathml-string-into-a-paragraph-using-documentbuilder.cs",
-      "task": "Insert an OfficeMath equation from a MathML string into a paragraph using DocumentBuilder.",
-      "workflow": "creation-modification",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 15,
-      "file_name": "iterate-over-all-officemath-nodes-in-a-document-to-count-the-total-number-of-equations.cs",
-      "task": "Iterate over all OfficeMath nodes in a document to count the total number of equations.",
-      "workflow": "inspection-reporting",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 16,
       "file_name": "load-a-docx-document-containing-officemath-equations-and-enumerate-each-equation-node.cs",
       "task": "Load a DOCX document containing OfficeMath equations and enumerate each equation node.",
       "workflow": "inspection-reporting",
@@ -255,18 +122,7 @@
       "winner": "mcp"
     },
     {
-      "id": 17,
-      "file_name": "load-a-docx-file-replace-specific-officemath-equations-based-on-identifier-and-save-as-doc.cs",
-      "task": "Load a DOCX file, replace specific OfficeMath equations based on identifier, and save as DOCX.",
-      "workflow": "creation-modification",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 18,
+      "id": 2,
       "file_name": "load-multiple-docx-files-iterate-officemath-equations-and-standardize-justification-across.cs",
       "task": "Load multiple DOCX files, iterate OfficeMath equations, and standardize justification across all documents.",
       "workflow": "formatting-display",
@@ -277,9 +133,9 @@
       "winner": "mcp"
     },
     {
-      "id": 19,
-      "file_name": "programmatically-change-all-officemath-equations-from-inline-to-separate-line-display-in-a.cs",
-      "task": "Programmatically change all OfficeMath equations from inline to separate line display in a large report.",
+      "id": 3,
+      "file_name": "create-a-new-officemath-object-with-documentbuilder-and-insert-it-as-an-inline-equation.cs",
+      "task": "Create a new OfficeMath object with DocumentBuilder and insert it as an inline equation.",
       "workflow": "formatting-display",
       "outputs": [
         "docx"
@@ -288,42 +144,31 @@
       "winner": "mcp"
     },
     {
-      "id": 20,
-      "file_name": "programmatically-set-the-display-mode-of-officemath-equations-to-inline-for-compact-docume.cs",
-      "task": "Programmatically set the display mode of OfficeMath equations to inline for compact document layout.",
-      "workflow": "formatting-display",
+      "id": 4,
+      "file_name": "insert-an-officemath-equation-from-a-latex-string-representation-into-a-specific-document.cs",
+      "task": "Insert an OfficeMath equation from a LaTeX string representation into a specific document location.",
+      "workflow": "creation-modification",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
-      "id": 21,
-      "file_name": "read-mathobjecttype-of-officemath-nodes-and-log-any-unsupported-equation-types-for-review.cs",
-      "task": "Read MathObjectType of OfficeMath nodes and log any unsupported equation types for review.",
-      "workflow": "inspection-reporting",
+      "id": 5,
+      "file_name": "insert-an-officemath-equation-from-a-mathml-string-into-a-paragraph-using-documentbuilder.cs",
+      "task": "Insert an OfficeMath equation from a MathML string into a paragraph using DocumentBuilder.",
+      "workflow": "creation-modification",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
-      "id": 22,
-      "file_name": "replace-all-inline-officemath-equations-with-separate-line-display-to-enhance-visual-clari.cs",
-      "task": "Replace all inline OfficeMath equations with separate line display to enhance visual clarity in presentations.",
-      "workflow": "formatting-display",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 23,
-      "file_name": "replace-the-content-of-an-existing-officemath-object-with-a-new-equation-defined-by-a-stri.cs",
-      "task": "Replace the content of an existing OfficeMath object with a new equation defined by a string.",
+      "id": 6,
+      "file_name": "create-a-batch-process-that-inserts-a-predefined-officemath-equation-into-each-paragraph-o.cs",
+      "task": "Create a batch process that inserts a predefined OfficeMath equation into each paragraph of a document.",
       "workflow": "creation-modification",
       "outputs": [
         "docx"
@@ -332,51 +177,84 @@
       "winner": "mcp"
     },
     {
-      "id": 24,
-      "file_name": "retrieve-the-mathobjecttype-of-each-officemath-node-to-determine-whether-it-is-a-fraction.cs",
-      "task": "Retrieve the MathObjectType of each OfficeMath node to determine whether it is a fraction or radical.",
-      "workflow": "inspection-reporting",
+      "id": 7,
+      "file_name": "replace-the-content-of-an-existing-officemath-object-with-a-new-equation-defined-by-a-stri.cs",
+      "task": "Replace the content of an existing OfficeMath object with a new equation defined by a string.",
+      "workflow": "creation-modification",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
-      "id": 25,
-      "file_name": "save-the-modified-document-as-docx-while-preserving-all-officemath-equations-and-their-for.cs",
-      "task": "Save the modified document as DOCX while preserving all OfficeMath equations and their formatting.",
-      "workflow": "native-officemath",
+      "id": 8,
+      "file_name": "load-a-docx-file-replace-specific-officemath-equations-based-on-identifier-and-save-as-doc.cs",
+      "task": "Load a DOCX file, replace specific OfficeMath equations based on identifier, and save as DOCX.",
+      "workflow": "creation-modification",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
-      "id": 26,
+      "id": 9,
+      "file_name": "delete-an-unwanted-officemath-node-from-the-document-and-adjust-surrounding-paragraph-spac.cs",
+      "task": "Delete an unwanted OfficeMath node from the document and adjust surrounding paragraph spacing.",
+      "workflow": "creation-modification",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
+    },
+    {
+      "id": 10,
+      "file_name": "clone-an-existing-officemath-object-and-insert-the-clone-at-a-new-location.cs",
+      "task": "Clone an existing OfficeMath object and insert the clone at a new location.",
+      "workflow": "creation-modification",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "llm",
+      "winner": "llm"
+    },
+    {
+      "id": 11,
       "file_name": "set-the-justification-of-an-officemath-equation-to-center-alignment-using-the-justificatio.cs",
       "task": "Set the justification of an OfficeMath equation to center alignment using the Justification property.",
       "workflow": "formatting-display",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
-      "id": 27,
+      "id": 12,
       "file_name": "update-the-justification-of-all-officemath-equations-to-right-alignment-in-a-template-docu.cs",
       "task": "Update the justification of all OfficeMath equations to right alignment in a template document.",
       "workflow": "formatting-display",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
+      "selected_engine": "mcp_secondary",
       "winner": "mcp"
     },
     {
-      "id": 28,
+      "id": 13,
+      "file_name": "apply-a-uniform-justification-setting-to-all-officemath-equations-across-multiple-sections.cs",
+      "task": "Apply a uniform justification setting to all OfficeMath equations across multiple sections of a large document.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
+    },
+    {
+      "id": 14,
       "file_name": "validate-that-after-bulk-justification-changes-no-officemath-equation-exceeds-the-page-mar.cs",
       "task": "Validate that after bulk justification changes, no OfficeMath equation exceeds the page margin limits.",
       "workflow": "formatting-display",
@@ -387,9 +265,109 @@
       "winner": "mcp"
     },
     {
-      "id": 29,
-      "file_name": "validate-that-each-officemath-object-conforms-to-expected-mathobjecttype-after-performing.cs",
-      "task": "Validate that each OfficeMath object conforms to expected MathObjectType after performing bulk updates.",
+      "id": 15,
+      "file_name": "configure-an-officemath-object-to-display-on-a-separate-line-rather-than-inline-within-the.cs",
+      "task": "Configure an OfficeMath object to display on a separate line rather than inline within the paragraph.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 16,
+      "file_name": "programmatically-change-all-officemath-equations-from-inline-to-separate-line-display-in-a.cs",
+      "task": "Programmatically change all OfficeMath equations from inline to separate line display in a large report.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 17,
+      "file_name": "replace-all-inline-officemath-equations-with-separate-line-display-to-enhance-visual-clari.cs",
+      "task": "Replace all inline OfficeMath equations with separate line display to enhance visual clarity in presentations.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 18,
+      "file_name": "programmatically-set-the-display-mode-of-officemath-equations-to-inline-for-compact-docume.cs",
+      "task": "Programmatically set the display mode of OfficeMath equations to inline for compact document layout.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 19,
+      "file_name": "retrieve-the-mathobjecttype-of-each-officemath-node-to-determine-whether-it-is-a-fraction.cs",
+      "task": "Retrieve the MathObjectType of each OfficeMath node to determine whether it is a fraction or radical.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 20,
+      "file_name": "read-mathobjecttype-of-officemath-nodes-and-log-any-unsupported-equation-types-for-review.cs",
+      "task": "Read MathObjectType of OfficeMath nodes and log any unsupported equation types for review.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 21,
+      "file_name": "create-a-function-that-returns-true-if-an-officemath-node-matches-a-specified-mathobjectty.cs",
+      "task": "Create a function that returns true if an OfficeMath node matches a specified MathObjectType criteria.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 22,
+      "file_name": "generate-a-report-listing-each-officemath-equation-s-mathobjecttype-and-its-position-withi.cs",
+      "task": "Generate a report listing each OfficeMath equation's MathObjectType and its position within the document.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx",
+        "txt"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 23,
+      "file_name": "extract-all-officemath-equations-from-a-document-and-write-them-to-a-text-file.cs",
+      "task": "Extract all OfficeMath equations from a document and write them to a text file.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "txt"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 24,
+      "file_name": "save-the-modified-document-as-docx-while-preserving-all-officemath-equations-and-their-for.cs",
+      "task": "Save the modified document as DOCX while preserving all OfficeMath equations and their formatting.",
       "workflow": "native-officemath",
       "outputs": [
         "docx"
@@ -398,13 +376,70 @@
       "winner": "mcp"
     },
     {
-      "id": 30,
+      "id": 25,
+      "file_name": "export-the-document-containing-officemath-equations-to-pdf-and-verify-equation-layout-rema.cs",
+      "task": "Export the document containing OfficeMath equations to PDF and verify equation layout remains intact.",
+      "workflow": "export-validation",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "llm",
+      "winner": "llm"
+    },
+    {
+      "id": 26,
       "file_name": "validate-that-exported-pdf-retains-the-exact-positioning-of-officemath-equations-as-in-the.cs",
       "task": "Validate that exported PDF retains the exact positioning of OfficeMath equations as in the source DOCX.",
       "workflow": "export-validation",
       "outputs": [
         "docx",
         "pdf"
+      ],
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
+    },
+    {
+      "id": 27,
+      "file_name": "batch-convert-a-collection-of-docx-files-containing-officemath-to-pdf-while-preserving-equ.cs",
+      "task": "Batch convert a collection of DOCX files containing OfficeMath to PDF while preserving equation fidelity.",
+      "workflow": "export-validation",
+      "outputs": [
+        "docx",
+        "pdf"
+      ],
+      "selected_engine": "mcp_secondary",
+      "winner": "mcp"
+    },
+    {
+      "id": 28,
+      "file_name": "validate-that-each-officemath-object-conforms-to-expected-mathobjecttype-after-performing.cs",
+      "task": "Validate that each OfficeMath object conforms to expected MathObjectType after performing bulk updates.",
+      "workflow": "native-officemath",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
+    },
+    {
+      "id": 29,
+      "file_name": "create-a-macro-that-toggles-the-display-mode-of-selected-officemath-equations-between-inli.cs",
+      "task": "Create a macro that toggles the display mode of selected OfficeMath equations between inline and separate line.",
+      "workflow": "formatting-display",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 30,
+      "file_name": "iterate-over-all-officemath-nodes-in-a-document-to-count-the-total-number-of-equations.cs",
+      "task": "Iterate over all OfficeMath nodes in a document to count the total number of equations.",
+      "workflow": "inspection-reporting",
+      "outputs": [
+        "docx"
       ],
       "selected_engine": "mcp",
       "winner": "mcp"

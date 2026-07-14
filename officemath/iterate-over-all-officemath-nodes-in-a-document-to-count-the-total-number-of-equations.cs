@@ -8,24 +8,53 @@ public class Program
 {
     public static void Main()
     {
+        // Prepare output folder.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+        string docPath = Path.Combine(outputDir, "OfficeMathCount.docx");
+
         // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three simple equations using the deterministic EQ-field bootstrap workflow.
-        InsertEquation(builder, @"\f(1,2)");   // Fraction 1/2
-        InsertEquation(builder, @"\r(2,x)");   // Square root of x
-        InsertEquation(builder, @"\i");        // Integral symbol
+        // Simple EQ field arguments that will be converted to real OfficeMath objects.
+        string[] eqArguments = { @"\f(1,2)", @"\r(3,x)", @"\i" };
 
-        // Save the sample document.
-        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
+        foreach (string args in eqArguments)
+        {
+            // Insert an EQ field.
+            FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+
+            // Write the EQ arguments into the field separator.
+            builder.MoveTo(field.Separator);
+            builder.Write(args);
+
+            // Return the builder to the field start's parent (the paragraph).
+            builder.MoveTo(field.Start.ParentNode);
+
+            // Convert the field to an OfficeMath object.
+            OfficeMath officeMath = field.AsOfficeMath();
+
+            // Replace the field with the real OfficeMath node.
+            if (officeMath != null)
+            {
+                field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+                field.Remove();
+            }
+
+            // Start a new paragraph for the next equation.
+            builder.Writeln();
+        }
+
+        // Save the document.
         doc.Save(docPath);
 
-        // Load the document (optional, demonstrates load workflow).
-        Document loadedDoc = new Document(docPath);
+        // Verify that the document was saved.
+        if (!File.Exists(docPath))
+            throw new InvalidOperationException("The document was not saved correctly.");
 
-        // Count all OfficeMath nodes that represent top‑level equations (MathObjectType.OMathPara).
-        NodeCollection officeMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
+        // Count top‑level OfficeMath nodes (equations) in the document.
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
         int equationCount = 0;
         foreach (OfficeMath om in officeMathNodes)
         {
@@ -34,29 +63,6 @@ public class Program
         }
 
         // Output the result.
-        Console.WriteLine($"Total number of equations: {equationCount}");
-    }
-
-    // Helper method to insert an EQ field, convert it to OfficeMath, and clean up the field.
-    private static void InsertEquation(DocumentBuilder builder, string eqArguments)
-    {
-        // Insert an EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-        // Move to the field separator and write the EQ arguments.
-        builder.MoveTo(field.Separator);
-        builder.Write(eqArguments);
-        // Return to the field start's parent node.
-        builder.MoveTo(field.Start.ParentNode);
-        // Convert the field to an OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
-        if (officeMath != null)
-        {
-            // Insert the OfficeMath before the field start.
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            // Remove the original field.
-            field.Remove();
-        }
-        // Insert a paragraph break after each equation for readability.
-        builder.InsertParagraph();
+        Console.WriteLine($"Total equations (top‑level OfficeMath): {equationCount}");
     }
 }
