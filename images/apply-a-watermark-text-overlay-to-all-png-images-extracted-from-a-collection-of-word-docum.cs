@@ -1,32 +1,32 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
+using Aspose.Words.Loading;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare output folder
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(baseDir);
 
-        // 1. Create a sample PNG image (used as source image in documents)
-        string sampleImagePath = Path.Combine(outputDir, "sample.png");
+        // 1. Create a sample PNG image (input.png)
+        string sampleImagePath = Path.Combine(baseDir, "input.png");
         CreateSamplePng(sampleImagePath, 200, 100);
 
         // 2. Create sample Word documents that contain the PNG image
-        string[] docPaths = new string[2];
-        for (int i = 0; i < docPaths.Length; i++)
+        List<string> docPaths = new List<string>();
+        for (int i = 0; i < 2; i++)
         {
-            string docPath = Path.Combine(outputDir, $"Document{i + 1}.docx");
+            string docPath = Path.Combine(baseDir, $"Document{i + 1}.docx");
             CreateWordDocumentWithImage(docPath, sampleImagePath);
-            docPaths[i] = docPath;
+            docPaths.Add(docPath);
         }
 
         // 3. Process each document: extract PNG images, apply watermark, save result
@@ -34,85 +34,78 @@ public class Program
         foreach (string docPath in docPaths)
         {
             Document doc = new Document(docPath);
-            var shapeNodes = doc.GetChildNodes(NodeType.Shape, true)
-                                .Cast<Shape>()
-                                .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Png)
-                                .ToList();
-
-            if (!shapeNodes.Any())
-                throw new Exception($"No PNG images found in document '{docPath}'.");
-
+            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
-            foreach (Shape shape in shapeNodes)
+
+            foreach (Shape shape in shapeNodes.OfType<Shape>())
             {
-                // Extract image to memory stream
-                using (MemoryStream imageStream = new MemoryStream())
+                if (shape.HasImage && shape.ImageData.ImageType == ImageType.Png)
                 {
-                    shape.ImageData.Save(imageStream);
-                    imageStream.Position = 0; // reset before reading
-
-                    // Load extracted image into a bitmap
-                    using (Bitmap originalBitmap = new Bitmap(imageStream))
+                    // Extract the image to a memory stream
+                    using (MemoryStream imageStream = new MemoryStream())
                     {
-                        // Create a new bitmap to draw watermark onto
-                        using (Bitmap watermarkedBitmap = new Bitmap(originalBitmap.Width, originalBitmap.Height))
+                        shape.ImageData.Save(imageStream);
+                        imageStream.Position = 0; // Reset before reading
+
+                        // Load the extracted image into a bitmap
+                        using (Aspose.Drawing.Bitmap originalBitmap = new Aspose.Drawing.Bitmap(imageStream))
                         {
-                            using (Graphics graphics = Graphics.FromImage(watermarkedBitmap))
+                            // Create a new bitmap to draw the watermark onto
+                            using (Aspose.Drawing.Bitmap watermarkedBitmap = new Aspose.Drawing.Bitmap(originalBitmap.Width, originalBitmap.Height))
                             {
-                                // Draw the original image
-                                graphics.DrawImage(originalBitmap, 0, 0, originalBitmap.Width, originalBitmap.Height);
-
-                                // Prepare watermark text drawing tools
-                                string watermarkText = "Sample Watermark";
-                                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20))
-                                using (SolidBrush brush = new SolidBrush(Aspose.Drawing.Color.FromArgb(128, 255, 0, 0))) // semi‑transparent red
+                                using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(watermarkedBitmap))
                                 {
-                                    // Position watermark near bottom‑left corner
-                                    PointF position = new PointF(10, originalBitmap.Height - 30);
-                                    graphics.DrawString(watermarkText, font, brush, position);
+                                    // Draw the original image onto the new bitmap
+                                    graphics.DrawImage(originalBitmap, 0, 0, originalBitmap.Width, originalBitmap.Height);
+
+                                    // Prepare watermark text drawing
+                                    string watermarkText = "Sample Watermark";
+                                    Aspose.Drawing.Font watermarkFont = new Aspose.Drawing.Font("Arial", 20);
+                                    Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.FromArgb(128, Aspose.Drawing.Color.Red));
+                                    Aspose.Drawing.PointF position = new Aspose.Drawing.PointF(10, 10);
+
+                                    // Draw the watermark text
+                                    graphics.DrawString(watermarkText, watermarkFont, brush, position);
                                 }
+
+                                // Save the watermarked image
+                                string watermarkedPath = Path.Combine(
+                                    baseDir,
+                                    $"watermarked_doc{docIndex + 1}_img{imageIndex + 1}.png");
+                                watermarkedBitmap.Save(watermarkedPath, Aspose.Drawing.Imaging.ImageFormat.Png);
+
+                                // Validate that the file was created
+                                if (!File.Exists(watermarkedPath))
+                                    throw new Exception($"Failed to create watermarked image: {watermarkedPath}");
                             }
-
-                            // Save the watermarked image
-                            string watermarkedPath = Path.Combine(outputDir,
-                                $"watermarked_doc{docIndex + 1}_img{imageIndex + 1}.png");
-                            watermarkedBitmap.Save(watermarkedPath, ImageFormat.Png);
-
-                            // Validate that the file was created
-                            if (!File.Exists(watermarkedPath))
-                                throw new Exception($"Failed to save watermarked image to '{watermarkedPath}'.");
                         }
                     }
-                }
 
-                imageIndex++;
+                    imageIndex++;
+                }
             }
 
             docIndex++;
         }
-
-        // Execution finished – all watermarked images are saved in the Output folder.
     }
 
-    // Creates a deterministic PNG image file.
+    // Creates a simple white PNG image with given dimensions
     private static void CreateSamplePng(string filePath, int width, int height)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
         {
-            graphics.Clear(Aspose.Drawing.Color.White);
-            using (SolidBrush brush = new SolidBrush(Aspose.Drawing.Color.LightBlue))
+            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                graphics.FillRectangle(brush, 0, 0, width, height);
+                graphics.Clear(Aspose.Drawing.Color.White);
             }
-            bitmap.Save(filePath, ImageFormat.Png);
+            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Png);
         }
 
         if (!File.Exists(filePath))
-            throw new Exception($"Failed to create sample image at '{filePath}'.");
+            throw new Exception($"Failed to create sample image: {filePath}");
     }
 
-    // Creates a Word document containing the specified image.
+    // Creates a Word document containing the specified image
     private static void CreateWordDocumentWithImage(string docPath, string imagePath)
     {
         Document doc = new Document();
@@ -120,6 +113,6 @@ public class Program
         builder.InsertImage(imagePath);
         doc.Save(docPath);
         if (!File.Exists(docPath))
-            throw new Exception($"Failed to save document at '{docPath}'.");
+            throw new Exception($"Failed to create document: {docPath}");
     }
 }

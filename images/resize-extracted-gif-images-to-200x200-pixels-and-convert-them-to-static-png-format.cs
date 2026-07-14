@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -9,85 +10,78 @@ public class Program
 {
     public static void Main()
     {
-        // File names
-        const string gifPath = "sample.gif";
-        const string docPath = "doc_with_gif.docx";
-        const string outputPngPath = "extracted_resized.png";
+        // Define file paths
+        const string sampleGifPath = "sample.gif";
+        const string documentPath = "sample.docx";
+        const string extractedGifPath = "extracted.gif";
+        const string resizedPngPath = "resized.png";
 
         // -------------------------------------------------
-        // 1. Create a sample 400x400 GIF image using Aspose.Drawing
+        // 1. Create a sample GIF image (static, 300x300)
         // -------------------------------------------------
-        const int originalSize = 400;
-        using (Bitmap bitmap = new Bitmap(originalSize, originalSize))
+        using (Bitmap bitmap = new Bitmap(300, 300))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background with light blue
-                g.Clear(Color.LightBlue);
-                // Draw a red ellipse
-                g.FillEllipse(new SolidBrush(Color.Red), 50, 50, 300, 300);
+                graphics.Clear(Color.White);
+                // Optional: draw a simple rectangle for visual content
+                graphics.DrawRectangle(Pens.Black, 50, 50, 200, 200);
             }
-
-            // Save as GIF
-            bitmap.Save(gifPath, ImageFormat.Gif);
+            bitmap.Save(sampleGifPath, ImageFormat.Gif);
         }
 
         // -------------------------------------------------
-        // 2. Create a Word document and insert the GIF image
+        // 2. Insert the GIF into a new Word document
         // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(gifPath);
-        doc.Save(docPath);
+        builder.InsertImage(sampleGifPath);
+        doc.Save(documentPath);
 
         // -------------------------------------------------
         // 3. Load the document and extract the GIF image
         // -------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        bool extracted = false;
+        Document loadedDoc = new Document(documentPath);
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        bool gifFound = false;
 
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        foreach (Shape shape in shapes.OfType<Shape>())
         {
             if (shape.HasImage && shape.ImageData.ImageType == ImageType.Gif)
             {
-                // Save image data to a memory stream
-                using (MemoryStream ms = new MemoryStream())
+                shape.ImageData.Save(extractedGifPath);
+                gifFound = true;
+                break; // Assuming only one GIF for this example
+            }
+        }
+
+        if (!gifFound)
+            throw new Exception("No GIF image found in the document.");
+
+        // -------------------------------------------------
+        // 4. Resize the extracted GIF to 200x200 and convert to PNG
+        // -------------------------------------------------
+        using (Bitmap original = new Bitmap(extractedGifPath))
+        {
+            using (Bitmap resized = new Bitmap(200, 200))
+            {
+                using (Graphics graphics = Graphics.FromImage(resized))
                 {
-                    shape.ImageData.Save(ms);
-                    ms.Position = 0; // Reset stream position
-
-                    // Load the GIF into a bitmap
-                    using (Bitmap originalBitmap = new Bitmap(ms))
-                    {
-                        const int targetSize = 200;
-                        using (Bitmap resizedBitmap = new Bitmap(targetSize, targetSize))
-                        {
-                            using (Graphics g = Graphics.FromImage(resizedBitmap))
-                            {
-                                // Draw the original image scaled to the new size
-                                g.DrawImage(originalBitmap, 0, 0, targetSize, targetSize);
-                            }
-
-                            // Save the resized bitmap as PNG
-                            resizedBitmap.Save(outputPngPath, ImageFormat.Png);
-                            extracted = true;
-                        }
-                    }
+                    graphics.DrawImage(original, 0, 0, 200, 200);
                 }
+                resized.Save(resizedPngPath, ImageFormat.Png);
             }
         }
 
         // -------------------------------------------------
-        // 4. Validate that the PNG file was created
+        // 5. Validate that the PNG was created
         // -------------------------------------------------
-        if (!extracted || !File.Exists(outputPngPath))
-        {
-            throw new Exception("Failed to extract and resize GIF image to PNG.");
-        }
+        if (!File.Exists(resizedPngPath))
+            throw new Exception("Resized PNG image was not created.");
 
-        // Optional cleanup (commented out)
-        // File.Delete(gifPath);
-        // File.Delete(docPath);
+        // Cleanup temporary files (optional)
+        // File.Delete(sampleGifPath);
+        // File.Delete(documentPath);
+        // File.Delete(extractedGifPath);
     }
 }

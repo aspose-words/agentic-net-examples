@@ -1,86 +1,89 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
         // Paths for temporary files
-        const string inputBmpPath = "sample.bmp";
-        const string docPath = "docWithBmp.docx";
+        const string sampleBmpPath = "sample.bmp";
+        const string docPath = "docWithImage.docx";
 
-        // 1. Create a sample BMP image (800x600) using Aspose.Drawing
-        using (Bitmap bmp = new Bitmap(800, 600))
+        // 1. Create a sample BMP image (800x600) and save it locally
+        const int originalWidth = 800;
+        const int originalHeight = 600;
+        using (Bitmap bitmap = new Bitmap(originalWidth, originalHeight))
         {
-            using (Graphics g = Graphics.FromImage(bmp))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.LightBlue);
+                g.Clear(Color.White);
+                // Draw a simple rectangle for visual reference
+                using (Pen pen = new Pen(Color.Blue, 5))
+                {
+                    g.DrawRectangle(pen, 50, 50, originalWidth - 100, originalHeight - 100);
+                }
             }
-
-            bmp.Save(inputBmpPath, ImageFormat.Bmp);
+            bitmap.Save(sampleBmpPath, ImageFormat.Bmp);
         }
 
-        // 2. Create a Word document and insert the BMP image
+        // 2. Create a new document and insert the BMP image
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputBmpPath);
+        builder.InsertImage(sampleBmpPath);
         doc.Save(docPath);
 
-        // 3. Load the document and extract images
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        // 3. Load the document (already in memory) and extract images
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Ensure the shape actually contains image data
-            if (!shape.HasImage) continue;
+            if (!shape.HasImage)
+                continue;
 
-            // 4. Save the original image bytes to a memory stream
-            using (MemoryStream originalStream = new MemoryStream())
+            // Save the original extracted image
+            string originalImagePath = $"original_{imageIndex}.bmp";
+            shape.ImageData.Save(originalImagePath);
+
+            // Load the extracted image into a bitmap
+            using (FileStream originalStream = File.OpenRead(originalImagePath))
             {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0; // reset before reading
-
-                // 5. Load the image with Aspose.Drawing.Bitmap
                 using (Bitmap originalBitmap = new Bitmap(originalStream))
                 {
-                    int originalWidth = originalBitmap.Width;
-                    int originalHeight = originalBitmap.Height;
-
-                    // 6. Calculate new dimensions (width = 1024, height proportional)
+                    // Calculate new dimensions to have a width of 1024 pixels, preserving aspect ratio
                     const int targetWidth = 1024;
-                    int targetHeight = (int)Math.Round((double)originalHeight * targetWidth / originalWidth);
+                    int targetHeight = (int)Math.Round((double)originalBitmap.Height * targetWidth / originalBitmap.Width);
 
-                    // 7. Resize the bitmap
+                    // Create a new bitmap with the target size
                     using (Bitmap resizedBitmap = new Bitmap(targetWidth, targetHeight))
                     {
                         using (Graphics g = Graphics.FromImage(resizedBitmap))
                         {
-                            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                            g.Clear(Color.White);
+                            // Draw the original image scaled to the new size
                             g.DrawImage(originalBitmap, 0, 0, targetWidth, targetHeight);
                         }
 
-                        // 8. Save the resized BMP image
-                        string resizedPath = $"resized_{imageIndex}.bmp";
-                        resizedBitmap.Save(resizedPath, ImageFormat.Bmp);
-                        imageIndex++;
+                        // Save the resized image
+                        string resizedImagePath = $"resized_{imageIndex}.bmp";
+                        resizedBitmap.Save(resizedImagePath, ImageFormat.Bmp);
                     }
                 }
             }
+
+            imageIndex++;
         }
 
-        // 9. Validation: ensure at least one resized image was created
+        // 4. Validation: ensure at least one resized image was created
         if (imageIndex == 0)
             throw new InvalidOperationException("No images were extracted and resized.");
 
-        // Cleanup temporary files (optional)
-        if (File.Exists(inputBmpPath)) File.Delete(inputBmpPath);
-        if (File.Exists(docPath)) File.Delete(docPath);
+        // Cleanup temporary sample image (optional)
+        if (File.Exists(sampleBmpPath))
+            File.Delete(sampleBmpPath);
     }
 }

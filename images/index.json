@@ -4,27 +4,85 @@
     "slug": "images",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use Aspose.Words Shape and DocumentBuilder image APIs with deterministic local image creation using Aspose.Drawing, validated outputs, and container-aware image traversal.",
+    "preferred_workflow": "Use Aspose.Words Shape and DocumentBuilder image APIs with deterministic local image creation using Aspose.Drawing. Create local sample image inputs whenever the task implies an existing image, file, stream, folder, or batch source. Use Shape.ImageData and builder.InsertImage through documented Aspose.Words APIs only.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common",
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.4.0",
-      "Aspose.Drawing.Common": "25.11.0",
-      "Newtonsoft.Json": ""
-    }
+      "Aspose.Words": "26.5.0",
+      "Aspose.Drawing.Common": "25.11.0"
+    },
+    "required_namespaces": [
+      "System",
+      "System.IO",
+      "System.Linq",
+      "Aspose.Words",
+      "Aspose.Words.Drawing",
+      "Aspose.Drawing",
+      "Aspose.Drawing.Imaging",
+      "Aspose.Words.Loading",
+      "Aspose.Words.Saving",
+      "System.IO.Compression",
+      "System.Collections.Generic",
+      "Aspose.Words.Tables",
+      "Aspose.Words.Notes",
+      "System.Text",
+      "System.Xml",
+      "Aspose.Words.Markup",
+      "Newtonsoft.Json",
+      "Aspose.Words.Drawing.Charts",
+      "Aspose.Drawing.Drawing2D",
+      "Aspose.Words.Properties",
+      "System.Xml.Linq",
+      "Aspose.Words.Rendering",
+      "System.Security.Cryptography"
+    ],
+    "key_apis": [
+      "Document",
+      "DocumentBuilder",
+      "NodeType",
+      "Directory",
+      "Path",
+      "Shape",
+      "ImageData",
+      "MemoryStream",
+      "SaveFormat",
+      "LoadOptions",
+      "File",
+      "ImageSaveOptions",
+      "ShapeType",
+      "Font",
+      "Table",
+      "Row",
+      "Cell",
+      "Footnote",
+      "Watermark",
+      "Paragraph",
+      "Comment",
+      "JsonConvert",
+      "StyleIdentifier",
+      "Chart",
+      "ChartType",
+      "PdfSaveOptions",
+      "HtmlSaveOptions"
+    ]
   },
   "stats": {
     "total_examples": 120,
     "publish_ready_successful_examples": 120,
     "workflow_counts": {
+      "general-image-workflow": 4,
+      "image-conversion-and-manipulation": 2,
       "image-extraction": 109,
       "image-insertion-and-shape": 4,
-      "image-conversion-and-manipulation": 2,
-      "input-bootstrap": 1,
-      "general-image-workflow": 4
+      "input-bootstrap": 1
+    },
+    "winner_counts": {
+      "existing_repo": 39,
+      "llm": 7,
+      "mcp": 74
     }
   },
   "rules_summary": {
@@ -135,7 +193,7 @@
     {
       "id": 6,
       "file_name": "insert-a-high-resolution-png-image-into-a-specific-paragraph-of-an-existing-docx-file.cs",
-      "task": "Insert a high‑resolution PNG image into a specific paragraph of an existing DOCX file.",
+      "task": "Insert a high-resolution PNG image into a specific paragraph of an existing DOCX file.",
       "workflow": "image-insertion-and-shape",
       "outputs": [
         "docx",
@@ -235,8 +293,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 15,
@@ -328,8 +386,8 @@
         "docx",
         "svg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 23,
@@ -421,8 +479,8 @@
         "doc",
         "emf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 31,
@@ -474,7 +532,7 @@
     {
       "id": 35,
       "file_name": "load-a-word-document-replace-all-low-resolution-images-with-high-resolution-versions-from.cs",
-      "task": "Load a Word document, replace all low‑resolution images with high‑resolution versions from a library.",
+      "task": "Load a Word document, replace all low-resolution images with high-resolution versions from a library.",
       "workflow": "general-image-workflow",
       "outputs": [
         "docx"
@@ -508,7 +566,7 @@
     {
       "id": 38,
       "file_name": "apply-a-blur-filter-to-all-extracted-jpeg-images-before-re-embedding-them-into-a-new-word.cs",
-      "task": "Apply a blur filter to all extracted JPEG images before re‑embedding them into a new Word file.",
+      "task": "Apply a blur filter to all extracted JPEG images before re-embedding them into a new Word file.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg"
@@ -519,7 +577,7 @@
     {
       "id": 39,
       "file_name": "extract-images-from-a-docx-file-s-chart-objects-and-convert-them-to-high-resolution-png.cs",
-      "task": "Extract images from a DOCX file's chart objects and convert them to high‑resolution PNG.",
+      "task": "Extract images from a DOCX file's chart objects and convert them to high-resolution PNG.",
       "workflow": "image-extraction",
       "outputs": [
         "docx",
@@ -559,8 +617,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 43,
@@ -571,8 +629,8 @@
         "docx",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 44,
@@ -617,8 +675,8 @@
         "docx",
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 48,
@@ -674,8 +732,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 53,
@@ -697,8 +755,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 55,
@@ -708,8 +766,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 56,
@@ -719,8 +777,8 @@
       "outputs": [
         "gif"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 57,
@@ -741,8 +799,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 59,
@@ -857,8 +915,8 @@
         "docx",
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 69,
@@ -874,14 +932,14 @@
     {
       "id": 70,
       "file_name": "apply-a-sharpening-filter-to-all-png-images-extracted-from-word-documents-before-re-saving.cs",
-      "task": "Apply a sharpening filter to all PNG images extracted from Word documents before re‑saving them.",
+      "task": "Apply a sharpening filter to all PNG images extracted from Word documents before re-saving them.",
       "workflow": "image-extraction",
       "outputs": [
         "docx",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 71,
@@ -898,7 +956,7 @@
     {
       "id": 72,
       "file_name": "convert-extracted-jpeg-images-to-high-resolution-tiff-for-archival-storage-with-lzw-compre.cs",
-      "task": "Convert extracted JPEG images to high‑resolution TIFF for archival storage with LZW compression.",
+      "task": "Convert extracted JPEG images to high-resolution TIFF for archival storage with LZW compression.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg",
@@ -984,13 +1042,13 @@
         "bmp",
         "webp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 80,
       "file_name": "load-a-word-document-extract-images-and-create-a-powershell-script-to-re-embed-them-later.cs",
-      "task": "Load a Word document, extract images, and create a PowerShell script to re‑embed them later.",
+      "task": "Load a Word document, extract images, and create a PowerShell script to re-embed them later.",
       "workflow": "image-extraction",
       "outputs": [
         "docx"
@@ -1001,7 +1059,7 @@
     {
       "id": 81,
       "file_name": "extract-images-from-a-docx-file-s-embedded-map-objects-and-save-them-as-high-resolution-pn.cs",
-      "task": "Extract images from a DOCX file's embedded map objects and save them as high‑resolution PNG.",
+      "task": "Extract images from a DOCX file's embedded map objects and save them as high-resolution PNG.",
       "workflow": "image-extraction",
       "outputs": [
         "docx",
@@ -1046,7 +1104,7 @@
     {
       "id": 85,
       "file_name": "convert-extracted-tiff-images-to-grayscale-jpeg-for-use-in-low-bandwidth-environments.cs",
-      "task": "Convert extracted TIFF images to grayscale JPEG for use in low‑bandwidth environments.",
+      "task": "Convert extracted TIFF images to grayscale JPEG for use in low-bandwidth environments.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg",
@@ -1088,8 +1146,8 @@
         "docx",
         "csv"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 89,
@@ -1099,8 +1157,8 @@
       "outputs": [
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 90,
@@ -1110,8 +1168,8 @@
       "outputs": [
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 91,
@@ -1122,8 +1180,8 @@
         "docx",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 92,
@@ -1133,8 +1191,8 @@
       "outputs": [
         "gif"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 93,
@@ -1144,8 +1202,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 94,
@@ -1156,8 +1214,8 @@
         "docx",
         "xml"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 95,
@@ -1167,8 +1225,8 @@
       "outputs": [
         "bmp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 96,
@@ -1178,8 +1236,8 @@
       "outputs": [
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 97,
@@ -1189,20 +1247,20 @@
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 98,
       "file_name": "convert-extracted-jpeg-images-to-high-quality-webp-for-optimized-web-delivery.cs",
-      "task": "Convert extracted JPEG images to high‑quality WebP for optimized web delivery.",
+      "task": "Convert extracted JPEG images to high-quality WebP for optimized web delivery.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg",
         "webp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 99,
@@ -1213,8 +1271,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 100,
@@ -1225,8 +1283,8 @@
         "docx",
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 101,
@@ -1237,8 +1295,8 @@
         "doc",
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 102,
@@ -1248,19 +1306,19 @@
       "outputs": [
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 103,
       "file_name": "apply-a-motion-blur-effect-to-all-extracted-jpeg-images-before-re-embedding-them.cs",
-      "task": "Apply a motion blur effect to all extracted JPEG images before re‑embedding them.",
+      "task": "Apply a motion blur effect to all extracted JPEG images before re-embedding them.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 104,
@@ -1271,8 +1329,8 @@
         "docx",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 105,
@@ -1283,8 +1341,8 @@
         "png",
         "bmp"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 106,
@@ -1294,20 +1352,20 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 107,
       "file_name": "extract-images-from-a-docx-file-s-embedded-video-frames-and-store-them-as-high-resolution.cs",
-      "task": "Extract images from a DOCX file's embedded video frames and store them as high‑resolution PNG.",
+      "task": "Extract images from a DOCX file's embedded video frames and store them as high-resolution PNG.",
       "workflow": "image-extraction",
       "outputs": [
         "docx",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 108,
@@ -1317,8 +1375,8 @@
       "outputs": [
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 109,
@@ -1328,8 +1386,8 @@
       "outputs": [
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 110,
@@ -1340,8 +1398,8 @@
         "docx",
         "html"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 111,
@@ -1352,8 +1410,8 @@
         "pdf",
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 112,
@@ -1364,8 +1422,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 113,
@@ -1375,8 +1433,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 114,
@@ -1386,8 +1444,8 @@
       "outputs": [
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 115,
@@ -1397,19 +1455,19 @@
       "outputs": [
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 116,
       "file_name": "apply-a-saturation-increase-of-20-to-all-extracted-jpeg-images-before-re-saving-them.cs",
-      "task": "Apply a saturation increase of 20% to all extracted JPEG images before re‑saving them.",
+      "task": "Apply a saturation increase of 20% to all extracted JPEG images before re-saving them.",
       "workflow": "image-extraction",
       "outputs": [
         "jpeg"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 117,
@@ -1420,8 +1478,8 @@
         "docx",
         "png"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 118,
@@ -1432,8 +1490,8 @@
         "png",
         "gif"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 119,
@@ -1444,8 +1502,8 @@
         "docx",
         "json"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 120,

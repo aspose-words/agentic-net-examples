@@ -11,79 +11,84 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare directories
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Paths for temporary files
+        const string inputImagePath = "input.png";
+        const string docPath = "DocumentWithImages.docx";
 
-        // 1. Create a sample PNG image (800x400) using Aspose.Drawing
-        string inputImagePath = Path.Combine(artifactsDir, "input.png");
-        using (Bitmap bitmap = new Bitmap(800, 400))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.White);
-                // Draw a simple rectangle for visual reference
-                g.FillRectangle(new SolidBrush(Color.Blue), 0, 0, 800, 400);
-            }
-            bitmap.Save(inputImagePath, ImageFormat.Png);
-        }
+        // -------------------------------------------------
+        // 1. Create a sample PNG image (800x400) locally
+        // -------------------------------------------------
+        Bitmap sampleBitmap = new Bitmap(800, 400);
+        Graphics graphics = Graphics.FromImage(sampleBitmap);
+        graphics.Clear(Color.White);
+        // Draw a simple rectangle to make the image non‑empty
+        graphics.DrawRectangle(new Pen(Color.Blue, 5), 50, 50, 700, 300);
+        // Save the image as PNG
+        sampleBitmap.Save(inputImagePath, ImageFormat.Png);
+        graphics.Dispose();
+        sampleBitmap.Dispose();
 
-        // 2. Create a new Word document and insert the sample image
+        // -------------------------------------------------
+        // 2. Create a Word document and insert the PNG image
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(inputImagePath);
-        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
+        // Save the document containing the image
         doc.Save(docPath);
 
-        // 3. Extract PNG images from the document
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        int extractedCount = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // -------------------------------------------------
+        // 3. Load the document and extract PNG images
+        // -------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+        var shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                                 .OfType<Shape>()
+                                 .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Png)
+                                 .ToList();
+
+        if (!shapeNodes.Any())
+            throw new InvalidOperationException("No PNG images were found in the document.");
+
+        int imageIndex = 0;
+        foreach (Shape shape in shapeNodes)
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Process only PNG images
-            if (shape.ImageData.ImageType != ImageType.Png)
-                continue;
-
-            string extractedPath = Path.Combine(artifactsDir, $"extracted_{extractedCount}.png");
-            shape.ImageData.Save(extractedPath);
-            extractedCount++;
-
-            // 4. Resize the extracted PNG to a fixed height of 600 pixels while preserving aspect ratio
-            using (Bitmap originalBitmap = new Bitmap(extractedPath))
+            // Save the image data to a memory stream
+            using (MemoryStream imageStream = new MemoryStream())
             {
-                int originalWidth = originalBitmap.Width;
-                int originalHeight = originalBitmap.Height;
+                shape.ImageData.Save(imageStream);
+                imageStream.Position = 0; // Reset for reading
 
-                // Desired height
-                int targetHeight = 600;
-                // Compute proportional width
-                int targetWidth = (int)Math.Round((double)originalWidth * targetHeight / originalHeight);
-
-                using (Bitmap resizedBitmap = new Bitmap(targetWidth, targetHeight))
+                // Load the original bitmap from the stream
+                using (Bitmap originalBitmap = new Bitmap(imageStream))
                 {
-                    using (Graphics graphics = Graphics.FromImage(resizedBitmap))
+                    // Desired fixed height
+                    const int targetHeight = 600;
+                    // Calculate proportional width
+                    double scaleFactor = (double)targetHeight / originalBitmap.Height;
+                    int targetWidth = (int)Math.Round(originalBitmap.Width * scaleFactor);
+
+                    // Create a new bitmap with the target dimensions
+                    using (Bitmap resizedBitmap = new Bitmap(targetWidth, targetHeight))
                     {
-                        graphics.Clear(Color.Transparent);
-                        graphics.DrawImage(originalBitmap, 0, 0, targetWidth, targetHeight);
+                        using (Graphics g = Graphics.FromImage(resizedBitmap))
+                        {
+                            // Draw the original image onto the resized bitmap
+                            g.DrawImage(originalBitmap, 0, 0, targetWidth, targetHeight);
+                        }
+
+                        // Save the resized image to a deterministic file name
+                        string resizedPath = $"resized_{imageIndex}.png";
+                        resizedBitmap.Save(resizedPath, ImageFormat.Png);
+                        imageIndex++;
                     }
-                    string resizedPath = Path.Combine(artifactsDir, $"resized_{extractedCount - 1}.png");
-                    resizedBitmap.Save(resizedPath, ImageFormat.Png);
                 }
             }
         }
 
-        // 5. Validation: ensure at least one resized image was created
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No PNG images were extracted from the document.");
-
-        int resizedImages = Directory.GetFiles(artifactsDir, "resized_*.png").Length;
-        if (resizedImages == 0)
-            throw new InvalidOperationException("Resizing failed: no resized PNG images were produced.");
-
-        // Example completed successfully
-        Console.WriteLine($"Processed {extractedCount} PNG image(s). Resized images are saved in: {artifactsDir}");
+        // -------------------------------------------------
+        // 4. Validation – ensure at least one resized file exists
+        // -------------------------------------------------
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No resized images were produced.");
     }
 }

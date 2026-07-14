@@ -3,82 +3,66 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 
-public class ExtractVideoThumbnails
+public class Program
 {
     public static void Main()
     {
-        // Define file paths.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string docPath = Path.Combine(artifactsDir, "SampleWithVideo.docx");
-        string thumbnailImagePath = Path.Combine(artifactsDir, "SampleThumbnail.png");
+        // Folder for all generated files.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
 
-        // -------------------------------------------------
-        // 1. Create a sample thumbnail image using Aspose.Drawing.
-        // -------------------------------------------------
-        int thumbWidth = 200;
-        int thumbHeight = 150;
-        using (Bitmap bitmap = new Bitmap(thumbWidth, thumbHeight))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
-        {
-            graphics.Clear(Aspose.Drawing.Color.LightBlue);
-            // Draw a simple rectangle to make the thumbnail recognizable.
-            graphics.DrawRectangle(new Pen(Aspose.Drawing.Color.DarkBlue, 3), 10, 10, thumbWidth - 20, thumbHeight - 20);
-            bitmap.Save(thumbnailImagePath);
-        }
+        // -----------------------------------------------------------------
+        // 1. Create a sample thumbnail image (PNG) using Aspose.Drawing.
+        // -----------------------------------------------------------------
+        string thumbPath = Path.Combine(outputDir, "thumb.png");
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
+        Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
+        graphics.Clear(Aspose.Drawing.Color.LightBlue);
+        // Dispose drawing objects.
+        graphics.Dispose();
+        bitmap.Save(thumbPath);
+        bitmap.Dispose();
 
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
         // 2. Create a DOCX document and insert the thumbnail image.
         //    In a real scenario this would be the video thumbnail.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert the image as an inline shape (simulating a video thumbnail).
-        Shape thumbnailShape = builder.InsertImage(thumbnailImagePath);
-        // Optionally set a name to identify it later.
-        thumbnailShape.Name = "VideoThumbnail";
-
-        // Save the document.
+        builder.InsertImage(thumbPath);
+        string docPath = Path.Combine(outputDir, "sample.docx");
         doc.Save(docPath);
 
-        // -------------------------------------------------
-        // 3. Load the document and extract all shape images.
-        //    Save each extracted image as a PNG file.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 3. Load the document and extract all images from shapes.
+        //    These represent the embedded video thumbnails.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
         int imageIndex = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage)
             {
-                // Save the shape's image data to a memory stream.
-                using (MemoryStream imageStream = new MemoryStream())
-                {
-                    shape.ImageData.Save(imageStream);
-                    imageStream.Position = 0; // Reset for reading.
+                // Determine the appropriate file extension.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                // Force PNG extension if the image is not already PNG.
+                if (!extension.Equals(".png", StringComparison.OrdinalIgnoreCase))
+                    extension = ".png";
 
-                    // Load the image into Aspose.Drawing.Bitmap.
-                    using (Bitmap bitmap = new Bitmap(imageStream))
-                    {
-                        // Ensure the output is PNG regardless of original format.
-                        string outFile = Path.Combine(artifactsDir, $"Thumbnail_{imageIndex}.png");
-                        bitmap.Save(outFile);
-                        // Validate that the file was created.
-                        if (!File.Exists(outFile))
-                            throw new InvalidOperationException($"Failed to save extracted image: {outFile}");
-                    }
-                }
+                string imageFileName = $"VideoThumbnail_{imageIndex}{extension}";
+                string imagePath = Path.Combine(outputDir, imageFileName);
+                shape.ImageData.Save(imagePath);
                 imageIndex++;
             }
         }
 
-        // Validate that at least one image was extracted.
+        // Validate that at least one thumbnail was extracted.
         if (imageIndex == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        // The program finishes here without awaiting user input.
+            throw new InvalidOperationException("No video thumbnail images were extracted.");
     }
 }

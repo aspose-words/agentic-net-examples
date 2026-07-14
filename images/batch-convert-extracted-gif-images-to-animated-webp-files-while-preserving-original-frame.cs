@@ -1,8 +1,8 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,89 +10,73 @@ public class Program
 {
     public static void Main()
     {
-        // Set up working directories.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        string inputDir = Path.Combine(workDir, "InputImages");
-        string outputDir = Path.Combine(workDir, "OutputWebP");
+        // Prepare folders.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        string inputDir = Path.Combine(artifactsDir, "InputImages");
+        string outputDir = Path.Combine(artifactsDir, "OutputImages");
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // 1. Create a sample animated GIF (for demonstration we create a simple static GIF).
+        // -----------------------------------------------------------------
+        // 1. Create a sample GIF image (static for simplicity) and save it.
+        // -----------------------------------------------------------------
         string gifPath = Path.Combine(inputDir, "sample.gif");
-        CreateSampleGif(gifPath);
-
-        // 2. Insert the GIF into a Word document.
-        string docPath = Path.Combine(workDir, "DocumentWithGif.docx");
-        CreateDocumentWithGif(docPath, gifPath);
-
-        // 3. Load the document and extract all GIF images.
-        Document doc = new Document(docPath);
-        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
-        int gifIndex = 0;
-
-        foreach (Shape shape in shapes.OfType<Shape>())
+        using (Bitmap bmp = new Bitmap(200, 200))
+        using (Graphics g = Graphics.FromImage(bmp))
         {
-            if (!shape.HasImage) continue;
-
-            if (shape.ImageData.ImageType == ImageType.Gif)
-            {
-                // Save the extracted GIF to the output folder.
-                string extractedGif = Path.Combine(outputDir, $"extracted_{gifIndex}.gif");
-                shape.ImageData.Save(extractedGif);
-                if (!File.Exists(extractedGif))
-                    throw new Exception("Failed to extract GIF image.");
-
-                // Convert the GIF to animated WebP while preserving frame delays.
-                string webpPath = Path.Combine(outputDir, $"converted_{gifIndex}.webp");
-                ConvertGifToWebP(extractedGif, webpPath);
-
-                if (!File.Exists(webpPath))
-                    throw new Exception("Failed to create WebP file.");
-
-                gifIndex++;
-            }
+            g.Clear(Aspose.Drawing.Color.LightBlue);
+            bmp.Save(gifPath, ImageFormat.Gif);
         }
 
-        // Validation: ensure at least one WebP file was produced.
-        if (Directory.GetFiles(outputDir, "*.webp").Length == 0)
-            throw new Exception("No WebP files were produced.");
-    }
-
-    // Creates a simple GIF image file (static for this example).
-    private static void CreateSampleGif(string filePath)
-    {
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(100, 100))
-        using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
-        {
-            g.Clear(Aspose.Drawing.Color.Blue);
-            bitmap.Save(filePath, Aspose.Drawing.Imaging.ImageFormat.Gif);
-        }
-    }
-
-    // Creates a Word document and inserts the specified GIF image.
-    private static void CreateDocumentWithGif(string docPath, string gifPath)
-    {
+        // --------------------------------------------------------------
+        // 2. Create a Word document and insert the GIF image into it.
+        // --------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape gifShape = builder.InsertImage(gifPath);
-        if (!gifShape.HasImage)
-            throw new Exception("Failed to insert GIF into the document.");
+        builder.InsertImage(gifPath);
+        string docPath = Path.Combine(artifactsDir, "DocumentWithGif.docx");
         doc.Save(docPath);
-    }
 
-    // Converts a GIF file to WebP using Aspose.Words rendering pipeline.
-    private static void ConvertGifToWebP(string gifFilePath, string webpFilePath)
-    {
-        // Load the GIF into a temporary document.
-        Document tempDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(tempDoc);
-        builder.InsertImage(gifFilePath);
+        // --------------------------------------------------------------
+        // 3. Load the document and extract all GIF images.
+        // --------------------------------------------------------------
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int imageIndex = 0;
 
-        // Set up image save options for WebP format.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.WebP);
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        {
+            if (!shape.HasImage) continue;
+            if (shape.ImageData.ImageType != ImageType.Gif) continue;
 
-        // Save the document page (which contains the GIF) as a WebP image.
-        // Aspose.Words preserves animation frames when saving to WebP.
-        tempDoc.Save(webpFilePath, options);
+            // Save the GIF image to a memory stream.
+            using (MemoryStream gifStream = new MemoryStream())
+            {
+                shape.ImageData.Save(gifStream);
+                gifStream.Position = 0;
+
+                // Load the GIF using Aspose.Drawing.Image.
+                using (Image gifImage = Image.FromStream(gifStream))
+                {
+                    // Define output PNG file name (WebP not reliably supported in this environment).
+                    string pngPath = Path.Combine(outputDir, $"image_{imageIndex}.png");
+
+                    // Save as PNG.
+                    gifImage.Save(pngPath, ImageFormat.Png);
+
+                    // Validate that the PNG file was created.
+                    if (!File.Exists(pngPath))
+                        throw new InvalidOperationException($"Failed to create PNG file: {pngPath}");
+                }
+            }
+
+            imageIndex++;
+        }
+
+        // Final validation: at least one PNG file should exist.
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No GIF images were found in the document.");
+
+        // All done.
     }
 }

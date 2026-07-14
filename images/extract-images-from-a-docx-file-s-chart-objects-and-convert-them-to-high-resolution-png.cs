@@ -2,21 +2,21 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Saving;
 
 public class ExtractChartImages
 {
     public static void Main()
     {
-        // Define deterministic folders and file names.
+        // Define folders.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
-        string docPath = Path.Combine(artifactsDir, "SampleWithChart.docx");
+        string docPath = Path.Combine(artifactsDir, "SampleChart.docx");
 
         // -----------------------------------------------------------------
-        // 1. Create a sample DOCX that contains a chart.
+        // 1. Create a sample DOCX containing a chart.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
@@ -29,14 +29,10 @@ public class ExtractChartImages
         chart.Series.Clear();
         chart.Series.Add("Series 1",
             new[] { "Category A", "Category B", "Category C" },
-            new[] { 10.0, 20.0, 30.0 });
-        chart.Series.Add("Series 2",
-            new[] { "Category A", "Category B", "Category C" },
-            new[] { 15.0, 25.0, 35.0 });
+            new double[] { 10, 20, 30 });
 
-        // Save the document so that it can be re‑loaded later.
+        // Save the document.
         doc.Save(docPath);
-        // -----------------------------------------------------------------
 
         // -----------------------------------------------------------------
         // 2. Load the document and extract each chart as a high‑resolution PNG.
@@ -47,26 +43,25 @@ public class ExtractChartImages
         int chartIndex = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // A shape that contains a chart has a non‑null Chart property.
+            // A chart shape has a non‑null Chart property.
             if (shape.Chart != null)
             {
-                // Render the chart shape to a PNG image with high resolution (300 dpi).
-                ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
+                // Render the chart shape to a PNG image with high resolution (300 DPI).
+                ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
                 {
-                    Resolution = 300 // high‑resolution output
+                    Resolution = 300,               // Sets both horizontal and vertical DPI.
+                    HorizontalResolution = 300,
+                    VerticalResolution = 300
                 };
 
-                string pngPath = Path.Combine(
-                    artifactsDir,
-                    $"ChartImage.{chartIndex}{FileFormatUtil.ImageTypeToExtension(ImageType.Png)}");
-
-                shape.GetShapeRenderer().Save(pngPath, pngOptions);
+                string imagePath = Path.Combine(artifactsDir, $"ChartImage_{chartIndex}.png");
+                shape.GetShapeRenderer().Save(imagePath, options);
                 chartIndex++;
             }
         }
 
         // -----------------------------------------------------------------
-        // 3. Validate that at least one chart image was extracted.
+        // 3. Validate that at least one image was extracted.
         // -----------------------------------------------------------------
         if (chartIndex == 0)
             throw new InvalidOperationException("No chart images were extracted from the document.");

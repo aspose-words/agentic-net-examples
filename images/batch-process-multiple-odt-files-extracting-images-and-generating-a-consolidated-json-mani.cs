@@ -1,127 +1,105 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Words.Loading;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 using Newtonsoft.Json;
 
 public class Program
 {
-    // Manifest structures for JSON output
-    public class ImageInfo
-    {
-        public string FileName { get; set; }
-        public string ImageType { get; set; }
-    }
-
-    public class DocumentInfo
+    public class DocumentManifest
     {
         public string DocumentName { get; set; }
-        public List<ImageInfo> Images { get; set; } = new List<ImageInfo>();
+        public List<string> Images { get; set; }
     }
 
     public static void Main()
     {
-        // Base folders
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputFolder = Path.Combine(baseDir, "InputDocs");
-        string imageFolder = Path.Combine(baseDir, "ExtractedImages");
-        string manifestPath = Path.Combine(baseDir, "Manifest.json");
+        // Base working directory.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        string imagesDir = Path.Combine(baseDir, "Images");
+        string docsDir = Path.Combine(baseDir, "Docs");
+        string outputDir = Path.Combine(baseDir, "ExtractedImages");
+        string manifestPath = Path.Combine(baseDir, "manifest.json");
 
-        // Clean previous run data
-        if (Directory.Exists(inputFolder)) Directory.Delete(inputFolder, true);
-        if (Directory.Exists(imageFolder)) Directory.Delete(imageFolder, true);
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(imageFolder);
+        // Ensure directories exist.
+        Directory.CreateDirectory(imagesDir);
+        Directory.CreateDirectory(docsDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create a deterministic sample image (sample.png)
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
+        // Create a deterministic sample image.
+        string sampleImagePath = Path.Combine(imagesDir, "sample.png");
         CreateSampleImage(sampleImagePath, 200, 200);
 
-        // Create a few ODT documents containing the sample image
-        CreateSampleOdtDocuments(inputFolder, sampleImagePath, 3);
-
-        // Process each ODT file, extract images, and build manifest
-        List<DocumentInfo> manifest = new List<DocumentInfo>();
-        foreach (string odtPath in Directory.GetFiles(inputFolder, "*.odt"))
+        // Create sample ODT documents containing the image.
+        const int documentCount = 3;
+        for (int i = 1; i <= documentCount; i++)
         {
-            Document doc = new Document(odtPath);
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Document {i}");
+            builder.InsertImage(sampleImagePath);
+            string docPath = Path.Combine(docsDir, $"Doc{i}.odt");
+            doc.Save(docPath, SaveFormat.Odt);
+        }
+
+        // Batch process ODT files.
+        var manifest = new List<DocumentManifest>();
+        string[] odtFiles = Directory.GetFiles(docsDir, "*.odt");
+        foreach (string odtFile in odtFiles)
+        {
+            Document doc = new Document(odtFile);
             NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-            DocumentInfo docInfo = new DocumentInfo { DocumentName = Path.GetFileName(odtPath) };
+            var extractedImages = new List<string>();
             int imageIndex = 0;
 
             foreach (Shape shape in shapeNodes.OfType<Shape>())
             {
-                if (!shape.HasImage) continue;
-
-                string extension = Aspose.Words.FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string imageFileName = $"{Path.GetFileNameWithoutExtension(odtPath)}_Image{imageIndex}{extension}";
-                string imagePath = Path.Combine(imageFolder, imageFileName);
-
-                shape.ImageData.Save(imagePath);
-
-                docInfo.Images.Add(new ImageInfo
+                if (shape.HasImage)
                 {
-                    FileName = imageFileName,
-                    ImageType = shape.ImageData.ImageType.ToString()
-                });
-
-                imageIndex++;
+                    string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                    string imageFileName = $"{Path.GetFileNameWithoutExtension(odtFile)}_img{imageIndex}{extension}";
+                    string imageFullPath = Path.Combine(outputDir, imageFileName);
+                    shape.ImageData.Save(imageFullPath);
+                    extractedImages.Add(imageFileName);
+                    imageIndex++;
+                }
             }
 
-            // Validation: ensure at least one image was extracted from this document
-            if (docInfo.Images.Count == 0)
-                throw new InvalidOperationException($"No images were extracted from document '{odtPath}'.");
+            if (extractedImages.Count == 0)
+                throw new InvalidOperationException($"No images were extracted from '{odtFile}'.");
 
-            manifest.Add(docInfo);
+            manifest.Add(new DocumentManifest
+            {
+                DocumentName = Path.GetFileName(odtFile),
+                Images = extractedImages
+            });
         }
 
-        // Validation: ensure at least one image was extracted overall
-        int totalImages = 0;
-        foreach (var d in manifest) totalImages += d.Images.Count;
-        if (totalImages == 0)
-            throw new InvalidOperationException("No images were extracted from any document.");
-
-        // Serialize manifest to JSON
+        // Serialize manifest to JSON.
         string json = JsonConvert.SerializeObject(manifest, Formatting.Indented);
         File.WriteAllText(manifestPath, json);
+
+        // Validation.
+        if (!File.Exists(manifestPath) || manifest.Count == 0)
+            throw new InvalidOperationException("Manifest generation failed.");
+
+        Console.WriteLine($"Processed {manifest.Count} document(s). Manifest saved to: {manifestPath}");
     }
 
-    // Creates a simple white PNG image with a black rectangle
     private static void CreateSampleImage(string path, int width, int height)
     {
         using (Bitmap bitmap = new Bitmap(width, height))
         using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            graphics.Clear(Aspose.Drawing.Color.White);
-            using (Pen pen = new Pen(Aspose.Drawing.Color.Black, 5))
-            {
-                graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-            }
+            graphics.Clear(Color.LightBlue);
+            // Draw a simple rectangle for visual distinction.
+            graphics.DrawRectangle(new Pen(Color.DarkBlue, 5), 10, 10, width - 20, height - 20);
             bitmap.Save(path, ImageFormat.Png);
-        }
-    }
-
-    // Generates a number of ODT files, each containing the sample image multiple times
-    private static void CreateSampleOdtDocuments(string folder, string imagePath, int count)
-    {
-        for (int i = 1; i <= count; i++)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            builder.Writeln($"Document {i}");
-            // Insert the sample image twice to ensure multiple images per file
-            builder.InsertImage(imagePath);
-            builder.InsertParagraph();
-            builder.InsertImage(imagePath);
-
-            string odtFile = Path.Combine(folder, $"Doc{i}.odt");
-            doc.Save(odtFile, SaveFormat.Odt);
         }
     }
 }

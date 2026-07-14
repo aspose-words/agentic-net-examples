@@ -1,18 +1,17 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
         // Prepare deterministic file names.
-        const string sampleImagePath = "sample.png";
-        const string documentPath = "sample.docx";
+        const string inputImagePath = "input.png";
+        const string docPath = "DocumentWithImage.docx";
 
         // -------------------------------------------------
         // 1. Create a sample PNG image using Aspose.Drawing.
@@ -25,11 +24,15 @@ public class Program
             {
                 // Fill background with white.
                 g.Clear(Color.White);
-                // Draw a red rectangle.
-                g.FillRectangle(new SolidBrush(Color.Red), 20, 20, imgWidth - 40, imgHeight - 40);
+                // Draw a simple red rectangle.
+                using (Brush brush = new SolidBrush(Color.Red))
+                {
+                    g.FillRectangle(brush, 50, 50, 100, 100);
+                }
             }
-            // Save the image to a local file.
-            bitmap.Save(sampleImagePath);
+
+            // Save the bitmap as a PNG file.
+            bitmap.Save(inputImagePath, ImageFormat.Png);
         }
 
         // -------------------------------------------------
@@ -37,14 +40,17 @@ public class Program
         // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        doc.Save(documentPath);
+        builder.InsertImage(inputImagePath);
+        doc.Save(docPath);
 
         // -------------------------------------------------
-        // 3. Load the document (already in memory) and extract PNG images.
+        // 3. Load the document and extract PNG images.
         // -------------------------------------------------
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
         int extractedCount = 0;
+        int imageIndex = 0;
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
@@ -55,43 +61,43 @@ public class Program
             if (shape.ImageData.ImageType != ImageType.Png)
                 continue;
 
-            // Obtain raw image bytes.
-            byte[] imageBytes = shape.ImageData.ToByteArray();
-
-            // Load the image into an Aspose.Drawing.Bitmap.
-            using (MemoryStream ms = new MemoryStream(imageBytes))
+            // Save the original image to a memory stream.
+            using (MemoryStream ms = new MemoryStream())
             {
+                shape.ImageData.Save(ms);
                 ms.Position = 0;
-                using (Bitmap bmp = new Bitmap(ms))
+
+                // Load the image into an Aspose.Drawing.Bitmap.
+                using (Bitmap bitmap = new Bitmap(ms))
                 {
                     // Invert colors pixel by pixel.
-                    for (int y = 0; y < bmp.Height; y++)
+                    for (int y = 0; y < bitmap.Height; y++)
                     {
-                        for (int x = 0; x < bmp.Width; x++)
+                        for (int x = 0; x < bitmap.Width; x++)
                         {
-                            Color original = bmp.GetPixel(x, y);
+                            Color original = bitmap.GetPixel(x, y);
                             Color inverted = Color.FromArgb(
                                 255 - original.R,
                                 255 - original.G,
                                 255 - original.B);
-                            bmp.SetPixel(x, y, inverted);
+                            bitmap.SetPixel(x, y, inverted);
                         }
                     }
 
-                    // Save the inverted image.
-                    string outFileName = $"inverted_{extractedCount}.png";
-                    bmp.Save(outFileName);
+                    // Save the inverted image to a deterministic file name.
+                    string outFileName = $"extracted_{imageIndex}_inverted.png";
+                    bitmap.Save(outFileName, ImageFormat.Png);
+                    extractedCount++;
+                    imageIndex++;
                 }
             }
-
-            extractedCount++;
         }
 
         // -------------------------------------------------
-        // 4. Validate that at least one image was processed.
+        // 4. Validation – ensure at least one image was processed.
         // -------------------------------------------------
         if (extractedCount == 0)
-            throw new InvalidOperationException("No PNG images were found to process.");
+            throw new InvalidOperationException("No PNG images were extracted and processed.");
 
         // The program finishes automatically.
     }

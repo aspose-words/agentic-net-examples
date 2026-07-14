@@ -3,78 +3,80 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // Provides Bitmap, Graphics, Color, etc.
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
+using Newtonsoft.Json;
 
 public class ExtractMapImages
 {
     public static void Main()
     {
-        // Define deterministic file names and folders.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
-        string mapImagePath = Path.Combine(workDir, "map.png");
-        string docPath = Path.Combine(workDir, "sample.docx");
-        string outputDir = Path.Combine(workDir, "Extracted");
-        Directory.CreateDirectory(outputDir);
+        // Prepare folders
+        string baseDir = Directory.GetCurrentDirectory();
+        string artifactsDir = Path.Combine(baseDir, "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // -------------------------------------------------
-        // 1. Create a sample high‑resolution PNG image.
-        // -------------------------------------------------
-        int width = 1200;   // high resolution width
-        int height = 800;   // high resolution height
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
+        // 1. Create a sample high‑resolution PNG image (simulating a map)
+        string sampleImagePath = Path.Combine(artifactsDir, "sample_map.png");
+        const int imgWidth = 1200;
+        const int imgHeight = 800;
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                // Fill background.
-                g.Clear(Aspose.Drawing.Color.White);
-                // Draw a simple map‑like rectangle.
-                g.FillRectangle(new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.LightBlue), 100, 100, width - 200, height - 200);
-                g.DrawRectangle(new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkBlue, 5), 100, 100, width - 200, height - 200);
-                // Add some text.
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 48))
-                {
-                    g.DrawString("Sample Map", font, new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black),
-                        new Aspose.Drawing.PointF(width / 2 - 150, height / 2 - 24));
-                }
+                g.Clear(Color.White);
+                // Draw a simple map‑like grid
+                Pen pen = new Pen(Color.LightGray, 2);
+                for (int x = 0; x <= imgWidth; x += 100)
+                    g.DrawLine(pen, x, 0, x, imgHeight);
+                for (int y = 0; y <= imgHeight; y += 100)
+                    g.DrawLine(pen, 0, y, imgWidth, y);
+                pen.Dispose();
+
+                // Draw a red circle to represent a point of interest
+                Brush brush = new SolidBrush(Color.Red);
+                int radius = 30;
+                g.FillEllipse(brush, imgWidth / 2 - radius, imgHeight / 2 - radius, radius * 2, radius * 2);
+                brush.Dispose();
             }
-            // Save the bitmap as PNG.
-            bitmap.Save(mapImagePath);
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
         }
 
-        // -------------------------------------------------
-        // 2. Create a DOCX document and embed the PNG image.
-        // -------------------------------------------------
+        // 2. Create a DOCX document and embed the PNG image
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert the image as an inline shape.
-        builder.InsertImage(mapImagePath);
-        // Save the document.
+        builder.InsertImage(sampleImagePath);
+        string docPath = Path.Combine(artifactsDir, "input.docx");
         doc.Save(docPath);
 
-        // -------------------------------------------------
-        // 3. Load the document and extract all embedded images.
-        // -------------------------------------------------
+        // 3. Load the document (simulating a separate load operation)
         Document loadedDoc = new Document(docPath);
+
+        // 4. Extract all images from shape nodes and save them as high‑resolution PNG files
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage)
             {
-                // Determine appropriate file extension based on image type.
-                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string outFile = Path.Combine(outputDir, $"extracted_{imageIndex}{extension}");
-                // Save the image data.
+                // Determine file extension based on the image type; force PNG if not already PNG
+                string ext = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                if (!ext.Equals(".png", StringComparison.OrdinalIgnoreCase))
+                {
+                    ext = ".png";
+                }
+
+                string outFile = Path.Combine(artifactsDir, $"extracted_image_{imageIndex}{ext}");
                 shape.ImageData.Save(outFile);
                 imageIndex++;
             }
         }
 
-        // -------------------------------------------------
-        // 4. Validation – ensure at least one image was extracted.
-        // -------------------------------------------------
+        // 5. Validation – ensure at least one image was extracted
         if (imageIndex == 0)
             throw new InvalidOperationException("No images were extracted from the document.");
+
+        // Optional: output result count (no interactive prompt)
+        Console.WriteLine($"Extracted {imageIndex} image(s) to folder: {artifactsDir}");
     }
 }

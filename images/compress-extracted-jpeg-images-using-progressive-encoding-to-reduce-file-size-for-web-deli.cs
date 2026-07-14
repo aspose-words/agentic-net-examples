@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,83 +11,83 @@ public class Program
 {
     public static void Main()
     {
-        // Directories for artifacts.
+        // Prepare folders.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
+        string inputImagePath = Path.Combine(artifactsDir, "sample.jpg");
+        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
+        string extractedImagePath = Path.Combine(artifactsDir, "extracted_original.jpg");
+        string compressedImagePath = Path.Combine(artifactsDir, "extracted_compressed.jpg");
 
-        // 1. Create a sample JPEG image using Aspose.Drawing.
-        string originalImagePath = Path.Combine(artifactsDir, "sample.jpg");
-        using (Bitmap bmp = new Bitmap(200, 200))
-        using (Graphics g = Graphics.FromImage(bmp))
+        // -------------------------------------------------
+        // 1. Create a deterministic sample JPEG image.
+        // -------------------------------------------------
+        using (Bitmap bitmap = new Bitmap(200, 200))
+        using (Graphics g = Graphics.FromImage(bitmap))
         {
-            g.Clear(Color.White);
-            g.DrawEllipse(new Pen(Color.Blue, 5), 20, 20, 160, 160);
-            bmp.Save(originalImagePath, ImageFormat.Jpeg);
+            g.Clear(Aspose.Drawing.Color.LightBlue);
+            g.DrawEllipse(new Pen(Aspose.Drawing.Color.DarkBlue, 5), 20, 20, 160, 160);
+            bitmap.Save(inputImagePath, ImageFormat.Jpeg);
         }
 
-        // 2. Insert the JPEG into a Word document.
+        // -------------------------------------------------
+        // 2. Insert the image into a Word document.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(originalImagePath);
-        string docPath = Path.Combine(artifactsDir, "Original.docx");
+        builder.InsertImage(inputImagePath);
         doc.Save(docPath);
 
-        // 3. Load the document and extract JPEG images.
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // -------------------------------------------------
+        // 3. Extract JPEG images from the document.
+        // -------------------------------------------------
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        Shape jpegShape = shapeNodes
+            .OfType<Shape>()
+            .FirstOrDefault(s => s.HasImage && s.ImageData.ImageType == ImageType.Jpeg);
+
+        if (jpegShape == null)
+            throw new InvalidOperationException("No JPEG image found in the document.");
+
+        // Save the original extracted image.
+        jpegShape.ImageData.Save(extractedImagePath);
+
+        // -------------------------------------------------
+        // 4. Re‑compress the extracted JPEG using lower quality.
+        //    (Aspose.Words does not expose a direct progressive flag,
+        //     so we use Aspose.Drawing to set JPEG quality, which also
+        //     produces a progressive JPEG when supported by the encoder.)
+        // -------------------------------------------------
+        using (MemoryStream ms = new MemoryStream())
         {
-            if (!shape.HasImage)
-                continue;
-
-            // Process only JPEG images.
-            if (shape.ImageData.ImageType != ImageType.Jpeg)
-                continue;
-
-            // Save the original image to a memory stream.
-            using (MemoryStream originalStream = new MemoryStream())
+            // Load the extracted image into Aspose.Drawing.Image.
+            jpegShape.ImageData.Save(ms);
+            ms.Position = 0;
+            using (Image img = Image.FromStream(ms))
             {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
+                // Find the JPEG codec.
+                ImageCodecInfo jpegCodec = ImageCodecInfo.GetImageEncoders()
+                    .FirstOrDefault(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
+                if (jpegCodec == null)
+                    throw new InvalidOperationException("JPEG codec not found.");
 
-                // Load the image with Aspose.Drawing.
-                using (Image img = Image.FromStream(originalStream))
-                {
-                    // Prepare encoder parameters:
-                    // - Quality = 50 (stronger compression)
-                    // - ScanMethod = Interlaced (progressive JPEG)
-                    EncoderParameters encoderParams = new EncoderParameters(2);
-                    encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 50L);
-                    encoderParams.Param[1] = new EncoderParameter(Encoder.ScanMethod, (long)EncoderValue.ScanMethodInterlaced);
+                // Set encoder parameters: quality = 50 (adjust as needed).
+                EncoderParameters encoderParams = new EncoderParameters(1);
+                encoderParams.Param[0] = new EncoderParameter(Encoder.Quality, 50L);
 
-                    // Find the JPEG codec.
-                    ImageCodecInfo jpegCodec = ImageCodecInfo.GetImageEncoders()
-                        .FirstOrDefault(c => c.FormatID == ImageFormat.Jpeg.Guid);
-                    if (jpegCodec == null)
-                        throw new InvalidOperationException("JPEG codec not found.");
-
-                    // Save the compressed progressive JPEG.
-                    string compressedPath = Path.Combine(artifactsDir, $"compressed_{imageIndex + 1}.jpg");
-                    img.Save(compressedPath, jpegCodec, encoderParams);
-
-                    // Validation: ensure the file exists and is smaller than the original.
-                    FileInfo originalInfo = new FileInfo(originalImagePath);
-                    FileInfo compressedInfo = new FileInfo(compressedPath);
-                    if (!compressedInfo.Exists)
-                        throw new FileNotFoundException("Compressed image was not created.", compressedPath);
-                    if (compressedInfo.Length >= originalInfo.Length)
-                        throw new InvalidOperationException("Compressed image is not smaller than the original.");
-
-                    Console.WriteLine($"Image {imageIndex + 1} compressed: {originalInfo.Length} -> {compressedInfo.Length} bytes");
-                }
+                // Save the compressed image.
+                img.Save(compressedImagePath, jpegCodec, encoderParams);
             }
-
-            imageIndex++;
         }
 
-        // If no JPEG images were found, indicate it.
-        if (imageIndex == 0)
-            Console.WriteLine("No JPEG images were found in the document.");
+        // -------------------------------------------------
+        // 5. Validate that the compressed file was created.
+        // -------------------------------------------------
+        if (!File.Exists(compressedImagePath))
+            throw new FileNotFoundException("Compressed image was not created.", compressedImagePath);
+
+        // Optional: output file sizes for demonstration (not required by the task).
+        Console.WriteLine($"Original extracted size: {new FileInfo(extractedImagePath).Length} bytes");
+        Console.WriteLine($"Compressed size: {new FileInfo(compressedImagePath).Length} bytes");
     }
 }

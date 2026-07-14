@@ -1,103 +1,76 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Drawing;
+using Aspose.Drawing;               // Provides Bitmap, Graphics, Color
+using Aspose.Drawing.Imaging;      // Provides ImageFormat
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string artifactsDir = "Artifacts";
-        string secureDir = "SecureArchive";
-        Directory.CreateDirectory(artifactsDir);
-        Directory.CreateDirectory(secureDir);
+        // Define deterministic file and folder names
+        string workingDir = Directory.GetCurrentDirectory();
+        string inputImagePath = Path.Combine(workingDir, "input.png");
+        string secureFolder = Path.Combine(workingDir, "SecureFolder");
+        Directory.CreateDirectory(secureFolder);
 
-        // -----------------------------------------------------------------
-        // 1. Create a deterministic PNG image that will be inserted into a document.
-        // -----------------------------------------------------------------
-        string pngPath = Path.Combine(artifactsDir, "sample.png");
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        using (Graphics g = Graphics.FromImage(bitmap))
+        // -------------------------------------------------
+        // 1. Create a sample PNG image using Aspose.Drawing
+        // -------------------------------------------------
+        const int imgWidth = 200;
+        const int imgHeight = 100;
+        using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
-            // Fill background with a solid color.
-            g.Clear(Color.CornflowerBlue);
-            // Draw a simple red ellipse.
-            g.FillEllipse(new SolidBrush(Color.Red), 50, 50, 100, 100);
-            bitmap.Save(pngPath);
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                // Fill background with white and draw a simple rectangle
+                g.Clear(Color.White);
+                g.FillRectangle(new SolidBrush(Color.Blue), 20, 20, 160, 60);
+            }
+
+            // Save the bitmap as PNG – this will be the source image for the document
+            bitmap.Save(inputImagePath, ImageFormat.Png);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Build a Word document that contains the PNG image.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // 2. Create a Word document and insert the PNG image
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(pngPath);
-        string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
-        doc.Save(docPath);
+        builder.InsertImage(inputImagePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the document and extract PNG images.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int extractedCount = 0;
+        // -------------------------------------------------
+        // 3. Extract all images, convert each to grayscale BMP,
+        //    and save them into the secure folder
+        // -------------------------------------------------
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        int savedCount = 0;
+        int imageIndex = 0;
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only PNG images.
-            if (shape.ImageData.ImageType != ImageType.Png)
-                continue;
+            // Apply grayscale rendering
+            shape.ImageData.GrayScale = true;
 
-            // Save the original image to a memory stream.
-            using (MemoryStream imageStream = new MemoryStream())
-            {
-                shape.ImageData.Save(imageStream);
-                imageStream.Position = 0;
+            // Build deterministic output file name
+            string outputPath = Path.Combine(secureFolder, $"extracted_{imageIndex}.bmp");
 
-                // Load the image into an Aspose.Drawing.Bitmap.
-                using (Bitmap sourceBmp = new Bitmap(imageStream))
-                {
-                    // Create a new bitmap for the grayscale version.
-                    using (Bitmap grayBmp = new Bitmap(sourceBmp.Width, sourceBmp.Height))
-                    using (Graphics graphics = Graphics.FromImage(grayBmp))
-                    {
-                        // Convert each pixel to grayscale.
-                        for (int y = 0; y < sourceBmp.Height; y++)
-                        {
-                            for (int x = 0; x < sourceBmp.Width; x++)
-                            {
-                                Color srcColor = sourceBmp.GetPixel(x, y);
-                                int grayValue = (int)(0.3 * srcColor.R + 0.59 * srcColor.G + 0.11 * srcColor.B);
-                                Color grayColor = Color.FromArgb(grayValue, grayValue, grayValue);
-                                grayBmp.SetPixel(x, y, grayColor);
-                            }
-                        }
-
-                        // Save the grayscale bitmap as BMP in the secure folder.
-                        string outputPath = Path.Combine(secureDir, $"extracted_{extractedCount}.bmp");
-                        grayBmp.Save(outputPath);
-
-                        // Validate that the file was created.
-                        if (!File.Exists(outputPath))
-                            throw new InvalidOperationException($"Failed to create '{outputPath}'.");
-                    }
-                }
-            }
-
-            extractedCount++;
+            // Save the image as BMP
+            shape.ImageData.Save(outputPath);
+            savedCount++;
+            imageIndex++;
         }
 
-        // -----------------------------------------------------------------
-        // 4. Validation – ensure at least one image was processed.
-        // -----------------------------------------------------------------
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No PNG images were found and converted.");
+        // -------------------------------------------------
+        // 4. Validation – ensure at least one image was saved
+        // -------------------------------------------------
+        if (savedCount == 0)
+            throw new InvalidOperationException("No images were extracted and saved.");
+
+        Console.WriteLine($"Successfully extracted and saved {savedCount} grayscale BMP image(s) to '{secureFolder}'.");
     }
 }

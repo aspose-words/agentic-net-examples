@@ -1,78 +1,97 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
+using Newtonsoft.Json;
 
 public class Program
 {
+    // Helper class for JSON deserialization
+    private class ImageResponse
+    {
+        public string imageData { get; set; }
+    }
+
     public static void Main()
     {
-        // File names used in the example
+        // Paths for files used in the example
         const string templatePath = "template.docx";
-        const string imagePath = "apiImage.png";
         const string outputPdfPath = "output.pdf";
 
         // -------------------------------------------------
-        // Step 1: Create a sample image (simulating a REST API response)
+        // 1. Create a simple DOCX template if it does not exist
         // -------------------------------------------------
-        const int imgWidth = 200;
-        const int imgHeight = 100;
+        if (!File.Exists(templatePath))
+        {
+            Document templateDoc = new Document();
+            DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
+            templateBuilder.Writeln("Template Document");
+            templateBuilder.Writeln("The image will be inserted below:");
+            templateDoc.Save(templatePath);
+        }
 
-        // Create a deterministic bitmap using Aspose.Drawing
-        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight);
+        // -------------------------------------------------
+        // 2. Simulate a REST API that returns an image as Base64 JSON
+        // -------------------------------------------------
+        // Create a deterministic sample image using Aspose.Drawing
+        Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 200);
         Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap);
         graphics.Clear(Aspose.Drawing.Color.LightBlue);
-        // Draw a simple rectangle to make the image visible
-        graphics.FillRectangle(
-            new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.DarkBlue),
-            10, 10, imgWidth - 20, imgHeight - 20);
+        // Draw a simple rectangle
+        using (var pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkBlue, 5))
+        {
+            graphics.DrawRectangle(pen, 20, 20, 160, 160);
+        }
 
-        // Save the generated image to a local file
-        bitmap.Save(imagePath);
+        // Save the image to a memory stream in PNG format
+        byte[] pngBytes;
+        using (MemoryStream imgStream = new MemoryStream())
+        {
+            bitmap.Save(imgStream, ImageFormat.Png);
+            imgStream.Position = 0;
+            pngBytes = imgStream.ToArray();
+        }
 
-        // Release drawing resources
+        // Clean up drawing resources
         graphics.Dispose();
         bitmap.Dispose();
 
-        // -------------------------------------------------
-        // Step 2: Create a simple DOCX template programmatically
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
-        templateBuilder.Writeln("This is a sample template document.");
-        templateBuilder.Writeln("Below is the image fetched from the API:");
-        // Save the template so it can be loaded later
-        templateDoc.Save(templatePath);
-        // No explicit Dispose needed for Document or DocumentBuilder
+        // Encode the image bytes to Base64 and wrap in JSON
+        string base64Image = Convert.ToBase64String(pngBytes);
+        string jsonResponse = $"{{\"imageData\":\"{base64Image}\"}}";
 
         // -------------------------------------------------
-        // Step 3: Load the DOCX template
+        // 3. Parse the JSON response to obtain the image bytes
+        // -------------------------------------------------
+        ImageResponse response = JsonConvert.DeserializeObject<ImageResponse>(jsonResponse);
+        if (response == null || string.IsNullOrEmpty(response.imageData))
+            throw new InvalidOperationException("Failed to retrieve image data from simulated API.");
+
+        byte[] imageBytes = Convert.FromBase64String(response.imageData);
+
+        // -------------------------------------------------
+        // 4. Load the DOCX template, insert the image, and save as PDF
         // -------------------------------------------------
         Document doc = new Document(templatePath);
-        DocumentBuilder docBuilder = new DocumentBuilder(doc);
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -------------------------------------------------
-        // Step 4: Insert the image into the document
-        // -------------------------------------------------
-        if (!File.Exists(imagePath))
-            throw new FileNotFoundException("Image file not found.", imagePath);
+        // Move to the end of the document to insert the image
+        builder.MoveToDocumentEnd();
+        builder.InsertParagraph(); // Ensure a new paragraph for the image
+        builder.InsertImage(imageBytes);
 
-        // Insert the image at the current cursor position
-        docBuilder.InsertImage(imagePath);
-
-        // -------------------------------------------------
-        // Step 5: Save the resulting document as PDF
-        // -------------------------------------------------
+        // Save the resulting document as PDF
         doc.Save(outputPdfPath, SaveFormat.Pdf);
 
         // -------------------------------------------------
-        // Validation: Ensure the PDF was created
+        // 5. Validate that the PDF was created
         // -------------------------------------------------
         if (!File.Exists(outputPdfPath))
-            throw new Exception("Failed to create the output PDF file.");
+            throw new FileNotFoundException("The PDF output file was not created.", outputPdfPath);
 
-        // Indicate successful completion
+        // Example completed successfully
         Console.WriteLine("Document processed and saved as PDF successfully.");
     }
 }
