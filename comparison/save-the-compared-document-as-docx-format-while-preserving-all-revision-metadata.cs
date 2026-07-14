@@ -7,30 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document with some content.
+        // Create the original document with some text.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world!");
-        builderOriginal.Writeln("This line will stay the same.");
+        builderOriginal.Writeln("This is the original paragraph.");
+        builderOriginal.Writeln("It contains a few sentences.");
 
-        // Create the revised document with a modification.
+        // Create the revised document with intentional differences.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello Aspose.Words!");
-        builderRevised.Writeln("This line will stay the same.");
+        builderRevised.Writeln("This is the original paragraph."); // same line
+        builderRevised.Writeln("It contains several modified sentences."); // changed text
+        builderRevised.Writeln("An additional line is added."); // new line
 
-        // Perform the comparison. The original document will receive revision metadata.
-        original.Compare(revised, "Comparer", DateTime.Now);
+        // Perform the comparison. The original document will receive revision objects.
+        string author = "AsposeUser";
+        DateTime compareDate = DateTime.Now;
+        original.Compare(revised, author, compareDate);
 
-        // Verify that at least one revision was created.
+        // Verify that revisions were created.
         if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after comparison.");
+        {
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
+        }
 
-        // Save the compared document (which contains all revisions) as DOCX.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Compared.docx");
+        // Save the compared document (with revisions) as DOCX.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparedDocument.docx");
         original.Save(outputPath, SaveFormat.Docx);
 
-        // Optional: write the revision count to the console for verification.
+        // Optional: write a simple confirmation to the console.
         Console.WriteLine($"Comparison complete. Revisions count: {original.Revisions.Count}");
         Console.WriteLine($"Compared document saved to: {outputPath}");
     }

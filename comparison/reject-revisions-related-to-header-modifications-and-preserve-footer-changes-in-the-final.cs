@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -6,69 +7,52 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document with header, footer and body content.
+        // Create the original document with a header, a footer and some body text.
         Document original = new Document();
         DocumentBuilder builder = new DocumentBuilder(original);
 
-        // Header
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
         builder.Writeln("Original Header");
 
-        // Footer
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
         builder.Writeln("Original Footer");
 
-        // Body
         builder.MoveToDocumentEnd();
-        builder.Writeln("Original body text.");
+        builder.Writeln("Body content.");
 
-        // Create the revised version by cloning and editing header, footer and body.
-        Document revised = (Document)original.Clone(true);
-        DocumentBuilder revBuilder = new DocumentBuilder(revised);
+        // Create the revised document where the header and footer are changed.
+        Document revised = new Document();
+        DocumentBuilder builder2 = new DocumentBuilder(revised);
 
-        // Edit header
-        revBuilder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        revBuilder.Writeln("Edited Header");
+        builder2.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder2.Writeln("Edited Header");
 
-        // Edit footer
-        revBuilder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        revBuilder.Writeln("Edited Footer");
+        builder2.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder2.Writeln("Edited Footer");
 
-        // Edit body
-        revBuilder.MoveToDocumentEnd();
-        revBuilder.Writeln("Edited body text.");
+        builder2.MoveToDocumentEnd();
+        builder2.Writeln("Body content.");
 
-        // Compare the documents – revisions will be added to the original document.
+        // Compare the documents – revisions will be created in the original document.
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Helper to determine whether a revision belongs to a header.
-        bool IsHeaderRevision(Revision rev)
-        {
-            Node? parent = rev.ParentNode;
-            if (parent == null) return false;
-            Node? grandParent = parent.ParentNode;
-            if (grandParent == null) return false;
-            if (grandParent.NodeType == NodeType.HeaderFooter)
-            {
-                HeaderFooter hf = (HeaderFooter)grandParent;
-                return hf.HeaderFooterType == HeaderFooterType.HeaderPrimary ||
-                       hf.HeaderFooterType == HeaderFooterType.HeaderFirst ||
-                       hf.HeaderFooterType == HeaderFooterType.HeaderEven;
-            }
-            return false;
-        }
+        // Reject revisions that belong to the header, keep (accept) all other revisions.
+        var revisions = original.Revisions;
+        var revisionList = revisions.Cast<Revision>().ToList(); // snapshot to avoid collection modification issues
 
-        // Reject header revisions, accept all others (including footer changes).
-        for (int i = original.Revisions.Count - 1; i >= 0; i--)
+        foreach (Revision rev in revisionList)
         {
-            Revision rev = original.Revisions[i];
-            if (IsHeaderRevision(rev))
-                rev.Reject();   // Discard header modifications.
+            // Determine if the revision is inside a header.
+            HeaderFooter headerFooter = rev.ParentNode?.GetAncestor(NodeType.HeaderFooter) as HeaderFooter;
+            bool isHeaderRevision = headerFooter != null && headerFooter.HeaderFooterType == HeaderFooterType.HeaderPrimary;
+
+            if (isHeaderRevision)
+                rev.Reject();   // Discard header changes.
             else
-                rev.Accept();   // Keep other modifications (e.g., footer, body).
+                rev.Accept();   // Preserve footer (and other) changes.
         }
 
-        // Save the final document where header changes are rejected and footer changes are preserved.
+        // Save the final document where header changes are rejected and footer changes are kept.
         original.Save("Result.docx");
     }
 }

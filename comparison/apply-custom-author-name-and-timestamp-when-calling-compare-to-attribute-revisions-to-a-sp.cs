@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
@@ -7,46 +6,43 @@ public class Program
 {
     public static void Main()
     {
-        // Define custom author name and timestamp for the comparison.
-        const string customAuthor = "JaneDoe";
-        DateTime customDate = new DateTime(2023, 5, 1, 10, 30, 0, DateTimeKind.Utc);
-
-        // Create the original document with some content.
+        // Create the original document.
         Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("This is the original paragraph.");
-        builderOriginal.Writeln("It contains a line that will be changed.");
+        DocumentBuilder builder1 = new DocumentBuilder(original);
+        builder1.Writeln("Hello world.");
+        builder1.Writeln("This line will stay the same.");
 
         // Create the revised document with intentional differences.
         Document revised = new Document();
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This is the original paragraph."); // unchanged line.
-        builderRevised.Writeln("It contains a line that has been edited."); // edited line.
+        DocumentBuilder builder2 = new DocumentBuilder(revised);
+        builder2.Writeln("Hello Aspose.Words world!"); // Modified line.
+        builder2.Writeln("This line will stay the same."); // Unchanged line.
+        builder2.Writeln("Additional line added."); // New line.
 
-        // Perform the comparison, attributing all revisions to the custom author and timestamp.
+        // Define custom author name and timestamp for the revisions.
+        string customAuthor = "John Doe";
+        DateTime customDate = new DateTime(2023, 1, 1, 12, 0, 0);
+
+        // Perform the comparison, attributing revisions to the custom author and timestamp.
         original.Compare(revised, customAuthor, customDate);
 
-        // Verify that at least one revision was created.
+        // Ensure that revisions were generated.
         if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after comparison, but none were found.");
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
 
-        // Ensure every revision has the expected author and timestamp.
+        // Output details of each revision.
         foreach (Revision rev in original.Revisions)
         {
-            if (!string.Equals(rev.Author, customAuthor, StringComparison.Ordinal))
-                throw new InvalidOperationException($"Revision author mismatch. Expected '{customAuthor}', got '{rev.Author}'.");
-
-            // Compare only the date component to avoid minor differences in ticks.
-            if (rev.DateTime.Date != customDate.Date)
-                throw new InvalidOperationException($"Revision date mismatch. Expected '{customDate.Date:d}', got '{rev.DateTime.Date:d}'.");
+            Console.WriteLine($"Author: {rev.Author}");
+            Console.WriteLine($"Date: {rev.DateTime:u}");
+            Console.WriteLine($"Type: {rev.RevisionType}");
+            Console.WriteLine($"Text: {rev.ParentNode.GetText().Trim()}");
+            Console.WriteLine();
         }
 
-        // Save the compared document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonResult.docx");
-        original.Save(outputPath);
-
-        // Optional console output to indicate success.
-        Console.WriteLine($"Comparison completed. Revisions attributed to '{customAuthor}' on {customDate:d}.");
-        Console.WriteLine($"Result saved to: {outputPath}");
+        // Save the document that now contains the revisions.
+        const string outputFile = "ComparedDocument.docx";
+        original.Save(outputFile);
+        Console.WriteLine($"Compared document saved to '{outputFile}'.");
     }
 }

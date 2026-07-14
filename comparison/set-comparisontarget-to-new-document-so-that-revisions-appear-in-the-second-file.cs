@@ -1,41 +1,43 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class Program
+public class ComparisonTargetExample
 {
     public static void Main()
     {
-        // Create the original document with some content.
+        // Create the original document.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("This is the original paragraph.");
-        builderOriginal.Writeln("It has two lines.");
+        builderOriginal.Writeln("Hello world.");
 
-        // Create the revised document with modifications.
+        // Create the revised document with a difference.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This is the edited paragraph."); // changed text
-        builderRevised.Writeln("It has two lines."); // same line
-        builderRevised.Writeln("An additional line in the revised version."); // new line
+        builderRevised.Writeln("Hello revised world.");
 
-        // Configure compare options to use the revised document as the target.
+        // Configure compare options to use the *new* document as the comparison target.
+        // This means the other document (original) is treated as the base,
+        // and revisions will be recorded in the document on which Compare is called (revised).
         CompareOptions compareOptions = new CompareOptions
         {
-            // Setting Target to New makes the other document (original) the base,
-            // so revisions will be recorded in the document we call Compare on (revised).
             Target = ComparisonTargetType.New
         };
 
-        // Perform the comparison. Revisions will appear in the 'revised' document.
-        revised.Compare(original, "Author", DateTime.Now, compareOptions);
+        // Perform the comparison. Revisions will be recorded in the revised document.
+        revised.Compare(original, "JD", DateTime.Now, compareOptions);
 
-        // Verify that revisions were generated.
+        // Verify that revisions exist in the revised document.
         if (revised.Revisions.Count == 0)
             throw new InvalidOperationException("Expected revisions in the revised document, but none were found.");
 
-        // Save both documents. The revised document now contains the tracked changes.
-        original.Save("Original.docx");
-        revised.Save("Revised_With_Revisions.docx");
+        // Save both documents to the current directory.
+        string outputDir = Directory.GetCurrentDirectory();
+        original.Save(Path.Combine(outputDir, "Original.docx"));
+        revised.Save(Path.Combine(outputDir, "Revised_With_Revisions.docx"));
+
+        // Simple console summary.
+        Console.WriteLine($"Revisions in revised document: {revised.Revisions.Count}");
     }
 }

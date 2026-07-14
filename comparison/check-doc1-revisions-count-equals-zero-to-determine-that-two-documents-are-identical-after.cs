@@ -2,29 +2,35 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
-public class Program
+public class ComparisonExample
 {
     public static void Main()
     {
-        // Create the first document with deterministic content.
+        // Create the first document with some content.
         Document doc1 = new Document();
         DocumentBuilder builder1 = new DocumentBuilder(doc1);
-        builder1.Writeln("This is a sample paragraph used for comparison.");
+        builder1.Writeln("Hello world.");
 
-        // Create the second document with exactly the same content.
+        // Create the second document with identical content.
         Document doc2 = new Document();
         DocumentBuilder builder2 = new DocumentBuilder(doc2);
-        builder2.Writeln("This is a sample paragraph used for comparison.");
+        builder2.Writeln("Hello world.");
 
-        // Perform the comparison. No revisions should be generated because the documents are identical.
+        // Ensure both documents have no revisions before comparison.
+        if (doc1.Revisions.Count != 0 || doc2.Revisions.Count != 0)
+            throw new InvalidOperationException("Documents should not contain revisions before comparison.");
+
+        // Compare the documents. Since they are identical, no revisions should be generated.
         doc1.Compare(doc2, "Comparer", DateTime.Now);
 
-        // Verify that the revisions collection is empty.
+        // Verify that the comparison produced zero revisions.
         if (doc1.Revisions.Count != 0)
-            throw new InvalidOperationException("Documents are not identical – revisions were detected.");
+            throw new InvalidOperationException("Expected zero revisions for identical documents.");
 
-        // Save the (unchanged) document to demonstrate that the operation completed successfully.
-        string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "IdenticalComparison.docx");
-        doc1.Save(outputPath);
+        // Save the (unchanged) result document.
+        doc1.Save("identical-comparison.docx");
+
+        // Indicate success.
+        Console.WriteLine("Documents are identical; no revisions were created.");
     }
 }

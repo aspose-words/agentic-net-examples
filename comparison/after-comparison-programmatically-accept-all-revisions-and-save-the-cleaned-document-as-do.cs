@@ -1,37 +1,38 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Comparing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the original document.
+        // Create the original document with some content.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("This is the original paragraph.");
+        builderOriginal.Writeln("Hello world.");
+        builderOriginal.Writeln("This line will stay unchanged.");
 
-        // Create the revised document with a difference.
+        // Create the revised document that contains a modification.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("This is the revised paragraph with a change.");
+        builderRevised.Writeln("Hello Aspose.Words!"); // changed text
+        builderRevised.Writeln("This line will stay unchanged.");
 
-        // Compare the documents – revisions will be added to the original document.
+        // Compare the documents. Revisions are added to the original document.
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Verify that at least one revision was created.
+        // Verify that the comparison produced revisions.
         if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("Expected revisions after comparison.");
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
 
         // Accept all revisions, turning the original into the revised version.
         original.AcceptAllRevisions();
 
-        // Verify that all revisions have been accepted.
+        // Ensure that all revisions have been accepted.
         if (original.Revisions.Count != 0)
             throw new InvalidOperationException("All revisions should have been accepted.");
 
         // Save the cleaned document.
-        string outputPath = "Cleaned.docx";
+        const string outputPath = "CleanedDocument.docx";
         original.Save(outputPath);
     }
 }
