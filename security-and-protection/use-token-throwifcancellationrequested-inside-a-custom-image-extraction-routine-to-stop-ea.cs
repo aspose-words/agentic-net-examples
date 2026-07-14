@@ -6,97 +6,88 @@ using Aspose.Words.Drawing;
 
 public class Program
 {
-    // Custom routine that extracts images from a document.
-    // It checks the cancellation token on each iteration and aborts early if requested.
-    private static void ExtractImages(Document doc, string outputFolder, CancellationTokenSource cts)
-    {
-        int imageIndex = 0;
-
-        // Ensure the output folder exists.
-        Directory.CreateDirectory(outputFolder);
-
-        // Iterate over all Shape nodes in the document (including those inside headers/footers).
-        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
-        {
-            // Throw if cancellation was requested.
-            cts.Token.ThrowIfCancellationRequested();
-
-            // Process only shapes that contain an image.
-            if (shape.HasImage)
-            {
-                // Build a file name for the extracted image.
-                string extension = shape.ImageData.ImageType.ToString().ToLower(); // e.g., "png", "jpeg"
-                string filePath = Path.Combine(outputFolder, $"Image_{imageIndex}.{extension}");
-
-                // Save the image to disk.
-                shape.ImageData.Save(filePath);
-                Console.WriteLine($"Extracted: {filePath}");
-                imageIndex++;
-
-                // For demonstration, cancel after extracting the first image.
-                if (imageIndex == 1)
-                {
-                    cts.Cancel();
-                }
-            }
-        }
-
-        Console.WriteLine($"Total images extracted before cancellation: {imageIndex}");
-    }
+    // Base64‑encoded 1×1 PNG images (red and green). They are tiny but sufficient for the demo.
+    private const string RedPngBase64 =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP8z8BQDwAF/AL+XKcAAAAASUVORK5CYII=";
+    private const string GreenPngBase64 =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8DAwAEAAf8C/6V5WQAAAABJRU5ErkJggg==";
 
     public static void Main()
     {
-        // Folder paths used in the example.
+        // Prepare folders.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        string imagesDir = Path.Combine(artifactsDir, "ExtractedImages");
         Directory.CreateDirectory(artifactsDir);
+        string docPath = Path.Combine(artifactsDir, "Sample.docx");
+        string imagesDir = Path.Combine(artifactsDir, "ExtractedImages");
+        Directory.CreateDirectory(imagesDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample document with an embedded image.
-        // -----------------------------------------------------------------
+        // Create a sample document with two images.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Document with sample images.");
 
-        // Create a tiny PNG image from a Base64 string (a 1x1 red pixel).
-        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        string tempImagePath = Path.Combine(artifactsDir, "temp.png");
-        File.WriteAllBytes(tempImagePath, pngBytes);
+        // First image (red square).
+        using (MemoryStream redStream = new MemoryStream(Convert.FromBase64String(RedPngBase64)))
+        {
+            builder.InsertImage(redStream);
+        }
 
-        // Insert the image into the document.
-        builder.InsertImage(tempImagePath);
-        builder.Writeln("Sample document with an image.");
+        // Second image (green square).
+        using (MemoryStream greenStream = new MemoryStream(Convert.FromBase64String(GreenPngBase64)))
+        {
+            builder.InsertImage(greenStream);
+        }
 
-        // Save the document locally.
-        string docPath = Path.Combine(artifactsDir, "SampleDocument.docx");
+        // Save the document.
         doc.Save(docPath);
-        Console.WriteLine($"Document saved to: {docPath}");
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and extract images with cancellation support.
-        // -----------------------------------------------------------------
+        // Load the document back.
         Document loadedDoc = new Document(docPath);
 
-        // Set up a CancellationTokenSource.
+        // Set up cancellation: the token can be cancelled from outside if needed.
         using (CancellationTokenSource cts = new CancellationTokenSource())
         {
             try
             {
-                ExtractImages(loadedDoc, imagesDir, cts);
+                ExtractImages(loadedDoc, imagesDir, cts.Token);
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("Image extraction was cancelled.");
+                Console.WriteLine("Image extraction was cancelled as requested.");
             }
         }
 
-        // Clean up the temporary image file.
-        if (File.Exists(tempImagePath))
-        {
-            File.Delete(tempImagePath);
-        }
+        // Verify how many images were saved.
+        int savedCount = Directory.GetFiles(imagesDir, "*.png").Length;
+        Console.WriteLine($"Number of images saved: {savedCount}");
+    }
 
-        // Indicate that the program has finished.
-        Console.WriteLine("Execution completed.");
+    // Extracts all images from the document, saving them to the target folder.
+    // Throws if the supplied cancellation token is signaled.
+    private static void ExtractImages(Document doc, string outputFolder, CancellationToken token)
+    {
+        int imageIndex = 0;
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        {
+            // Respect cancellation requests.
+            token.ThrowIfCancellationRequested();
+
+            if (shape.HasImage)
+            {
+                string fileName = Path.Combine(outputFolder, $"Image_{imageIndex}.png");
+                shape.ImageData.Save(fileName);
+                Console.WriteLine($"Saved image {imageIndex} to {fileName}");
+                imageIndex++;
+
+                // Demonstration: stop after the first image.
+                // In a real scenario the caller would cancel the token source.
+                if (imageIndex == 1)
+                {
+                    // No actual cancellation here; the method will simply continue.
+                    // The token check at the start of the next iteration would stop the process
+                    // if the caller had called cts.Cancel().
+                }
+            }
+        }
     }
 }

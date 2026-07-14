@@ -3,59 +3,61 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+namespace AsposeWordsResourceLeakDemo
 {
-    public static void Main()
+    // Callback that aborts the save operation after a short duration.
+    public class SavingProgressCallback : IDocumentSavingCallback
     {
-        // Path for the output document.
-        string outputPath = "Output.docx";
+        private readonly DateTime _savingStartedAt = DateTime.Now;
+        private const double MaxDurationSeconds = 0.01; // Cancel quickly.
 
-        // Create a new blank document and add some text.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello world!");
-
-        // Set up save options with a progress callback that cancels the operation.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+        public void Notify(DocumentSavingArgs args)
         {
-            ProgressCallback = new CancelSavingCallback()
-        };
-
-        try
-        {
-            // Attempt to save the document. The callback will throw OperationCanceledException.
-            doc.Save(outputPath, saveOptions);
-        }
-        catch (OperationCanceledException ex)
-        {
-            // Handle the cancellation.
-            Console.WriteLine("Document saving was canceled: " + ex.Message);
-        }
-        finally
-        {
-            // Dispose the Document if it implements IDisposable to prevent resource leaks.
-            if (doc is IDisposable disposable)
-                disposable.Dispose();
-        }
-
-        // Verify that the file was not created due to cancellation.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("File was saved unexpectedly.");
-        }
-        else
-        {
-            Console.WriteLine("No output file was created, as expected.");
+            double elapsed = (DateTime.Now - _savingStartedAt).TotalSeconds;
+            if (elapsed > MaxDurationSeconds)
+                throw new OperationCanceledException($"EstimatedProgress = {args.EstimatedProgress}");
         }
     }
 
-    // Callback that cancels the save operation immediately.
-    private class CancelSavingCallback : IDocumentSavingCallback
+    public class Program
     {
-        public void Notify(DocumentSavingArgs args)
+        public static void Main()
         {
-            throw new OperationCanceledException(
-                $"EstimatedProgress = {args.EstimatedProgress}; Canceled at {DateTime.Now}");
+            const string outputPath = "CanceledDocument.docx";
+            Document doc = null;
+
+            try
+            {
+                // Create a simple document.
+                doc = new Document();
+                var builder = new DocumentBuilder(doc);
+                builder.Writeln("Hello world!");
+
+                // Set up save options with the progress callback that will cancel the operation.
+                var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+                {
+                    ProgressCallback = new SavingProgressCallback()
+                };
+
+                // Attempt to save; this will be canceled and throw OperationCanceledException.
+                doc.Save(outputPath, saveOptions);
+            }
+            catch (OperationCanceledException ex)
+            {
+                Console.WriteLine($"Save operation was canceled: {ex.Message}");
+            }
+            finally
+            {
+                // Document does not implement IDisposable, so no explicit disposal is required.
+                // Setting the reference to null allows the garbage collector to reclaim it.
+                doc = null;
+            }
+
+            // Simple verification that the file was not created due to cancellation.
+            if (File.Exists(outputPath))
+                Console.WriteLine("File was created (partial save).");
+            else
+                Console.WriteLine("File was not created because the save was canceled.");
         }
     }
 }

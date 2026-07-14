@@ -8,68 +8,46 @@ public class Program
 {
     public static void Main()
     {
-        // Define paths for the sample documents.
-        string outputDir = Path.Combine(Path.GetTempPath(), "AsposeWordsDemo");
-        Directory.CreateDirectory(outputDir);
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
-        string resultPath = Path.Combine(outputDir, "Result.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample document with many fields (e.g., PAGE fields).
-        // -----------------------------------------------------------------
+        // Create a blank document and add a large number of fields to simulate a long‑running update.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert 500 PAGE fields to simulate a long‑running update operation.
-        for (int i = 0; i < 500; i++)
+        const int fieldCount = 5000;
+        for (int i = 0; i < fieldCount; i++)
         {
-            builder.Writeln($"Page number {i + 1}: ");
-            builder.InsertField(FieldType.FieldPage, true);
-            builder.Writeln(); // New line after each field.
+            builder.Writeln($"Paragraph before field {i}");
+            // Insert a simple MERGEFIELD; each field requires processing when updated.
+            builder.InsertField($"MERGEFIELD Field{i}");
+            builder.Writeln($"Paragraph after field {i}");
         }
 
-        // Save the source document.
-        doc.Save(sourcePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the document and update fields with cancellation support.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourcePath);
-
-        // Set up a cancellation token that will be triggered after a short delay.
+        // Set up a cancellation token that will trigger after a short delay.
         using (CancellationTokenSource cts = new CancellationTokenSource())
         {
-            // Cancel after 10 milliseconds to force early termination.
-            cts.CancelAfter(TimeSpan.FromMilliseconds(10));
-            CancellationToken token = cts.Token;
+            // Cancel after 100 milliseconds – enough to interrupt the update loop.
+            cts.CancelAfter(100);
 
             try
             {
-                // Iterate over each field individually.
-                foreach (Field field in loadedDoc.Range.Fields)
+                // Iterate over all fields and update them one by one.
+                // ThrowIfCancellationRequested is called inside the loop to abort efficiently.
+                foreach (Field field in doc.Range.Fields)
                 {
-                    // Abort if cancellation has been requested.
-                    token.ThrowIfCancellationRequested();
-
-                    // Update the current field.
+                    cts.Token.ThrowIfCancellationRequested();
                     field.Update();
                 }
+
+                Console.WriteLine("All fields updated successfully.");
             }
             catch (OperationCanceledException)
             {
-                // Expected path when the operation is cancelled.
-                Console.WriteLine("Field update was cancelled.");
+                Console.WriteLine("Field update operation was cancelled.");
             }
         }
 
-        // Save the (potentially partially updated) document.
-        loadedDoc.Save(resultPath);
-
-        // Verify that the output file exists.
-        if (!File.Exists(resultPath))
-            throw new InvalidOperationException("Result document was not saved.");
-
-        // Clean up (optional).
-        // Directory.Delete(outputDir, true);
+        // Save the (partially) updated document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UpdatedDocument.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

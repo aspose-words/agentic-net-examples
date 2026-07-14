@@ -1,82 +1,79 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class LargeDataSource : IEnumerable<int>
 {
-    // Simple non‑anonymous data source required by ReportingEngine.
-    public class DataSource
+    private readonly int _count;
+    private readonly CancellationToken _token;
+
+    public LargeDataSource(int count, CancellationToken token)
     {
-        public IEnumerable<int> ds { get; set; }
+        _count = count;
+        _token = token;
     }
 
+    public IEnumerator<int> GetEnumerator()
+    {
+        for (int i = 0; i < _count; i++)
+        {
+            // Abort if cancellation is requested.
+            if (_token.IsCancellationRequested)
+                throw new OperationCanceledException("Report generation was canceled.");
+
+            yield return i;
+        }
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
+public class Program
+{
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "Report.docx");
-
-        // Create a template document containing a foreach tag.
+        // Create a simple template document with a LINQ Reporting Engine tag.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Large Report:");
-        // The tag iterates over the data source named 'ds'.
-        builder.Writeln("<<foreach [item in ds]>>Item: <<[item]>>\n<</foreach>>");
+        builder.Writeln("Report:");
+        // Correct foreach syntax for the Reporting Engine.
+        builder.Writeln("<<foreach [item in Data]>><<[item]>><</foreach>>");
 
-        // Generate a large data source.
-        List<int> numbers = Enumerable.Range(1, 1_000_000).ToList();
+        // Set up a cancellation token that will trigger after a short delay.
+        using (CancellationTokenSource cts = new CancellationTokenSource())
+        {
+            cts.CancelAfter(10); // milliseconds
 
-        // Set up a cancellation token that will be triggered after a short delay.
-        using var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeSpan.FromMilliseconds(10));
-        CancellationToken token = cts.Token;
+            // Create a large data source that checks the token during enumeration.
+            LargeDataSource data = new LargeDataSource(1_000_000, cts.Token);
 
-        // Wrap the data source with a LINQ query that checks the cancellation token.
-        IEnumerable<int> cancellableNumbers = numbers.Where(i =>
-        {
-            if (token.IsCancellationRequested)
-                throw new OperationCanceledException("Report generation was cancelled.");
-            return true;
-        });
+            ReportingEngine engine = new ReportingEngine();
 
-        // Prepare the data object for the reporting engine.
-        var data = new DataSource { ds = cancellableNumbers };
+            try
+            {
+                // Build the report using the data source named "Data".
+                engine.BuildReport(template, data, "Data");
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        bool reportBuilt = false;
-        try
-        {
-            // No need to specify a data source name because the property name 'ds' is used in the template.
-            reportBuilt = engine.BuildReport(template, data);
-        }
-        catch (InvalidOperationException ex) when (ex.InnerException is OperationCanceledException)
-        {
-            // The ReportingEngine wraps the cancellation exception; treat it as a cancellation.
-            Console.WriteLine(ex.InnerException.Message);
-        }
-        catch (OperationCanceledException ex)
-        {
-            // Fallback in case the engine throws the exception directly.
-            Console.WriteLine(ex.Message);
-        }
-
-        // Save the document only if the report was built successfully.
-        if (reportBuilt)
-        {
-            template.Save(outputPath);
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The report file was not created.");
-            Console.WriteLine($"Report saved to: {outputPath}");
-        }
-        else
-        {
-            Console.WriteLine("Report generation was aborted; no file was saved.");
+                // If the report completes, save the full document.
+                template.Save("Report.docx");
+                Console.WriteLine("Report generated successfully.");
+            }
+            // The ReportingEngine wraps the OperationCanceledException in an InvalidOperationException.
+            catch (InvalidOperationException ex) when (ex.InnerException is OperationCanceledException)
+            {
+                // On cancellation, save the partially generated document (if any).
+                template.Save("ReportPartial.docx");
+                Console.WriteLine($"Report generation aborted: {ex.InnerException.Message}");
+            }
+            // Fallback in case a raw OperationCanceledException is thrown.
+            catch (OperationCanceledException ex)
+            {
+                template.Save("ReportPartial.docx");
+                Console.WriteLine($"Report generation aborted: {ex.Message}");
+            }
         }
     }
 }

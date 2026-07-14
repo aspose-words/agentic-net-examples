@@ -7,12 +7,12 @@ using Aspose.Words.Loading;
 
 public class Program
 {
-    // Callback that checks a CancellationToken and aborts loading when requested.
-    private class CancellationLoadingCallback : IDocumentLoadingCallback
+    // Callback that checks the cancellation token and aborts loading when requested.
+    private class CancelLoadingCallback : IDocumentLoadingCallback
     {
         private readonly CancellationToken _token;
 
-        public CancellationLoadingCallback(CancellationToken token)
+        public CancelLoadingCallback(CancellationToken token)
         {
             _token = token;
         }
@@ -20,62 +20,48 @@ public class Program
         public void Notify(DocumentLoadingArgs args)
         {
             if (_token.IsCancellationRequested)
-                throw new OperationCanceledException("Document loading was cancelled.");
+                throw new OperationCanceledException();
         }
     }
 
-    public static async Task Main(string[] args)
+    public static void Main()
     {
-        // Prepare a temporary folder for the demo files.
-        string artifactsDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+        // Prepare a folder for temporary files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a large document to make the load operation take noticeable time.
+        // Create and save a simple document.
+        string samplePath = Path.Combine(artifactsDir, "Sample.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 0; i < 2000; i++)
+        builder.Writeln("This is a sample document used to demonstrate cancellation during loading.");
+        doc.Save(samplePath);
+
+        // Set up a CancellationTokenSource that will cancel shortly after loading starts.
+        using (CancellationTokenSource cts = new CancellationTokenSource())
         {
-            builder.Writeln($"Paragraph {i + 1}");
-        }
+            // Cancel after 10 milliseconds.
+            Task.Delay(10).ContinueWith(_ => cts.Cancel());
 
-        string sourcePath = Path.Combine(artifactsDir, "LargeDocument.docx");
-        doc.Save(sourcePath);
-        if (!File.Exists(sourcePath))
-            throw new InvalidOperationException("Failed to save the source document.");
-
-        // Set up a CancellationTokenSource that will be cancelled shortly after loading starts.
-        using var cts = new CancellationTokenSource();
-
-        // Start the load operation in a separate task.
-        Task loadTask = Task.Run(() =>
-        {
             try
             {
-                // Configure LoadOptions with a progress callback that can cancel the load.
+                // Configure LoadOptions with a progress callback that respects the token.
                 LoadOptions loadOptions = new LoadOptions
                 {
-                    ProgressCallback = new CancellationLoadingCallback(cts.Token)
+                    ProgressCallback = new CancelLoadingCallback(cts.Token)
                 };
 
-                // Load the document; the callback will monitor the token.
-                Document loadedDoc = new Document(sourcePath, loadOptions);
+                // Load the document; the callback will throw if cancellation occurs.
+                Document loadedDoc = new Document(samplePath, loadOptions);
 
-                // If loading completes, save the loaded document to verify successful load.
-                string loadedPath = Path.Combine(artifactsDir, "LoadedDocument.docx");
-                loadedDoc.Save(loadedPath);
-                Console.WriteLine($"Document loaded successfully. Pages: {loadedDoc.PageCount}");
+                // If loading completes, output a simple verification.
+                Console.WriteLine("Document loaded successfully. Text length: " + loadedDoc.GetText().Length);
             }
             catch (OperationCanceledException)
             {
-                Console.WriteLine("Document loading was cancelled.");
+                // Expected when the token triggers cancellation.
+                Console.WriteLine("Document loading was canceled.");
             }
-        }, cts.Token);
-
-        // Cancel the operation after a short delay (e.g., 10 milliseconds).
-        await Task.Delay(10);
-        cts.Cancel();
-
-        // Await the load task to ensure the program finishes after handling cancellation.
-        await loadTask;
+        }
     }
 }

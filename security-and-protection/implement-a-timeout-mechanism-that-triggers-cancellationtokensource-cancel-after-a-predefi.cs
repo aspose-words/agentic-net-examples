@@ -1,46 +1,49 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Timers;
 
 public class Program
 {
-    // Predefined timeout duration (in milliseconds).
-    private const int TimeoutMilliseconds = 2000;
-
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // Run the asynchronous workflow synchronously.
-        RunAsync().GetAwaiter().GetResult();
-    }
-
-    private static async Task RunAsync()
-    {
-        // Create a CancellationTokenSource that will be cancelled after the timeout.
+        // Create a cancellation token source that will be cancelled after a timeout.
         using var cts = new CancellationTokenSource();
-        cts.CancelAfter(TimeoutMilliseconds);
 
+        // Define the timeout duration (e.g., 3 seconds).
+        const double timeoutMilliseconds = 3000;
+
+        // Set up a timer that triggers the cancellation.
+        // Use the fully qualified System.Timers.Timer to avoid ambiguity with System.Threading.Timer.
+        using var timer = new System.Timers.Timer(timeoutMilliseconds) { AutoReset = false };
+        timer.Elapsed += (sender, e) => cts.Cancel();
+        timer.Start();
+
+        // Simulate a long‑running operation that observes the cancellation token.
         try
         {
-            // Simulate a long-running operation that respects cancellation.
-            await PerformLongRunningOperationAsync(cts.Token);
+            RunLongOperationAsync(cts.Token).GetAwaiter().GetResult();
         }
         catch (OperationCanceledException)
         {
-            // The operation was cancelled due to the timeout.
-            // No further action needed; the program will exit gracefully.
+            Console.WriteLine("Operation was cancelled due to timeout.");
         }
+
+        // Ensure the timer is stopped before exiting.
+        timer.Stop();
     }
 
-    private static async Task PerformLongRunningOperationAsync(CancellationToken token)
+    private static async Task RunLongOperationAsync(CancellationToken token)
     {
-        // Example loop that performs work in small increments.
-        for (int i = 0; i < 10; i++)
+        // Perform work in a loop, checking for cancellation.
+        while (true)
         {
             // Throw if cancellation has been requested.
             token.ThrowIfCancellationRequested();
 
-            // Simulate work by delaying for 500 ms.
-            await Task.Delay(500, token);
+            // Simulated work (e.g., processing).
+            Console.WriteLine("Working...");
+            await Task.Delay(500, token); // Delay respects the token.
         }
     }
 }

@@ -6,84 +6,70 @@ using Aspose.Words.Fields;
 
 public class Program
 {
+    // Updates all fields in the document while periodically checking the cancellation token.
+    private static void UpdateFieldsWithCancellation(Document doc, CancellationToken token)
+    {
+        int processed = 0;
+        foreach (Field field in doc.Range.Fields)
+        {
+            // Throw if cancellation was requested.
+            token.ThrowIfCancellationRequested();
+
+            field.Update();
+            processed++;
+
+            // Additional periodic check (every 100 fields) to simulate long‑running work.
+            if (processed % 100 == 0)
+                token.ThrowIfCancellationRequested();
+        }
+    }
+
     public static void Main()
     {
-        // Define paths for the sample documents.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        // Prepare a temporary folder for the sample files.
+        string artifactsDir = Path.Combine(Path.GetTempPath(), "AsposeWordsDemo");
         Directory.CreateDirectory(artifactsDir);
-        string sourcePath = Path.Combine(artifactsDir, "LongRunningFields.docx");
-        string resultPath = Path.Combine(artifactsDir, "LongRunningFields_Updated.docx");
+        string filePath = Path.Combine(artifactsDir, "LongRunningFields.docx");
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample document containing many fields to simulate a
-        //    long‑running update operation.
-        // -----------------------------------------------------------------
+        // Create a document with many PAGE fields to simulate a long‑running update.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document with many PAGE fields:");
-        for (int i = 0; i < 2000; i++)
+        for (int i = 0; i < 5000; i++)
         {
-            // Insert a PAGE field and a line break.
+            builder.Writeln($"Record {i + 1}:");
+            // Use the FieldType overload to avoid ambiguity with older Aspose.Words versions.
             builder.InsertField(FieldType.FieldPage, true);
-            builder.Writeln($" - field #{i + 1}");
         }
-        doc.Save(sourcePath);
+        doc.Save(filePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and prepare a cancellation token that will be
-        //    triggered after a short timeout.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourcePath);
-        using var cts = new CancellationTokenSource();
-        // Cancel after 10 milliseconds to force early termination.
-        cts.CancelAfter(TimeSpan.FromMilliseconds(10));
-        CancellationToken token = cts.Token;
+        // Reload the document to ensure a fresh instance.
+        Document loadedDoc = new Document(filePath);
 
-        bool cancelled = false;
-
-        try
+        // Set up a cancellation token that will be triggered shortly after the update starts.
+        using (CancellationTokenSource cts = new CancellationTokenSource())
         {
-            // -----------------------------------------------------------------
-            // 3. Manually update each field, checking the token periodically.
-            //    This mimics a long‑running field update that respects cancellation.
-            // -----------------------------------------------------------------
-            foreach (Field field in loadedDoc.Range.Fields)
+            // Cancel after a very short delay (e.g., 5 milliseconds).
+            cts.CancelAfter(5);
+
+            bool cancelled = false;
+            try
             {
-                // Throw if cancellation was requested.
-                if (token.IsCancellationRequested)
-                {
-                    cancelled = true;
-                    throw new OperationCanceledException("Field update was cancelled.");
-                }
-
-                // Update the current field.
-                field.Update();
+                UpdateFieldsWithCancellation(loadedDoc, cts.Token);
             }
-        }
-        catch (OperationCanceledException ex)
-        {
-            Console.WriteLine($"Update cancelled: {ex.Message}");
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+                Console.WriteLine("Field update was cancelled as expected.");
+            }
+
+            if (!cancelled)
+                throw new InvalidOperationException("The field update was expected to be cancelled but completed normally.");
         }
 
-        // -----------------------------------------------------------------
-        // 4. Verify the outcome.
-        //    If the operation was not cancelled, save the fully updated document.
-        //    Otherwise, save the partially updated document for inspection.
-        // -----------------------------------------------------------------
-        if (!cancelled)
-        {
-            loadedDoc.Save(resultPath);
-            Console.WriteLine($"All fields updated successfully. Saved to: {resultPath}");
-        }
-        else
-        {
-            // Save the partially updated document to demonstrate that cancellation stopped the process.
-            loadedDoc.Save(resultPath);
-            Console.WriteLine($"Partial update saved to: {resultPath}");
-        }
-
-        // Simple validation: ensure the output file exists.
-        if (!File.Exists(resultPath))
-            throw new InvalidOperationException("The expected output document was not created.");
+        // Clean up the temporary files.
+        if (File.Exists(filePath))
+            File.Delete(filePath);
+        if (Directory.Exists(artifactsDir))
+            Directory.Delete(artifactsDir, true);
     }
 }
