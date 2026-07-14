@@ -8,16 +8,16 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for the document.
+        // Create a DocumentBuilder which will be used to insert content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the PageBreakBefore flag so the next paragraph starts on a new page.
+        // Set the PageBreakBefore flag so that the next paragraph starts on a new page.
         builder.ParagraphFormat.PageBreakBefore = true;
 
-        // Insert a paragraph with some text. The page break will be applied before this paragraph.
-        builder.Writeln("This paragraph begins on a new page due to PageBreakBefore.");
+        // Insert the paragraph text. The builder will apply the current ParagraphFormat.
+        builder.Writeln("This paragraph starts on a new page because of PageBreakBefore.");
 
-        // Save the document to a file.
-        doc.Save("ParagraphWithPageBreak.docx");
+        // Save the document to a file in the current directory.
+        doc.Save("ParagraphWithPageBreakBefore.docx");
     }
 }

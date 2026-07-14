@@ -1,7 +1,7 @@
 using System;
 using Aspose.Words;
 
-namespace AsposeWordsStyleExample
+namespace AsposeWordsExample
 {
     public class Program
     {
@@ -10,19 +10,20 @@ namespace AsposeWordsStyleExample
             // Create a new blank document.
             Document doc = new Document();
 
-            // Use DocumentBuilder for easy content insertion.
+            // Initialize a DocumentBuilder for inserting content.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Set a locale‑independent style using StyleIdentifier.
+            // Apply a locale‑independent style using StyleIdentifier.
+            // Heading1 is a built‑in style that works regardless of the document language.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("This paragraph uses Heading 1 style.");
+            builder.Writeln("This paragraph uses the built‑in Heading1 style.");
 
-            // Change to another built‑in style.
+            // Switch to another built‑in style (Normal) using the same approach.
             builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.Writeln("This paragraph uses Normal style.");
+            builder.Writeln("This paragraph uses the Normal style.");
 
-            // Save the document to the current directory.
-            string outputPath = "StyledParagraph.docx";
+            // Save the document to the current working directory.
+            string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "StyledParagraphs.docx");
             doc.Save(outputPath);
         }
     }

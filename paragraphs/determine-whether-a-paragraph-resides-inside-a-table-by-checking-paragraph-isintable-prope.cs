@@ -2,42 +2,44 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace ParagraphInTableDemo
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a paragraph that is NOT inside a table.
-        builder.Writeln("Paragraph outside any table.");
-
-        // Build a simple 1‑row, 2‑cell table.
-        builder.StartTable();
-
-        // First cell.
-        builder.InsertCell();
-        builder.Writeln("Paragraph inside first cell.");
-
-        // Second cell.
-        builder.InsertCell();
-        builder.Writeln("Paragraph inside second cell.");
-
-        // Finish the row and the table.
-        builder.EndRow();
-        builder.EndTable();
-
-        // Iterate through all paragraphs in the document and report whether each is inside a table cell.
-        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        foreach (Paragraph para in paragraphs)
+        public static void Main()
         {
-            // Trim the paragraph text to remove the trailing paragraph break.
-            string text = para.GetText().TrimEnd('\r', '\a');
-            Console.WriteLine($"\"{text}\" - IsInCell: {para.IsInCell}");
-        }
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the document to the local file system.
-        doc.Save("ParagraphInTable.docx");
+            // Paragraph that is NOT inside a table.
+            builder.Writeln("Paragraph outside table");
+
+            // Start a table and add a paragraph inside a cell.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Writeln("Paragraph inside table");
+            builder.EndTable();
+
+            // Another paragraph outside the table.
+            builder.Writeln("Another paragraph outside table");
+
+            // Save the document (optional, just to visualize the result).
+            string outputPath = "ParagraphInTable.docx";
+            doc.Save(outputPath);
+
+            // Iterate through all paragraphs in the document and report whether they are inside a table.
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+            foreach (Paragraph para in paragraphs)
+            {
+                // Paragraph.IsInCell is true when the paragraph is an immediate child of a Cell.
+                bool isInTable = para.IsInCell;
+
+                // Get the paragraph text without the trailing paragraph break.
+                string text = para.GetText().TrimEnd('\r', '\a');
+
+                Console.WriteLine($"\"{text}\" - Inside table: {isInTable}");
+            }
+        }
     }
 }

@@ -1,32 +1,28 @@
 using System;
 using Aspose.Words;
 
-namespace ParagraphLineSpacingExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new empty document.
+        Document doc = new Document();
 
-            // Initialize a DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Attach a DocumentBuilder to the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a new paragraph and obtain a reference to it.
-            // The builder's CurrentParagraph now points to this paragraph.
-            builder.InsertParagraph();
+        // Insert a paragraph with some text.
+        builder.Writeln("This paragraph will have 1.5 line spacing.");
 
-            // Set the line spacing of the current paragraph to 1.5 lines.
-            // Note: When LineSpacingRule is not set, the value is interpreted as points.
-            // For demonstration purposes we directly assign 1.5 as requested.
-            builder.CurrentParagraph.ParagraphFormat.LineSpacing = 1.5;
+        // Adjust the line spacing of the current paragraph to 1.5 lines.
+        // Set the rule to Multiple so the value is interpreted as a multiple of the default line spacing.
+        builder.CurrentParagraph.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
+        builder.CurrentParagraph.ParagraphFormat.LineSpacing = 1.5;
 
-            // Add some text to the paragraph.
-            builder.Writeln("This paragraph has a line spacing of 1.5 lines.");
+        // Add another paragraph to demonstrate that the previous paragraph keeps its custom spacing.
+        builder.Writeln("Another paragraph with default spacing.");
 
-            // Save the document to the local file system.
-            doc.Save("ParagraphLineSpacing.docx");
-        }
+        // Save the document to the local file system.
+        doc.Save("ParagraphLineSpacing.docx");
     }
 }

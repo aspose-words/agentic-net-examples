@@ -8,17 +8,20 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content.
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the paragraph direction to right‑to‑left.
+        // Arabic sample text.
+        string arabicText = "مرحبا بالعالم! هذا نص عربي.";
+
+        // Apply right‑to‑left direction to the current paragraph.
         builder.ParagraphFormat.Bidi = true;
 
-        // Write an Arabic sentence.
-        builder.Writeln("مرحبا بالعالم!"); // "Hello world!" in Arabic
+        // Write the Arabic text into the paragraph.
+        builder.Writeln(arabicText);
 
-        // Save the document to the current directory.
-        string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "ArabicRtl.docx");
+        // Save the document to a file.
+        string outputPath = "BidiParagraph.docx";
         doc.Save(outputPath);
     }
 }

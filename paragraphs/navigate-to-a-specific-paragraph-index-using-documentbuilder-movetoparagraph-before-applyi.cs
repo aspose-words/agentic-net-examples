@@ -1,31 +1,36 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
-public class Program
+namespace ParagraphNavigationExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new empty document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Insert several paragraphs into the document.
-        builder.Writeln("Paragraph 1: left aligned.");
-        builder.Writeln("Paragraph 2: left aligned.");
-        builder.Writeln("Paragraph 3: will be centered.");
-        builder.Writeln("Paragraph 4: left aligned.");
+            // Use DocumentBuilder to add several paragraphs.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Paragraph 0: This is the first paragraph.");
+            builder.Writeln("Paragraph 1: This is the second paragraph.");
+            builder.Writeln("Paragraph 2: This is the third paragraph.");
+            builder.Writeln("Paragraph 3: This is the fourth paragraph.");
 
-        // Move the builder's cursor to the third paragraph (zero‑based index 2).
-        // The character index 0 places the cursor at the start of that paragraph.
-        builder.MoveToParagraph(2, 0);
+            // Move the builder's cursor to the third paragraph (index 2).
+            // The second parameter (characterIndex) is set to 0 to position at the start.
+            builder.MoveToParagraph(2, 0);
 
-        // Apply formatting to the paragraph that the builder is now positioned on.
-        builder.CurrentParagraph.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            // Apply formatting to the paragraph at the current cursor position.
+            builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+            builder.ParagraphFormat.StyleName = "Heading 1";
 
-        // Add additional text to the same paragraph after applying the formatting.
-        builder.Writeln("Additional centered text.");
+            // Optionally, add additional text to the formatted paragraph.
+            builder.Writeln(" - This paragraph has been centered and styled as Heading 1.");
 
-        // Save the modified document to a file.
-        doc.Save("ParagraphNavigationExample.docx");
+            // Save the document to the output file.
+            doc.Save("ParagraphNavigationOutput.docx");
+        }
     }
 }

@@ -1,8 +1,9 @@
 using System;
 using System.Drawing;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
-public class Program
+public class ApplyStyleToHeadings
 {
     public static void Main()
     {
@@ -10,35 +11,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add paragraphs with built‑in heading styles and normal text.
+        // Add some heading paragraphs using built‑in heading styles.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Heading 1");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is a normal paragraph.");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
         builder.Writeln("Heading 2");
 
+        // Add a normal paragraph for contrast.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Another normal paragraph.");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Heading 3");
+        builder.Writeln("This is a normal paragraph.");
 
         // Create a custom paragraph style that will be applied to all headings.
-        Style customHeadingStyle = doc.Styles.Add(StyleType.Paragraph, "MyHeadingStyle");
-        customHeadingStyle.Font.Color = Color.Blue;
-        customHeadingStyle.Font.Size = 14;
-        customHeadingStyle.Font.Bold = true;
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomHeading");
+        customStyle.Font.Name = "Arial";
+        customStyle.Font.Size = 16;
+        customStyle.Font.Color = Color.Blue;
+        customStyle.ParagraphFormat.SpaceAfter = 12;
 
-        // Loop through all paragraphs and apply the custom style to headings.
-        NodeCollection allParagraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-        foreach (Paragraph para in allParagraphs)
+        // Loop through all paragraphs in the document and apply the custom style
+        // to those that are recognized as headings (built‑in Heading styles).
+        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        foreach (Paragraph para in paragraphs)
         {
             if (para.ParagraphFormat.IsHeading)
             {
-                para.ParagraphFormat.Style = customHeadingStyle;
+                para.ParagraphFormat.StyleName = customStyle.Name;
             }
         }
 

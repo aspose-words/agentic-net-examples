@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class ExportDocumentWithHeadersFooters
 {
     public static void Main()
     {
@@ -20,7 +20,7 @@ public class Program
         doc.FirstSection.HeadersFooters.Add(footer);
         footer.AppendParagraph("Primary footer");
 
-        // Build the body of the document.
+        // Build the body of the document with a few pages.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Page 1");
         builder.InsertBreak(BreakType.PageBreak);
@@ -35,16 +35,14 @@ public class Program
         };
 
         // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(outputDir);
 
         // Save the document as plain text.
-        string txtPath = Path.Combine(outputDir, "DocumentWithHeadersFooters.txt");
-        doc.Save(txtPath, saveOptions);
+        string outputPath = Path.Combine(outputDir, "DocumentWithHeadersFooters.txt");
+        doc.Save(outputPath, saveOptions);
 
-        // Optionally, display the saved text content.
-        string savedText = File.ReadAllText(txtPath);
-        Console.WriteLine("Saved TXT content:");
-        Console.WriteLine(savedText);
+        // Indicate completion (optional).
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

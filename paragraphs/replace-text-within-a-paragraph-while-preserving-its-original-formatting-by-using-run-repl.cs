@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
 
 public class Program
@@ -10,32 +9,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply some formatting to the builder's font.
-        builder.Font.Name = "Arial";
-        builder.Font.Size = 12;
+        // Build a paragraph that contains two runs with different formatting.
+        // First run: normal text.
+        builder.Font.Bold = false;
+        builder.Write("Hello ");
+
+        // Second run: bold text that we will replace.
         builder.Font.Bold = true;
-        builder.Font.Color = Color.Blue;
+        builder.Write("World!");
 
-        // Write a paragraph that contains the text we will replace.
-        builder.Writeln("Hello, this is a sample paragraph with placeholder text.");
-
-        // Text to find and its replacement.
-        const string oldText = "placeholder";
-        const string newText = "replaced";
-
-        // Iterate over all Run nodes in the document.
-        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
+        // Replace the word "World" with "Aspose" while preserving the original formatting of each run.
+        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            // If the run contains the target substring, replace it.
-            if (run.Text.Contains(oldText))
+            foreach (Run run in paragraph.Runs)
             {
-                // Replace only the substring; the run's formatting remains unchanged.
-                run.Text = run.Text.Replace(oldText, newText);
-                break; // Assuming the text appears only once.
+                if (run.Text.Contains("World"))
+                {
+                    // Only the text inside this run is changed; its formatting (bold) remains intact.
+                    run.Text = run.Text.Replace("World", "Aspose");
+                }
             }
         }
 
-        // Save the modified document.
+        // Save the resulting document.
         doc.Save("Output.docx");
     }
 }

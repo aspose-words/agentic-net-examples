@@ -8,23 +8,31 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a new empty paragraph where the field will be placed.
-        builder.InsertParagraph();
+        // Set paragraph formatting that will be applied to the next paragraph.
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;   // Center the paragraph.
+        builder.ParagraphFormat.SpaceAfter = 12;                        // Add space after the paragraph.
 
-        // Apply paragraph formatting: center alignment and a space after the paragraph.
-        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        builder.ParagraphFormat.SpaceAfter = 12; // points
+        // Start a new paragraph and write some introductory text.
+        builder.Writeln("Current date:");
 
-        // Insert a DATE field with a custom date format.
-        // The field code does not include the surrounding braces.
-        builder.InsertField("DATE \\@ \"dddd, MMMM dd, yyyy\"");
+        // Write the label and insert a DATE field on the same line.
+        builder.Write("Date: ");
+        Field dateField = builder.InsertField(FieldType.FieldDate, true); // Insert and update the field.
 
-        // Update all fields so the DATE field shows the current date.
+        // Apply a custom date format to the field result (e.g., "Monday, January 01, 2024").
+        dateField.Format.DateTimeFormat = "dddd, MMMM dd, yyyy";
+
+        // End the paragraph.
+        builder.Writeln();
+
+        // Ensure all fields are up‑to‑date before saving.
         doc.UpdateFields();
 
-        // Save the document to the local file system.
-        doc.Save("ParagraphWithDateField.docx");
+        // Save the document to the output file.
+        doc.Save("Output.docx");
     }
 }

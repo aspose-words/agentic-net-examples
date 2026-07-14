@@ -9,20 +9,20 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add paragraphs with different built‑in styles.
+        // Add a normal paragraph.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Writeln("This is a normal paragraph.");
 
+        // Add a paragraph with the built‑in Quote style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
         builder.Writeln("This paragraph uses the Quote style and will be removed.");
 
+        // Add another normal paragraph.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Writeln("Another normal paragraph.");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
-        builder.Writeln("Second Quote style paragraph to be removed.");
-
-        // Remove all paragraphs that have the Quote style.
+        // Remove all paragraphs that use the Quote style.
+        // Use ToArray() to avoid modifying the collection while iterating.
         foreach (Paragraph para in doc.FirstSection.Body.Paragraphs.ToArray())
         {
             if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Quote)

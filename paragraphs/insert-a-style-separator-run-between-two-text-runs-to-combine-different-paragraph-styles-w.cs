@@ -1,8 +1,7 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
-public class StyleSeparatorExample
+public class Program
 {
     public static void Main()
     {
@@ -10,26 +9,24 @@ public class StyleSeparatorExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First part of the line uses a built‑in heading style.
+        // Apply a built‑in style to the first part of the paragraph.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Write("This text is in a Heading style. ");
 
-        // Insert a style separator so the next text can have a different paragraph style
-        // without breaking the line.
+        // Insert a style separator so the next text can have a different paragraph style.
         builder.InsertStyleSeparator();
 
         // Define a custom paragraph style.
-        Style customStyle = builder.Document.Styles.Add(StyleType.Paragraph, "MyParaStyle");
-        customStyle.Font.Name = "Arial";
-        customStyle.Font.Size = 8;
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyParaStyle");
         customStyle.Font.Bold = false;
+        customStyle.Font.Size = 8;
+        customStyle.Font.Name = "Arial";
 
-        // Apply the custom style to the following text.
+        // Apply the custom style to the second part of the same paragraph.
         builder.ParagraphFormat.StyleName = customStyle.Name;
         builder.Write("This text is in a custom style.");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "StyleSeparator.docx");
-        doc.Save(outputPath);
+        // Save the resulting document.
+        doc.Save("StyleSeparator.docx");
     }
 }

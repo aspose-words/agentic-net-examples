@@ -1,30 +1,28 @@
 using System;
 using Aspose.Words;
 
-namespace InsertParagraphAfterBookmark
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Add a bookmark with some text.
-            builder.StartBookmark("MyBookmark");
-            builder.Write("Text inside bookmark.");
-            builder.EndBookmark("MyBookmark");
+        // Initialize a DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Move the builder cursor to the position just after the bookmark.
-            // Parameters: bookmark name, isStart = false (end of bookmark), isAfter = true (after the end).
-            builder.MoveToBookmark("MyBookmark", false, true);
+        // Insert a bookmark named "MyBookmark" with some text inside it.
+        builder.StartBookmark("MyBookmark");
+        builder.Writeln("Text inside the bookmark.");
+        builder.EndBookmark("MyBookmark");
 
-            // Insert an empty paragraph at the current position.
-            builder.InsertParagraph();
+        // Move the builder's cursor to the start of the bookmark.
+        builder.MoveToBookmark("MyBookmark");
 
-            // Save the document to the local file system.
-            doc.Save("Output.docx");
-        }
+        // Insert an empty paragraph immediately after the bookmark.
+        builder.InsertParagraph();
+
+        // Save the resulting document.
+        doc.Save("Output.docx");
     }
 }
