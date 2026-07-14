@@ -6,43 +6,36 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input and output documents.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+        // Define input and output directories.
+        string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
 
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Ensure the directories exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create sample documents with a text watermark.
+        // Create sample documents with watermarks.
         for (int i = 1; i <= 3; i++)
         {
             Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"This is sample document {i}.");
-
-            // Add a text watermark.
-            sampleDoc.Watermark.SetText("Sample Watermark");
-
-            // Save the document to the input folder.
-            string inputPath = Path.Combine(inputFolder, $"Doc{i}.docx");
-            sampleDoc.Save(inputPath);
+            sampleDoc.Watermark.SetText($"Sample Watermark {i}");
+            string samplePath = Path.Combine(inputDir, $"Doc{i}.docx");
+            sampleDoc.Save(samplePath);
         }
 
-        // Process each .docx file in the input folder.
-        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
+        // Process each document: remove any existing watermark and save to output folder.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            // Load the document.
             Document doc = new Document(filePath);
 
-            // Remove the watermark if it exists.
+            // Remove watermark if present.
             if (doc.Watermark.Type != WatermarkType.None)
             {
                 doc.Watermark.Remove();
             }
 
-            // Save the processed document to the output folder, preserving the original file name.
-            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
+            // Save the processed document.
+            string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
             doc.Save(outputPath);
         }
     }

@@ -6,40 +6,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a blank document.
         Document doc = new Document();
 
         // Add a text watermark.
-        const string watermarkText = "Test Watermark";
+        string watermarkText = "Test Watermark";
         doc.Watermark.SetText(watermarkText);
 
         // Verify that the watermark was added.
-        bool watermarkAdded = doc.Watermark.Type == WatermarkType.Text;
-        Console.WriteLine($"Watermark added: {watermarkAdded}");
+        bool added = doc.Watermark.Type == WatermarkType.Text;
+        if (!added)
+        {
+            Console.WriteLine("Failed to add watermark.");
+            return;
+        }
 
-        // Save the document with the watermark (optional, just to have an output file).
-        string addedPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkAdded.docx");
-        doc.Save(addedPath);
+        // Save the document with the watermark (optional, just to demonstrate saving).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Watermarked.docx");
+        doc.Save(outputPath);
 
         // Remove the watermark.
         doc.Watermark.Remove();
 
         // Verify that the watermark was removed.
-        bool watermarkRemoved = doc.Watermark.Type == WatermarkType.None;
-        Console.WriteLine($"Watermark removed: {watermarkRemoved}");
-
-        // Save the document after removal.
-        string removedPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkRemoved.docx");
-        doc.Save(removedPath);
-
-        // Simple test result output.
-        if (watermarkAdded && watermarkRemoved && File.Exists(addedPath) && File.Exists(removedPath))
+        bool removed = doc.Watermark.Type == WatermarkType.None;
+        if (removed)
         {
-            Console.WriteLine("Test passed.");
+            Console.WriteLine("Watermark removal test passed.");
         }
         else
         {
-            Console.WriteLine("Test failed.");
+            Console.WriteLine("Watermark removal test failed.");
         }
+
+        // Save the document after removal (optional).
+        string cleanedPath = Path.Combine(Directory.GetCurrentDirectory(), "Cleaned.docx");
+        doc.Save(cleanedPath);
     }
 }

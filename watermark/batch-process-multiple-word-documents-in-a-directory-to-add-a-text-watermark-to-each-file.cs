@@ -2,17 +2,16 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define input and output folders relative to the current directory.
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputDocs");
+        // Define input and output directories.
+        string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
 
-        // Ensure the folders exist.
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
@@ -24,39 +23,34 @@ public class Program
             {
                 Document sampleDoc = new Document();
                 DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-                builder.Writeln($"This is the content of sample document {i}.");
+                builder.Writeln($"This is sample document {i}.");
                 sampleDoc.Save(samplePath);
             }
         }
 
-        // Process each .docx file in the input directory.
+        // Iterate over each .docx file in the input directory and add a text watermark.
         foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            // Load the document.
             Document doc = new Document(filePath);
 
-            // Configure text watermark options.
+            // Configure watermark appearance.
             TextWatermarkOptions options = new TextWatermarkOptions
             {
                 FontFamily = "Arial",
                 FontSize = 36,
-                Color = System.Drawing.Color.Gray,
+                Color = Color.Red,
                 Layout = WatermarkLayout.Diagonal,
-                IsSemitrasparent = true
+                IsSemitrasparent = false
             };
 
-            // Apply the text watermark.
+            // Apply the watermark.
             doc.Watermark.SetText("CONFIDENTIAL", options);
 
-            // Save the watermarked document to the output folder, preserving the original name.
+            // Save the watermarked document to the output directory.
             string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
             doc.Save(outputPath);
         }
 
-        // Optional: simple verification that output files were created.
-        foreach (string outFile in Directory.GetFiles(outputDir, "*.docx"))
-        {
-            Console.WriteLine($"Watermarked file created: {outFile}");
-        }
+        Console.WriteLine("Watermark applied to all documents.");
     }
 }

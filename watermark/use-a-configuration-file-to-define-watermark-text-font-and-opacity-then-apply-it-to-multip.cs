@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Drawing;
@@ -13,90 +12,80 @@ public class Program
         public string Text { get; set; } = "Sample Watermark";
         public string FontFamily { get; set; } = "Arial";
         public float FontSize { get; set; } = 36;
-        public string Color { get; set; } = "#808080"; // Gray
-        public bool IsSemitrasparent { get; set; } = true;
-    }
-
-    // Loads the configuration from a JSON file; creates a default file if it does not exist.
-    private static WatermarkConfig LoadConfig(string path)
-    {
-        if (!File.Exists(path))
-        {
-            var defaultConfig = new WatermarkConfig();
-            var json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(path, json);
-            return defaultConfig;
-        }
-
-        var jsonText = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<WatermarkConfig>(jsonText) ?? new WatermarkConfig();
-    }
-
-    // Converts a hex colour string (e.g. "#FF0000") to a System.Drawing.Color.
-    private static Color ParseColor(string hex)
-    {
-        try
-        {
-            return ColorTranslator.FromHtml(hex);
-        }
-        catch
-        {
-            return Color.Black;
-        }
-    }
-
-    // Creates a simple document containing a single paragraph with the supplied text.
-    private static Document CreateSampleDocument(string content)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln(content);
-        return doc;
+        public string ColorHex { get; set; } = "#FF0000"; // Red
+        public bool IsSemitrasparent { get; set; } = false;
     }
 
     public static void Main()
     {
-        const string configPath = "watermarkConfig.json";
+        // -----------------------------------------------------------------
+        // 1. Ensure a configuration file exists. If not, create a default one.
+        // -----------------------------------------------------------------
+        const string configFile = "watermarkConfig.json";
+        if (!File.Exists(configFile))
+        {
+            var defaultConfig = new WatermarkConfig();
+            string json = JsonSerializer.Serialize(defaultConfig, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(configFile, json);
+        }
 
-        // Load configuration (or create a default one).
-        WatermarkConfig config = LoadConfig(configPath);
+        // -----------------------------------------------------------------
+        // 2. Load the configuration.
+        // -----------------------------------------------------------------
+        WatermarkConfig config = JsonSerializer.Deserialize<WatermarkConfig>(File.ReadAllText(configFile))!;
 
-        // Prepare watermark options based on the configuration.
-        var watermarkOptions = new TextWatermarkOptions
+        // Convert the hex color string to a System.Drawing.Color.
+        Color watermarkColor = ColorTranslator.FromHtml(config.ColorHex);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the watermark options based on the configuration.
+        // -----------------------------------------------------------------
+        var textOptions = new TextWatermarkOptions
         {
             FontFamily = config.FontFamily,
             FontSize = config.FontSize,
-            Color = ParseColor(config.Color),
-            Layout = WatermarkLayout.Diagonal,
-            IsSemitrasparent = config.IsSemitrasparent
+            Color = watermarkColor,
+            IsSemitrasparent = config.IsSemitrasparent,
+            Layout = WatermarkLayout.Diagonal
         };
 
-        // Documents to be generated.
-        var documentsInfo = new List<(string fileName, string content)>
-        {
-            ("Document1.docx", "First sample document."),
-            ("Document2.docx", "Second sample document."),
-            ("Document3.docx", "Third sample document.")
-        };
+        // -----------------------------------------------------------------
+        // 4. Create an output folder for the generated documents.
+        // -----------------------------------------------------------------
+        const string outputFolder = "Output";
+        Directory.CreateDirectory(outputFolder);
 
-        foreach (var (fileName, content) in documentsInfo)
+        // -----------------------------------------------------------------
+        // 5. Process multiple documents, applying the same watermark.
+        // -----------------------------------------------------------------
+        string[] sourceNames = { "Doc1.docx", "Doc2.docx", "Doc3.docx" };
+        foreach (string sourceName in sourceNames)
         {
-            // Create a fresh document.
-            Document doc = CreateSampleDocument(content);
+            // Create a new blank document.
+            var doc = new Document();
+
+            // Add a simple paragraph so the document is not empty.
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln($"This is the content of {Path.GetFileNameWithoutExtension(sourceName)}.");
 
             // Apply the text watermark using the configuration.
-            doc.Watermark.SetText(config.Text, watermarkOptions);
+            doc.Watermark.SetText(config.Text, textOptions);
 
             // Save the watermarked document.
-            doc.Save(fileName);
+            string outputPath = Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(sourceName) + "_Watermarked.docx");
+            doc.Save(outputPath);
         }
 
-        // Simple validation: report which files were created.
-        foreach (var (fileName, _) in documentsInfo)
+        // -----------------------------------------------------------------
+        // 6. Simple validation: ensure that output files were created.
+        // -----------------------------------------------------------------
+        foreach (string sourceName in sourceNames)
         {
-            Console.WriteLine(File.Exists(fileName)
-                ? $"Created: {fileName}"
-                : $"Failed to create: {fileName}");
+            string outputPath = Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(sourceName) + "_Watermarked.docx");
+            if (File.Exists(outputPath))
+            {
+                Console.WriteLine($"Created: {outputPath}");
+            }
         }
     }
 }

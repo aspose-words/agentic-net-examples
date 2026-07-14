@@ -7,31 +7,25 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths for the sample input and the output document.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "Sample.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Watermarked.docx");
+        // Define a folder for temporary files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a simple source document and save it to the input path.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document created for the watermark example.");
-        sourceDoc.Save(inputPath);
+        // Create a sample source document.
+        string inputPath = Path.Combine(artifactsDir, "input.docx");
+        Document sampleDoc = new Document();
+        var builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is a sample document.");
+        sampleDoc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the document from the file system.
-        // -----------------------------------------------------------------
+        // Load the document from the file system.
         Document doc = new Document(inputPath);
 
-        // -----------------------------------------------------------------
-        // Step 3: Add a text watermark using the Document.Watermark API.
-        // -----------------------------------------------------------------
-        doc.Watermark.SetText("CONFIDENTIAL");
+        // Add a text watermark.
+        doc.Watermark.SetText("Confidential");
 
-        // -----------------------------------------------------------------
-        // Step 4: Save the watermarked document.
-        // -----------------------------------------------------------------
+        // Save the watermarked document.
+        string outputPath = Path.Combine(artifactsDir, "output.docx");
         doc.Save(outputPath);
     }
 }

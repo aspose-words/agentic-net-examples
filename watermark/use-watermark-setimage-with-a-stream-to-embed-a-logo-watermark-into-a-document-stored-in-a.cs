@@ -6,50 +6,41 @@ public class Program
 {
     public static void Main()
     {
-        // 1. Prepare a simple 1x1 pixel PNG image (transparent) as a byte array.
-        // This avoids any external image files or System.Drawing usage.
-        byte[] pngBytes = Convert.FromBase64String(
+        // 1. Prepare a simple PNG image (1x1 pixel, transparent) as a Base64 string.
+        const string base64Png =
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
-            "Z6YcAAAAASUVORK5CYII=");
+            "Z6XcAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        using var imageStream = new MemoryStream(imageBytes);
+        imageStream.Position = 0; // Ensure the stream is at the beginning.
 
-        // 2. Create a blank document and add some sample text.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document contains an image watermark applied from a stream.");
+        // 2. Create a blank Word document and add some content.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("This document demonstrates adding an image watermark from a stream.");
+        builder.Writeln("The watermark is a tiny PNG image embedded via a MemoryStream.");
 
-        // 3. Simulate uploading the document to Azure Blob Storage by saving it to a memory stream.
-        using (MemoryStream blobStream = new MemoryStream())
+        // 3. Simulate storing the document in Azure Blob storage by using a MemoryStream.
+        using var blobStream = new MemoryStream();
+        doc.Save(blobStream, SaveFormat.Docx);
+        blobStream.Position = 0; // Reset for reading.
+
+        // 4. Load the document from the simulated blob.
+        var loadedDoc = new Document(blobStream);
+
+        // 5. Apply the image watermark using the stream.
+        var watermarkOptions = new ImageWatermarkOptions
         {
-            doc.Save(blobStream, SaveFormat.Docx);
-            // Reset the stream position to the beginning to simulate downloading.
-            blobStream.Position = 0;
+            Scale = 5,
+            IsWashout = false
+        };
+        imageStream.Position = 0; // Reset before reuse.
+        loadedDoc.Watermark.SetImage(imageStream, watermarkOptions);
 
-            // 4. Simulate downloading the document from Azure Blob Storage.
-            Document loadedDoc = new Document(blobStream);
+        // 6. Save the watermarked document to the local file system.
+        const string outputPath = "WatermarkedDocument.docx";
+        loadedDoc.Save(outputPath, SaveFormat.Docx);
 
-            // 5. Prepare the image stream for the watermark.
-            using (MemoryStream imageStream = new MemoryStream(pngBytes))
-            {
-                // Ensure the stream is at the beginning.
-                imageStream.Position = 0;
-
-                // 6. Configure watermark options (optional).
-                ImageWatermarkOptions options = new ImageWatermarkOptions
-                {
-                    Scale = 5,          // Example scale factor.
-                    IsWashout = false   // Show the image without washout effect.
-                };
-
-                // 7. Apply the image watermark using the stream overload.
-                loadedDoc.Watermark.SetImage(imageStream, options);
-            }
-
-            // 8. Save the resulting document to the local file system.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputWithWatermark.docx");
-            loadedDoc.Save(outputPath);
-        }
-
-        // Indicate completion (no interactive prompts).
-        Console.WriteLine("Document with image watermark has been created.");
+        Console.WriteLine($"Watermarked document saved to '{Path.GetFullPath(outputPath)}'.");
     }
 }

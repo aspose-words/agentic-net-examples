@@ -2,84 +2,74 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
-namespace BatchDocxToPdfWithWatermark
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        // Base64‑encoded PNG (1 × 1 pixel, solid blue). This provides a deterministic image without using System.Drawing.
-        private const string LogoBase64 = 
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/6cVYAAAAAElFTkSuQmCC";
+        // Define folders for input DOCX files, output PDFs and the logo image.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "OutputPdfs");
+        string logoPath = Path.Combine(baseDir, "logo.png");
 
-        private static readonly string WorkingFolder = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        private static readonly string InputFolder   = Path.Combine(WorkingFolder, "InputDocs");
-        private static readonly string OutputFolder  = Path.Combine(WorkingFolder, "OutputPdfs");
-        private static readonly string LogoPath      = Path.Combine(WorkingFolder, "logo.png");
+        // Ensure the directories exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        public static void Main()
+        // -----------------------------------------------------------------
+        // Create a simple logo image (a red 1x1 PNG) if it does not exist.
+        // The image is stored as a Base64 string to avoid System.Drawing usage.
+        // -----------------------------------------------------------------
+        if (!File.Exists(logoPath))
         {
-            PrepareFolders();
-            CreateSampleLogo();
-            CreateSampleDocuments();
-
-            // Process each DOCX file: add image watermark and save as PDF.
-            foreach (string docxPath in Directory.GetFiles(InputFolder, "*.docx"))
-            {
-                // Load the source document.
-                Document doc = new Document(docxPath);
-
-                // Configure watermark options (no washout, default scale).
-                ImageWatermarkOptions wmOptions = new ImageWatermarkOptions
-                {
-                    IsWashout = false
-                };
-
-                // Apply the image watermark using the logo file.
-                doc.Watermark.SetImage(LogoPath, wmOptions);
-
-                // Determine output PDF path.
-                string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
-                string pdfPath = Path.Combine(OutputFolder, pdfFileName);
-
-                // Save the document as PDF.
-                doc.Save(pdfPath, SaveFormat.Pdf);
-            }
-
-            // Simple verification – list generated PDFs.
-            Console.WriteLine("Generated PDF files:");
-            foreach (string pdf in Directory.GetFiles(OutputFolder, "*.pdf"))
-            {
-                Console.WriteLine(pdf);
-            }
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mP8z8BQDwAF/AL+XcXK5wAAAABJRU5ErkJggg==";
+            byte[] pngBytes = Convert.FromBase64String(base64Png);
+            File.WriteAllBytes(logoPath, pngBytes);
         }
 
-        // Ensure all required directories exist.
-        private static void PrepareFolders()
-        {
-            Directory.CreateDirectory(WorkingFolder);
-            Directory.CreateDirectory(InputFolder);
-            Directory.CreateDirectory(OutputFolder);
-        }
-
-        // Write the embedded logo PNG to disk.
-        private static void CreateSampleLogo()
-        {
-            byte[] logoBytes = Convert.FromBase64String(LogoBase64);
-            File.WriteAllBytes(LogoPath, logoBytes);
-        }
-
-        // Generate a few simple DOCX files for the batch operation.
-        private static void CreateSampleDocuments()
+        // -----------------------------------------------------------------
+        // Create a few sample DOCX files if the input folder is empty.
+        // -----------------------------------------------------------------
+        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
         {
             for (int i = 1; i <= 3; i++)
             {
-                Document doc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(doc);
-                builder.Writeln($"Sample document #{i}");
-                builder.Writeln("This document will be converted to PDF with a corporate logo watermark.");
-                string docxPath = Path.Combine(InputFolder, $"Sample{i}.docx");
-                doc.Save(docxPath);
+                string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
+                Document sampleDoc = new Document();
+                var builder = new DocumentBuilder(sampleDoc);
+                builder.Writeln($"This is sample document #{i}.");
+                sampleDoc.Save(samplePath);
             }
         }
+
+        // -----------------------------------------------------------------
+        // Process each DOCX: add image watermark and convert to PDF.
+        // -----------------------------------------------------------------
+        foreach (string docxFile in Directory.GetFiles(inputDir, "*.docx"))
+        {
+            // Load the source document.
+            Document doc = new Document(docxFile);
+
+            // Configure image watermark options (optional).
+            ImageWatermarkOptions imgOptions = new ImageWatermarkOptions
+            {
+                Scale = 0.5,          // 50% of the page width.
+                IsWashout = false    // Keep original colors.
+            };
+
+            // Apply the image watermark using the logo file.
+            doc.Watermark.SetImage(logoPath, imgOptions);
+
+            // Determine output PDF path.
+            string pdfFileName = Path.GetFileNameWithoutExtension(docxFile) + ".pdf";
+            string pdfPath = Path.Combine(outputDir, pdfFileName);
+
+            // Save as PDF.
+            doc.Save(pdfPath, SaveFormat.Pdf);
+        }
+
+        Console.WriteLine("Batch conversion completed. PDFs are located in: " + outputDir);
     }
 }

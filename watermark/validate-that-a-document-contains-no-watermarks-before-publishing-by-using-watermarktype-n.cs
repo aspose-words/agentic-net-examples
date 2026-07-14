@@ -6,27 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directory and file path
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "NoWatermark.docx");
+        // Prepare a folder for output files.
+        string artifactsDir = "Artifacts";
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create a blank document
+        // Path for the sample document.
+        string samplePath = Path.Combine(artifactsDir, "sample.docx");
+
+        // 1. Create a blank document.
         Document doc = new Document();
 
-        // (Optional) Add some content to the document
-        // DocumentBuilder builder = new DocumentBuilder(doc);
-        // builder.Writeln("Sample content without watermark.");
+        // 2. Save the blank document (no watermark present).
+        doc.Save(samplePath);
 
-        // Save the document
-        doc.Save(outputPath);
+        // 3. Load the document to simulate a publishing workflow.
+        Document loadedDoc = new Document(samplePath);
 
-        // Validate that the document has no watermark
-        bool hasNoWatermark = doc.Watermark.Type == WatermarkType.None;
+        // 4. Validate that the document contains no watermark.
+        if (loadedDoc.Watermark.Type == WatermarkType.None)
+        {
+            Console.WriteLine("Validation passed: No watermark present.");
+        }
+        else
+        {
+            Console.WriteLine("Validation failed: Watermark detected.");
+        }
 
-        // Output validation result
-        Console.WriteLine(hasNoWatermark
-            ? "Validation passed: No watermark present."
-            : "Validation failed: Watermark detected.");
+        // 5. If validation passes, save the document as the final published file.
+        if (loadedDoc.Watermark.Type == WatermarkType.None)
+        {
+            string publishPath = Path.Combine(artifactsDir, "published.docx");
+            loadedDoc.Save(publishPath);
+        }
     }
 }

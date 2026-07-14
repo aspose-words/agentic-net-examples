@@ -1,6 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -13,38 +14,46 @@ public class Program
         // Build a simple 2x2 table.
         builder.StartTable();
 
-        // First row.
+        // First cell (row 0, column 0)
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Cell 1,1");
+
+        // Second cell (row 0, column 1) – this is the target cell.
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Target Cell");
+
+        // End first row.
         builder.EndRow();
 
-        // Second row.
+        // Third cell (row 1, column 0)
         builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
+        builder.Write("Cell 2,1");
 
+        // Fourth cell (row 1, column 1)
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
+
+        // End the table.
         builder.EndTable();
 
-        // Define watermark options.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
-        {
-            FontFamily = "Arial",
-            FontSize = 36,
-            Color = System.Drawing.Color.Gray,
-            Layout = WatermarkLayout.Diagonal,
-            IsSemitrasparent = true
-        };
-
         // Apply a text watermark to the document.
-        // The watermark will be visible on every page, including inside the table cells.
-        doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
+        // The watermark will be visible behind all content, including the target cell.
+        doc.Watermark.SetText("CONFIDENTIAL");
 
-        // Save the resulting document.
-        const string outputPath = "WatermarkedTableCell.docx";
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkedTable.docx");
+
+        // Save the document.
         doc.Save(outputPath);
+
+        // Simple validation that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine("Document saved successfully: " + outputPath);
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

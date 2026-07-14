@@ -1,31 +1,36 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Apply a text watermark.
-        doc.Watermark.SetText("Confidential");
-
         // Define the output file path.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkedDocument.docx");
 
-        // Save the document as DOCX.
-        doc.Save(outputPath, SaveFormat.Docx);
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Simple validation: ensure the file was created.
+        // (Optional) Add a paragraph so the document has visible content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document with a text watermark.");
+
+        // Apply a text watermark to the document.
+        doc.Watermark.SetText("CONFIDENTIAL");
+
+        // Save the document as DOCX.
+        doc.Save(outputPath);
+
+        // Simple validation that the file was created.
         if (File.Exists(outputPath))
         {
-            Console.WriteLine("Watermark applied and document saved successfully.");
+            Console.WriteLine("Watermark applied and document saved to: " + outputPath);
         }
         else
         {
-            Console.WriteLine("Failed to save the document.");
+            Console.WriteLine("Failed to save the watermarked document.");
         }
     }
 }
