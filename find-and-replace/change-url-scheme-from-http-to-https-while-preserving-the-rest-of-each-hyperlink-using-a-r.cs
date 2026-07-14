@@ -7,30 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing plain‑text URLs.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Visit our site: http://example.com/page");
-        builder.Writeln("Another link: http://test.org");
-        // Save the source document (optional, just to demonstrate the workflow).
-        doc.Save("input.docx");
 
-        // Load the document we just created.
-        Document loaded = new Document("input.docx");
+        // Insert sample hyperlinks that use the http scheme.
+        builder.Writeln("Sample hyperlinks:");
+        builder.InsertHyperlink("http://example.com/page1", "Example 1", false);
+        builder.Writeln();
+        builder.InsertHyperlink("http://test.org/resource", "Test Resource", false);
+        builder.Writeln();
+        builder.InsertHyperlink("http://sub.domain.com", "Subdomain", false);
+        builder.Writeln();
 
-        // Regular expression that captures the part after "http://".
-        Regex httpRegex = new Regex(@"http://([^ \t\r\n]+)", RegexOptions.IgnoreCase);
-        // Replacement string keeps the captured part and prefixes it with "https://".
-        string replacement = "https://$1";
+        // Save the original document (optional, for inspection).
+        doc.Save("original.docx");
 
-        // Perform the find‑and‑replace operation.
-        int replacedCount = loaded.Range.Replace(httpRegex, replacement, new FindReplaceOptions());
+        // Define a regular expression that matches the http scheme at the start of a URL.
+        Regex httpScheme = new Regex(@"http://", RegexOptions.IgnoreCase);
 
-        // Validate that at least one URL was updated.
+        // Perform the replacement across the whole document.
+        FindReplaceOptions options = new FindReplaceOptions();
+        int replacedCount = doc.Range.Replace(httpScheme, "https://", options);
+
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one hyperlink scheme replacement.");
+            throw new InvalidOperationException("No hyperlink URLs were updated.");
 
         // Save the modified document.
-        loaded.Save("output.docx");
+        doc.Save("updated.docx");
     }
 }

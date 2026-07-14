@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -7,45 +8,52 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add sample text.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("apple banana apple orange");
+        // Create a sample document with some text.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello world. This is a sample document with several words.");
 
-        // Save the source document.
+        // Save the initial document (optional, just to demonstrate file I/O).
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for processing.
-        var loadedDoc = new Document(inputPath);
+        // Load the document from the file system.
+        Document loaded = new Document(inputPath);
 
-        // Set up find-and-replace options with a custom callback that adds a prefix.
-        var options = new FindReplaceOptions
-        {
-            ReplacingCallback = new PrefixReplacer()
-        };
+        // Set up a custom callback that adds a prefix to each matched word.
+        const string prefix = "PRE_";
+        PrefixCallback callback = new PrefixCallback(prefix);
+        FindReplaceOptions options = new FindReplaceOptions { ReplacingCallback = callback };
 
-        // Perform the replacement for the word "apple".
-        int replacedCount = loadedDoc.Range.Replace("apple", string.Empty, options);
+        // Define a regular expression that matches individual words.
+        Regex wordRegex = new Regex(@"\b\w+\b");
 
-        // Ensure that at least one replacement occurred.
+        // Perform the replace operation. The replacement string is ignored because the callback sets it.
+        int replacedCount = loaded.Range.Replace(wordRegex, string.Empty, options);
+
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
         const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
-
-        // Output the result count.
-        Console.WriteLine($"Replacements made: {replacedCount}");
+        loaded.Save(outputPath);
     }
 
-    // Callback that adds the prefix "PRE_" to each matched word.
-    private class PrefixReplacer : IReplacingCallback
+    // Custom callback that prefixes each matched word.
+    private class PrefixCallback : IReplacingCallback
     {
+        private readonly string _prefix;
+
+        public PrefixCallback(string prefix)
+        {
+            _prefix = prefix ?? string.Empty;
+        }
+
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            args.Replacement = "PRE_" + args.Match.Value;
+            // Add the prefix to the original matched text.
+            args.Replacement = _prefix + args.Match.Value;
             return ReplaceAction.Replace;
         }
     }

@@ -8,30 +8,44 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with bullet characters.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Paths for the sample input and output documents.
+        const string inputPath = "input.docx";
+        const string outputPath = "output.docx";
+
+        // -----------------------------------------------------------------
+        // Create a sample document containing bullet characters.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add several lines that start with the bullet character "•".
         builder.Writeln("• First item");
         builder.Writeln("• Second item");
+        builder.Writeln("• Third item");
         builder.Writeln("Regular paragraph without bullet.");
-        const string inputPath = "input.docx";
+
+        // Save the document so it can be loaded later.
         doc.Save(inputPath);
 
-        // Load the document we just created.
-        var loadedDoc = new Document(inputPath);
+        // -----------------------------------------------------------------
+        // Load the document and replace the bullet character with a new one.
+        // -----------------------------------------------------------------
+        Document loaded = new Document(inputPath);
 
-        // Define a regular expression that matches the bullet character (U+2022).
-        var bulletRegex = new Regex("\u2022");
+        // Regular expression that matches the bullet character "•".
+        Regex bulletRegex = new Regex("•");
 
-        // Replace the bullet with an alternative bullet style (U+25E6).
-        int replacedCount = loadedDoc.Range.Replace(bulletRegex, "\u25E6", new FindReplaceOptions());
+        // Replacement bullet character, e.g., "◦".
+        const string newBullet = "◦";
+
+        // Perform the replacement across the whole document.
+        int replacedCount = loaded.Range.Replace(bulletRegex, newBullet, new FindReplaceOptions());
 
         // Ensure that at least one replacement was made.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one bullet replacement.");
+            throw new InvalidOperationException("Expected at least one bullet character to be replaced.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+        loaded.Save(outputPath);
     }
 }

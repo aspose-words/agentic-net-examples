@@ -4,30 +4,31 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
 
 public class ReplaceEvaluator : IReplacingCallback
 {
-    private readonly IDictionary<string, string> _values;
+    private readonly Dictionary<string, string> _replacements;
 
-    public ReplaceEvaluator(IDictionary<string, string> values)
+    public ReplaceEvaluator(Dictionary<string, string> replacements)
     {
-        _values = values ?? throw new ArgumentNullException(nameof(values));
+        _replacements = replacements ?? new Dictionary<string, string>();
     }
 
-    ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+    public ReplaceAction Replacing(ReplacingArgs args)
     {
         // The regex captures the token name without the surrounding braces.
-        var match = args.Match;
-        var tokenName = match.Groups[1].Value;
+        // Group 1 contains the key (e.g., Name, Company).
+        string token = args.Match.Groups[1].Value;
 
-        if (_values.TryGetValue(tokenName, out var replacement))
+        if (_replacements.TryGetValue(token, out string value))
         {
-            args.Replacement = replacement;
+            args.Replacement = value;
         }
         else
         {
             // If the token is not found, keep the original placeholder.
-            args.Replacement = match.Value;
+            args.Replacement = args.Match.Value;
         }
 
         return ReplaceAction.Replace;
@@ -38,36 +39,42 @@ public class Program
 {
     public static void Main()
     {
-        // Define placeholder values.
-        var placeholders = new Dictionary<string, string>
+        // Paths for the sample files.
+        const string inputPath = "input.docx";
+        const string outputPath = "output.docx";
+        const string jsonPath = "data.json";
+
+        // 1. Create a sample document containing placeholder tokens.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello {{Name}}, welcome to {{Company}}.");
+        doc.Save(inputPath);
+
+        // 2. Load the document from the file system.
+        Document loaded = new Document(inputPath);
+
+        // 3. Prepare the replacement values.
+        var replacements = new Dictionary<string, string>
         {
             { "Name", "John Doe" },
-            { "Date", DateTime.Today.ToString("yyyy-MM-dd") }
+            { "Company", "Acme Corp" }
         };
 
-        // Create a sample document containing placeholders.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Dear {{Name}},");
-        builder.Writeln("Your appointment is scheduled for {{Date}}.");
-        templateDoc.Save("template.docx");
+        // Optional: serialize the dictionary to JSON for reporting purposes.
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(replacements, Formatting.Indented));
 
-        // Load the document for processing.
-        var doc = new Document("template.docx");
+        // 4. Set up the find-and-replace operation using a regex and a callback evaluator.
+        var evaluator = new ReplaceEvaluator(replacements);
+        var options = new FindReplaceOptions(evaluator);
+        var regex = new Regex(@"\{\{(\w+)\}\}");
 
-        // Prepare a regex that matches {{Token}} patterns.
-        var tokenRegex = new Regex(@"\{\{(\w+)\}\}");
+        int replacedCount = loaded.Range.Replace(regex, string.Empty, options);
 
-        // Set up find/replace options with the custom callback.
-        var options = new FindReplaceOptions(new ReplaceEvaluator(placeholders));
-
-        // Perform the replacement.
-        int replacedCount = doc.Range.Replace(tokenRegex, string.Empty, options);
-
+        // 5. Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No placeholders were replaced.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Save the result.
-        doc.Save("output.docx");
+        // 6. Save the modified document.
+        loaded.Save(outputPath);
     }
 }

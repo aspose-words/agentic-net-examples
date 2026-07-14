@@ -3,39 +3,43 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing; // Required by Aspose.Words for drawing types
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing a custom delimiter (pipe character).
+        // Paths for the sample input and output documents.
+        const string inputPath = "input.docx";
+        const string outputPath = "output.docx";
+
+        // -----------------------------------------------------------------
+        // Create a sample document containing a custom delimiter (|).
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Apple | Banana | Cherry");
-        const string inputPath = "input.docx";
+        builder.Writeln("Apple | Banana|Cherry | Date");
+        // Save the document so it can be loaded later.
         doc.Save(inputPath);
 
-        // Load the document to perform the find‑and‑replace operation.
+        // -----------------------------------------------------------------
+        // Load the document and replace the custom delimiter with a comma,
+        // preserving any surrounding whitespace.
+        // -----------------------------------------------------------------
         Document loaded = new Document(inputPath);
 
-        // Regex pattern:
-        //   (\s*)   – captures any whitespace before the delimiter.
-        //   \|      – matches the pipe character (custom delimiter).
-        //   (\s*)   – captures any whitespace after the delimiter.
-        // The replacement string re‑inserts the captured whitespace and inserts a comma.
-        Regex delimiterRegex = new Regex(@"(\s*)\|(\s*)");
-        string replacement = "$1,$2";
+        // Regex captures optional whitespace before and after the delimiter.
+        Regex delimiterPattern = new Regex(@"(\s*)\|(\s*)");
+        // Replacement keeps the captured whitespace groups and inserts a comma.
+        const string replacement = "$1,$2";
 
-        // Perform the replacement using Aspose.Words Range.Replace.
-        int replacedCount = loaded.Range.Replace(delimiterRegex, replacement, new FindReplaceOptions());
+        // Perform the replacement using Aspose.Words' Range.Replace method.
+        int replacementCount = loaded.Range.Replace(delimiterPattern, replacement, new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
-        if (replacedCount == 0)
+        if (replacementCount == 0)
             throw new InvalidOperationException("Expected at least one delimiter replacement.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
         loaded.Save(outputPath);
     }
 }

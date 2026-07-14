@@ -1,72 +1,77 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using System.Drawing; // Required for HighlightColor
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document containing color names.
+        // Create a sample document with color names.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("The sky is blue, the grass is green, and the sun is yellow.");
-        builder.Writeln("Roses are red, violets are purple, and clouds are white.");
-        builder.Writeln("A black cat crossed the path, while a gray mouse ran away.");
-        doc.Save("input.docx");
+        builder.Writeln("My favorite colors are red, light gray and dark red.");
+        builder.Writeln("Black and white are also classic choices.");
 
-        // Load the document we just created.
-        Document loaded = new Document("input.docx");
+        // Save the source document (optional, just to illustrate the workflow).
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Regular expression that matches the desired color names (case‑insensitive).
-        Regex colorRegex = new Regex(@"\b(red|green|blue|yellow|orange|purple|black|white|gray)\b",
-                                      RegexOptions.IgnoreCase);
+        // Prepare a regex that matches the color names (case‑insensitive).
+        const string pattern = @"\b(?:light\s+gray|dark\s+red|red|green|blue|yellow|black|white|gray)\b";
+        Regex regex = new Regex(pattern, RegexOptions.IgnoreCase);
 
-        // Configure find‑replace options.
-        FindReplaceOptions options = new FindReplaceOptions();
-        // Highlight the replacement text.
-        options.ApplyFont.HighlightColor = Color.Yellow;
-        // Use a custom callback to convert the matched color name to its hex value.
-        options.ReplacingCallback = new ColorNameHexConverter();
+        // Set up find‑replace options with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new ColorHexConverter()
+        };
 
-        // Perform the replacement. The replacement string is ignored because the callback supplies it.
-        int replacedCount = loaded.Range.Replace(colorRegex, string.Empty, options);
+        // Perform the replacement. The replacement string argument is ignored when a callback is used.
+        int replacedCount = doc.Range.Replace(regex, string.Empty, options);
 
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("No color names were replaced.");
 
         // Save the modified document.
-        loaded.Save("output.docx");
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 
     // Callback that converts a matched color name to its hexadecimal representation.
-    private class ColorNameHexConverter : IReplacingCallback
+    private class ColorHexConverter : IReplacingCallback
     {
-        // Mapping from color name (case‑insensitive) to hexadecimal string.
-        private static readonly Dictionary<string, string> ColorMap = new(StringComparer.OrdinalIgnoreCase)
+        // Mapping from normalized color name to hex string.
+        private static readonly Dictionary<string, string> ColorMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            { "red",    "#FF0000" },
-            { "green",  "#008000" },
-            { "blue",   "#0000FF" },
+            { "red", "#FF0000" },
+            { "green", "#008000" },
+            { "blue", "#0000FF" },
             { "yellow", "#FFFF00" },
-            { "orange", "#FFA500" },
-            { "purple", "#800080" },
-            { "black",  "#000000" },
-            { "white",  "#FFFFFF" },
-            { "gray",   "#808080" }
+            { "black", "#000000" },
+            { "white", "#FFFFFF" },
+            { "gray", "#808080" },
+            { "light gray", "#D3D3D3" },
+            { "dark red", "#8B0000" }
         };
 
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            string colorName = args.Match.Value;
-            if (ColorMap.TryGetValue(colorName, out string hex))
-                args.Replacement = hex; // Set the replacement text.
-            else
-                args.Replacement = colorName; // Fallback – should not occur.
+            // Normalise the matched value (trim and collapse multiple spaces).
+            string key = Regex.Replace(args.Match.Value.Trim(), @"\s+", " ").ToLowerInvariant();
 
-            return ReplaceAction.Replace;
+            if (ColorMap.TryGetValue(key, out string hex))
+            {
+                args.Replacement = hex;
+                return ReplaceAction.Replace;
+            }
+
+            // If the color is not in the map, leave it unchanged.
+            return ReplaceAction.Skip;
         }
     }
 }

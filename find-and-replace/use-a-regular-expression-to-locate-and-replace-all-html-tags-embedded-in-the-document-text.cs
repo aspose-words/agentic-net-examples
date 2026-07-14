@@ -1,62 +1,42 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing;          // Required package, not used directly
-using Newtonsoft.Json;        // Required package, not used directly
+using Newtonsoft.Json; // Required package reference
 
-namespace AsposeWordsFindReplaceHtmlTags
+public class HtmlTagRemover
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Define file names for the sample input and output documents.
-            const string inputPath = "input.docx";
-            const string outputPath = "output.docx";
+        // Step 1: Create a sample document with embedded HTML tags.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is a <b>bold</b> word, an <i>italic</i> word, and a <a href='https://example.com'>link</a>.");
+        builder.Writeln("Another line with <span style='color:red'>colored text</span>.");
 
-            // -----------------------------------------------------------------
-            // Create a sample document containing HTML tags embedded in the text.
-            // -----------------------------------------------------------------
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Save the original document.
+        const string inputPath = "input.docx";
+        sampleDoc.Save(inputPath);
 
-            // Sample text with various HTML tags.
-            builder.Writeln("This is a paragraph with <b>bold</b> text.");
-            builder.Writeln("Here is a link: <a href=\"https://example.com\">Example</a>.");
-            builder.Writeln("An image tag: <img src=\"image.png\" alt=\"Sample Image\"/>");
-            builder.Writeln("End of <span style=\"color:red;\">sample</span> document.");
+        // Step 2: Load the document from the file system.
+        Document loadedDoc = new Document(inputPath);
 
-            // Save the created document so that we have a tangible source file.
-            doc.Save(inputPath);
+        // Step 3: Define a regular expression that matches any HTML tag.
+        Regex htmlTagRegex = new Regex(@"<[^>]+>", RegexOptions.Compiled);
 
-            // ---------------------------------------------------------------
-            // Load the document from the file system (demonstrates load workflow).
-            // ---------------------------------------------------------------
-            Document loadedDoc = new Document(inputPath);
+        // Step 4: Perform the replacement using Aspose.Words Range.Replace.
+        FindReplaceOptions options = new FindReplaceOptions();
+        int replacedCount = loadedDoc.Range.Replace(htmlTagRegex, string.Empty, options);
 
-            // ---------------------------------------------------------------
-            // Define a regular expression that matches any HTML tag.
-            // The pattern <[^>]+> captures a '<', then any characters except '>', then a '>'.
-            // ---------------------------------------------------------------
-            Regex htmlTagRegex = new Regex(@"<[^>]+>", RegexOptions.IgnoreCase);
+        // Validate that at least one replacement occurred.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No HTML tags were found to replace.");
 
-            // Perform the replacement: remove all HTML tags.
-            FindReplaceOptions replaceOptions = new FindReplaceOptions();
-            int replacementCount = loadedDoc.Range.Replace(htmlTagRegex, string.Empty, replaceOptions);
+        // Step 5: Save the modified document.
+        const string outputPath = "output.docx";
+        loadedDoc.Save(outputPath);
 
-            // Validate that at least one replacement occurred.
-            if (replacementCount == 0)
-                throw new InvalidOperationException("No HTML tags were found to replace.");
-
-            // ---------------------------------------------------------------
-            // Save the modified document.
-            // ---------------------------------------------------------------
-            loadedDoc.Save(outputPath);
-
-            // Optional: write a short confirmation to the console.
-            Console.WriteLine($"Replaced {replacementCount} HTML tag(s). Output saved to '{outputPath}'.");
-        }
+        // Inform the user of the result.
+        Console.WriteLine($"Replaced {replacedCount} HTML tag(s). Output saved to '{outputPath}'.");
     }
 }

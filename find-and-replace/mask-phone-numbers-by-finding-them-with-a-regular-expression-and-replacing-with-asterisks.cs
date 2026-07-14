@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class Program
+public class PhoneNumberMasking
 {
     public static void Main()
     {
@@ -14,29 +14,30 @@ public class Program
         // Add sample text containing phone numbers.
         builder.Writeln("Contact list:");
         builder.Writeln("John Doe: 123-456-7890");
-        builder.Writeln("Jane Smith: (555) 123 4567");
-        builder.Writeln("Bob Johnson: 987.654.3210");
-        builder.Writeln("Alice Brown: 5551234567");
+        builder.Writeln("Jane Smith: 987.654.3210");
+        builder.Writeln("Bob Johnson: 555 123 4567");
+        builder.Writeln("No phone here.");
 
-        // Save the original document (optional, for inspection).
+        // Save the original document.
         const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document from the saved file.
-        Document loadedDoc = new Document(inputPath);
+        // Load the document we just saved.
+        Document loaded = new Document(inputPath);
 
         // Define a regular expression that matches common US phone number formats.
-        Regex phoneRegex = new Regex(@"\b(?:\d{3}[-.\s]?\d{3}[-.\s]?\d{4}|\(\d{3}\)\s?\d{3}[-.\s]?\d{4})\b");
+        Regex phoneRegex = new Regex(@"\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b");
 
-        // Replace each phone number with a masked version (10 asterisks).
-        int replacementCount = loadedDoc.Range.Replace(phoneRegex, "**********", new FindReplaceOptions());
+        // Replace each phone number with asterisks for privacy.
+        FindReplaceOptions options = new FindReplaceOptions();
+        int replacedCount = loaded.Range.Replace(phoneRegex, "*****", options);
 
-        // Ensure that at least one phone number was masked.
-        if (replacementCount == 0)
-            throw new InvalidOperationException("No phone numbers were found to mask.");
+        // Ensure that at least one replacement was made.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one phone number to be masked.");
 
         // Save the masked document.
         const string outputPath = "masked.docx";
-        loadedDoc.Save(outputPath);
+        loaded.Save(outputPath);
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -7,30 +6,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
+        // Create a sample document with text that contains whole words and substrings.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The cat sat on the catalog.");
-        builder.Writeln("A catapult is not a cat.");
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        builder.Writeln("Jackson will meet you in Jacksonville.");
+        builder.Writeln("Jackson is a common name.");
+        builder.Writeln("The quick brown fox jumps over the lazy dog.");
+
+        // Save the document to a local file so we can demonstrate loading it later.
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // Load the document for processing.
-        Document loadedDoc = new Document(inputPath);
+        // Load the document from the file system.
+        Document loaded = new Document(inputPath);
 
-        // Configure find/replace to match whole words only.
+        // Configure find-and-replace to match whole words only.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            FindWholeWordsOnly = true // Ensures only standalone words are replaced.
+            FindWholeWordsOnly = true
         };
 
-        // Perform the replacement.
-        int replacedCount = loadedDoc.Range.Replace("cat", "dog", options);
+        // Replace the word "Jackson" with "Louis" using the whole-word option.
+        int replacedCount = loaded.Range.Replace("Jackson", "Louis", options);
+
+        // Ensure that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one whole-word replacement.");
 
         // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        loadedDoc.Save(outputPath);
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
     }
 }

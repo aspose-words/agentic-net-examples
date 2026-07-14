@@ -4,77 +4,71 @@ using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-namespace MarkdownHeadingConverter
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a sample document containing markdown style headings.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("# Title");
+        builder.Writeln("This is a normal paragraph.");
+        builder.Writeln("## Section");
+        builder.Writeln("Content under the section.");
+        builder.Writeln("### Subsection");
+        builder.Writeln("More detailed content.");
+
+        // Regular expression to match markdown headings (levels 1‑6).
+        Regex headingRegex = new Regex(@"^(#{1,6})\s*(.+)$", RegexOptions.Multiline);
+
+        // Configure replace options with a callback that applies Word heading styles.
+        FindReplaceOptions options = new FindReplaceOptions
         {
-            // Create a sample document containing markdown style headings.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            builder.Writeln("# Title");
-            builder.Writeln("Some introductory text.");
-            builder.Writeln("## Section 1");
-            builder.Writeln("Content of section 1.");
-            builder.Writeln("### Subsection 1.1");
-            builder.Writeln("More details.");
-            builder.Writeln("## Section 2");
-            builder.Writeln("Content of section 2.");
+            ReplacingCallback = new HeadingCallback()
+        };
 
-            const string inputPath = "input.docx";
-            doc.Save(inputPath);
+        // Perform the find‑and‑replace operation.
+        int replacedCount = doc.Range.Replace(headingRegex, string.Empty, options);
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No markdown headings were found for replacement.");
 
-            // Load the document for processing.
-            var loaded = new Document(inputPath);
-
-            // Regex to match markdown headings (levels 1‑6).
-            var headingRegex = new Regex(@"^(#{1,6})\s*(.+)$", RegexOptions.Multiline);
-
-            var replaceOptions = new FindReplaceOptions
-            {
-                ReplacingCallback = new HeadingReplacingCallback()
-            };
-
-            // Perform the replace; the callback supplies the replacement text and styling.
-            int replacedCount = loaded.Range.Replace(headingRegex, string.Empty, replaceOptions);
-
-            if (replacedCount == 0)
-                throw new InvalidOperationException("No markdown headings were found to replace.");
-
-            const string outputPath = "output.docx";
-            loaded.Save(outputPath);
-        }
+        // Save the modified document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        doc.Save(outputPath);
     }
+}
 
-    // Callback that converts a markdown heading to a Word heading style.
-    internal class HeadingReplacingCallback : IReplacingCallback
+// Callback that converts a markdown heading to a Word heading style.
+public class HeadingCallback : IReplacingCallback
+{
+    public ReplaceAction Replacing(ReplacingArgs args)
     {
-        public ReplaceAction Replacing(ReplacingArgs args)
+        // Determine heading level from the number of leading '#'.
+        string hashGroup = args.Match.Groups[1].Value;
+        int level = hashGroup.Length; // 1 to 6
+
+        // Extract the heading text without markdown symbols.
+        string headingText = args.Match.Groups[2].Value.Trim();
+
+        // Replace the markdown syntax with plain heading text.
+        args.Replacement = headingText;
+
+        // Apply the corresponding Word heading style to the paragraph.
+        if (args.MatchNode?.ParentNode is Paragraph paragraph)
         {
-            // Determine heading level from the number of leading '#'.
-            var match = args.Match;
-            int level = match.Groups[1].Value.Length;
-            string headingText = match.Groups[2].Value.Trim();
-
-            // Replace the markdown syntax with plain heading text.
-            args.Replacement = headingText;
-
-            // Apply the appropriate Word heading style to the paragraph containing the match.
-            if (args.MatchNode?.ParentNode is Paragraph paragraph)
+            StyleIdentifier styleId = level switch
             {
-                switch (level)
-                {
-                    case 1: paragraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1; break;
-                    case 2: paragraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2; break;
-                    case 3: paragraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3; break;
-                    case 4: paragraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading4; break;
-                    case 5: paragraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading5; break;
-                    case 6: paragraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading6; break;
-                }
-            }
-
-            return ReplaceAction.Replace;
+                1 => StyleIdentifier.Heading1,
+                2 => StyleIdentifier.Heading2,
+                3 => StyleIdentifier.Heading3,
+                4 => StyleIdentifier.Heading4,
+                5 => StyleIdentifier.Heading5,
+                6 => StyleIdentifier.Heading6,
+                _ => StyleIdentifier.Normal
+            };
+            paragraph.ParagraphFormat.StyleIdentifier = styleId;
         }
+
+        return ReplaceAction.Replace;
     }
 }

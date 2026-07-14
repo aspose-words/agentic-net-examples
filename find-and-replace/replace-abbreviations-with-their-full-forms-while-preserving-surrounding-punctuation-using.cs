@@ -11,24 +11,20 @@ public class Program
         // Create a blank document and add sample text containing abbreviations.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("In this document we will see examples such as e.g., i.e., and etc., within sentences.");
-        builder.Writeln("Sometimes abbreviations appear in parentheses (e.g.) or with commas, i.e., like this.");
+        builder.Writeln("The meeting will start at 10 a.m., e.g., after the briefing. Please bring your ID, i.e., a passport.");
+        builder.Writeln("Remember to bring snacks, etc., for the break.");
 
-        // Regex that matches the abbreviations and looks ahead for optional punctuation.
-        // The trailing \b was removed because a period followed by another punctuation character
-        // is not considered a word boundary, causing the original pattern to miss matches.
-        Regex abbreviationRegex = new Regex(@"\b(e\.g\.|i\.e\.|etc\.)(?=[\s,;:\)\.]?)",
+        // Regex that matches the abbreviations and captures any following punctuation.
+        // The trailing word‑boundary is removed so that a comma or other punctuation
+        // immediately after the abbreviation is still part of the match.
+        Regex abbreviationRegex = new Regex(@"\b(e\.g\.|i\.e\.|etc\.)(?<punctuation>[\.,;:]?)",
                                             RegexOptions.IgnoreCase);
 
-        // Set up find‑replace options with a custom callback that maps each abbreviation to its full form.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            // Ensure case‑insensitive matching (default is false, but set explicitly for clarity).
-            MatchCase = false,
-            ReplacingCallback = new AbbreviationReplacer()
-        };
+        // Set up find‑and‑replace options with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new AbbreviationReplacer();
 
-        // Perform the replacement. The replacement string parameter is ignored because the callback sets it.
+        // Perform the replace operation. The replacement string is ignored because the callback supplies the value.
         int replacedCount = doc.Range.Replace(abbreviationRegex, string.Empty, options);
 
         // Validate that at least one replacement occurred.
@@ -39,33 +35,36 @@ public class Program
         const string outputPath = "output.docx";
         doc.Save(outputPath);
 
-        // Simple confirmation.
-        Console.WriteLine($"Replacements performed: {replacedCount}");
-        Console.WriteLine($"Modified document saved to: {outputPath}");
+        // Output the resulting text to the console for verification.
+        Console.WriteLine("Replacements performed: " + replacedCount);
+        Console.WriteLine("Resulting document text:");
+        Console.WriteLine(doc.GetText().Trim());
     }
 
-    // Callback that replaces each matched abbreviation with its full form.
+    // Callback that replaces each abbreviation with its full form while preserving captured punctuation.
     private class AbbreviationReplacer : IReplacingCallback
     {
-        private static readonly Dictionary<string, string> _map = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, string> FullForms = new(StringComparer.OrdinalIgnoreCase)
         {
             { "e.g.", "for example" },
             { "i.e.", "that is" },
             { "etc.", "and so on" }
         };
 
-        public ReplaceAction Replacing(ReplacingArgs args)
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
-            // The match value may include trailing punctuation (e.g., "e.g.") without the following comma.
-            // Use the map to find the appropriate replacement.
-            if (_map.TryGetValue(args.Match.Value, out string replacement))
-            {
-                args.Replacement = replacement;
-                return ReplaceAction.Replace;
-            }
+            // Determine the full form based on the matched abbreviation.
+            string abbreviation = args.Match.Value;
+            if (!FullForms.TryGetValue(abbreviation, out string fullForm))
+                fullForm = abbreviation; // Fallback: keep original if not found.
 
-            // If the match is not in the map, skip it.
-            return ReplaceAction.Skip;
+            // Retrieve any trailing punctuation captured by the regex.
+            string punctuation = args.Match.Groups["punctuation"].Value;
+
+            // Set the replacement text.
+            args.Replacement = fullForm + punctuation;
+
+            return ReplaceAction.Replace;
         }
     }
 }

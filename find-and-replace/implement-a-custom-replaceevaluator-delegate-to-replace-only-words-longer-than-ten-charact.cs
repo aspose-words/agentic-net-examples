@@ -1,5 +1,5 @@
 using System;
-using System.Text;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
@@ -8,50 +8,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
+        // Create a new blank document and add sample text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document contains severalwordswithmorethan10characters and short words.");
-        builder.Writeln("Anotherlongwordexample should be replaced, while tiny stays.");
-        doc.Save("input.docx");
+        builder.Writeln("Supercalifragilisticexpialidocious is a famously long word.");
+        builder.Writeln("Anotherlongwordexample demonstrates the replacement logic.");
+        builder.Writeln("Short words stay untouched.");
 
-        // Load the document we just created.
-        Document loaded = new Document("input.docx");
+        // Regex that matches words longer than ten characters.
+        Regex longWordRegex = new Regex(@"\b\w{11,}\b", RegexOptions.Compiled);
 
-        // Set up a callback that replaces only words longer than ten characters.
+        // Set up replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
             ReplacingCallback = new LongWordReplacer()
         };
 
-        // Use a regex that matches whole words.
-        Regex wordRegex = new Regex(@"\b\w+\b");
+        // Perform the replace operation. The replacement string argument is ignored
+        // because the callback supplies the actual replacement.
+        int replacedCount = doc.Range.Replace(longWordRegex, string.Empty, options);
 
-        // Perform the replace operation.
-        int replacedCount = loaded.Range.Replace(wordRegex, string.Empty, options);
-
-        // Verify that at least one replacement occurred.
+        // Ensure that at least one replacement was made.
         if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement.");
+            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        loaded.Save("output.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        doc.Save(outputPath);
     }
 
-    // Callback that replaces a match only if its length exceeds ten characters.
+    // Callback that replaces each matched long word with "SHORT".
     private class LongWordReplacer : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // If the matched word is longer than 10 characters, replace it with "SHORT".
-            if (args.Match.Value.Length > 10)
-            {
-                args.Replacement = "SHORT";
-                return ReplaceAction.Replace;
-            }
-
-            // Otherwise, skip this match.
-            return ReplaceAction.Skip;
+            args.Replacement = "SHORT";
+            return ReplaceAction.Replace;
         }
     }
 }

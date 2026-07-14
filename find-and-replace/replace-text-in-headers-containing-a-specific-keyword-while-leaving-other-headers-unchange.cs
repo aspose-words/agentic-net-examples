@@ -1,68 +1,82 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class HeaderReplaceExample
+public class Program
 {
     public static void Main()
     {
-        // Prepare file paths in the current working directory.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderInput.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderOutput.docx");
+        // File names (created in the current working directory).
+        const string inputPath = "input.docx";
+        const string outputPath = "output.docx";
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document with two sections, each having a header.
+        // Create a sample document with several headers.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First section header – contains the keyword "Confidential".
+        // Enable distinct first‑page and odd/even headers.
+        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
+
+        // Primary header (odd pages) – contains the keyword.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Company Report - Confidential");
+        builder.Writeln("Company Report – ReplaceMe");
+
+        // First‑page header – does NOT contain the keyword.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
+        builder.Writeln("Company Report – First Page");
+
+        // Even‑page header – contains the keyword.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
+        builder.Writeln("Company Report – ReplaceMe");
+
+        // Return to the main story before inserting a section break.
         builder.MoveToDocumentEnd();
-
-        // First section body.
-        builder.Writeln("This is the body of the first section.");
-
-        // Add a second section by inserting a section break.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Second section header – does NOT contain the keyword.
+        // Second section – same header layout.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Company Report - Public");
-        builder.MoveToDocumentEnd();
+        builder.Writeln("Summary – ReplaceMe");
 
-        // Second section body.
-        builder.Writeln("This is the body of the second section.");
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
+        builder.Writeln("Summary – First Page");
+
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
+        builder.Writeln("Summary – ReplaceMe");
 
         // Save the sample document.
         doc.Save(inputPath);
 
         // -----------------------------------------------------------------
-        // 2. Load the document and replace text only in headers that contain the keyword.
+        // Load the document and replace the keyword only in headers.
         // -----------------------------------------------------------------
         Document loadedDoc = new Document(inputPath);
-        const string keyword = "Confidential";
-        const string oldText = "Confidential";
-        const string newText = "REDACTED";
+
+        const string keyword = "ReplaceMe";
+        const string replacement = "Replaced";
 
         int totalReplacements = 0;
+        FindReplaceOptions options = new FindReplaceOptions();
 
-        // Iterate through all sections and their primary headers.
         foreach (Section section in loadedDoc.Sections)
         {
-            HeaderFooter header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
-            if (header != null && header.Range.Text.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            HeaderFooterCollection headers = section.HeadersFooters;
+            foreach (HeaderFooter header in headers)
             {
-                int replaced = header.Range.Replace(oldText, newText, new FindReplaceOptions());
-                totalReplacements += replaced;
+                // Process only headers that actually contain the keyword.
+                if (header.Range.Text.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                {
+                    int replaced = header.Range.Replace(keyword, replacement, options);
+                    totalReplacements += replaced;
+                }
             }
         }
 
-        // Validate that at least one replacement was performed.
+        // Validate that at least one replacement occurred.
         if (totalReplacements == 0)
-            throw new InvalidOperationException("Expected at least one header replacement, but none occurred.");
+            throw new InvalidOperationException("No header replacements were performed.");
 
         // Save the modified document.
         loadedDoc.Save(outputPath);

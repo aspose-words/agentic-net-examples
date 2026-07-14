@@ -3,75 +3,72 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Drawing; // Required by Aspose.Words for drawing types
+using Newtonsoft.Json;
 
-public class Program
+public class MacroExpander
 {
-    public static void Main()
+    // Custom callback that expands macros using the provided dictionary.
+    private class MacroReplacer : IReplacingCallback
     {
-        // Create a sample document containing macro placeholders.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Report generated on {DATE} by {USER}.");
-        builder.Writeln("Contact: {EMAIL}");
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        private readonly Dictionary<string, string> _macroMap;
 
-        // Load the document we just created.
-        Document loadedDoc = new Document(inputPath);
-
-        // Define macro expansions.
-        var macroValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        public MacroReplacer(Dictionary<string, string> macroMap)
         {
-            { "DATE", DateTime.Now.ToString("yyyy-MM-dd") },
-            { "USER", Environment.UserName },
-            { "EMAIL", $"{Environment.UserName}@example.com" }
-        };
-
-        // Regular expression to find macros like {MACRO_NAME}.
-        Regex macroRegex = new Regex(@"\{(\w+)\}", RegexOptions.Compiled);
-
-        // Set up FindReplaceOptions with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new MacroReplacingCallback(macroValues);
-
-        // Perform the replacement using the regex pattern.
-        int replacedCount = loadedDoc.Range.Replace(macroRegex, string.Empty, options);
-
-        // Validate that at least one replacement occurred.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("No macros were expanded in the document.");
-
-        // Save the modified document.
-        const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
-
-        // Confirmation output.
-        Console.WriteLine($"Macros expanded: {replacedCount}");
-        Console.WriteLine($"Output saved to '{outputPath}'.");
-    }
-
-    // Custom callback that expands macros based on the provided dictionary.
-    private class MacroReplacingCallback : IReplacingCallback
-    {
-        private readonly Dictionary<string, string> _macroValues;
-
-        public MacroReplacingCallback(Dictionary<string, string> macroValues)
-        {
-            _macroValues = macroValues ?? throw new ArgumentNullException(nameof(macroValues));
+            _macroMap = macroMap ?? throw new ArgumentNullException(nameof(macroMap));
         }
 
-        public ReplaceAction Replacing(ReplacingArgs args)
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
-            // Extract the macro name from the first capture group.
-            string key = args.Match.Groups[1].Value;
+            // The regex has a single capturing group that contains the macro name.
+            string macroName = args.Match.Groups[1].Value;
 
-            // If the macro exists, replace it with its value; otherwise keep the original text.
-            if (_macroValues.TryGetValue(key, out string value))
-                args.Replacement = value;
+            if (_macroMap.TryGetValue(macroName, out string replacement))
+                args.Replacement = replacement;          // Replace with the mapped value.
             else
-                args.Replacement = args.Match.Value;
+                args.Replacement = args.Match.Value;      // Leave unknown macros unchanged.
 
             return ReplaceAction.Replace;
         }
+    }
+
+    public static void Main()
+    {
+        // Create a blank document and add sample text containing macro placeholders.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Report generated on {DATE}.");
+        builder.Writeln("Prepared by {FULLNAME}.");
+        builder.Writeln("Message: {GREETING}");
+        builder.Writeln("Unknown macro: {UNKNOWN}");
+
+        // Define macro names and their full code replacements.
+        var macroMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "DATE", DateTime.Now.ToString("yyyy-MM-dd") },
+            { "FULLNAME", "John Doe" },
+            { "GREETING", "Hello, world!" }
+        };
+
+        // Regular expression to locate macros in the form {MACRO_NAME}.
+        Regex macroRegex = new Regex(@"\{(\w+)\}", RegexOptions.Compiled);
+
+        // Set up FindReplaceOptions with the custom callback.
+        FindReplaceOptions options = new FindReplaceOptions(new MacroReplacer(macroMap));
+
+        // Perform the replace. The replacement string argument is ignored because the callback supplies it.
+        int replacedCount = doc.Range.Replace(macroRegex, string.Empty, options);
+
+        // Validate that at least one replacement occurred.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("No macros were expanded.");
+
+        // Save the modified document.
+        const string outputPath = "ExpandedMacros.docx";
+        doc.Save(outputPath);
+
+        // Optional: Serialize the macro map to JSON for demonstration purposes.
+        string json = JsonConvert.SerializeObject(macroMap, Formatting.Indented);
+        System.IO.File.WriteAllText("MacroMap.json", json);
     }
 }
