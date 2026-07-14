@@ -3,42 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class AddHeaderFooterAndConvert
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Paths for the temporary DOCX and final PDF files.
+        const string docxPath = "sample.docx";
+        const string pdfPath = "sample.pdf";
+
+        // -------------------------------------------------
+        // 1. Create a new blank document and add header/footer.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable a different header/footer for the first page (optional).
+        // Enable different headers/footers for the first page if desired.
         builder.PageSetup.DifferentFirstPageHeaderFooter = true;
 
         // Add a primary header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Sample Header Text");
+        builder.Writeln("Sample Header Text");
 
         // Add a primary footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Sample Footer Text");
+        builder.Writeln("Sample Footer Text");
 
-        // Return to the main body and add some content.
+        // Return to the main body of the document.
         builder.MoveToSection(0);
-        builder.Writeln("Document body content.");
+        builder.Writeln("This is the body of the document.");
 
-        // Save the document as DOCX (the input file for conversion).
-        const string docxPath = "input.docx";
+        // -------------------------------------------------
+        // 2. Save the document as DOCX (input for conversion).
+        // -------------------------------------------------
         doc.Save(docxPath, SaveFormat.Docx);
 
-        // Load the saved DOCX file.
+        // -------------------------------------------------
+        // 3. Load the saved DOCX and convert it to PDF.
+        // -------------------------------------------------
         Document loadedDoc = new Document(docxPath);
-
-        // Convert the loaded document to PDF.
-        const string pdfPath = "output.pdf";
         loadedDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
+        // -------------------------------------------------
+        // 4. Validate that the PDF was created.
+        // -------------------------------------------------
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF conversion failed: output file not found.");
+            throw new InvalidOperationException("PDF conversion failed: output file was not created.");
+
+        // Optional: clean up temporary DOCX file.
+        if (File.Exists(docxPath))
+            File.Delete(docxPath);
     }
 }

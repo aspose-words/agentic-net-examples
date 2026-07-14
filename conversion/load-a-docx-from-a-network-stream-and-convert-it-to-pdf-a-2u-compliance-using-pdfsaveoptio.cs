@@ -7,36 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX file locally.
+        // Prepare a sample DOCX file.
+        const string inputPath = "sample.docx";
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document created for PDF/A‑2u conversion.");
-        const string inputPath = "sample_input.docx";
+        builder.Writeln("This is a sample document to be converted to PDF/A‑2u.");
         sourceDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Step 2: Simulate loading the DOCX from a network stream.
-        byte[] docBytes = File.ReadAllBytes(inputPath);
-        using (MemoryStream networkStream = new MemoryStream(docBytes))
+        // Simulate receiving the DOCX over a network by loading it into a MemoryStream.
+        byte[] fileBytes = File.ReadAllBytes(inputPath);
+        using MemoryStream networkStream = new MemoryStream(fileBytes);
+        networkStream.Position = 0; // Ensure the stream is at the beginning.
+
+        // Load the document from the simulated network stream.
+        Document doc = new Document(networkStream);
+
+        // Configure PDF/A‑2u compliance.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Ensure the stream is positioned at the beginning before loading.
-            networkStream.Position = 0;
-            Document loadedDoc = new Document(networkStream);
+            Compliance = PdfCompliance.PdfA2u
+        };
 
-            // Step 3: Convert the document to PDF/A‑2u compliant PDF.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions
-            {
-                Compliance = PdfCompliance.PdfA2u
-            };
-            const string outputPath = "converted_output.pdf";
-            loadedDoc.Save(outputPath, pdfOptions);
+        // Save the document as a PDF/A‑2u file.
+        const string outputPath = "output.pdf";
+        doc.Save(outputPath, pdfOptions);
 
-            // Step 4: Validate that the PDF file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The PDF/A‑2u output file was not created.");
-        }
+        // Verify that the PDF was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The PDF/A‑2u file was not created.");
 
         // Clean up temporary files (optional).
-        // File.Delete(inputPath);
-        // File.Delete("converted_output.pdf");
+        File.Delete(inputPath);
     }
 }

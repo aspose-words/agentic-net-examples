@@ -2,59 +2,65 @@ using System;
 using System.IO;
 using System.Net.Mail;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare directories
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        if (!Directory.Exists(artifactsDir))
-            Directory.CreateDirectory(artifactsDir);
-
-        string pickupDir = Path.Combine(Directory.GetCurrentDirectory(), "MailPickup");
-        if (!Directory.Exists(pickupDir))
-            Directory.CreateDirectory(pickupDir);
-
-        // 1. Create a simple Word document
+        // Step 1: Create a simple Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, this is a sample document that will be saved as MHTML.");
+        builder.Writeln("This is a sample document that will be saved as MHTML and attached to an email.");
 
-        // 2. Save the document as MHTML
-        string mhtmlPath = Path.Combine(artifactsDir, "sample.mht");
-        doc.Save(mhtmlPath, SaveFormat.Mhtml);
+        // Step 2: Save the document as MHTML.
+        string mhtmlPath = Path.Combine(Path.GetTempPath(), "sample.mht");
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml);
+        doc.Save(mhtmlPath, saveOptions);
 
         if (!File.Exists(mhtmlPath))
             throw new InvalidOperationException("MHTML file was not created.");
 
-        // 3. Create an email message and attach the MHTML file
-        MailMessage message = new MailMessage();
-        message.From = new MailAddress("sender@example.com");
-        message.To.Add(new MailAddress("recipient@example.com"));
-        message.Subject = "Sample MHTML Attachment";
-        message.Body = "Please find the MHTML document attached.";
-        Attachment attachment = new Attachment(mhtmlPath);
-        message.Attachments.Add(attachment);
+        // Step 3: Prepare the email message.
+        using (MailMessage message = new MailMessage())
+        {
+            message.From = new MailAddress("sender@example.com");
+            message.To.Add(new MailAddress("recipient@example.com"));
+            message.Subject = "Test Email with MHTML Attachment";
+            message.Body = "Please find the attached MHTML document.";
+            message.IsBodyHtml = false;
 
-        // 4. Configure SmtpClient to use a local pickup directory (no real server needed)
-        SmtpClient smtpClient = new SmtpClient("localhost");
-        smtpClient.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
-        smtpClient.PickupDirectoryLocation = pickupDir;
+            // Attach the MHTML file.
+            using (Attachment attachment = new Attachment(mhtmlPath))
+            {
+                message.Attachments.Add(attachment);
 
-        // 5. Send the email (will be written as an .eml file in the pickup directory)
-        smtpClient.Send(message);
+                // Step 4: Configure the SMTP client to use a pickup directory (no real server needed).
+                string pickupDirectory = Path.Combine(Path.GetTempPath(), "mailpickup");
+                Directory.CreateDirectory(pickupDirectory);
 
-        // 6. Verify that an .eml file was created
-        string[] emlFiles = Directory.GetFiles(pickupDir, "*.eml");
-        if (emlFiles.Length == 0)
-            throw new InvalidOperationException("Email was not written to the pickup directory.");
+                using (SmtpClient smtpClient = new SmtpClient())
+                {
+                    smtpClient.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
+                    smtpClient.PickupDirectoryLocation = pickupDirectory;
 
-        // Clean up resources
-        attachment.Dispose();
-        message.Dispose();
-        smtpClient.Dispose();
+                    // Send the email (writes an .eml file to the pickup directory).
+                    smtpClient.Send(message);
+                }
 
-        // Optional: indicate success (no console output required by specifications)
+                // Verify that an .eml file was created.
+                string[] emlFiles = Directory.GetFiles(pickupDirectory, "*.eml");
+                if (emlFiles.Length == 0)
+                    throw new InvalidOperationException("Email was not written to the pickup directory.");
+
+                // Cleanup temporary files (optional).
+                foreach (string file in emlFiles)
+                    File.Delete(file);
+                Directory.Delete(pickupDirectory, true);
+            } // Attachment disposed here, file handle released.
+
+            // Delete the MHTML file after the attachment has been disposed.
+            File.Delete(mhtmlPath);
+        } // MailMessage disposed here.
     }
 }

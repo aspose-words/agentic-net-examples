@@ -7,45 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        string inputPath = "sample.docx";
-        string outputPath = "compressed.xlsx";
+        // Prepare output directory
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX document.
-        // -----------------------------------------------------------------
+        // Paths for the intermediate DOCX and final XLSX files
+        string inputDocxPath = Path.Combine(artifactsDir, "input.docx");
+        string outputXlsxPath = Path.Combine(artifactsDir, "output.xlsx");
+
+        // Create a simple DOCX document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document that will be saved as XLSX.");
-        // Save the DOCX so it can be loaded later if needed.
-        doc.Save(inputPath, SaveFormat.Docx);
+        builder.Writeln("Sample content for XLSX conversion.");
+        doc.Save(inputDocxPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX document (demonstrates the load step).
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputPath);
+        // Load the DOCX document
+        Document loadedDoc = new Document(inputDocxPath);
 
-        // -----------------------------------------------------------------
-        // 3. Configure XlsxSaveOptions with fast compression.
-        // -----------------------------------------------------------------
+        // Set up XLSX save options with fast compression
         XlsxSaveOptions xlsxOptions = new XlsxSaveOptions
         {
             CompressionLevel = CompressionLevel.Fast,
             SaveFormat = SaveFormat.Xlsx
         };
 
-        // -----------------------------------------------------------------
-        // 4. Save the document as XLSX using the configured options.
-        // -----------------------------------------------------------------
-        loadedDoc.Save(outputPath, xlsxOptions);
+        // Save the document as XLSX using the configured options
+        loadedDoc.Save(outputXlsxPath, xlsxOptions);
 
-        // -----------------------------------------------------------------
-        // 5. Validate that the XLSX file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The XLSX file was not created.");
-
-        // Optional: output a confirmation message.
-        Console.WriteLine($"XLSX file saved successfully with fast compression: {outputPath}");
+        // Verify that the XLSX file was created
+        if (!File.Exists(outputXlsxPath))
+        {
+            throw new InvalidOperationException("Expected XLSX output was not created.");
+        }
     }
 }

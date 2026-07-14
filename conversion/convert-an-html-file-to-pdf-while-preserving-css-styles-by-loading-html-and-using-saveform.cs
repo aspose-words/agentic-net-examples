@@ -2,37 +2,48 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class HtmlToPdfConverter
 {
     public static void Main()
     {
-        // Create a sample HTML file that includes CSS styling.
-        const string htmlPath = "input.html";
-        const string pdfPath = "output.pdf";
+        // Define file names.
+        const string htmlPath = "sample.html";
+        const string pdfPath = "sample.pdf";
+
+        // Create a simple HTML file with CSS styling.
         string htmlContent = @"
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset='UTF-8'>
+    <title>Sample HTML</title>
     <style>
-        body { font-family: Arial; color: #333333; }
-        h1 { color: #0066CC; }
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #2E86C1; }
+        p { color: #555555; line-height: 1.5; }
+        .highlight { background-color: #FFF9C4; }
     </style>
 </head>
 <body>
-    <h1>Hello World</h1>
-    <p>This is a sample HTML document with CSS styles.</p>
+    <h1>HTML to PDF Conversion</h1>
+    <p>This paragraph demonstrates <span class='highlight'>CSS styling</span> preservation during conversion.</p>
 </body>
 </html>";
+
+        // Write the HTML content to a local file.
         File.WriteAllText(htmlPath, htmlContent);
 
-        // Load the HTML file into an Aspose.Words Document.
+        // Load the HTML document.
         Document doc = new Document(htmlPath);
 
-        // Convert the document to PDF while preserving the CSS styles.
+        // Save the document as PDF, preserving CSS styles.
         doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Expected output PDF was not created.");
+            throw new InvalidOperationException("The PDF file was not created.");
+
+        // Optional: clean up the temporary HTML file.
+        // File.Delete(htmlPath);
     }
 }

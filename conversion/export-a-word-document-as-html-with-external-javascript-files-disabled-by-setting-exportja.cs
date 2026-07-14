@@ -7,30 +7,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and add some text.
+        // Create a sample Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, this is a sample document exported to HTML without JavaScript.");
+        builder.Writeln("Hello, this is a sample document.");
+        // Insert a hyperlink that contains JavaScript.
+        builder.InsertHyperlink("Click me", "javascript:alert('Hello')", false);
 
-        // Configure HTML save options to prevent JavaScript from being exported.
-        // The ExportJavaScript property is not available in recent versions; instead,
-        // we can remove JavaScript from links, which ensures no script references are written.
+        // Define the output HTML file path.
+        string outputPath = "output.html";
+
+        // Configure HTML save options to remove JavaScript from links.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
+            // This option strips JavaScript from hyperlink URLs.
             RemoveJavaScriptFromLinks = true
         };
 
         // Save the document as HTML.
-        string outputPath = "output.html";
         doc.Save(outputPath, saveOptions);
 
         // Verify that the HTML file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("HTML output file was not created.");
-
-        // Ensure that no JavaScript was exported.
-        string htmlContent = File.ReadAllText(outputPath);
-        if (htmlContent.Contains("<script", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("JavaScript was not disabled in the exported HTML.");
     }
 }

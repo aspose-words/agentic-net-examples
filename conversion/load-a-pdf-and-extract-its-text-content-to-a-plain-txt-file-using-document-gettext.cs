@@ -6,25 +6,24 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF file.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Hello Aspose.Words PDF extraction.");
-        const string pdfPath = "sample.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Expected PDF file was not created.");
+        // Create a sample PDF document.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
+        builder.Writeln("This is a sample PDF file.");
+        builder.Writeln("It contains multiple lines of text.");
+        source.Save("input.pdf", SaveFormat.Pdf);
 
         // Load the PDF document.
-        Document pdfDoc = new Document(pdfPath);
+        Document pdfDoc = new Document("input.pdf");
 
-        // Extract plain text from the PDF.
+        // Extract the text content.
         string extractedText = pdfDoc.GetText();
 
-        // Save the extracted text to a TXT file.
-        const string txtPath = "output.txt";
-        File.WriteAllText(txtPath, extractedText);
-        if (!File.Exists(txtPath))
-            throw new InvalidOperationException("Expected TXT file was not created.");
+        // Save the extracted text to a plain TXT file.
+        File.WriteAllText("output.txt", extractedText);
+
+        // Verify that the output file was created.
+        if (!File.Exists("output.txt"))
+            throw new InvalidOperationException("The expected output TXT file was not created.");
     }
 }

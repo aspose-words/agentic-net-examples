@@ -9,55 +9,68 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample JPEG image using Aspose.Drawing.
+        // Define file names.
         const string jpegPath = "sample.jpg";
-        const int imageWidth = 800;
-        const int imageHeight = 600;
+        const string pdfPath = "output.pdf";
 
-        using (Bitmap bitmap = new Bitmap(imageWidth, imageHeight))
+        // ------------------------------------------------------------
+        // 1. Create a sample JPEG image using Aspose.Drawing.
+        // ------------------------------------------------------------
+        using (Bitmap bitmap = new Bitmap(800, 600))
         {
+            // Fill the bitmap with a solid color.
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background with a solid color.
                 graphics.Clear(Color.CornflowerBlue);
-                // Draw a simple ellipse.
+                // Draw a simple ellipse to have some content.
                 using (Pen pen = new Pen(Color.White, 5))
                 {
                     graphics.DrawEllipse(pen, 100, 100, 600, 400);
                 }
             }
 
-            // Save the bitmap as a JPEG with maximum quality to preserve original data.
+            // Save the bitmap as a JPEG with maximum quality (100).
+            // This ensures the source image has full resolution and color depth.
             bitmap.Save(jpegPath, ImageFormat.Jpeg);
         }
 
         // Verify that the JPEG file was created.
-        if (!File.Exists(jpegPath))
-            throw new InvalidOperationException("Failed to create the sample JPEG image.");
+        if (!File.Exists(jpegPath) || new FileInfo(jpegPath).Length == 0)
+            throw new InvalidOperationException("Failed to create the source JPEG image.");
 
-        // Create a new Word document and insert the JPEG image.
+        // ------------------------------------------------------------
+        // 2. Load the JPEG into a Word document.
+        // ------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(jpegPath);
 
-        // Configure PDF save options to keep the original image resolution and color depth.
+        // ------------------------------------------------------------
+        // 3. Configure PDF save options to preserve the original image.
+        // ------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Use JPEG compression with the highest quality (no additional compression).
+            // Keep colors unchanged.
+            ColorMode = ColorMode.Normal,
+            // Preserve JPEG quality (no recompression).
             ImageCompression = PdfImageCompression.Jpeg,
             JpegQuality = 100,
-            // Disable downsampling to preserve the original resolution.
+            // Disable downsampling of images.
             DownsampleOptions = { DownsampleImages = false }
         };
 
-        const string pdfPath = "output.pdf";
+        // ------------------------------------------------------------
+        // 4. Save the document as PDF.
+        // ------------------------------------------------------------
         doc.Save(pdfPath, pdfOptions);
 
-        // Validate that the PDF file was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF conversion failed; output file not found.");
+        // ------------------------------------------------------------
+        // 5. Validate that the PDF was created.
+        // ------------------------------------------------------------
+        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
+            throw new InvalidOperationException("PDF conversion failed; output file was not created.");
 
-        // Clean up temporary JPEG file.
-        File.Delete(jpegPath);
+        // Cleanup: optional removal of temporary files.
+        // File.Delete(jpegPath);
     }
 }

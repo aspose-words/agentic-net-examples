@@ -8,49 +8,56 @@ public class Program
     public static void Main()
     {
         // Define file names.
-        const string pdfPath = "sample.pdf";
-        const string htmlPath = "sample.html";
+        string pdfPath = "sample.pdf";
+        string htmlPath = "output.html";
 
         // -----------------------------------------------------------------
-        // 1. Create a simple Word document and save it as PDF (input file).
+        // 1. Create a simple document and save it as PDF (input for conversion).
         // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello, this is a sample PDF document.");
-        builder.Writeln("It will be converted to HTML with external CSS.");
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample PDF document created for conversion.");
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
+        // Verify PDF creation.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the PDF input file.");
+            throw new InvalidOperationException("PDF file was not created.");
 
-        // ---------------------------------------------------------------
-        // 2. Load the PDF document that we just created.
-        // ---------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // 2. Load the PDF document.
+        // -----------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
 
-        // ---------------------------------------------------------------
-        // 3. Configure HtmlFixedSaveOptions to disable embedded CSS.
-        //    When ExportEmbeddedCss is false, the CSS is not embedded in the
-        //    HTML file, resulting in an external stylesheet.
-        // ---------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // 3. Convert PDF to HTML with external CSS files.
+        //    ExportEmbeddedCss = false creates a separate CSS file.
+        // -----------------------------------------------------------------
         HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
         {
-            ExportEmbeddedCss = false
+            ExportEmbeddedCss = false // Disable embedding, create external CSS.
         };
 
-        // ---------------------------------------------------------------
-        // 4. Save the PDF as HTML using the configured options.
-        // ---------------------------------------------------------------
         pdfDoc.Save(htmlPath, htmlOptions);
 
-        // ---------------------------------------------------------------
-        // 5. Validate that the HTML output file exists.
-        // ---------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // 4. Validate that HTML and CSS files were generated.
+        // -----------------------------------------------------------------
         if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("HTML conversion failed; output file not found.");
+            throw new InvalidOperationException("HTML file was not created.");
 
-        // Optional: display a short confirmation.
-        Console.WriteLine("PDF successfully converted to HTML with external CSS.");
+        // CSS is saved in a subfolder named after the HTML file (without extension).
+        string cssFolder = Path.Combine(
+            Path.GetDirectoryName(htmlPath) ?? string.Empty,
+            Path.GetFileNameWithoutExtension(htmlPath));
+
+        string cssPath = Path.Combine(cssFolder, "styles.css");
+
+        if (!File.Exists(cssPath))
+            throw new InvalidOperationException("External CSS file was not created.");
+
+        // Output the locations of the generated files.
+        Console.WriteLine($"PDF created at: {Path.GetFullPath(pdfPath)}");
+        Console.WriteLine($"HTML created at: {Path.GetFullPath(htmlPath)}");
+        Console.WriteLine($"CSS created at: {Path.GetFullPath(cssPath)}");
     }
 }

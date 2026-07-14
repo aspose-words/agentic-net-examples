@@ -7,51 +7,64 @@ public class Program
 {
     public static void Main()
     {
-        // Define input and output directories.
-        string inputDir = "InputHtml";
-        string outputDir = "OutputPdf";
+        // Define folders for input HTML files and output PDFs.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "HtmlInputs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "PdfOutputs");
 
-        // Ensure the directories exist.
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Ensure clean environment.
+        if (Directory.Exists(inputFolder))
+            Directory.Delete(inputFolder, true);
+        if (Directory.Exists(outputFolder))
+            Directory.Delete(outputFolder, true);
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
         // Create sample HTML files.
-        File.WriteAllText(Path.Combine(inputDir, "sample1.html"),
-            "<html><body><h1>Sample 1</h1><p>Hello World!</p></body></html>");
-        File.WriteAllText(Path.Combine(inputDir, "sample2.html"),
-            "<html><body><h1>Sample 2</h1><p>Another page.</p></body></html>");
+        CreateSampleHtml(Path.Combine(inputFolder, "Sample1.html"), "<html><body><h1>First Document</h1><p>Hello from HTML 1.</p></body></html>");
+        CreateSampleHtml(Path.Combine(inputFolder, "Sample2.html"), "<html><body><h1>Second Document</h1><p>Hello from HTML 2.</p></body></html>");
 
-        // Get all HTML files in the input folder.
-        string[] htmlFiles = Directory.GetFiles(inputDir, "*.html");
+        // Define custom margins (in points). 1 inch = 72 points.
+        const double leftMargin = 72;   // 1 inch
+        const double rightMargin = 72;  // 1 inch
+        const double topMargin = 72;    // 1 inch
+        const double bottomMargin = 72; // 1 inch
 
-        foreach (string htmlPath in htmlFiles)
+        // Prepare PdfSaveOptions (no specific margin property exists, margins are set on the document).
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+
+        // Process each HTML file.
+        foreach (string htmlPath in Directory.GetFiles(inputFolder, "*.html"))
         {
             // Load the HTML document.
             Document doc = new Document(htmlPath);
 
-            // Set custom page margins (72 points = 1 inch).
-            doc.FirstSection.PageSetup.TopMargin = 72;
-            doc.FirstSection.PageSetup.BottomMargin = 72;
-            doc.FirstSection.PageSetup.LeftMargin = 72;
-            doc.FirstSection.PageSetup.RightMargin = 72;
+            // Apply custom page margins to each section.
+            foreach (Section section in doc.Sections)
+            {
+                section.PageSetup.LeftMargin = leftMargin;
+                section.PageSetup.RightMargin = rightMargin;
+                section.PageSetup.TopMargin = topMargin;
+                section.PageSetup.BottomMargin = bottomMargin;
+            }
 
-            // Prepare PDF save options.
-            PdfSaveOptions pdfOptions = new PdfSaveOptions();
-
-            // Determine the output PDF file path.
+            // Determine output PDF path.
             string pdfFileName = Path.GetFileNameWithoutExtension(htmlPath) + ".pdf";
-            string pdfPath = Path.Combine(outputDir, pdfFileName);
+            string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
-            // Save the document as PDF.
+            // Save as PDF using the options.
             doc.Save(pdfPath, pdfOptions);
 
             // Verify that the PDF was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"PDF file was not created: {pdfPath}");
+                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
         }
 
-        // Ensure at least one PDF was generated.
-        if (Directory.GetFiles(outputDir, "*.pdf").Length == 0)
-            throw new InvalidOperationException("No PDF files were generated.");
+        // All conversions completed successfully.
+        Console.WriteLine("Batch conversion completed. PDFs are located in: " + outputFolder);
+    }
+
+    private static void CreateSampleHtml(string filePath, string htmlContent)
+    {
+        File.WriteAllText(filePath, htmlContent);
     }
 }

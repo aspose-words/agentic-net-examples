@@ -6,18 +6,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample PDF content for EPUB conversion.");
-        source.Save("sample.pdf", SaveFormat.Pdf);
+        // Paths for the intermediate PDF and final EPUB files
+        const string pdfPath = "sample.pdf";
+        const string epubPath = "sample.epub";
 
-        // Load the PDF and convert it to EPUB.
-        Document pdfDoc = new Document("sample.pdf");
-        pdfDoc.Save("output.epub", SaveFormat.Epub);
+        // Create a simple Word document with some text
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample PDF that will be converted to EPUB.");
 
-        // Verify that the EPUB file was created.
-        if (!File.Exists("output.epub"))
+        // Save the document as PDF
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF file was created
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The PDF file was not created.");
+
+        // Load the PDF document
+        Document pdfDoc = new Document(pdfPath);
+
+        // Convert the loaded PDF to EPUB
+        pdfDoc.Save(epubPath, SaveFormat.Epub);
+
+        // Verify that the EPUB file was created
+        if (!File.Exists(epubPath))
             throw new InvalidOperationException("The EPUB file was not created.");
     }
 }

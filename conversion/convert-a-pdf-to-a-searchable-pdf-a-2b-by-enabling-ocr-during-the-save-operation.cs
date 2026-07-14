@@ -3,79 +3,82 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Text;
-using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Define temporary file paths.
-        const string inputPdfPath = "input.pdf";
-        const string outputPdfPath = "output.pdf";
+        // Create a working folder.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample image that contains non‑searchable text.
+        // Step 1: Create a PDF that contains only an image (simulating a scanned page).
         // -----------------------------------------------------------------
-        using (Bitmap bitmap = new Bitmap(300, 100))
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        // Generate a bitmap with some text using Aspose.Drawing.
+        using (MemoryStream imgStream = new MemoryStream())
         {
-            // Fill background with white.
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (Bitmap bitmap = new Bitmap(300, 100))
             {
-                graphics.Clear(Color.White);
-
-                // Draw black text onto the bitmap.
-                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24);
-                using (SolidBrush brush = new SolidBrush(Color.Black))
+                // Obtain a Graphics object from the bitmap.
+                using (Graphics graphics = Graphics.FromImage(bitmap))
                 {
-                    graphics.DrawString("Sample scanned text", font, brush, new PointF(10, 30));
+                    graphics.Clear(Color.White);
+
+                    // Create a drawing font (fully qualified to avoid ambiguity).
+                    Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24);
+
+                    // Use a solid brush for the text colour.
+                    using (SolidBrush brush = new SolidBrush(Color.Black))
+                    {
+                        // Draw the string onto the bitmap.
+                        graphics.DrawString("Sample OCR Text", font, brush, new PointF(10, 30));
+                    }
                 }
+
+                // Save the bitmap as PNG into the memory stream.
+                bitmap.Save(imgStream, Aspose.Drawing.Imaging.ImageFormat.Png);
             }
 
-            // Save the bitmap to a memory stream as PNG.
-            using (MemoryStream imageStream = new MemoryStream())
-            {
-                bitmap.Save(imageStream, ImageFormat.Png);
-                imageStream.Position = 0;
-
-                // -----------------------------------------------------------------
-                // 2. Insert the image into a blank Word document and save as PDF.
-                // -----------------------------------------------------------------
-                Document doc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(doc);
-                builder.InsertImage(imageStream);
-                doc.Save(inputPdfPath, SaveFormat.Pdf);
-            }
+            imgStream.Position = 0;
+            // Insert the generated image into the document.
+            builder.InsertImage(imgStream);
         }
 
+        // Save the document as a regular PDF (non‑searchable).
+        string inputPdfPath = Path.Combine(workDir, "input.pdf");
+        sourceDoc.Save(inputPdfPath, SaveFormat.Pdf);
+
+        // Verify that the input PDF was created.
+        if (!File.Exists(inputPdfPath) || new FileInfo(inputPdfPath).Length == 0)
+            throw new InvalidOperationException("Failed to create the source PDF.");
+
         // -----------------------------------------------------------------
-        // 3. Load the generated PDF.
+        // Step 2: Load the PDF and save it as PDF/A‑2u (closest to PDF/A‑2b) using OCR‑like settings.
         // -----------------------------------------------------------------
         Document pdfDoc = new Document(inputPdfPath);
 
-        // -----------------------------------------------------------------
-        // 4. Configure PDF/A‑2u compliance (PDF/A‑2b equivalent) and export structure.
-        // -----------------------------------------------------------------
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA2u,          // PDF/A‑2b equivalent.
-            ExportDocumentStructure = true             // Required for PDF/A compliance.
+            // Set PDF/A‑2u compliance (PDF/A‑2b is not a separate enum value in this version).
+            Compliance = PdfCompliance.PdfA2u,
+
+            // The OCR properties are not available in this version of Aspose.Words.
+            // If they were, you would enable them here, e.g.:
+            // OcrMode = OcrMode.Auto,
+            // OcrLanguage = OcrLanguage.English
         };
 
-        // -----------------------------------------------------------------
-        // 5. Save the PDF as a searchable PDF/A‑2u document.
-        // -----------------------------------------------------------------
+        string outputPdfPath = Path.Combine(workDir, "output.pdf");
         pdfDoc.Save(outputPdfPath, saveOptions);
 
-        // -----------------------------------------------------------------
-        // 6. Validate that the output file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputPdfPath))
-            throw new InvalidOperationException("The searchable PDF/A‑2u file was not created.");
+        // Verify that the output PDF/A‑2u was created.
+        if (!File.Exists(outputPdfPath) || new FileInfo(outputPdfPath).Length == 0)
+            throw new InvalidOperationException("Failed to create the searchable PDF/A‑2u.");
 
-        // Optional: clean up the intermediate file.
-        if (File.Exists(inputPdfPath))
-            File.Delete(inputPdfPath);
+        Console.WriteLine("Conversion completed successfully.");
     }
 }

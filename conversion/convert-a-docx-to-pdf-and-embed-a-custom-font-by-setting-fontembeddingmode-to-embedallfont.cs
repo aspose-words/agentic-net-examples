@@ -7,27 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Font.Name = "Courier New"; // Use a non‑standard font to demonstrate embedding.
-        builder.Writeln("Sample text with a custom font.");
-        source.Save("input.docx", SaveFormat.Docx);
+        // Define file names.
+        const string docxPath = "sample.docx";
+        const string pdfPath = "sample.pdf";
 
-        // Load the DOCX document.
-        Document doc = new Document("input.docx");
+        // -----------------------------------------------------------------
+        // 1. Create a sample DOCX document.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Name = "Arial";               // Use a common font.
+        builder.Writeln("This is a sample document.");
+        builder.Font.Name = "Courier New";         // Add a second font.
+        builder.Writeln("Text with a different font.");
 
-        // Set PDF save options to embed all fonts.
+        // Save the document as DOCX (input for conversion).
+        doc.Save(docxPath, SaveFormat.Docx);
+
+        // -----------------------------------------------------------------
+        // 2. Load the DOCX document.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(docxPath);
+
+        // -----------------------------------------------------------------
+        // 3. Configure PDF save options to embed all fonts.
+        // -----------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll
         };
 
-        // Convert and save as PDF.
-        doc.Save("output.pdf", pdfOptions);
+        // Save the document as PDF with the specified options.
+        loadedDoc.Save(pdfPath, pdfOptions);
 
-        // Verify that the PDF was created.
-        if (!File.Exists("output.pdf"))
-            throw new InvalidOperationException("Expected output PDF was not created.");
+        // -----------------------------------------------------------------
+        // 4. Validate that the PDF was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
+        {
+            throw new InvalidOperationException("PDF conversion failed: output file was not created.");
+        }
+
+        // Optional: inform the user (no interactive input required).
+        Console.WriteLine($"DOCX successfully converted to PDF with embedded fonts: {pdfPath}");
     }
 }

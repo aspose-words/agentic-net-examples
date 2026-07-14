@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
@@ -10,65 +9,46 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string mhtmlPath = "sample.mhtml";
-        string pdfPath = "output.pdf";
+        // Paths for temporary files
+        const string imagePath = "sample.png";
+        const string mhtmlPath = "sample.mhtml";
+        const string pdfPath = "output.pdf";
 
         // -----------------------------------------------------------------
-        // 1. Create a sample Word document with styled text and an image.
+        // Create a simple image using Aspose.Drawing (no System.Drawing usage)
         // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Apply some styling to the text.
-        builder.Font.Name = "Arial";
-        builder.Font.Size = 24;
-        builder.Writeln("This is a styled paragraph with an embedded image:");
-
-        // Create a simple bitmap using Aspose.Drawing (no System.Drawing usage).
-        Bitmap bitmap = new Bitmap(100, 100);
-        using (Graphics graphics = Graphics.FromImage(bitmap))
+        using (Bitmap bitmap = new Bitmap(100, 100))
         {
-            // Fill the bitmap with a solid blue color.
-            graphics.Clear(Color.Blue);
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.Blue);
+            }
+            bitmap.Save(imagePath, ImageFormat.Png);
         }
 
-        // Save the bitmap to a memory stream in PNG format.
-        using (MemoryStream imageStream = new MemoryStream())
-        {
-            bitmap.Save(imageStream, ImageFormat.Png);
-            imageStream.Position = 0; // Reset position before reading.
+        // ---------------------------------------------------------------
+        // Build a Word document, insert text and the created image, save as MHTML
+        // ---------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample MHTML document with an embedded image and style.");
+        builder.InsertImage(imagePath);
+        sourceDoc.Save(mhtmlPath, SaveFormat.Mhtml);
 
-            // Insert the image into the document.
-            builder.InsertImage(imageStream);
-        }
-
-        // Dispose of the bitmap now that it is no longer needed.
-        bitmap.Dispose();
-
-        // -----------------------------------------------------------------
-        // 2. Save the document as MHTML (Web archive) to preserve images/styles.
-        // -----------------------------------------------------------------
-        doc.Save(mhtmlPath, SaveFormat.Mhtml);
-
-        // Verify that the MHTML file was created.
-        if (!File.Exists(mhtmlPath))
-            throw new InvalidOperationException("MHTML file was not created.");
-
-        // -----------------------------------------------------------------
-        // 3. Load the MHTML file back into a new Document instance.
-        // -----------------------------------------------------------------
+        // ---------------------------------------------------------------
+        // Load the MHTML file and convert it to PDF while preserving content
+        // ---------------------------------------------------------------
         Document loadedDoc = new Document(mhtmlPath);
-
-        // -----------------------------------------------------------------
-        // 4. Convert the loaded document to PDF, preserving embedded content.
-        // -----------------------------------------------------------------
         loadedDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
+        // ---------------------------------------------------------------
+        // Validation: ensure the PDF file was created
+        // ---------------------------------------------------------------
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("PDF file was not created.");
+            throw new InvalidOperationException("The PDF conversion failed; output file was not created.");
 
-        // The example finishes here. No interactive prompts are used.
+        // Clean up temporary files (optional)
+        File.Delete(imagePath);
+        File.Delete(mhtmlPath);
     }
 }

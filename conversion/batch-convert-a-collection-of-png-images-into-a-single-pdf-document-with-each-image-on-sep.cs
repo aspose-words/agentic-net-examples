@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -9,67 +10,77 @@ public class Program
 {
     public static void Main()
     {
-        // Directory to hold the generated PNG images.
-        string imagesDir = "InputImages";
-        Directory.CreateDirectory(imagesDir);
+        // Folder for temporary image files.
+        string workDir = Directory.GetCurrentDirectory();
 
-        // Generate a few sample PNG files.
-        for (int i = 0; i < 3; i++)
+        // Create sample PNG images using Aspose.Drawing.
+        string[] imageFiles = new string[3];
+        for (int i = 0; i < imageFiles.Length; i++)
         {
-            string imagePath = Path.Combine(imagesDir, $"image{i}.png");
-            CreateSamplePng(imagePath, i);
+            string filePath = Path.Combine(workDir, $"sample{i + 1}.png");
+            CreateSamplePng(filePath, $"Image {i + 1}");
+            imageFiles[i] = filePath;
         }
 
-        // Create a new blank Word document.
+        // Build a Word document where each image occupies a separate page.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert each PNG onto its own page.
-        string[] pngFiles = Directory.GetFiles(imagesDir, "*.png");
-        for (int i = 0; i < pngFiles.Length; i++)
+        for (int i = 0; i < imageFiles.Length; i++)
         {
-            builder.InsertImage(pngFiles[i]);
+            builder.InsertImage(imageFiles[i]);
 
-            // Add a page break after every image except the last one.
-            if (i < pngFiles.Length - 1)
+            // Insert a page break after each image except the last one.
+            if (i < imageFiles.Length - 1)
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Save the assembled document as a PDF.
-        string outputPdf = "output.pdf";
-        doc.Save(outputPdf, SaveFormat.Pdf);
+        // Save the document as a single PDF file.
+        string pdfPath = Path.Combine(workDir, "ImagesCombined.pdf");
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF was created.
-        if (!File.Exists(outputPdf))
+        if (!File.Exists(pdfPath))
             throw new InvalidOperationException("The PDF file was not created.");
 
-        // Optional: clean up the temporary PNG files.
-        // foreach (string file in pngFiles) File.Delete(file);
+        // Clean up temporary PNG files.
+        foreach (string file in imageFiles)
+        {
+            if (File.Exists(file))
+                File.Delete(file);
+        }
     }
 
-    // Creates a simple PNG image with a colored background and some text.
-    private static void CreateSamplePng(string path, int index)
+    // Generates a simple PNG image with centered text using Aspose.Drawing.
+    private static void CreateSamplePng(string filePath, string text)
     {
-        // 200x200 pixel bitmap.
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        const int width = 400;
+        const int height = 300;
+
+        using (Bitmap bitmap = new Bitmap(width, height))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Alternate background colors.
-                Color background = (index % 2 == 0) ? Color.LightBlue : Color.LightGreen;
-                graphics.Clear(background);
+                // Fill background.
+                graphics.Clear(Color.LightGray);
 
-                // Draw identifying text.
-                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20);
-                using (Brush brush = new SolidBrush(Color.Black))
+                // Define font and brush.
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24))
+                using (SolidBrush brush = new SolidBrush(Color.Black))
                 {
-                    string text = $"Image {index + 1}";
-                    graphics.DrawString(text, font, brush, new PointF(10, 80));
-                }
+                    // Measure text size.
+                    SizeF textSize = graphics.MeasureString(text, font);
+                    // Calculate position to center the text.
+                    float x = (width - textSize.Width) / 2;
+                    float y = (height - textSize.Height) / 2;
 
-                // Save the bitmap as a PNG file.
-                bitmap.Save(path, ImageFormat.Png);
+                    // Draw the text.
+                    graphics.DrawString(text, font, brush, new PointF(x, y));
+                }
             }
+
+            // Save as PNG.
+            bitmap.Save(filePath, ImageFormat.Png);
         }
     }
 }

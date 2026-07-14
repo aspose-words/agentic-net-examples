@@ -3,47 +3,40 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class ExportHtmlWithExternalCss
+public class Program
 {
     public static void Main()
     {
-        // Create a sample document in memory.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Create a sample Word document in memory.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello, Aspose.Words!");
-        builder.Writeln("This document will be exported to HTML with external CSS.");
+        builder.Writeln("This document will be saved as HTML with external CSS.");
 
-        // Save the sample as DOCX to satisfy the bootstrap rule.
-        const string inputPath = "sample.docx";
-        sourceDoc.Save(inputPath, SaveFormat.Docx);
-
-        // Load the document from the file we just created.
-        Document doc = new Document(inputPath);
+        // Determine output locations.
+        string outputHtml = Path.Combine(Directory.GetCurrentDirectory(), "output.html");
+        string cssFilePath = Path.ChangeExtension(outputHtml, ".css"); // External CSS file.
 
         // Configure HtmlSaveOptions to generate an external CSS file.
+        // Setting CssStyleSheetType to External creates a separate stylesheet.
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions
         {
-            // Export CSS to a separate file instead of embedding it.
             CssStyleSheetType = CssStyleSheetType.External
         };
 
-        // Define the output HTML file name.
-        const string outputHtml = "output.html";
-
-        // Save the document as HTML using the configured options.
+        // Save the document as HTML with external CSS.
         doc.Save(outputHtml, htmlOptions);
 
         // Verify that the HTML file was created.
         if (!File.Exists(outputHtml))
             throw new InvalidOperationException("HTML output file was not created.");
 
-        // The external CSS file is saved alongside the HTML file with the same base name.
-        string cssPath = Path.ChangeExtension(outputHtml, ".css");
-        if (!File.Exists(cssPath))
-            throw new InvalidOperationException("External CSS file was not generated.");
+        // Verify that the external CSS file was created.
+        if (!File.Exists(cssFilePath))
+            throw new InvalidOperationException("External CSS file was not created.");
 
-        // Display the paths of the generated files.
-        Console.WriteLine($"HTML file: {Path.GetFullPath(outputHtml)}");
-        Console.WriteLine($"CSS file: {Path.GetFullPath(cssPath)}");
+        // Output the locations of the generated files.
+        Console.WriteLine($"HTML file saved to: {outputHtml}");
+        Console.WriteLine($"External CSS file saved to: {cssFilePath}");
     }
 }

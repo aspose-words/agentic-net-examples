@@ -7,37 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample PDF file.
+        // Create a sample PDF file.
+        const string pdfPath = "sample.pdf";
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-        builder.Writeln("This is page 1.");
+        builder.Writeln("Page 1 content.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 2.");
+        builder.Writeln("Page 2 content.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 3.");
-
-        const string pdfPath = "sample.pdf";
+        builder.Writeln("Page 3 content.");
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
+        // Verify the PDF was created.
         if (!File.Exists(pdfPath))
             throw new InvalidOperationException("Failed to create the sample PDF file.");
 
-        // Step 2: Load the PDF document.
+        // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Step 3: Export each page as a separate PNG image.
+        // Export each page as a separate PNG image.
         for (int i = 0; i < pdfDoc.PageCount; i++)
         {
+            string pngPath = $"page_{i + 1}.png";
+
             ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Png)
             {
-                // Render only the current page.
-                PageSet = new PageSet(i)
+                PageSet = new PageSet(i) // Zero‑based page index.
             };
 
-            string pngPath = $"page_{i + 1}.png";
             pdfDoc.Save(pngPath, options);
 
+            // Verify the PNG was created.
             if (!File.Exists(pngPath))
                 throw new InvalidOperationException($"Failed to create PNG for page {i + 1}.");
         }

@@ -7,35 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple Word document.
+        // Create a simple XML metadata file.
+        const string xmlFileName = "metadata.xml";
+        const string xmlContent = "<metadata><author>John Doe</author></metadata>";
+        File.WriteAllText(xmlFileName, xmlContent);
+
+        // Build a basic Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample content for PDF/A‑3u compliance.");
+        builder.Writeln("Sample content for PDF/A-3u compliance.");
 
-        // Create an XML metadata file that will be attached to the PDF.
-        const string xmlFileName = "metadata.xml";
-        File.WriteAllText(xmlFileName, "<metadata><author>John Doe</author></metadata>");
-
-        // Insert the XML file as an OLE object so it can be embedded as an attachment.
-        // "Package" is a generic OLE progID that works for arbitrary files.
+        // Embed the XML file as an OLE object; it will become an attachment in the PDF.
         builder.InsertOleObject(xmlFileName, "Package", false, true, null);
 
-        // Configure PDF save options for PDF/A‑3u compliance and enable attachment embedding.
+        // Configure PDF save options for PDF/A-3u and enable attachment embedding.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA3u,
             AttachmentsEmbeddingMode = PdfAttachmentsEmbeddingMode.Annotations
         };
 
-        // Save the document as a PDF/A‑3u file.
+        // Save the document as PDF/A-3u.
         const string pdfFileName = "output.pdf";
         doc.Save(pdfFileName, saveOptions);
 
         // Verify that the PDF file was created.
         if (!File.Exists(pdfFileName))
-            throw new InvalidOperationException("The PDF/A‑3u file was not created.");
+            throw new InvalidOperationException("The PDF/A-3u file was not created.");
 
-        // Clean up temporary files (optional).
-        // File.Delete(xmlFileName);
+        // Clean up temporary XML file (optional).
+        if (File.Exists(xmlFileName))
+            File.Delete(xmlFileName);
     }
 }

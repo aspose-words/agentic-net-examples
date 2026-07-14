@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net.Mail;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,48 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample document that will be converted to MHTML.");
+        // Step 1: Create a sample DOCX document.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Hello Aspose.Words! This document will be converted to MHTML and embedded in an email.");
         const string docxPath = "sample.docx";
-        sourceDoc.Save(docxPath, SaveFormat.Docx);
+        sampleDoc.Save(docxPath, SaveFormat.Docx);
 
-        // Load the DOCX document.
+        // Step 2: Load the DOCX document.
         Document loadedDoc = new Document(docxPath);
 
-        // Convert the document to MHTML.
-        const string mhtmlPath = "sample.mht";
-        HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml);
-        loadedDoc.Save(mhtmlPath, mhtmlOptions);
-
-        // Verify that the MHTML file was created.
-        if (!File.Exists(mhtmlPath) || new FileInfo(mhtmlPath).Length == 0)
-            throw new InvalidOperationException("MHTML conversion failed; output file is missing or empty.");
-
-        // Read the MHTML content.
-        string mhtmlContent = File.ReadAllText(mhtmlPath);
-
-        // Create an email message and embed the MHTML as the HTML body.
-        MailMessage email = new MailMessage
+        // Step 3: Convert the document to MHTML and store it in a memory stream.
+        using (MemoryStream mhtmlStream = new MemoryStream())
         {
-            From = new MailAddress("sender@example.com"),
-            Subject = "MHTML Email Example",
-            IsBodyHtml = true,
-            Body = mhtmlContent
-        };
-        email.To.Add("receiver@example.com");
+            HtmlSaveOptions mhtmlOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
+            {
+                // Use CID URLs for resources to improve compatibility.
+                ExportCidUrlsForMhtmlResources = true
+            };
+            loadedDoc.Save(mhtmlStream, mhtmlOptions);
 
-        // Save the email to an .eml file (simple write of the MIME content).
-        const string emlPath = "email.eml";
-        File.WriteAllText(emlPath, mhtmlContent);
+            if (mhtmlStream.Length == 0)
+                throw new InvalidOperationException("MHTML conversion produced an empty stream.");
 
-        // Verify that the email file was created.
-        if (!File.Exists(emlPath) || new FileInfo(emlPath).Length == 0)
-            throw new InvalidOperationException("Email saving failed; .eml file is missing or empty.");
+            // Reset the stream position before reading.
+            mhtmlStream.Position = 0;
 
-        // Optional cleanup of temporary files.
-        // File.Delete(docxPath);
-        // File.Delete(mhtmlPath);
+            // Step 4: Read the MHTML content as a string.
+            string mhtmlContent;
+            using (StreamReader reader = new StreamReader(mhtmlStream))
+            {
+                mhtmlContent = reader.ReadToEnd();
+            }
+
+            // Step 5: Create a simple MIME email with the MHTML as the HTML body.
+            // Since Aspose.Email is not available, we construct the .eml file manually.
+            string emlPath = "output.eml";
+            string emailHeaders =
+                "From: sender@example.com\r\n" +
+                "To: recipient@example.com\r\n" +
+                "Subject: Document embedded as MHTML\r\n" +
+                "MIME-Version: 1.0\r\n" +
+                "Content-Type: text/html; charset=utf-8\r\n" +
+                "\r\n";
+
+            File.WriteAllText(emlPath, emailHeaders + mhtmlContent);
+
+            // Step 6: Validate that the email file was created.
+            if (!File.Exists(emlPath))
+                throw new InvalidOperationException("The email file was not created as expected.");
+        }
     }
 }

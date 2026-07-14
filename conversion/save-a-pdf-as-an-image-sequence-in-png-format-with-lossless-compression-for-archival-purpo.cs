@@ -2,55 +2,53 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing; // Required by the package list, though not used directly.
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document with multiple pages.
+        // Step 1: Create a sample document with multiple pages.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Page 1 - Sample content for PDF conversion.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2 - Additional content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3 - Final page.");
 
-        // Save the document as PDF (the source for image extraction).
+        builder.Writeln("Page 1 – Sample content for archival.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 2 – Additional content.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 3 – Final page.");
+
+        // Step 2: Save the document as PDF (the source for conversion).
         const string pdfPath = "sample.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the PDF document.
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("PDF file was not created.");
+
+        // Step 3: Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Prepare image save options for PNG (lossless compression).
-        ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
-        {
-            // Ensure each page is saved individually.
-            // The PageSet will be overridden inside the loop for each page.
-            ImageColorMode = ImageColorMode.None // Preserve original colors.
-        };
-
-        // Export each page of the PDF as a separate PNG file.
+        // Step 4: Render each page to a separate PNG image using lossless compression.
         for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
         {
-            // Set the page to render.
+            // Configure image save options for PNG.
+            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
+            // Render only the current page.
             pngOptions.PageSet = new PageSet(pageIndex);
+            // Ensure no color reduction (PNG is lossless by default).
+            pngOptions.ImageColorMode = ImageColorMode.None;
+            // Optional: set a high resolution for archival quality.
+            pngOptions.Resolution = 300;
 
-            // Define the output file name.
-            string outputFile = $"page_{pageIndex + 1}.png";
+            string pngFileName = $"page_{pageIndex + 1}.png";
+            pdfDoc.Save(pngFileName, pngOptions);
 
-            // Save the current page as PNG.
-            pdfDoc.Save(outputFile, pngOptions);
-
-            // Validate that the file was created.
-            if (!File.Exists(outputFile))
-                throw new InvalidOperationException($"Expected image file '{outputFile}' was not created.");
+            // Validate that the PNG file was written.
+            if (!File.Exists(pngFileName))
+                throw new InvalidOperationException($"Failed to create PNG for page {pageIndex + 1}.");
         }
 
-        // Clean up the temporary PDF file.
-        if (File.Exists(pdfPath))
-            File.Delete(pdfPath);
+        // All pages have been saved as PNG images.
+        Console.WriteLine("PDF successfully converted to PNG image sequence.");
     }
 }

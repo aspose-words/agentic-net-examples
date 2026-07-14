@@ -7,37 +7,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a large Word document (e.g., 500 pages) to simulate a big source file.
+        // Create a sample document with many pages to simulate a large file.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add 500 pages of sample text.
         for (int i = 1; i <= 500; i++)
         {
-            builder.Writeln($"This is page {i}");
+            builder.Writeln($"Page {i}");
             if (i < 500)
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Configure PDF/A‑2u (closest to PDF/A‑2b) conversion options.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        // Configure PDF save options for PDF/A‑2u compliance (PDF/A‑2b is represented by PdfA2u).
+        PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            Compliance = PdfCompliance.PdfA2u, // PDF/A‑2b is not a separate enum value; PdfA2u provides PDF/A‑2 compliance.
-            MemoryOptimization = true          // Reduces memory usage during saving.
+            Compliance = PdfCompliance.PdfA2u, // PDF/A‑2b equivalent
+            MemoryOptimization = true
         };
 
-        // Save the document directly into a MemoryStream.
-        using (MemoryStream outputStream = new MemoryStream())
+        // Save the document directly to a memory stream.
+        using (MemoryStream pdfStream = new MemoryStream())
         {
-            doc.Save(outputStream, pdfOptions);
+            doc.Save(pdfStream, saveOptions);
 
             // Verify that data was written.
-            if (outputStream.Length == 0)
+            if (pdfStream.Length == 0)
                 throw new InvalidOperationException("The PDF/A‑2u stream is empty.");
 
-            // Reset the stream position for any subsequent reads.
-            outputStream.Position = 0;
+            // Reset position before reading.
+            pdfStream.Position = 0;
 
-            // Example output: display the size of the generated PDF/A‑2u stream.
-            Console.WriteLine($"Generated PDF/A‑2u stream length: {outputStream.Length} bytes");
+            // Example: write the stream to a file to demonstrate the result.
+            const string outputPath = "output_pdfa2u.pdf";
+            using (FileStream file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
+            {
+                pdfStream.CopyTo(file);
+            }
+
+            // Validate that the output file was created.
+            if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+                throw new InvalidOperationException("Failed to create the output PDF/A‑2u file.");
         }
     }
 }

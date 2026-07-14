@@ -7,31 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document and save it as PDF – this will be our input file.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample PDF content for conversion to HTML with embedded fonts.");
-        const string pdfPath = "input.pdf";
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Define file names in the current directory.
+        const string pdfPath = "sample.pdf";
+        const string htmlPath = "output.html";
 
-        // Load the PDF document.
-        Document pdfDocument = new Document(pdfPath);
+        // -----------------------------------------------------------------
+        // 1. Create a simple Word document and save it as PDF (input file).
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample PDF document.");
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Configure HTML fixed save options to embed fonts as Base64.
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
+            throw new InvalidOperationException("Failed to create the source PDF file.");
+
+        // ---------------------------------------------------------------
+        // 2. Load the PDF and convert it to HTML with embedded fonts (Base64).
+        // ---------------------------------------------------------------
+        Document pdfDoc = new Document(pdfPath);
+
         HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
         {
-            ExportEmbeddedFonts = true
+            ExportEmbeddedFonts = true   // Embed fonts as Base64 in the CSS.
         };
 
-        // Save the PDF as HTML using the configured options.
-        const string htmlPath = "output.html";
-        pdfDocument.Save(htmlPath, htmlOptions);
+        pdfDoc.Save(htmlPath, htmlOptions);
 
-        // Validate that the HTML file was created.
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("The HTML output file was not created.");
+        // Validate that the HTML output was created and contains data.
+        if (!File.Exists(htmlPath) || new FileInfo(htmlPath).Length == 0)
+            throw new InvalidOperationException("HTML conversion failed; output file is missing or empty.");
 
-        // Optional: indicate success (no interactive input required).
+        // Optionally, inform that the process completed successfully.
         Console.WriteLine("PDF successfully converted to HTML with embedded fonts.");
     }
 }
