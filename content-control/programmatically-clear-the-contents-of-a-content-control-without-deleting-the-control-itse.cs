@@ -8,26 +8,32 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Get the first paragraph (always exists in a new document).
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        // Insert an inline plain‑text content control.
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+        sdt.Title = "SampleControl";
+        sdt.Tag = "sample-tag";
 
-        // Create an inline plain‑text content control.
-        StructuredDocumentTag contentControl = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        contentControl.Title = "SampleControl";
-        contentControl.Tag = "sample-tag";
+        // Add some initial text inside the control.
+        sdt.AppendChild(new Run(doc, "Initial content"));
+        // Append the control to the first paragraph.
+        builder.CurrentParagraph.AppendChild(sdt);
 
-        // Add some initial text to the control.
-        contentControl.AppendChild(new Run(doc, "Initial content"));
-        paragraph.AppendChild(contentControl);
+        // Save the document before clearing (optional, just for demonstration).
+        doc.Save("BeforeClear.docx");
 
-        // Save the document before clearing (optional, shows the original state).
-        doc.Save("before-clear.docx");
+        // Locate the content control by its title.
+        StructuredDocumentTag found = (StructuredDocumentTag)doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .FirstOrDefault(node => ((StructuredDocumentTag)node).Title == "SampleControl");
 
-        // Clear the contents of the content control while keeping the control itself.
-        contentControl.Clear();
+        if (found != null)
+        {
+            // Clear the contents of the control while keeping the control itself.
+            found.Clear();
+        }
 
         // Save the document after clearing.
-        doc.Save("after-clear.docx");
+        doc.Save("AfterClear.docx");
     }
 }

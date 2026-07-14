@@ -7,12 +7,12 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX with a plain‑text content control that shows placeholder text.
+        // Create a DOCX document with a plain‑text content control that has a placeholder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph that will contain the content control.
-        builder.Writeln("Please fill the following field:");
+        // Add some introductory text.
+        builder.Writeln("Sample document with a content control placeholder:");
 
         // Create an inline plain‑text StructuredDocumentTag (content control).
         StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
@@ -21,29 +21,31 @@ public class Program
             Tag = "customer-name",
             IsShowingPlaceholderText = true // Show placeholder when the control is empty.
         };
-        // Define placeholder text.
+
+        // Define the placeholder text.
         sdt.RemoveAllChildren();
         sdt.AppendChild(new Run(doc, "Enter name here"));
 
-        // Append the content control to the current paragraph.
-        builder.InsertNode(sdt);
-        builder.Writeln(); // Move to next line.
+        // Insert the content control into the first paragraph.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(sdt);
 
-        // Save the DOCX to the working directory.
-        const string docxPath = "sample-with-content-controls.docx";
+        // Save the source DOCX file.
+        const string docxPath = "input.docx";
         doc.Save(docxPath);
 
-        // Step 2: Load the DOCX and convert it to PDF while preserving the placeholder appearance.
+        // Load the DOCX file that contains the content control.
         Document loadedDoc = new Document(docxPath);
 
-        // Configure PDF save options if needed (e.g., preserve form fields).
+        // Configure PDF save options to preserve form fields (content controls) as interactive fields.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            PreserveFormFields = false // Content controls are not form fields; keep as static text.
+            PreserveFormFields = true,
+            UseSdtTagAsFormFieldName = true // Use the Tag as the PDF form field name.
         };
 
-        // Save as PDF.
-        const string pdfPath = "converted.pdf";
+        // Convert and save the document to PDF while keeping the placeholder visible.
+        const string pdfPath = "output.pdf";
         loadedDoc.Save(pdfPath, pdfOptions);
     }
 }

@@ -7,34 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOC file that will be loaded later.
-        Document seedDoc = new Document();
-        DocumentBuilder seedBuilder = new DocumentBuilder(seedDoc);
-        seedBuilder.Writeln("Sample document for loading.");
-        seedDoc.Save("input.doc");
+        // Step 1: Create a simple source DOC file if it does not exist.
+        const string inputPath = "input.doc";
+        if (!System.IO.File.Exists(inputPath))
+        {
+            Document seedDoc = new Document();
+            DocumentBuilder seedBuilder = new DocumentBuilder(seedDoc);
+            seedBuilder.Writeln("Sample document for date picker content control.");
+            seedDoc.Save(inputPath);
+        }
 
-        // Load the existing DOC file.
-        Document doc = new Document("input.doc");
+        // Step 2: Load the existing DOC file.
+        Document doc = new Document(inputPath);
 
-        // Create a date picker content control (inline SDT).
+        // Step 3: Create a date picker (Date) content control.
         StructuredDocumentTag dateSdt = new StructuredDocumentTag(doc, SdtType.Date, MarkupLevel.Inline)
         {
-            Title = "DatePicker",
-            Tag = "date-picker"
+            Title = "AppointmentDate",
+            Tag = "appointment-date",
+            DateDisplayFormat = "dd MMMM, yyyy",
+            DateStorageFormat = SdtDateStorageFormat.DateTime,
+            CalendarType = SdtCalendarType.Gregorian,
+            FullDate = DateTime.Today
         };
 
-        // Configure display and storage settings.
-        dateSdt.DateDisplayLocale = CultureInfo.GetCultureInfo("en-US").LCID;
-        dateSdt.DateDisplayFormat = "dd MMMM, yyyy";
-        dateSdt.DateStorageFormat = SdtDateStorageFormat.DateTime;
-        dateSdt.CalendarType = SdtCalendarType.Gregorian;
-        dateSdt.FullDate = DateTime.Today;
+        // Step 4: Insert the content control into the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveToDocumentEnd();
+        builder.InsertNode(dateSdt);
 
-        // Insert the content control into the first paragraph of the document.
-        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-        firstParagraph.AppendChild(dateSdt);
-
-        // Save the modified document as DOCX.
-        doc.Save("output.docx");
+        // Step 5: Save the modified document as DOCX.
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

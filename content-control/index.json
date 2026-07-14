@@ -6,11 +6,59 @@
     "language": "csharp",
     "preferred_workflow": "Use native Aspose.Words structured document tag APIs directly. Create realistic local sample DOCX inputs inside the example whenever the task references an existing file, stream, folder, XML part, or batch of documents. Insert or locate real StructuredDocumentTag nodes and configure supported properties and child content through documented Aspose.Words APIs only.",
     "required_packages": [
-      "Aspose.Words"
+      "Aspose.Words",
+      "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.4.0"
-    }
+      "Aspose.Words": "26.5.0"
+    },
+    "required_namespaces": [
+      "System",
+      "Aspose.Words",
+      "Aspose.Words.Markup",
+      "System.IO",
+      "Aspose.Words.Drawing",
+      "System.Collections.Generic",
+      "System.Linq",
+      "Newtonsoft.Json",
+      "System.Globalization",
+      "Aspose.Words.Saving",
+      "Aspose.Words.Fields",
+      "Aspose.Words.Tables",
+      "Newtonsoft.Json.Linq",
+      "System.Xml",
+      "System.Drawing",
+      "Aspose.Words.BuildingBlocks",
+      "Aspose.Words.Themes",
+      "System.Net.Http",
+      "System.Text",
+      "System.Xml.Xsl"
+    ],
+    "key_apis": [
+      "Document",
+      "DocumentBuilder",
+      "Run",
+      "Directory",
+      "File",
+      "Path",
+      "Paragraph",
+      "Shape",
+      "ShapeType",
+      "ImageData",
+      "Node",
+      "JsonConvert",
+      "MemoryStream",
+      "PdfSaveOptions",
+      "Range",
+      "Table",
+      "Row",
+      "Cell",
+      "NodeType",
+      "Style",
+      "Font",
+      "SaveFormat",
+      "HtmlSaveOptions"
+    ]
   },
   "stats": {
     "total_examples": 35,
@@ -19,6 +67,10 @@
       "input-bootstrap": 3,
       "native-sdt-api": 22,
       "xml-json-export": 10
+    },
+    "winner_counts": {
+      "llm": 5,
+      "mcp": 30
     }
   },
   "rules_summary": {
@@ -97,8 +149,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 4,
@@ -186,8 +238,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 12,
@@ -208,8 +260,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 14,
@@ -225,7 +277,7 @@
     {
       "id": 15,
       "file_name": "validate-that-required-content-controls-contain-non-empty-text-before-saving-the-document.cs",
-      "task": "Validate that required content controls contain non‑empty text before saving the document.",
+      "task": "Validate that required content controls contain non-empty text before saving the document.",
       "workflow": "native-sdt-api",
       "outputs": [
         "docx"
@@ -236,7 +288,7 @@
     {
       "id": 16,
       "file_name": "lock-a-content-control-to-prevent-user-editing-and-enforce-read-only-behavior-in-the-final.cs",
-      "task": "Lock a content control to prevent user editing and enforce read‑only behavior in the final document.",
+      "task": "Lock a content control to prevent user editing and enforce read-only behavior in the final document.",
       "workflow": "native-sdt-api",
       "outputs": [
         "docx"
@@ -296,8 +348,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 22,
@@ -318,8 +370,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 24,
@@ -402,7 +454,7 @@
     {
       "id": 31,
       "file_name": "convert-a-document-with-content-controls-to-html-while-maintaining-control-attributes-as-d.cs",
-      "task": "Convert a document with content controls to HTML while maintaining control attributes as data‑attributes.",
+      "task": "Convert a document with content controls to HTML while maintaining control attributes as data-attributes.",
       "workflow": "native-sdt-api",
       "outputs": [
         "html"

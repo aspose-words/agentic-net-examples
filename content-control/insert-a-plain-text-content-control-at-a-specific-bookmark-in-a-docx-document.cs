@@ -2,36 +2,39 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Markup;
 
-public class Program
+namespace ContentControlAtBookmark
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document that contains a bookmark.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Document with a bookmark:");
-        builder.StartBookmark("TargetBookmark");
-        builder.Writeln("This text is inside the bookmark.");
-        builder.EndBookmark("TargetBookmark");
-        sourceDoc.Save("input.docx");
+        public static void Main()
+        {
+            // Create a sample document with a bookmark.
+            Document seedDoc = new Document();
+            DocumentBuilder seedBuilder = new DocumentBuilder(seedDoc);
+            seedBuilder.Writeln("This is a sample document.");
+            seedBuilder.StartBookmark("TargetBookmark");
+            seedBuilder.Writeln("Text inside the bookmark.");
+            seedBuilder.EndBookmark("TargetBookmark");
+            seedDoc.Save("input.docx");
 
-        // Load the document that contains the bookmark.
-        Document doc = new Document("input.docx");
-        DocumentBuilder docBuilder = new DocumentBuilder(doc);
+            // Load the document that contains the bookmark.
+            Document doc = new Document("input.docx");
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the cursor to the start of the bookmark.
-        docBuilder.MoveToBookmark("TargetBookmark");
+            // Move the cursor to the start of the bookmark.
+            builder.MoveToBookmark("TargetBookmark");
 
-        // Insert a plain‑text content control (StructuredDocumentTag) at the bookmark position.
-        StructuredDocumentTag sdt = docBuilder.InsertStructuredDocumentTag(SdtType.PlainText);
-        sdt.Title = "CustomerName";
-        sdt.Tag = "customer-name";
+            // Insert a plain‑text content control (structured document tag) at the bookmark position.
+            StructuredDocumentTag sdt = builder.InsertStructuredDocumentTag(SdtType.PlainText);
+            sdt.Title = "CustomerName";
+            sdt.Tag = "customer-name";
 
-        // Replace any default placeholder with the desired text.
-        sdt.RemoveAllChildren();
-        sdt.AppendChild(new Run(doc, "Contoso"));
+            // Replace any default placeholder with custom text.
+            sdt.RemoveAllChildren();
+            sdt.AppendChild(new Run(doc, "Contoso"));
 
-        // Save the modified document.
-        doc.Save("output.docx");
+            // Save the modified document.
+            doc.Save("output.docx");
+        }
     }
 }

@@ -1,46 +1,54 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.Drawing;
-using Newtonsoft.Json;
 
-public class Program
+namespace ContentControlExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Insert a plain‑text content control (inline) into the first paragraph.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-
-        // Set the title and tag for later identification.
-        sdt.Title = "CustomerName";
-        sdt.Tag = "customer-name";
-
-        // Add some placeholder text inside the content control.
-        sdt.RemoveAllChildren();
-        sdt.AppendChild(new Run(doc, "Enter name here"));
-        paragraph.AppendChild(sdt);
-
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "ContentControlTitleTag.docx");
-        doc.Save(outputPath);
-
-        // Optional: serialize basic info to JSON to demonstrate the required package.
-        var info = new
+        public static void Main()
         {
-            Title = sdt.Title,
-            Tag = sdt.Tag,
-            File = outputPath
-        };
-        string json = JsonConvert.SerializeObject(info, Formatting.Indented);
-        File.WriteAllText(Path.Combine(outputDir, "info.json"), json);
+            // Create a new blank document.
+            Document doc = new Document();
+
+            // Create an inline plain‑text content control.
+            StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+
+            // Set the friendly name (Title) and the non‑visible identifier (Tag).
+            sdt.Title = "CustomerName";
+            sdt.Tag = "customer-name";
+
+            // Add placeholder text inside the control.
+            sdt.RemoveAllChildren();
+            sdt.AppendChild(new Run(doc, "Enter name here"));
+
+            // Insert the content control into the first paragraph of the document.
+            Paragraph para = doc.FirstSection.Body.FirstParagraph;
+            para.AppendChild(sdt);
+
+            // Save the document with the configured content control.
+            doc.Save("ContentControlTitleTag.docx");
+
+            // ---------- Later identification ----------
+            // Locate the control by its Title.
+            IStructuredDocumentTag? foundByTitle = doc.Range.StructuredDocumentTags.GetByTitle("CustomerName");
+            if (foundByTitle != null && foundByTitle is StructuredDocumentTag titleSdt)
+            {
+                // Replace the placeholder text with actual content.
+                titleSdt.RemoveAllChildren();
+                titleSdt.AppendChild(new Run(doc, "Contoso Ltd."));
+            }
+
+            // Locate the control by its Tag.
+            IStructuredDocumentTag? foundByTag = doc.Range.StructuredDocumentTags.GetByTag("customer-name");
+            if (foundByTag != null && foundByTag is StructuredDocumentTag tagSdt)
+            {
+                // Change the appearance to show tags around the control.
+                tagSdt.Appearance = SdtAppearance.Tags;
+            }
+
+            // Save the modified document.
+            doc.Save("ContentControlTitleTag_Modified.docx");
+        }
     }
 }

@@ -6,93 +6,91 @@ using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
 
-namespace ContentControlTagUpdater
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a sample document with various content controls.
+        var sourceDoc = new Document();
+        var builder = new DocumentBuilder(sourceDoc);
+
+        // Plain text content control.
+        var plainTextSdt = new StructuredDocumentTag(sourceDoc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            // Paths for the sample input, output, and JSON mapping file.
-            const string inputPath = "input.docx";
-            const string outputPath = "output.docx";
-            const string jsonPath = "tag-mapping.json";
+            Title = "Customer Name",
+            Tag = "custName"
+        };
+        plainTextSdt.RemoveAllChildren();
+        plainTextSdt.AppendChild(new Run(sourceDoc, "John Doe"));
+        builder.CurrentParagraph.AppendChild(plainTextSdt);
+        builder.Writeln();
 
-            // Create a sample document containing several content controls.
-            CreateSampleDocument(inputPath);
+        // Rich text content control.
+        var richTextSdt = new StructuredDocumentTag(sourceDoc, SdtType.RichText, MarkupLevel.Block)
+        {
+            Title = "Address Block",
+            Tag = "addrBlock"
+        };
+        var para = new Paragraph(sourceDoc);
+        para.AppendChild(new Run(sourceDoc, "123 Main St"));
+        richTextSdt.AppendChild(para);
+        sourceDoc.FirstSection.Body.AppendChild(richTextSdt);
+        builder.Writeln();
 
-            // Load the document that contains the content controls.
-            Document doc = new Document(inputPath);
+        // Drop-down list content control.
+        var dropdownSdt = new StructuredDocumentTag(sourceDoc, SdtType.DropDownList, MarkupLevel.Inline)
+        {
+            Title = "Country Selector",
+            Tag = "countrySel"
+        };
+        dropdownSdt.ListItems.Add(new SdtListItem("USA", "US"));
+        dropdownSdt.ListItems.Add(new SdtListItem("Canada", "CA"));
+        builder.CurrentParagraph.AppendChild(dropdownSdt);
+        builder.Writeln();
 
-            // Prepare a list to hold old and new tag information for reporting.
-            var tagMappings = new List<object>();
+        // Save the source document.
+        const string inputPath = "input.docx";
+        sourceDoc.Save(inputPath);
 
-            // Retrieve all StructuredDocumentTag nodes in the document.
-            var sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                .OfType<StructuredDocumentTag>();
+        // Load the document for processing.
+        var doc = new Document(inputPath);
 
-            foreach (StructuredDocumentTag sdt in sdtNodes)
+        // Prepare a list to capture tag changes for reporting.
+        var tagChanges = new List<object>();
+
+        // Enumerate all StructuredDocumentTag nodes and update their Tag.
+        var sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>();
+
+        foreach (var sdt in sdtNodes)
+        {
+            var oldTag = sdt.Tag ?? string.Empty;
+            var title = sdt.Title ?? "untitled";
+
+            // Standardized naming: lower‑case title with hyphens, prefixed with "sdt-".
+            var standardizedTag = "sdt-" + string.Concat(title
+                .Trim()
+                .Split(new[] { ' ', '_' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(part => part.ToLowerInvariant()))
+                .Replace(" ", "-");
+
+            sdt.Tag = standardizedTag;
+
+            tagChanges.Add(new
             {
-                // Preserve the original tag value.
-                string oldTag = sdt.Tag;
-
-                // Ensure the Title is not null; use a fallback if necessary.
-                string title = string.IsNullOrEmpty(sdt.Title) ? "Untitled" : sdt.Title;
-
-                // Build a standardized tag: prefix "Tag_" and replace spaces with underscores.
-                string newTag = "Tag_" + title.Replace(' ', '_');
-
-                // Apply the new tag to the content control.
-                sdt.Tag = newTag;
-
-                // Record the mapping for later inspection.
-                tagMappings.Add(new { Title = title, OldTag = oldTag, NewTag = newTag });
-            }
-
-            // Save the modified document.
-            doc.Save(outputPath);
-
-            // Serialize the tag mapping information to a JSON file.
-            File.WriteAllText(jsonPath, JsonConvert.SerializeObject(tagMappings, Formatting.Indented));
+                Title = title,
+                OldTag = oldTag,
+                NewTag = standardizedTag
+            });
         }
 
-        // Generates a simple DOCX file with a few different content controls.
-        private static void CreateSampleDocument(string path)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Serialize the tag change report to JSON.
+        const string jsonPath = "tags-updated.json";
+        var json = JsonConvert.SerializeObject(tagChanges, Formatting.Indented);
+        File.WriteAllText(jsonPath, json);
 
-            // Plain text content control (inline).
-            StructuredDocumentTag plain = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-            plain.Title = "Customer Name";
-            plain.Tag = "custName";
-            plain.RemoveAllChildren();
-            plain.AppendChild(new Run(doc, "Alice"));
-            // Insert the inline SDT into the current paragraph.
-            builder.InsertNode(plain);
-            builder.Writeln();
-
-            // Rich text content control (block level).
-            StructuredDocumentTag rich = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block);
-            rich.Title = "Address";
-            rich.Tag = "addr";
-            rich.RemoveAllChildren();
-            Paragraph richParagraph = new Paragraph(doc);
-            richParagraph.AppendChild(new Run(doc, "123 Main St"));
-            rich.AppendChild(richParagraph);
-            // Append the block‑level SDT to the document body.
-            doc.FirstSection.Body.AppendChild(rich);
-            builder.Writeln();
-
-            // Checkbox content control (inline).
-            StructuredDocumentTag check = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline);
-            check.Title = "Subscribe";
-            check.Tag = "subscribe";
-            check.Checked = false;
-            builder.InsertNode(check);
-            builder.Writeln();
-
-            // Save the sample document to the specified path.
-            doc.Save(path);
-        }
+        // Save the updated document.
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 }

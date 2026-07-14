@@ -1,96 +1,68 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
-using Newtonsoft.Json;
 
-public class Program
+namespace ContentControlPdfAExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample DOCX with several content controls.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Plain‑text content control.
-        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        public static void Main()
         {
-            Title = "PlainTextControl",
-            Tag = "plain-text"
-        };
-        plainTextSdt.RemoveAllChildren();
-        plainTextSdt.AppendChild(new Run(doc, "Enter name"));
-        builder.InsertNode(plainTextSdt);
-        builder.Writeln();
+            // Define file names in the working directory.
+            const string docxPath = "sample.docx";
+            const string pdfPath = "sample-pdfa.pdf";
 
-        // Checkbox content control.
-        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
-        {
-            Title = "AgreeCheck",
-            Tag = "agree-check",
-            Checked = false
-        };
-        builder.InsertNode(checkBoxSdt);
-        builder.Writeln();
+            // -----------------------------------------------------------------
+            // 1. Create a Word document with a plain‑text content control.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Drop‑down list content control.
-        StructuredDocumentTag dropDownSdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
-        {
-            Title = "CountrySelect",
-            Tag = "country-select"
-        };
-        dropDownSdt.ListItems.Add(new SdtListItem("USA", "US"));
-        dropDownSdt.ListItems.Add(new SdtListItem("Canada", "CA"));
-        dropDownSdt.ListItems.Add(new SdtListItem("Mexico", "MX"));
-        builder.InsertNode(dropDownSdt);
-        builder.Writeln();
+            // Add a paragraph before the content control.
+            builder.Writeln("This document contains a content control that will be kept in the PDF/A output.");
 
-        // Save the DOCX to the working directory.
-        const string docxPath = "sample.docx";
-        doc.Save(docxPath);
-
-        // Load the document back.
-        Document loadedDoc = new Document(docxPath);
-
-        // Example modification: set the plain‑text control's content.
-        StructuredDocumentTag? foundPlainText = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .OfType<StructuredDocumentTag>()
-            .FirstOrDefault(sdt => sdt.Title == "PlainTextControl");
-        if (foundPlainText != null)
-        {
-            foundPlainText.RemoveAllChildren();
-            foundPlainText.AppendChild(new Run(loadedDoc, "John Doe"));
-        }
-
-        // Export metadata of all content controls to JSON (demonstrates Newtonsoft.Json usage).
-        var sdtInfo = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .OfType<StructuredDocumentTag>()
-            .Select(sdt => new
+            // Create an inline plain‑text StructuredDocumentTag (content control).
+            StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
             {
-                sdt.Title,
-                sdt.Tag,
-                Type = sdt.SdtType.ToString(),
-                Text = sdt.GetText().Trim()
-            })
-            .ToList();
+                Title = "CustomerName",
+                Tag = "customer-name"
+            };
+            // Set placeholder text (optional) and initial content.
+            sdt.RemoveAllChildren();
+            sdt.AppendChild(new Run(doc, "John Doe"));
 
-        string json = JsonConvert.SerializeObject(sdtInfo, Formatting.Indented);
-        File.WriteAllText("content-controls.json", json);
+            // Insert the content control into the current paragraph.
+            builder.InsertNode(sdt);
+            builder.Writeln(); // Move to a new line after the control.
 
-        // Configure PDF/A‑1a compliance and preserve content controls as form fields.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            Compliance = PdfCompliance.PdfA1a,
-            PreserveFormFields = true,
-            UseSdtTagAsFormFieldName = true,
-            // ExportDocumentStructure is required for PDF/A‑1a, but the property is ignored automatically.
-            ExportDocumentStructure = true
-        };
+            // Save the seed DOCX file.
+            doc.Save(docxPath);
 
-        // Save the document as PDF/A.
-        const string pdfPath = "output.pdf";
-        loadedDoc.Save(pdfPath, pdfOptions);
+            // -----------------------------------------------------------------
+            // 2. Load the DOCX file and convert it to PDF/A.
+            // -----------------------------------------------------------------
+            Document loadedDoc = new Document(docxPath);
+
+            // Configure PDF save options for PDF/A‑1a compliance.
+            PdfSaveOptions pdfOptions = new PdfSaveOptions
+            {
+                Compliance = PdfCompliance.PdfA1a,
+                // Preserve form fields so that the content control appears as an interactive field in the PDF.
+                PreserveFormFields = true,
+                // Use the content control's Tag as the form field name (helps keep the mapping clear).
+                UseSdtTagAsFormFieldName = true,
+                // Export document structure is required for PDF/A‑1a; the property is ignored but set for clarity.
+                ExportDocumentStructure = true
+            };
+
+            // Save the document as PDF/A.
+            loadedDoc.Save(pdfPath, pdfOptions);
+
+            // Inform the user (no interactive prompts, just console output).
+            Console.WriteLine($"DOCX file saved to: {Path.GetFullPath(docxPath)}");
+            Console.WriteLine($"PDF/A file saved to: {Path.GetFullPath(pdfPath)}");
+        }
     }
 }
