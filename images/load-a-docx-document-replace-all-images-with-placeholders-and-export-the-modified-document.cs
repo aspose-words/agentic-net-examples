@@ -1,91 +1,103 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string originalDoc = "original.docx";
-        string modifiedDoc = "modified.docx";
-        string sampleImage = "sample.png";
-        string placeholderImage = "placeholder.png";
+        // Define file names.
+        const string sampleImagePath = "sample.png";
+        const string placeholderImagePath = "placeholder.png";
+        const string originalDocPath = "original.docx";
+        const string modifiedDocPath = "modified.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample image that will be inserted into the document.
-        // -----------------------------------------------------------------
-        CreateSampleImage(sampleImage, 200, 200, Aspose.Drawing.Color.LightBlue);
+        // -------------------------------------------------
+        // Step 1: Create a sample image to be inserted.
+        // -------------------------------------------------
+        CreateSampleImage(sampleImagePath, 200, 100, Aspose.Drawing.Color.LightBlue, "Sample");
 
-        // -----------------------------------------------------------------
-        // 2. Build a document and insert a few images.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // Step 2: Build a document that contains a few images.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three sample images separated by paragraphs.
-        for (int i = 0; i < 3; i++)
-        {
-            builder.Writeln($"Paragraph before image {i + 1}:");
-            builder.InsertImage(sampleImage);
-            builder.Writeln($"Paragraph after image {i + 1}:");
-        }
+        // Insert three sample images.
+        builder.Writeln("First image:");
+        builder.InsertImage(sampleImagePath);
+        builder.Writeln();
+
+        builder.Writeln("Second image:");
+        builder.InsertImage(sampleImagePath);
+        builder.Writeln();
+
+        builder.Writeln("Third image:");
+        builder.InsertImage(sampleImagePath);
+        builder.Writeln();
 
         // Save the original document.
-        doc.Save(originalDoc);
+        doc.Save(originalDocPath);
 
-        // -----------------------------------------------------------------
-        // 3. Create a placeholder image that will replace all existing images.
-        // -----------------------------------------------------------------
-        CreateSampleImage(placeholderImage, 200, 200, Aspose.Drawing.Color.LightGray);
+        // -------------------------------------------------
+        // Step 3: Create a placeholder image that will replace all existing images.
+        // -------------------------------------------------
+        CreateSampleImage(placeholderImagePath, 200, 100, Aspose.Drawing.Color.LightGray, "Placeholder");
 
-        // -----------------------------------------------------------------
-        // 4. Load the document, replace each image with the placeholder.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(originalDoc);
+        // -------------------------------------------------
+        // Step 4: Load the document and replace each image with the placeholder.
+        // -------------------------------------------------
+        Document loadedDoc = new Document(originalDocPath);
 
-        // Get all Shape nodes (including inline and floating images).
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        // Get all Shape nodes (including images) in the document.
+        var shapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                              .OfType<Shape>()
+                              .Where(s => s.HasImage);
 
-        foreach (Shape shape in shapes.OfType<Shape>())
+        foreach (Shape shape in shapes)
         {
-            if (shape.HasImage)
-            {
-                // Replace the image data with the placeholder image file.
-                shape.ImageData.SetImage(placeholderImage);
-            }
+            // Replace the image data with the placeholder image.
+            shape.ImageData.SetImage(placeholderImagePath);
         }
 
         // Save the modified document.
-        loadedDoc.Save(modifiedDoc);
+        loadedDoc.Save(modifiedDocPath);
 
-        // -----------------------------------------------------------------
-        // 5. Validate that the output file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(modifiedDoc))
-            throw new InvalidOperationException($"Failed to create the modified document: {modifiedDoc}");
+        // -------------------------------------------------
+        // Step 5: Validate that the output file was created.
+        // -------------------------------------------------
+        if (!File.Exists(modifiedDocPath))
+        {
+            throw new InvalidOperationException($"Failed to create the modified document: {modifiedDocPath}");
+        }
 
-        // Clean up temporary files (optional).
-        // File.Delete(sampleImage);
-        // File.Delete(placeholderImage);
-        // File.Delete(originalDoc);
+        // Clean up temporary image files (optional).
+        // File.Delete(sampleImagePath);
+        // File.Delete(placeholderImagePath);
     }
 
-    // Helper method to create a deterministic PNG image.
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backgroundColor)
+    // Helper method to create a deterministic bitmap image.
+    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backColor, string text)
     {
+        // Create a bitmap.
         using (Bitmap bitmap = new Bitmap(width, height))
         {
+            // Obtain a graphics object for drawing.
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(backgroundColor);
+                // Fill background.
+                graphics.Clear(backColor);
+
+                // Optional: draw simple text in the center.
+                // Note: Aspose.Drawing does not provide a direct DrawString method without a Font.
+                // To keep the example simple and avoid font ambiguity, we skip drawing text.
             }
 
-            // Save as PNG.
-            bitmap.Save(filePath, ImageFormat.Png);
+            // Save the bitmap to the specified file.
+            bitmap.Save(filePath);
         }
     }
 }

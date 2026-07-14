@@ -1,93 +1,84 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // For Bitmap, Graphics, Color
+using Aspose.Drawing; // Aspose.Drawing.Common namespace
+using Aspose.Drawing.Imaging;
 
 public class ExtractImagesBySection
 {
     public static void Main()
     {
-        // Prepare a deterministic output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        // Prepare output directories
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string artifactsDir = Path.Combine(outputDir, "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a sample PNG image that will be inserted into the document.
+        // Create a deterministic sample image (sample.png)
         string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
         CreateSampleImage(sampleImagePath, 200, 200);
 
-        // Build a sample document containing two sections, each with the same image.
-        string docPath = Path.Combine(artifactsDir, "Sample.docx");
-        BuildDocumentWithSections(docPath, sampleImagePath);
-
-        // Load the document and extract images per section.
-        Document doc = new Document(docPath);
-
-        int totalExtracted = 0;
-        for (int secIndex = 0; secIndex < doc.Sections.Count; secIndex++)
-        {
-            Section section = doc.Sections[secIndex];
-
-            // Retrieve all Shape nodes inside this section (including nested ones).
-            NodeCollection shapeNodes = section.GetChildNodes(NodeType.Shape, true);
-            var imageShapes = shapeNodes.OfType<Shape>().Where(s => s.HasImage).ToList();
-
-            if (imageShapes.Count == 0)
-                continue; // No images in this section.
-
-            for (int imgIndex = 0; imgIndex < imageShapes.Count; imgIndex++)
-            {
-                Shape shape = imageShapes[imgIndex];
-                string ext = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string outFile = Path.Combine(
-                    artifactsDir,
-                    $"Section_{secIndex + 1}_Image_{imgIndex + 1}{ext}");
-
-                // Save the image to the file system.
-                shape.ImageData.Save(outFile);
-                totalExtracted++;
-                Console.WriteLine($"Saved image: {outFile}");
-            }
-        }
-
-        if (totalExtracted == 0)
-            throw new InvalidOperationException("No images were extracted from the document.");
-
-        Console.WriteLine($"Extraction complete. Total images saved: {totalExtracted}");
-    }
-
-    // Creates a simple solid‑color PNG image using Aspose.Drawing.
-    private static void CreateSampleImage(string filePath, int width, int height)
-    {
-        using (var bitmap = new Aspose.Drawing.Bitmap(width, height))
-        {
-            using (var graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Aspose.Drawing.Color.CornflowerBlue);
-            }
-            bitmap.Save(filePath);
-        }
-    }
-
-    // Builds a document with two sections, each containing the same sample image.
-    private static void BuildDocumentWithSections(string docPath, string imagePath)
-    {
+        // Build a document with two sections, each containing an image
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First section with an image.
-        builder.Writeln("Section 1");
-        builder.InsertImage(imagePath);
-        // Insert a section break.
+        // First section image
+        builder.InsertImage(sampleImagePath);
+
+        // Insert a section break (new page) to start a new section
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Second section with an image.
-        builder.Writeln("Section 2");
-        builder.InsertImage(imagePath);
+        // Second section image
+        builder.InsertImage(sampleImagePath);
 
-        // Save the document.
+        // Save the document
+        string docPath = Path.Combine(artifactsDir, "DocumentWithSections.docx");
         doc.Save(docPath);
+
+        // Load the document (optional, we can reuse the same instance)
+        Document loadedDoc = new Document(docPath);
+
+        // Extract images per section
+        int sectionCount = loadedDoc.Sections.Count;
+        for (int secIdx = 0; secIdx < sectionCount; secIdx++)
+        {
+            Section section = loadedDoc.Sections[secIdx];
+            NodeCollection shapes = section.GetChildNodes(NodeType.Shape, true);
+            int imageIdx = 0;
+
+            foreach (Shape shape in shapes.OfType<Shape>())
+            {
+                if (shape.HasImage)
+                {
+                    string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                    string imageFileName = $"Section_{secIdx + 1}_Image_{imageIdx + 1}{extension}";
+                    string imageFullPath = Path.Combine(artifactsDir, imageFileName);
+                    shape.ImageData.Save(imageFullPath);
+                    imageIdx++;
+                }
+            }
+
+            // Validation: ensure at least one image was extracted for the section
+            if (imageIdx == 0)
+                throw new InvalidOperationException($"No images were found in section {secIdx + 1}.");
+        }
+
+        // Optional: indicate completion
+        Console.WriteLine("Image extraction completed. Files are located in: " + artifactsDir);
+    }
+
+    // Helper method to create a simple white PNG image using Aspose.Drawing
+    private static void CreateSampleImage(string filePath, int width, int height)
+    {
+        using (Bitmap bitmap = new Bitmap(width, height))
+        {
+            using (Graphics graphics = Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(Color.White);
+            }
+            bitmap.Save(filePath, ImageFormat.Png);
+        }
     }
 }

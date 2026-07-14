@@ -5,75 +5,86 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare directories
-        string workDir = Directory.GetCurrentDirectory();
+        // Prepare output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // 1. Create a sample PNG image using Aspose.Drawing
-        string sampleImagePath = Path.Combine(workDir, "sample.png");
+        // 1. Create a deterministic sample PNG image.
+        string inputImagePath = Path.Combine(artifactsDir, "input.png");
         using (Bitmap bitmap = new Bitmap(200, 200))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Aspose.Drawing.Color.LightBlue);
-                // Draw a simple rectangle
-                g.DrawRectangle(new Aspose.Drawing.Pen(Aspose.Drawing.Color.DarkBlue, 5), 20, 20, 160, 160);
-            }
-            bitmap.Save(sampleImagePath); // Extension .png ensures PNG format
-        }
-
-        // 2. Create a Word document and insert the sample image multiple times
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document with images:");
-        builder.InsertImage(sampleImagePath);
-        builder.InsertParagraph();
-        builder.InsertImage(sampleImagePath);
-        string docPath = Path.Combine(workDir, "Original.docx");
-        doc.Save(docPath);
-
-        // 3. Load the document and extract all images
-        Document loadedDoc = new Document(docPath);
-        var shapeImages = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                   .Cast<Shape>()
-                                   .Where(s => s.HasImage)
-                                   .ToList();
-
-        if (!shapeImages.Any())
-            throw new InvalidOperationException("No images were found in the document.");
-
-        int index = 0;
-        foreach (var shape in shapeImages)
-        {
-            // Determine original file extension
-            string ext = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            string originalFile = Path.Combine(workDir, $"extracted_original_{index}{ext}");
-            shape.ImageData.Save(originalFile);
-            long originalSize = new FileInfo(originalFile).Length;
-
-            // 4. Apply lossless PNG compression (re‑encode as PNG)
-            string compressedFile = Path.Combine(workDir, $"compressed_{index}.png");
-            using (MemoryStream ms = new MemoryStream())
-            {
-                shape.ImageData.Save(ms);
-                ms.Position = 0;
-                using (Bitmap bmp = new Bitmap(ms))
+                g.Clear(Color.White);
+                // Draw a simple red rectangle.
+                using (Brush brush = new SolidBrush(Color.Red))
                 {
-                    // Saving with .png extension writes a losslessly compressed PNG
-                    bmp.Save(compressedFile);
+                    g.FillRectangle(brush, 50, 50, 100, 100);
                 }
             }
-            long compressedSize = new FileInfo(compressedFile).Length;
-
-            // 5. Output size reduction statistics
-            long reduction = originalSize - compressedSize;
-            Console.WriteLine($"Image {index}: Original = {originalSize} bytes, Compressed = {compressedSize} bytes, Reduction = {reduction} bytes.");
-
-            index++;
+            bitmap.Save(inputImagePath, ImageFormat.Png);
         }
+
+        // 2. Create a Word document and insert the sample image.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(inputImagePath);
+        string docPath = Path.Combine(artifactsDir, "sample.docx");
+        doc.Save(docPath);
+
+        // 3. Load the document and extract all images.
+        Document loadedDoc = new Document(docPath);
+        var shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                                  .Cast<Shape>()
+                                  .Where(s => s.HasImage)
+                                  .ToList();
+
+        if (!shapeNodes.Any())
+            throw new InvalidOperationException("No images were found in the document.");
+
+        long totalOriginalSize = 0;
+        long totalCompressedSize = 0;
+
+        for (int i = 0; i < shapeNodes.Count; i++)
+        {
+            Shape shape = shapeNodes[i];
+
+            // Save original image.
+            string originalPath = Path.Combine(artifactsDir, $"original_{i}.png");
+            using (FileStream originalFs = File.Create(originalPath))
+            {
+                shape.ImageData.Save(originalFs);
+            }
+            long originalSize = new FileInfo(originalPath).Length;
+            totalOriginalSize += originalSize;
+
+            // Load the original image into Aspose.Drawing.Bitmap.
+            using (FileStream originalFsRead = File.OpenRead(originalPath))
+            using (Bitmap bmp = new Bitmap(originalFsRead))
+            {
+                // Re‑save the bitmap as PNG (lossless compression).
+                string compressedPath = Path.Combine(artifactsDir, $"compressed_{i}.png");
+                using (FileStream compressedFs = File.Create(compressedPath))
+                {
+                    bmp.Save(compressedFs, ImageFormat.Png);
+                }
+                long compressedSize = new FileInfo(compressedPath).Length;
+                totalCompressedSize += compressedSize;
+
+                // Output size comparison for this image.
+                Console.WriteLine($"Image {i}: Original = {originalSize} bytes, Compressed = {compressedSize} bytes, Reduction = {originalSize - compressedSize} bytes");
+            }
+        }
+
+        // 4. Output overall statistics.
+        Console.WriteLine($"Total original size: {totalOriginalSize} bytes");
+        Console.WriteLine($"Total compressed size: {totalCompressedSize} bytes");
+        Console.WriteLine($"Total reduction: {totalOriginalSize - totalCompressedSize} bytes");
     }
 }

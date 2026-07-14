@@ -5,122 +5,103 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
-using Aspose.Drawing; // Aspose.Drawing.Common namespace
-using Aspose.Drawing.Imaging;
+using Aspose.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define working folders.
+        // Base working directory.
         string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        string inputDocsDir = Path.Combine(baseDir, "InputDocs");
+        string docsDir = Path.Combine(baseDir, "Docs");
         string extractedImagesDir = Path.Combine(baseDir, "ExtractedImages");
-        string indexCsvPath = Path.Combine(baseDir, "ImageIndex.csv");
+        string indexFilePath = Path.Combine(baseDir, "ImageIndex.csv");
+        string sampleImagePath = Path.Combine(baseDir, "sample.png");
 
-        // Ensure folders exist.
-        Directory.CreateDirectory(inputDocsDir);
+        // Ensure required folders exist.
+        Directory.CreateDirectory(docsDir);
         Directory.CreateDirectory(extractedImagesDir);
 
         // -----------------------------------------------------------------
-        // 1. Create deterministic sample images (PNG) using Aspose.Drawing.
+        // 1. Create a deterministic sample image (required by the rules).
         // -----------------------------------------------------------------
-        string sampleImage1Path = Path.Combine(baseDir, "sample1.png");
-        string sampleImage2Path = Path.Combine(baseDir, "sample2.png");
-
-        CreateSamplePng(sampleImage1Path, 100, 100, Aspose.Drawing.Color.LightBlue);
-        CreateSamplePng(sampleImage2Path, 120, 80, Aspose.Drawing.Color.LightCoral);
+        CreateSampleImage(sampleImagePath);
 
         // -----------------------------------------------------------------
-        // 2. Create a few sample DOCX files that contain the images.
+        // 2. Generate a few sample DOCX files that contain the image.
         // -----------------------------------------------------------------
-        for (int docIndex = 1; docIndex <= 3; docIndex++)
+        const int sampleDocCount = 3;
+        for (int i = 1; i <= sampleDocCount; i++)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            builder.Writeln($"Document {docIndex}");
-            // Insert first image.
-            builder.InsertImage(sampleImage1Path);
-            builder.Writeln(); // separate
-            // Insert second image.
-            builder.InsertImage(sampleImage2Path);
-
-            string docPath = Path.Combine(inputDocsDir, $"SampleDocument{docIndex}.docx");
-            doc.Save(docPath);
+            string docPath = Path.Combine(docsDir, $"Doc{i}.docx");
+            CreateDocumentWithImage(docPath, sampleImagePath);
         }
 
         // -----------------------------------------------------------------
-        // 3. Batch extract images from all DOC/DOCX files.
+        // 3. Batch extract images from all DOC/DOCX files and build index.
         // -----------------------------------------------------------------
         var indexLines = new List<string>();
-        int totalExtracted = 0;
+        indexLines.Add("DocumentPath,ImagePath"); // CSV header
 
-        string[] docFiles = Directory.GetFiles(inputDocsDir, "*.*", SearchOption.TopDirectoryOnly)
-                                     .Where(f => f.EndsWith(".doc", StringComparison.OrdinalIgnoreCase) ||
-                                                 f.EndsWith(".docx", StringComparison.OrdinalIgnoreCase))
-                                     .ToArray();
-
+        string[] docFiles = Directory.GetFiles(docsDir, "*.*", SearchOption.TopDirectoryOnly);
         foreach (string docFile in docFiles)
         {
+            // Load each document (lifecycle rule).
             Document doc = new Document(docFile);
-            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
+            // Get all shape nodes.
+            NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
             int imageIndex = 0;
             foreach (Shape shape in shapeNodes.OfType<Shape>())
             {
                 if (shape.HasImage)
                 {
-                    // Determine proper file extension based on image type.
+                    // Determine proper file extension for the image type.
                     string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_Img{imageIndex}{extension}";
+                    string imageFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_img{imageIndex}{extension}";
                     string imageFullPath = Path.Combine(extractedImagesDir, imageFileName);
 
-                    // Save the image.
+                    // Save the image (extraction rule).
                     shape.ImageData.Save(imageFullPath);
 
-                    // Record entry for the index.
-                    indexLines.Add($"{Path.GetFullPath(docFile)},{Path.GetFullPath(imageFullPath)}");
+                    // Record the mapping.
+                    indexLines.Add($"{docFile},{imageFullPath}");
                     imageIndex++;
-                    totalExtracted++;
                 }
             }
-
-            // Validation: ensure at least one image was found in the current document.
-            if (imageIndex == 0)
-                throw new InvalidOperationException($"No images were extracted from document '{docFile}'.");
         }
 
-        // -----------------------------------------------------------------
-        // 4. Write the CSV index file (Excel can open CSV directly).
-        // -----------------------------------------------------------------
-        if (totalExtracted == 0)
-            throw new InvalidOperationException("No images were extracted from any document.");
+        // Validation: ensure at least one image was extracted.
+        if (indexLines.Count <= 1)
+            throw new InvalidOperationException("No images were extracted from the documents.");
 
-        // CSV header.
-        indexLines.Insert(0, "DocumentPath,ImagePath");
-        File.WriteAllLines(indexCsvPath, indexLines);
-
-        // -----------------------------------------------------------------
-        // 5. Simple validation that output files exist.
-        // -----------------------------------------------------------------
-        if (!File.Exists(indexCsvPath))
-            throw new FileNotFoundException("Index CSV file was not created.", indexCsvPath);
-
-        // All done – the program exits without waiting for user input.
+        // Write the CSV index (Excel can open CSV files).
+        File.WriteAllLines(indexFilePath, indexLines);
     }
 
-    // Helper method to create a PNG image using Aspose.Drawing.
-    private static void CreateSamplePng(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
+    // Creates a simple 100x100 PNG image using Aspose.Drawing.
+    private static void CreateSampleImage(string filePath)
     {
-        using (Bitmap bitmap = new Bitmap(width, height))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(fillColor);
-            }
-            // Save as PNG.
-            bitmap.Save(filePath, ImageFormat.Png);
-        }
+        const int width = 100;
+        const int height = 100;
+
+        Bitmap bitmap = new Bitmap(width, height);
+        Graphics graphics = Graphics.FromImage(bitmap);
+        graphics.Clear(Color.LightBlue);
+        // Optional: draw a simple rectangle.
+        graphics.DrawRectangle(new Pen(Color.DarkBlue, 2), 10, 10, 80, 80);
+        bitmap.Save(filePath);
+        graphics.Dispose();
+        bitmap.Dispose();
+    }
+
+    // Creates a blank document and inserts the provided image.
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(imagePath);
+        // Save the document (lifecycle rule).
+        doc.Save(docPath);
     }
 }

@@ -3,40 +3,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create a deterministic BMP image using Aspose.Drawing.
-        const string bmpPath = "sample.bmp";
-        const int width = 100;
-        const int height = 100;
+        // Deterministic file names.
+        const string bmpFileName = "sample.bmp";
+        const string docxFileName = "sample.docx";
 
-        using (Bitmap bitmap = new Bitmap(width, height))
+        // -------------------------------------------------
+        // 1. Create a sample BMP image using Aspose.Drawing.
+        // -------------------------------------------------
+        const int imgWidth = 200;
+        const int imgHeight = 100;
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
         {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
             {
-                // Fill the bitmap with white background.
-                graphics.Clear(Color.White);
-                // (Optional) Draw a simple rectangle.
-                graphics.DrawRectangle(new Pen(Color.Black), 10, 10, width - 20, height - 20);
+                // Fill the bitmap with white colour.
+                graphics.Clear(Aspose.Drawing.Color.White);
             }
 
-            // Save the bitmap as BMP – this will be the image we embed in the document.
-            bitmap.Save(bmpPath);
+            // Save the bitmap as BMP to the file system.
+            bitmap.Save(bmpFileName, Aspose.Drawing.Imaging.ImageFormat.Bmp);
         }
 
-        // 2. Create a new Word document and insert the BMP image.
+        // -------------------------------------------------
+        // 2. Create a DOCX and insert the BMP image.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(bmpPath);
-        const string docPath = "sample.docx";
-        doc.Save(docPath);
 
-        // 3. Load the document (demonstrating load from file) and locate the first shape that contains an image.
-        Document loadedDoc = new Document(docPath);
+        // Insert the BMP image as a Shape to preserve the original format.
+        Shape bmpShape = new Shape(doc, ShapeType.Image);
+        bmpShape.ImageData.SetImage(bmpFileName);
+        // Append the shape to the current paragraph.
+        builder.CurrentParagraph.AppendChild(bmpShape);
+
+        // Save the document.
+        doc.Save(docxFileName);
+
+        // -------------------------------------------------
+        // 3. Load the document and extract the image.
+        // -------------------------------------------------
+        Document loadedDoc = new Document(docxFileName);
         Shape imageShape = null;
+
+        // Find the first shape that contains an image.
         foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
         {
             if (shape.HasImage)
@@ -49,37 +64,39 @@ public class Program
         if (imageShape == null)
             throw new InvalidOperationException("No image found in the document.");
 
-        // 4. Save the image data to a memory stream (BMP format is preserved because the source image is BMP).
+        // -------------------------------------------------
+        // 4. Save the image to a memory stream.
+        // -------------------------------------------------
         using (MemoryStream imageStream = new MemoryStream())
         {
+            // Save the image data into the stream.
             imageShape.ImageData.Save(imageStream);
-            // Reset the stream position before any further read operations.
+
+            // Reset the stream position before using it.
             imageStream.Position = 0;
 
-            // 5. Pass the memory stream to a sample API method.
-            ProcessImageStream(imageStream);
+            // -------------------------------------------------
+            // 5. Pass the stream to the target API.
+            //    (For demonstration, we simply read its length.)
+            // -------------------------------------------------
+            long length = imageStream.Length;
+            Console.WriteLine($"Extracted image stream length: {length} bytes.");
+
+            // Optional: write the stream to a file to verify the output.
+            const string extractedBmpPath = "extracted.bmp";
+            using (FileStream fileOut = new FileStream(extractedBmpPath, FileMode.Create, FileAccess.Write))
+            {
+                imageStream.CopyTo(fileOut);
+            }
+
+            // Validate that the file was created and is not empty.
+            if (!File.Exists(extractedBmpPath) || new FileInfo(extractedBmpPath).Length == 0)
+                throw new InvalidOperationException("Failed to write the extracted image to disk.");
         }
 
-        // Cleanup: ensure the generated files exist.
-        if (!File.Exists("extracted.bmp"))
-            throw new FileNotFoundException("The extracted image file was not created.");
-
-        Console.WriteLine("Image extraction and processing completed successfully.");
-    }
-
-    // Sample API that consumes a stream containing a BMP image.
-    private static void ProcessImageStream(Stream imageStream)
-    {
-        // For demonstration, copy the stream to a file.
-        const string outputPath = "extracted.bmp";
-
-        // Ensure the stream is at the beginning.
-        if (imageStream.CanSeek)
-            imageStream.Position = 0;
-
-        using (FileStream fileStream = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
-        {
-            imageStream.CopyTo(fileStream);
-        }
+        // Clean up temporary files (optional).
+        // File.Delete(bmpFileName);
+        // File.Delete(docxFileName);
+        // File.Delete("extracted.bmp");
     }
 }

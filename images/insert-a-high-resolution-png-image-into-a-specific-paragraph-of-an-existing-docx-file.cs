@@ -2,86 +2,83 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing; // Aspose.Drawing.Common namespace
-using Aspose.Drawing.Imaging; // For image format if needed
-using Newtonsoft.Json; // Included as required package (not used in this example)
+using Aspose.Drawing;
 
-public class Program
+public class InsertImageExample
 {
     public static void Main()
     {
-        // Define file names
-        const string imagePath = "sample.png";
+        // Paths for the files used in the example.
+        const string imagePath = "highres.png";
         const string sourceDocPath = "sample.docx";
-        const string resultDocPath = "result.docx";
+        const string outputDocPath = "output.docx";
 
         // -------------------------------------------------
-        // 1. Create a high‑resolution PNG image (2000x2000)
+        // 1. Create a high‑resolution PNG image.
         // -------------------------------------------------
         const int imgWidth = 2000;
         const int imgHeight = 2000;
 
-        // Create bitmap and graphics objects from Aspose.Drawing
+        // Create a bitmap and a graphics object to draw on it.
         using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            // Fill background with white
+            // Fill the background with white.
             graphics.Clear(Color.White);
 
-            // (Optional) Draw a simple rectangle to make the image recognizable
-            graphics.DrawRectangle(new Pen(Color.Black, 5), 100, 100, imgWidth - 200, imgHeight - 200);
+            // (Optional) Draw a simple rectangle to make the image recognizable.
+            // The rectangle is drawn in a light gray color.
+            graphics.FillRectangle(new SolidBrush(Color.LightGray), 100, 100, imgWidth - 200, imgHeight - 200);
 
-            // Save the bitmap as a PNG file
-            bitmap.Save(imagePath, ImageFormat.Png);
+            // Save the bitmap as a PNG file.
+            bitmap.Save(imagePath);
         }
 
-        // -------------------------------------------------
-        // 2. Create a sample DOCX file with several paragraphs
-        // -------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Paragraph 1: Introduction");
-        builder.Writeln("Paragraph 2: Target paragraph for image insertion");
-        builder.Writeln("Paragraph 3: Conclusion");
-
-        // Save the source document
-        doc.Save(sourceDocPath);
+        // Verify that the image file was created.
+        if (!File.Exists(imagePath))
+            throw new FileNotFoundException($"Image file '{imagePath}' was not created.");
 
         // -------------------------------------------------
-        // 3. Load the existing document
+        // 2. Create a sample DOCX file with several paragraphs.
         // -------------------------------------------------
-        Document loadedDoc = new Document(sourceDocPath);
-        DocumentBuilder docBuilder = new DocumentBuilder(loadedDoc);
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Target paragraph where the image will be inserted.");
+        builder.Writeln("Third paragraph.");
+
+        sampleDoc.Save(sourceDocPath);
+
+        // Verify that the source document was created.
+        if (!File.Exists(sourceDocPath))
+            throw new FileNotFoundException($"Source document '{sourceDocPath}' was not created.");
 
         // -------------------------------------------------
-        // 4. Locate the specific paragraph (second paragraph, index 1)
+        // 3. Load the existing document and insert the image into the target paragraph.
         // -------------------------------------------------
-        Paragraph targetParagraph = (Paragraph)loadedDoc.GetChild(NodeType.Paragraph, 1, true);
-        if (targetParagraph == null)
-            throw new InvalidOperationException("Target paragraph not found.");
+        Document doc = new Document(sourceDocPath);
+        DocumentBuilder docBuilder = new DocumentBuilder(doc);
 
-        // Move the builder cursor to the target paragraph
-        docBuilder.MoveTo(targetParagraph);
+        // Move the cursor to the second paragraph (index 1, zero‑based).
+        docBuilder.MoveToParagraph(1, 0);
 
-        // -------------------------------------------------
-        // 5. Insert the high‑resolution PNG image into the paragraph
-        // -------------------------------------------------
-        docBuilder.InsertImage(imagePath);
+        // Insert the high‑resolution PNG image inline.
+        Shape insertedShape = docBuilder.InsertImage(imagePath);
 
-        // -------------------------------------------------
-        // 6. Save the modified document
-        // -------------------------------------------------
-        loadedDoc.Save(resultDocPath);
+        // Optional: verify that the shape indeed contains an image.
+        if (!insertedShape.HasImage)
+            throw new InvalidOperationException("The inserted shape does not contain an image.");
 
         // -------------------------------------------------
-        // 7. Validate that the output file was created
+        // 4. Save the modified document.
         // -------------------------------------------------
-        if (!File.Exists(resultDocPath))
-            throw new FileNotFoundException("The result document was not created.", resultDocPath);
+        doc.Save(outputDocPath);
 
-        // (Optional) Clean up temporary files if desired
-        // File.Delete(imagePath);
-        // File.Delete(sourceDocPath);
+        // Validate that the output file exists.
+        if (!File.Exists(outputDocPath))
+            throw new FileNotFoundException($"Output document '{outputDocPath}' was not saved.");
+
+        // The example finishes without requiring any user interaction.
     }
 }

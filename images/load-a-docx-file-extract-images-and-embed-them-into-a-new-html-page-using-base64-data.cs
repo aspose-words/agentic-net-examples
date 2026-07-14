@@ -1,69 +1,96 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
         // Define deterministic file names.
-        string workDir = Directory.GetCurrentDirectory();
-        string imagePath = Path.Combine(workDir, "sample.png");
-        string docPath = Path.Combine(workDir, "sample.docx");
-        string htmlPath = Path.Combine(workDir, "output.html");
+        const string imagePath = "sample.png";
+        const string docPath = "input.docx";
+        const string htmlPath = "output.html";
 
         // -------------------------------------------------
-        // 1. Create a sample PNG image using Aspose.Drawing.
+        // 1. Create a sample image using Aspose.Drawing.
         // -------------------------------------------------
         const int imgWidth = 200;
-        const int imgHeight = 100;
+        const int imgHeight = 200;
         using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
                 // Fill background with white.
-                g.Clear(Color.White);
-                // Optionally draw a simple rectangle.
-                g.DrawRectangle(Pens.Black, 10, 10, imgWidth - 20, imgHeight - 20);
+                g.Clear(Aspose.Drawing.Color.White);
+                // Draw a simple rectangle.
+                using (Pen pen = new Pen(Aspose.Drawing.Color.Blue, 5))
+                {
+                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
+                }
             }
-            // Save the image to a deterministic file.
-            bitmap.Save(imagePath);
+            // Save the image to a local file.
+            bitmap.Save(imagePath, ImageFormat.Png);
         }
 
         // -------------------------------------------------
-        // 2. Create a Word document and insert the image.
+        // 2. Create a DOCX document and insert the image.
         // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(imagePath);
-        // Save the document to a deterministic file.
         doc.Save(docPath);
 
         // -------------------------------------------------
-        // 3. Load the saved document.
+        // 3. Load the DOCX document.
         // -------------------------------------------------
         Document loadedDoc = new Document(docPath);
 
         // -------------------------------------------------
-        // 4. Save the document as HTML with images embedded as Base64.
+        // 4. Extract images and embed them as Base64 in HTML.
         // -------------------------------------------------
-        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
-        {
-            ExportImagesAsBase64 = true,
-            PrettyFormat = true
-        };
-        loadedDoc.Save(htmlPath, htmlOptions);
+        StringBuilder htmlBuilder = new StringBuilder();
+        htmlBuilder.AppendLine("<!DOCTYPE html>");
+        htmlBuilder.AppendLine("<html>");
+        htmlBuilder.AppendLine("<head><meta charset=\"UTF-8\"><title>Extracted Images</title></head>");
+        htmlBuilder.AppendLine("<body>");
 
-        // -------------------------------------------------
-        // 5. Validate that the HTML file was created.
-        // -------------------------------------------------
-        if (!File.Exists(htmlPath))
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int extractedCount = 0;
+
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            throw new FileNotFoundException("HTML output file was not created.", htmlPath);
+            if (!shape.HasImage)
+                continue;
+
+            // Get raw image bytes.
+            byte[] imageBytes = shape.ImageData.ImageBytes;
+            if (imageBytes == null || imageBytes.Length == 0)
+                continue;
+
+            // Determine MIME type from image format.
+            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType); // e.g., ".png"
+            string mimeType = "image/" + extension.TrimStart('.').ToLowerInvariant();
+
+            // Encode to Base64.
+            string base64 = Convert.ToBase64String(imageBytes);
+
+            // Append <img> tag.
+            htmlBuilder.AppendLine($"<img src=\"data:{mimeType};base64,{base64}\" alt=\"Extracted Image\" />");
+            extractedCount++;
         }
 
-        // The program finishes here without waiting for user input.
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No images were extracted from the document.");
+
+        htmlBuilder.AppendLine("</body>");
+        htmlBuilder.AppendLine("</html>");
+
+        // Save the HTML file.
+        File.WriteAllText(htmlPath, htmlBuilder.ToString(), Encoding.UTF8);
     }
 }

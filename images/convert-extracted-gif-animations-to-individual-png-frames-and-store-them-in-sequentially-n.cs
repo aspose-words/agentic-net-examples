@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,26 +11,41 @@ public class Program
     public static void Main()
     {
         // Prepare folders
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
-        string outputDir = Path.Combine(workDir, "Frames");
-        Directory.CreateDirectory(outputDir);
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string inputImagePath = Path.Combine(artifactsDir, "sample.gif");
+        string docPath = Path.Combine(artifactsDir, "DocumentWithGif.docx");
 
-        // 1. Create a sample GIF image (single‑frame for demonstration)
-        string gifPath = Path.Combine(workDir, "sample.gif");
-        CreateSampleGif(gifPath);
+        // -----------------------------------------------------------------
+        // 1. Create a simple GIF image (single‑frame is sufficient for demo)
+        // -----------------------------------------------------------------
+        int width = 200, height = 200;
+        using (Bitmap bmp = new Bitmap(width, height))
+        {
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Color.White);
+                g.DrawEllipse(new Pen(Color.Blue, 5), 10, 10, width - 20, height - 20);
+            }
+            // Save as GIF
+            bmp.Save(inputImagePath, ImageFormat.Gif);
+        }
 
-        // 2. Insert the GIF into a Word document
+        // --------------------------------------------------------------
+        // 2. Insert the GIF into a Word document and save the document
+        // --------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(gifPath);
-        string docPath = Path.Combine(workDir, "DocumentWithGif.docx");
+        builder.InsertImage(inputImagePath);
         doc.Save(docPath);
 
-        // 3. Load the document and locate the shape that holds the GIF
+        // --------------------------------------------------------------
+        // 3. Reload the document and locate the GIF shape
+        // --------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         Shape gifShape = null;
-        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (shape.HasImage && shape.ImageData.ImageType == ImageType.Gif)
             {
@@ -41,55 +57,35 @@ public class Program
         if (gifShape == null)
             throw new InvalidOperationException("No GIF image found in the document.");
 
-        // 4. Extract the GIF bytes to a memory stream
+        // --------------------------------------------------------------
+        // 4. Extract the GIF bytes and load it with Aspose.Drawing.Image
+        // --------------------------------------------------------------
         using (MemoryStream gifStream = new MemoryStream())
         {
             gifShape.ImageData.Save(gifStream);
-            gifStream.Position = 0; // Reset before reading
+            gifStream.Position = 0;
 
-            // 5. Load the GIF with Aspose.Drawing and split into frames
             using (Image gifImage = Image.FromStream(gifStream))
             {
-                // FrameDimension.Time is used for animated GIFs; fallback to 0 if unavailable
-                FrameDimension dimension = new FrameDimension(gifImage.FrameDimensionsList[0]);
-                int frameCount = gifImage.GetFrameCount(dimension);
+                // Determine the number of frames in the GIF
+                int frameCount = gifImage.GetFrameCount(FrameDimension.Time);
+                if (frameCount == 0) frameCount = 1; // fallback for non‑animated GIFs
 
-                if (frameCount == 0)
-                    throw new InvalidOperationException("The GIF contains no frames.");
-
+                // --------------------------------------------------------------
+                // 5. Save each frame as a separate PNG file
+                // --------------------------------------------------------------
                 for (int i = 0; i < frameCount; i++)
                 {
-                    gifImage.SelectActiveFrame(dimension, i);
-                    using (Bitmap frameBitmap = new Bitmap(gifImage))
-                    {
-                        string framePath = Path.Combine(outputDir, $"frame_{i + 1}.png");
-                        frameBitmap.Save(framePath, ImageFormat.Png);
-                    }
+                    gifImage.SelectActiveFrame(FrameDimension.Time, i);
+                    string pngPath = Path.Combine(artifactsDir, $"frame_{i + 1}.png");
+                    gifImage.Save(pngPath, ImageFormat.Png);
                 }
 
-                // Validation: ensure at least one PNG was written
-                int pngCount = Directory.GetFiles(outputDir, "*.png").Length;
-                if (pngCount == 0)
-                    throw new InvalidOperationException("No PNG frames were extracted.");
+                // Validation: ensure at least one PNG was created
+                string[] pngFiles = Directory.GetFiles(artifactsDir, "frame_*.png");
+                if (pngFiles.Length == 0)
+                    throw new InvalidOperationException("No PNG frames were generated.");
             }
-        }
-
-        // Clean up (optional)
-        // Console.WriteLine($"Extracted {Directory.GetFiles(outputDir, "*.png").Length} frame(s) to '{outputDir}'.");
-    }
-
-    private static void CreateSampleGif(string filePath)
-    {
-        // Create a simple bitmap and save it as a GIF file.
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.LightCoral);
-                graphics.DrawEllipse(new Pen(Color.White, 5), 20, 20, 160, 160);
-            }
-
-            bitmap.Save(filePath, ImageFormat.Gif);
         }
     }
 }

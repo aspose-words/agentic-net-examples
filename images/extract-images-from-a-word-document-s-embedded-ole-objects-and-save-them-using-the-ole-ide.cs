@@ -1,91 +1,73 @@
 using System;
 using System.IO;
-using System.Text;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Words.Loading;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Newtonsoft.Json; // Included as required package
 
 public class ExtractOleImages
 {
     public static void Main()
     {
-        // Prepare output folder
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Define file and folder names.
+        const string docPath = "DocumentWithOle.docx";
+        const string oleDataFile = "sample.txt";
 
-        // ---------- Create a sample icon image ----------
-        string iconPath = Path.Combine(artifactsDir, "icon.png");
-        using (Bitmap bitmap = new Bitmap(64, 64))
+        // Create a simple text file to embed as an OLE object.
+        File.WriteAllText(oleDataFile, "This is sample OLE embedded content.");
+
+        // Create a new Word document and embed the OLE object as an icon.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Read the sample file into a memory stream.
+        using (MemoryStream oleStream = new MemoryStream(File.ReadAllBytes(oleDataFile)))
         {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Aspose.Drawing.Color.LightGray);
-                // Draw a simple rectangle as visual content
-                g.DrawRectangle(new Pen(Aspose.Drawing.Color.Blue, 2), 8, 8, 48, 48);
-            }
-            bitmap.Save(iconPath, ImageFormat.Png);
+            // Insert the OLE object. The 'asIcon' flag is true so the shape will contain an image.
+            builder.InsertOleObject(oleStream, "Package", true, null);
         }
 
-        // ---------- Create a sample OLE data stream ----------
-        byte[] oleContent = Encoding.UTF8.GetBytes("Sample OLE embedded content");
-        using (MemoryStream oleStream = new MemoryStream(oleContent))
-        {
-            // Reset position before use
-            oleStream.Position = 0;
+        // Save the document that now contains an OLE object.
+        doc.Save(docPath);
 
-            // ---------- Build a document with an OLE object ----------
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Document containing an OLE object with an icon:");
+        // Load the document back (demonstrates the load step).
+        Document loadedDoc = new Document(docPath);
 
-            // Load the icon into a stream
-            using (MemoryStream iconStream = new MemoryStream(File.ReadAllBytes(iconPath)))
-            {
-                iconStream.Position = 0;
-                // Insert the OLE object as an icon (ProgId "Package" works for generic data)
-                builder.InsertOleObject(oleStream, "Package", true, iconStream);
-            }
-
-            // Save the document
-            string docPath = Path.Combine(artifactsDir, "OleDocument.docx");
-            doc.Save(docPath);
-        }
-
-        // ---------- Load the document and extract OLE icon images ----------
-        Document loadedDoc = new Document(Path.Combine(artifactsDir, "OleDocument.docx"));
+        // Get all shape nodes in the document.
         NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
+
+        int extractedCount = 0;
 
         foreach (Shape shape in shapes.OfType<Shape>())
         {
-            // Process only OLE object shapes
-            if (shape.ShapeType == ShapeType.OleObject)
+            // Process only OLE object shapes that have an image (icon).
+            if (shape.ShapeType == ShapeType.OleObject && shape.HasImage)
             {
                 OleFormat oleFormat = shape.OleFormat;
-                string progId = !string.IsNullOrEmpty(oleFormat?.ProgId) ? oleFormat.ProgId : "OleObject";
+                // Use the ProgId as part of the file name; replace characters that are invalid in file names.
+                string progId = oleFormat.ProgId ?? "OleObject";
+                foreach (char c in Path.GetInvalidFileNameChars())
+                    progId = progId.Replace(c, '_');
 
-                // If the OLE shape has an associated image (icon), save it
-                if (shape.HasImage)
-                {
-                    string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                    string outFileName = $"{progId}_{imageIndex}{extension}";
-                    string outPath = Path.Combine(artifactsDir, outFileName);
-                    shape.ImageData.Save(outPath);
-                    imageIndex++;
-                }
+                // Determine the appropriate image file extension.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string imageFileName = $"{progId}_icon{extension}";
+                string imagePath = Path.Combine(Directory.GetCurrentDirectory(), imageFileName);
+
+                // Save the image (icon) to the file system.
+                shape.ImageData.Save(imagePath);
+                extractedCount++;
+
+                // Optional: verify that the file was created.
+                if (!File.Exists(imagePath))
+                    throw new InvalidOperationException($"Failed to save extracted image to '{imagePath}'.");
             }
         }
 
-        // Validate that at least one image was extracted
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No OLE icon images were extracted.");
+        // Validate that at least one image was extracted.
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No OLE object images were found and extracted.");
 
-        // Optional: list extracted files (non‑interactive)
-        Console.WriteLine($"Extracted {imageIndex} OLE icon image(s) to folder: {artifactsDir}");
+        // Clean up temporary files used for the example.
+        File.Delete(oleDataFile);
     }
 }
