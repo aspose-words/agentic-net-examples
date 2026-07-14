@@ -25,19 +25,19 @@ public class Program
         builder.Writeln("Bullet item B");
         builder.ListFormat.RemoveNumbers();
 
-        // Iterate over every list in the document and set a uniform style for each level.
+        // Iterate over every list in the document.
         foreach (List list in doc.Lists)
         {
+            // Apply the same formatting to each level of the current list.
             foreach (ListLevel level in list.ListLevels)
             {
                 level.Font.Name = "Arial";
-                level.Font.Size = 12;
-                level.Font.Color = Color.Black;
-                level.Font.Bold = false;
+                level.Font.Color = Color.Green;
+                level.Font.Bold = true;
             }
         }
 
-        // Save the resulting document to the file system.
-        doc.Save("UniformLists.docx");
+        // Save the modified document to the file system.
+        doc.Save("UniformListStyle.docx");
     }
 }

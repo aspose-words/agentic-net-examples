@@ -6,24 +6,23 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a default numbered list.
+        // Start a numbered list using the default list template.
         builder.ListFormat.List = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Add a first‑level list item (level 0).
-        builder.Writeln("Level 0 item");
-
-        // Set the list level to 3 (third‑level item, zero‑based index).
+        // Set the list level to 3 (third‑level item, zero‑based indexing).
         builder.ListFormat.ListLevelNumber = 3;
-        builder.Writeln("Third‑level list item");
+
+        // Add a paragraph that will be formatted as a third‑level list item.
+        builder.Writeln("Third level list item");
 
         // End the list formatting.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the file system.
+        // Save the document to disk.
         doc.Save("ThirdLevelList.docx");
     }
 }

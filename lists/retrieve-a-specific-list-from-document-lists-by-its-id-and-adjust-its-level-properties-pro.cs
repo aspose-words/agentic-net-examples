@@ -7,29 +7,43 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Add a numbered list to the document.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        // Add a numbered list to the document using a predefined template.
+        List originalList = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Store the ListId for later retrieval.
-        int listId = list.ListId;
-
-        // Retrieve the same list using its identifier.
-        List retrievedList = doc.Lists.GetListByListId(listId);
-
-        // If the list exists, modify its first level formatting.
-        if (retrievedList != null)
+        // Add a few paragraphs and apply the list to them.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Item 1");
+        builder.Writeln("Item 2");
+        builder.Writeln("Item 3");
+        // Apply the list to the last three paragraphs.
+        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            ListLevel level = retrievedList.ListLevels[0];
-            level.Font.Color = Color.Blue;          // Change bullet/number color.
-            level.Font.Size = 16;                    // Increase font size.
-            level.NumberStyle = NumberStyle.UppercaseRoman; // Use uppercase Roman numerals.
-            level.StartAt = 5;                       // Start numbering at 5.
+            para.ListFormat.List = originalList;
+            para.ListFormat.ListLevelNumber = 0; // first level
         }
 
-        // Save the document.
-        doc.Save("Output.docx");
+        // Retrieve the ListId of the created list.
+        int listId = originalList.ListId;
+
+        // Use GetListByListId to obtain the same list from the collection.
+        List retrievedList = doc.Lists.GetListByListId(listId);
+        if (retrievedList == null)
+        {
+            Console.WriteLine("List with ID {0} not found.", listId);
+            return;
+        }
+
+        // Adjust properties of the first level of the retrieved list.
+        // For example, change the font color, start number, and number style.
+        ListLevel level0 = retrievedList.ListLevels[0];
+        level0.Font.Color = Color.Blue;          // Change bullet/number color.
+        level0.StartAt = 10;                     // Start numbering at 10.
+        level0.NumberStyle = NumberStyle.UppercaseRoman; // Use uppercase Roman numerals.
+
+        // Save the document to verify the changes.
+        doc.Save("Lists_RetrieveAndModify.docx");
     }
 }

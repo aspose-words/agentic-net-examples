@@ -9,23 +9,28 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a numbered list based on the default template.
+        // Create a list based on the default numbered template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Set the first list level to start numbering at 5 instead of the default 1.
+        // Set the starting number of the first list level to 5.
+        // This will cause the first item to be numbered "5."
         list.ListLevels[0].StartAt = 5;
 
-        // Write a heading and apply the custom list to a few items.
-        builder.Writeln("List that starts at 5:");
-        builder.ListFormat.List = list;
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.Writeln("Item 3");
+        // Use DocumentBuilder to add paragraphs that belong to the list.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.ListFormat.List = list; // Apply the list to subsequent paragraphs.
+
+        // Add a few list items to demonstrate the custom start number.
+        builder.Writeln("Item 1 (should be numbered 5)");
+        builder.Writeln("Item 2 (should be numbered 6)");
+        builder.Writeln("Item 3 (should be numbered 7)");
+
+        // Remove list formatting from further paragraphs.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the current directory.
-        doc.Save("ListStartAtFive.docx");
+        // Save the document to the output file.
+        string outputPath = "Lists.StartAt.docx";
+        doc.Save(outputPath);
     }
 }

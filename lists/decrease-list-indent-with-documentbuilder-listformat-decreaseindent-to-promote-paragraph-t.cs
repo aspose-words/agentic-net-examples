@@ -1,33 +1,45 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace ListOutdentExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new empty document.
+            Document doc = new Document();
 
-        // Start a default numbered list.
-        builder.ListFormat.ApplyNumberDefault();
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
+            // Create a DocumentBuilder which will be used to insert content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Increase the list level to create a sub‑list.
-        builder.ListFormat.ListIndent();
-        builder.Writeln("Subitem 2.1");
-        builder.Writeln("Subitem 2.2");
+            // Start a default numbered list.
+            builder.ListFormat.ApplyNumberDefault();
+            builder.Writeln("Item 1 (level 0)");
+            builder.Writeln("Item 2 (level 0)");
 
-        // Decrease the list level to promote the next paragraph back to the higher level.
-        builder.ListFormat.ListOutdent();
-        builder.Writeln("Item 3");
+            // Increase the list level – this creates a sub‑list.
+            builder.ListFormat.ListIndent();
+            builder.Writeln("Item 1 (level 1)");
+            builder.Writeln("Item 2 (level 1)");
 
-        // End the list formatting.
-        builder.ListFormat.RemoveNumbers();
+            // Decrease the list level – the next paragraphs return to the previous level.
+            builder.ListFormat.ListOutdent();
+            builder.Writeln("Item 3 (back to level 0)");
+            builder.Writeln("Item 4 (level 0)");
 
-        // Save the document to a file.
-        doc.Save("DecreaseIndent.docx");
+            // End the list.
+            builder.ListFormat.RemoveNumbers();
+
+            // Prepare an output folder.
+            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // Save the document.
+            string outputPath = Path.Combine(outputDir, "ListOutdentDemo.docx");
+            doc.Save(outputPath);
+        }
     }
 }

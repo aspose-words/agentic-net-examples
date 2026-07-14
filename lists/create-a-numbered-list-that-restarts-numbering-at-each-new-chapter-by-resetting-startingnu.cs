@@ -7,51 +7,51 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to insert content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Create a numbered list based on the default template.
         List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
-
-        // First chapter.
-        InsertChapter(builder, "Chapter 1");
-        // Reset the list numbering to start from 1 for this chapter.
-        numberedList.ListLevels[0].StartAt = 1;
-        // Apply the list to the builder and add some items.
         builder.ListFormat.List = numberedList;
+
+        // Helper to start a new chapter.
+        void StartChapter(string title)
+        {
+            // Reset the starting number of the first list level to 1.
+            numberedList.ListLevels[0].StartAt = 1;
+
+            // Write the chapter heading (not part of the list).
+            builder.ListFormat.RemoveNumbers(); // Ensure heading is not numbered as a list item.
+            builder.Writeln(title);
+
+            // Re‑apply the list for the chapter items.
+            builder.ListFormat.List = numberedList;
+        }
+
+        // Chapter 1
+        StartChapter("Chapter 1");
         builder.Writeln("Item 1");
         builder.Writeln("Item 2");
         builder.Writeln("Item 3");
-        // End the list for this chapter.
-        builder.ListFormat.RemoveNumbers();
 
-        // Insert a section break to start a new chapter on a new page.
+        // Insert a section break to separate chapters.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Second chapter.
-        InsertChapter(builder, "Chapter 2");
-        // Reset the list numbering again.
-        numberedList.ListLevels[0].StartAt = 1;
-        builder.ListFormat.List = numberedList;
+        // Chapter 2
+        StartChapter("Chapter 2");
         builder.Writeln("Item 1");
         builder.Writeln("Item 2");
         builder.Writeln("Item 3");
         builder.Writeln("Item 4");
+
+        // Ensure any remaining list formatting is cleared.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "NumberedListRestart.docx");
+        // Save the document.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string outputPath = Path.Combine(artifactsDir, "NumberedListRestartPerChapter.docx");
         doc.Save(outputPath);
-    }
-
-    // Helper method to insert a chapter heading.
-    private static void InsertChapter(DocumentBuilder builder, string title)
-    {
-        // Use Heading 1 style for chapter titles.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln(title);
-        // Return to normal style for list items.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
     }
 }

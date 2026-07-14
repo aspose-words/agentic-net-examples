@@ -10,27 +10,27 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document.
+        // Initialize DocumentBuilder which will be used to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Write an introductory paragraph.
-        builder.Writeln("Aspose.Words main advantages are:");
+        builder.Writeln("Features of Aspose.Words:");
 
-        // Start a default bulleted list.
+        // Start a default bulleted list and apply it to subsequent paragraphs.
         builder.ListFormat.ApplyBulletDefault();
 
-        // Add bullet items.
+        // Add list items.
         builder.Writeln("High performance");
-        builder.Writeln("Rich API");
-        builder.Writeln("Cross‑platform support");
-        builder.Writeln("Extensive documentation");
-        builder.Writeln("Easy to use");
+        builder.Writeln("Robust API");
+        builder.Writeln("Extensive format support");
+        builder.Writeln("Easy to integrate");
+        builder.Writeln("Comprehensive documentation");
 
-        // End the bulleted list.
+        // End the list.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "BulletedList.docx");
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BulletedList.docx");
         doc.Save(outputPath);
     }
 }
