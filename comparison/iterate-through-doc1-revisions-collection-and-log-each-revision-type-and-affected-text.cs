@@ -1,7 +1,7 @@
 using System;
 using Aspose.Words;
 
-public class Program
+public class RevisionLogger
 {
     public static void Main()
     {
@@ -9,26 +9,32 @@ public class Program
         Document original = new Document();
         DocumentBuilder builder1 = new DocumentBuilder(original);
         builder1.Writeln("Hello world.");
-        builder1.Writeln("This is the original document.");
+        builder1.Writeln("This line will be changed.");
+        builder1.Writeln("This line stays the same.");
 
-        // Create the revised document with different content.
+        // Create the revised document that contains differences.
         Document revised = new Document();
         DocumentBuilder builder2 = new DocumentBuilder(revised);
-        builder2.Writeln("Hello brave new world.");
-        builder2.Writeln("This is the edited document.");
+        builder2.Writeln("Hello world!");                     // Punctuation change.
+        builder2.Writeln("This line has been modified.");    // Text change.
+        builder2.Writeln("This line stays the same.");       // Unchanged.
 
-        // Compare the documents; revisions are added to the original document.
-        original.Compare(revised, "Author", DateTime.Now);
+        // Perform the comparison – revisions are added to the original document.
+        original.Compare(revised, "John Doe", DateTime.Now);
+
+        // Verify that revisions were generated.
+        if (original.Revisions.Count == 0)
+            throw new InvalidOperationException("Expected at least one revision after comparison.");
+
+        // Log each revision's type and the affected text.
+        foreach (Revision rev in original.Revisions)
+        {
+            // Some revision types (e.g., style changes) may not have a ParentNode.
+            string affectedText = rev.ParentNode != null ? rev.ParentNode.GetText().Trim() : "<no node>";
+            Console.WriteLine($"Revision type: {rev.RevisionType}, affected text: \"{affectedText}\"");
+        }
 
         // Save the compared document (optional artifact).
         original.Save("Compared.docx");
-
-        // Iterate through the revisions and log their type and affected text.
-        foreach (Revision rev in original.Revisions)
-        {
-            string type = rev.RevisionType.ToString();
-            string text = rev.ParentNode?.GetText().Trim() ?? string.Empty;
-            Console.WriteLine($"Revision type: {type}, affected text: \"{text}\"");
-        }
     }
 }

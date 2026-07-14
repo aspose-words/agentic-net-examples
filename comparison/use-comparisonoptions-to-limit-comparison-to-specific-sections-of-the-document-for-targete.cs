@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Comparing;
 
@@ -7,53 +6,78 @@ public class Program
 {
     public static void Main()
     {
-        // Create the original document with two sections.
-        var original = new Document();
-        var builder = new DocumentBuilder(original);
-        builder.Writeln("Original Section 1 - Paragraph 1.");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Original Section 2 - Paragraph 1.");
+        // Create the original document.
+        Document original = new Document();
+        DocumentBuilder builder = new DocumentBuilder(original);
 
-        // Create the revised document with changes in both sections.
-        var revised = new Document();
-        var revBuilder = new DocumentBuilder(revised);
-        revBuilder.Writeln("Edited Section 1 - Paragraph 1."); // changed text in section 1
-        revBuilder.InsertBreak(BreakType.SectionBreakNewPage);
-        revBuilder.Writeln("Edited Section 2 - Paragraph 1."); // changed text in section 2
+        // Body content.
+        builder.Writeln("Section 1 - Introduction.");
 
-        // Set up compare options (default options are sufficient for this example).
-        var compareOptions = new CompareOptions();
+        // Header.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Writeln("Original Header");
 
-        // Perform the comparison. Revisions will be added to the original document.
+        // Footer.
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Writeln("Original Footer");
+
+        // Return to the body to add more elements.
+        builder.MoveTo(original.FirstSection.Body.LastParagraph);
+
+        // Table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndTable();
+
+        // Comment.
+        Comment comment = new Comment(original, "John Doe", "JD", DateTime.Now);
+        comment.SetText("Original comment.");
+        builder.CurrentParagraph.AppendChild(comment);
+
+        // Save the original document (optional, for inspection).
+        original.Save("Original.docx");
+
+        // Clone the original and make targeted changes.
+        Document revised = (Document)original.Clone(true);
+
+        // Update body text.
+        Paragraph bodyParagraph = revised.FirstSection.Body.FirstParagraph;
+        if (bodyParagraph.Runs.Count > 0)
+            bodyParagraph.Runs[0].Text = "Section 1 - Updated introduction.";
+
+        // Update header text.
+        HeaderFooter revisedHeader = revised.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
+        if (revisedHeader.FirstParagraph?.Runs.Count > 0)
+            revisedHeader.FirstParagraph.Runs[0].Text = "Revised Header";
+
+        // Save the revised document (optional, for inspection).
+        revised.Save("Revised.docx");
+
+        // Configure compare options to ignore headers, footers, tables, and comments.
+        CompareOptions compareOptions = new CompareOptions
+        {
+            IgnoreHeadersAndFooters = true,
+            IgnoreTables = true,
+            IgnoreComments = true,
+            Target = ComparisonTargetType.New // Compare against the revised document as the target.
+        };
+
+        // Perform the comparison.
         original.Compare(revised, "Comparer", DateTime.Now, compareOptions);
 
-        // Save the compared document.
-        string outputDir = Directory.GetCurrentDirectory();
-        string comparedPath = Path.Combine(outputDir, "compared.docx");
-        original.Save(comparedPath);
+        // Save the comparison result.
+        original.Save("ComparisonResult.docx");
 
-        // Analyze revisions only in the second section (index 1).
-        int targetSectionIndex = 1; // zero‑based index: 0 = first section, 1 = second section
-        int revisionsInTargetSection = 0;
-
+        // Output a summary of revisions that were detected (should reflect only body changes).
+        Console.WriteLine($"Total revisions after applying CompareOptions: {original.Revisions.Count}");
         foreach (Revision rev in original.Revisions)
         {
-            // Guard against null ParentNode (e.g., style revisions).
-            if (rev.ParentNode == null) continue;
-
-            // Find the section that contains the revision's parent node.
-            var section = rev.ParentNode.GetAncestor(NodeType.Section) as Section;
-            if (section == null) continue;
-
-            // Determine the section's index within the document.
-            int sectionIndex = original.Sections.IndexOf(section);
-            if (sectionIndex == targetSectionIndex)
-                revisionsInTargetSection++;
+            string parentInfo = rev.ParentNode?.ParentNode?.NodeType.ToString() ?? "N/A";
+            string text = rev.ParentNode?.GetText().Trim() ?? string.Empty;
+            Console.WriteLine($"Revision Type: {rev.RevisionType}, Parent Node Type: {parentInfo}, Text: \"{text}\"");
         }
-
-        // Write a simple report about the filtered revisions.
-        string reportPath = Path.Combine(outputDir, "revision_report.txt");
-        string reportContent = $"Revisions found in section {targetSectionIndex + 1}: {revisionsInTargetSection}";
-        File.WriteAllText(reportPath, reportContent);
     }
 }

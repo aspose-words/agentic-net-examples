@@ -1,42 +1,51 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create the original document with bold formatting.
+        // Create the original document with two separate runs.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Font.Bold = true;
-        builderOriginal.Writeln("Hello world.");
+        builderOriginal.Write("Hello ");
+        builderOriginal.Write("world.");
+        builderOriginal.Writeln(); // End of paragraph.
 
-        // Create the revised document with a content insertion and different formatting.
-        Document revised = new Document();
+        // Clone the original to create a revised version.
+        Document revised = (Document)original.Clone(true);
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        // Insert an extra word to create a content change.
-        builderRevised.Writeln("Hello brave world.");
-        // Ensure the text is not bold to create a formatting change.
-        builderRevised.Font.Bold = false;
+        Paragraph para = revised.FirstSection.Body.FirstParagraph;
 
-        // Compare the documents. The original document will receive revisions.
+        // 1. Apply a formatting change (make the first run bold) – creates a FormatChange revision.
+        Run firstRun = para.Runs[0];
+        firstRun.Font.Bold = true;
+
+        // 2. Delete the second run ("world.") – creates a Deletion revision.
+        Run secondRun = para.Runs[1];
+        secondRun.Remove();
+
+        // 3. Insert a new paragraph – creates an Insertion revision.
+        builderRevised.Writeln("Inserted paragraph.");
+
+        // Compare the original document with the revised one.
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Accept only formatting revisions, reject all other types.
-        // Copy the revisions to a list to avoid modifying the collection while iterating.
-        List<Revision> revisions = new List<Revision>(original.Revisions);
+        // Accept only formatting revisions, reject all other content changes.
+        Revision[] revisions = original.Revisions.ToArray(); // Copy to avoid collection modification issues.
         foreach (Revision rev in revisions)
         {
             if (rev.RevisionType == RevisionType.FormatChange)
-                rev.Accept();
+                rev.Accept();   // Keep formatting changes.
             else
-                rev.Reject();
+                rev.Reject();   // Discard insertions, deletions, etc.
         }
 
+        // Verify that no revisions remain after processing.
+        if (original.Revisions.Count != 0)
+            throw new InvalidOperationException("There should be no remaining revisions.");
+
         // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
-        original.Save(outputPath);
+        original.Save("Result.docx");
     }
 }

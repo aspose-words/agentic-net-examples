@@ -1,61 +1,64 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class TableCellFormattingComparison
+public class DetectTableCellFormattingChanges
 {
     public static void Main()
     {
         // Create the original document with a simple 2x2 table.
         Document original = new Document();
-        DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.StartTable();
-        builderOriginal.InsertCell();
-        builderOriginal.Write("Cell 1,1");
-        builderOriginal.InsertCell();
-        builderOriginal.Write("Cell 1,2");
-        builderOriginal.EndRow();
-        builderOriginal.InsertCell();
-        builderOriginal.Write("Cell 2,1");
-        builderOriginal.InsertCell();
-        builderOriginal.Write("Cell 2,2");
-        builderOriginal.EndTable();
+        DocumentBuilder builder = new DocumentBuilder(original);
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("A1");
+        builder.InsertCell();
+        builder.Write("A2");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("B1");
+        builder.InsertCell();
+        builder.Write("B2");
+        builder.EndTable();
 
         // Save the original document (optional, for inspection).
-        original.Save("Original.docx");
+        string originalPath = "Original.docx";
+        original.Save(originalPath);
 
-        // Clone the original to create the revised version.
+        // Clone the original to create a revised version.
         Document revised = (Document)original.Clone(true);
-        DocumentBuilder builderRevised = new DocumentBuilder(revised);
 
-        // Change the background shading of the cell at row 2, column 1.
+        // Change the formatting of the cell at row 1, column 1 (zero‑based indices).
         Table table = revised.FirstSection.Body.Tables[0];
-        Row secondRow = table.Rows[1];
-        Cell targetCell = secondRow.Cells[0];
-        targetCell.CellFormat.Shading.BackgroundPatternColor = System.Drawing.Color.Yellow;
+        Cell targetCell = table.Rows[1].Cells[1];
+        targetCell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
 
         // Save the revised document (optional, for inspection).
-        revised.Save("Revised.docx");
+        string revisedPath = "Revised.docx";
+        revised.Save(revisedPath);
 
-        // Compare the original document with the revised one.
+        // Compare the documents to generate revisions.
         original.Compare(revised, "Comparer", DateTime.Now);
 
-        // Iterate over revisions to find format changes in table cells.
+        // Iterate through revisions and log cell format changes with coordinates.
         foreach (Revision rev in original.Revisions)
         {
-            if (rev.RevisionType == RevisionType.FormatChange && rev.ParentNode is Cell cell)
+            if (rev.RevisionType == RevisionType.FormatChange && rev.ParentNode.NodeType == NodeType.Cell)
             {
-                // Determine the row index (1‑based).
-                int rowIndex = table.Rows.IndexOf(cell.ParentRow) + 1;
+                Cell changedCell = (Cell)rev.ParentNode;
+                Row parentRow = changedCell.ParentRow;
+                Table parentTable = parentRow?.ParentTable;
 
-                // Determine the column index (1‑based) within its row.
-                int columnIndex = cell.ParentRow.Cells.IndexOf(cell) + 1;
+                int rowIndex = parentTable?.Rows.IndexOf(parentRow) ?? -1;
+                int columnIndex = parentRow?.Cells.IndexOf(changedCell) ?? -1;
 
-                Console.WriteLine($"Format change detected in cell at Row {rowIndex}, Column {columnIndex}.");
+                Console.WriteLine($"Cell format changed at row {rowIndex}, column {columnIndex}.");
             }
         }
 
         // Save the document that now contains the revisions.
-        original.Save("ComparisonResult.docx");
+        string resultPath = "ComparisonResult.docx";
+        original.Save(resultPath);
     }
 }

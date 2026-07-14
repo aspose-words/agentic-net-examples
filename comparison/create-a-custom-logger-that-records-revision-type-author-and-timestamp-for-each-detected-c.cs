@@ -2,60 +2,47 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class CustomRevisionLogger
+public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for all artifacts.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "ComparisonArtifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create the original document.
+        // Create the original document with some content.
         Document original = new Document();
         DocumentBuilder builderOriginal = new DocumentBuilder(original);
-        builderOriginal.Writeln("Hello world!");
-        builderOriginal.Writeln("This line will stay unchanged.");
+        builderOriginal.Writeln("Hello world.");
+        builderOriginal.Writeln("This is the original paragraph.");
 
-        // Save the original (optional, for inspection).
-        string originalPath = Path.Combine(artifactsDir, "original.docx");
-        original.Save(originalPath);
-
-        // Create the revised document with intentional differences.
+        // Create the revised document with differences.
         Document revised = new Document();
         DocumentBuilder builderRevised = new DocumentBuilder(revised);
-        builderRevised.Writeln("Hello Aspose.Words!"); // changed text
-        builderRevised.Writeln("This line will stay unchanged."); // same line
-        builderRevised.Writeln("An extra line was added."); // new line
+        builderRevised.Writeln("Hello world!"); // punctuation change
+        builderRevised.Writeln("This is the revised paragraph."); // text change
 
-        // Save the revised (optional, for inspection).
-        string revisedPath = Path.Combine(artifactsDir, "revised.docx");
-        revised.Save(revisedPath);
+        // Compare the documents. Revisions will be added to the original document.
+        string comparisonAuthor = "Comparer";
+        DateTime comparisonDate = DateTime.Now;
+        original.Compare(revised, comparisonAuthor, comparisonDate);
 
-        // Perform comparison: original will receive revisions.
-        string author = "CustomLogger";
-        DateTime compareTime = DateTime.Now;
-        original.Compare(revised, author, compareTime);
-
-        // Verify that revisions were generated.
+        // Ensure that revisions were detected.
         if (original.Revisions.Count == 0)
-            throw new InvalidOperationException("No revisions were detected after comparison.");
-
-        // Prepare a log for revisions.
-        string logPath = Path.Combine(artifactsDir, "revision_log.txt");
-        using (StreamWriter logWriter = new StreamWriter(logPath, false))
         {
-            logWriter.WriteLine("RevisionType\tAuthor\tTimestamp");
+            throw new InvalidOperationException("No revisions were detected after comparison.");
+        }
+
+        // Prepare a log file to record revision details.
+        string logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "revision_log.txt");
+        using (StreamWriter logger = new StreamWriter(logFilePath, false))
+        {
+            logger.WriteLine("RevisionType\tAuthor\tTimestamp");
             foreach (Revision rev in original.Revisions)
             {
-                // Ensure properties are not null (they are guaranteed by Aspose.Words).
-                string line = $"{rev.RevisionType}\t{rev.Author}\t{rev.DateTime:u}";
-                logWriter.WriteLine(line);
-                Console.WriteLine(line);
+                // Log revision type, author, and timestamp in ISO 8601 format.
+                logger.WriteLine($"{rev.RevisionType}\t{rev.Author}\t{rev.DateTime:O}");
             }
         }
 
-        // Save the compared document showing revisions.
-        string comparedPath = Path.Combine(artifactsDir, "compared.docx");
-        original.Save(comparedPath);
+        // Save the compared document for reference.
+        string comparedDocPath = Path.Combine(Directory.GetCurrentDirectory(), "compared.docx");
+        original.Save(comparedDocPath);
     }
 }

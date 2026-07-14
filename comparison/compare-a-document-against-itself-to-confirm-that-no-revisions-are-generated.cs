@@ -1,29 +1,30 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Comparing;
 
-public class Program
+public class SelfComparisonExample
 {
     public static void Main()
     {
-        // Create a new blank document and add some content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document used for self‑comparison.");
+        // Create a simple document with deterministic content.
+        Document original = new Document();
+        DocumentBuilder builder = new DocumentBuilder(original);
+        builder.Writeln("This is a sample paragraph used for self‑comparison.");
 
         // Compare the document with itself. No revisions should be generated.
-        doc.Compare(doc, "SelfComparer", DateTime.Now);
+        original.Compare(original, "SelfComparer", DateTime.Now);
 
-        // Verify that the comparison produced zero revisions.
-        if (doc.Revisions.Count != 0)
+        // Verify that the revisions collection is empty.
+        if (original.Revisions.Count != 0)
             throw new InvalidOperationException(
-                $"Expected zero revisions after self‑comparison, but found {doc.Revisions.Count}.");
+                $"Expected zero revisions, but found {original.Revisions.Count}.");
 
-        // Save the (unchanged) document to the current directory.
-        string outputPath = "SelfCompared.docx";
-        doc.Save(outputPath);
+        // Save the (unchanged) document to demonstrate that the operation completed.
+        string outputPath = "SelfComparisonResult.docx";
+        original.Save(outputPath);
 
-        // Optional: write a short confirmation to the console.
-        Console.WriteLine($"Self‑comparison completed. Revisions count: {doc.Revisions.Count}");
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Optional: write a brief confirmation to the console.
+        Console.WriteLine($"Self‑comparison completed. Revisions count: {original.Revisions.Count}");
+        Console.WriteLine($"Result saved to: {outputPath}");
     }
 }
