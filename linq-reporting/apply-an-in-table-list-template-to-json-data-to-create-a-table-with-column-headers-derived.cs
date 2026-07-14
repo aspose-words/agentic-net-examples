@@ -1,75 +1,78 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables; // Required for Table type
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for older .NET versions.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // ---------- Step 1: Create sample JSON data ----------
-        string json = @"
-[
-    { ""Name"": ""Alice"", ""Age"": 30, ""City"": ""New York"" },
-    { ""Name"": ""Bob"",   ""Age"": 25, ""City"": ""London"" },
-    { ""Name"": ""Charlie"", ""Age"": 28, ""City"": ""Paris"" }
+        // -----------------------------------------------------------------
+        // 1. Create sample JSON data.
+        // -----------------------------------------------------------------
+        string jsonPath = "sampleData.json";
+        string jsonContent = @"[
+  { ""Name"": ""Alice"", ""Age"": 30 },
+  { ""Name"": ""Bob"",   ""Age"": 25 },
+  { ""Name"": ""Carol"", ""Age"": 28 }
 ]";
-        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "data.json");
-        File.WriteAllText(jsonPath, json);
+        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
 
-        // ---------- Step 2: Build the template document ----------
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        // -----------------------------------------------------------------
+        // 2. Build the template document programmatically.
+        // -----------------------------------------------------------------
+        string templatePath = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Begin the foreach block that iterates over the JSON array.
+        // Begin the foreach loop – it will repeat the whole table for each item.
         builder.Writeln("<<foreach [item in data]>>");
 
-        // Create a table. Header row is static (derived from the JSON keys).
+        // Start the table.
         Table table = builder.StartTable();
 
-        // Header cells.
+        // Header row – column names.
         builder.InsertCell();
         builder.Writeln("Name");
         builder.InsertCell();
         builder.Writeln("Age");
-        builder.InsertCell();
-        builder.Writeln("City");
         builder.EndRow();
 
-        // Data row – values are filled from the JSON objects.
+        // Data row – values will be filled from JSON.
         builder.InsertCell();
         builder.Writeln("<<[item.Name]>>");
         builder.InsertCell();
         builder.Writeln("<<[item.Age]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.City]>>");
         builder.EndRow();
 
-        // Close the table and the foreach block.
+        // Finish the table.
         builder.EndTable();
+
+        // End the foreach loop.
         builder.Writeln("<</foreach>>");
 
         // Save the template.
         templateDoc.Save(templatePath);
 
-        // ---------- Step 3: Load the template and build the report ----------
+        // -----------------------------------------------------------------
+        // 3. Load the template and generate the report.
+        // -----------------------------------------------------------------
         Document reportDoc = new Document(templatePath);
 
-        // Create a JSON data source from the file.
+        // Create a JSON data source.
         JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
 
-        // Configure and run the reporting engine.
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // explicit assignment as required.
         engine.BuildReport(reportDoc, jsonDataSource, "data");
 
-        // ---------- Step 4: Save the generated report ----------
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
+        // Save the final report.
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

@@ -1,18 +1,29 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables; // Required for Table type
+using Aspose.Words.Tables;   // Needed for the Table class
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document and a builder to construct the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+        string reportPath   = Path.Combine(Environment.CurrentDirectory, "Report.docx");
 
-        // Begin a foreach loop over the Items collection.
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Title.
+        builder.Writeln("Items Report");
+        builder.Writeln();
+
+        // Begin foreach loop over Items collection.
         builder.Writeln("<<foreach [item in Items]>>");
 
         // Create a table with a header row.
@@ -23,49 +34,61 @@ public class Program
         builder.Writeln("Name");
         builder.EndRow();
 
-        // Data row with conditional background color (yellow for even indices).
+        // Data row – apply yellow background when the index is even.
         builder.InsertCell();
         builder.Writeln(
-            "<<if [item.Index % 2 == 0]>><<backColor [\"Yellow\"]>><<[item.Index]>> <</backColor>><</if>>" +
-            "<<if [item.Index % 2 != 0]>><<[item.Index]>> <</if>>");
+            "<<if [item.Index % 2 == 0]>>" +
+            "<<backColor [\"Yellow\"]>><<[item.Index]>> <</backColor>><</if>>" +
+            "<<if [item.Index % 2 != 0]>> <<[item.Index]>> <</if>>");
         builder.InsertCell();
         builder.Writeln(
-            "<<if [item.Index % 2 == 0]>><<backColor [\"Yellow\"]>><<[item.Name]>> <</backColor>><</if>>" +
-            "<<if [item.Index % 2 != 0]>><<[item.Name]>> <</if>>");
+            "<<if [item.Index % 2 == 0]>>" +
+            "<<backColor [\"Yellow\"]>><<[item.Name]>> <</backColor>><</if>>" +
+            "<<if [item.Index % 2 != 0]>> <<[item.Name]>> <</if>>");
         builder.EndRow();
 
-        // Finish the table and the foreach block.
+        // End of table and foreach block.
         builder.EndTable();
         builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
         // Prepare sample data.
         ReportModel model = new ReportModel
         {
             Items = new List<Item>
             {
-                new Item { Index = 1, Name = "Alice" },
-                new Item { Index = 2, Name = "Bob" },
-                new Item { Index = 3, Name = "Charlie" },
-                new Item { Index = 4, Name = "Diana" }
+                new Item { Index = 1, Name = "Alpha" },
+                new Item { Index = 2, Name = "Beta" },
+                new Item { Index = 3, Name = "Gamma" },
+                new Item { Index = 4, Name = "Delta" },
+                new Item { Index = 5, Name = "Epsilon" }
             }
         };
 
         // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated document.
-        doc.Save("Report.docx");
+        // Save the generated report.
+        reportDoc.Save(reportPath);
     }
 }
 
-// Root data model.
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
 }
 
-// Item displayed in each table row.
 public class Item
 {
     public int Index { get; set; }

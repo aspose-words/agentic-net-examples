@@ -1,45 +1,74 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Person
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public int Age { get; set; }
-    public Person(string name, int age)
-    {
-        Name = name;
-        Age = age;
-    }
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data – a list of at least four persons.
-        List<Person> persons = new()
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        var templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // The tag uses ElementAt(3) to fetch the fourth element (zero‑based index).
+        builder.Writeln("Fourth person: <<[model.Persons.ElementAt(3).Name]>> Age: <<[model.Persons.ElementAt(3).Age]>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template document.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model with at least four persons.
+        // -----------------------------------------------------------------
+        var model = new ReportModel
         {
-            new Person("Alice", 30),
-            new Person("Bob", 25),
-            new Person("Charlie", 28),
-            new Person("Diana", 32),
-            new Person("Ethan", 27)
+            Persons = new List<Person>
+            {
+                new Person { Name = "Alice",   Age = 30 },
+                new Person { Name = "Bob",     Age = 25 },
+                new Person { Name = "Charlie", Age = 28 },
+                new Person { Name = "Diana",   Age = 22 }, // Fourth element (index 3)
+                new Person { Name = "Eve",     Age = 35 }
+            }
         };
 
-        // Create a template document programmatically.
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
-        builder.Writeln("Fourth person in the list: <<[persons.ElementAt(3).Name]>>");
-        builder.Writeln("Age: <<[persons.ElementAt(3).Age]>>");
+        // -----------------------------------------------------------------
+        // 4. Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, persons, "persons");
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        var outputPath = "Report.docx";
+        doc.Save(outputPath);
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

@@ -8,86 +8,118 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a large data source.
-        ReportModel model = new()
-        {
-            Items = GenerateItems(5000)
-        };
+        // Paths for the template and generated reports.
+        const string templatePath = "template.docx";
+        const string reportWithOptionPath = "Report_With_RemoveEmptyParagraphs.docx";
+        const string reportWithoutOptionPath = "Report_Without_RemoveEmptyParagraphs.docx";
 
-        // Create the LINQ Reporting template programmatically.
-        const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // -----------------------------------------------------------------
+        // 1. Create a LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Benchmark without RemoveEmptyParagraphs.
-        BenchmarkReport(templatePath, model, ReportBuildOptions.None, "Report_WithoutRemove.docx");
-
-        // Benchmark with RemoveEmptyParagraphs enabled.
-        BenchmarkReport(templatePath, model, ReportBuildOptions.RemoveEmptyParagraphs, "Report_WithRemove.docx");
-    }
-
-    // Generates a list of items where half have an empty Description.
-    private static List<Item> GenerateItems(int count)
-    {
-        var list = new List<Item>(count);
-        for (int i = 0; i < count; i++)
-        {
-            list.Add(new Item
-            {
-                Name = $"Item {i + 1}",
-                Description = i % 2 == 0 ? $"Description {i + 1}" : string.Empty
-            });
-        }
-        return list;
-    }
-
-    // Creates a simple template that uses LINQ Reporting tags.
-    private static void CreateTemplate(string fileName)
-    {
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
-
+        // Simple header.
+        builder.Writeln("=== LINQ Reporting Benchmark ===");
         // Begin a foreach loop over Items.
         builder.Writeln("<<foreach [item in Items]>>");
-        // Write the Name field.
-        builder.Writeln("Name: <<[item.Name]>>");
-        // Write the Description field – may be empty.
-        builder.Writeln("Description: <<[item.Description]>>");
-        // End the foreach loop.
+        // Each iteration writes two fields; the second field may be empty for some items.
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Text]>>");
+        // End the loop.
         builder.Writeln("<</foreach>>");
+        // Footer.
+        builder.Writeln("=== End of Report ===");
 
-        doc.Save(fileName);
+        // Save the template to disk so it can be re‑loaded for each benchmark run.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Prepare a large data source.
+        // -----------------------------------------------------------------
+        var model = new ReportModel
+        {
+            Items = GenerateItems(5000) // Adjust the count for desired size.
+        };
+
+        // -----------------------------------------------------------------
+        // 3. Benchmark with RemoveEmptyParagraphs enabled.
+        // -----------------------------------------------------------------
+        var timeWithOption = BenchmarkReportGeneration(
+            templatePath,
+            model,
+            ReportBuildOptions.RemoveEmptyParagraphs,
+            reportWithOptionPath);
+
+        // -----------------------------------------------------------------
+        // 4. Benchmark with RemoveEmptyParagraphs disabled.
+        // -----------------------------------------------------------------
+        var timeWithoutOption = BenchmarkReportGeneration(
+            templatePath,
+            model,
+            ReportBuildOptions.None,
+            reportWithoutOptionPath);
+
+        // -----------------------------------------------------------------
+        // 5. Output the results.
+        // -----------------------------------------------------------------
+        Console.WriteLine($"Report generation with RemoveEmptyParagraphs: {timeWithOption.TotalMilliseconds} ms");
+        Console.WriteLine($"Report generation without RemoveEmptyParagraphs: {timeWithoutOption.TotalMilliseconds} ms");
     }
 
-    // Runs the report generation, measures elapsed time, and saves the result.
-    private static void BenchmarkReport(string templatePath, ReportModel model, ReportBuildOptions options, string outputPath)
+    // Generates a list of items; every 10th item has an empty Text to trigger empty paragraph removal.
+    private static List<Item> GenerateItems(int count)
+    {
+        var items = new List<Item>(count);
+        for (int i = 1; i <= count; i++)
+        {
+            items.Add(new Item
+            {
+                Index = i,
+                Text = i % 10 == 0 ? string.Empty : $"Sample text for item {i}"
+            });
+        }
+        return items;
+    }
+
+    // Runs the report generation once and returns the elapsed time.
+    private static TimeSpan BenchmarkReportGeneration(
+        string templatePath,
+        ReportModel model,
+        ReportBuildOptions options,
+        string outputPath)
     {
         // Load a fresh copy of the template for each run.
-        Document doc = new(templatePath);
+        Document doc = new Document(templatePath);
 
-        ReportingEngine engine = new()
+        // Configure the reporting engine.
+        ReportingEngine engine = new ReportingEngine
         {
             Options = options
         };
 
+        // Measure the build time.
         Stopwatch sw = Stopwatch.StartNew();
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(doc, model, "model");
+        bool success = engine.BuildReport(doc, model, "model");
         sw.Stop();
 
+        // Save the generated report (optional, but ensures the document is fully built).
         doc.Save(outputPath);
-        Console.WriteLine($"{options}: Elapsed = {sw.ElapsedMilliseconds} ms, Output = {outputPath}");
+
+        // The success flag is only meaningful when InlineErrorMessages is set; we ignore it here.
+        return sw.Elapsed;
     }
 }
 
-// Root data model.
+// ---------------------------------------------------------------------
+// Data model classes – must be public with public properties.
+// ---------------------------------------------------------------------
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
 }
 
-// Item used in the report.
 public class Item
 {
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+    public int Index { get; set; }
+    public string Text { get; set; } = string.Empty;
 }

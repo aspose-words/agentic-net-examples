@@ -1,8 +1,6 @@
 using System;
 using System.Data;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -10,54 +8,53 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words features).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Prepare folders.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Tags that reference members which do not exist in the data source.
+        builder.Writeln("Customer name: <<[MissingCustomer.Name]>>");
+        builder.Writeln("<<foreach [item in MissingCollection]>>Item: <<[item.Id]>> <</foreach>>");
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document with tags that reference missing members.
-        // -----------------------------------------------------------------
-        DocumentBuilder builder = new DocumentBuilder();
-        builder.Writeln("Customer Name: <<[customer.Name]>>");
-        builder.Writeln("<<foreach [order in orders]>>Order ID: <<[order.Id]>> <</foreach>>");
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        builder.Document.Save(templatePath);
+        // Configure the reporting engine to allow missing members.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.AllowMissingMembers,
+            MissingMemberMessage = "MISSING"
+        };
 
-        // -----------------------------------------------------------------
-        // 2. Load the template back for reporting.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
+        // Build the report using an empty DataSet as the data source.
+        bool success = engine.BuildReport(template, new DataSet(), "");
 
-        // -----------------------------------------------------------------
-        // 3. Configure the ReportingEngine to allow missing members.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
-        engine.MissingMemberMessage = "MISSING_MEMBER";
+        // Log each occurrence of the missing member placeholder.
+        LogMissingMembers(template, engine.MissingMemberMessage);
 
-        // Use an empty DataSet as the data source – it contains no members referenced in the template.
-        DataSet emptyData = new DataSet();
+        // Save the generated report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        template.Save(outputPath);
+    }
 
-        // Build the report. The root name is empty because we do not reference the data source object itself.
-        engine.BuildReport(doc, emptyData, "");
+    private static void LogMissingMembers(Document doc, string placeholder)
+    {
+        // Retrieve the full text of the document.
+        string fullText = doc.GetText();
 
-        // -----------------------------------------------------------------
-        // 4. Log each occurrence of the missing member placeholder.
-        // -----------------------------------------------------------------
-        string documentText = doc.GetText();
-        int missingCount = Regex.Matches(documentText, Regex.Escape(engine.MissingMemberMessage)).Count;
+        // Split into lines for easier processing.
+        string[] lines = fullText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
-        string logMessage = $"Missing member occurrences: {missingCount}";
-        Console.WriteLine(logMessage);
+        int occurrence = 0;
+        foreach (string line in lines)
+        {
+            if (line.Contains(placeholder))
+            {
+                occurrence++;
+                Console.WriteLine($"Missing member occurrence {occurrence}: \"{line.Trim()}\"");
+            }
+        }
 
-        string logPath = Path.Combine(outputDir, "missing_log.txt");
-        File.WriteAllText(logPath, logMessage);
-
-        // Save the final report.
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        doc.Save(resultPath);
+        if (occurrence == 0)
+        {
+            Console.WriteLine("No missing members were found in the generated report.");
+        }
     }
 }

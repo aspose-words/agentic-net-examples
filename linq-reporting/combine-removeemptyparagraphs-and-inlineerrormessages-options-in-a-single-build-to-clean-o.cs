@@ -2,59 +2,59 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model used by the template.
-    public class ReportModel
+    public static void Main()
     {
-        // Initialize to avoid nullable warnings.
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-        // Note: No property named "Missing" – this will trigger an inline error.
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare a simple data model.
+        var model = new ReportModel
         {
-            // Create a new blank document and a builder to insert LINQ Reporting tags.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            Name = "John Doe",
+            Empty = string.Empty // This will produce an empty paragraph.
+            // Note: No property named NonExistent – accessing it will cause an error.
+        };
 
-            // Title.
-            builder.Writeln("Customer Report");
-            builder.Writeln();
+        // Create a template document programmatically.
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Valid tag – will be replaced with the Name value.
-            builder.Writeln("Name: <<[model.Name]>>");
+        // Normal field.
+        builder.Writeln("Customer: <<[model.Name]>>");
+        // This tag references a missing member and will generate an inline error message.
+        builder.Writeln("Missing: <<[model.NonExistent]>>");
+        // This tag resolves to an empty string; the paragraph should be removed.
+        builder.Writeln("Empty: <<[model.Empty]>>");
+        // A paragraph that contains only an empty tag; it should be removed entirely.
+        builder.Writeln("<<[model.Empty]>>");
 
-            // Invalid tag – property does not exist, will be shown as an inline error message.
-            builder.Writeln("Missing property: <<[model.Missing]>>");
+        // Save the template to disk.
+        doc.Save(templatePath);
 
-            // Conditional tag – will be empty because the condition is false (Age = 25).
-            builder.Writeln("<<if [model.Age > 30]>>");
-            builder.Writeln("Age over 30: <<[model.Age]>>");
-            builder.Writeln("<</if>>");
+        // Load the template back for reporting.
+        var loadedDoc = new Document(templatePath);
 
-            // Build the data source.
-            ReportModel model = new ReportModel
-            {
-                Name = "John Doe",
-                Age = 25
-            };
+        // Configure the reporting engine with both options.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs | ReportBuildOptions.InlineErrorMessages;
 
-            // Configure the reporting engine with both options.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.RemoveEmptyParagraphs | ReportBuildOptions.InlineErrorMessages;
+        // Build the report. The returned flag indicates success when InlineErrorMessages is set.
+        bool success = engine.BuildReport(loadedDoc, model, "model");
 
-            // Build the report. The returned flag indicates whether parsing succeeded (relevant for InlineErrorMessages).
-            bool success = engine.BuildReport(doc, model, "model");
+        // Save the resulting document.
+        var outputPath = "output.docx";
+        loadedDoc.Save(outputPath);
 
-            // Output the success flag to the console (optional, does not require user interaction).
-            Console.WriteLine($"Report build success: {success}");
-
-            // Save the generated document.
-            doc.Save("ReportOutput.docx");
-        }
+        // Output simple status to the console (no user interaction required).
+        Console.WriteLine($"Report build success: {success}");
+        Console.WriteLine($"Output saved to: {outputPath}");
     }
+}
+
+// Data model used by the template.
+public class ReportModel
+{
+    // Initialized to avoid nullable warnings.
+    public string Name { get; set; } = string.Empty;
+    public string Empty { get; set; } = string.Empty;
 }

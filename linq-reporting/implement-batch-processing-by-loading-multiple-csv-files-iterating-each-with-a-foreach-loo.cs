@@ -7,8 +7,8 @@ using Aspose.Words.Reporting;
 
 public class Person
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
 }
 
 public class ReportModel
@@ -20,53 +20,74 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for possible CSV encodings.
+        // Ensure code page support for possible CSV encodings.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample CSV files.
+        // Prepare a temporary folder for sample CSV files.
         string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "Data");
         Directory.CreateDirectory(dataFolder);
 
-        string csv1 = Path.Combine(dataFolder, "data1.csv");
-        string csv2 = Path.Combine(dataFolder, "data2.csv");
-
-        File.WriteAllText(csv1, "Id,Name\n1,Alpha\n2,Beta");
-        File.WriteAllText(csv2, "Id,Name\n3,Gamma\n4,Delta");
-
-        // Load and merge CSV data.
-        ReportModel model = new ReportModel();
-        foreach (string csvPath in new[] { csv1, csv2 })
+        // Create two sample CSV files.
+        CreateCsvFile(Path.Combine(dataFolder, "people1.csv"), new[]
         {
-            foreach (string line in File.ReadAllLines(csvPath, Encoding.UTF8))
+            "Name,Age",
+            "Alice,30",
+            "Bob,25"
+        });
+
+        CreateCsvFile(Path.Combine(dataFolder, "people2.csv"), new[]
+        {
+            "Name,Age",
+            "Charlie,35",
+            "Diana,28"
+        });
+
+        // Load all CSV files from the folder and merge their contents.
+        ReportModel model = new();
+        foreach (string csvPath in Directory.GetFiles(dataFolder, "*.csv"))
+        {
+            foreach (string line in File.ReadAllLines(csvPath))
             {
-                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("Id")) continue; // Skip header.
+                // Skip header line.
+                if (line.StartsWith("Name", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
                 string[] parts = line.Split(',');
-                if (parts.Length != 2) continue;
-                if (int.TryParse(parts[0], out int id))
+                if (parts.Length != 2)
+                    continue;
+
+                if (int.TryParse(parts[1], out int age))
                 {
-                    model.Persons.Add(new Person { Id = id, Name = parts[1] });
+                    model.Persons.Add(new Person
+                    {
+                        Name = parts[0],
+                        Age = age
+                    });
                 }
             }
         }
 
-        // Create the template document with LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Build a template document with LINQ Reporting tags.
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
 
-        builder.Writeln("Merged CSV Report");
+        builder.Writeln("Report of Persons:");
         builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("Id: <<[person.Id]>>, Name: <<[person.Name]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        // Generate the report.
+        ReportingEngine engine = new();
+        engine.Options = ReportBuildOptions.None;
         engine.BuildReport(doc, model, "model");
 
-        // Save the result.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputFolder);
-        string outputPath = Path.Combine(outputFolder, "MergedReport.docx");
+        // Save the final document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedReport.docx");
         doc.Save(outputPath);
+    }
+
+    private static void CreateCsvFile(string path, IEnumerable<string> lines)
+    {
+        File.WriteAllLines(path, lines, Encoding.UTF8);
     }
 }

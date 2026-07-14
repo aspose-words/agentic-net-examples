@@ -6,103 +6,99 @@ using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Product
+public class Item
 {
     public string Category { get; set; } = "";
-    public string Name { get; set; } = "";
-    public double Price { get; set; }
+    public decimal Amount { get; set; }
 }
 
 public class CategorySummary
 {
     public string Category { get; set; } = "";
-    public double Total { get; set; }
-    public List<Product> Items { get; set; } = new();
+    public decimal Total { get; set; }
 }
 
-public class ReportModel
+public class ReportData
 {
-    public List<CategorySummary> Categories { get; set; } = new();
+    public List<CategorySummary> Summaries { get; set; } = new();
 }
 
-public class Program
+class Program
 {
-    public static void Main()
+    static void Main()
     {
-        // Prepare sample XML data.
-        string xmlPath = "sample.xml";
-        File.WriteAllText(xmlPath,
-@"<Products>
-    <Product>
-        <Category>Fruit</Category>
-        <Name>Apple</Name>
-        <Price>1.2</Price>
-    </Product>
-    <Product>
-        <Category>Fruit</Category>
-        <Name>Banana</Name>
-        <Price>0.8</Price>
-    </Product>
-    <Product>
-        <Category>Vegetable</Category>
-        <Name>Carrot</Name>
-        <Price>0.5</Price>
-    </Product>
-    <Product>
-        <Category>Vegetable</Category>
-        <Name>Broccoli</Name>
-        <Price>1.1</Price>
-    </Product>
-</Products>");
+        // Ensure Aspose.Words license is not required for this example.
+        // 1. Create sample XML data.
+        const string xmlFile = "sample.xml";
+        File.WriteAllText(xmlFile,
+@"<Items>
+    <Item>
+        <Category>Food</Category>
+        <Amount>10.5</Amount>
+    </Item>
+    <Item>
+        <Category>Food</Category>
+        <Amount>20</Amount>
+    </Item>
+    <Item>
+        <Category>Books</Category>
+        <Amount>15</Amount>
+    </Item>
+    <Item>
+        <Category>Books</Category>
+        <Amount>5</Amount>
+    </Item>
+    <Item>
+        <Category>Electronics</Category>
+        <Amount>99.99</Amount>
+    </Item>
+</Items>");
 
-        // Load XML and build the data model with grouping.
-        XDocument xdoc = XDocument.Load(xmlPath);
-        var products = xdoc.Root!
-            .Elements("Product")
-            .Select(p => new Product
+        // 2. Load XML into objects.
+        var items = XDocument.Load(xmlFile)
+            .Root!
+            .Elements("Item")
+            .Select(x => new Item
             {
-                Category = (string)p.Element("Category")!,
-                Name = (string)p.Element("Name")!,
-                Price = (double)p.Element("Price")!
+                Category = (string?)x.Element("Category") ?? "",
+                Amount = decimal.Parse((string?)x.Element("Amount") ?? "0")
             })
             .ToList();
 
-        var model = new ReportModel
+        // 3. Summarize by category using LINQ GroupBy.
+        var reportData = new ReportData
         {
-            Categories = products
-                .GroupBy(p => p.Category)
+            Summaries = items
+                .GroupBy(i => i.Category)
                 .Select(g => new CategorySummary
                 {
                     Category = g.Key,
-                    Total = g.Sum(p => p.Price),
-                    Items = g.ToList()
+                    Total = g.Sum(i => i.Amount)
                 })
                 .ToList()
         };
 
-        // Create the LINQ Reporting template.
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // 4. Create a template document programmatically.
+        const string templateFile = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("<<foreach [cat in Categories]>>");
-        builder.Writeln("Category: <<[cat.Category]>>   Total Price: <<[cat.Total]>>");
-        builder.Writeln("Products:");
-        builder.Writeln("<<foreach [p in cat.Items]>>");
-        builder.Writeln("- <<[p.Name]>> : $<<[p.Price]>>");
+        builder.Writeln("Category Summary Report");
+        builder.Writeln();
+        // LINQ Reporting foreach tag.
+        builder.Writeln("<<foreach [summary in Summaries]>>");
+        builder.Writeln("Category: <<[summary.Category]>>   Total: <<[summary.Total]>>");
         builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
+        doc.Save(templateFile);
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(reportDoc, model, "model");
+        // 5. Load the template and build the report.
+        var template = new Document(templateFile);
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, reportData, "model");
 
-        // Save the final report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // 6. Save the final report.
+        const string outputFile = "Report.docx";
+        template.Save(outputFile);
     }
 }

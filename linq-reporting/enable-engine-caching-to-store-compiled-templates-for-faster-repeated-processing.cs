@@ -1,61 +1,51 @@
 using System;
-using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider required by Aspose.Words.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for any required encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Sample data.
-        var persons = new List<Person>
-        {
-            new() { Name = "Alice", Age = 30 },
-            new() { Name = "Bob", Age = 25 },
-            new() { Name = "Charlie", Age = 35 }
-        };
-
-        var model = new ReportModel { Persons = persons };
-
-        // Create a template document with LINQ Reporting tags.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-        builder.Writeln("People Report");
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
-        builder.Writeln("<</foreach>>");
-
-        // Save and reload the template to simulate a real-world scenario.
+        // Path for the template document.
         const string templatePath = "template.docx";
-        template.Save(templatePath);
-        var doc = new Document(templatePath);
 
-        // Create a ReportingEngine instance. Reusing the same engine enables internal caching
-        // of the compiled template, which speeds up subsequent BuildReport calls.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
+        // Create a simple template with a LINQ Reporting tag.
+        CreateTemplate(templatePath);
 
-        // First report generation.
-        engine.BuildReport(doc, model, "model");
-        doc.Save("Report1.docx");
+        // Load the template document.
+        Document template = new Document(templatePath);
 
-        // Second report generation using the same engine (cached template).
-        var doc2 = new Document(templatePath);
-        engine.BuildReport(doc2, model, "model");
-        doc2.Save("Report2.docx");
+        // Initialise the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+
+        // First data source.
+        var model1 = new Model { Name = "Alice" };
+        engine.BuildReport(template, model1, "model");
+        template.Save("output1.docx");
+
+        // Reload the template for the second run (the previous document was modified).
+        Document template2 = new Document(templatePath);
+        var model2 = new Model { Name = "Bob" };
+        engine.BuildReport(template2, model2, "model");
+        template2.Save("output2.docx");
+    }
+
+    // Creates a Word document containing a single reporting tag.
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello <<[model.Name]>>!");
+        doc.Save(path);
+    }
+
+    // Simple data model used by the template.
+    public class Model
+    {
+        public string Name { get; set; } = string.Empty;
     }
 }

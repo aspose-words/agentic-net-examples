@@ -3,74 +3,65 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
-using System.Text;
 
-// Ensure code page support for older encodings if needed.
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-public partial class Program
+public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        // Paths for the template and final PDF.
+        const string templatePath = "ReportTemplate.docx";
+        const string pdfPath = "Report.pdf";
+
+        // 1. Create the template document with LINQ Reporting tags.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Header with a simple field.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln();
+
+        // Loop over the items collection.
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // 2. Load the template back (required before building the report).
+        Document loadedTemplate = new Document(templatePath);
+
+        // 3. Prepare sample data.
+        Order sampleOrder = new Order
         {
-            Title = "Product Catalog",
-            Items = new List<Item>
+            CustomerName = "Acme Corp",
+            Items =
             {
-                new Item { Index = 1, Name = "Apple", Price = 0.99 },
-                new Item { Index = 2, Name = "Banana", Price = 0.59 },
-                new Item { Index = 3, Name = "Cherry", Price = 2.99 }
+                new Item { Index = 1, Name = "Widget" },
+                new Item { Index = 2, Name = "Gadget" },
+                new Item { Index = 3, Name = "Doohickey" }
             }
         };
 
-        // Create a template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // 4. Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, sampleOrder, "order");
 
-        // Load the template.
-        var doc = new Document(templatePath);
-
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Export the rendered document to PDF.
-        doc.Save("Report.pdf", SaveFormat.Pdf);
-    }
-
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Title placeholder.
-        builder.Writeln("Report: <<[model.Title]>>");
-        builder.Writeln();
-
-        // Begin foreach loop over Items.
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        // Output each item's details.
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>> - $<<[item.Price]>>");
-        // End foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(filePath);
+        // 5. Export the rendered document to PDF.
+        loadedTemplate.Save(pdfPath, SaveFormat.Pdf);
     }
 }
 
-// Data model for the report.
-public class ReportModel
+// Root data model.
+public class Order
 {
-    public string Title { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = "";
     public List<Item> Items { get; set; } = new();
 }
 
-// Individual item definition.
+// Item model used inside the collection.
 public class Item
 {
     public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public double Price { get; set; }
+    public string Name { get; set; } = "";
 }

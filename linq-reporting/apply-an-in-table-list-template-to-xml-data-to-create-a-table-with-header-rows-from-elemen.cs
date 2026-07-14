@@ -1,117 +1,86 @@
-#nullable enable
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
-using System.Xml.Linq;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for possible XML encoding issues.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Prepare sample XML data
+        string xmlPath = "data.xml";
+        XDocument xmlDoc = new XDocument(
+            new XElement("Items",
+                new XElement("Item",
+                    new XElement("Name", "John Doe"),
+                    new XElement("Age", "30"),
+                    new XElement("Country", "USA")),
+                new XElement("Item",
+                    new XElement("Name", "Jane Smith"),
+                    new XElement("Age", "25"),
+                    new XElement("Country", "Canada"))
+            )
+        );
+        xmlDoc.Save(xmlPath);
 
-        // Sample XML data.
-        string xmlContent = @"
-<Orders>
-    <Order>
-        <Id>1</Id>
-        <Customer>John Doe</Customer>
-        <Amount>100.00</Amount>
-    </Order>
-    <Order>
-        <Id>2</Id>
-        <Customer>Jane Smith</Customer>
-        <Amount>150.50</Amount>
-    </Order>
-    <Order>
-        <Id>3</Id>
-        <Customer>Bob Johnson</Customer>
-        <Amount>200.75</Amount>
-    </Order>
-</Orders>";
+        // Extract column names from the first Item element
+        List<string> columnNames = xmlDoc.Root?
+            .Elements("Item")
+            .FirstOrDefault()?
+            .Elements()
+            .Select(e => e.Name.LocalName)
+            .ToList() ?? new List<string>();
 
-        // Parse XML into model objects.
-        XDocument xDoc = XDocument.Parse(xmlContent);
-        List<Order> orders = xDoc.Root?.Elements("Order")
-            .Select(o => new Order
-            {
-                Id = (string?)o.Element("Id") ?? string.Empty,
-                Customer = (string?)o.Element("Customer") ?? string.Empty,
-                Amount = (string?)o.Element("Amount") ?? string.Empty
-            })
-            .ToList() ?? new List<Order>();
+        // Create the template document programmatically
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        var model = new OrderData { Orders = orders };
+        // Begin foreach over Items
+        builder.Writeln("<<foreach [item in Items]>>");
 
-        // Create template document.
-        const string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Begin foreach block.
-        builder.Writeln("<<foreach [order in Orders]>>");
-
-        // Start table.
+        // Start table
         Table table = builder.StartTable();
 
-        // Header row – use property names of Order class.
-        PropertyInfo[] props = typeof(Order).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-        foreach (PropertyInfo prop in props)
+        // Header row
+        foreach (string col in columnNames)
         {
             builder.InsertCell();
-            builder.Writeln(prop.Name);
+            builder.Writeln(col);
         }
         builder.EndRow();
 
-        // Data row – placeholders for each property.
-        foreach (PropertyInfo prop in props)
+        // Data row (inside foreach)
+        foreach (string col in columnNames)
         {
             builder.InsertCell();
-            builder.Writeln($"<<[order.{prop.Name}]>>");
+            builder.Writeln($"<<[item.{col}]>>");
         }
         builder.EndRow();
 
-        // End table.
+        // End table and foreach
         builder.EndTable();
-
-        // End foreach block.
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        // Save the template
+        string templatePath = "template.docx";
+        template.Save(templatePath);
 
-        // Load template for reporting.
-        Document doc = new Document(templatePath);
+        // Load the template for reporting
+        Document reportDoc = new Document(templatePath);
+
+        // Build the report using XmlDataSource
         ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, new XmlDataSource(xmlPath), "Items");
 
-        // Build the report.
-        engine.BuildReport(doc, model, "model");
-
-        // Save output.
-        string outputPath = Path.Combine("output", "Report.docx");
+        // Save the generated report
+        string outputPath = Path.Combine("output", "report.docx");
         Directory.CreateDirectory("output");
-        doc.Save(outputPath);
+        reportDoc.Save(outputPath);
 
         Console.WriteLine($"Report generated: {outputPath}");
     }
-}
-
-// Wrapper model.
-public class OrderData
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
-// Individual order.
-public class Order
-{
-    public string Id { get; set; } = string.Empty;
-    public string Customer { get; set; } = string.Empty;
-    public string Amount { get; set; } = string.Empty;
 }

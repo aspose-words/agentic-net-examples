@@ -1,60 +1,68 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts; // ChartType enum resides here
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing.Charts; // Needed for ChartType enum
 
-public class Program
+namespace LinkTagExample
 {
-    public static void Main()
+    // Simple data model used by the LINQ Reporting engine.
+    public class ReportModel
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "LinkTemplate.docx";
-        const string reportPath = "LinkReport.docx";
+        // URL that the link will point to.
+        public string Url { get; set; } = "https://www.example.com";
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Text displayed for the link.
+        public string LinkText { get; set; } = "Visit Example";
 
-        // Normal paragraph with a LINQ Reporting link tag.
-        builder.Writeln("Report with a hyperlink:");
-        // The link tag uses the model's Url and LinkText properties.
-        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
-
-        // Insert a chart to demonstrate that the link tag is NOT placed inside it.
-        builder.Writeln();
-        builder.InsertChart(ChartType.Column, 400, 300);
-        builder.Writeln(); // Ensure the chart is closed with a paragraph break.
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // Sample data model for the report.
-        ReportModel model = new ReportModel
-        {
-            Url = "https://example.com",
-            LinkText = "Example Site"
-        };
-
-        // Configure and execute the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        reportDoc.Save(reportPath);
+        // Additional property to demonstrate that the model can hold more data.
+        public string Title { get; set; } = "Link Tag Demo";
     }
-}
 
-// Simple data model used by the LINQ Reporting template.
-public class ReportModel
-{
-    public string Url { get; set; } = "";
-    public string LinkText { get; set; } = "";
+    public class Program
+    {
+        public static void Main()
+        {
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Add a heading (plain text, not a link).
+            builder.Writeln("<<[model.Title]>>");
+            builder.Writeln();
+
+            // Insert a paragraph that contains a link tag.
+            // The link tag will be resolved by the ReportingEngine.
+            builder.Writeln("Here is a link: <<link [model.Url] [model.LinkText]>>");
+            builder.Writeln();
+
+            // Insert a chart to demonstrate that link tags are NOT placed inside chart elements.
+            // The chart is added after the paragraph, so the link tag remains outside the chart.
+            builder.InsertChart(ChartType.Column, 400, 300);
+            builder.Writeln(); // Ensure a paragraph after the chart.
+
+            // Save the template to disk.
+            const string templatePath = "LinkTemplate.docx";
+            template.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report.
+            // -----------------------------------------------------------------
+            Document report = new Document(templatePath);
+
+            // Prepare the data source.
+            ReportModel model = new ReportModel();
+
+            // Create and configure the reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+
+            // Build the report. The root object name must match the tag prefix used in the template.
+            engine.BuildReport(report, model, "model");
+
+            // Save the generated report.
+            const string outputPath = "LinkReport.docx";
+            report.Save(outputPath);
+        }
+    }
 }

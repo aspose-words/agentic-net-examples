@@ -7,81 +7,62 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words features).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Create a template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Add a title.
-        builder.Writeln("Report with Inline Error Messages");
-        builder.Writeln();
-
-        // Optional foreach loop over Items. Inside the loop we reference a missing member (Name)
-        // and place an <<error>> tag to capture any evaluation failures.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item Id: <<[item.Id]>>");
-        builder.Writeln("Item Name: <<[item.Name]>>"); // 'Name' does not exist on Item.
-        builder.Writeln("<<error>>"); // Will display the error message for the missing member.
+        // Write a simple report with an optional loop.
+        builder.Writeln("Report:");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        // Age property does not exist in the data model; <<error>> will capture the evaluation failure.
+        builder.Writeln("Age: <<[p.Age]>> <<error>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template document for reporting.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Load the template back for reporting.
+        var doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model with missing members.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        // Prepare sample data. The Person class lacks an Age property.
+        var model = new ReportModel
         {
-            Items = new List<Item>
+            Persons = new List<Person>
             {
-                new Item { Id = 1 }, // Missing Name.
-                new Item { Id = 2 }  // Missing Name.
+                new Person { Name = "Alice" },
+                new Person { Name = "Bob" }
             }
         };
 
-        // -----------------------------------------------------------------
-        // 4. Configure the ReportingEngine to use InlineErrorMessages.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
+        // Configure the reporting engine to inline error messages.
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.InlineErrorMessages | ReportBuildOptions.AllowMissingMembers,
+            MissingMemberMessage = "Missing"
+        };
 
-        // Build the report. The bool indicates success when InlineErrorMessages is enabled.
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        // Build the report. The success flag is meaningful because InlineErrorMessages is enabled.
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(reportPath);
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
 
-        // Output the result to the console.
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{reportPath}'.");
+        // Output the result status (no interactive prompts required).
+        Console.WriteLine($"Report generation succeeded: {success}");
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
+// Root data model referenced in the template as <<[model.Persons]>>.
 public class ReportModel
 {
-    // The collection referenced by the foreach loop in the template.
-    public List<Item> Items { get; set; } = new();
+    public List<Person> Persons { get; set; } = new();
 }
 
-// Item intentionally lacks a 'Name' property to trigger missing member errors.
-public class Item
+// Sample item class. Intentionally does NOT contain an Age property to trigger an error.
+public class Person
 {
-    public int Id { get; set; }
+    public string Name { get; set; } = "";
 }

@@ -2,41 +2,48 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+namespace AsposeWordsLinqReportingHtml
 {
-    // HTML snippet that will be inserted into the document at runtime.
-    public string HtmlSnippet { get; set; } = string.Empty;
-}
-
-public class Program
-{
-    public static void Main()
+    // Model class that holds the HTML snippet to be inserted.
+    public class ReportModel
     {
-        // 1. Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Initialize to avoid nullable warnings.
+        public string HtmlSnippet { get; set; } = string.Empty;
+    }
 
-        // Add a title.
-        builder.Writeln("Report with HTML snippet:");
-        // Insert the LINQ Reporting HTML tag placeholder.
-        // The tag will be replaced with the value of model.HtmlSnippet at build time.
-        builder.Writeln("<<html [model.HtmlSnippet]>>");
-
-        // 2. Prepare the data model with a realistic HTML fragment.
-        ReportModel model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            HtmlSnippet = @"
-                <p style='color:blue;'>
-                    This is <b>HTML</b> content inserted at runtime.
-                </p>"
-        };
+            // Step 1: Create the template document with a LINQ Reporting tag.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-        // 3. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        // The third argument is the name used in the template to reference the root object.
-        engine.BuildReport(template, model, "model");
+            builder.Writeln("Report generated with an external HTML snippet:");
+            // The <<html>> tag will be replaced by the value of HtmlSnippet at runtime.
+            builder.Writeln("<<html [model.HtmlSnippet]>>");
 
-        // 4. Save the generated document.
-        template.Save("ReportWithHtml.docx");
+            // Save the template to disk.
+            const string templatePath = "template.docx";
+            template.Save(templatePath);
+
+            // Step 2: Load the template for reporting.
+            var loadedTemplate = new Document(templatePath);
+
+            // Step 3: Prepare the data model with the HTML content.
+            var model = new ReportModel
+            {
+                HtmlSnippet = "<p style='color:blue;'>This is <b>HTML</b> inserted at runtime.</p>"
+            };
+
+            // Step 4: Build the report using the ReportingEngine.
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // No special options required.
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // Step 5: Save the generated report.
+            const string outputPath = "output.docx";
+            loadedTemplate.Save(outputPath);
+        }
     }
 }

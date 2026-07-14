@@ -1,64 +1,37 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingBookmarkExample
+public class ReportModel
 {
-    // Simple data model used by the LINQ Reporting engine.
-    public class ReportModel
+    // Bookmark name must be a non‑empty string.
+    public string BookmarkName { get; set; } = "SampleBookmark";
+
+    // Sample content to place inside the bookmark.
+    public string Title { get; set; } = "Hello World";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        // Name of the bookmark – must be a non‑empty string.
-        public string BookmarkName { get; set; } = "MyBookmark";
+        // Create a blank document and a builder to add content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Text that will appear inside the bookmark.
-        public string Title { get; set; } = "Hello from Aspose.Words!";
-    }
+        // Insert a LINQ Reporting bookmark tag whose name comes from the model.
+        builder.Writeln("<<bookmark [model.BookmarkName]>>");
+        // Content that will be inside the bookmark.
+        builder.Writeln("<<[model.Title]>>");
+        // Close the bookmark tag.
+        builder.Writeln("<</bookmark>>");
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Paths for the template and the generated report.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(outputDir);
-            string templatePath = Path.Combine(outputDir, "template.docx");
-            string resultPath = Path.Combine(outputDir, "result.docx");
+        // Build the report using the model as the root data source.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(doc, new ReportModel(), "model");
 
-            // -------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Insert a bookmark tag whose name comes from the model's BookmarkName property.
-            builder.Writeln("<<bookmark [model.BookmarkName]>>");
-            // Content that will be placed inside the bookmark.
-            builder.Writeln("<<[model.Title]>>");
-            // Close the bookmark tag.
-            builder.Writeln("<</bookmark>>");
-
-            // Save the template to disk before building the report.
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template and build the report.
-            // -------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-            ReportModel model = new ReportModel(); // Sample data.
-
-            ReportingEngine engine = new ReportingEngine();
-            // BuildReport overload that specifies the root name ("model").
-            engine.BuildReport(reportDoc, model, "model");
-
-            // -------------------------------------------------
-            // 3. Save the generated report.
-            // -------------------------------------------------
-            reportDoc.Save(resultPath);
-
-            // Inform the user where files are written (optional, not interactive).
-            Console.WriteLine($"Template saved to: {templatePath}");
-            Console.WriteLine($"Report generated at: {resultPath}");
-        }
+        // Save the generated document.
+        doc.Save("ReportWithBookmark.docx");
     }
 }

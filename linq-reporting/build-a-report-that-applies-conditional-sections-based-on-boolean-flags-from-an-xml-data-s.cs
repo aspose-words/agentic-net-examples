@@ -1,63 +1,89 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare working folder and file paths.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string xmlPath = Path.Combine(workDir, "data.xml");
-        string outputPath = Path.Combine(workDir, "report.docx");
+        public static void Main()
+        {
+            // Enable code page support for XML parsing (required for some environments).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample XML data source.
-        string xmlContent =
-@"<Report>
-    <Item>
-        <Name>Item 1</Name>
-        <ShowDetails>true</ShowDetails>
-        <Details>Details for Item 1</Details>
-    </Item>
-    <Item>
-        <Name>Item 2</Name>
-        <ShowDetails>false</ShowDetails>
-        <Details>Details for Item 2</Details>
-    </Item>
-    <Item>
-        <Name>Item 3</Name>
-        <ShowDetails>true</ShowDetails>
-        <Details>Details for Item 3</Details>
-    </Item>
+            // Create an output folder for generated files.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // -----------------------------------------------------------------
+            // 1. Create a sample XML data source with boolean flags.
+            // -----------------------------------------------------------------
+            string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Report>
+    <Title>Quarterly Sales Report</Title>
+    <ShowSection1>true</ShowSection1>
+    <ShowSection2>false</ShowSection2>
+    <Summary>Overall sales increased by 12% compared to the previous quarter.</Summary>
 </Report>";
-        File.WriteAllText(xmlPath, xmlContent);
+            string xmlPath = Path.Combine(outputDir, "data.xml");
+            File.WriteAllText(xmlPath, xmlContent);
 
-        // 2. Build the template document with correct LINQ Reporting tags.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // -----------------------------------------------------------------
+            // 2. Build the template document programmatically.
+            // -----------------------------------------------------------------
+            string templatePath = Path.Combine(outputDir, "template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // The XML root element is treated as a collection, so iterate directly over the root.
-        builder.Writeln("<<foreach [item in report]>>");
-        builder.Writeln("Item: <<[item.Name]>>");
-        builder.Writeln("<<if [item.ShowDetails]>>Details: <<[item.Details]>> <</if>>");
-        builder.Writeln("<</foreach>>");
+            // Title (always shown)
+            builder.Writeln("<<[model.Title]>>");
+            builder.Writeln();
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+            // Conditional Section 1
+            builder.Writeln("<<if [model.ShowSection1]>>");
+            builder.Writeln("Section 1: Detailed analysis of product performance.");
+            builder.Writeln("<</if>>");
+            builder.Writeln();
 
-        // 3. Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+            // Conditional Section 2
+            builder.Writeln("<<if [model.ShowSection2]>>");
+            builder.Writeln("Section 2: Forecast for the next quarter.");
+            builder.Writeln("<</if>>");
+            builder.Writeln();
 
-        // 4. Load XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
+            // Summary (always shown)
+            builder.Writeln("Summary:");
+            builder.Writeln("<<[model.Summary]>>");
 
-        // 5. Build the report using the data source name "report".
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, dataSource, "report");
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // 6. Save the generated report.
-        reportDoc.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 3. Load the template document.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 4. Create XmlDataSource from the XML file.
+            // -----------------------------------------------------------------
+            XmlDataSource dataSource = new XmlDataSource(xmlPath);
+
+            // -----------------------------------------------------------------
+            // 5. Build the report using the LINQ Reporting engine.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            // The root object name used in the template tags is "model".
+            engine.BuildReport(reportDoc, dataSource, "model");
+
+            // -----------------------------------------------------------------
+            // 6. Save the generated report.
+            // -----------------------------------------------------------------
+            string resultPath = Path.Combine(outputDir, "report.docx");
+            reportDoc.Save(resultPath);
+
+            Console.WriteLine($"Report generated successfully at: {resultPath}");
+        }
     }
 }

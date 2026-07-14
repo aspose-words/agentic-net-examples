@@ -1,79 +1,82 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingFirstCharStyling
 {
-    public static void Main()
+    // Data model classes
+    public class ReportModel
     {
-        // Prepare folders.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // 1. Create the LINQ Reporting template.
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        CreateTemplate(templatePath);
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+    }
 
-        // 2. Load the template for reporting.
-        Document template = new Document(templatePath);
-
-        // 3. Prepare sample data.
-        ReportModel model = new()
+    public class Program
+    {
+        public static void Main()
         {
-            Items = new()
+            // Register code page provider (required for some environments)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for template and output
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+
+            // -------------------------------------------------
+            // 1. Create the LINQ Reporting template programmatically
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Write a foreach block that iterates over Items
+            builder.Writeln("<<foreach [item in Items]>>");
+
+            // Apply custom font styling to the first character of the Name:
+            // - The first character is colored red using the textColor tag.
+            // - The rest of the string is inserted without additional styling.
+            builder.Writeln(
+                "<<textColor [\"Red\"]>><<[item.Name.Substring(0,1)]>><</textColor>><<[item.Name.Substring(1)]>>");
+
+            // End the foreach block
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // 2. Prepare sample data
+            // -------------------------------------------------
+            ReportModel model = new()
             {
-                new Item { Name = "Apple", Index = 1 },
-                new Item { Name = "Banana", Index = 2 },
-                new Item { Name = "Cherry", Index = 3 }
-            }
-        };
+                Items = new List<Item>
+                {
+                    new() { Name = "Apple" },
+                    new() { Name = "Banana" },
+                    new() { Name = "Cherry" },
+                    new() { Name = "Date" }
+                }
+            };
 
-        // 4. Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+            // -------------------------------------------------
+            // 3. Load the template and build the report
+            // -------------------------------------------------
+            Document doc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
 
-        // 5. Save the generated report.
-        string outputPath = Path.Combine(workDir, "Report.docx");
-        template.Save(outputPath);
+            // Build the report using the model; the root object name is "model"
+            engine.BuildReport(doc, model, "model");
+
+            // -------------------------------------------------
+            // 4. Save the generated report
+            // -------------------------------------------------
+            doc.Save(outputPath);
+        }
     }
-
-    // Creates a Word document containing LINQ Reporting tags.
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Title.
-        builder.Writeln("Items with first‑character styling:");
-        builder.Writeln();
-
-        // Begin foreach loop over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Apply a red color to the first character of the Name,
-        // then output the remaining characters normally.
-        builder.Writeln(
-            "<<textColor [\"Red\"]>><<[item.Name.Substring(0,1)]>><</textColor>><<[item.Name.Substring(1)]>>");
-
-        // New line for each item.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(filePath);
-    }
-}
-
-// Root data model for the report.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Simple item class used in the foreach loop.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public int Index { get; set; }
 }

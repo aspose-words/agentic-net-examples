@@ -1,36 +1,66 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingHtml
 {
-    // Simple data model representing a record from a database.
-    public class ReportData
+    // Data model that mimics a database record containing HTML content.
+    public class ReportModel
     {
-        // HTML fragment that would normally come from a DB field.
-        public string HtmlContent { get; set; } = "<h2 style='color:Blue;'>Hello from the database!</h2>"
-                                                + "<p>This paragraph is <b>bold</b> and <i>italic</i>.</p>";
+        // Sample HTML stored in a database field.
+        public string HtmlContent { get; set; } = "<h2 style='color:Blue;'>Hello from the database!</h2><p>This paragraph is <b>bold</b> and <i>italic</i>.</p>";
     }
 
-    public static void Main()
+    public class Program
     {
-        // 1. Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        public static void Main()
+        {
+            // Paths for the template and the generated report.
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+            string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
 
-        // Insert the LINQ Reporting tag that will render the HTML content.
-        // The "-html" switch tells the engine to treat the expression result as HTML.
-        builder.Writeln("<<[model.HtmlContent] -html>>");
+            // -----------------------------------------------------------------
+            // 1. Create the template document with a LINQ Reporting tag that
+            //    inserts HTML using the -html switch.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // 2. Prepare the data source (simulating a DB record).
-        ReportData data = new ReportData();
+            // Add a title.
+            builder.Writeln("=== LINQ Reporting HTML Insertion Example ===");
+            builder.Writeln();
 
-        // 3. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        // No special options are required for this simple scenario.
-        engine.BuildReport(template, data, "model");
+            // Insert the HTML expression tag. The tag references the model's
+            // HtmlContent property and uses the -html switch.
+            builder.Writeln("<<[model.HtmlContent] -html>>");
 
-        // 4. Save the generated document.
-        template.Save("ReportWithHtml.docx");
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template back (simulating a separate load step).
+            // -----------------------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source (simulated database record).
+            // -----------------------------------------------------------------
+            ReportModel model = new ReportModel();
+
+            // -----------------------------------------------------------------
+            // 4. Build the report using Aspose.Words LINQ ReportingEngine.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            // No special options are required for this simple scenario.
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            loadedTemplate.Save(reportPath);
+
+            // The example finishes without waiting for user input.
+        }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.IO;
 using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -11,56 +12,55 @@ public class Program
         // Register code page provider (required for some environments).
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Ensure the current thread uses the desired culture.
-        Thread.CurrentThread.CurrentCulture = CultureInfo.CurrentCulture;
-
-        // Step 1: Create the data model.
-        var model = new ReportModel
+        // Prepare sample data model.
+        var order = new Order
         {
-            Order = new Order
-            {
-                Id = 12345,
-                CustomerName = "John Doe",
-                Total = 1234.56m
-            }
+            CustomerName = "John Doe",
+            TotalAmount = 12345.67m
         };
 
-        // Step 2: Build the template document programmatically.
+        // Create a template document with a LINQ Reporting tag.
         var templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        CreateTemplate(templatePath);
 
-        builder.Writeln("Order Report");
-        builder.Writeln("==============");
-        builder.Writeln("Order ID: <<[model.Order.Id]>>");
-        builder.Writeln("Customer: <<[model.Order.CustomerName]>>");
-        // The LINQ Reporting engine will call ToString() on the decimal value,
-        // which respects the current thread's culture set above.
-        builder.Writeln("Total: <<[model.Order.Total]>>");
+        // Load the template.
+        var doc = new Document(templatePath);
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Set the current thread culture to demonstrate locale‑specific formatting.
+        // Change the culture identifier to test different locales (e.g., "de-DE", "ja-JP").
+        Thread.CurrentThread.CurrentCulture = new CultureInfo("fr-FR");
 
-        // Step 3: Load the template and generate the report.
-        var reportDoc = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, order, "order");
 
-        // Step 4: Save the generated report.
+        // Save the generated report.
         var outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        doc.Save(outputPath);
+    }
+
+    // Creates a simple Word template containing a LINQ Reporting expression.
+    private static void CreateTemplate(string filePath)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Insert a heading.
+        builder.Writeln("Invoice");
+        builder.Writeln();
+
+        // Insert data fields.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Total Amount: <<[order.TotalAmount]>>");
+
+        // Save the template.
+        doc.Save(filePath);
     }
 }
 
-// Public data model classes required by the LINQ Reporting engine.
-public class ReportModel
-{
-    public Order Order { get; set; } = new Order();
-}
-
+// Public data model class used by the report.
 public class Order
 {
-    public int Id { get; set; }
     public string CustomerName { get; set; } = string.Empty;
-    public decimal Total { get; set; }
+    public decimal TotalAmount { get; set; }
 }

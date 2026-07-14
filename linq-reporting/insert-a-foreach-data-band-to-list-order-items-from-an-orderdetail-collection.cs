@@ -3,64 +3,64 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReportingDemo
 {
-    // Data model for an order detail line.
-    public class OrderDetail
-    {
-        public int Index { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-    }
-
-    // Data model for an order containing a collection of order details.
+    // Data model classes
     public class Order
     {
-        public string CustomerName { get; set; } = string.Empty;
-        public List<OrderDetail> Items { get; set; } = new();
+        public string CustomerName { get; set; } = "";
+        public List<OrderDetail> OrderDetails { get; set; } = new();
     }
 
-    public class Program
+    public class OrderDetail
     {
-        public static void Main()
+        public string ProductName { get; set; } = "";
+        public int Quantity { get; set; }
+    }
+
+    class Program
+    {
+        static void Main()
         {
-            // Prepare sample data.
+            // 1. Create the template document programmatically
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
+
+            builder.Writeln("Order Report");
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln(); // empty line
+
+            // Start a foreach data band that iterates over OrderDetails collection
+            builder.Writeln("<<foreach [detail in OrderDetails]>>");
+            builder.Writeln("Product: <<[detail.ProductName]>> , Quantity: <<[detail.Quantity]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            const string templatePath = "OrderTemplate.docx";
+            template.Save(templatePath);
+
+            // 2. Load the template for report generation
+            var doc = new Document(templatePath);
+
+            // 3. Prepare sample data
             var order = new Order
             {
                 CustomerName = "John Doe",
-                Items = new List<OrderDetail>
+                OrderDetails = new List<OrderDetail>
                 {
-                    new OrderDetail { Index = 1, ProductName = "Apple", Quantity = 5, UnitPrice = 0.60m },
-                    new OrderDetail { Index = 2, ProductName = "Banana", Quantity = 3, UnitPrice = 0.40m },
-                    new OrderDetail { Index = 3, ProductName = "Cherry", Quantity = 10, UnitPrice = 0.15m }
+                    new OrderDetail { ProductName = "Apple", Quantity = 5 },
+                    new OrderDetail { ProductName = "Banana", Quantity = 3 },
+                    new OrderDetail { ProductName = "Orange", Quantity = 7 }
                 }
             };
 
-            // Create a template document programmatically.
-            var templatePath = "OrderTemplate.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("Order for: <<[order.CustomerName]>>");
-            builder.Writeln("Items:");
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln(" - <<[item.Index]>>: <<[item.ProductName]>> x <<[item.Quantity]>> @ <<[item.UnitPrice]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template before building the report.
-            templateDoc.Save(templatePath);
-
-            // Load the template and build the report.
-            var doc = new Document(templatePath);
+            // 4. Build the report using ReportingEngine
             var engine = new ReportingEngine();
             engine.BuildReport(doc, order, "order");
 
-            // Save the generated report.
-            var outputPath = "OrderReport.docx";
+            // 5. Save the generated report
+            const string outputPath = "OrderReport.docx";
             doc.Save(outputPath);
-
-            Console.WriteLine($"Report generated: {outputPath}");
         }
     }
 }

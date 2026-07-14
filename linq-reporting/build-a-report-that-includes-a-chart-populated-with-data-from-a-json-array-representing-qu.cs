@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
 using Newtonsoft.Json;
 
 public class QuarterlyResult
@@ -13,78 +11,71 @@ public class QuarterlyResult
     public double Revenue { get; set; }
 }
 
+public class ReportModel
+{
+    public List<QuarterlyResult> Results { get; set; } = new();
+    public string ChartHtml { get; set; } = "";
+    public string ReportDate { get; set; } = DateTime.Now.ToString("yyyy-MM-dd");
+}
+
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Prepare sample JSON data.
-        // -----------------------------------------------------------------
-        string jsonPath = "quarterly.json";
-        var sampleData = new List<QuarterlyResult>
+        // Prepare sample JSON data.
+        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "quarterly.json");
+        string jsonContent = @"[
+            { ""Quarter"": ""Q1"", ""Revenue"": 120000 },
+            { ""Quarter"": ""Q2"", ""Revenue"": 150000 },
+            { ""Quarter"": ""Q3"", ""Revenue"": 130000 },
+            { ""Quarter"": ""Q4"", ""Revenue"": 170000 }
+        ]";
+        File.WriteAllText(jsonPath, jsonContent);
+
+        // Load data from JSON.
+        List<QuarterlyResult> results = JsonConvert.DeserializeObject<List<QuarterlyResult>>(jsonContent) ?? new();
+
+        // Build simple HTML bar chart.
+        string chartHtml = "<div style='font-family:Arial;'>";
+        foreach (var r in results)
         {
-            new() { Quarter = "Q1", Revenue = 15000 },
-            new() { Quarter = "Q2", Revenue = 18000 },
-            new() { Quarter = "Q3", Revenue = 21000 },
-            new() { Quarter = "Q4", Revenue = 24000 }
+            int barWidth = (int)(r.Revenue / 1000); // scale for display
+            chartHtml += $"<div>{r.Quarter}: ${r.Revenue:N0}</div>";
+            chartHtml += $"<div style='background:#4F81BD;height:15px;width:{barWidth}px;'></div>";
+        }
+        chartHtml += "</div>";
+
+        // Prepare the model.
+        ReportModel model = new()
+        {
+            Results = results,
+            ChartHtml = chartHtml
         };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData));
 
-        // -----------------------------------------------------------------
-        // 2. Create a template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Create the template document.
+        Document template = new();
+        DocumentBuilder builder = new(template);
 
-        builder.Writeln("Quarterly Revenue Report");
+        builder.Writeln("Quarterly Financial Report");
+        builder.Writeln($"Generated on: <<[model.ReportDate]>>");
         builder.Writeln();
-        builder.Writeln("Data Table:");
-        builder.Writeln("<<foreach [item in results]>>");
-        builder.Writeln("<<[item.Quarter]>>\t<<[item.Revenue]>>");
+
+        // Table of raw data.
+        builder.Writeln("Quarterly Results:");
+        builder.Writeln("<<foreach [r in model.Results]>>");
+        builder.Writeln("<<[r.Quarter]>> - <<[r.Revenue]>>");
         builder.Writeln("<</foreach>>");
         builder.Writeln();
 
-        // Insert a placeholder chart (will be populated after the report is built).
-        builder.Writeln("Revenue Chart:");
-        var chartShape = builder.InsertChart(ChartType.Column, 400, 300);
-        // Add a dummy series so the chart exists in the template.
-        chartShape.Chart.Series.Add("Revenue", new[] { "Q1", "Q2", "Q3", "Q4" }, new[] { 0.0, 0.0, 0.0, 0.0 });
+        // Insert the HTML chart.
+        builder.Writeln("<<html [model.ChartHtml]>>");
 
-        // Save the template.
-        string templatePath = "template.docx";
-        template.Save(templatePath);
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.BuildReport(template, model, "model");
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report using LINQ Reporting.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-        var jsonDataSource = new JsonDataSource(jsonPath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, jsonDataSource, "results");
-
-        // -----------------------------------------------------------------
-        // 4. Populate the chart with real data.
-        // -----------------------------------------------------------------
-        var results = JsonConvert.DeserializeObject<List<QuarterlyResult>>(File.ReadAllText(jsonPath)) ?? new();
-
-        // Locate the chart shape in the generated document.
-        var shape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
-        var chart = shape.Chart;
-
-        // Replace the dummy series with actual data.
-        chart.Series.Clear();
-        var categories = new List<string>();
-        var values = new List<double>();
-        foreach (var item in results)
-        {
-            categories.Add(item.Quarter);
-            values.Add(item.Revenue);
-        }
-        chart.Series.Add("Revenue", categories.ToArray(), values.ToArray());
-
-        // -----------------------------------------------------------------
-        // 5. Save the final report.
-        // -----------------------------------------------------------------
-        doc.Save("QuarterlyReport.docx");
+        // Save the report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "QuarterlyReport.docx");
+        template.Save(outputPath);
     }
 }

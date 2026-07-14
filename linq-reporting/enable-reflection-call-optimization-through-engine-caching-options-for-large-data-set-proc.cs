@@ -1,85 +1,68 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
-    // Data model for the report.
-    public class ReportModel
-    {
-        // Collection of items to be iterated in the template.
-        public List<Item> Items { get; set; } = new();
-    }
-
-    // Individual item displayed in the report.
+    // Model classes used by the LINQ Reporting engine.
     public class Item
     {
         public int Index { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 
+    public class Order
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
     public class Program
     {
         public static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Prepare a large data set (e.g., 10,000 items).
-            // -----------------------------------------------------------------
-            var model = new ReportModel();
-
-            const int itemCount = 10000;
-            for (int i = 1; i <= itemCount; i++)
+            // Prepare a large data set (e.g., 10,000 items).
+            var order = new Order();
+            for (int i = 1; i <= 10000; i++)
             {
-                model.Items.Add(new Item
+                order.Items.Add(new Item
                 {
                     Index = i,
-                    Name = $"Item #{i}"
+                    Name = $"Product #{i}"
                 });
             }
 
-            // -----------------------------------------------------------------
-            // 2. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            // Create a template document programmatically.
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-            // Add a simple heading.
-            builder.Writeln("Large Data Set Report");
-            builder.Writeln();
-
-            // Insert a foreach tag that will iterate over the Items collection.
+            builder.Writeln("Order Report");
             builder.Writeln("<<foreach [item in Items]>>");
-            // Each line will show the index and name of the item.
-            builder.Writeln("<<[item.Index]>> - <<[item.Name]>>");
+            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
+            doc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Enable reflection optimization (engine caching) for the reporting engine.
-            // -----------------------------------------------------------------
+            // Load the template (demonstrates load step).
+            var loadedDoc = new Document(templatePath);
+
+            // Enable reflection optimization (engine caching) for large data sets.
             ReportingEngine.UseReflectionOptimization = true;
 
-            // -----------------------------------------------------------------
-            // 4. Load the template and build the report.
-            // -----------------------------------------------------------------
-            var reportDoc = new Document(templatePath);
-            var engine = new ReportingEngine();
+            // Create the reporting engine and optionally set options.
+            var engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.None
+            };
 
-            // Build the report using the model as the root data source named "model".
-            engine.BuildReport(reportDoc, model, "model");
+            // Build the report using the root object name "order".
+            engine.BuildReport(loadedDoc, order, "order");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
-
-            // Inform the user (no interactive input required).
-            Console.WriteLine($"Report generated successfully: {outputPath}");
+            // Save the generated report.
+            var outputPath = "Report.docx";
+            loadedDoc.Save(outputPath);
         }
     }
 }

@@ -1,58 +1,89 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
-public class Program
+namespace LinqReportingConditionalDefault
 {
-    public static void Main()
+    // Data model classes
+    public class ReportModel
     {
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "Item 1", Status = "A" },
-                new Item { Name = "Item 2", Status = "B" },
-                new Item { Name = "Item 3", Status = "C" } // Will trigger the default case.
-            }
-        };
-
-        // Create a template document programmatically.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        builder.Writeln("Report:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("- <<[item.Name]>>: ");
-
-        // Conditional blocks for known statuses.
-        builder.Writeln("<<if [item.Status == \"A\"]>>Alpha<</if>>");
-        builder.Writeln("<<if [item.Status == \"B\"]>>Beta<</if>>");
-
-        // Default block when none of the above conditions are true.
-        builder.Writeln("<<if [item.Status != \"A\" && item.Status != \"B\"]>>Other<</if>>");
-
-        builder.Writeln("<</foreach>>");
-
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
-
-        // Save the generated report.
-        template.Save("Report.docx");
+        public List<Item> Items { get; set; } = new();
     }
-}
 
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public string Status { get; set; } = "";
+    }
 
-// Item model used in the foreach loop.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Register code page provider (required for some encodings)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for the template and the generated report
+            string templatePath = "template.docx";
+            string reportPath = "report.docx";
+
+            // -------------------------------------------------
+            // 1. Create the template document programmatically
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("Report:");
+            // Start a foreach loop over Items
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Item: <<[item.Name]>> - Status: ");
+
+            // Specific conditions
+            builder.Writeln("<<if [item.Status == \"New\"]>>New<</if>>");
+            builder.Writeln("<<if [item.Status == \"InProgress\"]>>In Progress<</if>>");
+            builder.Writeln("<<if [item.Status == \"Completed\"]>>Completed<</if>>");
+
+            // Default block when none of the above conditions are true
+            builder.Writeln("<<if [item.Status != \"New\" && item.Status != \"InProgress\" && item.Status != \"Completed\"]>>Other<</if>>");
+
+            // End of foreach
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // 2. Load the template for report generation
+            // -------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            // -------------------------------------------------
+            // 3. Prepare sample data
+            // -------------------------------------------------
+            ReportModel model = new ReportModel
+            {
+                Items = new List<Item>
+                {
+                    new Item { Name = "Task 1", Status = "New" },
+                    new Item { Name = "Task 2", Status = "InProgress" },
+                    new Item { Name = "Task 3", Status = "Completed" },
+                    new Item { Name = "Task 4", Status = "OnHold" } // Will trigger the default block
+                }
+            };
+
+            // -------------------------------------------------
+            // 4. Build the report using the LINQ Reporting engine
+            // -------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // -------------------------------------------------
+            // 5. Save the generated report
+            // -------------------------------------------------
+            reportDoc.Save(reportPath);
+        }
+    }
 }

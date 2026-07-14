@@ -1,79 +1,112 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace ExternalModels
-{
-    public class ModelA
-    {
-        public string Name => "ModelA Instance";
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        public static string GetInfo()
-        {
-            return "Static info from ModelA";
-        }
+namespace MyApp.Models
+{
+    // Simple person model.
+    public class Person
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
     }
 }
 
-namespace OtherModels
+namespace MyApp.Entities
 {
-    public class ModelB
+    // Simple product model.
+    public class Product
     {
-        public int Value => 42;
-
-        public static string GetDetail()
-        {
-            return "Static detail from ModelB";
-        }
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
     }
 }
 
-public class ReportData
+// Wrapper model that will be passed to the reporting engine.
+public class ReportModel
 {
-    public string Title { get; set; } = string.Empty;
-    public ExternalModels.ModelA A { get; set; } = new();
-    public OtherModels.ModelB B { get; set; } = new();
+    public List<MyApp.Models.Person> Persons { get; set; } = new();
+    public List<MyApp.Entities.Product> Products { get; set; } = new();
 }
 
-public class Program
+// Marked as partial to match the test harness's partial declaration.
+public partial class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // -----------------------------------------------------------------
+        // 1. Create a template document programmatically.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Create a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Report Title: <<[model.Title]>>");
-        builder.Writeln("A Name: <<[model.A.Name]>>");
-        builder.Writeln("A Info (static): <<[ExternalModels.ModelA.GetInfo()]>>");
-        builder.Writeln("B Value: <<[model.B.Value]>>");
-        builder.Writeln("B Detail (static): <<[OtherModels.ModelB.GetDetail()]>>");
-        templateDoc.Save(templatePath);
+        // Persons section.
+        builder.Writeln("Persons:");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
 
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
+        // Products section.
+        builder.Writeln("Products:");
+        builder.Writeln("<<foreach [pr in Products]>>");
+        builder.Writeln("- <<[pr.Name]>> : $<<[pr.Price]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
 
-        // Register external types from different namespaces.
-        var engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(ExternalModels.ModelA));
-        engine.KnownTypes.Add(typeof(OtherModels.ModelB));
+        // Example of using a static member from a registered external type.
+        builder.Writeln("Generated GUID: <<[Guid.NewGuid()]>>");
 
-        // Prepare the root data object.
-        var data = new ReportData
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template back (simulating a real-world scenario).
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare sample data.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
         {
-            Title = "LINQ Reporting Demo"
+            Persons = new List<MyApp.Models.Person>
+            {
+                new() { Name = "Alice", Age = 30 },
+                new() { Name = "Bob", Age = 45 }
+            },
+            Products = new List<MyApp.Entities.Product>
+            {
+                new() { Name = "Laptop", Price = 999.99m },
+                new() { Name = "Smartphone", Price = 499.50m }
+            }
         };
 
-        // Build the report.
-        engine.BuildReport(doc, data, "model");
+        // -----------------------------------------------------------------
+        // 4. Configure the ReportingEngine and register external types.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
 
-        // Save the generated report.
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        doc.Save(reportPath);
+        // Register types from different namespaces so that the template can access them.
+        engine.KnownTypes.Add(typeof(System.Guid));                     // System namespace.
+        engine.KnownTypes.Add(typeof(MyApp.Models.Person));            // MyApp.Models namespace.
+        engine.KnownTypes.Add(typeof(MyApp.Entities.Product));         // MyApp.Entities namespace.
+
+        // -----------------------------------------------------------------
+        // 5. Build the report.
+        // -----------------------------------------------------------------
+        // The root object name in the template is "model".
+        engine.BuildReport(loadedTemplate, model, "model");
+
+        // -----------------------------------------------------------------
+        // 6. Save the generated report.
+        // -----------------------------------------------------------------
+        const string outputPath = "Report.docx";
+        loadedTemplate.Save(outputPath);
     }
 }

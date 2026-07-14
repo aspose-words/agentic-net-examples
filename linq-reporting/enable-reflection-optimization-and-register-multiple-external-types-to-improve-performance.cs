@@ -1,118 +1,101 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
-    // Sample static helper class that will be used inside the template.
-    public static class CustomHelper
+    // Sample data model classes
+    public class Order
     {
-        public static string Upper(string value) => value?.ToUpperInvariant() ?? string.Empty;
+        public int Id { get; set; } = 0;
+        public Customer Customer { get; set; } = new();
+        public List<Item> Items { get; set; } = new();
     }
 
-    // Root wrapper class – the template will reference this object as "model".
-    public class ReportModel
-    {
-        public Company Company { get; set; } = new();
-    }
-
-    public class Company
+    public class Customer
     {
         public string Name { get; set; } = string.Empty;
-        public List<Department> Departments { get; set; } = new();
+        public string Email { get; set; } = string.Empty;
     }
 
-    public class Department
+    public class Item
     {
-        public string DeptName { get; set; } = string.Empty;
-        public List<Employee> Employees { get; set; } = new();
+        public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
     }
 
-    public class Employee
+    // External static helper types that will be used inside the template
+    public static class Helper
     {
-        public string FullName { get; set; } = string.Empty;
-        public int Age { get; set; }
+        public static string FormatPrice(decimal price) => $"${price:F2}";
+    }
+
+    public static class MathHelper
+    {
+        public static int Double(int value) => value * 2;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Enable reflection optimization for the reporting engine.
+            // Enable reflection optimization (static property)
             ReportingEngine.UseReflectionOptimization = true;
 
-            // Create a new document and build the LINQ Reporting template.
+            // Create a simple template document in memory
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Simple header.
-            builder.Writeln("Company Report");
-            builder.Writeln("Company: <<[model.Company.Name]>>");
+            builder.Writeln("Order Report");
+            builder.Writeln("==============");
+            builder.Writeln("Order ID: <<[order.Id]>>");
+            builder.Writeln("Customer: <<[order.Customer.Name]>>");
+            builder.Writeln("Email: <<[order.Customer.Email]>>");
             builder.Writeln();
+            builder.Writeln("Items:");
+            builder.Writeln("<<foreach [item in order.Items]>>");
+            builder.Writeln("- Name: <<[item.Name]>>");
+            builder.Writeln("  Price: <<[Helper.FormatPrice(item.Price)]>>");
+            builder.Writeln("  Quantity (x2): <<[MathHelper.Double(item.Quantity)]>>");
+            builder.Writeln("<</foreach>>");
 
-            // Iterate over departments.
-            builder.Writeln("<<foreach [dept in model.Company.Departments]>>");
-            builder.Writeln("Department: <<[dept.DeptName]>>");
-            builder.Writeln("Employees:");
-
-            // Iterate over employees inside each department.
-            builder.Writeln("<<foreach [emp in dept.Employees]>>");
-            // Use a registered static type (CustomHelper) to transform the employee name.
-            builder.Writeln("- <<[CustomHelper.Upper(emp.FullName)]>> (Age: <<[emp.Age]>>)");
-            builder.Writeln("<</foreach>>"); // End employee foreach.
-            builder.Writeln("<</foreach>>"); // End department foreach.
-
-            // Initialize the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-
-            // Register external types that can be accessed from the template.
-            engine.KnownTypes.Add(typeof(CustomHelper));
-            engine.KnownTypes.Add(typeof(System.Math));
-
-            // Build sample hierarchical data.
-            ReportModel model = CreateSampleData();
-
-            // Build the report using the model and the root name "model".
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            doc.Save("ReportOutput.docx");
-        }
-
-        // Generates realistic sample data for the report.
-        private static ReportModel CreateSampleData()
-        {
-            var model = new ReportModel
+            // Prepare sample hierarchical data
+            Order sampleOrder = new()
             {
-                Company = new Company
+                Id = 12345,
+                Customer = new Customer
                 {
-                    Name = "Tech Solutions Ltd.",
-                    Departments = new List<Department>
-                    {
-                        new Department
-                        {
-                            DeptName = "Research & Development",
-                            Employees = new List<Employee>
-                            {
-                                new Employee { FullName = "Alice Johnson", Age = 34 },
-                                new Employee { FullName = "Bob Smith", Age = 29 }
-                            }
-                        },
-                        new Department
-                        {
-                            DeptName = "Sales",
-                            Employees = new List<Employee>
-                            {
-                                new Employee { FullName = "Carol White", Age = 41 },
-                                new Employee { FullName = "David Brown", Age = 38 }
-                            }
-                        }
-                    }
+                    Name = "John Doe",
+                    Email = "john.doe@example.com"
+                },
+                Items = new List<Item>
+                {
+                    new Item { Name = "Widget", Price = 19.99m, Quantity = 2 },
+                    new Item { Name = "Gadget", Price = 34.50m, Quantity = 1 },
+                    new Item { Name = "Doohickey", Price = 5.75m, Quantity = 5 }
                 }
             };
 
-            return model;
+            // Configure the reporting engine
+            ReportingEngine engine = new ReportingEngine();
+
+            // Register external types so that static members can be used in the template
+            engine.KnownTypes.Add(typeof(Helper));
+            engine.KnownTypes.Add(typeof(MathHelper));
+
+            // Build the report using the root object name "order"
+            engine.BuildReport(doc, sampleOrder, "order");
+
+            // Ensure output directory exists
+            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // Save the generated report
+            string outputPath = Path.Combine(outputDir, "OrderReport.docx");
+            doc.Save(outputPath);
         }
     }
 }

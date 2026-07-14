@@ -3,49 +3,64 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    public class Program
     {
-        // Create a blank document and a builder to insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Define a data band that iterates over the Items collection.
-        // Inside the band we refer to members without the object reference (contextual access).
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Index: <<[Index]>>, Name: <<[Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Prepare sample data.
-        ReportModel model = new ReportModel
+        public static void Main()
         {
-            Items = new List<Item>
+            // Sample data.
+            Order order = new()
             {
-                new Item { Index = 1, Name = "Alpha" },
-                new Item { Index = 2, Name = "Beta" },
-                new Item { Index = 3, Name = "Gamma" }
-            }
-        };
+                Customer = "John Doe",
+                Items = new()
+                {
+                    new Item { Name = "Apple", Price = 1.20m },
+                    new Item { Name = "Banana", Price = 0.80m },
+                    new Item { Name = "Cherry", Price = 2.50m }
+                }
+            };
 
-        // Build the report using the model as the root data source named "model".
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Create the template document.
+            const string templatePath = "Template.docx";
+            Document template = new();
+            DocumentBuilder builder = new(template);
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+            // Header – explicit root reference.
+            builder.Writeln("Order for <<[order.Customer]>>");
+            builder.Writeln();
+
+            // Data band – members accessed without object reference.
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Item: <<[Name]>>   Price: <<[Price]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template.
+            template.Save(templatePath);
+
+            // Load the template before building the report.
+            Document report = new(templatePath);
+
+            // Build the report using the root object name "order".
+            ReportingEngine engine = new();
+            engine.BuildReport(report, order, "order");
+
+            // Save the generated report.
+            report.Save("Report.docx");
+        }
     }
-}
 
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    // Root data model.
+    public class Order
+    {
+        public string Customer { get; set; } = "";
+        public List<Item> Items { get; set; } = new();
+    }
 
-// Item displayed inside the data band.
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
+    // Item model used inside the data band.
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public decimal Price { get; set; }
+    }
 }

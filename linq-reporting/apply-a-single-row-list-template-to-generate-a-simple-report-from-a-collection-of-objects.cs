@@ -1,70 +1,65 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+namespace AsposeWordsLinqReportingExample
 {
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model classes
+    public class ReportModel
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        public List<Person> Persons { get; set; } = new();
+    }
+
+    public class Person
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Persons = new List<Person>
+            // Register code page provider (required for some environments)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Step 1: Create the template document programmatically
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
+
+            builder.Writeln("Simple Report");
+            builder.Writeln("<<foreach [person in Persons]>>");
+            builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            const string templatePath = "template.docx";
+            template.Save(templatePath);
+
+            // Step 2: Load the template (simulating a separate load step)
+            var loadedTemplate = new Document(templatePath);
+
+            // Step 3: Prepare sample data
+            var model = new ReportModel
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 45 },
-                new Person { Name = "Charlie", Age = 28 }
-            }
-        };
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 25 },
+                    new Person { Name = "Charlie", Age = 35 }
+                }
+            };
 
-        // Paths for the template and the generated report.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-        string reportPath   = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+            // Step 4: Build the report using the LINQ Reporting engine
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // No special options required
+            engine.BuildReport(loadedTemplate, model, "model");
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Simple Person Report");
-        builder.Writeln();
-
-        // LINQ Reporting foreach tag – iterates over the collection Persons.
-        builder.Writeln("<<foreach [person in Persons]>>");
-        // Each iteration writes a bullet line with the person's data.
-        builder.Writeln("• <<[person.Name]>> (Age: <<[person.Age]>>)");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        var loadedTemplate = new Document(templatePath);
-
-        var engine = new ReportingEngine();
-        // Explicitly set options (none in this simple case).
-        engine.Options = ReportBuildOptions.None;
-
-        // BuildReport overload with root object name "model".
-        engine.BuildReport(loadedTemplate, model, "model");
-
-        // Save the generated report.
-        loadedTemplate.Save(reportPath);
+            // Step 5: Save the generated report
+            const string reportPath = "report.docx";
+            loadedTemplate.Save(reportPath);
+        }
     }
 }

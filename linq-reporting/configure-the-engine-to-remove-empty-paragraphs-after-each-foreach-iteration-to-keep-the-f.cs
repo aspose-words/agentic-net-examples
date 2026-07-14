@@ -7,76 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create a template document with a foreach loop.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Add a heading.
-        builder.Writeln("People Report");
-        builder.Writeln();
-
-        // Begin foreach loop over the collection "Persons".
-        builder.Writeln("<<foreach [p in Persons]>>");
-
-        // Paragraph that may become empty if Name is null or empty.
-        builder.Writeln("Name: <<[p.Name]>>");
-
-        // Paragraph that may become empty if Age is null (int is non‑nullable, so we use a sentinel value).
-        builder.Writeln("Age: <<[p.Age]>>");
-
-        // End of foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and prepare data.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // Sample data: one person with full data, one with empty name.
-        ReportModel model = new ReportModel
+        // Prepare sample data.
+        var model = new ReportModel
         {
             Persons = new List<Person>
             {
                 new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "", Age = 0 }   // This will produce empty paragraphs.
+                new Person { Name = "Bob", Age = 0 },   // This entry will produce an empty paragraph.
+                new Person { Name = "Charlie", Age = 25 }
             }
         };
 
-        // -----------------------------------------------------------------
-        // 3. Configure the ReportingEngine to remove empty paragraphs.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
-        };
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("<<foreach [p in Persons]>>");
+        // Paragraph that may become empty when the condition is false.
+        builder.Writeln("<<if [p.Age > 0]>><<[p.Name]>> is <<[p.Age]>> years old<</if>>");
+        builder.Writeln("<</foreach>>");
+        builder.Document.Save(templatePath);
 
-        // Build the report. The root object name must match the tag prefix used in the template.
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
+
+        // Configure the reporting engine to remove empty paragraphs.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+
+        // Build the report.
         engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 4. Save the final document.
-        // -----------------------------------------------------------------
-        doc.Save(outputPath);
+        // Save the final document.
+        doc.Save("Report.docx");
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes (public with public properties, non‑nullable init).
-// ---------------------------------------------------------------------
+// Wrapper class that matches the root object name used in the template.
 public class ReportModel
 {
     public List<Person> Persons { get; set; } = new();
 }
 
+// Simple data model used in the foreach loop.
 public class Person
 {
     public string Name { get; set; } = string.Empty;

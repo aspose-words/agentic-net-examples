@@ -1,76 +1,81 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
-    // Data model with a sensitive field.
+    // Simple data model with a sensitive field.
     public class Employee
     {
-        public Employee(string name, string position, decimal salary)
-        {
-            Name = name;
-            Position = position;
-            Salary = salary;
-        }
+        public string Name { get; set; } = "John Doe";
+        public decimal Salary { get; set; } = 12345.67m;
+    }
 
-        public string Name { get; set; }
-        public string Position { get; set; }
-        public decimal Salary { get; set; }
+    // Wrapper class used as the root data source for the report.
+    public class ReportModel
+    {
+        public Employee Employee { get; set; } = new Employee();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+            // Ensure the code page provider is registered (required for some data sources).
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+            // Paths for the template and the generated report.
+            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+            string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
 
             // -----------------------------------------------------------------
-            // 1. Restrict the Employee type so its members cannot be accessed in templates.
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Insert LINQ Reporting tags.
+            builder.Writeln("Employee Report");
+            builder.Writeln("Name: <<[model.Employee.Name]>>");
+            builder.Writeln("Salary: <<[model.Employee.Salary]>>"); // Sensitive field.
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template for reporting.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Configure restricted types to block access to sensitive members.
+            //    Here we restrict the entire Employee type; any member (including Salary)
+            //    will be inaccessible in the template.
             // -----------------------------------------------------------------
             ReportingEngine.SetRestrictedTypes(typeof(Employee));
 
             // -----------------------------------------------------------------
-            // 2. Create a template document programmatically.
+            // 4. Prepare the reporting engine.
+            //    AllowMissingMembers prevents exceptions when a restricted member is accessed.
             // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            builder.Writeln("Employee Report");
-            builder.Writeln("Name: <<[emp.Name]>>");
-            builder.Writeln("Position: <<[emp.Position]>>");
-            builder.Writeln("Salary: <<[emp.Salary]>>"); // This field will be restricted.
-
-            // Save the template to disk.
-            string templatePath = Path.Combine(outputDir, "template.docx");
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document report = new Document(templatePath);
-
-            // Configure the reporting engine.
             ReportingEngine engine = new ReportingEngine
             {
-                // Allow missing members so the engine does not throw when a restricted member is accessed.
                 Options = ReportBuildOptions.AllowMissingMembers,
-                // Message shown for restricted/missing members.
-                MissingMemberMessage = "[Restricted]"
+                MissingMemberMessage = string.Empty // Hide missing member messages.
             };
 
-            // Sample data.
-            Employee emp = new Employee("John Doe", "Software Engineer", 95000m);
+            // -----------------------------------------------------------------
+            // 5. Build the report.
+            // -----------------------------------------------------------------
+            ReportModel model = new ReportModel(); // Populate with real data as needed.
+            engine.BuildReport(reportDoc, model, "model");
 
-            // Build the report. The root object name used in the template is "emp".
-            engine.BuildReport(report, emp, "emp");
-
-            // Save the final document.
-            string outputPath = Path.Combine(outputDir, "EmployeeReport.docx");
-            report.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 6. Save the generated report.
+            // -----------------------------------------------------------------
+            reportDoc.Save(reportPath);
         }
     }
 }

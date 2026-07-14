@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,60 +7,53 @@ public class Program
 {
     public static void Main()
     {
-        // Create an output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // 1. Build the template document using the default LINQ Reporting delimiters << >>.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // LINQ Reporting tags.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<[item.Index]>> - <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        template.Save(templatePath);
-
-        // 2. Load the template for reporting.
-        Document doc = new Document(templatePath);
-
-        // 3. Prepare sample data.
-        ReportModel model = new ReportModel
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            Items = new List<Item>
+            Persons = new List<Person>
             {
-                new Item { Index = 1, Name = "Apple" },
-                new Item { Index = 2, Name = "Banana" },
-                new Item { Index = 3, Name = "Cherry" }
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 35 }
             }
         };
 
-        // 4. Configure the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
+        // Create a template document using the default LINQ Reporting delimiters << and >>.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-        // 5. Build the report. The root object name is "model" to match the tags.
+        // LINQ Reporting tags.
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template (optional, shown for completeness).
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for reporting (demonstrates load‑save cycle).
+        var doc = new Document(templatePath);
+
+        // Configure the reporting engine.
+        var engine = new ReportingEngine();
+
+        // Build the report. The third parameter is the root object name used in the template.
         engine.BuildReport(doc, model, "model");
 
-        // 6. Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        doc.Save(reportPath);
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }
 
-// Public data model classes.
+// Data model classes.
 public class ReportModel
 {
-    public List<Item> Items { get; set; } = new();
+    public List<Person> Persons { get; set; } = new();
 }
 
-public class Item
+public class Person
 {
-    public int Index { get; set; }
     public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

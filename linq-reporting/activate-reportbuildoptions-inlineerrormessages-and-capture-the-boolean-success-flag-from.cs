@@ -3,55 +3,50 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    // Simple data model used by the template.
-    public class Order
+    // Simple data model with a collection of persons.
+    public class ReportModel
     {
-        public string CustomerName { get; set; } = "";
-        public List<Item> Items { get; set; } = new();
+        public List<Person> Persons { get; set; } = new();
     }
 
-    public class Item
+    public class Person
     {
-        public int Index { get; set; }
         public string Name { get; set; } = "";
+        public int Age { get; set; }
     }
 
-    public static void Main()
+    public class Program
     {
-        // Create a blank document and a builder to insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Template content.
-        builder.Writeln("Customer: <<[model.CustomerName]>>");
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        builder.Writeln("- <<[item.Index]>>: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Prepare sample data.
-        Order order = new Order
+        public static void Main()
         {
-            CustomerName = "Acme Corp",
-            Items = new List<Item>
-            {
-                new Item { Index = 1, Name = "Widget" },
-                new Item { Index = 2, Name = "Gadget" }
-            }
-        };
+            // Create sample data.
+            var model = new ReportModel();
+            model.Persons.Add(new Person { Name = "Alice", Age = 30 });
+            model.Persons.Add(new Person { Name = "Bob", Age = 45 });
 
-        // Configure the reporting engine to inline error messages.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
+            // Build a template document programmatically.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        // Build the report and capture the success flag.
-        bool success = engine.BuildReport(doc, order, "model");
+            // Insert a foreach loop that iterates over the Persons collection.
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Output the result flag.
-        Console.WriteLine($"Report build success: {success}");
+            // Configure the reporting engine to inline error messages.
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Save the generated document.
-        doc.Save("ReportOutput.docx");
+            // Build the report and capture the success flag.
+            bool success = engine.BuildReport(doc, model, "model");
+
+            // Output the success flag to the console.
+            Console.WriteLine($"Report build success: {success}");
+
+            // Save the generated report.
+            doc.Save("ReportOutput.docx");
+        }
     }
 }

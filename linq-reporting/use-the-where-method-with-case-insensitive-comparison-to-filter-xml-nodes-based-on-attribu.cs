@@ -6,63 +6,66 @@ using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+public class Product
 {
     public string Name { get; set; } = "";
-    public string Gender { get; set; } = "";
+    public string Category { get; set; } = "";
 }
 
-public class Model
+public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
+    public List<Product> Products { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data.
-        const string xmlPath = "people.xml";
-        File.WriteAllText(xmlPath,
-            @"<People>
-                <Person Name='Alice' Gender='Female' />
-                <Person Name='Bob' Gender='Male' />
-                <Person Name='Charlie' Gender='male' />
-                <Person Name='Diana' Gender='FEMALE' />
-              </People>");
+        // Sample XML data.
+        string xmlContent = @"<Products>
+    <Product Name='Apple' Category='Fruit' />
+    <Product Name='Banana' Category='fruit' />
+    <Product Name='Carrot' Category='Vegetable' />
+    <Product Name='Broccoli' Category='vegetable' />
+</Products>";
 
-        // Load XML and filter nodes where Gender attribute equals "male" (case‑insensitive).
-        XDocument xdoc = XDocument.Load(xmlPath);
-        List<Person> filtered = xdoc.Root!
-            .Elements("Person")
-            .Where(e => string.Equals((string?)e.Attribute("Gender"), "male", StringComparison.OrdinalIgnoreCase))
-            .Select(e => new Person
+        // Load XML.
+        XDocument xdoc = XDocument.Parse(xmlContent);
+
+        // Filter nodes where the Category attribute equals "fruit" (case‑insensitive).
+        List<Product> filtered = xdoc.Root?
+            .Elements("Product")
+            .Where(e => string.Equals((string)e.Attribute("Category"), "fruit", StringComparison.OrdinalIgnoreCase))
+            .Select(e => new Product
             {
-                Name = (string?)e.Attribute("Name") ?? "",
-                Gender = (string?)e.Attribute("Gender") ?? ""
+                Name = (string)e.Attribute("Name") ?? "",
+                Category = (string)e.Attribute("Category") ?? ""
             })
-            .ToList();
+            .ToList() ?? new List<Product>();
 
-        // Wrap the filtered collection for the reporting engine.
-        Model model = new Model { Persons = filtered };
+        // Prepare the model for the report.
+        ReportModel model = new()
+        {
+            Products = filtered
+        };
 
-        // Create a LINQ Reporting template programmatically.
-        const string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Filtered persons (Gender = male):");
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Gender]>>");
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = "Template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+        builder.Writeln("Products with Category = \"fruit\" (case‑insensitive):");
+        builder.Writeln("<<foreach [p in Products]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Category: <<[p.Category]>>");
         builder.Writeln("<</foreach>>");
         templateDoc.Save(templatePath);
 
         // Load the template and build the report.
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
+        Document reportDoc = new(templatePath);
+        ReportingEngine engine = new();
         engine.BuildReport(reportDoc, model, "model");
 
         // Save the final report.
-        const string outputPath = "report.docx";
+        string outputPath = "Report.docx";
         reportDoc.Save(outputPath);
     }
 }

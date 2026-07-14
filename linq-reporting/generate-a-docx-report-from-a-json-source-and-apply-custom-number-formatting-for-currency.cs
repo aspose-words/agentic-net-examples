@@ -1,75 +1,91 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public double Total { get; set; }
-    public string Date { get; set; } = "";
-    public string TotalFormatted => Total.ToString("C");
-}
-
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-    public string GeneratedOn { get; set; } = DateTime.Now.ToString("yyyy-MM-dd");
-}
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required by Aspose.Words)
+        // Register code page provider (required for Aspose.Words on some platforms)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         // Prepare sample data
-        var model = new ReportModel
+        var order = new Order
         {
-            Orders =
+            CustomerName = "John Doe",
+            Total = 1234.56m,
+            Items = new List<Item>
             {
-                new Order
-                {
-                    CustomerName = "Alice Johnson",
-                    Total = 1234.56,
-                    Date = "2023-08-01"
-                },
-                new Order
-                {
-                    CustomerName = "Bob Smith",
-                    Total = 7890.12,
-                    Date = "2023-08-02"
-                }
+                new Item { Name = "Widget", Price = 123.45m },
+                new Item { Name = "Gadget", Price = 250.00m }
             }
         };
 
-        // Create the template document programmatically
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Serialize data to JSON file
+        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "order.json");
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(order, Formatting.Indented));
 
-        builder.Writeln("Order Report");
-        builder.Writeln("Generated on: <<[model.GeneratedOn]>>");
-        builder.Writeln();
+        // Create a template document with LINQ Reporting tags
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-        builder.Writeln("<<foreach [order in model.Orders]>>");
+        builder.Writeln("Invoice");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Date: <<[order.Date]>>");
-        builder.Writeln("Total: <<[order.TotalFormatted]>>");
+        builder.Writeln("Total Amount: <<[order.Total.ToString(\"C\")]>>");
+        builder.Writeln();
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+
+        // Table for items
+        var table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Product");
+        builder.InsertCell();
+        builder.Writeln("Price");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Price.ToString(\"C\")]>>");
+        builder.EndRow();
+
+        builder.EndTable();
+
         builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
+        // Save the template (optional, for inspection)
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        template.Save(templatePath);
 
-        // Load the template and build the report using the model
-        var reportDoc = new Document(templatePath);
+        // Build the report using the JSON data source
+        // Load JSON data back (demonstrates JsonDataSource usage)
+        string jsonContent = File.ReadAllText(jsonPath);
+        var data = JsonConvert.DeserializeObject<Order>(jsonContent) ?? new Order();
+
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(template, data, "order");
 
         // Save the generated report
         string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
+        template.Save(reportPath);
     }
+}
+
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public decimal Total { get; set; }
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
 }

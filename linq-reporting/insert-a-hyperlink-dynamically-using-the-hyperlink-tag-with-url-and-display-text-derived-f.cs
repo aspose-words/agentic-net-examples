@@ -1,36 +1,41 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    // URL to be used for the hyperlink.
-    public string Url { get; set; } = "https://www.example.com";
-
-    // Text that will be displayed for the hyperlink.
-    public string LinkText { get; set; } = "Visit Example";
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Prepare sample data.
+        ReportModel model = new ReportModel
+        {
+            Url = "https://www.example.com",
+            LinkText = "Visit Example"
+        };
 
-        // Insert a LINQ Reporting link tag.
-        // The tag will be replaced with a hyperlink whose URL and display text come from the data source.
+        // Create a template document with a LINQ Reporting link tag.
+        string templatePath = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
         builder.Writeln("<<link [model.Url] [model.LinkText]>>");
+        templateDoc.Save(templatePath);
 
-        // Prepare the data source.
-        ReportModel model = new ReportModel();
+        // Load the template for reporting.
+        Document loadedTemplate = new Document(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
+        // Build the report using the model as the root object named "model".
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(loadedTemplate, model, "model");
 
-        // Save the generated document.
-        doc.Save("HyperlinkReport.docx");
+        // Save the generated report.
+        loadedTemplate.Save("Report.docx");
     }
+}
+
+// Data model used by the LINQ Reporting engine.
+public class ReportModel
+{
+    public string Url { get; set; } = string.Empty;
+    public string LinkText { get; set; } = string.Empty;
 }

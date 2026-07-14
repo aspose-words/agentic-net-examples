@@ -8,64 +8,44 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create sample XML data that contains Order elements with attributes.
-        // -----------------------------------------------------------------
-        XDocument xml = new XDocument(
-            new XElement("Orders",
-                new XElement("Order",
-                    new XAttribute("Id", "1"),
-                    new XAttribute("Customer", "Alice")),
-                new XElement("Order",
-                    new XAttribute("Id", "2"),
-                    new XAttribute("Customer", "Bob")),
-                new XElement("Order",
-                    new XAttribute("Id", "3"),
-                    new XAttribute("Customer", "Charlie"))
+        // Create sample XML data with attributes.
+        XDocument xDoc = new XDocument(
+            new XElement("People",
+                new XElement("Person", new XAttribute("Name", "John Doe"), new XAttribute("Age", "30")),
+                new XElement("Person", new XAttribute("Name", "Jane Smith"), new XAttribute("Age", "25"))
             )
         );
 
-        // Save the XML to a file that will be used as the data source.
-        string xmlPath = Path.Combine(Environment.CurrentDirectory, "Orders.xml");
-        xml.Save(xmlPath);
+        // Write the XML to a memory stream.
+        using MemoryStream xmlStream = new MemoryStream();
+        xDoc.Save(xmlStream);
+        xmlStream.Position = 0; // Reset for reading.
 
-        // -----------------------------------------------------------------
-        // 2. Build a Word template programmatically and insert LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document template = new Document();                     // blank document
+        // Create an XML data source from the stream.
+        XmlDataSource xmlDataSource = new XmlDataSource(xmlStream);
+
+        // Build a simple Word template programmatically.
+        Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        builder.Writeln("Order Report");                       // heading
-        builder.Writeln();                                     // empty line
-
-        // The root element name of the XML data source is "Orders".
-        // Iterate over each Order element.
-        builder.Writeln("<<foreach [order in Orders]>>");
-        // Output the Id and Customer attribute values.
-        builder.Writeln("Order Id: <<[order.Id]>>");
-        builder.Writeln("Customer: <<[order.Customer]>>");
+        // Insert a foreach tag that iterates over the "Person" elements.
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template so it can be loaded for reporting.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+        // Save the template (optional, demonstrates load/save lifecycle).
+        const string templatePath = "Template.docx";
         template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and bind the XML data source.
-        // -----------------------------------------------------------------
+        // Load the template back (simulating a separate load step).
         Document doc = new Document(templatePath);
 
-        // XmlDataSource reads the XML file; the root name ("Orders") will be used in the template.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
-
-        // Build the report using the data source.
+        // Build the report using the XML data source.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, dataSource, "Orders");
+        engine.BuildReport(doc, xmlDataSource, "persons");
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
-        doc.Save(outputPath);
+        // Save the generated report.
+        const string reportPath = "Report.docx";
+        doc.Save(reportPath);
     }
 }

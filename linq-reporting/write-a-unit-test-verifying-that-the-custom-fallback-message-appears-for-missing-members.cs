@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -7,39 +8,52 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Ensure the output directory exists.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a template document with a tag that references a missing member.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        // This tag refers to a member "Name" of an object "missing" that does not exist in the data source.
-        builder.Writeln("<<[missing.Name]>>");
-        templateDoc.Save(templatePath);
+        // 1. Create a template document with a tag that references a missing member.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        // The tag <<[missingObject.Name]>> refers to a member that does not exist.
+        builder.Writeln("<<[missingObject.Name]>>");
 
-        // Load the template back.
+        // Save the template to disk.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        template.Save(templatePath);
+
+        // 2. Load the template back (required by the lifecycle rule).
         Document loadedTemplate = new Document(templatePath);
 
-        // Configure the reporting engine to allow missing members and provide a custom fallback message.
+        // 3. Prepare a dummy data source (empty DataSet is sufficient).
+        DataSet dummyData = new DataSet();
+
+        // 4. Configure the ReportingEngine to allow missing members and set a custom fallback message.
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.AllowMissingMembers;
-        engine.MissingMemberMessage = "Custom fallback";
+        engine.MissingMemberMessage = "CustomMissingMessage";
 
-        // Build the report using an empty data source. The root name is empty because the template does not reference the root object.
-        bool success = engine.BuildReport(loadedTemplate, new object(), "");
+        // 5. Build the report. The root name is irrelevant because we only use a plain reference.
+        bool buildResult = engine.BuildReport(loadedTemplate, dummyData, "");
 
-        // Verify that the fallback message appears in the generated document.
-        string resultText = loadedTemplate.GetText();
-        bool containsFallback = resultText.Contains(engine.MissingMemberMessage);
-
-        Console.WriteLine(containsFallback
-            ? "Test passed: custom fallback message is present."
-            : "Test failed: custom fallback message is missing.");
-
-        // Save the generated document for manual inspection.
+        // 6. Save the generated report.
         string resultPath = Path.Combine(outputDir, "result.docx");
         loadedTemplate.Save(resultPath);
+
+        // 7. Verify that the custom fallback message appears in the output document text.
+        string resultText = loadedTemplate.GetText();
+
+        if (resultText.Contains(engine.MissingMemberMessage))
+        {
+            Console.WriteLine("Test passed: custom fallback message was inserted.");
+        }
+        else
+        {
+            Console.WriteLine("Test failed: custom fallback message was not found.");
+        }
+
+        // Optional: output the paths for reference.
+        Console.WriteLine($"Template saved to: {templatePath}");
+        Console.WriteLine($"Result saved to: {resultPath}");
     }
 }

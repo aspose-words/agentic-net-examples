@@ -1,64 +1,79 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    class Program
     {
-        // Register code page provider for XML encoding support.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        static void Main()
+        {
+            // Ensure the CodePages provider is registered (required for some XML encodings).
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Prepare sample XML data.
-        string xmlContent = @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<people>
+            // Paths for the files used in the example.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+            string xmlPath = Path.Combine(outputDir, "people.xml");
+            string templatePath = Path.Combine(outputDir, "template.docx");
+            string reportPath = Path.Combine(outputDir, "report.docx");
+
+            // 1. Create a simple XML data source file.
+            // The XML contains a root element <persons> with multiple <person> entries.
+            string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<persons>
     <person>
-        <name>Alice</name>
-        <age>30</age>
+        <Name>John Doe</Name>
+        <Age>30</Age>
     </person>
     <person>
-        <name>Bob</name>
-        <age>45</age>
+        <Name>Jane Smith</Name>
+        <Age>25</Age>
     </person>
     <person>
-        <name>Charlie</name>
-        <age>28</age>
+        <Name>Bob Johnson</Name>
+        <Age>40</Age>
     </person>
-</people>";
-        string xmlPath = Path.Combine(Directory.GetCurrentDirectory(), "People.xml");
-        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
+</persons>";
+            File.WriteAllText(xmlPath, xmlContent);
 
-        // Create a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // 2. Build a Word template programmatically.
+            // The template uses LINQ Reporting tags to iterate over the XML data.
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // The XML root (<people>) is treated as a collection of rows.
-        // Iterate directly over the root collection.
-        builder.Writeln("<<foreach [p in data]>>");
-        builder.Writeln("<<[p.name]>> - <<[p.age]>>");
-        builder.Writeln("<</foreach>>");
+            // Begin a foreach loop over the collection named "persons".
+            builder.Writeln("<<foreach [person in persons]>>");
+            // Output each person's name and age.
+            builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+            // End the foreach block.
+            builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // Load the template for report generation.
-        Document reportDoc = new Document(templatePath);
+            // 3. Load the template document for reporting.
+            Document loadedTemplate = new Document(templatePath);
 
-        // Create an XmlDataSource from the XML file.
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
+            // 4. Create an XmlDataSource from the XML file.
+            XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
 
-        // Initialize the reporting engine without AllowMissingMembers.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
+            // 5. Configure the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            // Do NOT enable AllowMissingMembers; the default (None) keeps the option disabled.
+            engine.Options = ReportBuildOptions.None;
 
-        // Build the report. The data source name used in the template is "data".
-        engine.BuildReport(reportDoc, xmlDataSource, "data");
+            // 6. Build the report.
+            // The root object name in the template is "persons", matching the XML root element.
+            engine.BuildReport(loadedTemplate, xmlDataSource, "persons");
 
-        // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        reportDoc.Save(reportPath);
+            // 7. Save the generated report.
+            loadedTemplate.Save(reportPath);
+
+            // Inform the user where the files are located.
+            Console.WriteLine("Template, XML data source, and report have been created in:");
+            Console.WriteLine(outputDir);
+        }
     }
 }

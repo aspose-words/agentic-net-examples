@@ -1,15 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
 public class Item
 {
     public int Index { get; set; }
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
 }
 
 public class ReportModel
@@ -21,50 +18,48 @@ public class Program
 {
     public static void Main()
     {
-        // Required for some encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample data.
+        var model = new ReportModel
+        {
+            Items = new List<Item>
+            {
+                new Item { Index = 1, Name = "Apple" },
+                new Item { Index = 2, Name = "Banana" },
+                new Item { Index = 3, Name = "Cherry" }
+            }
+        };
 
-        // Sample data.
-        var model = new ReportModel();
-        model.Items.Add(new Item { Index = 1, Name = "Apple" });
-        model.Items.Add(new Item { Index = 2, Name = "Banana" });
-        model.Items.Add(new Item { Index = 3, Name = "Cherry" });
-
-        // Build the template document.
+        // Create a blank document and a builder.
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Begin a data band that will repeat the rows.
+        // Insert a data band that iterates over Items.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Create the table.
-        Table table = builder.StartTable();
-
-        // Header row.
+        // Build a table header.
+        var table = builder.StartTable();
         builder.InsertCell();
         builder.Writeln("Index");
         builder.InsertCell();
         builder.Writeln("Name");
         builder.EndRow();
 
-        // Data row – this row will be repeated for each item.
+        // Table row for each item.
         builder.InsertCell();
         builder.Writeln("<<[item.Index]>>");
         builder.InsertCell();
         builder.Writeln("<<[item.Name]>>");
         builder.EndRow();
 
-        // Finish the table and the data band.
+        // Close the table and the foreach block.
         builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Generate the report.
+        // Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the result.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"Report generated: {outputPath}");
+        // Save the generated document.
+        doc.Save("Report.docx");
     }
 }

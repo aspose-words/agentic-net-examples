@@ -4,38 +4,36 @@ using Aspose.Words.Reporting;
 
 namespace LinqReportingExample
 {
-    public class Person
+    // Simple data model used by the template.
+    public class ReportModel
     {
-        public string Name { get; set; } = "John Doe";
+        public string Name { get; set; } = "World";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a simple DOCX template with a LINQ Reporting tag if it does not exist.
+            // Step 1: Create a DOCX template with a LINQ Reporting tag.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+            builder.Writeln("Hello <<[model.Name]>>!");
             const string templatePath = "Template.docx";
-            if (!System.IO.File.Exists(templatePath))
-            {
-                var doc = new Document();
-                var builder = new DocumentBuilder(doc);
-                builder.Writeln("Hello, <<[person.Name]>>!");
-                doc.Save(templatePath);
-            }
+            template.Save(templatePath);
 
-            // Load the template from the project directory.
-            var template = new Document(templatePath);
+            // Step 2: Load the template from the file system.
+            Document doc = new Document(templatePath);
 
-            // Prepare the data model.
-            var person = new Person();
+            // Step 3: Prepare the data source.
+            ReportModel model = new ReportModel { Name = "Aspose.Words" };
 
-            // Instantiate the reporting engine and build the report.
-            var engine = new ReportingEngine();
-            engine.BuildReport(template, person, "person");
+            // Step 4: Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-            // Save the generated report.
+            // Step 5: Save the generated report.
             const string outputPath = "Report.docx";
-            template.Save(outputPath);
+            doc.Save(outputPath);
         }
     }
 }

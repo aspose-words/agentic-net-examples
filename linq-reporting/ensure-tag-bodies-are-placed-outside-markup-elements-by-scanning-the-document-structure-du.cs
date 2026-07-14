@@ -1,114 +1,100 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 namespace LinqReportingTagPreprocess
 {
-    // Simple data model used as the root object for the report.
-    public class ReportModel
-    {
-        // Initialize to avoid nullable warnings.
-        public string Name { get; set; } = "World";
-    }
-
     public class Program
     {
-        // Entry point.
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-            string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+            // Register code page provider for certain data sources.
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            // Sample data model.
+            Order order = new Order { CustomerName = "John Doe" };
 
-            // The tag is placed inside a sentence – this is the situation we want to fix.
-            builder.Writeln("Hello <<[model.Name]>>! This is a LINQ Reporting example.");
+            // Create a template document with a LINQ Reporting tag inside a run.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+            builder.Writeln("Dear <<[order.CustomerName]>>,");
+            builder.Writeln("Thank you for your purchase.");
 
-            // Save the template so it can be re‑loaded for preprocessing.
+            // Save and reload to emulate a real‑world scenario.
+            const string templatePath = "Template.docx";
             template.Save(templatePath);
+            Document doc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template back and preprocess it.
-            //    The goal is to ensure that any tag body (e.g., <<[model.Name]>>)
-            //    is not embedded inside other markup elements such as runs.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
-            MoveTagsToSeparateParagraphs(doc);
+            // Preprocess: ensure each tag resides in its own Run node.
+            PreprocessDocument(doc);
 
-            // -----------------------------------------------------------------
-            // 3. Build the report using the ReportingEngine.
-            // -----------------------------------------------------------------
-            var model = new ReportModel(); // model.Name = "World" by default
+            // Build the report.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, order, "order");
 
-            var engine = new ReportingEngine
-            {
-                // Use the property setter as required by the rules.
-                Options = ReportBuildOptions.None
-            };
-
-            // The root name in the template is "model" because the tag uses <<[model.Name]>>.
-            engine.BuildReport(doc, model, "model");
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            doc.Save(reportPath);
+            // Save the final document.
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
         }
 
-        // Scans the document and moves any tag found inside a Run to its own paragraph.
-        private static void MoveTagsToSeparateParagraphs(Document document)
+        // Moves any LINQ Reporting tags so that they are isolated in separate Run nodes.
+        private static void PreprocessDocument(Document doc)
         {
-            // Create a snapshot of all runs to avoid modifying the collection while iterating.
-            var runs = document.GetChildNodes(NodeType.Run, true)
-                               .Cast<Run>()
-                               .ToList();
-
-            foreach (Run run in runs)
+            foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
             {
-                string text = run.Text;
-                int startIdx = text.IndexOf("<<[", StringComparison.Ordinal);
-                int endIdx = text.IndexOf("]>>", StringComparison.Ordinal);
+                // Get a snapshot of the runs in the paragraph.
+                Run[] runs = paragraph.GetChildNodes(NodeType.Run, true)
+                                      .OfType<Run>()
+                                      .ToArray();
 
-                // If a tag is present inside this run, extract it.
-                if (startIdx >= 0 && endIdx > startIdx)
+                foreach (Run run in runs)
                 {
-                    // Preserve any text before the tag.
-                    string beforeTag = text.Substring(0, startIdx);
-                    // Preserve any text after the tag.
-                    string afterTag = text.Substring(endIdx + 3);
+                    string text = run.Text;
+                    int startIdx = text.IndexOf("<<[", StringComparison.Ordinal);
+                    int endIdx = text.IndexOf("]>>", StringComparison.Ordinal);
 
-                    // Replace the original run's text with the preceding text (if any).
-                    run.Text = beforeTag;
-
-                    // Create a new paragraph that will contain only the tag.
-                    Paragraph currentParagraph = (Paragraph)run.GetAncestor(NodeType.Paragraph);
-                    Paragraph tagParagraph = (Paragraph)currentParagraph.Clone(true);
-                    tagParagraph.Runs.Clear();
-
-                    // Create a new run that contains only the tag.
-                    Run tagRun = new Run(document, text.Substring(startIdx, endIdx - startIdx + 3));
-                    tagParagraph.Runs.Add(tagRun);
-
-                    // Insert the tag paragraph immediately after the current paragraph.
-                    CompositeNode parent = (CompositeNode)currentParagraph.ParentNode;
-                    parent.InsertAfter(tagParagraph, currentParagraph);
-
-                    // If there is trailing text after the tag, insert it as a new run in the original paragraph.
-                    if (!string.IsNullOrEmpty(afterTag))
+                    // If a tag is found, split the run into before‑tag, tag, and after‑tag parts.
+                    if (startIdx >= 0 && endIdx > startIdx)
                     {
-                        Run afterRun = new Run(document, afterTag);
-                        currentParagraph.Runs.Add(afterRun);
+                        string beforeTag = text.Substring(0, startIdx);
+                        string tag = text.Substring(startIdx, endIdx - startIdx + 3);
+                        string afterTag = text.Substring(endIdx + 3);
+
+                        // Preserve the original run for insertion reference.
+                        Run referenceRun = run;
+
+                        // Set the text of the original run to the preceding text (may be empty).
+                        referenceRun.Text = beforeTag ?? string.Empty;
+
+                        // Insert a new run that contains only the tag.
+                        Run tagRun = new Run(doc, tag);
+                        paragraph.InsertAfter(tagRun, referenceRun);
+
+                        // If there is trailing text, insert another run after the tag run.
+                        if (!string.IsNullOrEmpty(afterTag))
+                        {
+                            Run afterRun = new Run(doc, afterTag);
+                            paragraph.InsertAfter(afterRun, tagRun);
+                        }
+
+                        // If the original run ended up empty, remove it to avoid stray empty runs.
+                        if (string.IsNullOrEmpty(referenceRun.Text))
+                        {
+                            referenceRun.Remove();
+                        }
                     }
                 }
             }
         }
+    }
+
+    // Public data model used by the template.
+    public class Order
+    {
+        public string CustomerName { get; set; } = string.Empty;
     }
 }

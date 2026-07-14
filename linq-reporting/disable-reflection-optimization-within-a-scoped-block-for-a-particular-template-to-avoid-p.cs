@@ -1,70 +1,65 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
     // Simple data model used by the template.
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
+
     public class Person
     {
-        public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-            string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+            // Prepare sample data.
+            var model = new ReportModel
+            {
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 25 },
+                    new Person { Name = "Charlie", Age = 35 }
+                }
+            };
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Create a template document programmatically.
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+            doc.Save(templatePath);
 
-            // Insert a simple paragraph that references the data source.
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>");
+            // Load the template (demonstrates separate load step).
+            var template = new Document(templatePath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back for report generation.
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Disable reflection optimization for this scoped operation.
-            // -----------------------------------------------------------------
-            bool previousOptimizationSetting = ReportingEngine.UseReflectionOptimization;
-            ReportingEngine.UseReflectionOptimization = false; // Disable proxy generation.
-
+            // Disable reflection optimization for this report generation.
+            bool previousOptimization = ReportingEngine.UseReflectionOptimization;
+            ReportingEngine.UseReflectionOptimization = false;
             try
             {
-                // Create the reporting engine.
-                ReportingEngine engine = new ReportingEngine();
-
-                // Prepare the data source.
-                Person person = new Person { Name = "Alice Smith", Age = 28 };
-
-                // Build the report. The root name must match the tag prefix used in the template.
-                engine.BuildReport(loadedTemplate, person, "person");
-
+                var engine = new ReportingEngine();
+                // Build the report using the model; root name must match the template tags.
+                engine.BuildReport(template, model, "model");
                 // Save the generated report.
-                loadedTemplate.Save(reportPath);
+                template.Save("Report.docx");
             }
             finally
             {
                 // Restore the original optimization setting.
-                ReportingEngine.UseReflectionOptimization = previousOptimizationSetting;
+                ReportingEngine.UseReflectionOptimization = previousOptimization;
             }
-
-            // The example finishes without requiring any user interaction.
         }
     }
 }

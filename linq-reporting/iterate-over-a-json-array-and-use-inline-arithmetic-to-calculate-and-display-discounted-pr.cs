@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,49 +8,45 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some locales).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Prepare folders.
-        string workDir = Directory.GetCurrentDirectory();
-        string dataFile = Path.Combine(workDir, "products.json");
-        string templateFile = Path.Combine(workDir, "template.docx");
-        string resultFile = Path.Combine(workDir, "DiscountReport.docx");
+        // 1. Create sample JSON data representing a list of products.
+        string jsonPath = Path.Combine(outputDir, "products.json");
+        string jsonContent = @"
+[
+    { ""Name"": ""Apple"",  ""Price"": 1.20, ""Discount"": 10 },
+    { ""Name"": ""Banana"", ""Price"": 0.80, ""Discount"": 5 },
+    { ""Name"": ""Cherry"", ""Price"": 2.50, ""Discount"": 20 }
+]";
+        File.WriteAllText(jsonPath, jsonContent);
 
-        // 1. Create sample JSON array.
-        string json = @"[
-            { ""Name"": ""Apple"",  ""Price"": 10.0, ""Discount"": 0.10 },
-            { ""Name"": ""Banana"", ""Price"": 5.0,  ""Discount"": 0.20 },
-            { ""Name"": ""Orange"", ""Price"": 8.0,  ""Discount"": 0.15 }
-        ]";
-        File.WriteAllText(dataFile, json, Encoding.UTF8);
+        // 2. Create a template document programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // 2. Build a template document with LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        builder.Writeln("Product Discount Report");
-        builder.Writeln("<<foreach [p in products]>>");
-        // Display product name, original price, and discounted price calculated inline.
-        builder.Writeln("<<[p.Name]>>: Original <<[p.Price]>>  Discounted <<[p.Price * (1 - p.Discount)]>>");
+        builder.Writeln("Product Price Report");
+        builder.Writeln("====================================");
+        // The data source name will be \"items\" (see BuildReport call below).
+        builder.Writeln("<<foreach [item in items]>>");
+        builder.Writeln("Name: <<[item.Name]>>");
+        builder.Writeln("Original Price: $<<[item.Price]>>");
+        // Inline arithmetic to calculate discounted price.
+        builder.Writeln("Discounted Price: $<<[item.Price * (1 - item.Discount / 100)]>>");
         builder.Writeln("<</foreach>>");
+        builder.Writeln("====================================");
 
-        // Save the template (required by the workflow).
-        template.Save(templateFile);
+        // 3. Load the JSON data as a JsonDataSource.
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
 
-        // 3. Load the template (demonstrating the load‑save cycle).
-        Document doc = new Document(templateFile);
-
-        // 4. Create a JsonDataSource from the JSON file.
-        JsonDataSource jsonData = new JsonDataSource(dataFile);
-
-        // 5. Build the report. The data source name must match the tag used in the template.
+        // 4. Build the report using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, jsonData, "products");
+        // No special options are required for this simple scenario.
+        engine.BuildReport(doc, jsonDataSource, "items");
 
-        // 6. Save the generated report.
-        doc.Save(resultFile);
-
-        Console.WriteLine($"Report generated: {resultFile}");
+        // 5. Save the generated report.
+        string reportPath = Path.Combine(outputDir, "DiscountReport.docx");
+        doc.Save(reportPath);
     }
 }

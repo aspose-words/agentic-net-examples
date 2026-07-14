@@ -1,73 +1,54 @@
 using System;
-using System.IO;
+using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingCurrencyExample
+public static class Extensions
 {
-    // Sample data model.
-    public class Order
+    // Formats a decimal value as a currency string with a dollar sign and two decimal places.
+    public static string ToCurrencyString(this decimal amount)
     {
-        public decimal Amount { get; set; } = 0m; // Initialize to avoid nullable warnings.
+        return string.Format(CultureInfo.InvariantCulture, "${0:0.00}", amount);
     }
 
-    // Extension method used in the LINQ Reporting template.
-    public static class Extensions
+    // Helper method for the reporting engine (static call) – required because the engine
+    // cannot resolve extension methods directly in template expressions.
+    public static string ToCurrencyStringStatic(decimal amount)
     {
-        // Formats a decimal value as a currency string, e.g. $1234.56
-        public static string ToCurrencyString(this decimal amount)
-        {
-            return string.Format("${0:N2}", amount);
-        }
+        return ToCurrencyString(amount);
     }
+}
 
-    public class Program
+// Simple data model that will be used as the root object for the report.
+public class Order
+{
+    public decimal Amount { get; set; } = 0m; // Initialized to avoid nullable warnings.
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+        // Create a new blank document and a builder to insert the template tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // -------------------------------------------------
-            // 1. Create the template document with a LINQ tag.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Insert a LINQ Reporting tag that calls the static helper method.
+        // The engine can resolve static methods from known types, so we use the static wrapper.
+        builder.Writeln("Amount: <<[Extensions.ToCurrencyStringStatic(order.Amount)]>>");
 
-            // The tag calls the custom extension method ToCurrencyString().
-            builder.Writeln("Amount: <<[order.Amount.ToCurrencyString()]>>");
+        // Prepare sample data.
+        Order order = new Order { Amount = 1234.56m };
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Configure the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        // Register the static class that contains the helper method so the engine can use it.
+        engine.KnownTypes.Add(typeof(Extensions));
 
-            // -------------------------------------------------
-            // 2. Load the template and prepare data.
-            // -------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+        // Build the report. The root object name must match the tag prefix used in the template.
+        engine.BuildReport(doc, order, "order");
 
-            // Sample data.
-            Order order = new Order { Amount = 1234.56m };
-
-            // -------------------------------------------------
-            // 3. Build the report using ReportingEngine.
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine
-            {
-                // Allow the engine to resolve extension methods.
-                Options = ReportBuildOptions.AllowMissingMembers
-            };
-
-            // Register the static class that contains the extension method.
-            engine.KnownTypes.Add(typeof(Extensions));
-
-            // Build the report. The root name "order" must match the tag.
-            engine.BuildReport(loadedTemplate, order, "order");
-
-            // -------------------------------------------------
-            // 4. Save the generated report.
-            // -------------------------------------------------
-            loadedTemplate.Save(reportPath);
-        }
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }

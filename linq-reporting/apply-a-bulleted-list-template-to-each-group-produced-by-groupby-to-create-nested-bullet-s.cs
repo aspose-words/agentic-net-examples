@@ -1,79 +1,98 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Lists;
+using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
         // Prepare sample data.
-        var model = new ReportModel
+        List<Item> items = new()
         {
-            Items = new List<Item>
-            {
-                new Item { Category = "Fruits", Name = "Apple" },
-                new Item { Category = "Fruits", Name = "Banana" },
-                new Item { Category = "Fruits", Name = "Cherry" },
-                new Item { Category = "Vegetables", Name = "Carrot" },
-                new Item { Category = "Vegetables", Name = "Lettuce" },
-                new Item { Category = "Grains", Name = "Rice" },
-                new Item { Category = "Grains", Name = "Wheat" }
-            }
+            new Item { Category = "Fruits", Name = "Apple" },
+            new Item { Category = "Fruits", Name = "Banana" },
+            new Item { Category = "Fruits", Name = "Cherry" },
+            new Item { Category = "Vegetables", Name = "Carrot" },
+            new Item { Category = "Vegetables", Name = "Lettuce" },
+            new Item { Category = "Grains", Name = "Rice" }
         };
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Group items by Category.
+        List<Group> groups = items
+            .GroupBy(i => i.Category)
+            .Select(g => new Group { Category = g.Key, Items = g.ToList() })
+            .ToList();
 
-        // Write the LINQ Reporting tags.
-        // Outer foreach iterates over groups created by GroupBy on Category.
-        builder.Writeln("<<foreach [g in Items.GroupBy(i => i.Category)]>>");
-        // Group title (category name).
-        builder.Writeln("<<[g.Key]>>");
+        // Build the wrapper model for the report.
+        ReportModel model = new() { Groups = groups };
 
-        // Apply a bulleted list to the items of each group.
-        builder.ListFormat.List = template.Lists.Add(ListTemplate.BulletDefault);
-        builder.Writeln("<<foreach [item in g]>>");
-        builder.Writeln("<<[item.Name]>>");
+        // -----------------------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Create a bulleted list that will be used for both group headers and items.
+        List bulletList = templateDoc.Lists.Add(ListTemplate.BulletDefault);
+        builder.ListFormat.List = bulletList;
+
+        // Begin outer foreach over groups.
+        builder.Writeln("<<foreach [g in Groups]>>");
+
+        // Group header – level 0 bullet.
+        builder.ListFormat.ListLevelNumber = 0;
+        builder.Writeln("<<[g.Category]>>");
+
+        // Begin inner foreach over items within the current group.
+        builder.Writeln("<<foreach [i in g.Items]>>");
+
+        // Item name – level 1 bullet.
+        builder.ListFormat.ListLevelNumber = 1;
+        builder.Writeln("<<[i.Name]>>");
+
+        // End inner foreach.
         builder.Writeln("<</foreach>>");
-        // End the bullet list for this group.
-        builder.ListFormat.RemoveNumbers();
 
-        // Close the outer foreach.
+        // End outer foreach.
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
+        // Load the template and build the report.
         // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        const string reportPath = "Report.docx";
-        reportDoc.Save(reportPath);
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
 // ---------------------------------------------------------------------
 // Data model classes.
 // ---------------------------------------------------------------------
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
 public class Item
 {
     public string Category { get; set; } = "";
     public string Name { get; set; } = "";
+}
+
+public class Group
+{
+    public string Category { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class ReportModel
+{
+    public List<Group> Groups { get; set; } = new();
 }

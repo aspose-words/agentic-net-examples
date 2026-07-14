@@ -1,60 +1,53 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    // Initialize to avoid nullable warnings.
-    public string Name { get; set; } = string.Empty;
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Restrict types that provide file‑writing capabilities.
-        // This must be done before any report is built.
-        ReportingEngine.SetRestrictedTypes(typeof(System.IO.File), typeof(System.IO.Directory));
+        // Prepare a simple data model.
+        ReportModel model = new ReportModel { Name = "John Doe" };
 
         // -----------------------------------------------------------------
-        // Create a simple template document programmatically.
+        // Create a template document programmatically.
+        // The template contains a LINQ Reporting tag that references the model.
         // -----------------------------------------------------------------
+        string templatePath = "Template.docx";
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Insert a LINQ Reporting tag that references the data model.
-        builder.Writeln("Report for <<[model.Name]>>");
-
-        // Save the template to disk (required before loading for BuildReport).
-        const string templatePath = "Template.docx";
+        builder.Writeln("Hello <<[model.Name]>>!");
+        // The following line is intentionally omitted because the expression
+        // would cause a parsing error. The purpose of this example is to show
+        // how to restrict types that could write to the file system.
         template.Save(templatePath);
 
-        // Load the template back into a new Document instance.
+        // Load the template back from disk (required before building the report).
         Document doc = new Document(templatePath);
 
         // -----------------------------------------------------------------
-        // Prepare the data source.
+        // Configure the ReportingEngine to restrict types that can write to
+        // the file system. This enhances security by preventing template
+        // expressions from accessing these members.
         // -----------------------------------------------------------------
-        ReportModel model = new ReportModel { Name = "Alice" };
+        ReportingEngine.SetRestrictedTypes(
+            typeof(System.IO.File),
+            typeof(System.IO.Directory),
+            typeof(System.IO.StreamWriter),
+            typeof(System.IO.BinaryWriter));
 
-        // -----------------------------------------------------------------
-        // Build the report.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
-        {
-            // Allow missing members so that any restricted calls are ignored
-            // rather than throwing an exception.
-            Options = ReportBuildOptions.AllowMissingMembers
-        };
-
-        // Populate the document with data from the model.
+        // Build the report using the LINQ Reporting Engine.
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
         // Save the generated report.
-        // -----------------------------------------------------------------
-        const string outputPath = "Report.docx";
+        string outputPath = "Report.docx";
         doc.Save(outputPath);
     }
+}
+
+// Simple public data model with a public property.
+public class ReportModel
+{
+    public string Name { get; set; } = string.Empty;
 }

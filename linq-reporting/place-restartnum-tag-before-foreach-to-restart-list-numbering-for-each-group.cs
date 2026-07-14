@@ -4,82 +4,83 @@ using Aspose.Words;
 using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 
-public class Item
-{
-    public string Name { get; set; } = "";
-}
-
-public class Group
-{
-    public string Name { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class ReportModel
-{
-    public List<Group> groups { get; set; } = new();
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Sample data.
-        var model = new ReportModel
+        // Create a blank document and a builder to insert the template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Create a numbered list style that will be used for the service items.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        builder.ListFormat.List = list; // Apply the list to subsequent paragraphs.
+
+        // LINQ Reporting template.
+        // Outer loop over orders.
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Client: <<[order.ClientName]>>");
+
+        // Restart numbering for each order's service list.
+        // The <<restartNum>> tag must be placed before the <<foreach>> tag in the same numbered paragraph.
+        builder.Writeln("<<restartNum>><<foreach [service in order.Services]>>");
+        builder.Writeln("<<[service.Name]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
+
+        // End list formatting.
+        builder.ListFormat.RemoveNumbers();
+
+        // Prepare sample data.
+        ReportModel model = new ReportModel
         {
-            groups = new List<Group>
+            Orders = new List<Order>
             {
-                new Group
+                new Order
                 {
-                    Name = "Group A",
-                    Items = new List<Item>
+                    ClientName = "Acme Corp",
+                    Services = new List<Service>
                     {
-                        new Item { Name = "Item 1" },
-                        new Item { Name = "Item 2" }
+                        new Service { Name = "Consulting" },
+                        new Service { Name = "Implementation" },
+                        new Service { Name = "Support" }
                     }
                 },
-                new Group
+                new Order
                 {
-                    Name = "Group B",
-                    Items = new List<Item>
+                    ClientName = "Globex Inc",
+                    Services = new List<Service>
                     {
-                        new Item { Name = "Item 1" },
-                        new Item { Name = "Item 2" },
-                        new Item { Name = "Item 3" }
+                        new Service { Name = "Analysis" },
+                        new Service { Name = "Design" }
                     }
                 }
             }
         };
 
-        // Create the template document.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        // Outer foreach over groups.
-        builder.Writeln("<<foreach [group in groups]>>");
-        // Group heading.
-        builder.Writeln("<<[group.Name]>>");
-
-        // Create a numbered list and apply it to the paragraph that will contain the items.
-        var list = template.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = list;
-
-        // Restart numbering for each group and iterate over items.
-        builder.Writeln("1. <<restartNum>><<foreach [item in group.Items]>> <<[item.Name]>>");
-        // Close inner and outer foreach tags.
-        builder.Writeln("<</foreach>><</foreach>>");
-        builder.ListFormat.RemoveNumbers();
-
-        // Save the template, then load it for reporting.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-        var loadedTemplate = new Document(templatePath);
-
         // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model);
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // Save the final report.
-        loadedTemplate.Save("Report.docx");
+        // Save the generated document.
+        doc.Save("Report.docx");
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
+
+public class Order
+{
+    public string ClientName { get; set; } = "";
+    public List<Service> Services { get; set; } = new();
+}
+
+public class Service
+{
+    public string Name { get; set; } = "";
 }

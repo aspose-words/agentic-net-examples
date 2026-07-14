@@ -5,7 +5,7 @@ using Aspose.Words.Reporting;
 
 public class Item
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public int Stock { get; set; }
     public double Price { get; set; }
 }
@@ -20,48 +20,50 @@ public class Program
     public static void Main()
     {
         // 1. Create a template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-        // Header
+        // Write a simple heading.
         builder.Writeln("Items with Stock > 0 and Price < 100:");
         builder.Writeln();
 
-        // Begin foreach over Items collection.
+        // Begin a foreach loop over the collection Items.
         builder.Writeln("<<foreach [item in Items]>>");
 
         // Conditional block: display only items meeting both criteria.
         builder.Writeln("<<if [item.Stock > 0 && item.Price < 100]>>");
-        builder.Writeln("- <<[item.Name]>> (Stock: <<[item.Stock]>>, Price: $<<[item.Price]>>)");
+        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>> (Stock: <<[item.Stock]>>)");
         builder.Writeln("<</if>>");
 
-        // End foreach.
+        // End the foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        doc.Save(templatePath);
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // 2. Load the template for reporting.
-        var reportDoc = new Document(templatePath);
+        // 2. Load the template (could reuse the same instance, but following the rule to load after creation).
+        var doc = new Document(templatePath);
 
         // 3. Prepare sample data.
         var model = new ReportModel
         {
-            Items = new()
+            Items = new List<Item>
             {
-                new Item { Name = "Apple", Stock = 20, Price = 45.5 },
-                new Item { Name = "Banana", Stock = 0, Price = 30.0 },
-                new Item { Name = "Cherry", Stock = 15, Price = 120.0 },
-                new Item { Name = "Date", Stock = 5, Price = 80.0 }
+                new Item { Name = "Pen", Stock = 10, Price = 2.5 },
+                new Item { Name = "Notebook", Stock = 0, Price = 5.0 },
+                new Item { Name = "Backpack", Stock = 5, Price = 120.0 },
+                new Item { Name = "Mouse", Stock = 3, Price = 25.0 },
+                new Item { Name = "Keyboard", Stock = 2, Price = 80.0 }
             }
         };
 
         // 4. Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // 5. Save the generated report.
-        reportDoc.Save("Report.docx");
+        const string reportPath = "Report.docx";
+        doc.Save(reportPath);
     }
 }

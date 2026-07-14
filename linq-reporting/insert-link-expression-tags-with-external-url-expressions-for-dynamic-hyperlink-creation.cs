@@ -4,56 +4,42 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Data model used by the LINQ Reporting engine.
+    // Data model used by the template.
     public class ReportModel
     {
-        // URL that the hyperlink will point to.
-        public string Url { get; set; } = string.Empty;
-
-        // Text displayed for the hyperlink.
-        public string LinkText { get; set; } = string.Empty;
+        public string Url { get; set; } = "https://example.com";
+        public string LinkText { get; set; } = "Example Site";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "template.docx";
-            const string reportPath = "report.docx";
-
-            // -------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -------------------------------------------------
+            // Step 1: Create the template document with a LINQ Reporting link tag.
             var templateDoc = new Document();
             var builder = new DocumentBuilder(templateDoc);
-
-            // Insert a paragraph with a dynamic link tag.
-            // The tag will be replaced with a hyperlink whose URL and display text
-            // come from the data model (model.Url and model.LinkText).
-            builder.Writeln("Visit our site: <<link [model.Url] [model.LinkText]>>");
-
-            // Save the template to disk.
+            builder.Writeln("Visit our site:");
+            builder.Writeln("<<link [model.Url] [model.LinkText]>>");
+            const string templatePath = "Template.docx";
             templateDoc.Save(templatePath);
 
-            // -------------------------------------------------
-            // 2. Load the template and build the report.
-            // -------------------------------------------------
-            var loadedTemplate = new Document(templatePath);
+            // Step 2: Load the template for reporting.
+            var doc = new Document(templatePath);
 
-            // Prepare the data source.
+            // Step 3: Prepare the data source.
             var model = new ReportModel
             {
-                Url = "https://www.example.com",
-                LinkText = "Example Site"
+                Url = "https://www.aspose.com",
+                LinkText = "Aspose.Words"
             };
 
-            // Create the reporting engine and generate the report.
+            // Step 4: Build the report using the ReportingEngine.
             var engine = new ReportingEngine();
-            engine.BuildReport(loadedTemplate, model, "model");
+            engine.BuildReport(doc, model, "model");
 
-            // Save the final document.
-            loadedTemplate.Save(reportPath);
+            // Step 5: Save the generated report.
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
         }
     }
 }

@@ -1,61 +1,56 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Order
 {
-    public int Id { get; set; } = 0;
+    public int Id { get; set; }
     public string CustomerName { get; set; } = "";
     public string Status { get; set; } = "";
-    public decimal Amount { get; set; } = 0m;
+}
+
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create a blank document and a builder to insert LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare sample data
-        List<Order> orders = new()
-        {
-            new Order { Id = 1, CustomerName = "Alice",   Status = "Pending",   Amount = 120.50m },
-            new Order { Id = 2, CustomerName = "Bob",     Status = "Shipped",   Amount =  85.00m },
-            new Order { Id = 3, CustomerName = "Charlie", Status = "Pending",   Amount =  45.75m },
-            new Order { Id = 4, CustomerName = "Diana",   Status = "Delivered", Amount = 210.00m }
-        };
-
-        // -----------------------------------------------------------------
-        // Create the LINQ Reporting template programmatically
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        builder.Writeln("Orders Report (Pending Only)");
-        // Use Where extension method inside the foreach tag to filter pending orders
-        builder.Writeln("<<foreach [order in orders.Where(o => o.Status == \"Pending\")]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>, Customer: <<[order.CustomerName]>>, Amount: $<<[order.Amount]>>");
+        // Template: iterate over the Orders collection and output fields.
+        builder.Writeln("<<foreach [order in Model.Orders]>>");
+        builder.Writeln("Order ID: <<[order.Id]>>, Customer: <<[order.CustomerName]>>, Status: <<[order.Status]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Sample data.
+        List<Order> allOrders = new()
+        {
+            new Order { Id = 1, CustomerName = "Alice",   Status = "Pending" },
+            new Order { Id = 2, CustomerName = "Bob",     Status = "Shipped" },
+            new Order { Id = 3, CustomerName = "Charlie", Status = "Pending" },
+            new Order { Id = 4, CustomerName = "Diana",   Status = "Cancelled" }
+        };
 
-        // -----------------------------------------------------------------
-        // Load the template and build the report
-        // -----------------------------------------------------------------
-        Document report = new Document(templatePath);
+        // Apply the built‑in Where extension method to keep only pending orders.
+        List<Order> pendingOrders = allOrders
+            .Where(o => o.Status == "Pending")
+            .ToList();
+
+        // Wrap the filtered collection in a model object.
+        ReportModel model = new ReportModel { Orders = pendingOrders };
+
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "Model");
 
-        // Pass the orders list as the data source named "orders"
-        engine.BuildReport(report, orders, "orders");
-
-        // Save the generated report
-        const string outputPath = "Report.docx";
-        report.Save(outputPath);
+        // Save the generated document.
+        doc.Save("Report.docx");
     }
 }

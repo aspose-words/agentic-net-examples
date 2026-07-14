@@ -1,77 +1,84 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingHeaderImage
+public class ReportModel
 {
-    public class Program
+    // Path to the image file that will be inserted into the header.
+    public string ImagePath { get; set; } = string.Empty;
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Register code page provider for legacy encodings.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare an output folder.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(workDir);
 
-            // Define file paths.
-            string workDir = Directory.GetCurrentDirectory();
-            string templatePath = Path.Combine(workDir, "HeaderImageTemplate.docx");
-            string outputPath = Path.Combine(workDir, "HeaderImageReport.docx");
-            string imagePath = Path.Combine(workDir, "SampleImage.png");
+        // -----------------------------------------------------------------
+        // 1. Create a simple PNG image (1x1 transparent pixel).
+        // -----------------------------------------------------------------
+        string imagePath = Path.Combine(workDir, "SampleImage.png");
+        CreateSamplePng(imagePath);
 
-            // Create a minimal PNG image (1x1 pixel) and write it to disk.
-            byte[] pngBytes = Convert.FromBase64String(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=");
-            File.WriteAllBytes(imagePath, pngBytes);
+        // -----------------------------------------------------------------
+        // 2. Build the template document that contains an image tag in the header.
+        // -----------------------------------------------------------------
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        CreateTemplate(templatePath);
 
-            // -----------------------------------------------------------------
-            // 1. Build the template document with a header containing an image tag.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // 3. Load the template and prepare the data model.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
+        var model = new ReportModel { ImagePath = imagePath };
 
-            // Move cursor to the primary header.
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        // -----------------------------------------------------------------
+        // 4. Run the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Insert a textbox that will host the image tag.
-            Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 100);
-            builder.MoveTo(textBox.FirstParagraph);
-
-            // Insert the LINQ Reporting image tag with the fitWidth switch.
-            builder.Write("<<image [model.ImagePath] -fitWidth>>");
-
-            // Add a simple paragraph in the body.
-            builder.MoveToDocumentEnd();
-            builder.Writeln("Report body content goes here.");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report using LINQ Reporting.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // Prepare the data model.
-            ReportModel model = new ReportModel
-            {
-                ImagePath = imagePath
-            };
-
-            // Create and run the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the final report.
-            reportDoc.Save(outputPath);
-        }
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        string reportPath = Path.Combine(workDir, "Report.docx");
+        doc.Save(reportPath);
     }
 
-    // Data model used by the LINQ Reporting engine.
-    public class ReportModel
+    // Creates a minimal 1x1 PNG image from a Base64 string.
+    private static void CreateSamplePng(string filePath)
     {
-        // Path to the image that will be inserted into the header.
-        public string ImagePath { get; set; } = string.Empty;
+        // Base64 for a 1x1 transparent PNG.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/lKX9WQAAAABJRU5ErkJggg==";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(filePath, pngBytes);
+    }
+
+    // Creates a Word template with a header that contains an image tag using the -fitWidth switch.
+    private static void CreateTemplate(string filePath)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Move to the primary header.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+
+        // Insert a textbox that will host the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        // Move the cursor inside the textbox.
+        builder.MoveTo(textBox.FirstParagraph);
+
+        // LINQ Reporting image tag with -fitWidth scaling switch.
+        builder.Write("<<image [model.ImagePath] -fitWidth>>");
+
+        // Return to the main document body.
+        builder.MoveToDocumentEnd();
+
+        // Save the template.
+        doc.Save(filePath);
     }
 }

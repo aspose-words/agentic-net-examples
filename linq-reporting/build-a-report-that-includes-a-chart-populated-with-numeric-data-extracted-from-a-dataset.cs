@@ -1,89 +1,111 @@
 using System;
-using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
+using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-
-public class ReportModel
-{
-    // Collection of chart series that will be bound to the chart tag.
-    public List<ChartSeries> Chart { get; set; } = new();
-}
-
-// Simple POCO representing a chart series for LINQ Reporting.
-public class ChartSeries
-{
-    public string Name { get; set; } = string.Empty;
-    public List<double> Values { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare folders.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "ReportWithChart.docx");
 
-        // ---------- Create sample data in a DataSet ----------
-        var dataSet = new DataSet();
-        var table = new DataTable("Sales");
-        table.Columns.Add("Month", typeof(string));
-        table.Columns.Add("Revenue", typeof(double));
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        table.Rows.Add("Jan", 12000.5);
-        table.Rows.Add("Feb", 15000.75);
-        table.Rows.Add("Mar", 17000);
-        table.Rows.Add("Apr", 13000.25);
-        dataSet.Tables.Add(table);
+        // Add a title that will be filled by the reporting engine.
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln(); // empty line.
 
-        // ---------- Convert DataSet data to a model suitable for LINQ Reporting ----------
-        var model = new ReportModel();
+        // Insert a placeholder chart (Column chart). The chart will be populated later.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+        // The chart initially contains a dummy series; it will be replaced after BuildReport.
 
-        var series = new ChartSeries
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Prepare the data source (DataSet with a numeric table).
+        // -----------------------------------------------------------------
+        DataSet dataSet = new DataSet();
+
+        DataTable valuesTable = new DataTable("Values");
+        valuesTable.Columns.Add("Category", typeof(string));
+        valuesTable.Columns.Add("Amount", typeof(double));
+
+        valuesTable.Rows.Add("Q1", 1200.5);
+        valuesTable.Rows.Add("Q2", 1500.0);
+        valuesTable.Rows.Add("Q3", 1100.75);
+        valuesTable.Rows.Add("Q4", 1800.25);
+
+        dataSet.Tables.Add(valuesTable);
+
+        // -----------------------------------------------------------------
+        // 3. Create the root model object for the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
         {
-            Name = "Revenue",
-            // Extract numeric values from the DataTable.
-            Values = table.AsEnumerable()
-                         .Select(row => row.Field<double>("Revenue"))
-                         .ToList()
+            Title = "Quarterly Sales Report",
+            Data = dataSet
         };
 
-        model.Chart.Add(series);
+        // -----------------------------------------------------------------
+        // 4. Load the template and build the report using ReportingEngine.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // ---------- Build the template document programmatically ----------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 5. Populate the chart with data from the DataSet table.
+        // -----------------------------------------------------------------
+        // Locate the first chart shape in the document.
+        Shape? chartContainer = reportDoc.GetChildNodes(NodeType.Shape, true)
+                                         .Cast<Shape>()
+                                         .FirstOrDefault(s => s.HasChart);
 
-        builder.Writeln("Quarterly Revenue Chart");
-
-        // Insert a chart shape and populate it with the data extracted from the DataSet.
-        var chartShape = builder.InsertChart(ChartType.Column, 432, 252);
-        var chart = chartShape.Chart;
-
-        // Clear any default series and add our own.
-        chart.Series.Clear();
-
-        // Use the first (and only) series from the model.
-        var modelSeries = model.Chart.First();
-
-        // Create X‑axis categories (e.g., 1, 2, 3, …) and add Y‑values from the model.
-        for (int i = 0; i < modelSeries.Values.Count; i++)
+        if (chartContainer != null && chartContainer.HasChart)
         {
-            double yValue = modelSeries.Values[i];
-            // X value is the index (starting from 1) to keep the chart simple.
-            chart.Series.Add(modelSeries.Name,
-                             new[] { (double)(i + 1) },
-                             new[] { yValue });
+            Chart chart = chartContainer.Chart;
+
+            // Remove any existing series.
+            chart.Series.Clear();
+
+            // Extract categories and values from the DataTable.
+            string[] categories = valuesTable.AsEnumerable()
+                                             .Select(row => row.Field<string>("Category"))
+                                             .ToArray();
+
+            double[] values = valuesTable.AsEnumerable()
+                                         .Select(row => row.Field<double>("Amount"))
+                                         .ToArray();
+
+            // Add a new series with the extracted data.
+            chart.Series.Add("Sales", categories, values);
         }
 
-        // ---------- Build the report ----------
-        var engine = new Aspose.Words.Reporting.ReportingEngine();
-        engine.Options = Aspose.Words.Reporting.ReportBuildOptions.None; // default options
-        engine.BuildReport(doc, model, "model");
+        // -----------------------------------------------------------------
+        // 6. Save the final report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(outputPath);
+    }
 
-        // ---------- Save the generated report ----------
-        doc.Save("ReportWithChart.docx");
+    // Root model class used by the LINQ Reporting engine.
+    public class ReportModel
+    {
+        // Title displayed in the report.
+        public string Title { get; set; } = string.Empty;
+
+        // DataSet containing the numeric data for the chart.
+        public DataSet Data { get; set; } = new DataSet();
     }
 }

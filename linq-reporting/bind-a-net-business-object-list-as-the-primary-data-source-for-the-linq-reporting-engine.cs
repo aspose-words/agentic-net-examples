@@ -1,74 +1,76 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text; // Needed for Encoding
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Product
+namespace LinqReportingExample
 {
-    public string Name { get; set; } = "";
-    public decimal Price { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main(string[] args)
+    // Business object representing a person.
+    public class Person
     {
-        // Paths for the template and the generated report.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+    }
 
-        // -------------------------------------------------
-        // Create a Word template with LINQ Reporting tags.
-        // -------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+    // Wrapper model that will be passed to the reporting engine.
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
 
-        builder.Writeln("Product Report");
-        builder.Writeln("<<foreach [p in Products]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Price: <<[p.Price]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // Load the template for report generation.
-        // -------------------------------------------------
-        var reportDoc = new Document(templatePath);
-
-        // -------------------------------------------------
-        // Prepare the business object list as the data source.
-        // -------------------------------------------------
-        var model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            Products = new()
+            // Register code page provider (required for some environments).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for the template and the generated report.
+            string templatePath = "Template.docx";
+            string reportPath = "Report.docx";
+
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Insert LINQ Reporting tags.
+            builder.Writeln("<<foreach [person in Persons]>>");
+            builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and prepare the data source.
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
+
+            var model = new ReportModel
             {
-                new Product { Name = "Apple",  Price = 1.20m },
-                new Product { Name = "Banana", Price = 0.80m },
-                new Product { Name = "Orange", Price = 1.50m }
-            }
-        };
+                Persons = new List<Person>
+                {
+                    new Person { Name = "John Doe", Age = 30 },
+                    new Person { Name = "Jane Smith", Age = 25 },
+                    new Person { Name = "Bob Johnson", Age = 40 }
+                }
+            };
 
-        // -------------------------------------------------
-        // Build the report using the LINQ Reporting engine.
-        // -------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // No special options required.
-        engine.BuildReport(reportDoc, model, "model");
+            // -----------------------------------------------------------------
+            // 3. Build the report using the LINQ Reporting engine.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            // No special options are required for this simple example.
+            engine.BuildReport(doc, model, "model");
 
-        // -------------------------------------------------
-        // Save the generated report.
-        // -------------------------------------------------
-        reportDoc.Save(reportPath);
-
-        // Inform the user where the report was saved.
-        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            doc.Save(reportPath);
+        }
     }
 }

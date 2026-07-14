@@ -1,103 +1,100 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsLinqReportingImageInTable
+public class Program
 {
-    // Data model for a product.
-    public class Product
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-        public string ImagePath { get; set; } = string.Empty;
-    }
+        // Prepare a working folder.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
-    // Wrapper class required by the ReportingEngine (anonymous types are not allowed).
-    public class ReportModel
-    {
-        public List<Product> Products { get; set; } = new();
-    }
+        // Create a tiny PNG image (1x1 pixel) and save it locally.
+        string imagePath = Path.Combine(workDir, "sample.png");
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XKf8AAAAASUVORK5CYII=";
+        File.WriteAllBytes(imagePath, Convert.FromBase64String(base64Png));
 
-    public class Program
-    {
-        public static void Main()
+        // Build the data model.
+        var model = new ReportModel
         {
-            // Register code page provider (required for some encodings).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Prepare output folder.
-            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(workDir);
-
-            // Create a tiny PNG image from a Base64 string.
-            string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9W6c2V8AAAAASUVORK5CYII=";
-            byte[] pngBytes = Convert.FromBase64String(base64Png);
-            string imageFile = Path.Combine(workDir, "sample.png");
-            File.WriteAllBytes(imageFile, pngBytes);
-
-            // Sample data source.
-            List<Product> products = new()
+            Products = new List<Product>
             {
-                new Product { Name = "Product A", ImagePath = imageFile },
-                new Product { Name = "Product B", ImagePath = imageFile }
-            };
+                new Product { Name = "Product A", ImagePath = imagePath },
+                new Product { Name = "Product B", ImagePath = imagePath },
+                new Product { Name = "Product C", ImagePath = imagePath }
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // Create the LINQ Reporting template programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -------------------------
+        // Create the LINQ Reporting template.
+        // -------------------------
+        string templatePath = Path.Combine(workDir, "template.docx");
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            // Begin a foreach block over the Products collection.
-            builder.Writeln("<<foreach [p in Products]>>");
+        // Begin foreach over Products.
+        builder.Writeln("<<foreach [p in Products]>>");
 
-            // Create a table with a header row.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Writeln("Name");
-            builder.InsertCell();
-            builder.Writeln("Image");
-            builder.EndRow();
+        // Start a table with two columns: Name and Image.
+        Table table = builder.StartTable();
 
-            // Data row: product name.
-            builder.InsertCell();
-            builder.Writeln("<<[p.Name]>>");
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Image");
+        builder.EndRow();
 
-            // Data row: image inside a textbox shape.
-            builder.InsertCell();
-            Shape textBox = builder.InsertShape(ShapeType.TextBox, 100, 100);
-            builder.MoveTo(textBox.FirstParagraph);
-            builder.Write("<<image [p.ImagePath] -fitSize>>");
+        // Data row (will be repeated for each product).
+        builder.InsertCell();
+        // Insert product name.
+        builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell();
 
-            // Finish the row and the table.
-            builder.EndRow();
-            builder.EndTable();
+        // Insert a textbox shape to host the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 100, 100);
+        builder.MoveTo(textBox.FirstParagraph);
+        // Image tag with fitSize switch.
+        builder.Write("<<image [p.ImagePath] -fitSize>>");
 
-            // End the foreach block.
-            builder.Writeln("<</foreach>>");
+        // End the data row.
+        builder.EndRow();
 
-            // Save the template to disk.
-            string templatePath = Path.Combine(workDir, "template.docx");
-            templateDoc.Save(templatePath);
+        // Finish the table.
+        builder.EndTable();
 
-            // -----------------------------------------------------------------
-            // Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None;
+        // End foreach.
+        builder.Writeln("<</foreach>>");
 
-            // Wrap the data source in a public class.
-            var model = new ReportModel { Products = products };
-            engine.BuildReport(reportDoc, model);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-            // Save the generated report.
-            string reportPath = Path.Combine(workDir, "report.docx");
-            reportDoc.Save(reportPath);
-        }
+        // -------------------------
+        // Load the template and build the report.
+        // -------------------------
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final document.
+        string outputPath = Path.Combine(workDir, "Report.docx");
+        reportDoc.Save(outputPath);
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
+
+public class Product
+{
+    public string Name { get; set; } = "";
+    public string ImagePath { get; set; } = "";
 }

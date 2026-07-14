@@ -7,84 +7,83 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Root data model.
+    // Simple data model for the report.
     public class ReportModel
     {
-        // Collection to be iterated in the template.
-        public List<Item> Items { get; set; } = new();
+        // Collection of persons; one entry will be null to simulate a missing item.
+        public List<Person> Persons { get; set; } = new();
     }
 
-    // Simple item class.
-    public class Item
+    public class Person
     {
-        // Name of the item – initialized via constructor.
-        public string Name { get; set; }
-
-        public Item(string name) => Name = name;
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Required for some Aspose.Words features.
+            // Register code page provider (required for some Aspose.Words features).
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
+            // Prepare output folder.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-            builder.Writeln("Item list:");
-            // foreach loop over Items collection.
-            builder.Writeln("<<foreach [item in Items]>>");
-            // Use an if‑condition to safely handle null items.
-            builder.Writeln("- <<if [item != null]>><<[item.Name]>> <</if>>");
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // LINQ Reporting tags:
+            // Iterate over the Persons collection.
+            // Use an if tag to guard against null items.
+            builder.Writeln("<<foreach [person in Persons]>>");
+            // The condition must return a Boolean value; check for null explicitly.
+            builder.Writeln("<<if [person != null]>>Name: <<[person.Name]>> Age: <<[person.Age]>> <</if>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template.
-            builder.Document.Save(templatePath);
+            // Save the template to disk.
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
             // 2. Load the template document.
             // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
+            Document doc = new Document(templatePath);
 
             // -----------------------------------------------------------------
-            // 3. Prepare sample data with a missing (null) collection item.
+            // 3. Prepare the data source with a missing collection item.
             // -----------------------------------------------------------------
-            var model = new ReportModel
-            {
-                Items = new()
-                {
-                    new Item("Apple"),
-                    null,                     // Missing item – will be skipped by the if‑condition.
-                    new Item("Banana")
-                }
-            };
+            ReportModel model = new ReportModel();
+            model.Persons.Add(new Person { Name = "Alice", Age = 30 });
+            model.Persons.Add(null); // Missing item – should be treated as empty.
+            model.Persons.Add(new Person { Name = "Bob", Age = 25 });
 
             // -----------------------------------------------------------------
             // 4. Configure the ReportingEngine to treat missing members as empty.
             // -----------------------------------------------------------------
-            var engine = new ReportingEngine
+            ReportingEngine engine = new ReportingEngine
             {
+                // Enable handling of missing members.
                 Options = ReportBuildOptions.AllowMissingMembers,
+                // Use an empty placeholder for missing members.
                 MissingMemberMessage = string.Empty
             };
 
-            // -----------------------------------------------------------------
-            // 5. Build the report.
-            // -----------------------------------------------------------------
+            // Build the report. The root object name is "model" and must match the tags.
             engine.BuildReport(doc, model, "model");
 
             // -----------------------------------------------------------------
-            // 6. Save the generated report.
+            // 5. Save the generated report.
             // -----------------------------------------------------------------
-            var outputPath = "Report.docx";
-            doc.Save(outputPath);
+            string reportPath = Path.Combine(outputDir, "Report.docx");
+            doc.Save(reportPath);
 
-            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+            Console.WriteLine("Report generated successfully at:");
+            Console.WriteLine(reportPath);
         }
     }
 }

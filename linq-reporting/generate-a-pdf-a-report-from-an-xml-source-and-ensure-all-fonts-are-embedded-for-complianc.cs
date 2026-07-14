@@ -1,94 +1,90 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables;   // Needed for Table type
 
 public class PdfAReportGenerator
 {
     public static void Main()
     {
-        // File paths for the example.
-        string dataFile = "data.xml";
-        string templateFile = "Template.docx";
-        string outputFile = "Report.pdf";
+        // Register code page provider for XML encoding support.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create a simple XML data source.
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+
+        // File paths.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        string xmlPath = Path.Combine(outputDir, "data.xml");
+        string pdfPath = Path.Combine(outputDir, "report.pdf");
+
+        // 1. Create sample XML data.
         string xmlContent =
-@"<Report>
-    <Title>Sample Report</Title>
+@"<?xml version=""1.0"" encoding=""UTF-8""?>
+<Report>
+    <Title>Sample PDF/A Report</Title>
     <Date>2023-01-01</Date>
     <Items>
         <Item>
-            <Name>Item 1</Name>
+            <Name>Widget A</Name>
             <Quantity>10</Quantity>
         </Item>
         <Item>
-            <Name>Item 2</Name>
-            <Quantity>5</Quantity>
+            <Name>Widget B</Name>
+            <Quantity>25</Quantity>
+        </Item>
+        <Item>
+            <Name>Widget C</Name>
+            <Quantity>7</Quantity>
         </Item>
     </Items>
 </Report>";
-        File.WriteAllText(dataFile, xmlContent);
+        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
 
-        // 2. Build the template document programmatically.
+        // 2. Create the LINQ Reporting template programmatically.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert LINQ Reporting tags.
+        // Title and date.
         builder.Writeln("<<[report.Title]>>");
         builder.Writeln("Date: <<[report.Date]>>");
         builder.Writeln();
 
-        // Begin foreach loop over the Item elements.
+        // Items list using foreach tag.
+        builder.Writeln("Items:");
         builder.Writeln("<<foreach [item in report.Items.Item]>>");
-
-        // Create a table for each item.
-        Table table = builder.StartTable();
-
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Quantity");
-        builder.EndRow();
-
-        // Data row.
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Quantity]>>");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // End foreach loop.
+        builder.Writeln("- <<[item.Name]>> : <<[item.Quantity]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        templateDoc.Save(templateFile);
+        templateDoc.Save(templatePath);
 
-        // 3. Load the template document.
-        Document reportDoc = new Document(templateFile);
+        // 3. Load the template for report generation.
+        Document reportDoc = new Document(templatePath);
 
-        // 4. Create an XmlDataSource from the XML file.
-        XmlDataSource xmlData = new XmlDataSource(dataFile);
+        // 4. Load XML data source.
+        using (FileStream xmlStream = File.OpenRead(xmlPath))
+        {
+            XmlDataSource dataSource = new XmlDataSource(xmlStream);
 
-        // 5. Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, xmlData, "report");
+            // 5. Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None;
+            engine.BuildReport(reportDoc, dataSource, "report");
+        }
 
-        // 6. Save the report as PDF/A with all fonts embedded.
+        // 6. Configure PDF/A save options with full font embedding.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // PDF/A-1b compliance.
-            Compliance = PdfCompliance.PdfA1b,
-            // Ensure all fonts used in the document are embedded.
-            EmbedFullFonts = true
-            // FontEmbeddingMode property is optional; EmbedFullFonts is sufficient for most versions.
+            Compliance = PdfCompliance.PdfA1b, // PDF/A-1b compliance.
+            EmbedFullFonts = true,             // Embed every glyph of every font.
+            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll // Ensure all fonts are embedded.
         };
 
-        reportDoc.Save(outputFile, pdfOptions);
+        // 7. Save the final report as PDF/A.
+        reportDoc.Save(pdfPath, pdfOptions);
     }
 }

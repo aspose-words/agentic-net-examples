@@ -8,7 +8,6 @@ public class Item
 {
     public string Name { get; set; } = "";
     public int Quantity { get; set; }
-    public decimal Price { get; set; }
 }
 
 public class ReportModel
@@ -20,41 +19,54 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var items = new List<Item>
-        {
-            new() { Name = "Apple", Quantity = 10, Price = 0.5m },
-            new() { Name = "Banana", Quantity = 5, Price = 0.3m },
-            new() { Name = "Orange", Quantity = 8, Price = 0.6m }
-        };
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-        // Create a template document with LINQ Reporting tags.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Use Select to project only Name and Quantity fields.
-        builder.Writeln("<<foreach [item in Items.Select(i => new { Name = i.Name, Quantity = i.Quantity })]>>");
-        builder.Writeln("Product: <<[item.Name]>> | Qty: <<[item.Quantity]>>");
+        // Write a heading.
+        builder.Writeln("Items Report");
+        builder.Writeln();
+
+        // Use the Select extension method to project only Name and Quantity.
+        // The foreach tag iterates over the projected collection.
+        builder.Writeln("<<foreach [item in Items.Select(i => new { i.Name, i.Quantity })]>>");
+        builder.Writeln("Name: <<[item.Name]>>\tQuantity: <<[item.Quantity]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 2. Prepare the data source.
+        // -----------------------------------------------------------------
+        List<Item> items = new()
+        {
+            new Item { Name = "Apple",  Quantity = 10 },
+            new Item { Name = "Banana", Quantity = 20 },
+            new Item { Name = "Orange", Quantity = 15 }
+        };
 
-        // Prepare the root data model.
-        var model = new ReportModel { Items = items };
+        ReportModel model = new()
+        {
+            Items = items
+        };
 
-        // Build the report using the ReportingEngine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // -----------------------------------------------------------------
+        // 3. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
 
-        // Save the generated report.
-        const string reportPath = "Report.docx";
-        reportDoc.Save(reportPath);
+        // The root object name in the template is "model".
+        engine.BuildReport(doc, model, "model");
 
-        Console.WriteLine($"Report generated: {reportPath}");
+        // Save the final report.
+        doc.Save(reportPath);
     }
 }

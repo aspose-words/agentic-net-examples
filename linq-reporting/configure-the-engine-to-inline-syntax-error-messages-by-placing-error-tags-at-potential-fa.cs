@@ -4,79 +4,88 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    // Data model classes
+    public class Order
     {
-        // Prepare sample data model.
-        var order = new Order
+        public string CustomerName { get; set; } = string.Empty;
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        // Note: Price property is intentionally omitted to trigger an inline error.
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            CustomerName = "John Doe",
-            Items = new List<Item>
+            // Paths for the template and the generated report.
+            string templatePath = "Template.docx";
+            string reportPath = "Report.docx";
+
+            // -----------------------------------------------------------------
+            // 1. Create the template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Simple expression.
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+
+            // This tag references a non‑existent property and will cause an error.
+            builder.Writeln("Missing property: <<[order.NonExistingProperty]>>");
+
+            // Loop over items; the Price property does not exist on Item.
+            builder.Writeln("<<foreach [item in order.Items]>>");
+            builder.Writeln("Item: <<[item.Name]>> | Qty: <<[item.Quantity]>> | Price: <<[item.Price]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template back for reporting.
+            // -----------------------------------------------------------------
+            var reportDoc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            var order = new Order
             {
-                new Item { Name = "Apple", Quantity = 3 },
-                new Item { Name = "Banana", Quantity = 5 }
-            }
-        };
+                CustomerName = "John Doe",
+                Items = new List<Item>
+                {
+                    new Item { Name = "Apple", Quantity = 5 },
+                    new Item { Name = "Banana", Quantity = 3 }
+                }
+            };
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+            // -----------------------------------------------------------------
+            // 4. Configure the ReportingEngine to inline error messages.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.InlineErrorMessages
+            };
 
-        // Load the template.
-        var doc = new Document(templatePath);
+            // Build the report. The boolean indicates whether parsing succeeded.
+            bool success = engine.BuildReport(reportDoc, order, "order");
 
-        // Configure the reporting engine to inline error messages.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            reportDoc.Save(reportPath);
 
-        // Build the report. The boolean indicates whether parsing succeeded.
-        bool success = engine.BuildReport(doc, order, "order");
-
-        // Save the resulting document.
-        var outputPath = "Report_Output.docx";
-        doc.Save(outputPath);
-
-        // Simple console output to indicate completion.
-        Console.WriteLine($"Report generation completed. Success flag: {success}");
-        Console.WriteLine($"Output saved to: {Path.GetFullPath(outputPath)}");
+            // Output the result to the console.
+            Console.WriteLine($"Report generation success flag: {success}");
+            Console.WriteLine($"Template saved to: {Path.GetFullPath(templatePath)}");
+            Console.WriteLine($"Report saved to:   {Path.GetFullPath(reportPath)}");
+        }
     }
-
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Normal data insertion.
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-
-        // Loop over items.
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("Item: <<[item.Name]>>  Qty: <<[item.Quantity]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Intentional syntax error: malformed expression inside an if tag.
-        builder.Writeln("<<if [order.Items.Count >]>>");
-        builder.Writeln("This line will be skipped due to syntax error.");
-        builder.Writeln("<</if>>");
-
-        // Reference to a missing property (will also trigger an error message).
-        builder.Writeln("Missing property: <<[order.MissingProperty]>>");
-
-        // Save the template.
-        doc.Save(filePath);
-    }
-}
-
-// Data model classes.
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = "";
-    public int Quantity { get; set; }
 }

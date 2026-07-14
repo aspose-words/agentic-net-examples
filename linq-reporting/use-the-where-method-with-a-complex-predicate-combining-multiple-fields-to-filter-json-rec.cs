@@ -10,66 +10,68 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure code pages are available (required by Aspose.Words for some encodings).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Ensure the working directory exists.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(workDir);
 
-        // 1. Create sample JSON data file.
-        string jsonPath = "people.json";
-        var samplePeople = new List<Person>
+        // 1. Create sample JSON data.
+        string jsonPath = Path.Combine(workDir, "people.json");
+        var sampleData = new List<Person>
         {
-            new Person { Name = "Alice", Age = 28, City = "New York", IsActive = true },
-            new Person { Name = "Bob",   Age = 45, City = "Chicago",   IsActive = false },
-            new Person { Name = "Carol", Age = 34, City = "New York", IsActive = true },
-            new Person { Name = "Dave",  Age = 52, City = "Los Angeles", IsActive = true },
-            new Person { Name = "Eve",   Age = 23, City = "New York", IsActive = false }
+            new Person { Name = "John Doe", Age = 45, Country = "USA", IsActive = true },
+            new Person { Name = "Jane Smith", Age = 28, Country = "USA", IsActive = true },
+            new Person { Name = "Carlos Ruiz", Age = 52, Country = "Spain", IsActive = true },
+            new Person { Name = "Emily Zhang", Age = 37, Country = "USA", IsActive = false },
+            new Person { Name = "Anna Müller", Age = 33, Country = "Germany", IsActive = true }
         };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(samplePeople, Formatting.Indented));
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // 2. Load JSON data into objects.
-        var allPeople = JsonConvert.DeserializeObject<List<Person>>(File.ReadAllText(jsonPath)) ?? new List<Person>();
-
-        // 3. Apply a complex LINQ Where predicate to filter records dynamically.
-        //    Keep only active persons older than 30 who live in New York.
-        var filteredPeople = allPeople
-            .Where(p => p.IsActive && p.Age > 30 && string.Equals(p.City, "New York", StringComparison.OrdinalIgnoreCase))
+        // 2. Load JSON and apply a complex Where predicate.
+        List<Person> allPersons = JsonConvert.DeserializeObject<List<Person>>(File.ReadAllText(jsonPath))!;
+        List<Person> filteredPersons = allPersons
+            .Where(p => p.Age > 30 && p.Country == "USA" && p.IsActive)
             .ToList();
 
-        // 4. Prepare the reporting model.
-        var model = new ReportModel { Persons = filteredPeople };
+        // 3. Create a wrapper model for the reporting engine.
+        var model = new ReportModel { Persons = filteredPersons };
 
-        // 5. Create a template document with LINQ Reporting tags.
-        string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Filtered Persons Report");
-        builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("- <<[person.Name]>> (Age: <<[person.Age]>>, City: <<[person.City]>>)");
+        // 4. Build the LINQ Reporting template programmatically.
+        string templatePath = Path.Combine(workDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Filtered Persons (Age > 30, Country = USA, IsActive = true):");
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Age: <<[p.Age]>>");
+        builder.Writeln("Country: <<[p.Country]>>");
         builder.Writeln("<</foreach>>");
+
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // 6. Load the template document for reporting.
-        var loadedTemplate = new Document(templatePath);
+        // 5. Load the template and generate the report.
+        Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(reportDoc, model, "model");
 
-        // 7. Build the report using ReportingEngine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
-
-        // 8. Save the generated report.
-        string outputPath = "FilteredReport.docx";
-        loadedTemplate.Save(outputPath);
+        // 6. Save the final report.
+        string outputPath = Path.Combine(workDir, "FilteredReport.docx");
+        reportDoc.Save(outputPath);
     }
 }
 
-// Public data model representing a person.
+// Data entity representing a person.
 public class Person
 {
     public string Name { get; set; } = string.Empty;
     public int Age { get; set; }
-    public string City { get; set; } = string.Empty;
+    public string Country { get; set; } = string.Empty;
     public bool IsActive { get; set; }
 }
 
-// Wrapper class used as the root data source for the report.
+// Wrapper model exposing the filtered collection to the template.
 public class ReportModel
 {
     public List<Person> Persons { get; set; } = new();

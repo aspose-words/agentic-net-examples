@@ -2,55 +2,58 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+namespace LinqReportingConditionalBlock
 {
-    // Data model used by the LINQ Reporting template.
+    // Simple data model used by the template.
     public class Order
     {
-        // Non‑nullable string initialized to avoid CS8618.
-        public string CustomerName { get; set; } = string.Empty;
-        public double Discount { get; set; }
+        public int Id { get; set; } = 0;
+        public double DiscountPercentage { get; set; } = 0.0;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Create the template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Prepare sample data.
+            Order order = new Order
+            {
+                Id = 12345,
+                DiscountPercentage = 15.0   // Change to 0 to see the block omitted.
+            };
 
-            // Simple static text.
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            string templatePath = "template.docx";
+
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Write static text and data tags.
+            builder.Writeln("Order Report");
+            builder.Writeln("Order ID: <<[order.Id]>>");
 
             // Conditional block: show discount only when it is greater than zero.
-            builder.Writeln("<<if [order.Discount > 0]>>Discount: <<[order.Discount]>>%<</if>>");
+            builder.Writeln("<<if [order.DiscountPercentage > 0]>>Discount: <<[order.DiscountPercentage]>>%<</if>>");
 
-            // Save the template to disk (required by the workflow).
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            // Save the template so that it can be loaded later (required by the rule set).
+            templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
             // 2. Load the template and build the report.
             // -----------------------------------------------------------------
-            Document report = new Document(templatePath);
-
-            // Sample data where Discount > 0 (the block will be rendered).
-            Order order = new Order
-            {
-                CustomerName = "John Doe",
-                Discount = 15.0
-            };
-
-            // Build the report using the root object name "order".
+            Document reportDoc = new Document(templatePath);
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(report, order, "order");
 
-            // Save the generated report.
-            const string outputPath = "Report.docx";
-            report.Save(outputPath);
+            // BuildReport expects the root object name to match the tag prefix used in the template.
+            engine.BuildReport(reportDoc, order, "order");
+
+            // -----------------------------------------------------------------
+            // 3. Save the generated report.
+            // -----------------------------------------------------------------
+            string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
         }
     }
 }

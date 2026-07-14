@@ -4,43 +4,67 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Sample external type whose static members will be accessed from the template.
-    public static class CustomerInfo
+    // Sample data model that will be used in the report.
+    public class CustomerInfo
     {
-        public static string Name => "John Doe";
-        public static int Age => 30;
-        public static string Email => "john.doe@example.com";
+        // Initialize properties to avoid nullable warnings.
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+        public string Email { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-            builder.Writeln("Customer Report");
-            builder.Writeln("Name: <<[CustomerInfo.Name]>>");
-            builder.Writeln("Age: <<[CustomerInfo.Age]>>");
-            builder.Writeln("Email: <<[CustomerInfo.Email]>>");
+            // -----------------------------------------------------------------
+            // 1. Create a template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Save the template to a local file.
-            const string templatePath = "CustomerTemplate.docx";
+            builder.Writeln("Customer Report");
+            builder.Writeln("Name: <<[customer.Name]>>");
+            builder.Writeln("Age: <<[customer.Age]>>");
+            builder.Writeln("Email: <<[customer.Email]>>");
+
+            // Save the template to disk before building the report.
+            const string templatePath = "Template.docx";
             template.Save(templatePath);
 
-            // Load the template for reporting.
-            Document report = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // 2. Load the template document.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
 
-            // Configure the ReportingEngine and register the external type.
-            ReportingEngine engine = new ReportingEngine();
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            var customer = new CustomerInfo
+            {
+                Name = "John Doe",
+                Age = 30,
+                Email = "john.doe@example.com"
+            };
+
+            // -----------------------------------------------------------------
+            // 4. Configure the ReportingEngine.
+            //    Register the external type so its members can be accessed in the template.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
             engine.KnownTypes.Add(typeof(CustomerInfo));
 
-            // Build the report. No data source is required because we only use static members.
-            engine.BuildReport(report, new object(), "");
+            // -----------------------------------------------------------------
+            // 5. Build the report.
+            //    The root object name used in the template is "customer".
+            // -----------------------------------------------------------------
+            engine.BuildReport(doc, customer, "customer");
 
-            // Save the generated report.
-            const string outputPath = "CustomerReport.docx";
-            report.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 6. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
         }
     }
 }

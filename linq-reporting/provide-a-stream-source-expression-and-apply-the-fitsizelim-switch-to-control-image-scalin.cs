@@ -5,42 +5,41 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // The image data provided as a stream.
-    public Stream ImageStream { get; set; } = Stream.Null;
+    // Stream that provides the image data for the report.
+    public Stream ImageStream { get; set; } = null!;
 }
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Prepare a simple PNG image (1x1 pixel, red) as a base64 string.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YVYB2cAAAAASUVORK5CYII=";
+        // Create a simple PNG image (1x1 pixel, red) as a base64 string.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=";
         byte[] imageBytes = Convert.FromBase64String(base64Png);
 
-        // 2. Create the data model and assign a MemoryStream containing the image.
+        // Prepare the data model with a reset MemoryStream.
         var model = new ReportModel
         {
-            ImageStream = new MemoryStream(imageBytes)
+            ImageStream = new MemoryStream(imageBytes, writable: false)
         };
-        // Ensure the stream is positioned at the beginning before the engine reads it.
-        model.ImageStream.Position = 0;
+        model.ImageStream.Position = 0; // Ensure the stream is at the beginning.
 
-        // 3. Build the template document programmatically.
+        // Build the template document.
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Insert a textbox that will host the image tag.
+        // Insert a textbox that will host the image.
         var textBox = builder.InsertShape(Aspose.Words.Drawing.ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
 
-        // LINQ Reporting image tag with -fitSizeLim switch.
+        // LINQ Reporting tag: image from a stream with -fitSizeLim switch.
         builder.Write("<<image [model.ImageStream] -fitSizeLim>>");
 
-        // 4. Generate the report using the ReportingEngine.
+        // Build the report.
         var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // 5. Save the resulting document.
-        doc.Save("ReportWithImage.docx");
+        // Save the resulting document.
+        doc.Save("ReportWithFitSizeLim.docx");
     }
 }

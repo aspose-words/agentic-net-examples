@@ -3,118 +3,76 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Data model classes
-    public class ReportModel
+    public static void Main()
     {
-        public List<Department> Departments { get; set; } = new();
-    }
+        // 1. Create the template document with LINQ Reporting tags.
+        var templatePath = "ReportTemplate.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("<<foreach [dept in Departments]>>");
+        builder.Writeln("Department: <<[dept.Name]>>");
+        builder.Writeln("Projects:");
+        builder.Writeln("<<foreach [proj in dept.Projects]>>");
+        builder.Writeln("- <<[proj.Name]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
+        builder.Document.Save(templatePath);
 
-    public class Department
-    {
-        public string Name { get; set; } = string.Empty;
-        public List<Employee> Employees { get; set; } = new();
-    }
+        // 2. Load the template for report generation.
+        var doc = new Document(templatePath);
 
-    public class Employee
-    {
-        public string FullName { get; set; } = string.Empty;
-        public List<Project> Projects { get; set; } = new();
-    }
-
-    public class Project
-    {
-        public string Title { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // 3. Prepare sample data.
+        var model = new ReportModel
         {
-            // 1. Create a template document programmatically.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Title
-            builder.Writeln("Company Project Report");
-            builder.Writeln();
-
-            // Outer loop: Departments
-            builder.Writeln("<<foreach [dept in Departments]>>");
-            builder.Writeln("Department: <<[dept.Name]>>");
-            builder.Writeln();
-
-            // Middle loop: Employees within a department
-            builder.Writeln("<<foreach [emp in dept.Employees]>>");
-            builder.Writeln("  Employee: <<[emp.FullName]>>");
-            builder.Writeln();
-
-            // Inner loop: Projects for each employee
-            builder.Writeln("  <<foreach [proj in emp.Projects]>>");
-            builder.Writeln("    Project: <<[proj.Title]>> - <<[proj.Description]>>");
-            builder.Writeln("  <</foreach>>");
-            builder.Writeln();
-            builder.Writeln("<</foreach>>");
-            builder.Writeln();
-            builder.Writeln("<</foreach>>");
-
-            // 2. Prepare sample data.
-            ReportModel model = new ReportModel
+            Departments = new List<Department>
             {
-                Departments = new List<Department>
+                new Department
                 {
-                    new Department
+                    Name = "Research",
+                    Projects = new List<Project>
                     {
-                        Name = "Research & Development",
-                        Employees = new List<Employee>
-                        {
-                            new Employee
-                            {
-                                FullName = "Alice Johnson",
-                                Projects = new List<Project>
-                                {
-                                    new Project { Title = "AI Platform", Description = "Develop core AI services." },
-                                    new Project { Title = "Data Pipeline", Description = "Build scalable data ingestion." }
-                                }
-                            },
-                            new Employee
-                            {
-                                FullName = "Bob Smith",
-                                Projects = new List<Project>
-                                {
-                                    new Project { Title = "Quantum Research", Description = "Explore quantum algorithms." }
-                                }
-                            }
-                        }
-                    },
-                    new Department
+                        new Project { Name = "AI Exploration" },
+                        new Project { Name = "Quantum Computing" }
+                    }
+                },
+                new Department
+                {
+                    Name = "Development",
+                    Projects = new List<Project>
                     {
-                        Name = "Marketing",
-                        Employees = new List<Employee>
-                        {
-                            new Employee
-                            {
-                                FullName = "Carol White",
-                                Projects = new List<Project>
-                                {
-                                    new Project { Title = "Brand Refresh", Description = "Update visual identity." },
-                                    new Project { Title = "Social Campaign", Description = "Launch Q3 social media ads." }
-                                }
-                            }
-                        }
+                        new Project { Name = "Mobile App" },
+                        new Project { Name = "Web Platform" },
+                        new Project { Name = "API Integration" }
                     }
                 }
-            };
+            }
+        };
 
-            // 3. Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // 4. Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // 4. Save the generated report.
-            const string outputPath = "NestedReport.docx";
-            doc.Save(outputPath);
-        }
+        // 5. Save the generated report.
+        doc.Save("ReportResult.docx");
     }
+}
+
+// Root data model.
+public class ReportModel
+{
+    public List<Department> Departments { get; set; } = new();
+}
+
+// Department with a collection of projects.
+public class Department
+{
+    public string Name { get; set; } = string.Empty;
+    public List<Project> Projects { get; set; } = new();
+}
+
+// Simple project entity.
+public class Project
+{
+    public string Name { get; set; } = string.Empty;
 }

@@ -1,81 +1,62 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingRestrictedMembers
 {
-    public static void Main()
+    // Sample data model with a method that modifies its state.
+    public class SampleModel
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        // Initialize to avoid nullable warnings.
+        public int Counter { get; set; } = 0;
+
+        // Method that changes the Counter property.
+        public int Increment()
         {
-            Items = new List<Item>
-            {
-                new Item { Name = "Apple" },
-                new Item { Name = "Banana" }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Attempt to modify the data source inside the template (this will be blocked).
-        builder.Writeln("Attempt to add an item (should be blocked):");
-        builder.Writeln("<<[Items.Add(new Item { Name = \"Cherry\" })]>>");
-
-        // Normal foreach loop to display items.
-        builder.Writeln("Items list:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("- <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk (required before building the report).
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Restrict access to List<Item> so that its mutating members are unavailable.
-        // -----------------------------------------------------------------
-        ReportingEngine.SetRestrictedTypes(typeof(List<Item>));
-
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine
-        {
-            // Inline error messages will show that the blocked call could not be executed.
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
-
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(doc, model, "model");
-
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        string outputPath = "report.docx";
-        doc.Save(outputPath);
-
-        // Indicate completion (no interactive input required).
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+            Counter++;
+            return Counter;
+        }
     }
-}
 
-// ---------------------------------------------------------------------
-// Data model classes (public with public properties, non‑nullable).
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare a simple template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
+            // Output the current counter value.
+            builder.Writeln("Counter value: <<[model.Counter]>>");
+            // Attempt to call a method that modifies the data source.
+            builder.Writeln("Attempt to increment: <<[model.Increment()]>>");
+
+            // Save the template to a local file.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // Load the template back (simulating a separate load step).
+            Document doc = new Document(templatePath);
+
+            // Create the data source instance.
+            SampleModel model = new SampleModel();
+
+            // Restrict access to the SampleModel type so its members cannot be used in the template.
+            // This must be done before any report is built.
+            ReportingEngine.SetRestrictedTypes(typeof(SampleModel));
+
+            // Configure the reporting engine to inline error messages.
+            ReportingEngine engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.InlineErrorMessages
+            };
+
+            // Build the report. The method call will be blocked and an error message will appear inline.
+            engine.BuildReport(doc, model, "model");
+
+            // Save the resulting document.
+            const string outputPath = "Report_Output.docx";
+            doc.Save(outputPath);
+        }
+    }
 }

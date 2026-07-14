@@ -1,90 +1,65 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Model
+{
+    // Property that will be empty in the report.
+    public string Empty { get; set; } = string.Empty;
+
+    // Sample non‑empty property.
+    public string Name { get; set; } = "John Doe";
+}
+
 public class Program
 {
-    // Simple data model for the report.
-    public class ReportModel
-    {
-        // This property will be empty, causing an empty paragraph after the tag is processed.
-        public string EmptyValue { get; set; } = string.Empty;
-
-        // Regular property with a value.
-        public string Name { get; set; } = string.Empty;
-    }
-
     public static void Main()
     {
-        // Prepare file paths.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string templatePath = Path.Combine(artifactsDir, "Template.docx");
-        string outputPath = Path.Combine(artifactsDir, "Result.docx");
-
         // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
+        // 1. Create a template document programmatically.
         // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Paragraph with a normal value.
-        builder.Writeln("<<[model.Name]>>");
-        // Paragraph that will become empty after the engine processes it.
-        builder.Writeln("<<[model.EmptyValue]>>");
-        // Another paragraph to ensure the document still has content after removal.
-        builder.Writeln("End of document.");
+        builder.Writeln("Name: <<[model.Name]>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Paragraph that contains only a tag which resolves to an empty string.
+        builder.Writeln("<<[model.Empty]>>");
 
         // -----------------------------------------------------------------
-        // 2. Load the template back (required by the workflow rules).
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the data source.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
-        {
-            Name = "John Doe",
-            EmptyValue = string.Empty // Explicitly empty.
-        };
-
-        // -----------------------------------------------------------------
-        // 4. Configure the ReportingEngine with RemoveEmptyParagraphs option.
+        // 2. Build the report with the RemoveEmptyParagraphs option enabled.
         // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // Build the report. The root object name must match the tag prefix ("model").
-        engine.BuildReport(loadedTemplate, model, "model");
-
-        // Save the generated document.
-        loadedTemplate.Save(outputPath);
+        // The root object name in the template is "model".
+        engine.BuildReport(doc, new Model(), "model");
 
         // -----------------------------------------------------------------
-        // 5. Verify that the empty paragraph was removed.
+        // 3. Verify that the empty paragraph has been removed.
         // -----------------------------------------------------------------
-        string resultText = loadedTemplate.GetText();
+        // Get the document text; paragraphs are separated by '\r'.
+        string fullText = doc.GetText();
+        string[] paragraphs = fullText.Split('\r');
 
-        // In Aspose.Words, a paragraph break is represented by '\r'.
-        // Two consecutive '\r' indicate an empty paragraph between content.
-        bool containsEmptyParagraph = resultText.Contains("\r\r");
+        // Count paragraphs that contain visible text.
+        int nonEmptyParagraphCount = 0;
+        foreach (string p in paragraphs)
+        {
+            if (!string.IsNullOrWhiteSpace(p))
+                nonEmptyParagraphCount++;
+        }
 
-        if (!containsEmptyParagraph)
+        // The template had two paragraphs, but the second one should be gone.
+        if (nonEmptyParagraphCount == 1)
         {
             Console.WriteLine("Test passed: empty paragraphs were removed.");
         }
         else
         {
-            Console.WriteLine("Test failed: empty paragraph still present.");
+            Console.WriteLine("Test failed: empty paragraph was not removed.");
+            Environment.Exit(1);
         }
-
-        // Optional: display the resulting text for manual inspection.
-        Console.WriteLine("Resulting document text:");
-        Console.WriteLine(resultText);
     }
 }

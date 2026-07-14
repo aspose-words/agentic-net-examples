@@ -4,70 +4,73 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Data model classes
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = "";
-        public string Title { get; set; } = "";
-    }
-
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Ensure code page support (required for some environments)
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-            // Create the template document programmatically
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            builder.Writeln("Employee List:");
-            // Start foreach loop over Persons collection
-            builder.Writeln("<<foreach [p in Persons]>>");
-            // Each iteration writes a paragraph that may become empty if both fields are empty
-            builder.Writeln("<<[p.Name]>> <<[p.Title]>>");
-            // End foreach loop
-            builder.Writeln("<</foreach>>");
-
-            // Save the template (optional, shown for clarity)
-            string templatePath = Path.Combine("Output", "Template.docx");
-            Directory.CreateDirectory(Path.GetDirectoryName(templatePath)!);
-            template.Save(templatePath);
-
-            // Prepare sample data with one completely empty entry
-            ReportModel model = new ReportModel
+            Persons = new List<Person>
             {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "John Doe", Title = "Manager" },
-                    new Person { Name = "Jane Smith", Title = "Developer" },
-                    new Person { Name = "", Title = "" } // This will produce an empty paragraph
-                }
-            };
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 35 }
+            }
+        };
 
-            // Load the template (demonstrates load step)
-            Document doc = new Document(templatePath);
+        // Paths for the template and the generated report.
+        string templatePath = "Template.docx";
+        string reportPath = "Report.docx";
 
-            // Configure the reporting engine to remove empty paragraphs after processing
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.RemoveEmptyParagraphs
-            };
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            // Build the report; root object name must match the name used in the template tags
-            engine.BuildReport(doc, model, "model");
+        // Title.
+        builder.Writeln("People Report");
+        builder.Writeln();
 
-            // Save the final document
-            string outputPath = Path.Combine("Output", "Report.docx");
-            doc.Save(outputPath);
-        }
+        // Begin foreach loop over the collection "Persons".
+        builder.Writeln("<<foreach [p in Persons]>>");
+        // Content for each item.
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Age: <<[p.Age]>>");
+        // End of the loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        // Enable removal of empty paragraphs that may appear after the foreach loop.
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+
+        // Build the report using the model as the root data source named "model".
+        engine.BuildReport(doc, model, "model");
+
+        // Save the final document.
+        doc.Save(reportPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    // Collection referenced by the template's foreach tag.
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

@@ -4,82 +4,74 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 
+public class ReportModel
+{
+    // The stream will be closed automatically by the reporting engine after insertion.
+    public Stream ImageStream { get; set; }
+
+    public ReportModel()
+    {
+        // A 1x1 pixel PNG image (base64 encoded).
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AApEB/6V6nVQAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        ImageStream = new MemoryStream(pngBytes);
+    }
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Prepare a simple PNG image as a byte array (1x1 pixel, transparent).
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X6V8AAAAASUVORK5CYII=");
-
-        // Create the data model that supplies a Stream for the image tag.
-        ReportModel model = new ReportModel(pngBytes);
+        // Paths for the template and the generated report.
+        const string templatePath = "template.docx";
+        const string reportPath = "report.docx";
 
         // -----------------------------------------------------------------
-        // Step 1: Build the template document programmatically.
+        // 1. Create a template document with an image tag inside a textbox.
         // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
         // Insert a textbox that will host the image.
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
 
-        // LINQ Reporting image tag that uses the Stream property.
+        // LINQ Reporting image tag referencing the stream property.
         builder.Write("<<image [model.ImageStream] -fitSize>>");
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template (required before building the report).
+        templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document report = new Document(templatePath);
+        // ---------------------------------------------------------------
+        // 2. Prepare the data model containing the image stream.
+        // ---------------------------------------------------------------
+        ReportModel model = new ReportModel();
+
+        // ---------------------------------------------------------------
+        // 3. Build the report using the ReportingEngine.
+        // ---------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
+        // The root object name must match the tag prefix ("model").
+        engine.BuildReport(templateDoc, model, "model");
 
-        // BuildReport will consume the Stream and close it automatically.
-        engine.BuildReport(report, model, "model");
+        // Save the populated report.
+        templateDoc.Save(reportPath);
 
-        // Save the generated report.
-        const string reportPath = "Report.docx";
-        report.Save(reportPath);
-
-        // -----------------------------------------------------------------
-        // Step 3: Verify that the Stream has been closed by the engine.
-        // -----------------------------------------------------------------
-        bool isClosed;
+        // ---------------------------------------------------------------
+        // 4. Verify that the image stream has been closed automatically.
+        // ---------------------------------------------------------------
+        bool streamClosed = false;
         try
         {
-            // Attempt to read from the stream; an ObjectDisposedException means it was closed.
-            int _ = model.ImageStream.ReadByte();
-            isClosed = false;
+            // Accessing a disposed stream throws ObjectDisposedException.
+            long _ = model.ImageStream.Position;
         }
         catch (ObjectDisposedException)
         {
-            isClosed = true;
-        }
-        catch (Exception)
-        {
-            // Any other exception also indicates the stream is not usable.
-            isClosed = true;
+            streamClosed = true;
         }
 
-        Console.WriteLine(isClosed
-            ? "The image stream was automatically closed after insertion."
-            : "The image stream is still open (unexpected).");
-    }
-}
-
-// Data model used by the LINQ Reporting engine.
-public class ReportModel
-{
-    // The Stream that provides image data to the <<image>> tag.
-    public Stream ImageStream { get; set; }
-
-    // Initialise the Stream with the supplied image bytes.
-    public ReportModel(byte[] imageBytes)
-    {
-        ImageStream = new MemoryStream(imageBytes);
+        // Output the verification result.
+        Console.WriteLine($"Image stream closed after report build: {streamClosed}");
     }
 }

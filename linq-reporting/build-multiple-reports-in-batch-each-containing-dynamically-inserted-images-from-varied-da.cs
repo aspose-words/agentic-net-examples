@@ -1,78 +1,93 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing;
-
-public class ReportModel
-{
-    // Title displayed in the report.
-    public string Title { get; set; } = string.Empty;
-
-    // Base64-encoded PNG image (1x1 pixel) inserted into the report.
-    public string ImageBase64 { get; set; } = string.Empty;
-}
 
 public class Program
 {
     public static void Main()
     {
+        // Prepare working folders.
+        string workDir = Directory.GetCurrentDirectory();
+        string imagesDir = Path.Combine(workDir, "Images");
+        string outputDir = Path.Combine(workDir, "Output");
+        Directory.CreateDirectory(imagesDir);
+        Directory.CreateDirectory(outputDir);
+
+        // Create three identical PNG images from a tiny red dot base64 string.
+        const string base64Png =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9WcXK7cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        string[] imagePaths = new[]
+        {
+            Path.Combine(imagesDir, "image1.png"),
+            Path.Combine(imagesDir, "image2.png"),
+            Path.Combine(imagesDir, "image3.png")
+        };
+        foreach (string path in imagePaths)
+            File.WriteAllBytes(path, pngBytes);
+
         // -----------------------------------------------------------------
-        // 1. Create a reusable template document programmatically.
+        // Build a template document that contains a foreach loop and an image tag inside a textbox.
         // -----------------------------------------------------------------
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Insert a placeholder for the report title.
-        builder.Writeln("Report: <<[model.Title]>>");
+        // Begin foreach over Items collection.
+        builder.Writeln("<<foreach [item in Items]>>");
 
-        // Insert a textbox that will contain the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 200);
+        // Insert a textbox that will host the image.
+        var textBox = builder.InsertShape(Aspose.Words.Drawing.ShapeType.TextBox, 200, 120);
+        // Move the cursor inside the textbox.
         builder.MoveTo(textBox.FirstParagraph);
-        builder.Write("<<image [model.ImageBase64] -fitSize>>");
+        // Image tag – the expression returns a file path.
+        builder.Write("<<image [item.ImagePath] -fitSize>>");
+        // Move the cursor back to the main story after the textbox.
+        builder.MoveTo(template.FirstSection.Body.LastParagraph);
 
-        // Save the template to disk (required before building reports).
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
+        // End foreach.
+        builder.Writeln("<</foreach>>");
 
         // -----------------------------------------------------------------
-        // 2. Prepare sample data for multiple reports.
+        // Generate a separate report for each image.
         // -----------------------------------------------------------------
-        // A 1x1 pixel transparent PNG encoded in Base64.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII=";
-
-        List<ReportModel> reportData = new()
+        for (int i = 0; i < imagePaths.Length; i++)
         {
-            new ReportModel { Title = "First Report",  ImageBase64 = base64Png },
-            new ReportModel { Title = "Second Report", ImageBase64 = base64Png },
-            new ReportModel { Title = "Third Report",  ImageBase64 = base64Png }
-        };
+            // Prepare data model containing a single item.
+            var model = new ReportModel
+            {
+                Items = new List<ReportItem>
+                {
+                    new ReportItem { ImagePath = imagePaths[i] }
+                }
+            };
 
-        // -----------------------------------------------------------------
-        // 3. Build each report in batch using the LINQ Reporting engine.
-        // -----------------------------------------------------------------
-        // Load the template once; clone it for each iteration to keep it unchanged.
-        Document templateDoc = new Document(templatePath);
+            // Clone the template so that each report starts from a fresh copy.
+            Document report = (Document)template.Clone(true);
 
-        int index = 1;
-        foreach (ReportModel model in reportData)
-        {
-            // Clone the template for the current report.
-            Document report = (Document)templateDoc.Clone();
-
-            // Build the report by binding the model to the template.
+            // Build the report using LINQ Reporting Engine.
             ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // default options
             engine.BuildReport(report, model, "model");
 
-            // Save the generated report with a distinct filename.
-            string outputFileName = $"Report_{index}_{model.Title.Replace(' ', '_')}.docx";
-            report.Save(outputFileName);
-            index++;
+            // Save the generated document.
+            string outFile = Path.Combine(outputDir, $"Report_{i + 1}.docx");
+            report.Save(outFile);
         }
 
-        // -----------------------------------------------------------------
-        // 4. Indicate completion.
-        // -----------------------------------------------------------------
-        Console.WriteLine("Batch report generation completed.");
+        Console.WriteLine("Reports generated in: " + outputDir);
     }
+}
+
+// Root wrapper class referenced in the template as <<[model.Items]>>.
+public class ReportModel
+{
+    public List<ReportItem> Items { get; set; } = new();
+}
+
+// Simple data class exposing the image path.
+public class ReportItem
+{
+    public string ImagePath { get; set; } = string.Empty;
 }

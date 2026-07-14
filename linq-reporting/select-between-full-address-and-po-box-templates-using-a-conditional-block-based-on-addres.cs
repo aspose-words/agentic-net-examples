@@ -3,82 +3,70 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingConditionalAddress
+namespace AsposeWordsLinqReportingExample
 {
-    // Root data model for the report.
-    public class ReportModel
+    // Data model for an address.
+    public class Address
     {
-        public AddressInfo Address { get; set; } = new();
-    }
+        // Determines which template block to use.
+        public bool IsPoBox { get; set; } = false;
 
-    // Holds address details and the type of address to display.
-    public class AddressInfo
-    {
-        // Expected values: "Full" or "POBox".
-        public string Type { get; set; } = string.Empty;
+        // PO Box address fields.
+        public string PoBox { get; set; } = string.Empty;
 
-        // Fields for a full street address.
+        // Full street address fields.
         public string Street { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string State { get; set; } = string.Empty;
         public string Zip { get; set; } = string.Empty;
-
-        // Field for a PO Box address.
-        public string POBox { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Prepare sample data.
-            var modelFull = new ReportModel
+            // Prepare two sample data objects.
+            var poBoxAddress = new Address
             {
-                Address = new AddressInfo
-                {
-                    Type = "Full",
-                    Street = "123 Main St.",
-                    City = "Springfield",
-                    State = "IL",
-                    Zip = "62704"
-                }
+                IsPoBox = true,
+                PoBox = "PO Box 1234"
             };
 
-            var modelPoBox = new ReportModel
+            var fullAddress = new Address
             {
-                Address = new AddressInfo
-                {
-                    Type = "POBox",
-                    POBox = "PO Box 5678"
-                }
+                IsPoBox = false,
+                Street = "123 Main St.",
+                City = "Springfield",
+                State = "IL",
+                Zip = "62704"
             };
 
-            // Create a template document with conditional blocks.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Create a template document programmatically.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Full address block.
-            builder.Writeln("<<if [model.Address.Type == \"Full\"]>>");
-            builder.Writeln("<<[model.Address.Street]>>");
-            builder.Writeln("<<[model.Address.City]>>, <<[model.Address.State]>> <<[model.Address.Zip]>>");
+            builder.Writeln("Recipient Address:");
+            // PO Box block – shown only when IsPoBox is true.
+            builder.Writeln("<<if [model.IsPoBox]>>");
+            builder.Writeln("<<[model.PoBox]>>");
+            builder.Writeln("<</if>>");
+            // Full address block – shown only when IsPoBox is false.
+            builder.Writeln("<<if [!model.IsPoBox]>>");
+            builder.Writeln("<<[model.Street]>>");
+            builder.Writeln("<<[model.City]>>, <<[model.State]>> <<[model.Zip]>>");
             builder.Writeln("<</if>>");
 
-            // PO Box block.
-            builder.Writeln("<<if [model.Address.Type == \"POBox\"]>>");
-            builder.Writeln("PO Box: <<[model.Address.POBox]>>");
-            builder.Writeln("<</if>>");
+            // Build the report for the PO Box address.
+            var engine = new ReportingEngine();
+            engine.BuildReport(template, poBoxAddress, "model");
+            template.Save("Report_POBox.docx");
 
-            // Build report for a full address.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(template, modelFull, "model");
-            string outputFull = Path.Combine(Environment.CurrentDirectory, "Report_FullAddress.docx");
-            template.Save(outputFull);
-
-            // Build report for a PO Box address.
-            // Re‑use the same template (it still contains the tags).
-            engine.BuildReport(template, modelPoBox, "model");
-            string outputPoBox = Path.Combine(Environment.CurrentDirectory, "Report_POBox.docx");
-            template.Save(outputPoBox);
+            // Re‑use the same template for the full address.
+            // (Reloading the template ensures a clean state.)
+            var templateForFull = new Document("Report_POBox.docx");
+            var engineFull = new ReportingEngine();
+            engineFull.BuildReport(templateForFull, fullAddress, "model");
+            templateForFull.Save("Report_Full.docx");
         }
     }
 }

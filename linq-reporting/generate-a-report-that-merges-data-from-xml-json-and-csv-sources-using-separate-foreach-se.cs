@@ -10,148 +10,90 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV handling.
+        // Register code page provider for CSV parsing (required on .NET Core).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         // -----------------------------------------------------------------
-        // 1. Create sample data files (XML, JSON, CSV).
+        // Prepare sample data files.
         // -----------------------------------------------------------------
         string xmlPath = "people.xml";
-        string jsonPath = "people.json";
-        string csvPath = "people.csv";
+        string jsonPath = "products.json";
+        string csvPath = "orders.csv";
 
+        // XML file with a list of persons.
         File.WriteAllText(xmlPath,
-@"<?xml version=""1.0"" encoding=""utf-8""?>
-<Persons>
-    <Person><Name>John</Name><Age>30</Age></Person>
-    <Person><Name>Emma</Name><Age>28</Age></Person>
-</Persons>");
+            @"<?xml version=""1.0"" encoding=""utf-8""?>
+<People>
+    <Person>
+        <Name>John Doe</Name>
+    </Person>
+    <Person>
+        <Name>Jane Smith</Name>
+    </Person>
+</People>");
 
-        File.WriteAllText(jsonPath,
-@"[
-    { ""Name"": ""Alice"", ""Age"": 25 },
-    { ""Name"": ""Bob"",   ""Age"": 35 }
-]");
-
-        File.WriteAllText(csvPath,
-@"Name,Age
-Mike,40
-Sara,22");
-
-        // -----------------------------------------------------------------
-        // 2. Build a wrapper model that holds three collections.
-        // -----------------------------------------------------------------
-        var model = new ReportModel
+        // JSON file with a list of products.
+        var products = new List<Product>
         {
-            Xml = LoadFromXml(xmlPath),
-            Json = LoadFromJson(jsonPath),
-            Csv = LoadFromCsv(csvPath)
+            new Product { Name = "Laptop", Price = 1299.99 },
+            new Product { Name = "Smartphone", Price = 799.5 }
         };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(products, Formatting.Indented));
+
+        // CSV file with a header row (Id,Description) and two orders.
+        File.WriteAllText(csvPath, "Id,Description\r\n1,First order\r\n2,Second order");
 
         // -----------------------------------------------------------------
-        // 3. Create the template document with three foreach sections.
+        // Create the template document with LINQ Reporting tags.
         // -----------------------------------------------------------------
-        string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        builder.Writeln("=== XML Data ===");
-        builder.Writeln("<<foreach [p in Xml]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
-
-        builder.Writeln("=== JSON Data ===");
-        builder.Writeln("<<foreach [p in Json]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
-
-        builder.Writeln("=== CSV Data ===");
-        builder.Writeln("<<foreach [p in Csv]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("=== XML Persons ===");
+        builder.Writeln("<<foreach [p in xml]>>");
+        builder.Writeln("- <<[p.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
+        builder.Writeln("\n=== JSON Products ===");
+        builder.Writeln("<<foreach [pr in json]>>");
+        builder.Writeln("- <<[pr.Name]>> : $<<[pr.Price]>>");
+        builder.Writeln("<</foreach>>");
+
+        builder.Writeln("\n=== CSV Orders ===");
+        builder.Writeln("<<foreach [o in csv]>>");
+        builder.Writeln("- Order <<[o.Id]>>: <<[o.Description]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template (optional, shown for clarity).
+        template.Save("template.docx");
 
         // -----------------------------------------------------------------
-        // 4. Load the template and run the reporting engine.
+        // Load the template document (could also reuse the same instance).
         // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        Document doc = new Document("template.docx");
 
-        // The root object name is "model" – the template tags reference its
-        // public properties (Xml, Json, Csv).  Pass the name explicitly.
-        engine.BuildReport(doc, model, "model");
+        // Create data source objects.
+        XmlDataSource xmlData = new XmlDataSource(xmlPath);
+        JsonDataSource jsonData = new JsonDataSource(jsonPath);
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
+        // CSV data source – enable header parsing so column names are recognized.
+        var csvLoadOptions = new CsvDataLoadOptions { HasHeaders = true };
+        CsvDataSource csvData = new CsvDataSource(csvPath, csvLoadOptions);
+
+        // Build the report using multiple data sources.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc,
+            new object[] { xmlData, jsonData, csvData },
+            new string[] { "xml", "json", "csv" });
+
+        // Save the final report.
         doc.Save("Report.docx");
     }
 
-    // -----------------------------------------------------------------
-    // Helper methods to load data from the three sources.
-    // -----------------------------------------------------------------
-    private static List<Person> LoadFromXml(string path)
+    // Simple POCO for JSON serialization.
+    public class Product
     {
-        var list = new List<Person>();
-        var xml = new System.Xml.XmlDocument();
-        xml.Load(path);
-        var nodes = xml.SelectNodes("//Person");
-        foreach (System.Xml.XmlNode node in nodes)
-        {
-            var nameNode = node.SelectSingleNode("Name");
-            var ageNode = node.SelectSingleNode("Age");
-            list.Add(new Person
-            {
-                Name = nameNode?.InnerText ?? string.Empty,
-                Age = int.TryParse(ageNode?.InnerText, out var a) ? a : 0
-            });
-        }
-        return list;
+        public string Name { get; set; } = "";
+        public double Price { get; set; }
     }
-
-    private static List<Person> LoadFromJson(string path)
-    {
-        var json = File.ReadAllText(path);
-        return JsonConvert.DeserializeObject<List<Person>>(json) ?? new List<Person>();
-    }
-
-    private static List<Person> LoadFromCsv(string path)
-    {
-        var list = new List<Person>();
-        var lines = File.ReadAllLines(path);
-        // Assume first line contains headers.
-        for (int i = 1; i < lines.Length; i++)
-        {
-            var parts = lines[i].Split(',');
-            if (parts.Length >= 2)
-            {
-                list.Add(new Person
-                {
-                    Name = parts[0],
-                    Age = int.TryParse(parts[1], out var a) ? a : 0
-                });
-            }
-        }
-        return list;
-    }
-}
-
-// -----------------------------------------------------------------
-// Public data model classes – required to be non‑anonymous and
-// have public properties that match the template tags.
-// -----------------------------------------------------------------
-public class ReportModel
-{
-    public List<Person> Xml { get; set; } = new();
-    public List<Person> Json { get; set; } = new();
-    public List<Person> Csv { get; set; } = new();
-}
-
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

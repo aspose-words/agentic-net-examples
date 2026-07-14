@@ -1,71 +1,66 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
+using Aspose.Words.Reporting;          // ReportingEngine, CsvDataSource, CsvDataLoadOptions
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Set up working paths.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string csvPath = Path.Combine(workDir, "people.csv");
+        string outputPath = Path.Combine(workDir, "result.docx");
 
-        // Prepare sample CSV data.
-        string csvPath = "data.csv";
-        File.WriteAllText(csvPath,
-            "Name,Age\r\n" +
-            "Alice,30\r\n" +
-            "Bob,25\r\n" +
-            ",\r\n" +               // Empty row to produce empty paragraph after processing.
-            "Charlie,35\r\n");
+        // 1. Create a simple CSV file.
+        File.WriteAllLines(csvPath, new[]
+        {
+            "Name,Age",
+            "Alice,30",
+            "Bob,",          // Age is empty – will generate an empty paragraph after processing.
+            "Charlie,25"
+        });
 
-        // Create the template document.
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // 2. Build the template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Static header.
-        builder.Writeln("=== Report Header ===");
+        // Section 1 – static content.
+        builder.Writeln("=== Header Section ===");
         builder.Writeln();
 
-        // CSV section – will be populated via LINQ Reporting.
+        // Section 2 – CSV driven content.
         builder.Writeln("<<foreach [person in persons]>>");
         builder.Writeln("Name: <<[person.Name]>>");
         builder.Writeln("Age: <<[person.Age]>>");
-        // This paragraph may become empty if the CSV row is empty.
-        builder.Writeln();
         builder.Writeln("<</foreach>>");
-
-        // Static footer.
         builder.Writeln();
-        builder.Writeln("=== Report Footer ===");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        // Section 3 – static content.
+        builder.Writeln("=== Footer Section ===");
 
-        // Load the template for reporting.
+        // Save the template (required before loading for reporting).
+        template.Save(templatePath);
+
+        // 3. Load the template back for reporting.
         Document doc = new Document(templatePath);
 
-        // Configure CSV data source options.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true) // first line has headers
-        {
-            Delimiter = ',',
-            QuoteChar = '"',
-            CommentChar = '#'
-        };
+        // 4. Prepare the CSV data source.
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(hasHeaders: true);
+        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
 
-        // Create CSV data source.
-        CsvDataSource dataSource = new CsvDataSource(csvPath, loadOptions);
+        // 5. First pass: process CSV section with removal of empty paragraphs.
+        ReportingEngine csvEngine = new ReportingEngine();
+        csvEngine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        csvEngine.BuildReport(doc, csvData, "persons");
 
-        // Build the report with removal of empty paragraphs.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
-        };
-        engine.BuildReport(doc, dataSource, "persons");
+        // 6. Second pass: run a dummy build without the RemoveEmptyParagraphs flag
+        // to keep other sections untouched (they have no tags, so this is a no‑op).
+        ReportingEngine finalEngine = new ReportingEngine();
+        finalEngine.BuildReport(doc, new object(), "");
 
-        // Save the final document.
-        doc.Save("output.docx");
+        // 7. Save the final document.
+        doc.Save(outputPath);
     }
 }

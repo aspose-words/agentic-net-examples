@@ -8,49 +8,54 @@ public class Program
 {
     public static void Main()
     {
-        // Enable code page support for CSV parsing on .NET Core.
+        // Register code page provider for CSV parsing (required for some encodings).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple CSV file that will serve as the data source.
-        // -----------------------------------------------------------------
-        string csvFile = Path.Combine(Directory.GetCurrentDirectory(), "people.csv");
-        File.WriteAllLines(csvFile, new[]
-        {
-            "Name,Age",
-            "Alice,30",
-            "Bob,25",
-            "Charlie,35"
-        });
+        // Prepare folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string dataDir = Path.Combine(baseDir, "Data");
+        string outputDir = Path.Combine(baseDir, "Output");
+        Directory.CreateDirectory(dataDir);
+        Directory.CreateDirectory(outputDir);
 
-        // ---------------------------------------------------------------
-        // 2. Build a Word template in memory that contains LINQ Reporting
-        //    tags. The foreach tag iterates over the CSV data source.
-        // ---------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // 1. Create a simple CSV file with headers and sample rows.
+        string csvPath = Path.Combine(dataDir, "People.csv");
+        File.WriteAllText(csvPath,
+            "Name,Age\r\n" +
+            "Alice,30\r\n" +
+            "Bob,25\r\n" +
+            "Charlie,35\r\n",
+            Encoding.UTF8);
 
-        builder.Writeln("<<foreach [in csvData]>>");   // Start loop over CSV rows
-        builder.Writeln("<<[Name]>> - <<[Age]>>");    // Output fields from each row
-        builder.Writeln("<</foreach>>");              // End loop
+        // 2. Build the template document programmatically.
+        DocumentBuilder builder = new DocumentBuilder();
+        // The foreach tag iterates over the CSV data source named "csvData".
+        builder.Writeln("<<foreach [row in csvData]>>");
+        // Inside the loop we can reference column names via the loop variable.
+        builder.Writeln("<<[row.Name]>> - <<[row.Age]>>");
+        builder.Writeln("<</foreach>>");
 
-        // ---------------------------------------------------------------
-        // 3. Load the CSV data using Aspose.Words.Reporting.CsvDataSource.
-        // ---------------------------------------------------------------
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(hasHeaders: true);
-        CsvDataSource dataSource = new CsvDataSource(csvFile, loadOptions);
+        // Save the template to disk.
+        string templatePath = Path.Combine(dataDir, "Template.docx");
+        builder.Document.Save(templatePath);
 
-        // ---------------------------------------------------------------
-        // 4. Execute the report. The data source name must match the name
-        //    used in the template tags ("csvData").
-        // ---------------------------------------------------------------
+        // 3. Load the template document.
+        Document templateDoc = new Document(templatePath);
+
+        // 4. Create a CsvDataSource that reads the CSV file (headers are present).
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true); // hasHeaders = true
+        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+
+        // 5. Build the report using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, dataSource, "csvData");
+        // The data source name used in the template tags is "csvData".
+        engine.BuildReport(templateDoc, csvDataSource, "csvData");
 
-        // ---------------------------------------------------------------
-        // 5. Save the generated report.
-        // ---------------------------------------------------------------
-        string outputFile = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        template.Save(outputFile);
+        // 6. Save the generated report.
+        string resultPath = Path.Combine(outputDir, "Report.docx");
+        templateDoc.Save(resultPath);
+
+        // Indicate completion.
+        Console.WriteLine("Report generated at: " + resultPath);
     }
 }

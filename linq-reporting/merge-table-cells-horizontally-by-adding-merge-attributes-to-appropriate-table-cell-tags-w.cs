@@ -1,71 +1,70 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Required for Table type
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Sample data.
-        var model = new ReportModel
-        {
-            Items = new()
-            {
-                new Item { Group = "Group A", Name = "Item 1" },
-                new Item { Group = "Group A", Name = "Item 2" },
-                new Item { Group = "Group B", Name = "Item 3" }
-            }
-        };
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-        // Create a template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Begin foreach block.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Build a table for each item.
+        // Build a table where the first two cells of the first row are merged horizontally.
+        // The <<cellMerge>> tag tells the LINQ Reporting engine to merge cells that have
+        // identical textual content (ignoring surrounding whitespace).
         Table table = builder.StartTable();
 
-        // First row – merged cells showing the group name.
+        // First cell – contains the merge tag and the text "Group A".
         builder.InsertCell();
-        builder.Write("<<cellMerge>><<[item.Group]>>");
+        builder.Write("<<cellMerge>>Group A");
+
+        // Second cell – same merge tag and identical text.
         builder.InsertCell();
-        builder.Write("<<cellMerge>><<[item.Group]>>");
+        builder.Write("<<cellMerge>>Group A");
+
+        // End the first row.
         builder.EndRow();
 
-        // Second row – regular cells with item details.
+        // Add a normal (unmerged) row for demonstration.
         builder.InsertCell();
-        builder.Write("<<[item.Name]>>");
+        builder.Write("Item 1");
         builder.InsertCell();
-        builder.Write("Details");
+        builder.Write("Description 1");
         builder.EndRow();
 
+        // Finish the table.
         builder.EndTable();
 
-        // End foreach block.
-        builder.Writeln("<</foreach>>");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
-        // Save the result.
-        doc.Save("MergedTableReport.docx");
+        // The model can be empty because the template does not reference any data fields.
+        var model = new ReportModel();
+
+        ReportingEngine engine = new ReportingEngine();
+        // No special options are required for this simple example.
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final report.
+        reportDoc.Save(reportPath);
     }
-}
 
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Item model used in the foreach loop.
-public class Item
-{
-    public string Group { get; set; } = "";
-    public string Name { get; set; } = "";
+    // Simple wrapper class used as the root data source.
+    public class ReportModel
+    {
+        // Add properties here if the template needs to reference data.
+    }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -13,62 +12,42 @@ public class Person
 
 public class ReportModel
 {
-    public List<Person> People { get; set; } = new();
+    public List<Person> Persons { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-
-        // -------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Filtered and Sorted Names:");
-        // Combine Where, OrderBy, and Select in a single expression inside the foreach tag.
-        builder.Writeln("<<foreach [name in model.People.Where(p => p.Age > 30).OrderBy(p => p.Name).Select(p => p.Name)]>>");
-        builder.Writeln(" - <<[name]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // 2. Load the template for report generation.
-        // -------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // -------------------------------------------------
-        // 3. Prepare the data model with sample data.
-        // -------------------------------------------------
-        ReportModel model = new()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            People = new()
+            Persons = new List<Person>
             {
                 new Person { Name = "Alice", Age = 28 },
-                new Person { Name = "Bob",   Age = 45 },
-                new Person { Name = "Carol", Age = 35 },
-                new Person { Name = "Dave",  Age = 22 },
-                new Person { Name = "Eve",   Age = 40 }
+                new Person { Name = "Bob",   Age = 35 },
+                new Person { Name = "Carol", Age = 42 },
+                new Person { Name = "Dave",  Age = 31 },
+                new Person { Name = "Eve",   Age = 24 }
             }
         };
 
-        // -------------------------------------------------
-        // 4. Build the report using Aspose.Words ReportingEngine.
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        // No special options are required for this simple scenario.
-        engine.BuildReport(reportDoc, model, "model");
+        // Create a blank document and insert LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -------------------------------------------------
-        // 5. Save the generated report.
-        // -------------------------------------------------
-        reportDoc.Save(reportPath);
+        // Use a single LINQ expression that combines Where, Select, and OrderBy.
+        // The expression filters persons aged 30 or more, selects their names,
+        // and orders the names alphabetically.
+        builder.Writeln("<<foreach [name in Persons.Where(p => p.Age >= 30).Select(p => p.Name).OrderBy(n => n)]>>");
+        builder.Writeln("<<[name]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Build the report using the model as the data source.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }

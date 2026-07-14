@@ -2,29 +2,13 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+namespace AsposeWordsLinqReportingExample
 {
-    // NOTE: The original example attempted to use an assembly attribute
-    // Aspose.Words.Reporting.CustomAuthenticationModule which is not present
-    // in the referenced Aspose.Words packages. The attribute has been omitted
-    // to allow the code to compile and run. If the attribute becomes available
-    // in a newer version, it can be re‑added as:
-    // [assembly: Aspose.Words.Reporting.CustomAuthenticationModuleAttribute(typeof(MyAuthenticationModule))]
-    public class MyAuthenticationModule
-    {
-        // This method will be called by the reporting engine when it needs to authenticate a resource.
-        public string GetAuthentication(string uri)
-        {
-            // Return a dummy token or credentials.
-            return "Bearer dummy-token";
-        }
-    }
-
-    // Simple data model used by the LINQ Reporting template.
+    // Data model used by the template.
     public class ReportModel
     {
-        public string Title { get; set; } = "Sample Report";
-        public string Content { get; set; } = "Hello from LINQ Reporting.";
+        // Initialize to avoid nullable warnings.
+        public string Name { get; set; } = "World";
     }
 
     public class Program
@@ -32,18 +16,27 @@ namespace LinqReportingExample
         public static void Main()
         {
             // Create a template document programmatically.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("<<[model.Title]>>");
-            builder.Writeln("<<[model.Content]>>");
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+            builder.Writeln("Hello <<[model.Name]>>!");
 
-            // Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine();
+            // Save the template to disk (required step before building the report).
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // Load the template back (simulating a real‑world scenario where the template is read from storage).
+            Document doc = new Document(templatePath);
+
+            // Prepare the data source.
             ReportModel model = new ReportModel();
+
+            // Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
             engine.BuildReport(doc, model, "model");
 
             // Save the generated report.
-            doc.Save("ReportOutput.docx");
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
         }
     }
 }

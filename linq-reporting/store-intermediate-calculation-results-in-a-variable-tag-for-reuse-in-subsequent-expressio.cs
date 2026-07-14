@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -9,62 +9,48 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for legacy encodings (required by Aspose.Words in some environments).
+        // Register code page provider (required for Aspose.Words on .NET Core)
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Begin a foreach loop over the collection "Items".
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Output each item's name and price.
-        builder.Writeln("Item: <<[item.Name]>>  Price: <<[item.Price]>>");
-
-        // End the foreach block.
-        builder.Writeln("<</foreach>>");
-
-        // After the loop, display the total price using a LINQ expression.
-        builder.Writeln("Total Price: <<[Items.Sum(item => item.Price)]>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Prepare the data source.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        // Prepare sample data
+        ReportModel model = new()
         {
-            Items = new List<Item>
+            Items = new()
             {
-                new Item { Name = "Apple",  Price = 1.20 },
-                new Item { Name = "Banana", Price = 0.80 },
-                new Item { Name = "Orange", Price = 1.50 }
+                new Item { Name = "Apple", Price = 0.5m, Quantity = 4 },
+                new Item { Name = "Banana", Price = 0.3m, Quantity = 6 },
+                new Item { Name = "Cherry", Price = 1.2m, Quantity = 10 }
             }
         };
 
-        // -----------------------------------------------------------------
-        // 3. Build the report using the LINQ Reporting engine.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Create template document
+        Document template = new();
+        DocumentBuilder builder = new(template);
 
-        // Save the generated report.
-        reportDoc.Save(reportPath);
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Item: <<[item.Name]>>");
+        builder.Writeln("Quantity: <<[item.Quantity]>>");
+        builder.Writeln("Price per unit: <<[item.Price]>>");
+        // Use a calculated property instead of an unsupported let tag
+        builder.Writeln("Line total: <<[item.LineTotal]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template (optional, for inspection)
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        template.Save(templatePath);
+
+        // Build the report
+        Document report = new(templatePath);
+        ReportingEngine engine = new();
+        engine.BuildReport(report, model, "model");
+
+        // Save the generated report
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        report.Save(reportPath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
+// Data model classes
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
@@ -73,5 +59,9 @@ public class ReportModel
 public class Item
 {
     public string Name { get; set; } = string.Empty;
-    public double Price { get; set; }
+    public decimal Price { get; set; }
+    public int Quantity { get; set; }
+
+    // Calculated property used in the template
+    public decimal LineTotal => Price * Quantity;
 }

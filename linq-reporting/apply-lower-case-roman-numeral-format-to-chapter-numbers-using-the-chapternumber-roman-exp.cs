@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Chapter
 {
     public int ChapterNumber { get; set; }
-    public string Title { get; set; } = "";
+    public string Title { get; set; } = string.Empty;
 }
 
 public class ReportModel
@@ -19,26 +19,7 @@ public class Program
 {
     public static void Main()
     {
-        // Required for some encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Create the template document with LINQ Reporting tags.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        // Begin a foreach loop over the Chapters collection.
-        builder.Writeln("<<foreach [chapter in Chapters]>>");
-        // Apply lower‑case Roman numeral format to ChapterNumber.
-        builder.Writeln("Chapter <<[chapter.ChapterNumber]:roman>>: <<[chapter.Title]>>");
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save and reload the template to satisfy lifecycle rules.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-        var doc = new Document(templatePath);
-
-        // Sample data.
+        // Prepare sample data
         var model = new ReportModel
         {
             Chapters = new List<Chapter>
@@ -49,12 +30,28 @@ public class Program
             }
         };
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Create template document
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        builder.Writeln("Book Chapters:");
+        builder.Writeln("<<foreach [ch in Chapters]>>");
+        // Apply lower‑case Roman numeral format to ChapterNumber
+        builder.Writeln("{=ch.ChapterNumber:roman}. <<[ch.Title]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(templatePath);
+
+        // Load template and build report
+        var templateDoc = new Document(templatePath);
+        ReportingEngine.UseReflectionOptimization = true;
+        var engine = new ReportingEngine();
+        engine.BuildReport(templateDoc, model, "model");
+
+        var outputPath = "Report.docx";
+        templateDoc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
 }

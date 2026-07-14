@@ -1,68 +1,49 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class PhoneReportModel
+{
+    public string PhoneNumber { get; set; } = "";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create sample data.
-        var model = new ReportWrapper
+        // Prepare sample data.
+        var model = new PhoneReportModel
         {
-            Items = new List<ReportModel>
-            {
-                new ReportModel { PhoneNumber = "123-456-7890" }, // valid
-                new ReportModel { PhoneNumber = "555-1234" }      // invalid
-            }
+            PhoneNumber = "123-456-7890" // Change to test different formats.
         };
 
-        // Create the template document programmatically.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a template document programmatically.
+        string templatePath = "PhoneTemplate.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Phone Numbers Report");
-        builder.Writeln("---------------------");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item:");
-        // Show the phone number if it matches the required format.
-        builder.Writeln("<<if [Regex.IsMatch(item.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>>");
-        builder.Writeln("<<[item.PhoneNumber]>> (valid)");
-        builder.Writeln("<</if>>");
-        // Otherwise indicate that it is invalid.
-        builder.Writeln("<<if [!Regex.IsMatch(item.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>>");
-        builder.Writeln("Invalid phone number");
-        builder.Writeln("<</if>>");
-        builder.Writeln("<</foreach>>");
+        // Insert placeholders and conditional tags.
+        builder.Writeln("Phone: <<[model.PhoneNumber]>>");
+        builder.Writeln("<<if [Regex.IsMatch(model.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>>Valid<</if>>");
+        builder.Writeln("<<if [!Regex.IsMatch(model.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>>Invalid<</if>>");
 
         // Save the template to disk.
-        doc.Save(templatePath);
+        templateDoc.Save(templatePath);
 
         // Load the template for reporting.
-        var templateDoc = new Document(templatePath);
+        var doc = new Document(templatePath);
 
         // Configure the reporting engine.
         var engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(Regex)); // Allow use of Regex static methods in the template.
+        engine.KnownTypes.Add(typeof(Regex)); // Allow use of Regex static methods in expressions.
 
-        // Build the report.
-        engine.BuildReport(templateDoc, model, "model");
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        templateDoc.Save("Report.docx");
+        string outputPath = "PhoneReport.docx";
+        doc.Save(outputPath);
     }
-}
-
-// Wrapper class that holds the collection referenced by the template.
-public class ReportWrapper
-{
-    public List<ReportModel> Items { get; set; } = new();
-}
-
-// Simple data model with a phone number field.
-public class ReportModel
-{
-    public string PhoneNumber { get; set; } = string.Empty;
 }

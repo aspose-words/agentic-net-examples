@@ -1,110 +1,77 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Required for Table type
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Enable full Unicode support.
+        // Register code page provider for possible Unicode handling.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare output folder and file paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string jsonPath = Path.Combine(outputDir, "data.json");
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string reportPath = Path.Combine(outputDir, "report.docx");
+        // Paths for temporary files.
+        const string jsonPath = "sample.json";
+        const string templatePath = "template.docx";
+        const string outputPath = "ReportOutput.docx";
 
-        // Sample JSON containing multilingual records.
-        string jsonContent = @"[
-  {
-    ""Name"": ""John Doe"",
-    ""Greeting"": ""Hello"",
-    ""Language"": ""English"",
-    ""Message"": ""Welcome""
-  },
-  {
-    ""Name"": ""Иван Иванов"",
-    ""Greeting"": ""Привет"",
-    ""Language"": ""Russian"",
-    ""Message"": ""Добро пожаловать""
-  },
-  {
-    ""Name"": ""张伟"",
-    ""Greeting"": ""你好"",
-    ""Language"": ""Chinese"",
-    ""Message"": ""欢迎""
-  },
-  {
-    ""Name"": ""محمد علي"",
-    ""Greeting"": ""مرحبا"",
-    ""Language"": ""Arabic"",
-    ""Message"": ""أهلا وسهلا""
-  },
-  {
-    ""Name"": ""राहुल शर्मा"",
-    ""Greeting"": ""नमस्ते"",
-    ""Language"": ""Hindi"",
-    ""Message"": ""स्वागत है""
-  }
-]";
-        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+        // 1. Create sample JSON with multilingual greetings.
+        var sampleData = new ReportModel
+        {
+            Items = new List<Item>
+            {
+                new Item { Name = "Alice", Greeting = "Hello (English)" },
+                new Item { Name = "Боб", Greeting = "Привет (Russian)" },
+                new Item { Name = "陈", Greeting = "你好 (Chinese)" },
+                new Item { Name = "ديف", Greeting = "مرحبا (Arabic)" },
+                new Item { Name = "ईवा", Greeting = "नमस्ते (Hindi)" }
+            }
+        };
+        // Serialize to JSON file.
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // -----------------------------
-        // Create the template document.
-        // -----------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // 2. Load JSON into a strongly‑typed model.
+        var json = File.ReadAllText(jsonPath);
+        var model = JsonConvert.DeserializeObject<ReportModel>(json)!; // Non‑null after deserialization.
 
-        builder.Writeln("Multilingual Report");
-        builder.Writeln();
+        // 3. Build the LINQ Reporting template programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Begin foreach loop over the JSON collection named 'persons'.
-        builder.Writeln("<<foreach [p in persons]>>");
-
-        // Build a table inside the loop.
-        Table table = builder.StartTable();
-
-        // Header row.
-        builder.InsertCell(); builder.Writeln("Name");
-        builder.InsertCell(); builder.Writeln("Greeting");
-        builder.InsertCell(); builder.Writeln("Language");
-        builder.InsertCell(); builder.Writeln("Message");
-        builder.EndRow();
-
-        // Data row with LINQ Reporting tags.
-        builder.InsertCell(); builder.Writeln("<<[p.Name]>>");
-        builder.InsertCell(); builder.Writeln("<<[p.Greeting]>>");
-        builder.InsertCell(); builder.Writeln("<<[p.Language]>>");
-        builder.InsertCell(); builder.Writeln("<<[p.Message]>>");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // End foreach block.
+        builder.Writeln("Multilingual Greeting Report");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Name: <<[item.Name]>>");
+        builder.Writeln("Greeting: <<[item.Greeting]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template to disk (required before BuildReport according to rules).
         templateDoc.Save(templatePath);
 
-        // -----------------------------
-        // Generate the final report.
-        // -----------------------------
-        Document reportDoc = new Document(templatePath);
+        // 4. Load the template and generate the report.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // Default options.
 
-        // Load JSON data source.
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Configure and run the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        engine.BuildReport(reportDoc, jsonDataSource, "persons");
-
-        // Save the populated report.
-        reportDoc.Save(reportPath);
+        // 5. Save the final report.
+        reportDoc.Save(outputPath);
     }
+}
+
+// Root data model.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+// Individual item containing multilingual text.
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public string Greeting { get; set; } = string.Empty;
 }

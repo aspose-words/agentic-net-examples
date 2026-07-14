@@ -1,15 +1,10 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
-
-// Ensure code page support (required by Aspose.Words for some encodings)
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Simple data model with a non‑nullable Stock property
+    // Simple data model with a Stock property.
     public class Product
     {
         public int Stock { get; set; } = 0;
@@ -19,25 +14,41 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // 1. Create a blank Word document that will serve as the template
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
             Document template = new Document();
             DocumentBuilder builder = new DocumentBuilder(template);
 
-            // 2. Insert a conditional LINQ Reporting tag:
-            //    Show "In stock" only when the Stock value is greater than 0
-            builder.Writeln("<<if [product.Stock > 0]>>In stock<</if>>");
+            builder.Writeln("Product availability:");
+            // Conditional block: show "In stock" only when Stock > 0.
+            builder.Writeln("<<if [model.Stock > 0]>>In stock<</if>>");
 
-            // 3. Prepare sample data
-            Product product = new Product { Stock = 5 }; // Change to 0 to see no output
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-            // 4. Build the report using the template and the data source
+            // -----------------------------------------------------------------
+            // 2. Load the template back (required before building the report).
+            // -----------------------------------------------------------------
+            Document report = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            Product model = new Product { Stock = 5 }; // Change to 0 to see no output.
+
+            // -----------------------------------------------------------------
+            // 4. Build the report using the LINQ Reporting engine.
+            // -----------------------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
-            // The root object name used in the template is "product"
-            engine.BuildReport(template, product, "product");
+            engine.BuildReport(report, model, "model");
 
-            // 5. Save the generated document
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
-            template.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "Report.docx";
+            report.Save(outputPath);
         }
     }
 }

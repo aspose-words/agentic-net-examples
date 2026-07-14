@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -13,53 +14,67 @@ public class Person
 
 public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
+    public List<Person> persons { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        // Ensure the output folder exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // 1. Create the template document programmatically.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        CreateTemplate(templatePath);
+
+        // 2. Prepare sample data.
+        ReportModel model = new ReportModel
         {
-            Persons = new List<Person>
+            persons = new List<Person>
             {
                 new Person { Name = "Alice", Age = 30, Department = "HR" },
-                new Person { Name = "Bob",   Age = 25, Department = "IT" },
-                new Person { Name = "Carol", Age = 28, Department = "HR" },
-                new Person { Name = "Dave",  Age = 35, Department = "Finance" },
-                new Person { Name = "Eve",   Age = 22, Department = "IT" }
+                new Person { Name = "Bob", Age = 45, Department = "Finance" },
+                new Person { Name = "Charlie", Age = 28, Department = "HR" },
+                new Person { Name = "Diana", Age = 35, Department = "IT" },
+                new Person { Name = "Ethan", Age = 40, Department = "Finance" }
             }
         };
 
-        // Create a blank document and build the LINQ Reporting template.
+        // 3. Load the template and build the report.
+        Document doc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // 4. Save the generated report.
+        string resultPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(resultPath);
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Title.
+        // Title
         builder.Writeln("Employee Report");
         builder.Writeln();
 
-        // Group by Department.
-        builder.Writeln("<<foreach [deptGroup in Persons.GroupBy(p => p.Department)]>>");
+        // Group by Department
+        builder.Writeln("<<foreach [deptGroup in persons.GroupBy(p => p.Department)]>>");
         builder.Writeln("Department: <<[deptGroup.Key]>>");
         builder.Writeln();
 
-        // List persons within the current department.
+        // List persons within the current department
         builder.Writeln("<<foreach [p in deptGroup]>>");
         builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
         builder.Writeln("<</foreach>>");
         builder.Writeln();
 
-        // End of outer foreach.
+        // End outer foreach
         builder.Writeln("<</foreach>>");
 
-        // Build the report using the model as the root data source named "model".
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        doc.Save("EmployeeReport.docx");
+        doc.Save(filePath);
     }
 }

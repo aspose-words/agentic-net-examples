@@ -1,30 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Order
-{
-    public int Id { get; set; }
-    public string Product { get; set; } = "";
-    public int Quantity { get; set; }
-}
-
-public class Customer
-{
-    public string Name { get; set; } = "";
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class ReportModel
-{
-    public List<Customer> Customers { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
+        // Register code page provider (required for some environments).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
         // Prepare sample data.
         var model = new ReportModel
         {
@@ -35,8 +21,8 @@ public class Program
                     Name = "Alice",
                     Orders = new List<Order>
                     {
-                        new Order { Id = 1, Product = "Apple", Quantity = 5 },
-                        new Order { Id = 2, Product = "Banana", Quantity = 3 }
+                        new Order { Id = 1, ProductName = "Laptop", Quantity = 2 },
+                        new Order { Id = 2, ProductName = "Mouse", Quantity = 5 }
                     }
                 },
                 new Customer
@@ -44,35 +30,58 @@ public class Program
                     Name = "Bob",
                     Orders = new List<Order>
                     {
-                        new Order { Id = 3, Product = "Carrot", Quantity = 7 },
-                        new Order { Id = 4, Product = "Dates", Quantity = 2 }
+                        new Order { Id = 3, ProductName = "Keyboard", Quantity = 1 },
+                        new Order { Id = 4, ProductName = "Monitor", Quantity = 2 },
+                        new Order { Id = 5, ProductName = "USB‑Cable", Quantity = 10 }
                     }
                 }
             }
         };
 
-        // Create a blank template document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a template document with LINQ Reporting tags.
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("<<foreach [customer in Customers]>>");
+        builder.Writeln("Customer: <<[customer.Name]>>");
+        builder.Writeln("Orders:");
+        builder.Writeln("<<foreach [order in customer.Orders]>>");
+        builder.Writeln("- Id: <<[order.Id]>>, Product: <<[order.ProductName]>>, Qty: <<[order.Quantity]>>");
+        builder.Writeln("<</foreach>>"); // End inner foreach (orders)
+        builder.Writeln("<</foreach>>"); // End outer foreach (customers)
 
-        // Outer foreach – iterate over customers.
-        builder.Writeln("<<foreach [c in model.Customers]>>");
-        builder.Writeln("Customer: <<[c.Name]>>");
-        builder.Writeln();
+        // Save the template.
+        builder.Document.Save(templatePath);
 
-        // Inner foreach – iterate over orders of the current customer.
-        builder.Writeln("<<foreach [o in c.Orders]>>");
-        builder.Writeln("- <<[o.Product]>> (Qty: <<[o.Quantity]>>)");
-        builder.Writeln("<</foreach>>");
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
 
-        // End outer foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Build the report.
+        // Build the report using the model as the root data source.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(doc, model);
 
         // Save the generated report.
-        doc.Save("GroupedReport.docx");
+        var outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Root model containing a collection of customers.
+public class ReportModel
+{
+    public List<Customer> Customers { get; set; } = new();
+}
+
+// Customer entity with a name and a collection of orders.
+public class Customer
+{
+    public string Name { get; set; } = "";
+    public List<Order> Orders { get; set; } = new();
+}
+
+// Order entity with simple properties.
+public class Order
+{
+    public int Id { get; set; }
+    public string ProductName { get; set; } = "";
+    public int Quantity { get; set; }
 }

@@ -1,83 +1,69 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Simple data model representing a customer.
+    public class Customer
     {
-        // Paths for the template and the final report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create a template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Mail merge field (will be filled by MailMerge).
-        builder.InsertField(" MERGEFIELD CustomerName ");
-        builder.Writeln(); // New paragraph.
-
-        // LINQ Reporting tags (will be processed by ReportingEngine).
-        builder.Writeln("<<foreach [c in Customers]>>");
-        builder.Writeln("Customer (LINQ): <<[c.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and apply MailMerge.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // Prepare a simple DataTable as the mail‑merge data source.
-        DataTable mailMergeTable = new DataTable("MailMerge");
-        mailMergeTable.Columns.Add("CustomerName");
-        mailMergeTable.Rows.Add("John Doe");
-
-        // Execute mail merge – fills the MERGEFIELD.
-        doc.MailMerge.Execute(mailMergeTable);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare LINQ Reporting data source.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
-        {
-            Customers = new List<Customer>
-            {
-                new Customer { Name = "John Doe" },
-                new Customer { Name = "Jane Smith" }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 4. Build the report using ReportingEngine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        // The root object name in the template is "model".
-        engine.BuildReport(doc, model, "model");
-
-        // -----------------------------------------------------------------
-        // 5. Save the final report.
-        // -----------------------------------------------------------------
-        doc.Save(reportPath);
+        public string Name { get; set; } = "";
+        public string Address { get; set; } = "";
     }
-}
 
-// ---------------------------------------------------------------------
-// Data model for LINQ Reporting.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public List<Customer> Customers { get; set; } = new();
-}
+    // Wrapper class that will be used as the root data source for the LINQ Reporting engine.
+    public class ReportModel
+    {
+        public List<Customer> Customers { get; set; } = new();
+    }
 
-public class Customer
-{
-    public string Name { get; set; } = string.Empty;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Step 1 – Create a template document with LINQ Reporting tags.
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // Add a title.
+            builder.Writeln("Customer Report");
+            builder.Writeln();
+
+            // Begin a foreach loop over the Customers collection.
+            builder.Writeln("<<foreach [c in Customers]>>");
+            builder.Writeln("Name: <<[c.Name]>>");
+            builder.Writeln("Address: <<[c.Address]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            doc.Save(templatePath);
+
+            // Step 2 – Load the template back (required before building the report).
+            var loadedDoc = new Document(templatePath);
+
+            // Step 3 – Prepare sample data.
+            var model = new ReportModel
+            {
+                Customers = new List<Customer>
+                {
+                    new Customer { Name = "Alice Johnson", Address = "123 Maple Street" },
+                    new Customer { Name = "Bob Smith", Address = "456 Oak Avenue" },
+                    new Customer { Name = "Carol Davis", Address = "789 Pine Road" }
+                }
+            };
+
+            // Step 4 – Build the report using the LINQ Reporting engine.
+            var engine = new ReportingEngine();
+            // No special options are required for this simple example.
+            engine.BuildReport(loadedDoc, model, "model");
+
+            // Step 5 – Save the generated report.
+            var outputPath = "Report.docx";
+            loadedDoc.Save(outputPath);
+
+            Console.WriteLine($"Report generated successfully: {outputPath}");
+        }
+    }
 }

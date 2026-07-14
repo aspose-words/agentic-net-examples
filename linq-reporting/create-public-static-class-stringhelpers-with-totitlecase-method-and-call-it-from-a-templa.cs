@@ -3,49 +3,76 @@ using System.Globalization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class StringHelpers
+namespace AsposeWordsLinqReportingExample
 {
-    // Converts a string to title case (first letter of each word capitalized).
-    public static string ToTitleCase(string value)
+    // Helper class with a static method that will be called from the LINQ Reporting template.
+    public static class StringHelpers
     {
-        if (string.IsNullOrEmpty(value))
-            return value;
+        // Converts the input string to title case (first letter of each word capitalized).
+        public static string ToTitleCase(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return value;
 
-        // Use the current culture's TextInfo for title casing.
-        return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(value.ToLower());
+            // Ensure the whole string is in lower case before applying title case.
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(value.ToLowerInvariant());
+        }
     }
-}
 
-// Simple data model used as the root object for the report.
-public class Model
-{
-    public string Name { get; set; } = "john doe";
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model used as the root object for the report.
+    public class PersonModel
     {
-        // Create a blank Word document that will serve as the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public string Name { get; set; } = "john doe";
+    }
 
-        // Insert a LINQ Reporting tag that calls the static ToTitleCase method.
-        // The root object is referenced as "model", so we use model.Name as the argument.
-        builder.Writeln("<<[StringHelpers.ToTitleCase(model.Name)]>>");
+    class Program
+    {
+        static void Main()
+        {
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Prepare the data source.
-        Model model = new Model();
+            // Insert a LINQ Reporting tag that calls the static helper method.
+            // The tag will output the title‑cased version of the Name property.
+            builder.Writeln("<<[StringHelpers.ToTitleCase(Name)]>>");
 
-        // Configure the reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        // Register the helper class so its static members can be used in the template.
-        engine.KnownTypes.Add(typeof(StringHelpers));
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            templateDoc.Save(templatePath);
 
-        // Build the report using the template, data source, and root name.
-        engine.BuildReport(doc, model, "model");
+            // -----------------------------------------------------------------
+            // 2. Load the template document for reporting.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            PersonModel model = new PersonModel();
+
+            // -----------------------------------------------------------------
+            // 4. Build the report using Aspose.Words LINQ Reporting Engine.
+            // -----------------------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+
+            // Register the helper class so its static members can be used in the template.
+            engine.KnownTypes.Add(typeof(StringHelpers));
+
+            // Build the report. The root object name is "model" because the template
+            // references members directly (e.g., Name) without a prefix.
+            engine.BuildReport(reportDoc, model, "model");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+
+            // Optional: write a confirmation to the console.
+            Console.WriteLine($"Report generated successfully: {outputPath}");
+        }
     }
 }

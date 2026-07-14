@@ -5,123 +5,114 @@ using Aspose.Words.Reporting;
 
 namespace LinqReportingMultiSection
 {
-    // Header data source
-    public class Header
+    // Header data model
+    public class HeaderModel
     {
-        public string Title { get; set; } = string.Empty;
-        public string Date { get; set; } = string.Empty;
+        public string Title { get; set; } = "Quarterly Sales Report";
+        public string Date { get; set; } = DateTime.Now.ToString("MMMM dd, yyyy");
     }
 
-    // Body data source
-    public class Body
+    // Body item model
+    public class BodyItem
     {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = "";
         public int Quantity { get; set; }
     }
 
-    // Footer data source
-    public class Footer
+    // Body data model containing a collection of items
+    public class BodyModel
     {
-        public string Note { get; set; } = string.Empty;
+        public List<BodyItem> Items { get; set; } = new();
+    }
+
+    // Footer data model
+    public class FooterModel
+    {
+        public int Total { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Create the template document with three sections (header, body, footer)
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            // Paths for the template and the final report
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
 
-            // ----- Header section -----
-            builder.Writeln("=== Header Section ===");
-            builder.Writeln("Title: <<[header.Title]>>");
+            // -----------------------------------------------------------------
+            // 1. Create the template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Section 1 – Header
+            builder.Writeln("<<[header.Title]>>");
             builder.Writeln("Date: <<[header.Date]>>");
             builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-            // ----- Body section -----
-            builder.Writeln("=== Body Section ===");
+            // Section 2 – Body (repeating items)
+            builder.Writeln("Products:");
             builder.Writeln("<<foreach [item in body.Items]>>");
-
-            // Table header (appears once)
-            var table = builder.StartTable();
-            builder.InsertCell();
-            builder.Writeln("Item");
-            builder.InsertCell();
-            builder.Writeln("Quantity");
-            builder.EndRow();
-
-            // Table row for each item
-            builder.InsertCell();
-            builder.Writeln("<<[item.Name]>>");
-            builder.InsertCell();
-            builder.Writeln("<<[item.Quantity]>>");
-            builder.EndRow();
-            builder.EndTable();
-
+            builder.Writeln(" - <<[item.Name]>> : <<[item.Quantity]>>");
             builder.Writeln("<</foreach>>");
             builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-            // ----- Footer section -----
-            builder.Writeln("=== Footer Section ===");
-            builder.Writeln("<<[footer.Note]>>");
+            // Section 3 – Footer
+            builder.Writeln("Total items: <<[footer.Total]>>");
 
             // Save the template to disk
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Prepare separate data sources for header, body, and footer
+            // 2. Load the template and prepare data sources.
             // -----------------------------------------------------------------
-            var header = new Header
-            {
-                Title = "Quarterly Sales Report",
-                Date = DateTime.Now.ToString("yyyy-MM-dd")
-            };
+            var doc = new Document(templatePath);
 
-            var body = new Body
+            // Header data
+            var header = new HeaderModel();
+
+            // Body data with sample items
+            var body = new BodyModel
             {
-                Items = new List<Item>
+                Items =
                 {
-                    new Item { Name = "Product A", Quantity = 120 },
-                    new Item { Name = "Product B", Quantity = 85 },
-                    new Item { Name = "Product C", Quantity = 47 }
+                    new BodyItem { Name = "Apples", Quantity = 120 },
+                    new BodyItem { Name = "Bananas", Quantity = 85 },
+                    new BodyItem { Name = "Cherries", Quantity = 60 }
                 }
             };
 
-            var footer = new Footer
+            // Footer data (calculate total quantity)
+            var footer = new FooterModel
             {
-                Note = "Confidential – For internal use only"
+                Total = 0
+            };
+            foreach (var item in body.Items)
+                footer.Total += item.Quantity;
+
+            // -----------------------------------------------------------------
+            // 3. Build the report using multiple data sources.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine
+            {
+                // Example option – remove empty paragraphs after processing
+                Options = ReportBuildOptions.RemoveEmptyParagraphs
             };
 
-            // -----------------------------------------------------------------
-            // 3. Build the report using the LINQ Reporting engine with three data sources
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None;
-
-            // BuildReport overload that accepts multiple data sources
+            // BuildReport overload that accepts multiple data sources and their names
             bool success = engine.BuildReport(
                 doc,
                 new object[] { header, body, footer },
                 new[] { "header", "body", "footer" });
 
-            // Save the generated report
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
+            // Optional: check success flag (relevant when InlineErrorMessages option is used)
+            if (!success)
+                Console.WriteLine("Report generation encountered errors.");
 
-            // Simple console output to indicate completion
-            Console.WriteLine(success
-                ? $"Report generated successfully: {outputPath}"
-                : "Report generation failed.");
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            doc.Save(reportPath);
         }
     }
 }

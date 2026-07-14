@@ -1,68 +1,54 @@
 using System;
+using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    public class Program
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create a template document programmatically.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Tag that references an existing member.
-        builder.Writeln("Customer Name: <<[model.ExistingProperty]>>");
-        // Tag that references a missing member – this will cause an exception.
-        builder.Writeln("Missing Member: <<[model.MissingProperty]>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template document for reporting.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the data source.
-        // -----------------------------------------------------------------
-        var model = new ReportModel();
-
-        // -----------------------------------------------------------------
-        // 4. Build the report without AllowMissingMembers.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine
+        public static void Main()
         {
-            // Do NOT enable AllowMissingMembers; default is None.
-            Options = ReportBuildOptions.None
-        };
+            // Ensure the output folder exists.
+            const string outputFolder = "Output";
+            System.IO.Directory.CreateDirectory(outputFolder);
 
-        try
-        {
-            // This call is expected to throw because MissingProperty does not exist.
-            engine.BuildReport(doc, model, "model");
+            // 1. Create a template document with a LINQ Reporting tag that references a missing member.
+            var templatePath = System.IO.Path.Combine(outputFolder, "Template.docx");
+            var builder = new DocumentBuilder();
+            // The tag <<[MissingObject.Name]>> refers to a member that does not exist in the data source.
+            builder.Writeln("<<[MissingObject.Name]>>");
+            builder.Document.Save(templatePath);
 
-            // If no exception occurs, save the generated report.
-            doc.Save(reportPath);
-            Console.WriteLine("Report generated successfully.");
+            // 2. Load the template document for reporting.
+            var doc = new Document(templatePath);
+
+            // 3. Prepare a data source that does not contain the required member.
+            // Using an empty DataSet ensures that "MissingObject" cannot be resolved.
+            var dataSource = new DataSet();
+
+            // 4. Create the ReportingEngine without the AllowMissingMembers option.
+            var engine = new ReportingEngine();
+            // Do NOT set engine.Options = ReportBuildOptions.AllowMissingMembers;
+            // The default options (ReportBuildOptions.None) will cause an exception for missing members.
+
+            try
+            {
+                // 5. Build the report. This should throw because the template references a missing member.
+                engine.BuildReport(doc, dataSource, "");
+                // If no exception is thrown, indicate unexpected success.
+                Console.WriteLine("Report built successfully (unexpected).");
+            }
+            catch (Exception ex)
+            {
+                // 6. Expected path: an exception is thrown due to the missing member.
+                Console.WriteLine("Exception caught as expected:");
+                Console.WriteLine(ex.Message);
+            }
+
+            // 7. Save the (potentially unchanged) document to verify the process completed.
+            var resultPath = System.IO.Path.Combine(outputFolder, "Result.docx");
+            doc.Save(resultPath);
         }
-        catch (Exception ex)
-        {
-            // Expected path: an exception is thrown for the missing member.
-            Console.WriteLine($"Exception caught as expected: {ex.Message}");
-        }
-    }
-
-    // Data model used by the report. Contains only ExistingProperty.
-    public class ReportModel
-    {
-        public string ExistingProperty { get; set; } = "John Doe";
-        // Note: MissingProperty is intentionally omitted.
     }
 }

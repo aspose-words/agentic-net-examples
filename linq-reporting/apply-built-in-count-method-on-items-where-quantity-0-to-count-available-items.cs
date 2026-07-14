@@ -5,7 +5,7 @@ using Aspose.Words.Reporting;
 
 public class Item
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = "";
     public int Quantity { get; set; }
 }
 
@@ -22,23 +22,25 @@ public class Program
         var model = new ReportModel();
         model.Items.Add(new Item { Name = "Apple", Quantity = 5 });
         model.Items.Add(new Item { Name = "Banana", Quantity = 0 });
-        model.Items.Add(new Item { Name = "Cherry", Quantity = 12 });
-        model.Items.Add(new Item { Name = "Date", Quantity = -3 });
+        model.Items.Add(new Item { Name = "Orange", Quantity = 3 });
 
         // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        // Insert a tag that counts items with Quantity > 0.
-        builder.Writeln("Available items: <<[Items.Count(i => i.Quantity > 0)]>>");
-        doc.Save(templatePath);
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+        builder.Writeln("Available items count: <<[model.Items.Count(i => i.Quantity > 0)]>>");
+        // Save the template to a local file.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // Load the template and build the report.
-        var loadedDoc = new Document(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
+
+        // Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
-        engine.BuildReport(loadedDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        loadedDoc.Save("Report.docx");
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

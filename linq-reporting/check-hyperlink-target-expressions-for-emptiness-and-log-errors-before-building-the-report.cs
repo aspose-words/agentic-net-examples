@@ -4,90 +4,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace HyperlinkValidationExample
+public class ReportModel
 {
-    // Data model for the report.
-    public class ReportModel
-    {
-        // Collection of items that will be iterated in the template.
-        public List<Item> Items { get; set; } = new();
-    }
+    // Hyperlink target (URL or bookmark name). Initialized to empty string to avoid nullable warnings.
+    public string Url { get; set; } = string.Empty;
 
-    // Individual item containing hyperlink data.
-    public class Item
-    {
-        // Target of the hyperlink. Must not be empty.
-        public string Url { get; set; } = string.Empty;
+    // Display text for the hyperlink.
+    public string Text { get; set; } = string.Empty;
+}
 
-        // Text displayed for the hyperlink.
-        public string Text { get; set; } = string.Empty;
-    }
-
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data with one valid and one empty hyperlink target.
+        var models = new List<ReportModel>
         {
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string outputPath = "Report.docx";
+            new ReportModel { Url = "https://www.example.com", Text = "Example Site" },
+            new ReportModel { Url = "", Text = "Missing URL" } // This entry should trigger an error log.
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create the LINQ Reporting template programmatically.
-            // -----------------------------------------------------------------
-            DocumentBuilder builder = new DocumentBuilder();
-            builder.Writeln("Hyperlink Report");
-            builder.Writeln("<<foreach [item in Items]>>");
-            // Link tag: first expression is the target, second is the display text.
-            builder.Writeln("<<link [item.Url] [item.Text]>>");
-            builder.Writeln("<</foreach>>");
-            builder.Document.Save(templatePath);
+        // Create a template document programmatically.
+        const string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Prepare sample data, intentionally leaving some URLs empty.
-            // -----------------------------------------------------------------
-            ReportModel model = new()
+        // Load the template for reporting.
+        Document templateDoc = new Document(templatePath);
+
+        // Iterate over the data items, validate hyperlink targets, and log errors.
+        foreach (var model in models)
+        {
+            if (string.IsNullOrWhiteSpace(model.Url))
             {
-                Items = new List<Item>
-                {
-                    new Item { Url = "https://www.example.com", Text = "Example Site" },
-                    new Item { Url = "", Text = "Missing URL" },               // Invalid entry
-                    new Item { Url = "https://www.github.com", Text = "GitHub" },
-                    new Item { Url = null, Text = "Null URL" }                // Invalid entry
-                }
-            };
-
-            // -----------------------------------------------------------------
-            // 3. Validate hyperlink targets before building the report.
-            // -----------------------------------------------------------------
-            bool hasErrors = false;
-            foreach (var item in model.Items)
-            {
-                if (string.IsNullOrWhiteSpace(item.Url))
-                {
-                    Console.WriteLine($"Error: Hyperlink target is empty for display text \"{item.Text}\".");
-                    hasErrors = true;
-                }
+                Console.WriteLine($"Error: Hyperlink target is empty for display text \"{model.Text}\".");
+                // Continue processing other items; the report will still be generated.
             }
 
-            if (hasErrors)
-            {
-                Console.WriteLine("Report generation aborted due to hyperlink validation errors.");
-                return;
-            }
-
-            // -----------------------------------------------------------------
-            // 4. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document template = new(templatePath);
+            // Build the report for the current model.
             ReportingEngine engine = new ReportingEngine();
-            // No special options are required for this scenario.
-            engine.BuildReport(template, model, "model");
+            // Use InlineErrorMessages to capture any template parsing issues.
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            template.Save(outputPath);
-            Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
+            // The root object name in the template is "model".
+            bool success = engine.BuildReport(templateDoc, model, "model");
+
+            // Save the generated report with a distinct filename.
+            string outputPath = $"Report_{Guid.NewGuid():N}.docx";
+            templateDoc.Save(outputPath);
+            Console.WriteLine($"Report generated: {outputPath} (Success: {success})");
         }
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
+        // The template contains a LINQ Reporting link tag.
+        // <<link [model.Url] [model.Text]>>
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("<<link [model.Url] [model.Text]>>");
+        doc.Save(filePath);
     }
 }
