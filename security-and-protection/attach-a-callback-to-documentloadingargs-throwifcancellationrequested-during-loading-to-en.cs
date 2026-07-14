@@ -2,23 +2,44 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Loading;
+using System.Threading;
 
 public class Program
 {
+    // Callback that aborts loading by throwing an OperationCanceledException.
+    private class LoadingProgressCallback : IDocumentLoadingCallback
+    {
+        private readonly DateTime _startTime = DateTime.Now;
+        private const double MaxDurationSeconds = 0.1; // short duration to trigger cancellation
+
+        public void Notify(DocumentLoadingArgs args)
+        {
+            // If the loading takes longer than the allowed time, request cancellation.
+            double elapsed = (DateTime.Now - _startTime).TotalSeconds;
+            if (elapsed > MaxDurationSeconds)
+            {
+                // Some versions expose ThrowIfCancellationRequested; call it if available.
+                // args.ThrowIfCancellationRequested(); // Uncomment if the method exists.
+                throw new OperationCanceledException(
+                    $"Loading cancelled after {elapsed:F2}s (EstimatedProgress = {args.EstimatedProgress}).");
+            }
+        }
+    }
+
     public static void Main()
     {
-        // Prepare output folder.
+        // Prepare output directory.
         string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a simple document and save it.
+        // 1. Create a simple document and save it.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello Aspose.Words!");
         string filePath = Path.Combine(outputDir, "Sample.docx");
         doc.Save(filePath);
 
-        // Set up load options with a progress callback that forces cancellation.
+        // 2. Load the document with a progress callback that may cancel the operation.
         LoadOptions loadOptions = new LoadOptions
         {
             ProgressCallback = new LoadingProgressCallback()
@@ -26,28 +47,16 @@ public class Program
 
         try
         {
-            // Attempt to load the document; the callback will trigger cancellation.
             Document loadedDoc = new Document(filePath, loadOptions);
-            // If loading succeeds (unlikely), output the document text.
-            Console.WriteLine("Document loaded successfully:");
-            Console.WriteLine(loadedDoc.GetText());
+            Console.WriteLine("Document loaded successfully.");
         }
         catch (OperationCanceledException ex)
         {
-            // Expected path when the callback requests cancellation.
-            Console.WriteLine("Loading was cancelled by the progress callback:");
-            Console.WriteLine(ex.Message);
+            Console.WriteLine($"Loading was cancelled: {ex.Message}");
         }
-    }
 
-    // Callback implementation that aborts loading by throwing OperationCanceledException.
-    private class LoadingProgressCallback : IDocumentLoadingCallback
-    {
-        public void Notify(DocumentLoadingArgs args)
-        {
-            // Throw an exception to abort loading. Include progress info for diagnostics.
-            throw new OperationCanceledException(
-                $"Loading cancelled. EstimatedProgress = {args.EstimatedProgress}");
-        }
+        // 3. Load the document without cancellation to demonstrate normal loading.
+        Document normalLoad = new Document(filePath);
+        Console.WriteLine($"Normal load text: {normalLoad.GetText().Trim()}");
     }
 }

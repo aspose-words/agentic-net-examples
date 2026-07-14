@@ -9,93 +9,58 @@ public class Program
 {
     public static void Main()
     {
-        // Create a cancellation token source that could be used to cancel operations.
+        // Create a cancellation token source that will not be cancelled.
         using var cts = new CancellationTokenSource();
         CancellationToken token = cts.Token;
 
-        // Prepare a temporary folder and file path for the sample document.
-        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeDemo");
-        Directory.CreateDirectory(tempFolder);
-        string filePath = Path.Combine(tempFolder, "Sample.docx");
+        // Prepare a temporary folder for the demo files.
+        string artifactsDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Path of the document to be saved and later loaded.
+        string docPath = Path.Combine(artifactsDir, "SampleDocument.docx");
 
         // -----------------------------------------------------------------
-        // Create a simple document.
+        // 1. Create a simple document.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello Aspose.Words with CancellationToken!");
 
         // -----------------------------------------------------------------
-        // Save the document while using the same CancellationToken for progress monitoring.
+        // 2. Save the document using the same CancellationToken.
         // -----------------------------------------------------------------
-        try
-        {
-            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-            {
-                // The callback will abort the save operation if the token is cancelled.
-                ProgressCallback = new SavingProgressCallback(token)
-            };
+        // Since Aspose.Words does not provide a Save overload that accepts a
+        // CancellationToken, we manually check the token before invoking Save.
+        if (token.IsCancellationRequested)
+            throw new OperationCanceledException("Save operation was cancelled.", token);
 
-            doc.Save(filePath, saveOptions);
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("Document saving was canceled.");
-            return;
-        }
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
+        doc.Save(docPath, saveOptions);
+
+        // Verify that the file was created.
+        if (!File.Exists(docPath))
+            throw new FileNotFoundException("The document was not saved correctly.", docPath);
 
         // -----------------------------------------------------------------
-        // Load the document using the same CancellationToken for progress monitoring.
+        // 3. Load the document using the same CancellationToken.
         // -----------------------------------------------------------------
-        Document loadedDoc;
-        try
-        {
-            LoadOptions loadOptions = new LoadOptions
-            {
-                // The callback will abort the load operation if the token is cancelled.
-                ProgressCallback = new LoadingProgressCallback(token)
-            };
+        // Similarly, we check the token before loading.
+        if (token.IsCancellationRequested)
+            throw new OperationCanceledException("Load operation was cancelled.", token);
 
-            loadedDoc = new Document(filePath, loadOptions);
-        }
-        catch (OperationCanceledException)
-        {
-            Console.WriteLine("Document loading was canceled.");
-            return;
-        }
+        LoadOptions loadOptions = new LoadOptions();
+        Document loadedDoc = new Document(docPath, loadOptions);
 
-        // -----------------------------------------------------------------
-        // Verify that the document was loaded correctly.
-        // -----------------------------------------------------------------
-        string text = loadedDoc.GetText().Trim();
-        Console.WriteLine($"Loaded document text: {text}");
-    }
+        // Simple validation: the loaded text should match the original.
+        string originalText = doc.GetText().Trim();
+        string loadedText = loadedDoc.GetText().Trim();
 
-    // Callback for saving that checks the cancellation token.
-    private class SavingProgressCallback : IDocumentSavingCallback
-    {
-        private readonly CancellationToken _token;
+        if (!originalText.Equals(loadedText, StringComparison.Ordinal))
+            throw new InvalidOperationException("The loaded document content does not match the original.");
 
-        public SavingProgressCallback(CancellationToken token) => _token = token;
-
-        public void Notify(DocumentSavingArgs args)
-        {
-            if (_token.IsCancellationRequested)
-                throw new OperationCanceledException("Saving was canceled via token.");
-        }
-    }
-
-    // Callback for loading that checks the cancellation token.
-    private class LoadingProgressCallback : IDocumentLoadingCallback
-    {
-        private readonly CancellationToken _token;
-
-        public LoadingProgressCallback(CancellationToken token) => _token = token;
-
-        public void Notify(DocumentLoadingArgs args)
-        {
-            if (_token.IsCancellationRequested)
-                throw new OperationCanceledException("Loading was canceled via token.");
-        }
+        // Cleanup: delete the temporary files (optional).
+        File.Delete(docPath);
+        Directory.Delete(artifactsDir, true);
     }
 }

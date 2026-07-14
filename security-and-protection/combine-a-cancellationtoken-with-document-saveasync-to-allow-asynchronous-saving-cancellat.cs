@@ -1,68 +1,74 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
 public class Program
 {
-    public static void Main(string[] args)
+    // Callback that checks the cancellation token and aborts saving when requested.
+    private class SavingProgressCallback : IDocumentSavingCallback
     {
-        // Output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CanceledSave.docx");
+        private readonly CancellationToken _token;
 
-        // Create a blank document and add many paragraphs to make saving take noticeable time.
+        public SavingProgressCallback(CancellationToken token) => _token = token;
+
+        public void Notify(DocumentSavingArgs args)
+        {
+            if (_token.IsCancellationRequested)
+                throw new OperationCanceledException($"Saving canceled at {args.EstimatedProgress}% progress.");
+        }
+    }
+
+    public static async Task Main()
+    {
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "LargeDocument.docx");
+
+        // Create a large document to make the save operation take noticeable time.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 0; i < 2000; i++)
+        for (int i = 0; i < 5000; i++)
         {
             builder.Writeln($"Paragraph {i + 1}");
         }
 
         // Set up a cancellation token that will be triggered after a short delay.
         using var cts = new CancellationTokenSource();
-        Task.Delay(100).ContinueWith(_ => cts.Cancel());
-
-        // Configure save options and attach a progress callback that observes the token.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            ProgressCallback = new CancellationSavingCallback(cts.Token)
-        };
+        cts.CancelAfter(200); // Cancel after 200 milliseconds.
 
         try
         {
-            // Save the document. The callback will throw OperationCanceledException if the token is cancelled.
-            doc.Save(outputPath, saveOptions);
-            Console.WriteLine("Document saved successfully (cancellation did not occur).");
+            // Configure save options with a progress callback that respects the token.
+            OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+            {
+                ProgressCallback = new SavingProgressCallback(cts.Token)
+            };
+
+            // Perform the save operation. The callback will throw if cancellation is requested.
+            await Task.Run(() => doc.Save(outputPath, saveOptions), cts.Token);
+            Console.WriteLine("Document saved successfully.");
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Document saving was canceled via the cancellation token.");
+            Console.WriteLine("Document saving was canceled.");
         }
-        finally
+        catch (Exception ex)
         {
-            // Remove any partially written file.
-            if (File.Exists(outputPath))
-            {
-                try { File.Delete(outputPath); } catch { /* ignore cleanup errors */ }
-            }
-        }
-    }
-
-    // Implements IDocumentSavingCallback to monitor progress and abort when cancellation is requested.
-    private class CancellationSavingCallback : IDocumentSavingCallback
-    {
-        private readonly CancellationToken _token;
-
-        public CancellationSavingCallback(CancellationToken token)
-        {
-            _token = token;
+            Console.WriteLine($"An unexpected error occurred: {ex.Message}");
         }
 
-        public void Notify(DocumentSavingArgs args)
+        // Verify whether the file was created.
+        if (File.Exists(outputPath))
         {
-            if (_token.IsCancellationRequested)
-                throw new OperationCanceledException($"Saving canceled at {args.EstimatedProgress}% progress.");
+            Console.WriteLine($"Output file exists at: {outputPath}");
+        }
+        else
+        {
+            Console.WriteLine("Output file does not exist (save was likely canceled).");
         }
     }
 }

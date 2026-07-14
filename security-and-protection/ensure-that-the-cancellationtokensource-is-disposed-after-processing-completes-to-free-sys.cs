@@ -1,67 +1,70 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
 public class Program
 {
-    public static void Main()
+    public static async Task Main()
     {
-        // Path for the output document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ProtectedDocument.docx");
+        // Create a simple document and add some text.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello world!");
 
-        // Use a CancellationTokenSource within a using block to ensure it is disposed.
+        // Protect the document with a password.
+        doc.Protect(ProtectionType.ReadOnly, "secret");
+
+        // Define output paths.
+        string protectedPath = Path.Combine(Directory.GetCurrentDirectory(), "Protected.docx");
+        string unprotectedPath = Path.Combine(Directory.GetCurrentDirectory(), "Unprotected.docx");
+
+        // Save the protected document.
+        doc.Save(protectedPath);
+
+        // Use a CancellationTokenSource for a simulated async operation.
+        // The using statement guarantees that the token source is disposed after use.
         using (CancellationTokenSource cts = new CancellationTokenSource())
         {
-            // Simulate a cancellation token check (not required by Aspose.Words but shown for completeness).
-            CancellationToken token = cts.Token;
-
-            // Create a new blank document.
-            Document doc = new Document();
-
-            // Build simple content.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("This document is protected with a password.");
-
-            // Apply read‑only protection with a password.
-            doc.Protect(ProtectionType.ReadOnly, "SecretPassword");
-
-            // Save the protected document.
-            doc.Save(outputPath, SaveFormat.Docx);
-
-            // Optional: check for cancellation request.
-            if (token.IsCancellationRequested)
-            {
-                // If cancellation was requested, exit early.
-                return;
-            }
-        } // The CancellationTokenSource is disposed here, freeing system resources.
-
-        // Validate that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"The expected output file was not created: {outputPath}");
+            // Perform some asynchronous processing that respects cancellation.
+            await ProcessDocumentAsync(protectedPath, cts.Token);
+            // The CancellationTokenSource will be disposed here.
         }
 
-        // Load the protected document to verify the protection state.
-        Document loadedDoc = new Document(outputPath);
-        if (loadedDoc.ProtectionType != ProtectionType.ReadOnly)
-        {
-            throw new InvalidOperationException("The document protection was not applied as expected.");
-        }
+        // Verify that the protected file was created.
+        if (!File.Exists(protectedPath))
+            throw new FileNotFoundException("Protected document was not saved.", protectedPath);
 
-        // Unprotect the document (no password needed for Aspose.Words Unprotect method).
-        loadedDoc.Unprotect();
+        // Load the protected document, then unprotect it using the correct password.
+        Document loadedDoc = new Document(protectedPath);
+        loadedDoc.Unprotect("secret");
 
         // Save the unprotected version.
-        string unprotectedPath = Path.Combine(Directory.GetCurrentDirectory(), "UnprotectedDocument.docx");
-        loadedDoc.Save(unprotectedPath, SaveFormat.Docx);
+        loadedDoc.Save(unprotectedPath);
 
-        // Final validation.
+        // Verify that the unprotected file was created.
         if (!File.Exists(unprotectedPath))
+            throw new FileNotFoundException("Unprotected document was not saved.", unprotectedPath);
+    }
+
+    private static async Task ProcessDocumentAsync(string filePath, CancellationToken token)
+    {
+        // Simulate asynchronous work that loads the document and reads its text.
+        await Task.Run(() =>
         {
-            throw new InvalidOperationException($"Failed to save the unprotected document: {unprotectedPath}");
-        }
+            // Load the document.
+            Document doc = new Document(filePath);
+
+            // Read the document text (just to simulate some processing).
+            string text = doc.GetText();
+
+            // Simulate a short delay.
+            Thread.Sleep(500);
+
+            // Respect cancellation requests.
+            token.ThrowIfCancellationRequested();
+        }, token);
     }
 }

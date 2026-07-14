@@ -1,75 +1,66 @@
 using System;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
-    private const string AuditFileName = "audit.log";
+    // Path for the audit log file.
+    private const string AuditFilePath = "audit_log.txt";
 
-    private static void LogCancellation(string message)
+    // Simple implementation of IDocumentSavingCallback that logs cancellation events.
+    private class SavingProgressCallback : IDocumentSavingCallback
     {
-        string entry = $"{DateTime.UtcNow:O} - {message}{Environment.NewLine}";
-        File.AppendAllText(AuditFileName, entry);
+        private readonly DateTime _startTime;
+        private readonly TimeSpan _maxDuration;
+
+        public SavingProgressCallback(TimeSpan maxDuration)
+        {
+            _startTime = DateTime.UtcNow;
+            _maxDuration = maxDuration;
+        }
+
+        public void Notify(DocumentSavingArgs args)
+        {
+            // If the saving operation exceeds the allowed duration, log and abort.
+            if (DateTime.UtcNow - _startTime > _maxDuration)
+            {
+                string logEntry = $"{DateTime.UtcNow:O} - Document save cancelled. EstimatedProgress={args.EstimatedProgress:F2}%{Environment.NewLine}";
+                File.AppendAllText(AuditFilePath, logEntry);
+                throw new OperationCanceledException("Saving operation exceeded the maximum allowed duration.");
+            }
+        }
     }
 
     public static void Main()
     {
-        // Ensure the audit file starts empty for this run.
-        if (File.Exists(AuditFileName))
-            File.Delete(AuditFileName);
+        // Ensure the audit file exists.
+        if (!File.Exists(AuditFilePath))
+            File.WriteAllText(AuditFilePath, $"Audit Log Started at {DateTime.UtcNow:O}{Environment.NewLine}");
 
-        // Example 1: Cancellation triggered by a timeout.
-        var ctsTimeout = new CancellationTokenSource();
-        ctsTimeout.CancelAfter(100); // Cancel after 100 ms.
+        // Create a simple Word document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document used to demonstrate cancellation logging.");
+
+        // Configure save options with a progress callback that will cancel after 0.1 seconds.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+        {
+            ProgressCallback = new SavingProgressCallback(TimeSpan.FromMilliseconds(100))
+        };
 
         try
         {
-            // This will be cancelled before the delay completes.
-            Task.Delay(1000, ctsTimeout.Token).Wait();
+            // Attempt to save the document. The callback is expected to cancel the operation.
+            doc.Save("sample_output.docx", saveOptions);
         }
-        catch (AggregateException ae) when (ae.InnerException is OperationCanceledException)
+        catch (OperationCanceledException ex)
         {
-            LogCancellation("Operation cancelled due to timeout.");
-        }
-        catch (OperationCanceledException)
-        {
-            LogCancellation("Operation cancelled due to timeout.");
+            // Log the exception details as part of the audit.
+            string logEntry = $"{DateTime.UtcNow:O} - Save operation aborted: {ex.Message}{Environment.NewLine}";
+            File.AppendAllText(AuditFilePath, logEntry);
         }
 
-        // Example 2: Manual cancellation.
-        var ctsManual = new CancellationTokenSource();
-
-        var task = Task.Run(async () =>
-        {
-            // Simulate work that checks for cancellation.
-            for (int i = 0; i < 5; i++)
-            {
-                ctsManual.Token.ThrowIfCancellationRequested();
-                await Task.Delay(200, ctsManual.Token);
-            }
-        }, ctsManual.Token);
-
-        // Cancel the operation after a short delay.
-        Task.Delay(350).ContinueWith(_ => ctsManual.Cancel());
-
-        try
-        {
-            task.Wait();
-        }
-        catch (AggregateException ae) when (ae.InnerException is OperationCanceledException)
-        {
-            LogCancellation("Operation manually cancelled.");
-        }
-        catch (OperationCanceledException)
-        {
-            LogCancellation("Operation manually cancelled.");
-        }
-
-        // Verify that the audit file was created.
-        if (!File.Exists(AuditFileName))
-            throw new InvalidOperationException("Audit log was not created.");
-
-        // The program ends here; no user interaction required.
+        // Indicate completion (no interactive output required).
     }
 }

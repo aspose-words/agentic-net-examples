@@ -6,7 +6,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple blank document and add some text.
+        // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("This is a sample document.");
@@ -24,20 +24,31 @@ public class Program
         }
         catch (OperationCanceledException ex)
         {
-            // Capture and log the exception message and stack trace for debugging.
-            Console.WriteLine("Caught OperationCanceledException: " + ex.Message);
+            // Capture and log the stack trace for debugging.
+            Console.WriteLine("Operation was canceled:");
+            Console.WriteLine(ex.Message);
             Console.WriteLine("Stack Trace:");
             Console.WriteLine(ex.StackTrace);
         }
     }
 
-    // Callback that aborts the saving process by throwing OperationCanceledException.
+    // Callback that cancels the save operation after a short duration.
     private class SavingProgressCallback : IDocumentSavingCallback
     {
+        private readonly DateTime _startTime;
+        private const double MaxDurationSeconds = 0.01; // Very short to trigger cancellation quickly.
+
+        public SavingProgressCallback()
+        {
+            _startTime = DateTime.Now;
+        }
+
         public void Notify(DocumentSavingArgs args)
         {
-            // Immediately cancel the operation.
-            throw new OperationCanceledException($"Saving canceled at progress {args.EstimatedProgress}%.");
+            double elapsed = (DateTime.Now - _startTime).TotalSeconds;
+            if (elapsed > MaxDurationSeconds)
+                throw new OperationCanceledException(
+                    $"EstimatedProgress = {args.EstimatedProgress}; Canceled after {elapsed:F2} seconds.");
         }
     }
 }

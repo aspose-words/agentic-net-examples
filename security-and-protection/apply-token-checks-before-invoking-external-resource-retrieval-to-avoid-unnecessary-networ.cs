@@ -1,80 +1,94 @@
 using System;
 using System.IO;
+using System.Net.Http;
 using Aspose.Words;
 using Aspose.Words.Loading;
+using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Simulated authentication token.
-        string providedToken = "valid-token";
-        string requiredToken = "valid-token";
+        // Expected token that authorizes external resource loading.
+        const string expectedToken = "valid-token";
 
-        // Create a new blank document.
+        // Create a blank document.
         Document doc = new Document();
 
-        // Assign a custom resource loading callback that checks the token before providing an image.
-        doc.ResourceLoadingCallback = new ImageTokenHandler(providedToken, requiredToken);
+        // Assign a custom resource loading callback that checks the token before downloading.
+        doc.ResourceLoadingCallback = new TokenCheckingCallback(expectedToken);
 
-        // Build the document content.
+        // Insert an image using a URL. The callback will decide whether to load it.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document with conditional external image:");
-        // The placeholder URI triggers the callback.
-        builder.InsertImage("ProtectedImage");
+        builder.InsertImage("https://www.example.com/sample-image.png");
 
         // Save the document.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
-        doc.Save(outputPath);
+        doc.Save(outputPath, SaveFormat.Docx);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
+            throw new InvalidOperationException("Failed to create the output document.");
 
-        // Load the saved document to ensure it can be opened.
-        Document loaded = new Document(outputPath);
-        Console.WriteLine("Document saved and loaded successfully.");
-    }
-}
-
-// Custom callback that provides an image only when a valid token is supplied.
-// Instead of downloading from the internet, it uses an embedded 1x1 PNG to avoid SSL issues.
-public class ImageTokenHandler : IResourceLoadingCallback
-{
-    private readonly string _providedToken;
-    private readonly string _requiredToken;
-
-    // A tiny 1x1 pixel transparent PNG (base64 encoded).
-    private const string Base64Png = 
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO7+X3cAAAAASUVORK5CYII=";
-
-    public ImageTokenHandler(string providedToken, string requiredToken)
-    {
-        _providedToken = providedToken;
-        _requiredToken = requiredToken;
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 
-    public ResourceLoadingAction ResourceLoading(ResourceLoadingArgs args)
+    // Callback that validates a token before allowing image download.
+    private class TokenCheckingCallback : IResourceLoadingCallback
     {
-        // Only handle image resources with the specific placeholder URI.
-        if (args.ResourceType == ResourceType.Image && args.OriginalUri == "ProtectedImage")
+        private readonly string _validToken;
+
+        public TokenCheckingCallback(string validToken)
         {
-            // Check the token before providing any image data.
-            if (_providedToken == _requiredToken)
-            {
-                // Token is valid – provide the embedded PNG data.
-                byte[] imageData = Convert.FromBase64String(Base64Png);
-                args.SetData(imageData);
-                return ResourceLoadingAction.UserProvided;
-            }
-            else
-            {
-                // Token is invalid – skip loading the external resource.
-                return ResourceLoadingAction.Skip;
-            }
+            _validToken = validToken;
         }
 
-        // For all other resources, use the default loading behavior.
-        return ResourceLoadingAction.Default;
+        public ResourceLoadingAction ResourceLoading(ResourceLoadingArgs args)
+        {
+            // Only intercept image resources.
+            if (args.ResourceType == ResourceType.Image)
+            {
+                // Simulate token retrieval (in a real scenario, obtain it from a secure source).
+                string providedToken = GetProvidedToken();
+
+                // If the token is invalid, skip loading the external resource.
+                if (!string.Equals(providedToken, _validToken, StringComparison.Ordinal))
+                    return ResourceLoadingAction.Skip;
+
+                // Token is valid – attempt to download the image.
+                try
+                {
+                    using (HttpClient client = new HttpClient())
+                    {
+                        // Synchronously get the image bytes; any failure will be caught below.
+                        byte[] imageData = client.GetByteArrayAsync(args.OriginalUri).GetAwaiter().GetResult();
+                        args.SetData(imageData);
+                    }
+
+                    return ResourceLoadingAction.UserProvided;
+                }
+                catch (HttpRequestException)
+                {
+                    // If the request fails (e.g., 404), skip loading to avoid an exception.
+                    return ResourceLoadingAction.Skip;
+                }
+                catch (Exception)
+                {
+                    // For any other unexpected errors, also skip loading.
+                    return ResourceLoadingAction.Skip;
+                }
+            }
+
+            // For all other resource types, use the default loading behavior.
+            return ResourceLoadingAction.Default;
+        }
+
+        // Placeholder method to obtain a token. Replace with real logic as needed.
+        private string GetProvidedToken()
+        {
+            // For demonstration, we return the same token that authorizes loading.
+            return "valid-token";
+        }
     }
 }

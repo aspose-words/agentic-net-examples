@@ -5,29 +5,25 @@ using Aspose.Words.Saving;
 
 namespace AsposeWordsCancellationDemo
 {
-    // Simple configuration class to enable or disable cancellation for specific stages.
-    public class ProcessingConfig
-    {
-        // When true, the saving process will be cancelled once progress exceeds the threshold.
-        public bool CancelDuringSaving { get; set; } = false;
-    }
-
-    // Implements the saving progress callback. Throws an exception to cancel saving
-    // when the configuration requests cancellation and the progress threshold is met.
+    // Callback that can cancel a save operation based on a configuration flag.
     public class SavingProgressCallback : IDocumentSavingCallback
     {
-        private readonly ProcessingConfig _config;
-        private const double CancelThreshold = 0.5; // Cancel after 50% progress.
+        private readonly bool _enableCancellation;
+        private readonly double _cancelAfterProgress;
 
-        public SavingProgressCallback(ProcessingConfig config)
+        public SavingProgressCallback(bool enableCancellation, double cancelAfterProgress = 0.5)
         {
-            _config = config;
+            _enableCancellation = enableCancellation;
+            _cancelAfterProgress = cancelAfterProgress;
         }
 
         public void Notify(DocumentSavingArgs args)
         {
-            if (_config.CancelDuringSaving && args.EstimatedProgress >= CancelThreshold)
-                throw new OperationCanceledException($"Saving canceled at {args.EstimatedProgress:P0} progress.");
+            // If cancellation is enabled and the estimated progress exceeds the threshold,
+            // abort the save by throwing an exception.
+            if (_enableCancellation && args.EstimatedProgress >= _cancelAfterProgress)
+                throw new OperationCanceledException(
+                    $"Saving canceled at {args.EstimatedProgress:P0} progress.");
         }
     }
 
@@ -35,64 +31,47 @@ namespace AsposeWordsCancellationDemo
     {
         public static void Main()
         {
-            // Prepare a simple document.
+            // Configuration setting: turn cancellation on or off for the PDF save stage.
+            bool cancelDuringPdfSave = true;
+
+            // Prepare output folder.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+            string pdfPath = Path.Combine(outputDir, "Sample.pdf");
+
+            // Create a simple document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Hello world! This is a test document for cancellation support.");
+            builder.Writeln("Hello Aspose.Words cancellation demo.");
 
-            // Define output paths.
-            string baseDir = Directory.GetCurrentDirectory();
-            string cancelPath = Path.Combine(baseDir, "CancelledOutput.docx");
-            string successPath = Path.Combine(baseDir, "SuccessfulOutput.docx");
-
-            // ---------- Demonstration with cancellation enabled ----------
-            var config = new ProcessingConfig { CancelDuringSaving = true };
-            var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+            // Attempt to save with cancellation enabled.
+            PdfSaveOptions pdfOptions = new PdfSaveOptions
             {
-                ProgressCallback = new SavingProgressCallback(config)
+                ProgressCallback = new SavingProgressCallback(cancelDuringPdfSave, 0.1)
             };
 
             try
             {
-                doc.Save(cancelPath, saveOptions);
-                Console.WriteLine("Document saved (cancellation was expected but did not occur).");
+                doc.Save(pdfPath, pdfOptions);
+                Console.WriteLine("PDF saved successfully (cancellation disabled).");
             }
             catch (OperationCanceledException ex)
             {
-                Console.WriteLine($"Save operation was cancelled as configured: {ex.Message}");
+                Console.WriteLine($"Save operation canceled: {ex.Message}");
+                // Ensure no partial file remains.
+                if (File.Exists(pdfPath))
+                    File.Delete(pdfPath);
             }
 
-            // ---------- Demonstration with cancellation disabled ----------
-            config.CancelDuringSaving = false; // Disable cancellation.
-            // Reuse the same document; optionally modify it.
-            builder.Writeln("Additional line after cancellation test.");
+            // Disable cancellation and save again.
+            cancelDuringPdfSave = false;
+            pdfOptions.ProgressCallback = new SavingProgressCallback(cancelDuringPdfSave);
+            doc.Save(pdfPath, pdfOptions);
+            Console.WriteLine("PDF saved without cancellation.");
 
-            var saveOptionsNoCancel = new OoxmlSaveOptions(SaveFormat.Docx)
-            {
-                ProgressCallback = new SavingProgressCallback(config)
-            };
-
-            try
-            {
-                doc.Save(successPath, saveOptionsNoCancel);
-                Console.WriteLine($"Document saved successfully to '{successPath}'.");
-            }
-            catch (OperationCanceledException ex)
-            {
-                // This block should not be reached when cancellation is disabled.
-                Console.WriteLine($"Unexpected cancellation: {ex.Message}");
-            }
-
-            // Verify that the output files exist.
-            if (File.Exists(cancelPath))
-                Console.WriteLine($"Cancelled file exists (partial save may be present): {cancelPath}");
-            else
-                Console.WriteLine("Cancelled file was not created, as expected.");
-
-            if (File.Exists(successPath))
-                Console.WriteLine($"Successful file exists: {successPath}");
-            else
-                Console.WriteLine("Successful file was not created, which indicates an error.");
+            // Validate that the file was created.
+            if (!File.Exists(pdfPath))
+                throw new Exception("The PDF file was not created as expected.");
         }
     }
 }

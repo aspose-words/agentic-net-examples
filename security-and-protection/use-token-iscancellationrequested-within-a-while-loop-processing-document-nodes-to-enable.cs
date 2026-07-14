@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Tables;
@@ -10,49 +9,54 @@ namespace AsposeWordsCancellationDemo
     {
         public static void Main()
         {
-            // Prepare a cancellation token that will be triggered after a short delay.
-            using var cts = new CancellationTokenSource();
-            cts.CancelAfter(200); // Cancel after 200 milliseconds.
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a sample document and add several paragraphs.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-            for (int p = 1; p <= 20; p++)
+            // Add several paragraphs to have nodes to process.
+            for (int i = 1; i <= 20; i++)
             {
-                builder.Writeln($"Paragraph {p}");
+                builder.Writeln($"Paragraph {i}");
             }
 
-            // Save the original document.
-            string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docx");
-            doc.Save(originalPath);
-
-            // Process document nodes while respecting the cancellation token.
-            var allNodes = doc.GetChildNodes(NodeType.Any, true);
-            int index = 0;
-            while (index < allNodes.Count && !cts.Token.IsCancellationRequested)
+            // Set up a cancellation token that will be triggered after a short delay.
+            using (CancellationTokenSource cts = new CancellationTokenSource())
             {
-                var node = allNodes[index];
+                // Cancel after 200 milliseconds.
+                cts.CancelAfter(200);
+                CancellationToken token = cts.Token;
 
-                // Example modification: if the node is a paragraph, append a marker.
-                if (node.NodeType == NodeType.Paragraph)
+                // Get all nodes in the document (including nested nodes).
+                var allNodes = doc.GetChildNodes(NodeType.Any, true);
+                int index = 0;
+
+                // Process nodes in a while loop, checking for cancellation.
+                while (index < allNodes.Count)
                 {
-                    var paragraph = (Paragraph)node;
-                    paragraph.AppendChild(new Run(doc, " [Processed]"));
-                }
+                    // Gracefully exit if cancellation is requested.
+                    if (token.IsCancellationRequested)
+                    {
+                        Console.WriteLine("Cancellation requested. Exiting processing loop.");
+                        break;
+                    }
 
-                index++;
+                    var node = allNodes[index];
+
+                    // Example processing: append a marker to each paragraph.
+                    if (node.NodeType == NodeType.Paragraph)
+                    {
+                        Paragraph paragraph = (Paragraph)node;
+                        paragraph.AppendChild(new Run(doc, " [processed]"));
+                    }
+
+                    index++;
+                }
             }
 
-            // Save the processed document.
-            string processedPath = Path.Combine(Directory.GetCurrentDirectory(), "Processed.docx");
-            doc.Save(processedPath);
-
-            // Validate that the output file was created.
-            if (!File.Exists(processedPath))
-                throw new InvalidOperationException("The processed document was not saved correctly.");
-
-            // Indicate completion (no interactive input required).
-            Console.WriteLine("Document processing completed.");
+            // Save the resulting document.
+            const string outputPath = "Processed.docx";
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved to '{outputPath}'.");
         }
     }
 }

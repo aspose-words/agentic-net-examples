@@ -5,12 +5,25 @@ public class Program
 {
     public static void Main()
     {
-        const string readmePath = "README.md";
-        string content = "# Project README\n\n" +
-                         "## .NET Version Requirement\n\n" +
-                         "This project requires **.NET 6.0** or later to use `CancellationToken` features.\n";
+        // Define the required .NET version for CancellationToken support.
+        // CancellationToken was introduced in .NET Framework 4.5,
+        // .NET Core 2.0 and is also available in .NET Standard 2.0.
+        string readmeContent = @"# Project README
 
-        File.WriteAllText(readmePath, content);
-        Console.WriteLine($"README file created at: {Path.GetFullPath(readmePath)}");
+## CancellationToken Support
+
+CancellationToken is supported starting from:
+- **.NET Framework 4.5**
+- **.NET Core 2.0**
+- **.NET Standard 2.0**
+
+Ensure your project targets one of the above frameworks or a later version.";
+
+        // Write the content to a README.md file in the current directory.
+        const string fileName = "README.md";
+        File.WriteAllText(fileName, readmeContent);
+
+        // Inform the user that the file has been created.
+        Console.WriteLine($"README file '{fileName}' has been created with the required .NET version information.");
     }
 }
