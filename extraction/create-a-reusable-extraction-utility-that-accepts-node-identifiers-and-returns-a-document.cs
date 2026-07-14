@@ -3,32 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
 public class ExtractionUtility
 {
-    // Extracts the content that lies inside a bookmark and returns it as a new document.
-    public static Document ExtractByBookmark(Document source, string bookmarkName)
+    // Extracts content based on node type and identifier.
+    // nodeType: "Paragraph", "Bookmark", or "Table"
+    // identifier: paragraph index (0‑based) or bookmark name or table index (0‑based)
+    public static Document ExtractContent(Document source, string nodeType, string identifier)
     {
-        Bookmark bookmark = source.Range.Bookmarks[bookmarkName];
-        if (bookmark == null)
-            throw new InvalidOperationException($"Bookmark '{bookmarkName}' not found.");
+        if (source == null) throw new ArgumentNullException(nameof(source));
+        if (string.IsNullOrEmpty(nodeType)) throw new ArgumentException("Node type is required.", nameof(nodeType));
+        if (string.IsNullOrEmpty(identifier)) throw new ArgumentException("Identifier is required.", nameof(identifier));
 
-        Node startNode = bookmark.BookmarkStart;
-        Node endNode = bookmark.BookmarkEnd;
-
-        // Collect all nodes that are between the start and end markers.
-        List<Node> nodesInRange = new List<Node>();
-        Node cur = startNode.NextSibling;
-        while (cur != null && cur != endNode)
-        {
-            nodesInRange.Add(cur);
-            cur = cur.NextSibling;
-        }
-
-        if (nodesInRange.Count == 0)
-            throw new InvalidOperationException($"Bookmark '{bookmarkName}' contains no nodes.");
-
-        // Build the result document with a clean structure.
+        // Create a clean destination document.
         Document result = new Document();
         result.RemoveAllChildren();
         Section section = new Section(result);
@@ -36,87 +24,56 @@ public class ExtractionUtility
         Body body = new Body(result);
         section.AppendChild(body);
 
-        Paragraph? inlineParagraph = null; // Holds runs that belong to the same paragraph.
-
-        foreach (Node node in nodesInRange)
+        switch (nodeType.Trim().ToLowerInvariant())
         {
-            // Import the node into the destination document.
-            Node imported = result.ImportNode(node, true);
-
-            // Block level nodes can be appended directly to the body.
-            if (imported.NodeType == NodeType.Paragraph || imported.NodeType == NodeType.Table)
-            {
-                // Flush any pending inline paragraph first.
-                if (inlineParagraph != null)
+            case "paragraph":
                 {
-                    body.AppendChild(inlineParagraph);
-                    inlineParagraph = null;
+                    if (!int.TryParse(identifier, out int paraIndex))
+                        throw new ArgumentException("Paragraph identifier must be an integer index.", nameof(identifier));
+
+                    Paragraph paragraph = source.FirstSection.Body.Paragraphs[paraIndex];
+                    if (paragraph == null)
+                        throw new InvalidOperationException($"Paragraph at index {paraIndex} not found.");
+
+                    // Import the paragraph into the destination document before appending.
+                    Node imported = result.ImportNode(paragraph, true);
+                    body.AppendChild(imported);
+                    break;
                 }
+            case "bookmark":
+                {
+                    Bookmark bookmark = source.Range.Bookmarks[identifier];
+                    if (bookmark == null)
+                        throw new InvalidOperationException($"Bookmark \"{identifier}\" not found.");
 
-                body.AppendChild(imported);
-            }
-            else // Inline nodes (Run, Field, etc.) must be placed inside a paragraph.
-            {
-                if (inlineParagraph == null)
-                    inlineParagraph = new Paragraph(result);
+                    // Create a new paragraph containing the bookmark text.
+                    Paragraph para = new Paragraph(result);
+                    Run run = new Run(result, bookmark.Text);
+                    para.AppendChild(run);
+                    body.AppendChild(para);
+                    break;
+                }
+            case "table":
+                {
+                    if (!int.TryParse(identifier, out int tableIndex))
+                        throw new ArgumentException("Table identifier must be an integer index.", nameof(identifier));
 
-                inlineParagraph.AppendChild(imported);
-            }
+                    NodeCollection tables = source.GetChildNodes(NodeType.Table, true);
+                    if (tableIndex < 0 || tableIndex >= tables.Count)
+                        throw new InvalidOperationException($"Table at index {tableIndex} not found.");
+
+                    Table table = tables[tableIndex] as Table;
+                    if (table == null)
+                        throw new InvalidOperationException($"Table at index {tableIndex} not found.");
+
+                    // Import the table into the destination document before appending.
+                    Node imported = result.ImportNode(table, true);
+                    body.AppendChild(imported);
+                    break;
+                }
+            default:
+                throw new ArgumentException($"Unsupported node type \"{nodeType}\".", nameof(nodeType));
         }
-
-        // Append any remaining inline paragraph.
-        if (inlineParagraph != null)
-            body.AppendChild(inlineParagraph);
-
-        return result;
-    }
-
-    // Extracts a range of paragraphs (inclusive) by their zero‑based indices.
-    public static Document ExtractParagraphRange(Document source, int startIndex, int endIndex)
-    {
-        ParagraphCollection paragraphs = source.FirstSection.Body.Paragraphs;
-        if (startIndex < 0 || endIndex >= paragraphs.Count || startIndex > endIndex)
-            throw new ArgumentOutOfRangeException("Invalid paragraph range.");
-
-        Document result = new Document();
-        result.RemoveAllChildren();
-        Section section = new Section(result);
-        result.AppendChild(section);
-        Body body = new Body(result);
-        section.AppendChild(body);
-
-        for (int i = startIndex; i <= endIndex; i++)
-        {
-            Paragraph para = paragraphs[i];
-            Paragraph cloned = (Paragraph)para.Clone(true);
-            Node imported = result.ImportNode(cloned, true);
-            body.AppendChild(imported);
-        }
-
-        return result;
-    }
-
-    // Extracts a table by its zero‑based index in the document.
-    public static Document ExtractTable(Document source, int tableIndex)
-    {
-        NodeCollection tables = source.GetChildNodes(NodeType.Table, true);
-        if (tableIndex < 0 || tableIndex >= tables.Count)
-            throw new ArgumentOutOfRangeException("Table index out of range.");
-
-        Table table = tables[tableIndex] as Table;
-        if (table == null)
-            throw new InvalidOperationException("Selected node is not a table.");
-
-        Document result = new Document();
-        result.RemoveAllChildren();
-        Section section = new Section(result);
-        result.AppendChild(section);
-        Body body = new Body(result);
-        section.AppendChild(body);
-
-        Table clonedTable = (Table)table.Clone(true);
-        Node imported = result.ImportNode(clonedTable, true);
-        body.AppendChild(imported);
 
         return result;
     }
@@ -126,17 +83,21 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with paragraphs, a bookmark and a table.
-        Document sample = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sample);
+        // Build a sample source document.
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
 
-        builder.Writeln("Paragraph 1");
+        // Paragraphs.
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Second paragraph.");
+        builder.Writeln("Third paragraph.");
+
+        // Bookmark surrounding a paragraph.
         builder.StartBookmark("SampleBookmark");
-        builder.Writeln("Paragraph inside bookmark");
+        builder.Writeln("Paragraph inside bookmark.");
         builder.EndBookmark("SampleBookmark");
-        builder.Writeln("Paragraph 3");
 
-        // Insert a simple 2x2 table.
+        // Table.
         builder.StartTable();
         builder.InsertCell(); builder.Write("A1");
         builder.InsertCell(); builder.Write("B1");
@@ -146,35 +107,41 @@ public class Program
         builder.EndRow();
         builder.EndTable();
 
-        // Save the source document.
-        const string sourcePath = "sample.docx";
-        sample.Save(sourcePath);
+        // Save the source document locally.
+        const string sourcePath = "source.docx";
+        source.Save(sourcePath);
 
         // Load the document for extraction.
         Document loaded = new Document(sourcePath);
 
-        // 1. Extract content inside the bookmark.
-        Document bookmarkExtract = ExtractionUtility.ExtractByBookmark(loaded, "SampleBookmark");
-        const string bookmarkPath = "extracted-bookmark.docx";
-        bookmarkExtract.Save(bookmarkPath);
-        if (!File.Exists(bookmarkPath))
-            throw new InvalidOperationException("Bookmark extraction failed.");
+        // Define extraction requests.
+        var requests = new List<(string NodeType, string Identifier, string OutputFile)>
+        {
+            ("Paragraph", "1", "extracted-paragraph.docx"),
+            ("Bookmark", "SampleBookmark", "extracted-bookmark.docx"),
+            ("Table", "0", "extracted-table.docx")
+        };
 
-        // 2. Extract paragraphs 0 through 2 (the three paragraphs).
-        Document paragraphExtract = ExtractionUtility.ExtractParagraphRange(loaded, 0, 2);
-        const string paragraphPath = "extracted-paragraphs.docx";
-        paragraphExtract.Save(paragraphPath);
-        if (!File.Exists(paragraphPath))
-            throw new InvalidOperationException("Paragraph range extraction failed.");
+        // Collect report data.
+        var report = new List<object>();
 
-        // 3. Extract the first table in the document.
-        Document tableExtract = ExtractionUtility.ExtractTable(loaded, 0);
-        const string tablePath = "extracted-table.docx";
-        tableExtract.Save(tablePath);
-        if (!File.Exists(tablePath))
-            throw new InvalidOperationException("Table extraction failed.");
+        foreach (var (nodeType, identifier, outputFile) in requests)
+        {
+            Document extracted = ExtractionUtility.ExtractContent(loaded, nodeType, identifier);
+            extracted.Save(outputFile);
 
-        // Simple console output to indicate success (no interactive input required).
-        Console.WriteLine("Extraction completed successfully.");
+            if (!File.Exists(outputFile))
+                throw new InvalidOperationException($"Failed to create output file \"{outputFile}\".");
+
+            report.Add(new { NodeType = nodeType, Identifier = identifier, OutputFile = outputFile });
+        }
+
+        // Serialize a simple JSON report of the extraction operations.
+        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
+        const string reportPath = "extraction-report.json";
+        File.WriteAllText(reportPath, jsonReport);
+
+        if (!File.Exists(reportPath))
+            throw new InvalidOperationException("Extraction report was not created.");
     }
 }

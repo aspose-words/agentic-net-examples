@@ -7,9 +7,9 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with various fields.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
+        // Create a sample source document with various fields.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
         // Insert a DATE field.
         builder.InsertField(FieldType.FieldDate, true);
@@ -19,32 +19,34 @@ public class Program
         builder.InsertField(FieldType.FieldPage, true);
         builder.Writeln();
 
-        // Insert a custom MERGEFIELD.
-        // Use the string overload; it automatically updates the field result.
-        builder.InsertField("MERGEFIELD SampleField \\* MERGEFORMAT");
+        // Insert a MERGEFIELD (will display its result after update).
+        builder.InsertField(" MERGEFIELD SampleField \\* MERGEFORMAT ");
         builder.Writeln();
 
-        // Ensure all fields are evaluated.
-        source.UpdateFields();
-
-        // Save the original document.
+        // Save the source document.
         const string sourcePath = "source.docx";
-        source.Save(sourcePath);
+        sourceDoc.Save(sourcePath);
 
-        // Load the saved document.
-        Document loaded = new Document(sourcePath);
+        // Load the source document.
+        Document loadedDoc = new Document(sourcePath);
 
-        // Extract the entire content while preserving fields and their results.
-        Document extracted = loaded.Range.ToDocument();
+        // Update all fields so their results are evaluated.
+        loadedDoc.UpdateFields();
 
-        // Save the extracted content to a new DOCX file.
+        // Clone the document to create an extracted copy.
+        Document extractedDoc = (Document)loadedDoc.Clone(true);
+
+        // Save the extracted document preserving fields and their evaluated results.
         const string extractedPath = "extracted.docx";
-        extracted.Save(extractedPath);
+        extractedDoc.Save(extractedPath, SaveFormat.Docx);
 
-        // Verify that the output file was created.
+        // Validate that the output file was created.
         if (!File.Exists(extractedPath))
+        {
             throw new InvalidOperationException("The extracted DOCX file was not created.");
+        }
 
+        // Optional: Output a simple confirmation (no interactive input required).
         Console.WriteLine("Extraction completed successfully.");
     }
 }

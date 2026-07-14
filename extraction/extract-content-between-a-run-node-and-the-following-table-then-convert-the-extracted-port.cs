@@ -2,78 +2,78 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // 1. Create a sample source document with a run and a table.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // Create a sample source document containing a run of text followed by a table.
+        // -----------------------------------------------------------------
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
 
-        builder.Writeln("Intro paragraph.");
+        // First paragraph with some text.
+        builder.Writeln("Paragraph before the target run.");
 
-        // Paragraph that will contain the target run.
-        builder.Writeln("This paragraph contains the target run:");
-        Run targetRun = new Run(source, "TARGET_RUN");
-        builder.CurrentParagraph.AppendChild(targetRun);
-        builder.Writeln(); // End the paragraph.
+        // Second paragraph with the target run.
+        builder.Write("TargetRunText "); // This creates a Run inside the current paragraph.
+
+        // End the paragraph.
+        builder.Writeln();
 
         // Insert a table after the run.
         Table table = builder.StartTable();
         builder.InsertCell();
         builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
         builder.EndRow();
         builder.EndTable();
 
-        // Save the source document locally.
+        // Save the source document to a local file.
         const string sourcePath = "source.docx";
         source.Save(sourcePath);
 
-        // -------------------------------------------------
-        // 2. Load the source document and locate the required nodes.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // Load the document for extraction.
+        // -----------------------------------------------------------------
         Document loaded = new Document(sourcePath);
 
+        // Locate the run that contains the marker text "TargetRunText".
         Run runNode = null;
         foreach (Run run in loaded.GetChildNodes(NodeType.Run, true))
         {
-            if (run.Text == "TARGET_RUN")
+            if (run.Text != null && run.Text.Contains("TargetRunText"))
             {
                 runNode = run;
                 break;
             }
         }
 
-        Table tableNode = null;
-        // Find the first table that appears after the run in document order.
-        if (runNode != null)
-        {
-            NodeCollection allNodes = loaded.GetChildNodes(NodeType.Any, true);
-            int runIndex = allNodes.IndexOf(runNode);
+        if (runNode == null)
+            throw new InvalidOperationException("Target run node not found.");
 
-            foreach (Table tbl in loaded.GetChildNodes(NodeType.Table, true))
+        // Find the first table node that appears after the paragraph containing the run.
+        Paragraph startParagraph = runNode.ParentParagraph;
+        Node nextNode = startParagraph.NextSibling;
+        Table tableNode = null;
+
+        while (nextNode != null)
+        {
+            if (nextNode.NodeType == NodeType.Table)
             {
-                int tblIndex = allNodes.IndexOf(tbl);
-                if (tblIndex > runIndex)
-                {
-                    tableNode = tbl;
-                    break;
-                }
+                tableNode = (Table)nextNode;
+                break;
             }
+            nextNode = nextNode.NextSibling;
         }
 
-        if (runNode == null || tableNode == null)
-            throw new InvalidOperationException("Required run or table node was not found.");
+        if (tableNode == null)
+            throw new InvalidOperationException("Following table not found.");
 
-        // -------------------------------------------------
-        // 3. Build a new document that will contain the extracted content.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // Build a new document that will contain the extracted content.
+        // Use NodeImporter to import nodes from the source document into the new document.
+        // -----------------------------------------------------------------
         Document result = new Document();
         result.RemoveAllChildren();
 
@@ -83,25 +83,16 @@ public class Program
         Body body = new Body(result);
         section.AppendChild(body);
 
-        // -------------------------------------------------
-        // 4. Import the run and table from the source document into the new document.
-        //    Use NodeImporter to avoid cross‑document ownership errors.
-        // -------------------------------------------------
+        // Import the paragraph that contains the run (preserves styling).
         NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
+        Paragraph importedParagraph = (Paragraph)importer.ImportNode(startParagraph, true);
+        body.AppendChild(importedParagraph);
 
-        // Import the run (inline node) and place it inside a new paragraph.
-        Paragraph para = new Paragraph(result);
-        body.AppendChild(para);
-        Node importedRun = importer.ImportNode(runNode, true);
-        para.AppendChild(importedRun);
-
-        // Import the table (block node) and append it directly to the body.
-        Node importedTable = importer.ImportNode(tableNode, true);
+        // Import the table.
+        Table importedTable = (Table)importer.ImportNode(tableNode, true);
         body.AppendChild(importedTable);
 
-        // -------------------------------------------------
-        // 5. Save the extracted content as XPS.
-        // -------------------------------------------------
+        // Save the extracted portion as XPS.
         const string outputPath = "extracted.xps";
         result.Save(outputPath, SaveFormat.Xps);
 

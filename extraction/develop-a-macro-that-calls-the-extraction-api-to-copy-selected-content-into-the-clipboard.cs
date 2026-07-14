@@ -1,58 +1,63 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-public class ExtractionMacro
+public class ExtractionExample
 {
     [STAThread]
     public static void Main()
     {
-        // Create a sample document with a bookmark that encloses the content to copy.
-        const string docPath = "sample.docx";
+        // Create a sample document with some content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("First paragraph - plain text.");
+        builder.Font.Bold = true;
+        builder.Writeln("Second paragraph - bold text.");
+        builder.Font.Bold = false;
+        builder.Font.Italic = true;
+        builder.Writeln("Third paragraph - italic text.");
+        doc.Save("sample.docx");
 
-        builder.Writeln("Header text that will not be copied.");
-        builder.StartBookmark("CopyMe");
-        builder.Writeln("This paragraph will be copied to the clipboard.");
-        builder.Writeln("Another line inside the bookmark.");
-        builder.EndBookmark("CopyMe");
-        builder.Writeln("Footer text that will not be copied.");
+        // Load the document and extract the second paragraph's text.
+        Document loaded = new Document("sample.docx");
+        if (loaded.FirstSection?.Body?.Paragraphs?.Count < 2)
+        {
+            throw new InvalidOperationException("The document does not contain the expected second paragraph.");
+        }
 
-        doc.Save(docPath);
+        Paragraph secondParagraph = loaded.FirstSection.Body.Paragraphs[1];
+        if (secondParagraph == null)
+        {
+            throw new InvalidOperationException("The expected paragraph was not found.");
+        }
 
-        // Load the document and locate the bookmark.
-        Document loaded = new Document(docPath);
-        Bookmark bookmark = loaded.Range.Bookmarks["CopyMe"];
-        if (bookmark == null)
-            throw new InvalidOperationException("Bookmark 'CopyMe' was not found.");
+        string extractedText = secondParagraph.GetText().Trim();
 
-        // Extract the text inside the bookmark.
-        string extractedText = bookmark.Text;
+        // Write the extracted text to a file for verification.
+        string textFilePath = "extracted.txt";
+        File.WriteAllText(textFilePath, extractedText);
+        if (!File.Exists(textFilePath))
+        {
+            throw new InvalidOperationException("Failed to create the extracted text file.");
+        }
 
-        // Instead of using System.Windows.Forms.Clipboard (which may not be available),
-        // write the extracted text to a temporary file that simulates the clipboard.
-        const string simulatedClipboardPath = "clipboard.txt";
-        File.WriteAllText(simulatedClipboardPath, extractedText);
+        // Also create a JSON report containing the extracted content.
+        var report = new
+        {
+            ExtractedParagraphIndex = 2,
+            Content = extractedText,
+            Timestamp = DateTime.UtcNow
+        };
+        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
+        string jsonFilePath = "extraction_report.json";
+        File.WriteAllText(jsonFilePath, json);
+        if (!File.Exists(jsonFilePath))
+        {
+            throw new InvalidOperationException("Failed to create the JSON report file.");
+        }
 
-        // Verify that the simulated clipboard now contains the expected text.
-        string clipboardText = File.ReadAllText(simulatedClipboardPath);
-        if (clipboardText != extractedText)
-            throw new InvalidOperationException("Simulated clipboard content does not match the extracted text.");
-
-        // Serialize the extracted text to a JSON file using Newtonsoft.Json.
-        const string jsonPath = "extracted.json";
-        string jsonPayload = JsonConvert.SerializeObject(new { Content = extractedText }, Formatting.Indented);
-        File.WriteAllText(jsonPath, jsonPayload);
-
-        // Validate that the JSON file was created.
-        if (!File.Exists(jsonPath))
-            throw new InvalidOperationException("Failed to create the JSON output file.");
-
-        // Clean up temporary files (optional).
-        // File.Delete(docPath);
-        // File.Delete(jsonPath);
-        // File.Delete(simulatedClipboardPath);
+        // Program completed successfully.
     }
 }

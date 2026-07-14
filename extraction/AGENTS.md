@@ -1,6 +1,6 @@
 ---
 name: extraction
-description: Verified C# examples for extraction scenarios in Aspose.Words for .NET
+description: Verified C# examples for Extraction scenarios in Aspose.Words for .NET
 language: csharp
 framework: net8.0
 product: Aspose.Words
@@ -10,7 +10,7 @@ product: Aspose.Words
 
 ## Purpose
 
-This folder is a **live, curated example set** for extraction scenarios. Treat every file as a standalone console example. The main goal is correct, warning-free extraction of text, tables, images, bookmarks, comments, fields, metadata, and related document content using direct Aspose.Words APIs.
+This folder is a live, curated example set for Extraction scenarios. Treat every `.cs` file as a standalone console application. The goal is correct, warning-free examples that use documented Aspose APIs and match the original task intent.
 
 ## Non-negotiable conventions
 
@@ -23,203 +23,202 @@ This folder is a **live, curated example set** for extraction scenarios. Treat e
 
 ## Recommended workflow selection
 
-- **Text / range extraction workflow**: 11 examples
-- **Table / structured extraction workflow**: 6 examples
-- **Image / shape extraction workflow**: 3 examples
-- **Targeted node extraction workflow**: 9 examples
-- **Input-bootstrap workflow**: 1 examples
+- Image Shape Extraction workflow: 3 examples
+- Input Bootstrap workflow: 1 examples
+- Table Structured Extraction workflow: 6 examples
+- Targeted Node Extraction workflow: 9 examples
+- Text Range Extraction workflow: 11 examples
 
 Use the simplest workflow that satisfies the task.
 
 ## Validation priorities
 
 1. The code must compile and run without manual input.
-2. Source documents, files, images, streams, or folders must be bootstrapped locally whenever the task implies an existing input.
-3. Extracted content must come from real document nodes, fields, bookmarks, comments, tables, images, or metadata objects.
-4. Requested report or export files must actually be written.
-5. Drawing-related types must use `Aspose.Drawing` and not `System.Drawing`.
+2. API usage must be supported by the configured package versions.
+3. Exported outputs must actually be written by the example.
+4. Validation scenarios must inspect only the behavior requested by the task.
+5. Examples that depend on files, folders, streams, images, or data should bootstrap those inputs locally during the example run.
 
 ## File-to-task reference
 
 - `load-a-docx-file-extract-content-between-two-paragraphs-and-save-the-result-as-a-new-docx.cs`
   - Task: Load a DOCX file, extract content between two paragraphs, and save the result as a new DOCX.
-  - Workflow: text-range-extraction
+  - Workflow: Text Range Extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `load-a-docm-file-extract-content-between-a-macro-enabled-field-and-a-paragraph-and-save-as.cs`
   - Task: Load a DOCM file, extract content between a macro-enabled field and a paragraph, and save as DOCX.
-  - Workflow: targeted-node-extraction
+  - Workflow: Targeted Node Extraction
   - Outputs: docx, doc
-  - Selected engine: mcp
+  - Selected engine: llm
 - `identify-a-start-run-node-and-an-end-bookmark-node-then-extract-the-intervening-nodes-into.cs`
   - Task: Identify a start run node and an end bookmark node, then extract the intervening nodes into a document.
-  - Workflow: targeted-node-extraction
+  - Workflow: Targeted Node Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `programmatically-determine-start-and-end-nodes-based-on-paragraph-styles-then-extract-the.cs`
   - Task: Programmatically determine start and end nodes based on paragraph styles, then extract the styled content segment.
-  - Workflow: text-range-extraction
+  - Workflow: Text Range Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `extract-a-mixed-node-range-that-starts-with-a-table-cell-and-ends-with-a-paragraph-maintai.cs`
   - Task: Extract a mixed node range that starts with a table cell and ends with a paragraph, maintaining layout.
-  - Workflow: table-structured-extraction
+  - Workflow: Table Structured Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `extract-a-range-of-nodes-that-includes-tables-images-and-fields-preserving-original-hierar.cs`
   - Task: Extract a range of nodes that includes tables, images, and fields, preserving original hierarchy in the output.
-  - Workflow: table-structured-extraction
+  - Workflow: Table Structured Extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `extract-content-between-a-run-node-and-the-next-bookmark-then-convert-the-extracted-segmen.cs`
   - Task: Extract content between a run node and the next bookmark, then convert the extracted segment to HTML format.
-  - Workflow: targeted-node-extraction
+  - Workflow: Targeted Node Extraction
   - Outputs: html
   - Selected engine: mcp
 - `extract-content-between-a-run-node-and-the-following-table-then-convert-the-extracted-port.cs`
   - Task: Extract content between a run node and the following table, then convert the extracted portion to XPS format.
-  - Workflow: table-structured-extraction
+  - Workflow: Table Structured Extraction
   - Outputs: xps
   - Selected engine: mcp
 - `use-the-extraction-api-to-copy-content-between-two-headings-and-insert-it-into-a-template.cs`
   - Task: Use the extraction API to copy content between two headings and insert it into a template document.
-  - Workflow: text-range-extraction
+  - Workflow: Text Range Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `use-documentbuilder-to-prepend-extracted-node-collection-to-the-beginning-of-a-new-documen.cs`
   - Task: Use DocumentBuilder to prepend extracted node collection to the beginning of a new document before saving.
-  - Workflow: text-range-extraction
+  - Workflow: Text Range Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `use-documentbuilder-to-insert-extracted-node-collection-into-a-new-document-at-a-custom-bo.cs`
   - Task: Use DocumentBuilder to insert extracted node collection into a new document at a custom bookmark location.
-  - Workflow: targeted-node-extraction
+  - Workflow: Targeted Node Extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `duplicate-extracted-content-between-a-table-and-a-field-node-within-the-original-document.cs`
   - Task: Duplicate extracted content between a table and a field node within the original document without altering formatting.
-  - Workflow: table-structured-extraction
+  - Workflow: Table Structured Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `save-extracted-content-as-a-docx-file-while-preserving-embedded-fields-and-their-evaluatio.cs`
   - Task: Save extracted content as a DOCX file while preserving embedded fields and their evaluation results.
-  - Workflow: targeted-node-extraction
+  - Workflow: Targeted Node Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `batch-process-multiple-word-files-extracting-content-between-specified-nodes-and-saving-ea.cs`
   - Task: Batch process multiple Word files, extracting content between specified nodes and saving each extraction as an individual PDF.
-  - Workflow: input-bootstrap
+  - Workflow: Input Bootstrap
   - Outputs: pdf
   - Selected engine: mcp
 - `batch-extract-images-from-shape-nodes-in-documents-and-generate-a-csv-manifest-listing-ima.cs`
   - Task: Batch extract images from shape nodes in documents and generate a CSV manifest listing image names and sources.
-  - Workflow: table-structured-extraction
+  - Workflow: Table Structured Extraction
   - Outputs: csv
   - Selected engine: mcp
 - `extract-all-images-from-shape-nodes-across-a-document-collection-and-compile-them-into-a-s.cs`
   - Task: Extract all images from shape nodes across a document collection and compile them into a single ZIP archive.
-  - Workflow: image-shape-extraction
+  - Workflow: Image Shape Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `extract-a-document-segment-that-includes-nested-tables-and-ensure-nested-structures-are-re.cs`
   - Task: Extract a document segment that includes nested tables and ensure nested structures are retained in the new file.
-  - Workflow: table-structured-extraction
+  - Workflow: Table Structured Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-reusable-extraction-utility-that-accepts-node-identifiers-and-returns-a-document.cs`
   - Task: Create a reusable extraction utility that accepts node identifiers and returns a Document containing the selected content.
-  - Workflow: text-range-extraction
+  - Workflow: Text Range Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `implement-error-handling-for-cases-where-the-start-node-appears-after-the-end-node-during.cs`
   - Task: Implement error handling for cases where the start node appears after the end node during extraction.
-  - Workflow: text-range-extraction
+  - Workflow: Text Range Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `implement-a-custom-node-filter-to-exclude-comments-while-extracting-content-between-two-pa.cs`
   - Task: Implement a custom node filter to exclude comments while extracting content between two paragraphs.
-  - Workflow: targeted-node-extraction
+  - Workflow: Targeted Node Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `extract-content-between-two-bookmark-nodes-and-replace-the-original-range-with-a-placehold.cs`
   - Task: Extract content between two bookmark nodes and replace the original range with a placeholder paragraph.
-  - Workflow: targeted-node-extraction
+  - Workflow: Targeted Node Extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `extract-content-between-a-paragraph-and-a-comment-node-then-log-the-extracted-text-to-a-mo.cs`
   - Task: Extract content between a paragraph and a comment node, then log the extracted text to a monitoring system.
-  - Workflow: targeted-node-extraction
+  - Workflow: Targeted Node Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `automate-extraction-of-footnote-content-between-specified-nodes-and-export-each-footnote-a.cs`
   - Task: Automate extraction of footnote content between specified nodes and export each footnote as a separate text file.
-  - Workflow: targeted-node-extraction
+  - Workflow: Targeted Node Extraction
   - Outputs: txt
   - Selected engine: mcp
 - `create-a-command-line-tool-that-accepts-start-and-end-node-ids-and-outputs-the-extracted-s.cs`
-  - Task: Create a command‑line tool that accepts start and end node IDs and outputs the extracted segment as PDF.
-  - Workflow: text-range-extraction
+  - Task: Create a command-line tool that accepts start and end node IDs and outputs the extracted segment as PDF.
+  - Workflow: Text Range Extraction
   - Outputs: pdf
-  - Selected engine: mcp
+  - Selected engine: llm
 - `create-a-unit-test-that-verifies-extraction-of-content-between-two-specific-paragraphs-ret.cs`
   - Task: Create a unit test that verifies extraction of content between two specific paragraphs retains original text styling.
-  - Workflow: text-range-extraction
+  - Workflow: Text Range Extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `develop-a-macro-that-calls-the-extraction-api-to-copy-selected-content-into-the-clipboard.cs`
   - Task: Develop a macro that calls the extraction API to copy selected content into the clipboard for pasting elsewhere.
-  - Workflow: text-range-extraction
+  - Workflow: Text Range Extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `extract-a-range-that-starts-inside-a-shape-s-image-and-ends-at-a-field-preserving-both-ele.cs`
   - Task: Extract a range that starts inside a shape's image and ends at a field, preserving both elements.
-  - Workflow: image-shape-extraction
+  - Workflow: Image Shape Extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `extract-content-between-two-nodes-in-a-document-then-encrypt-the-resulting-file-using-a-pa.cs`
   - Task: Extract content between two nodes in a document, then encrypt the resulting file using a password.
-  - Workflow: text-range-extraction
+  - Workflow: Text Range Extraction
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `implement-parallel-processing-to-extract-node-ranges-from-multiple-documents-simultaneousl.cs`
   - Task: Implement parallel processing to extract node ranges from multiple documents simultaneously, improving performance.
-  - Workflow: text-range-extraction
+  - Workflow: Text Range Extraction
   - Outputs: docx
   - Selected engine: mcp
 - `extract-images-from-shape-nodes-and-embed-them-directly-into-a-new-docx-document.cs`
   - Task: Extract images from shape nodes and embed them directly into a new DOCX document.
-  - Workflow: image-shape-extraction
+  - Workflow: Image Shape Extraction
   - Outputs: docx
   - Selected engine: mcp
 
 ## Common failure patterns and preferred agent fixes
 
-- **Invalid node insertion in destination document**
+- Invalid node insertion in destination document
   - Symptom: Runtime failures such as 'Cannot insert a node of this type at this location'.
   - Preferred fix: Rebuild a valid destination document structure explicitly and insert cloned inline or block nodes only into supported parents.
 
-- **Table namespace assumptions**
+- Table namespace assumptions
   - Symptom: Compile errors because Table, Row, or Cell were used without Aspose.Words.Tables.
   - Preferred fix: Import Aspose.Words.Tables or use fully qualified table node type names.
 
-- **Weak bookmark boundary logic**
+- Weak bookmark boundary logic
   - Symptom: Bookmark-bounded extraction or replacement fails because the wrong nodes are used or placeholder insertion is invalid.
   - Preferred fix: Use real BookmarkStart and BookmarkEnd boundaries and insert a valid placeholder Paragraph into a supported block container.
 
-- **Footnote-specific API issues**
+- Footnote-specific API issues
   - Symptom: Footnote export or enumeration fails because footnote APIs or namespaces are used incorrectly.
   - Preferred fix: Use Aspose.Words.Notes.Footnote and Aspose.Words.Notes.FootnoteType explicitly and enumerate actual footnote nodes.
 
-- **Font or drawing ambiguity**
+- Font or drawing ambiguity
   - Symptom: Compile errors due to System.Drawing usage or ambiguous Font references.
   - Preferred fix: Use Aspose.Drawing only and prefer explicit Aspose.Drawing type names when ambiguity is possible.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Primary package: `Aspose.Words` `26.4.0`
-- Additional package: `Aspose.Drawing.Common`
-- Additional package: `Newtonsoft.Json`
+- Package: `Aspose.Words` `26.5.0`
+- Package: `Newtonsoft.Json`
 
 ## Command reference
 
@@ -233,8 +232,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.4.0
-dotnet add package Aspose.Drawing.Common
+dotnet add package Aspose.Words --version 26.5.0
 dotnet add package Newtonsoft.Json
 ```
 
@@ -255,4 +253,4 @@ dotnet run --configuration Release --no-build
 
 - Preserve file-to-task traceability. Any future update should keep the original task text associated with the file in metadata.
 - When replacing a file, prefer the latest verified publish-ready version rather than a merely compiling draft.
-- Keep examples standalone, bootstrap missing inputs locally, and prefer direct Aspose.Words extraction APIs over speculative shortcuts.
+- Keep examples standalone, bootstrap missing inputs locally, and prefer documented Aspose APIs over speculative shortcuts.

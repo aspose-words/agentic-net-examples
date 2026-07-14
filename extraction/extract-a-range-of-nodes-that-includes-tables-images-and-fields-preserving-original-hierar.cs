@@ -1,88 +1,121 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
 using Aspose.Words.Fields;
+using Newtonsoft.Json;
 
-public class ExtractRangeExample
+public class ExtractionExample
 {
     public static void Main()
     {
-        // Create a sample source document containing a field, a table with an image, and surrounding paragraphs.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // -----------------------------------------------------------------
+        // 1. Create a sample source document containing a table, an image,
+        //    and a field, wrapped between two bookmarks.
+        // -----------------------------------------------------------------
+        var sourceDoc = new Document();
+        var builder = new DocumentBuilder(sourceDoc);
 
-        // Intro paragraph.
-        builder.Writeln("Intro paragraph before the extracted range.");
+        builder.Writeln("Document introduction paragraph.");
 
-        // Paragraph that contains a MERGEFIELD.
-        builder.InsertField(" MERGEFIELD SampleField ");
+        // Start bookmark.
+        builder.StartBookmark("Start");
+        builder.EndBookmark("Start");
 
-        // Table with one cell that holds an image.
+        // Insert a simple 1x2 table.
         builder.StartTable();
         builder.InsertCell();
-
-        // Insert a tiny PNG image from a Base64 string.
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=");
-        using (MemoryStream imgStream = new MemoryStream(pngBytes))
-        {
-            builder.InsertImage(imgStream);
-        }
-
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
         builder.EndRow();
         builder.EndTable();
 
-        // Closing paragraph.
-        builder.Writeln("Closing paragraph after the extracted range.");
+        // Insert a tiny PNG image.
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9yhl4AAAAASUVORK5CYII=");
+        using (var imageStream = new MemoryStream(pngBytes))
+        {
+            builder.InsertImage(imageStream);
+        }
 
-        // Save the source document (optional, just for verification).
+        // Insert a MERGEFIELD.
+        builder.InsertField("MERGEFIELD SampleField \\* MERGEFORMAT");
+
+        // End bookmark.
+        builder.StartBookmark("End");
+        builder.EndBookmark("End");
+
         const string sourcePath = "source.docx";
         sourceDoc.Save(sourcePath);
 
-        // Load the document back (simulating a real‑world scenario).
-        Document loadedDoc = new Document(sourcePath);
+        // -----------------------------------------------------------------
+        // 2. Load the document and locate the start/end bookmarks.
+        // -----------------------------------------------------------------
+        var loadedDoc = new Document(sourcePath);
+        var startBookmark = loadedDoc.Range.Bookmarks["Start"];
+        var endBookmark = loadedDoc.Range.Bookmarks["End"];
+        if (startBookmark == null || endBookmark == null)
+            throw new InvalidOperationException("Required bookmarks were not found.");
 
-        // Identify the start node: the paragraph that contains the first field.
-        Field firstField = loadedDoc.Range.Fields[0];
-        Paragraph startParagraph = (Paragraph)firstField.Start.GetAncestor(NodeType.Paragraph);
-        if (startParagraph == null)
-            throw new InvalidOperationException("Start paragraph not found.");
-
-        // Identify the end node: the first table in the document.
-        Table endTable = loadedDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
-        if (endTable == null)
-            throw new InvalidOperationException("Table not found.");
-
-        // Prepare the destination document.
-        Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren(); // Clear the default empty section/paragraph.
-        Section resultSection = new Section(resultDoc);
+        // -----------------------------------------------------------------
+        // 3. Prepare the destination document (empty).
+        // -----------------------------------------------------------------
+        var resultDoc = new Document();
+        resultDoc.RemoveAllChildren();
+        var resultSection = new Section(resultDoc);
         resultDoc.AppendChild(resultSection);
-        Body resultBody = new Body(resultDoc);
+        var resultBody = new Body(resultDoc);
         resultSection.AppendChild(resultBody);
 
-        // Use NodeImporter to import nodes while preserving formatting.
-        NodeImporter importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        // -----------------------------------------------------------------
+        // 4. Extract nodes that lie between the two bookmarks (exclusive).
+        //    Preserve the original hierarchy by importing each node.
+        // -----------------------------------------------------------------
+        var importer = new NodeImporter(loadedDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
+        Node currentNode = startBookmark.BookmarkStart.NextSibling;
+        while (currentNode != null && currentNode != endBookmark.BookmarkEnd)
+        {
+            // Import the node into the destination document.
+            Node importedNode = importer.ImportNode(currentNode, true);
+            resultBody.AppendChild(importedNode);
+            currentNode = currentNode.NextSibling;
+        }
 
-        // Import the start paragraph (contains the field) and append it.
-        Node importedStart = importer.ImportNode(startParagraph, true);
-        resultBody.AppendChild(importedStart);
+        // -----------------------------------------------------------------
+        // 5. Save the extracted content.
+        // -----------------------------------------------------------------
+        const string extractedPath = "extracted.docx";
+        resultDoc.Save(extractedPath);
+        if (!File.Exists(extractedPath))
+            throw new InvalidOperationException("Extraction output file was not created.");
 
-        // Import the table (contains the image) and append it.
-        Node importedTable = importer.ImportNode(endTable, true);
-        resultBody.AppendChild(importedTable);
+        // -----------------------------------------------------------------
+        // 6. Build a simple JSON report about the extracted content.
+        // -----------------------------------------------------------------
+        var report = new
+        {
+            ParagraphCount = resultDoc.FirstSection.Body.Paragraphs.Count,
+            TableCount = resultDoc.GetChildNodes(NodeType.Table, true).Count,
+            ImageCount = resultDoc.GetChildNodes(NodeType.Shape, true)
+                                 .OfType<Shape>()
+                                 .Count(s => s.HasImage),
+            FieldCount = resultDoc.Range.Fields.Count
+        };
 
-        // Save the extracted range to a new document.
-        const string resultPath = "extracted_range.docx";
-        resultDoc.Save(resultPath);
+        string jsonReport = JsonConvert.SerializeObject(report, Formatting.Indented);
+        const string reportPath = "extraction-report.json";
+        File.WriteAllText(reportPath, jsonReport);
+        if (!File.Exists(reportPath))
+            throw new InvalidOperationException("Extraction report file was not created.");
 
-        // Verify that the output file was created.
-        if (!File.Exists(resultPath))
-            throw new InvalidOperationException("The extracted document was not created.");
-
-        // Confirmation message.
-        Console.WriteLine("Extraction completed successfully. Output file: " + resultPath);
+        // -----------------------------------------------------------------
+        // 7. Indicate successful completion.
+        // -----------------------------------------------------------------
+        Console.WriteLine("Extraction completed successfully.");
+        Console.WriteLine($"Extracted document: {extractedPath}");
+        Console.WriteLine($"Report file: {reportPath}");
     }
 }

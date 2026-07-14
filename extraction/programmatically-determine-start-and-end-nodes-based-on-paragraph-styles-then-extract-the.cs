@@ -7,95 +7,97 @@ public class Program
 {
     public static void Main()
     {
-        // -------------------------------------------------
-        // Create a sample source document with styled markers.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with styled paragraphs.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Introduction paragraph.");
-
-        // Start marker – style "Heading 1".
-        builder.ParagraphFormat.StyleName = "Heading 1";
-        builder.Writeln("Start of Styled Segment");
-
-        // Content inside the segment with distinct formatting.
+        // Heading 1 - start marker (bold).
         builder.Font.Bold = true;
-        builder.Writeln("Bold paragraph inside segment.");
+        builder.ParagraphFormat.StyleName = "Heading 1";
+        builder.Writeln("Start Section");
+
+        // Normal paragraphs - content.
         builder.Font.Bold = false;
-        builder.Font.Italic = true;
-        builder.Writeln("Italic paragraph inside segment.");
-        builder.Font.Italic = false;
-
-        // End marker – style "Heading 2".
-        builder.ParagraphFormat.StyleName = "Heading 2";
-        builder.Writeln("End of Styled Segment");
-
-        // Normal paragraph after the segment.
         builder.ParagraphFormat.StyleName = "Normal";
-        builder.Writeln("Conclusion paragraph.");
+        builder.Writeln("First content paragraph.");
+        builder.Writeln("Second content paragraph.");
 
-        // Save the source document locally.
-        const string sourcePath = "source.docx";
+        // Heading 2 - end marker (italic).
+        builder.Font.Italic = true;
+        builder.ParagraphFormat.StyleName = "Heading 2";
+        builder.Writeln("End Section");
+
+        // Reset formatting for any further text.
+        builder.Font.Italic = false;
+        builder.Font.Bold = false;
+        builder.ParagraphFormat.StyleName = "Normal";
+
+        // Save the source document.
+        const string sourcePath = "styled-input.docx";
         sourceDoc.Save(sourcePath);
 
-        // -------------------------------------------------
-        // Load the document for processing.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 2. Load the document and locate start/end paragraphs by style.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(sourcePath);
-        ParagraphCollection paragraphs = loadedDoc.FirstSection.Body.Paragraphs;
-
-        // Locate the start and end paragraphs by their styles.
         Paragraph startParagraph = null;
         Paragraph endParagraph = null;
 
+        NodeCollection paragraphs = loadedDoc.FirstSection.Body.GetChildNodes(NodeType.Paragraph, true);
         foreach (Paragraph para in paragraphs)
         {
             string styleName = para.ParagraphFormat.StyleName;
-            if (startParagraph == null && styleName == "Heading 1")
+            if (styleName == "Heading 1" && startParagraph == null)
                 startParagraph = para;
-            else if (startParagraph != null && styleName == "Heading 2")
-            {
+            else if (styleName == "Heading 2" && endParagraph == null)
                 endParagraph = para;
-                break;
-            }
         }
 
         if (startParagraph == null || endParagraph == null)
-            throw new InvalidOperationException("Could not locate the start or end styled paragraphs.");
+            throw new InvalidOperationException("Required styled paragraphs were not found.");
 
+        // Determine the indices of the start and end paragraphs.
         int startIndex = paragraphs.IndexOf(startParagraph);
         int endIndex = paragraphs.IndexOf(endParagraph);
+        if (startIndex > endIndex)
+            throw new InvalidOperationException("Start paragraph occurs after end paragraph.");
 
-        if (startIndex < 0 || endIndex < 0 || endIndex < startIndex)
-            throw new InvalidOperationException("Invalid paragraph indices for extraction.");
-
-        // -------------------------------------------------
-        // Build a new document containing the extracted range.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 3. Extract the range of paragraphs (inclusive) into a new document.
+        // -----------------------------------------------------------------
         Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren(); // Ensure a clean document structure.
+        resultDoc.RemoveAllChildren();
 
-        // Create a new section and body for the result document.
         Section resultSection = new Section(resultDoc);
         resultDoc.AppendChild(resultSection);
+
         Body resultBody = new Body(resultDoc);
         resultSection.AppendChild(resultBody);
 
-        // Import each paragraph from the source range into the result document.
+        // Import each paragraph from the source document into the result document.
         for (int i = startIndex; i <= endIndex; i++)
         {
-            // ImportNode clones the node and reassigns it to the destination document.
-            Node importedNode = resultDoc.ImportNode(paragraphs[i], true);
+            Paragraph srcPara = (Paragraph)paragraphs[i];
+            // ImportNode creates a copy that belongs to resultDoc.
+            Node importedNode = resultDoc.ImportNode(srcPara, true);
             resultBody.AppendChild(importedNode);
         }
 
-        // Save the extracted segment.
-        const string resultPath = "extracted.docx";
+        // Validate that styling was preserved (first paragraph should be bold).
+        Paragraph clonedFirst = resultDoc.FirstSection.Body.Paragraphs[0];
+        if (clonedFirst.Runs.Count == 0 || !clonedFirst.Runs[0].Font.Bold)
+            throw new InvalidOperationException("Extracted paragraph styling does not match the source.");
+
+        // -----------------------------------------------------------------
+        // 4. Save the extracted segment.
+        // -----------------------------------------------------------------
+        const string resultPath = "styled-extraction.docx";
         resultDoc.Save(resultPath);
 
-        // Validate that the output file was created.
+        // Verify that the output file was created.
         if (!File.Exists(resultPath))
-            throw new InvalidOperationException("The extracted document was not created.");
+            throw new InvalidOperationException("Expected extraction output was not created.");
     }
 }

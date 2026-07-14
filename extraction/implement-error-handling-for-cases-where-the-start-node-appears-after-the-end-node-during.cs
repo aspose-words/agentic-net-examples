@@ -1,103 +1,86 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Newtonsoft.Json;
 
-public class ExtractionExample
+public class Program
 {
     public static void Main()
     {
-        // Ensure deterministic output folder (current directory)
-        string inputPath = "sample.docx";
-        string extractedPath = "extracted.docx";
-        string reportPath = "extracted_report.json";
-        string errorPath = "extraction_error.txt";
-
-        // Create a sample document with identifiable paragraphs
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // -----------------------------------------------------------------
+        // 1. Create a sample source document.
+        // -----------------------------------------------------------------
+        Document source = new Document();
+        DocumentBuilder builder = new DocumentBuilder(source);
         builder.Writeln("Intro paragraph.");
-        builder.Writeln("Start marker paragraph.");
-        builder.Writeln("Middle paragraph 1.");
-        builder.Writeln("Middle paragraph 2.");
-        builder.Writeln("End marker paragraph.");
-        builder.Writeln("Conclusion paragraph.");
-        sampleDoc.Save(inputPath);
+        builder.Writeln("Start extraction paragraph.");
 
-        // Load the document for extraction
-        Document loadedDoc = new Document(inputPath);
-        Body body = loadedDoc.FirstSection.Body;
+        // Insert a simple table.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.EndRow();
+        builder.EndTable();
 
-        // Locate start and end paragraphs by their text content
-        Paragraph? startPara = FindParagraphByText(body, "Start marker paragraph.");
-        Paragraph? endPara = FindParagraphByText(body, "End marker paragraph.");
+        builder.Writeln("End of document.");
+        string inputPath = "input.docx";
+        source.Save(inputPath);
 
-        // Validate that both markers were found
-        if (startPara == null || endPara == null)
-        {
-            File.WriteAllText(errorPath, "Start or end marker paragraph not found.");
-            return;
-        }
+        // -----------------------------------------------------------------
+        // 2. Load the document for extraction.
+        // -----------------------------------------------------------------
+        Document loaded = new Document(inputPath);
 
-        // Determine the positions of the markers within the body
-        int startIndex = body.Paragraphs.IndexOf(startPara);
-        int endIndex = body.Paragraphs.IndexOf(endPara);
+        // Locate the start paragraph (second paragraph) and the target table.
+        Paragraph startParagraph = loaded.FirstSection.Body.Paragraphs[1];
+        Table targetTable = loaded.GetChildNodes(NodeType.Table, true)[0] as Table;
 
-        // Error handling: start appears after end
+        if (startParagraph == null || targetTable == null)
+            throw new InvalidOperationException("Required extraction nodes were not found.");
+
+        // -----------------------------------------------------------------
+        // 3. Verify that the start node appears before the end node.
+        // -----------------------------------------------------------------
+        NodeCollection bodyChildren = loaded.FirstSection.Body.GetChildNodes(NodeType.Any, false);
+        int startIndex = bodyChildren.IndexOf(startParagraph);
+        int endIndex = bodyChildren.IndexOf(targetTable);
+
+        if (startIndex == -1 || endIndex == -1)
+            throw new InvalidOperationException("Unable to determine node positions.");
+
         if (startIndex > endIndex)
-        {
-            File.WriteAllText(errorPath, $"Invalid range: start index ({startIndex}) is after end index ({endIndex}).");
-            return;
-        }
+            throw new InvalidOperationException("Start node appears after the end node; extraction aborted.");
 
-        try
-        {
-            // Extract paragraphs from start to end inclusive
-            List<string> extractedTexts = new List<string>();
-            Document resultDoc = new Document();
-            resultDoc.RemoveAllChildren();
-            Section resultSection = new Section(resultDoc);
-            resultDoc.AppendChild(resultSection);
-            Body resultBody = new Body(resultDoc);
-            resultSection.AppendChild(resultBody);
+        // -----------------------------------------------------------------
+        // 4. Build a new document containing the extracted nodes.
+        // -----------------------------------------------------------------
+        Document result = new Document();
+        result.RemoveAllChildren();
 
-            for (int i = startIndex; i <= endIndex; i++)
-            {
-                Paragraph srcPara = (Paragraph)body.Paragraphs[i];
-                Paragraph clonedPara = (Paragraph)srcPara.Clone(true);
-                resultBody.AppendChild(clonedPara);
-                extractedTexts.Add(srcPara.GetText().TrimEnd('\r', '\n'));
-            }
+        Section resultSection = new Section(result);
+        result.AppendChild(resultSection);
 
-            // Save the extracted content document
-            resultDoc.Save(extractedPath);
+        Body resultBody = new Body(result);
+        resultSection.AppendChild(resultBody);
 
-            // Serialize extracted texts to JSON report
-            string jsonReport = JsonConvert.SerializeObject(
-                new { ExtractedParagraphs = extractedTexts },
-                Formatting.Indented);
-            File.WriteAllText(reportPath, jsonReport);
+        // Import nodes from the source document into the destination document.
+        NodeImporter importer = new NodeImporter(loaded, result, ImportFormatMode.KeepSourceFormatting);
 
-            // Validate that output files were created
-            if (!File.Exists(extractedPath) || !File.Exists(reportPath))
-                throw new InvalidOperationException("Extraction output files were not created as expected.");
-        }
-        catch (Exception ex)
-        {
-            // Write exception details to error file
-            File.WriteAllText(errorPath, $"Extraction failed: {ex.Message}");
-        }
-    }
+        Node importedParagraph = importer.ImportNode(startParagraph, true);
+        Node importedTable = importer.ImportNode(targetTable, true);
 
-    private static Paragraph? FindParagraphByText(Body body, string text)
-    {
-        foreach (Paragraph para in body.Paragraphs)
-        {
-            if (para.GetText().TrimEnd('\r', '\n') == text)
-                return para;
-        }
-        return null;
+        resultBody.AppendChild(importedParagraph);
+        resultBody.AppendChild(importedTable);
+
+        // -----------------------------------------------------------------
+        // 5. Save the extracted content and validate the output.
+        // -----------------------------------------------------------------
+        string outputPath = "extracted.docx";
+        result.Save(outputPath);
+
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Extraction output file was not created.");
+
+        Console.WriteLine("Extraction completed successfully.");
     }
 }
