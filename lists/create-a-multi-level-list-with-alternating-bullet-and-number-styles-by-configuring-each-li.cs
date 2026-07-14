@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 using System.Drawing;
@@ -8,58 +7,57 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a multilevel list based on a default template.
+        // Create a multilevel list based on the default numbered template (contains 9 levels).
         List multiLevelList = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Configure each level: even levels -> bullet, odd levels -> Arabic numbers.
-        for (int i = 0; i < multiLevelList.ListLevels.Count; i++)
+        // Configure each level individually to alternate between bullet and number styles.
+        for (int i = 0; i < 4; i++) // We'll demonstrate the first four levels.
         {
             ListLevel level = multiLevelList.ListLevels[i];
-            level.Font.Name = "Arial";
-            level.Font.Size = 12;
-            level.TrailingCharacter = ListTrailingCharacter.Tab;
 
-            if (i % 2 == 0) // Bullet level
+            // Even index (0,2,...) -> bullet style.
+            if (i % 2 == 0)
             {
                 level.NumberStyle = NumberStyle.Bullet;
-                // Unicode bullet character.
-                level.NumberFormat = "\u2022";
+                // Use a standard bullet character (•). Unicode 2022.
+                level.NumberFormat = "\x2022";
+                level.Font.Name = "Symbol";
+                level.Font.Color = Color.DarkBlue;
             }
-            else // Numbered level
+            // Odd index (1,3,...) -> numbered style.
+            else
             {
                 level.NumberStyle = NumberStyle.Arabic;
-                // Show the current level number followed by a dot.
+                // Use the placeholder for the current level number followed by a period.
                 level.NumberFormat = "\x0000.";
+                level.Font.Name = "Times New Roman";
+                level.Font.Color = Color.DarkRed;
             }
+
+            // Common indentation settings for readability.
+            level.NumberPosition = -36;   // Position of the bullet/number.
+            level.TextPosition = 144;     // Position where the text starts.
+            level.TabPosition = 144;      // Tab stop after the label.
         }
 
-        // Apply the list to the builder.
+        // Apply the custom list to the builder.
         builder.ListFormat.List = multiLevelList;
 
-        // Build a sample list with several levels.
-        builder.Writeln("Level 0 – Bullet");
-        builder.ListFormat.ListIndent(); // Level 1 – Number
-        builder.Writeln("Level 1 – Number");
-        builder.ListFormat.ListIndent(); // Level 2 – Bullet
-        builder.Writeln("Level 2 – Bullet");
-        builder.ListFormat.ListIndent(); // Level 3 – Number
-        builder.Writeln("Level 3 – Number");
-        builder.ListFormat.ListOutdent(); // Back to Level 2
-        builder.Writeln("Another Level 2 – Bullet");
-        builder.ListFormat.ListOutdent(); // Back to Level 1
-        builder.Writeln("Another Level 1 – Number");
-        builder.ListFormat.ListOutdent(); // Back to Level 0
-        builder.Writeln("Another Level 0 – Bullet");
+        // Add sample items for each configured level.
+        for (int i = 0; i < 4; i++)
+        {
+            builder.ListFormat.ListLevelNumber = i; // Set the current list level.
+            builder.Writeln($"Item at level {i + 1}");
+        }
 
         // End the list.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "MultiLevelList.docx");
-        doc.Save(outputPath);
+        // Save the document.
+        doc.Save("MultiLevelAlternatingList.docx");
     }
 }

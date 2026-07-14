@@ -1,37 +1,42 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
+
+        // Create a new list based on the default bullet template.
+        List customList = doc.Lists.Add(ListTemplate.BulletDefault);
+
+        // Access the first (level 0) list level to customize its bullet.
+        ListLevel level = customList.ListLevels[0];
+        // Set the list level to use a bullet style.
+        level.NumberStyle = NumberStyle.Bullet;
+        // Define a custom bullet character. Here we use the check mark (✓) as an example.
+        level.NumberFormat = "\u2713";
+        // Optional: set the font that contains the custom character.
+        level.Font.Name = "Wingdings";
+        level.Font.Size = 12;
+        level.Font.Color = Color.DarkGreen;
+
+        // Use DocumentBuilder to add paragraphs that will use the custom list.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.ListFormat.List = customList; // Apply the list to subsequent paragraphs.
 
-        // Add a bulleted list based on the default bullet template.
-        List list = doc.Lists.Add(ListTemplate.BulletDefault);
-
-        // Customize the first level of the list.
-        ListLevel level = list.ListLevels[0];
-        level.NumberStyle = NumberStyle.Bullet;          // Use bullet numbering.
-        level.NumberFormat = "\xf0af";                    // Custom bullet character (star in Wingdings).
-        level.Font.Name = "Wingdings";                    // Font that contains the custom glyph.
-        level.Font.Size = 12;                             // Optional: set bullet size.
-        level.TrailingCharacter = ListTrailingCharacter.Space; // Space after the bullet.
-        level.NumberPosition = 0;                         // Position of the bullet.
-
-        // Apply the customized list to paragraphs.
-        builder.ListFormat.List = list;
         builder.Writeln("First custom bullet item");
         builder.Writeln("Second custom bullet item");
         builder.Writeln("Third custom bullet item");
 
-        // End the list.
+        // Remove list formatting from further paragraphs.
         builder.ListFormat.RemoveNumbers();
+        builder.Writeln("This paragraph is not part of the list.");
 
-        // Save the document to a file.
+        // Save the document to the current directory.
         doc.Save("CustomBulletList.docx");
     }
 }

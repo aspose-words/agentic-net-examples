@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -9,10 +8,9 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading for the list.
-        builder.Writeln("Default numbered list example:");
+        // Initialize a DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a default numbered list.
         builder.ListFormat.ApplyNumberDefault();
@@ -25,12 +23,8 @@ public class Program
         // End the numbered list.
         builder.ListFormat.RemoveNumbers();
 
-        // Prepare the output folder and file name.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputFolder);
-        string outputFile = Path.Combine(outputFolder, "NumberedList.docx");
-
-        // Save the document to disk.
-        doc.Save(outputFile);
+        // Save the document to the current directory.
+        string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "DefaultNumberedList.docx");
+        doc.Save(outputPath);
     }
 }

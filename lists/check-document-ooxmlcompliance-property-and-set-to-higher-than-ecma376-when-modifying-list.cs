@@ -1,40 +1,48 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Lists;
 using Aspose.Words.Saving;
-using Aspose.Words.Settings;
+using Aspose.Words.Lists; // Needed for List and ListTemplate types
 
 public class Program
 {
     public static void Main()
     {
+        // Define output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Path for the saved document.
+        string docPath = Path.Combine(outputDir, "ListWithRestart.docx");
+
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a numbered list to the document.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        // Add a simple list to the document.
+        doc.Lists.Add(ListTemplate.NumberDefault);
+        List list = doc.Lists[0];
 
-        // The IsRestartAtEachSection property is only effective when the OOXML compliance
-        // level is higher than Ecma376_2006, so we set it here.
+        // Modify a list definition that requires a higher OOXML compliance level.
+        // For example, enable restarting the list at each section.
         list.IsRestartAtEachSection = true;
 
-        // Display the compliance level of the newly created document (should be Ecma376_2006).
-        Console.WriteLine("Initial document compliance: " + doc.Compliance);
+        // Check the current compliance of the document (should be Ecma376_2006 for a new document).
+        Console.WriteLine($"Document compliance before saving: {doc.Compliance}");
 
-        // Prepare save options with a higher OOXML compliance level.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
-        {
-            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
-        };
+        // Since we modified a property that is only written when the compliance level is higher than Ecma376,
+        // create OoxmlSaveOptions with a higher compliance level.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx);
+        saveOptions.Compliance = OoxmlCompliance.Iso29500_2008_Transitional;
 
-        // Save the document using the higher compliance level.
-        string filePath = "ListComplianceExample.docx";
-        doc.Save(filePath, saveOptions);
+        // Save the document using the specified save options.
+        doc.Save(docPath, saveOptions);
 
-        // Load the saved document.
-        Document loadedDoc = new Document(filePath);
+        // Load the saved document to verify the compliance level.
+        Document loadedDoc = new Document(docPath);
+        Console.WriteLine($"Document compliance after loading: {loadedDoc.Compliance}");
 
-        // Display the compliance level after loading (should reflect the higher compliance).
-        Console.WriteLine("Loaded document compliance: " + loadedDoc.Compliance);
+        // Output the result of the list property to confirm it was persisted.
+        Console.WriteLine($"IsRestartAtEachSection persisted: {loadedDoc.Lists[0].IsRestartAtEachSection}");
     }
 }

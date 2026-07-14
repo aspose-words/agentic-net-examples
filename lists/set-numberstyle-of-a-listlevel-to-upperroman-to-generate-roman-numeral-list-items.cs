@@ -1,40 +1,37 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
-using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Create a list based on the built‑in numbered template.
-        List romanList = doc.Lists.Add(ListTemplate.NumberDefault);
+        // Add a new list based on the default numbered template (contains 9 levels).
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Configure the first level of the list to use upper‑case Roman numerals.
-        ListLevel level = romanList.ListLevels[0];
+        // Configure the first list level (level 0) to use upper‑case Roman numerals.
+        ListLevel level = list.ListLevels[0];
         level.NumberStyle = NumberStyle.UppercaseRoman;
-        // Use the default number format placeholder for the current level.
+        // Define the format string – the placeholder \x0000 will be replaced by the Roman numeral.
         level.NumberFormat = "\x0000.";
 
-        // Use a DocumentBuilder to add paragraphs that will be formatted by the list.
+        // Use DocumentBuilder to write paragraphs that belong to the list.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ListFormat.List = romanList;
+        builder.ListFormat.List = list; // Start the list.
 
-        // Add several items – they will be numbered I., II., III., etc.
-        builder.Writeln("First Roman item");
-        builder.Writeln("Second Roman item");
-        builder.Writeln("Third Roman item");
-        builder.Writeln("Fourth Roman item");
+        // Add a few list items.
+        for (int i = 0; i < 5; i++)
+        {
+            builder.Writeln($"Item {i + 1}");
+        }
 
-        // End the list formatting.
+        // End the list.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the local file system.
-        string outputPath = "RomanList.docx";
-        doc.Save(outputPath);
+        // Save the document to the current directory.
+        doc.Save("ListUpperRoman.docx");
     }
 }

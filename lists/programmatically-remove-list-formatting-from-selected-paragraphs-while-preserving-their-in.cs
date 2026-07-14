@@ -3,51 +3,49 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using Aspose.Words.Tables;
 
-public class Program
+namespace ListFormattingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document and a DocumentBuilder to add content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start a numbered list and add three items.
-        builder.ListFormat.ApplyNumberDefault();
-        builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
-        builder.Writeln("Item 3");
-
-        // End the current list (optional, just for clarity).
-        builder.ListFormat.RemoveNumbers();
-
-        // Add a normal paragraph between two lists.
-        builder.Writeln("Normal paragraph");
-
-        // Start another numbered list and add two more items.
-        builder.ListFormat.ApplyNumberDefault();
-        builder.Writeln("Item 4");
-        builder.Writeln("Item 5");
-
-        // Retrieve all paragraphs in the document.
-        var paragraphs = doc.GetChildNodes(NodeType.Paragraph, true)
-                           .Cast<Paragraph>()
-                           .ToList();
-
-        // Remove list formatting from the second and third list items (preserving indentation).
-        // These are the paragraphs at index 1 and 2 among the list items.
-        foreach (var para in paragraphs
-                             .Where(p => p.ListFormat.IsListItem)
-                             .Skip(1)   // skip the first list item
-                             .Take(2))  // take the next two items
+        public static void Main()
         {
-            // This call removes the bullet/number and sets the list level to zero,
-            // while keeping any existing indentation of the paragraph.
-            para.ListFormat.RemoveNumbers();
-        }
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the resulting document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RemoveListFormatting.docx");
-        doc.Save(outputPath);
+            // Build a simple numbered list.
+            builder.ListFormat.ApplyNumberDefault();
+            builder.Writeln("First list item");
+            builder.Writeln("Second list item");
+            builder.Writeln("Third list item");
+
+            // End the list.
+            builder.ListFormat.RemoveNumbers();
+
+            // Add a normal paragraph after the list.
+            builder.Writeln("A regular paragraph.");
+
+            // Retrieve all paragraphs in the document.
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+
+            // Remove list formatting from each list item while preserving its left indentation.
+            foreach (Paragraph para in paragraphs.OfType<Paragraph>().Where(p => p.ListFormat.IsListItem))
+            {
+                // Store the current left indentation.
+                double leftIndent = para.ParagraphFormat.LeftIndent;
+
+                // Remove the list numbering/bullet.
+                para.ListFormat.RemoveNumbers();
+
+                // Reapply the stored indentation.
+                para.ParagraphFormat.LeftIndent = leftIndent;
+            }
+
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "ListFormattingRemoved.docx");
+            doc.Save(outputPath);
+        }
     }
 }

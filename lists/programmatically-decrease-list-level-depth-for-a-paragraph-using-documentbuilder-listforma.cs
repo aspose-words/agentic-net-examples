@@ -12,30 +12,25 @@ public class Program
 
         // Start a default numbered list.
         builder.ListFormat.ApplyNumberDefault();
-
-        // Add a couple of top‑level list items.
         builder.Writeln("Item 1");
-        builder.Writeln("Item 2");
 
-        // Increase the list level to create a sub‑list.
+        // Increase the list level to create a sub‑item.
         builder.ListFormat.ListIndent();
-        builder.Writeln("Subitem 1");
-        builder.Writeln("Subitem 2");
+        builder.Writeln("Subitem 1.1");
 
-        // If we are currently indented (level > 0), decrease the list level.
+        // Decrease the list level only if we are not already at the top level.
         if (builder.ListFormat.ListLevelNumber > 0)
         {
-            // Decrease the list level depth.
-            builder.ListFormat.ListOutdent();
+            builder.ListFormat.ListOutdent(); // Decreases list depth by one level.
         }
 
-        // Continue adding items at the (now) current level.
-        builder.Writeln("Item 3");
+        // Continue the list after outdenting.
+        builder.Writeln("Item 2 after outdent");
 
         // End the list formatting.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to the file system.
+        // Save the document to disk.
         doc.Save("DecreaseListLevel.docx");
     }
 }

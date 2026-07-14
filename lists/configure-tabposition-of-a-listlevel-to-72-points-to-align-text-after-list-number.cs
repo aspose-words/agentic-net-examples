@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -12,30 +11,30 @@ namespace ListTabPositionExample
             // Create a new blank document.
             Document doc = new Document();
 
-            // Add a numbered list based on the default template.
+            // Create a list based on the built‑in numbered template.
             List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-            // Configure the first list level.
+            // Access the first level of the list.
             ListLevel level = list.ListLevels[0];
-            // Use a tab as the trailing character so that TabPosition takes effect.
-            level.TrailingCharacter = ListTrailingCharacter.Tab;
-            // Set the tab position to 72 points (1 inch) to align the text after the number.
-            level.TabPosition = 72.0;
-            // Optional: adjust other positions for clarity.
-            level.NumberPosition = -36.0;
-            level.TextPosition = 144.0;
 
-            // Build list items using DocumentBuilder.
+            // Set the tab position to 72 points (1 inch) so that the text aligns after the number.
+            level.TabPosition = 72;
+
+            // Use a tab character as the trailing character to make the TabPosition effective.
+            level.TrailingCharacter = ListTrailingCharacter.Tab;
+
+            // Build some list items to demonstrate the formatting.
             DocumentBuilder builder = new DocumentBuilder(doc);
             builder.ListFormat.List = list;
             builder.Writeln("First item");
             builder.Writeln("Second item");
             builder.Writeln("Third item");
+
+            // Remove list formatting from subsequent paragraphs (optional).
             builder.ListFormat.RemoveNumbers();
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "ListTabPosition.docx");
-            doc.Save(outputPath);
+            // Save the document to the file system.
+            doc.Save("ListTabPosition.docx");
         }
     }
 }

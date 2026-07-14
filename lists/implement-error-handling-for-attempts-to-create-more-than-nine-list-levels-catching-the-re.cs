@@ -3,45 +3,45 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-namespace AsposeWordsListLevelExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and a DocumentBuilder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a numbered list using a built‑in template.
+        builder.ListFormat.List = doc.Lists.Add(ListTemplate.NumberDefault);
+
+        // Write list items for all valid levels (0 to 8).
+        for (int i = 0; i < 9; i++)
         {
-            // Create a new empty document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a numbered list (default template has 9 levels: 0‑8).
-            builder.ListFormat.List = doc.Lists.Add(ListTemplate.NumberDefault);
-
-            // Try to assign list levels from 0 to 9.
-            // Levels 0‑8 are valid; level 9 exceeds the maximum and will throw.
-            for (int i = 0; i <= 9; i++)
-            {
-                try
-                {
-                    builder.ListFormat.ListLevelNumber = i; // May throw if i > 8
-                    builder.Writeln($"Level {i}");
-                }
-                catch (ArgumentOutOfRangeException ex)
-                {
-                    Console.WriteLine($"Caught ArgumentOutOfRangeException for level {i}: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Caught unexpected exception for level {i}: {ex.Message}");
-                }
-            }
-
-            // End the list formatting.
-            builder.ListFormat.RemoveNumbers();
-
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "ListLevelExample.docx");
-            doc.Save(outputPath);
-            Console.WriteLine($"Document saved to: {outputPath}");
+            builder.ListFormat.ListLevelNumber = i; // Valid level.
+            builder.Writeln($"Level {i}");
         }
+
+        // Attempt to set a level beyond the allowed range and catch the exception.
+        try
+        {
+            builder.ListFormat.ListLevelNumber = 9; // Invalid level – should throw.
+            builder.Writeln("This line will not be added.");
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            Console.WriteLine($"Caught expected exception: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Caught unexpected exception: {ex.Message}");
+        }
+
+        // End list formatting.
+        builder.ListFormat.List = null;
+
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ListLevelExceptionDemo.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }
