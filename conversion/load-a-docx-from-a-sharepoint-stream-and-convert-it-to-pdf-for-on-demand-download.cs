@@ -2,47 +2,54 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Drawing; // Required package, not used directly
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX document.
+        // Step 1: Create a sample DOCX file that will act as the SharePoint document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample content loaded from a SharePoint stream.");
+        builder.Writeln("Sample DOCX content generated for conversion.");
         const string inputPath = "input.docx";
         sourceDoc.Save(inputPath, SaveFormat.Docx);
 
-        // Step 2: Simulate a SharePoint stream by reading the DOCX into a MemoryStream.
-        using (FileStream fileStream = File.OpenRead(inputPath))
-        using (MemoryStream sharepointStream = new MemoryStream())
+        // Verify that the input file was created.
+        if (!File.Exists(inputPath))
+            throw new InvalidOperationException("The input DOCX file was not created.");
+
+        // Step 2: Simulate obtaining the DOCX from a SharePoint stream.
+        // Read the file into a byte array and wrap it with a MemoryStream.
+        byte[] docxBytes = File.ReadAllBytes(inputPath);
+        using (MemoryStream sharePointStream = new MemoryStream(docxBytes))
         {
-            fileStream.CopyTo(sharepointStream);
-            sharepointStream.Position = 0; // Reset for reading.
+            // Ensure the stream is positioned at the beginning before loading.
+            sharePointStream.Position = 0;
 
-            // Step 3: Load the document from the simulated SharePoint stream.
-            Document doc = new Document(sharepointStream);
+            // Load the document from the simulated SharePoint stream.
+            Document docFromStream = new Document(sharePointStream);
 
-            // Step 4: Convert the document to PDF and write to a simulated response stream.
+            // Step 3: Convert the loaded document to PDF and write it to a response stream.
             using (MemoryStream responseStream = new MemoryStream())
             {
-                doc.Save(responseStream, SaveFormat.Pdf);
+                docFromStream.Save(responseStream, SaveFormat.Pdf);
 
-                // Validate that PDF data was written.
+                // Validate that PDF data was written to the stream.
                 if (responseStream.Length == 0)
                     throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
 
                 // Optional: Save the PDF to a file for verification.
                 const string outputPath = "output.pdf";
-                responseStream.Position = 0;
-                using (FileStream outFile = File.Create(outputPath))
+                responseStream.Position = 0; // Reset before reading.
+                using (FileStream file = new FileStream(outputPath, FileMode.Create, FileAccess.Write))
                 {
-                    responseStream.CopyTo(outFile);
+                    responseStream.CopyTo(file);
                 }
 
+                // Verify that the PDF file exists.
                 if (!File.Exists(outputPath))
-                    throw new InvalidOperationException("Expected output PDF was not created.");
+                    throw new InvalidOperationException("The output PDF file was not created.");
             }
         }
     }

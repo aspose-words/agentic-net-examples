@@ -7,49 +7,51 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple Word document in memory.
+        // Define output file names.
+        string outputHtml = "output.html";
+        string outputCss = Path.ChangeExtension(outputHtml, ".css");
+
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World!");
-        builder.Writeln("This document will be saved as HTML with a CSS class prefix.");
 
-        // Prepare the HTML save options.
+        // Add a heading styled paragraph.
+        // Use the built‑in "Header" style so that the generated CSS class will be "Header".
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Header;
+        builder.Writeln("Sample Heading");
+
+        // Add a normal paragraph.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is a sample paragraph.");
+
+        // Configure HTML save options with an external CSS file and a class name prefix.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            // Export CSS to an external stylesheet so we can see the prefix in the .css file.
             CssStyleSheetType = CssStyleSheetType.External,
-            // Add a prefix to every generated CSS class name.
             CssClassNamePrefix = "myPrefix-"
         };
 
-        // Define output file names.
-        string htmlPath = "output.html";
-        string cssPath = "output.css";
+        // Save the document as HTML.
+        doc.Save(outputHtml, saveOptions);
 
-        // Ensure any previous files are removed.
-        if (File.Exists(htmlPath)) File.Delete(htmlPath);
-        if (File.Exists(cssPath)) File.Delete(cssPath);
+        // Validate that the HTML file was created.
+        if (!File.Exists(outputHtml))
+            throw new InvalidOperationException($"HTML file '{outputHtml}' was not created.");
 
-        // Save the document as HTML using the configured options.
-        doc.Save(htmlPath, saveOptions);
+        // Validate that the external CSS file was created.
+        if (!File.Exists(outputCss))
+            throw new InvalidOperationException($"CSS file '{outputCss}' was not created.");
 
-        // Verify that the HTML file was created.
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("HTML output file was not created.");
+        // Simple content checks to ensure the prefix was applied.
+        string htmlContent = File.ReadAllText(outputHtml);
+        if (!htmlContent.Contains("class=\"myPrefix-Header\""))
+            throw new InvalidOperationException("CSS class prefix was not applied to the heading in the HTML output.");
 
-        // When CssStyleSheetType is External, Aspose.Words creates a CSS file with the same name as the HTML file.
-        // The default name is the HTML file name with a .css extension.
-        if (!File.Exists(cssPath))
-            throw new InvalidOperationException("CSS output file was not created.");
+        string cssContent = File.ReadAllText(outputCss);
+        if (!cssContent.Contains(".myPrefix-Header"))
+            throw new InvalidOperationException("CSS class prefix was not applied in the CSS file.");
 
-        // Optional: read the generated files to ensure the prefix appears.
-        string htmlContent = File.ReadAllText(htmlPath);
-        string cssContent = File.ReadAllText(cssPath);
-
-        if (!cssContent.Contains(".myPrefix-"))
-            throw new InvalidOperationException("CSS class prefix was not applied.");
-
-        // Indicate success (no console input required).
-        Console.WriteLine("HTML and CSS files were generated successfully.");
+        // Indicate successful completion.
+        Console.WriteLine("Document saved as HTML with CSS class prefix successfully.");
     }
 }

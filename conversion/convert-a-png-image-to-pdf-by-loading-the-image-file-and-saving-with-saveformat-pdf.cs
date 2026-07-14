@@ -1,57 +1,66 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for temporary PNG and final PDF.
-        const string pngPath = "sample.png";
-        const string pdfPath = "output.pdf";
+        // Define file names in the current directory.
+        string pngPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
+        string pdfPath = Path.Combine(Directory.GetCurrentDirectory(), "output.pdf");
 
-        // Image dimensions.
-        const int width = 200;
-        const int height = 200;
-
-        // Create a bitmap and draw simple content onto it.
-        using (Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb))
+        // -----------------------------------------------------------------
+        // Create a simple PNG image using Aspose.Drawing (no System.Drawing usage).
+        // -----------------------------------------------------------------
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            // Obtain a Graphics object from the bitmap (Aspose.Drawing version).
+            // Obtain a Graphics object for drawing on the bitmap.
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                // Fill background.
+                // Fill background with light blue.
                 graphics.Clear(Color.LightBlue);
 
-                // Create a drawing font (fully qualified to avoid ambiguity).
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20))
+                // Draw a red ellipse.
+                using (Pen pen = new Pen(Color.Red, 5))
                 {
-                    // Draw text onto the image.
-                    graphics.DrawString(
-                        "Hello",
-                        font,
-                        new SolidBrush(Color.Black),
-                        new PointF(10, 80));
+                    graphics.DrawEllipse(pen, 20, 20, 160, 160);
+                }
+
+                // Draw some text.
+                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20);
+                using (SolidBrush brush = new SolidBrush(Color.DarkBlue))
+                {
+                    graphics.DrawString("Sample", font, brush, new PointF(40, 80));
                 }
             }
 
-            // Save the bitmap as a PNG file.
+            // Save the bitmap as PNG.
             bitmap.Save(pngPath, ImageFormat.Png);
         }
 
-        // Load the PNG image as a document and convert it to PDF.
-        Document doc = new Document(pngPath);
+        // Verify that the PNG file was created.
+        if (!File.Exists(pngPath))
+            throw new InvalidOperationException("Failed to create the PNG image.");
+
+        // -----------------------------------------------------------------
+        // Load the PNG into a Word document and save as PDF.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(pngPath);
+
+        // Save the document as PDF.
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
+        // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+            throw new InvalidOperationException("The PDF conversion failed; output file not found.");
 
-        // Clean up the temporary PNG file.
-        if (File.Exists(pngPath))
-            File.Delete(pngPath);
+        // Cleanup: optional removal of the temporary PNG file.
+        // File.Delete(pngPath);
     }
 }

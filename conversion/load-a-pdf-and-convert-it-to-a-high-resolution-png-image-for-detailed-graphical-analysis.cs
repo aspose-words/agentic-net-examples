@@ -7,44 +7,48 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary PDF and the resulting PNG.
+        // Define file names.
         const string pdfPath = "sample.pdf";
-        const string pngPath = "sample_high_res.png";
+        const string pngPath = "output.png";
 
         // -----------------------------------------------------------------
-        // Create a sample Word document and save it as a PDF.
+        // Step 1: Create a sample PDF document.
         // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample PDF document for conversion.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page content.");
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample PDF content for conversion.");
+        // Save the document as PDF.
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
+        // Verify that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Expected PDF file was not created.");
+            throw new InvalidOperationException("The PDF file was not created.");
 
         // -----------------------------------------------------------------
-        // Load the PDF and convert it to a high‑resolution PNG image.
+        // Step 2: Load the PDF and convert it to a high‑resolution PNG.
         // -----------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
 
-        // Configure image save options for high quality.
+        // Configure image save options for high resolution (e.g., 300 DPI).
         ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            Resolution = 300,                 // 300 DPI for high resolution.
-            UseHighQualityRendering = true   // Enable high‑quality rendering algorithms.
+            Resolution = 300 // Sets both horizontal and vertical DPI.
         };
 
         // Save the first page of the PDF as a PNG image.
         pdfDoc.Save(pngPath, pngOptions);
 
-        // Verify that the PNG file was created.
+        // -----------------------------------------------------------------
+        // Step 3: Validate the PNG output.
+        // -----------------------------------------------------------------
         if (!File.Exists(pngPath))
-            throw new InvalidOperationException("Expected PNG file was not created.");
+            throw new InvalidOperationException("The PNG image was not created.");
 
-        // Indicate successful conversion.
+        FileInfo pngInfo = new FileInfo(pngPath);
+        if (pngInfo.Length == 0)
+            throw new InvalidOperationException("The PNG image file is empty.");
+
+        // Optionally, report success (no interactive prompts required).
         Console.WriteLine("PDF successfully converted to high‑resolution PNG.");
     }
 }

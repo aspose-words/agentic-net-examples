@@ -8,64 +8,67 @@ public class Program
     public static void Main()
     {
         // Define folders for input PDFs and output PNGs.
-        string inputFolder = "InputPdfs";
-        string outputFolder = "OutputPngs";
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputPdfs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPngs");
 
-        // Ensure the folders exist.
+        // Ensure clean start.
+        if (Directory.Exists(inputFolder))
+            Directory.Delete(inputFolder, true);
+        if (Directory.Exists(outputFolder))
+            Directory.Delete(outputFolder, true);
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a few sample PDF files (the task assumes no external files).
-        // -----------------------------------------------------------------
-        for (int i = 1; i <= 3; i++)
+        // Create sample PDF files.
+        const int samplePdfCount = 3;
+        for (int i = 1; i <= samplePdfCount; i++)
         {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"Sample PDF document {i}");
-            builder.Writeln("This document will be converted to high‑resolution PNG images.");
-            // Add a second page to demonstrate multi‑page handling.
+            // Create a simple Word document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Sample PDF #{i}");
             builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Second page of document {i}.");
-
-            string pdfPath = Path.Combine(inputFolder, $"sample{i}.pdf");
-            sampleDoc.Save(pdfPath, SaveFormat.Pdf);
-
+            builder.Writeln($"Second page of PDF #{i}");
+            // Save as PDF.
+            string pdfPath = Path.Combine(inputFolder, $"Sample{i}.pdf");
+            doc.Save(pdfPath, SaveFormat.Pdf);
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create sample PDF: {pdfPath}");
+                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
         }
 
-        // -----------------------------------------------------------------
-        // Step 2: Batch convert each PDF to PNG images at 600 DPI.
-        // -----------------------------------------------------------------
-        string[] pdfFiles = Directory.GetFiles(inputFolder, "*.pdf");
-        foreach (string pdfFile in pdfFiles)
+        // Batch convert each PDF to high‑resolution PNG images (600 DPI).
+        foreach (string pdfFile in Directory.GetFiles(inputFolder, "*.pdf"))
         {
             // Load the PDF document.
             Document pdfDoc = new Document(pdfFile);
 
-            // Convert each page of the PDF to a separate PNG file.
+            // Prepare image save options for PNG with 600 DPI.
+            ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
+            {
+                Resolution = 600 // Set both horizontal and vertical resolution.
+            };
+
+            // Render each page separately.
             for (int pageIndex = 0; pageIndex < pdfDoc.PageCount; pageIndex++)
             {
-                // Configure image save options: PNG format, 600 DPI, render only the current page.
-                ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png);
-                pngOptions.Resolution = 600; // Set both horizontal and vertical resolution.
-                pngOptions.PageSet = new PageSet(pageIndex); // Zero‑based page index.
+                // Specify which page to render.
+                pngOptions.PageSet = new PageSet(pageIndex);
 
-                // Build the output file name: original name + page number.
-                string outputFileName = $"{Path.GetFileNameWithoutExtension(pdfFile)}_page{pageIndex + 1}.png";
-                string outputPath = Path.Combine(outputFolder, outputFileName);
+                // Build output file name: <pdfName>_page<1‑based>.png
+                string pdfName = Path.GetFileNameWithoutExtension(pdfFile);
+                string pngPath = Path.Combine(outputFolder, $"{pdfName}_page{pageIndex + 1}.png");
 
-                // Save the page as a PNG image.
-                pdfDoc.Save(outputPath, pngOptions);
+                // Save the rendered page as PNG.
+                pdfDoc.Save(pngPath, pngOptions);
 
-                // Verify that the PNG file was created.
-                if (!File.Exists(outputPath))
-                    throw new InvalidOperationException($"Failed to create PNG image: {outputPath}");
+                // Validate that the PNG file was created.
+                if (!File.Exists(pngPath) || new FileInfo(pngPath).Length == 0)
+                    throw new InvalidOperationException($"Failed to create PNG: {pngPath}");
             }
         }
 
-        // Optional: indicate completion (no interactive input required).
-        Console.WriteLine("Batch conversion completed successfully.");
+        // All conversions completed successfully.
+        Console.WriteLine("Batch conversion completed. PNG files are located in:");
+        Console.WriteLine(outputFolder);
     }
 }

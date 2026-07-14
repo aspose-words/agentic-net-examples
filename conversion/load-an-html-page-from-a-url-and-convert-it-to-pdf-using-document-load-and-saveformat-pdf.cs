@@ -1,38 +1,35 @@
 using System;
 using System.IO;
-using System.Text;
+using System.Net.Http;
 using Aspose.Words;
-using Aspose.Words.Loading;
 
-public class HtmlToPdfConverter
+public class Program
 {
     public static void Main()
     {
-        // Create a simple HTML content locally.
-        const string htmlContent = "<html><body><h1>Sample Heading</h1><p>This is a sample HTML page.</p></body></html>";
+        // URL of the HTML page to convert.
+        const string url = "https://www.example.com";
 
-        // Convert the HTML string to a byte array.
-        byte[] htmlBytes = Encoding.UTF8.GetBytes(htmlContent);
-
-        // Load the HTML from a memory stream using HtmlLoadOptions.
-        using (MemoryStream htmlStream = new MemoryStream(htmlBytes))
+        // Download the HTML content.
+        using (HttpClient httpClient = new HttpClient())
         {
-            HtmlLoadOptions loadOptions = new HtmlLoadOptions
+            HttpResponseMessage response = httpClient.GetAsync(url).Result;
+            response.EnsureSuccessStatusCode();
+            byte[] htmlBytes = response.Content.ReadAsByteArrayAsync().Result;
+
+            // Load the HTML into an Aspose.Words Document via a memory stream.
+            using (MemoryStream htmlStream = new MemoryStream(htmlBytes))
             {
-                LoadFormat = LoadFormat.Html
-            };
+                Document doc = new Document(htmlStream);
 
-            Document document = new Document(htmlStream, loadOptions);
+                // Convert and save the document as PDF.
+                const string outputPath = "output.pdf";
+                doc.Save(outputPath, SaveFormat.Pdf);
 
-            // Define the output PDF file path.
-            const string outputPath = "output.pdf";
-
-            // Save the document as PDF.
-            document.Save(outputPath, SaveFormat.Pdf);
-
-            // Verify that the PDF was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The PDF file was not created.");
+                // Verify that the PDF was created.
+                if (!File.Exists(outputPath))
+                    throw new InvalidOperationException("The PDF file was not created.");
+            }
         }
     }
 }

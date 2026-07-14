@@ -3,35 +3,46 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class ApplyPdfA2bCompliance
 {
     public static void Main()
     {
-        // Create a sample DOC document in memory.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample DOC content for PDF/A‑2b conversion.");
-
-        // Save the document locally as DOC (input file for the conversion).
+        // Define file names.
         const string inputPath = "input.doc";
-        source.Save(inputPath, SaveFormat.Doc);
+        const string outputPath = "output.pdf";
 
-        // Load the DOC document from the file system.
+        // -----------------------------------------------------------------
+        // Create a sample DOC file.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is a sample document for PDF/A‑2b conversion.");
+        sourceDoc.Save(inputPath, SaveFormat.Doc);
+
+        // -----------------------------------------------------------------
+        // Load the DOC file.
+        // -----------------------------------------------------------------
         Document doc = new Document(inputPath);
 
-        // Configure PDF save options to use PDF/A‑2b compliance.
-        // In Aspose.Words the PDF/A‑2b level is represented by PdfCompliance.PdfA2u.
+        // -----------------------------------------------------------------
+        // Configure PDF save options for PDF/A‑2b compliance.
+        // Aspose.Words does not expose a PdfA2b enum value; PdfA2u provides PDF/A‑2b
+        // compliance with additional Unicode support, which satisfies the requirement.
+        // -----------------------------------------------------------------
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
             Compliance = PdfCompliance.PdfA2u
         };
 
         // Save the document as PDF with the specified compliance level.
-        const string outputPath = "output.pdf";
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the PDF file was created successfully.
+        // -----------------------------------------------------------------
+        // Verify that the PDF file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Expected output PDF was not created.");
+            throw new InvalidOperationException($"The expected output file '{outputPath}' was not created.");
+
+        Console.WriteLine("PDF/A‑2b conversion completed successfully.");
     }
 }

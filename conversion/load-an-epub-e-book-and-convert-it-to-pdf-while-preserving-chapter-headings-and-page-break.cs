@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,41 +8,63 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document with headings and page breaks.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
+        // Define file names.
+        const string epubPath = "sample.epub";
+        const string pdfPath = "sample.pdf";
 
-        // Chapter 1 heading.
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample document with headings and page breaks.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        // Chapter 1
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-
-        // Chapter 1 content.
+        builder.Writeln("Chapter 1: Introduction");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the content of chapter 1.");
-
-        // Insert a page break between chapters.
+        builder.Writeln("This is the first chapter content.");
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Chapter 2 heading.
+        // Chapter 2
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
+        builder.Writeln("Chapter 2: Details");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the second chapter content.");
+        builder.InsertBreak(BreakType.PageBreak);
 
-        // Chapter 2 content.
-        builder.Writeln("This is the content of chapter 2.");
+        // Chapter 3
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Chapter 3: Conclusion");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the final chapter content.");
 
-        // Save the document as EPUB.
-        const string epubPath = "input.epub";
-        source.Save(epubPath, SaveFormat.Epub);
+        // -----------------------------------------------------------------
+        // Step 2: Save the document as EPUB, splitting at heading paragraphs.
+        // -----------------------------------------------------------------
+        HtmlSaveOptions epubSaveOptions = new HtmlSaveOptions
+        {
+            SaveFormat = SaveFormat.Epub,
+            Encoding = Encoding.UTF8,
+            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
+            ExportDocumentProperties = true
+        };
+        sourceDoc.Save(epubPath, epubSaveOptions);
 
-        // Load the EPUB file.
+        // Verify that the EPUB file was created.
+        if (!File.Exists(epubPath))
+            throw new InvalidOperationException("EPUB file was not created.");
+
+        // -----------------------------------------------------------------
+        // Step 3: Load the EPUB and convert it to PDF.
+        // -----------------------------------------------------------------
         Document epubDoc = new Document(epubPath);
-
-        // Convert the EPUB to PDF.
-        const string pdfPath = "output.pdf";
         epubDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
+        // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF conversion failed; output file was not created.");
+            throw new InvalidOperationException("PDF file was not created.");
+
+        // Optional: Inform that conversion succeeded.
+        Console.WriteLine("EPUB successfully converted to PDF.");
     }
 }

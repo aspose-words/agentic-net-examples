@@ -1,80 +1,89 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class BatchHtmlToMhtml
+public class BatchHtmlToMhtmlConverter
 {
     public static void Main()
     {
-        // Prepare folders.
-        string inputFolder = "InputHtml";
-        string outputFolder = "OutputMhtml";
+        // Define folders for input HTML files and output MHTML files.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputHtml");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputMhtml");
 
+        // Ensure the folders exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create a simple PNG image (1x1 pixel) from a Base64 string.
-        string pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X5eUAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(pngBase64);
-        string imagePath = Path.Combine(inputFolder, "sample.png");
-        File.WriteAllBytes(imagePath, pngBytes);
+        // Create sample resources (a tiny PNG image) that will be referenced from the HTML files.
+        string imagePath = Path.Combine(inputFolder, "sampleImage.png");
+        CreateSamplePng(imagePath);
 
-        // Create a simple CSS file.
-        string cssContent = "body { font-family: Arial; } .highlight { color: red; }";
-        string cssPath = Path.Combine(inputFolder, "style.css");
-        File.WriteAllText(cssPath, cssContent, Encoding.UTF8);
-
-        // Create two sample HTML files that reference the image and CSS.
+        // Create a few sample HTML files that reference the image.
         for (int i = 1; i <= 2; i++)
         {
-            string html = $@"
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Sample {i}</title>
-    <link rel=""stylesheet"" type=""text/css"" href=""style.css"">
-</head>
-<body>
-    <h1 class=""highlight"">Hello World {i}</h1>
-    <p>This is a sample HTML file.</p>
-    <img src=""sample.png"" alt=""Sample Image"">
-</body>
+            string htmlFileName = $"sample{i}.html";
+            string htmlFilePath = Path.Combine(inputFolder, htmlFileName);
+            string htmlContent = $@"<html>
+    <body>
+        <h1>Sample Document {i}</h1>
+        <p>This is a test HTML file.</p>
+        <img src=""sampleImage.png"" alt=""Sample Image"" />
+    </body>
 </html>";
-            string htmlPath = Path.Combine(inputFolder, $"sample{i}.html");
-            File.WriteAllText(htmlPath, html, Encoding.UTF8);
+            File.WriteAllText(htmlFilePath, htmlContent);
         }
 
-        // Batch convert each HTML file to MHTML with all resources embedded.
-        foreach (string htmlFile in Directory.GetFiles(inputFolder, "*.html"))
+        // Batch convert each HTML file in the input folder to MHTML.
+        string[] htmlFiles = Directory.GetFiles(inputFolder, "*.html");
+        foreach (string htmlFile in htmlFiles)
         {
             // Load the HTML document.
             Document doc = new Document(htmlFile);
 
-            // Configure save options for MHTML.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
-            {
-                // Ensure that fonts, images, CSS, etc., are embedded.
-                ExportFontResources = true,
-                ExportCidUrlsForMhtmlResources = true,
-                CssStyleSheetType = CssStyleSheetType.External,
-                PrettyFormat = true
-            };
-
-            // Determine output file path.
+            // Determine the output MHTML file path.
             string outputFileName = Path.GetFileNameWithoutExtension(htmlFile) + ".mht";
-            string outputPath = Path.Combine(outputFolder, outputFileName);
+            string outputFilePath = Path.Combine(outputFolder, outputFileName);
 
-            // Save as MHTML.
-            doc.Save(outputPath, saveOptions);
+            // Save the document as MHTML. Resources (images, CSS, etc.) are embedded automatically.
+            doc.Save(outputFilePath, SaveFormat.Mhtml);
 
-            // Validate that the output file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create MHTML file: {outputPath}");
+            // Verify that the output file was created.
+            if (!File.Exists(outputFilePath))
+            {
+                throw new InvalidOperationException($"Failed to create MHTML file: {outputFilePath}");
+            }
         }
 
         // Indicate successful completion.
         Console.WriteLine("Batch conversion completed successfully.");
+    }
+
+    // Creates a minimal 1x1 pixel PNG file without using System.Drawing.
+    private static void CreateSamplePng(string filePath)
+    {
+        // PNG file header and a single transparent pixel.
+        byte[] pngBytes = new byte[]
+        {
+            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A, // PNG signature
+            0x00,0x00,0x00,0x0D, // IHDR chunk length
+            0x49,0x48,0x44,0x52, // "IHDR"
+            0x00,0x00,0x00,0x01, // width: 1
+            0x00,0x00,0x00,0x01, // height: 1
+            0x08, // bit depth
+            0x06, // color type: RGBA
+            0x00, // compression method
+            0x00, // filter method
+            0x00, // interlace method
+            0x1F,0x15,0xC4,0x89, // CRC
+            0x00,0x00,0x00,0x0A, // IDAT chunk length
+            0x49,0x44,0x41,0x54, // "IDAT"
+            0x78,0x9C,0x63,0x60,0x00,0x00,0x00,0x02,0x00,0x01, // compressed data
+            0x05,0x5C,0x0A,0x2D, // CRC
+            0x00,0x00,0x00,0x00, // IEND chunk length
+            0x49,0x45,0x4E,0x44, // "IEND"
+            0xAE,0x42,0x60,0x82  // CRC
+        };
+        File.WriteAllBytes(filePath, pngBytes);
     }
 }

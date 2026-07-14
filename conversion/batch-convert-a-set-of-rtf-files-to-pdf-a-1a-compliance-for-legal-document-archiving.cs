@@ -15,19 +15,31 @@ public class Program
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create a few sample RTF documents.
+        // -----------------------------------------------------------------
+        // Create sample RTF documents (the task requires local sample input).
+        // -----------------------------------------------------------------
         for (int i = 1; i <= 3; i++)
         {
+            // Create a blank document.
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+
+            // Add deterministic content.
             builder.Writeln($"Sample RTF document #{i}");
-            builder.Writeln("This is a legal document intended for archiving.");
+            builder.Writeln("Legal text for archiving purposes.");
+            builder.Writeln($"Generated on {DateTime.UtcNow:u}");
+
+            // Save as RTF in the input folder.
             string rtfPath = Path.Combine(inputFolder, $"Sample{i}.rtf");
             sampleDoc.Save(rtfPath, SaveFormat.Rtf);
         }
 
-        // Batch convert each RTF file to PDF/A‑1a.
+        // ---------------------------------------------------------------
+        // Batch convert each RTF file to PDF/A‑1a compliant PDF document.
+        // ---------------------------------------------------------------
         string[] rtfFiles = Directory.GetFiles(inputFolder, "*.rtf");
+        int convertedCount = 0;
+
         foreach (string rtfFile in rtfFiles)
         {
             // Load the RTF document.
@@ -39,18 +51,21 @@ public class Program
                 Compliance = PdfCompliance.PdfA1a
             };
 
-            // Determine the output PDF file path.
+            // Determine output PDF file path (same name, .pdf extension).
             string pdfFileName = Path.GetFileNameWithoutExtension(rtfFile) + ".pdf";
             string pdfPath = Path.Combine(outputFolder, pdfFileName);
 
             // Save the document as PDF/A‑1a.
             doc.Save(pdfPath, pdfOptions);
 
-            // Verify that the PDF was created.
+            // Verify that the PDF file was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF for '{rtfFile}'.");
+                throw new InvalidOperationException($"Failed to create PDF file: {pdfPath}");
+
+            convertedCount++;
         }
 
-        // All conversions completed successfully.
+        // Simple confirmation (no interactive input required).
+        Console.WriteLine($"Batch conversion completed. {convertedCount} file(s) converted to PDF/A‑1a.");
     }
 }

@@ -7,33 +7,26 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOC file.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample content for PDF/UA compliance.");
+        // Create a new blank document and add some text.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This PDF is PDF/UA compliant.");
 
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.doc");
-        source.Save(inputPath, SaveFormat.Doc);
-
-        // Load the DOC file.
-        Document doc = new Document(inputPath);
-
-        // Configure PDF save options for PDF/UA compliance.
+        // Set up PDF save options to enforce PDF/UA compliance.
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            // Use PDF/UA-1 compliance.
             Compliance = PdfCompliance.PdfUa1
         };
 
-        // Save the document as a PDF/UA compliant file.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output_ua.pdf");
+        string outputPath = "output_pdfua.pdf";
+
+        // Save the document as a PDF/UA file.
         doc.Save(outputPath, saveOptions);
 
-        // Verify that the PDF file was created.
+        // Verify that the file was created successfully.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Expected PDF/UA output file was not created.");
-
-        // Optional: clean up intermediate files.
-        File.Delete(inputPath);
+        {
+            throw new InvalidOperationException($"The PDF/UA file '{outputPath}' was not created.");
+        }
     }
 }

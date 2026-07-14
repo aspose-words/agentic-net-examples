@@ -8,24 +8,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample PDF file.
-        const string pdfPath = "sample.pdf";
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF created by Aspose.Words.");
-        builder.Writeln("It contains multiple lines to test layout preservation.");
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        // Create a sample PDF document.
+        Document sourceDocument = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDocument);
+        builder.Writeln("Sample PDF content for conversion.");
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndTable();
 
-        // Load the PDF. Layout preservation is handled automatically by the loader.
+        // Save the sample as PDF.
+        string pdfPath = "sample.pdf";
+        sourceDocument.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF file was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The PDF file was not created.");
+
+        // Load the PDF (layout‑preservation is the default behavior).
         PdfLoadOptions loadOptions = new PdfLoadOptions();
-        Document pdfDoc = new Document(pdfPath, loadOptions);
+        Document pdfDocument = new Document(pdfPath, loadOptions);
 
-        // Convert the loaded PDF to DOCX.
-        const string docxPath = "converted.docx";
-        pdfDoc.Save(docxPath, SaveFormat.Docx);
+        // Convert the loaded PDF to DOCX while preserving layout.
+        string docxPath = "converted.docx";
+        pdfDocument.Save(docxPath, SaveFormat.Docx);
 
         // Verify that the DOCX file was created.
         if (!File.Exists(docxPath))
-            throw new InvalidOperationException("DOCX conversion failed: output file not found.");
+            throw new InvalidOperationException("The DOCX file was not created.");
     }
 }

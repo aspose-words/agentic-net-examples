@@ -2,88 +2,89 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing;
-using Aspose.Drawing; // Aspose.Drawing.Common provides Bitmap, etc.
+using Aspose.Words.Drawing;   // Required for ShapeType
 
-public class PdfToHtmlConverter
+public class Program
 {
     public static void Main()
     {
-        // Base directory for all generated files.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "ConversionDemo");
-        Directory.CreateDirectory(baseDir);
+        // Define file and folder names.
+        string baseDir = Directory.GetCurrentDirectory();
+        string pdfPath = Path.Combine(baseDir, "sample.pdf");
+        string htmlPath = Path.Combine(baseDir, "output.html");
+        string imagesFolder = Path.Combine(baseDir, "Images");
+
+        // Ensure the images folder exists for external image files.
+        Directory.CreateDirectory(imagesFolder);
 
         // -----------------------------------------------------------------
-        // Step 1: Create a sample PDF document.
+        // Step 1: Create a simple PDF document using Aspose.Words.
         // -----------------------------------------------------------------
-        string pdfPath = Path.Combine(baseDir, "sample.pdf");
-        CreateSamplePdf(pdfPath, baseDir);
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        // Use a non‑standard font to guarantee that a font resource will be exported.
+        builder.Font.Name = "Courier New";
+        builder.Writeln("This is a sample PDF document with a non‑standard font.");
+
+        // Add an image to demonstrate external image extraction.
+        builder.InsertImage(ImageFromPlaceholder());
+
+        // Save the document as PDF.
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("Failed to create the sample PDF file.");
 
         // -----------------------------------------------------------------
         // Step 2: Load the PDF and convert it to HTML.
         // -----------------------------------------------------------------
-        Document pdfDocument = new Document(pdfPath);
-
-        // Configure HTML save options:
-        // - Embed fonts as Base64.
-        // - Keep images as external files.
-        // - Specify a folder for the external images.
-        string imagesFolder = Path.Combine(baseDir, "Images");
-        Directory.CreateDirectory(imagesFolder);
+        Document pdfDoc = new Document(pdfPath);
 
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions
         {
-            ExportFontsAsBase64 = true,
-            ExportImagesAsBase64 = false,
-            ImagesFolder = imagesFolder,
+            ExportFontsAsBase64 = true,      // Embed fonts directly in the CSS as Base64.
+            ExportFontResources = true,      // Ensure font resources are processed.
+            ExportImagesAsBase64 = false,    // Keep images as external files.
+            ImagesFolder = imagesFolder,     // Folder where external images will be saved.
             PrettyFormat = true
         };
 
-        string htmlPath = Path.Combine(baseDir, "sample.html");
-        pdfDocument.Save(htmlPath, htmlOptions);
+        pdfDoc.Save(htmlPath, htmlOptions);
 
         // -----------------------------------------------------------------
-        // Step 3: Validation.
+        // Step 3: Validate the conversion results.
         // -----------------------------------------------------------------
         if (!File.Exists(htmlPath))
-            throw new FileNotFoundException("HTML output file was not created.", htmlPath);
+            throw new InvalidOperationException("HTML output file was not created.");
 
-        // Verify that at least one image file was written to the images folder.
+        // Ensure at least one image file was written to the images folder.
         string[] imageFiles = Directory.GetFiles(imagesFolder);
         if (imageFiles.Length == 0)
-            throw new InvalidOperationException("No image files were generated in the Images folder.");
+            throw new InvalidOperationException("No image files were exported during HTML conversion.");
 
-        // Output the locations of the generated files.
-        Console.WriteLine($"PDF created at: {pdfPath}");
-        Console.WriteLine($"HTML created at: {htmlPath}");
-        Console.WriteLine($"Images folder contains {imageFiles.Length} file(s).");
+        // Confirm that fonts were embedded as Base64.
+        string htmlContent = File.ReadAllText(htmlPath);
+        if (!htmlContent.Contains("@font-face") || !htmlContent.Contains("base64"))
+            throw new InvalidOperationException("Fonts were not embedded as Base64 in the HTML.");
     }
 
-    private static void CreateSamplePdf(string pdfPath, string baseDir)
+    // Helper method to generate a simple placeholder image stream.
+    private static Stream ImageFromPlaceholder()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a temporary document containing a rectangle shape.
+        Document tempDoc = new Document();
+        DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
+        tempBuilder.InsertShape(ShapeType.Rectangle, 100, 100);
 
-        // Add some text.
-        builder.Writeln("This is a sample PDF document generated for conversion.");
-
-        // Create a tiny PNG image (1x1 pixel) using Aspose.Drawing.
-        string pngPath = Path.Combine(baseDir, "sample.png");
-        CreateTinyPng(pngPath);
-
-        // Insert the image into the document.
-        builder.InsertImage(pngPath);
-
-        // Save the document as PDF.
-        doc.Save(pdfPath, SaveFormat.Pdf);
-    }
-
-    private static void CreateTinyPng(string filePath)
-    {
-        // 1x1 pixel transparent PNG (base64 encoded).
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        File.WriteAllBytes(filePath, pngBytes);
+        // Save the temporary document as a PNG image into a memory stream.
+        using (MemoryStream ms = new MemoryStream())
+        {
+            tempDoc.Save(ms, SaveFormat.Png);
+            ms.Position = 0;
+            // Return a fresh stream containing the PNG data.
+            return new MemoryStream(ms.ToArray());
+        }
     }
 }

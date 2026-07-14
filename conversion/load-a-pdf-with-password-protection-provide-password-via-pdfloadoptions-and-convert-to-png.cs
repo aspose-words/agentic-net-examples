@@ -8,48 +8,52 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files
+        // File names and password.
         const string pdfPath = "protected.pdf";
         const string pngPath = "output.png";
+        const string password = "Secret123";
 
         // -----------------------------------------------------------------
-        // 1. Create a simple Word document and save it as a password‑protected PDF.
+        // Step 1: Create a simple document and save it as a password‑protected PDF.
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("This PDF is protected with a password.");
 
-        // Set PDF encryption (user password required to open the file)
+        // The owner password must be different from the user password.
+        // An empty owner password disables owner‑level restrictions.
+        PdfEncryptionDetails encryption = new PdfEncryptionDetails(userPassword: password, ownerPassword: string.Empty);
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            EncryptionDetails = new PdfEncryptionDetails("SecretPassword", string.Empty)
+            EncryptionDetails = encryption
         };
+
         sourceDoc.Save(pdfPath, saveOptions);
 
+        // Verify that the protected PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the protected PDF.");
+            throw new InvalidOperationException($"Failed to create the PDF file '{pdfPath}'.");
 
         // -----------------------------------------------------------------
-        // 2. Load the protected PDF using PdfLoadOptions with the correct password.
+        // Step 2: Load the password‑protected PDF using PdfLoadOptions.
         // -----------------------------------------------------------------
         PdfLoadOptions loadOptions = new PdfLoadOptions
         {
-            Password = "SecretPassword"
+            Password = password
         };
+
         Document protectedDoc = new Document(pdfPath, loadOptions);
 
         // -----------------------------------------------------------------
-        // 3. Convert the loaded PDF to a PNG image.
+        // Step 3: Convert the loaded PDF to PNG.
         // -----------------------------------------------------------------
         protectedDoc.Save(pngPath, SaveFormat.Png);
 
-        // -----------------------------------------------------------------
-        // 4. Validate that the PNG file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(pngPath) || new FileInfo(pngPath).Length == 0)
-            throw new InvalidOperationException("PNG conversion failed; output file is missing or empty.");
+        // Verify that the PNG was created.
+        if (!File.Exists(pngPath))
+            throw new InvalidOperationException($"Failed to create the PNG file '{pngPath}'.");
 
-        // Example completed successfully.
-        Console.WriteLine("PDF loaded with password and converted to PNG successfully.");
+        // Indicate success (no interactive I/O required).
+        Console.WriteLine("PDF successfully converted to PNG.");
     }
 }

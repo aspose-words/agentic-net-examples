@@ -9,37 +9,26 @@ public class Program
         // Create a sample DOCX document in memory.
         Document source = new Document();
         DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("This is a sample DOCX document created in memory.");
+        builder.Writeln("Sample DOCX content.");
 
-        // Save the document to a memory stream in DOCX format.
-        using (MemoryStream docxStream = new MemoryStream())
-        {
-            source.Save(docxStream, SaveFormat.Docx);
-            docxStream.Position = 0; // Reset for reading.
+        // Save the document as a local DOCX file to simulate an existing input file.
+        const string inputPath = "input.docx";
+        source.Save(inputPath, SaveFormat.Docx);
 
-            // Load the document from the DOCX stream.
-            Document doc = new Document(docxStream);
+        // Load the DOCX document from the file.
+        Document doc = new Document(inputPath);
 
-            // Simulate an HTTP response stream.
-            using (MemoryStream responseStream = new MemoryStream())
-            {
-                // Convert the document to PDF and write directly to the response stream.
-                doc.Save(responseStream, SaveFormat.Pdf);
+        // Simulate an HTTP response stream using a MemoryStream.
+        using MemoryStream responseStream = new MemoryStream();
 
-                // Verify that PDF data was written.
-                if (responseStream.Length == 0)
-                    throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
+        // Save the document as PDF directly into the simulated response stream.
+        doc.Save(responseStream, SaveFormat.Pdf);
 
-                // Optionally write the PDF to a file for inspection.
-                responseStream.Position = 0;
-                using (FileStream file = new FileStream("output.pdf", FileMode.Create, FileAccess.Write))
-                {
-                    responseStream.CopyTo(file);
-                }
+        // Verify that PDF data was written to the stream.
+        if (responseStream.Length == 0)
+            throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
 
-                if (!File.Exists("output.pdf"))
-                    throw new InvalidOperationException("Expected output PDF file was not created.");
-            }
-        }
+        // (Optional) Write the PDF to a file for manual inspection.
+        // File.WriteAllBytes("output.pdf", responseStream.ToArray());
     }
 }

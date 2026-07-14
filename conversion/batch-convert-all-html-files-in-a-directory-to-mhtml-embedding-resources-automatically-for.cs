@@ -1,79 +1,48 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare input and output folders.
-        string inputFolder = "InputHtml";
-        string outputFolder = "OutputMhtml";
+        // Define input and output directories.
+        string inputDir = "InputHtml";
+        string outputDir = "OutputMhtml";
 
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Ensure the directories exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create a simple image that will be referenced from the HTML files.
-        string imagePath = Path.Combine(inputFolder, "sample.png");
-        CreateSampleImage(imagePath);
+        // Seed the input folder with sample HTML files.
+        CreateSampleHtml(Path.Combine(inputDir, "sample1.html"),
+            "<html><body><h1>Sample 1</h1><p>Hello World!</p></body></html>");
 
-        // Create a few sample HTML files that reference the image.
-        for (int i = 1; i <= 2; i++)
-        {
-            string htmlContent = $@"<html>
-    <body>
-        <h1>Sample Document {i}</h1>
-        <p>This is a test HTML file.</p>
-        <img src='sample.png' alt='Sample Image' />
-    </body>
-</html>";
-            string htmlFilePath = Path.Combine(inputFolder, $"sample{i}.html");
-            File.WriteAllText(htmlFilePath, htmlContent);
-        }
+        CreateSampleHtml(Path.Combine(inputDir, "sample2.html"),
+            "<html><body><h1>Sample 2</h1><img src=\"https://via.placeholder.com/150\" alt=\"Placeholder\"/></body></html>");
 
-        // Batch convert each HTML file to MHTML with embedded resources.
-        foreach (string htmlFile in Directory.GetFiles(inputFolder, "*.html"))
+        // Convert each HTML file in the input folder to MHTML.
+        foreach (string htmlFilePath in Directory.GetFiles(inputDir, "*.html"))
         {
             // Load the HTML document.
-            Document doc = new Document(htmlFile);
+            Document doc = new Document(htmlFilePath);
 
-            // Prepare the output MHTML file path.
-            string outputFileName = Path.GetFileNameWithoutExtension(htmlFile) + ".mht";
-            string outputPath = Path.Combine(outputFolder, outputFileName);
+            // Build the output MHTML file path.
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(htmlFilePath);
+            string mhtmlFilePath = Path.Combine(outputDir, fileNameWithoutExt + ".mht");
 
-            // Configure save options for MHTML. Enable CID URLs to ensure resources are embedded.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Mhtml)
-            {
-                ExportCidUrlsForMhtmlResources = true
-            };
-
-            // Save the document as MHTML.
-            doc.Save(outputPath, saveOptions);
+            // Save as MHTML; resources (images, fonts, CSS) are embedded automatically.
+            doc.Save(mhtmlFilePath, SaveFormat.Mhtml);
 
             // Verify that the output file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create MHTML file: {outputPath}");
+            if (!File.Exists(mhtmlFilePath))
+                throw new InvalidOperationException($"Failed to create MHTML file: {mhtmlFilePath}");
         }
-
-        // Optionally, indicate successful conversion (no interactive output required).
-        // Console.WriteLine("Batch conversion completed.");
     }
 
-    // Creates a simple 100x100 PNG image using Aspose.Drawing.
-    private static void CreateSampleImage(string path)
+    // Helper method to write HTML content to a file.
+    private static void CreateSampleHtml(string filePath, string htmlContent)
     {
-        using (Bitmap bitmap = new Bitmap(100, 100))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.LightBlue);
-                graphics.DrawEllipse(new Pen(Color.DarkBlue, 3), 10, 10, 80, 80);
-            }
-
-            bitmap.Save(path, ImageFormat.Png);
-        }
+        File.WriteAllText(filePath, htmlContent);
     }
 }

@@ -8,44 +8,32 @@ public class Program
 {
     public static void Main()
     {
-        // Define temporary file paths.
-        const string pdfPath = "sample.pdf";
-        const string docxPath = "output.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample PDF document.
-        // -----------------------------------------------------------------
+        // Create a sample PDF file.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("This is the first page.");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("This is the second page.");
+        const string pdfPath = "sample.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // 2. Load the PDF with options that ignore errors.
-        // -----------------------------------------------------------------
+        // Load the PDF with options that ignore errors during loading.
         PdfLoadOptions loadOptions = new PdfLoadOptions
         {
-            // Explicitly set the recovery mode to try to recover the document if it contains errors.
+            // Attempt to recover from any errors encountered while loading.
             RecoveryMode = DocumentRecoveryMode.TryRecover
         };
-
         Document pdfDoc = new Document(pdfPath, loadOptions);
 
-        // -----------------------------------------------------------------
-        // 3. Save the loaded document as DOCX while preserving page breaks.
-        // -----------------------------------------------------------------
-        // No special save options are required; Aspose.Words preserves page breaks by default.
+        // Save the loaded document as DOCX, preserving page breaks.
+        const string docxPath = "output.docx";
         pdfDoc.Save(docxPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 4. Verify that the DOCX file was created.
-        // -----------------------------------------------------------------
+        // Verify that the DOCX file was created.
         if (!File.Exists(docxPath))
             throw new InvalidOperationException("The DOCX file was not created.");
 
-        // Clean up the temporary PDF file (optional).
+        // Clean up temporary PDF file (optional).
         if (File.Exists(pdfPath))
             File.Delete(pdfPath);
     }

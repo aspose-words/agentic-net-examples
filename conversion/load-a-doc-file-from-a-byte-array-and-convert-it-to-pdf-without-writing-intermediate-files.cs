@@ -6,31 +6,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOC document in memory.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample DOC content.");
+        // 1. Create a sample DOC document in memory.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample DOC content for conversion.");
 
-        // Save the DOC document to a memory stream (no file is written).
+        // 2. Save the DOC document to a MemoryStream (no file is written).
         using (MemoryStream docStream = new MemoryStream())
         {
-            source.Save(docStream, SaveFormat.Doc);
-
-            // Obtain the byte array representing the DOC file.
+            sourceDoc.Save(docStream, SaveFormat.Doc);
             byte[] docBytes = docStream.ToArray();
 
-            // Load a new Document from the byte array.
-            using (MemoryStream inputStream = new MemoryStream(docBytes))
+            // 3. Load a new Document from the byte array.
+            using (MemoryStream loadStream = new MemoryStream(docBytes))
             {
-                Document doc = new Document(inputStream);
+                Document loadedDoc = new Document(loadStream);
 
-                // Convert the document to PDF and save to disk.
+                // 4. Convert the loaded document to PDF and save to a file.
                 const string pdfPath = "output.pdf";
-                doc.Save(pdfPath, SaveFormat.Pdf);
+                loadedDoc.Save(pdfPath, SaveFormat.Pdf);
 
-                // Verify that the PDF was created.
+                // 5. Validate that the PDF file was created.
                 if (!File.Exists(pdfPath))
-                    throw new InvalidOperationException("Expected output PDF was not created.");
+                    throw new InvalidOperationException("The PDF conversion failed; output file was not created.");
+
+                // Optional: indicate success.
+                Console.WriteLine($"PDF successfully created at '{Path.GetFullPath(pdfPath)}'.");
             }
         }
     }

@@ -7,47 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names.
         const string inputPath = "input.docx";
-        const string outputPath = "report.pdf";
+        const string outputPath = "output.pdf";
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX with a date placeholder.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Create a sample DOCX containing a date placeholder.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
         builder.Writeln("Report generated on {{Date}}.");
-        sourceDoc.Save(inputPath, SaveFormat.Docx);
+        sampleDoc.Save(inputPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX we just created.
-        // -----------------------------------------------------------------
+        // Load the DOCX file.
         Document doc = new Document(inputPath);
 
-        // -----------------------------------------------------------------
-        // 3. Replace all occurrences of the placeholder with the current date.
-        // -----------------------------------------------------------------
+        // Replace all occurrences of the placeholder with the current date.
         string placeholder = "{{Date}}";
-        string currentDate = DateTime.Now.ToString("d"); // Short date pattern.
+        string currentDate = DateTime.Now.ToString("d");
+        doc.Range.Replace(placeholder, currentDate, new FindReplaceOptions());
 
-        // Use FindReplaceOptions; only set properties that exist in the current API version.
-        FindReplaceOptions replaceOptions = new FindReplaceOptions
-        {
-            MatchCase = false
-            // FindWholeWords property is not available in this version and is therefore omitted.
-        };
-
-        doc.Range.Replace(placeholder, currentDate, replaceOptions);
-
-        // -----------------------------------------------------------------
-        // 4. Export the updated document to PDF.
-        // -----------------------------------------------------------------
+        // Export the updated document to PDF.
         doc.Save(outputPath, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // 5. Verify that the PDF was created.
-        // -----------------------------------------------------------------
+        // Validate that the PDF was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The PDF report was not created.");
+        {
+            throw new InvalidOperationException("The PDF output file was not created.");
+        }
     }
 }

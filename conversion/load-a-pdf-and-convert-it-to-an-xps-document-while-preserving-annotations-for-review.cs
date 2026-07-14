@@ -8,42 +8,51 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document with a comment.");
+        // Define file names for the sample files.
+        const string pdfPath = "sample.pdf";
+        const string xpsPath = "sample.xps";
 
-        // Create a comment that will become an annotation in PDF/XPS.
-        Comment comment = new Comment(doc, "Reviewer", "RV", DateTime.Now);
+        // -----------------------------------------------------------------
+        // 1. Create a sample Word document with a comment (annotation).
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Document created for conversion demo.");
 
-        // A Comment must contain at least one Paragraph before adding Runs.
-        Paragraph commentParagraph = new Paragraph(doc);
-        commentParagraph.AppendChild(new Run(doc, "Please review this paragraph."));
+        // Create a comment node and attach it to the current paragraph.
+        // The comment must contain at least one paragraph with a run.
+        Comment comment = new Comment(sourceDoc, "Reviewer", "RV", DateTime.Now);
+        Paragraph commentParagraph = new Paragraph(sourceDoc);
+        commentParagraph.AppendChild(new Run(sourceDoc, "This paragraph contains a review comment."));
         comment.AppendChild(commentParagraph);
 
-        // Attach the comment to the current paragraph.
+        // Attach the comment to the paragraph that was just written.
         builder.CurrentParagraph.AppendChild(comment);
 
-        // Render comments as annotations when saving to PDF.
-        doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
+        // Ensure comments are rendered as PDF annotations.
+        sourceDoc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
 
-        // Save the document as PDF (the comment becomes a PDF annotation).
-        string pdfPath = "sample.pdf";
-        doc.Save(pdfPath, SaveFormat.Pdf);
+        // Save the document as PDF – this embeds the comment as a PDF annotation.
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the generated PDF.
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException($"Failed to create PDF file '{pdfPath}'.");
+
+        // -----------------------------------------------------------------
+        // 2. Load the PDF and convert it to XPS while preserving annotations.
+        // -----------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
 
-        // Convert the PDF to XPS while preserving annotations.
-        string xpsPath = "output.xps";
+        // XpsSaveOptions preserve annotations by default.
         XpsSaveOptions xpsOptions = new XpsSaveOptions();
+
         pdfDoc.Save(xpsPath, xpsOptions);
 
         // Verify that the XPS file was created.
         if (!File.Exists(xpsPath))
-            throw new InvalidOperationException("The XPS file was not created.");
+            throw new InvalidOperationException($"Failed to create XPS file '{xpsPath}'.");
 
-        // Optional cleanup of the intermediate PDF.
-        // File.Delete(pdfPath);
+        Console.WriteLine("PDF successfully converted to XPS with annotations preserved.");
     }
 }

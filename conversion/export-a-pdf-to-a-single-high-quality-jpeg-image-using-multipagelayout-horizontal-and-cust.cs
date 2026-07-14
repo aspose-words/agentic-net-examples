@@ -2,45 +2,46 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
 
-public class Program
+public class ExportPdfToJpeg
 {
     public static void Main()
     {
-        // Create a sample document and save it as PDF (input.pdf).
+        // Step 1: Create a sample multi‑page document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("First page of the PDF.");
+        builder.Writeln("Page 1 - Sample content.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page of the PDF.");
+        builder.Writeln("Page 2 - More content.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Third page of the PDF.");
-        sourceDoc.Save("input.pdf", SaveFormat.Pdf);
+        builder.Writeln("Page 3 - Final page.");
 
-        // Load the PDF we just created.
-        Document pdfDoc = new Document("input.pdf");
+        // Step 2: Save the document as PDF (the source for conversion).
+        const string pdfPath = "sample.pdf";
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Configure image save options for a single high‑quality JPEG.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The source PDF was not created.");
+
+        // Step 3: Load the PDF document.
+        Document pdfDoc = new Document(pdfPath);
+
+        // Step 4: Configure image save options for a high‑quality JPEG.
         ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
         {
-            // High quality (0‑100). 100 = best quality, least compression.
-            JpegQuality = 100,
-            // Render all pages side by side horizontally.
-            PageLayout = MultiPageLayout.Horizontal(10f), // 10 points spacing between pages.
-            // Optional: improve rendering quality.
-            UseHighQualityRendering = true,
-            UseAntiAliasing = true
+            JpegQuality = 100,                 // Highest quality (0‑100).
+            UseHighQualityRendering = true,    // Use high‑quality rendering algorithms.
+            UseAntiAliasing = true,            // Enable anti‑aliasing.
+            PageLayout = MultiPageLayout.Horizontal(10) // Render pages side‑by‑side with 10 pts spacing.
         };
 
-        // Save the PDF as a single JPEG image.
-        string outputPath = "output.jpg";
-        pdfDoc.Save(outputPath, jpegOptions);
+        // Step 5: Save the PDF as a single JPEG image.
+        const string jpegPath = "output.jpg";
+        pdfDoc.Save(jpegPath, jpegOptions);
 
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
-            throw new InvalidOperationException("The JPEG image was not created successfully.");
+        if (!File.Exists(jpegPath))
+            throw new InvalidOperationException("The JPEG image was not created.");
 
-        // Example completed without requiring user interaction.
+        Console.WriteLine("PDF successfully exported to high‑quality JPEG: " + Path.GetFullPath(jpegPath));
     }
 }

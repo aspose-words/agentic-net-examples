@@ -2,42 +2,68 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing;
+using Aspose.Words.Drawing.Charts;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a rectangle shape (vector graphic).
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        // Insert a rectangle shape; default colors are sufficient for the example.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 300, 150);
+        // Define file names in the current directory.
+        string pdfPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.pdf");
+        string pngPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
 
-        // Save the document as PDF – vector graphics are preserved.
-        const string pdfPath = "sample.pdf";
-        sampleDoc.Save(pdfPath, SaveFormat.Pdf);
+        // -----------------------------------------------------------------
+        // Step 1: Create a Word document with vector graphics (a chart).
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Load the PDF document.
+        // Insert a title.
+        builder.Writeln("Vector Graphics Sample");
+
+        // Insert a pie chart – charts are vector graphics.
+        Chart chart = builder.InsertChart(ChartType.Pie, 500, 400).Chart;
+        chart.Title.Text = "Sample Chart";
+        chart.Series.Clear();
+
+        // Add a series with sample data.
+        ChartSeries series = chart.Series.Add("Series 1",
+            new string[] { "A", "B", "C" },
+            new double[] { 30, 45, 25 });
+
+        // (Optional) Enable data labels if needed.
+        // The ChartSeries class does not expose a HasDataLabel property in this version,
+        // so this line is omitted.
+
+        // Save the document as PDF.
+        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The PDF file was not created.");
+
+        // -----------------------------------------------------------------
+        // Step 2: Load the PDF and convert the first page to a high‑resolution PNG.
+        // -----------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
 
-        // Configure high‑resolution PNG export.
         ImageSaveOptions pngOptions = new ImageSaveOptions(SaveFormat.Png)
         {
-            Resolution = 300,               // High DPI for visual fidelity.
+            // Render at 300 DPI for high resolution.
+            Resolution = 300,
+            // Use high‑quality rendering algorithms.
             UseHighQualityRendering = true,
-            UseAntiAliasing = true
+            // Render only the first page (zero‑based index).
+            PageSet = new PageSet(0)
         };
 
-        // Save the first page of the PDF as a PNG image.
-        const string pngPath = "output.png";
         pdfDoc.Save(pngPath, pngOptions);
 
-        // Verify that the PNG file was created and is not empty.
+        // Verify that the PNG was created and contains data.
         if (!File.Exists(pngPath) || new FileInfo(pngPath).Length == 0)
-            throw new InvalidOperationException("The PNG conversion failed; the output file was not created or is empty.");
+            throw new InvalidOperationException("The PNG file was not created or is empty.");
 
-        // Optional cleanup of intermediate files.
-        // File.Delete(pdfPath);
+        // Indicate successful completion.
+        Console.WriteLine("PDF successfully converted to high‑resolution PNG.");
     }
 }

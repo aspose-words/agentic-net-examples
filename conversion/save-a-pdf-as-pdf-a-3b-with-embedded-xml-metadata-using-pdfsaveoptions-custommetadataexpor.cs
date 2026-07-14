@@ -7,30 +7,52 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and add some text.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample content for PDF/A-3b conversion.");
+        // Create a simple Word document.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample content for PDF/A-3b conversion with custom XML metadata.");
 
-        // Add a custom document property that contains XML metadata.
-        string xmlMetadata = "<metadata><author>John Doe</author><description>Sample PDF/A-3b document</description></metadata>";
-        doc.CustomDocumentProperties.Add("XmlMetadata", xmlMetadata);
+        // Save the source document as a temporary DOCX file (required by the lifecycle rule).
+        const string tempDocPath = "temp.docx";
+        sourceDoc.Save(tempDocPath, SaveFormat.Docx);
 
-        // Configure PDF save options:
-        // - Set compliance to PDF/A-3b (represented by PdfA3u in Aspose.Words).
-        // - Export custom properties as XMP metadata.
-        PdfSaveOptions saveOptions = new PdfSaveOptions
+        // Load the temporary document.
+        Document doc = new Document(tempDocPath);
+
+        // Prepare custom XML metadata to be stored in the PDF.
+        const string customXml = "<xmpmeta xmlns=\"adobe:ns:meta/\">\n" +
+                                 "  <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n" +
+                                 "    <rdf:Description rdf:about=\"\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\">\n" +
+                                 "      <dc:title>Sample PDF/A-3b Document</dc:title>\n" +
+                                 "      <dc:creator>Aspose.Words Example</dc:creator>\n" +
+                                 "    </rdf:Description>\n" +
+                                 "  </rdf:RDF>\n" +
+                                 "</xmpmeta>";
+
+        // Store the XML string as a custom document property.
+        // It will be exported as XMP metadata when saving to PDF/A.
+        doc.CustomDocumentProperties.Add("CustomXmlMetadata", customXml);
+
+        // Configure PDF save options for PDF/A‑3b compliance and embed the custom XML metadata.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
+            // PDF/A‑3b compliance is achieved via the PdfA3u level (includes the “b” requirements).
             Compliance = PdfCompliance.PdfA3u,
+
+            // Export custom document properties as XMP metadata.
             CustomPropertiesExport = PdfCustomPropertiesExport.Metadata
         };
 
-        // Save the document as PDF/A-3b.
-        string outputPath = "output.pdf";
-        doc.Save(outputPath, saveOptions);
+        // Save the document as PDF/A‑3b with the specified options.
+        const string outputPdfPath = "output_pdfa3b.pdf";
+        doc.Save(outputPdfPath, pdfOptions);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("PDF/A-3b file was not created.");
+        // Verify that the PDF file was created.
+        if (!File.Exists(outputPdfPath))
+            throw new InvalidOperationException("The PDF/A-3b file was not created.");
+
+        // Clean up temporary files.
+        if (File.Exists(tempDocPath))
+            File.Delete(tempDocPath);
     }
 }

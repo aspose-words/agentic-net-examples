@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net.Http;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
@@ -10,27 +11,33 @@ public class Program
         // URL of a sample PDF file.
         const string pdfUrl = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
 
-        // Download the PDF into a byte array.
+        // Path for the resulting DOCX file.
+        const string outputPath = "output.docx";
+
+        // Download the PDF into a memory stream.
         using (HttpClient httpClient = new HttpClient())
         {
-            byte[] pdfBytes = httpClient.GetByteArrayAsync(pdfUrl).GetAwaiter().GetResult();
+            HttpResponseMessage response = httpClient.GetAsync(pdfUrl).Result;
+            response.EnsureSuccessStatusCode();
+            byte[] pdfBytes = response.Content.ReadAsByteArrayAsync().Result;
 
-            // Load the PDF from a memory stream.
             using (MemoryStream pdfStream = new MemoryStream(pdfBytes))
             {
-                pdfStream.Position = 0; // Ensure the stream is at the beginning.
+                // Ensure the stream is positioned at the beginning before loading.
+                pdfStream.Position = 0;
 
-                // Create an Aspose.Words Document from the PDF stream.
-                Document doc = new Document(pdfStream);
+                // Load the PDF document directly from the stream.
+                Document pdfDocument = new Document(pdfStream);
 
-                // Convert and save the document as DOCX.
-                const string outputPath = "output.docx";
-                doc.Save(outputPath, SaveFormat.Docx);
-
-                // Verify that the DOCX file was created.
-                if (!File.Exists(outputPath))
-                    throw new InvalidOperationException("The DOCX output file was not created.");
+                // Convert and save the document as DOCX without creating an intermediate file.
+                pdfDocument.Save(outputPath, SaveFormat.Docx);
             }
+        }
+
+        // Verify that the DOCX file was created and contains data.
+        if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+        {
+            throw new InvalidOperationException("Conversion failed: DOCX file was not created or is empty.");
         }
     }
 }

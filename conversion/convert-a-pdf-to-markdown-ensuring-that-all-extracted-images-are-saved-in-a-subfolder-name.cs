@@ -2,76 +2,70 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names and folders.
-        string inputPdfPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.pdf");
-        string outputMarkdownPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.md");
-        string assetsFolder = Path.Combine(Directory.GetCurrentDirectory(), "assets");
+        // Define file and folder paths.
+        string currentDir = Directory.GetCurrentDirectory();
+        string pdfPath = Path.Combine(currentDir, "input.pdf");
+        string markdownPath = Path.Combine(currentDir, "output.md");
+        string assetsFolder = Path.Combine(currentDir, "assets");
+        string imagePath = Path.Combine(currentDir, "sample.png");
+
+        // Ensure the assets folder exists.
+        Directory.CreateDirectory(assetsFolder);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample PDF document with an image.
+        // 1. Create a sample image using Aspose.Drawing (no System.Drawing).
         // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("This is a sample PDF that will be converted to Markdown.");
-        // Insert a sample image (use any image file that exists in the project directory).
-        // For demonstration, create a simple placeholder image file if it does not exist.
-        string placeholderImagePath = Path.Combine(Directory.GetCurrentDirectory(), "placeholder.png");
-        if (!File.Exists(placeholderImagePath))
+        using (Bitmap bitmap = new Bitmap(200, 100))
         {
-            // Create a 1x1 pixel PNG using Aspose.Drawing (no System.Drawing usage).
-            using (var bitmap = new Aspose.Drawing.Bitmap(1, 1))
+            using (Graphics graphics = Graphics.FromImage(bitmap))
             {
-                bitmap.SetPixel(0, 0, Aspose.Drawing.Color.Red);
-                bitmap.Save(placeholderImagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+                graphics.Clear(Color.White);
+                // Resolve the ambiguous Font type by using the fully qualified name.
+                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20);
+                graphics.DrawString("Sample", font, Brushes.Black, new PointF(10, 40));
+                font.Dispose();
             }
+            bitmap.Save(imagePath, ImageFormat.Png);
         }
-        builder.InsertImage(placeholderImagePath);
-        // Save the document as PDF.
-        sourceDoc.Save(inputPdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(inputPdfPath))
-            throw new InvalidOperationException("Failed to create the input PDF file.");
+        // --------------------------------------------------------------
+        // 2. Create a PDF document that contains some text and the image.
+        // --------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample PDF with an image.");
+        builder.InsertImage(imagePath);
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // -----------------------------------------------------------------
-        // 2. Load the PDF and convert it to Markdown, saving images to "assets".
-        // -----------------------------------------------------------------
-        Document pdfDoc = new Document(inputPdfPath);
-
-        // Configure Markdown save options.
+        // --------------------------------------------------------------
+        // 3. Load the PDF and convert it to Markdown, extracting images.
+        // --------------------------------------------------------------
+        Document pdfDoc = new Document(pdfPath);
         MarkdownSaveOptions mdOptions = new MarkdownSaveOptions
         {
-            // Ensure images are saved to the "assets" subfolder.
-            ImagesFolder = assetsFolder,
-            ImagesFolderAlias = "assets",
-            SaveFormat = SaveFormat.Markdown
+            ImagesFolder = assetsFolder // Images will be saved here.
         };
+        pdfDoc.Save(markdownPath, mdOptions);
 
-        // Save as Markdown.
-        pdfDoc.Save(outputMarkdownPath, mdOptions);
+        // ------------------------------
+        // 4. Validation of the results.
+        // ------------------------------
+        if (!File.Exists(markdownPath))
+            throw new InvalidOperationException("The Markdown file was not created.");
 
-        // -----------------------------------------------------------------
-        // 3. Validation.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputMarkdownPath))
-            throw new InvalidOperationException("Markdown output file was not created.");
-
-        if (!Directory.Exists(assetsFolder))
-            throw new InvalidOperationException("Assets folder was not created.");
-
-        // At least one image file should be present in the assets folder.
-        string[] imageFiles = Directory.GetFiles(assetsFolder);
-        if (imageFiles.Length == 0)
+        if (!Directory.Exists(assetsFolder) || Directory.GetFiles(assetsFolder).Length == 0)
             throw new InvalidOperationException("No images were extracted to the assets folder.");
 
-        // Example completed successfully.
-        Console.WriteLine("PDF successfully converted to Markdown.");
-        Console.WriteLine($"Markdown file: {outputMarkdownPath}");
+        // Optional: output a short confirmation (no interactive input required).
+        Console.WriteLine("Conversion completed successfully.");
+        Console.WriteLine($"Markdown file: {markdownPath}");
         Console.WriteLine($"Extracted images folder: {assetsFolder}");
     }
 }

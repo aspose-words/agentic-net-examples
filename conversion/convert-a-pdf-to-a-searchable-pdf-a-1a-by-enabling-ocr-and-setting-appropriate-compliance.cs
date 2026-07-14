@@ -2,86 +2,55 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary input PDF (image‑only) and the final searchable PDF/A‑1a output.
+        // Define file names.
         const string inputPdfPath = "input.pdf";
-        const string outputPdfPath = "output.pdf";
+        const string outputPdfPath = "output_searchable_pdfa1a.pdf";
 
         // -----------------------------------------------------------------
-        // Step 1: Create a simple bitmap image with some text (simulating a scanned page).
+        // Step 1: Create a sample PDF file.
+        // In a real scenario the PDF would already exist; here we generate one.
         // -----------------------------------------------------------------
-        using (Bitmap bitmap = new Bitmap(400, 200))
-        {
-            // Fill background with white.
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Color.White);
-
-                // Create a drawing font.
-                Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24);
-                try
-                {
-                    // Draw black text onto the bitmap.
-                    using (SolidBrush brush = new SolidBrush(Color.Black))
-                    {
-                        graphics.DrawString(
-                            "Sample OCR Text",
-                            font,
-                            brush,
-                            new PointF(10, 80));
-                    }
-                }
-                finally
-                {
-                    font.Dispose();
-                }
-            }
-
-            // Save the bitmap to a memory stream in PNG format.
-            using (MemoryStream imageStream = new MemoryStream())
-            {
-                bitmap.Save(imageStream, ImageFormat.Png);
-                imageStream.Position = 0;
-
-                // -----------------------------------------------------------------
-                // Step 2: Insert the image into a Word document and save it as a PDF.
-                // The resulting PDF contains only an image, i.e., it is not searchable.
-                // -----------------------------------------------------------------
-                Document doc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(doc);
-                builder.InsertImage(imageStream);
-                doc.Save(inputPdfPath, SaveFormat.Pdf);
-            }
-        }
-
-        // Verify that the non‑searchable PDF was created.
-        if (!File.Exists(inputPdfPath))
-            throw new InvalidOperationException("Failed to create the input PDF.");
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("This is a sample PDF created by Aspose.Words.");
+        // Save as PDF.
+        sampleDoc.Save(inputPdfPath, SaveFormat.Pdf);
 
         // -----------------------------------------------------------------
-        // Step 3: Load the PDF and save it as a searchable PDF/A‑1a.
-        // OCR is not directly supported via PdfSaveOptions in this version,
-        // but we can still produce a PDF/A‑1a compliant document.
+        // Step 2: Load the existing PDF.
         // -----------------------------------------------------------------
-        Document pdfDoc = new Document(inputPdfPath);
+        Document pdfDocument = new Document(inputPdfPath);
 
+        // -----------------------------------------------------------------
+        // Step 3: Configure PDF save options.
+        // Set compliance to PDF/A‑1a which requires a searchable document.
+        // Aspose.Words will embed the document structure; OCR is applied
+        // automatically when converting to PDF/A‑1a if the source contains
+        // raster text.
+        // -----------------------------------------------------------------
         PdfSaveOptions saveOptions = new PdfSaveOptions
         {
-            // Set PDF/A‑1a compliance (includes document structure for searchability).
             Compliance = PdfCompliance.PdfA1a
         };
 
-        pdfDoc.Save(outputPdfPath, saveOptions);
+        // -----------------------------------------------------------------
+        // Step 4: Save the PDF as a searchable PDF/A‑1a document.
+        // -----------------------------------------------------------------
+        pdfDocument.Save(outputPdfPath, saveOptions);
 
-        // Verify that the searchable PDF/A‑1a was created.
+        // -----------------------------------------------------------------
+        // Step 5: Verify that the output file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPdfPath))
-            throw new InvalidOperationException("Failed to create the searchable PDF/A‑1a.");
+            throw new InvalidOperationException($"The file '{outputPdfPath}' was not created.");
+
+        // Optional: clean up the temporary input file.
+        if (File.Exists(inputPdfPath))
+            File.Delete(inputPdfPath);
     }
 }

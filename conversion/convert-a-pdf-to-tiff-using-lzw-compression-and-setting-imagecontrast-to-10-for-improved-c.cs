@@ -7,33 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample Word document.
+        // Create a sample PDF document.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
         builder.Writeln("Sample PDF content for conversion to TIFF.");
-
-        // Save the document as PDF – this will be the input for conversion.
-        const string pdfPath = "sample.pdf";
+        const string pdfPath = "input.pdf";
         sourceDoc.Save(pdfPath, SaveFormat.Pdf);
 
         // Load the PDF document.
         Document pdfDoc = new Document(pdfPath);
 
-        // Configure image save options for TIFF output.
+        // Configure TIFF save options: LZW compression and increased contrast.
         ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Apply LZW compression.
             TiffCompression = TiffCompression.Lzw,
-            // Set contrast within the valid range (0‑1). Use a high value for clearer output.
-            ImageContrast = 0.9f
+            // ImageContrast must be in the range 0..1. 1.0 gives maximum contrast.
+            ImageContrast = 1.0f
         };
 
-        // Save the PDF as a TIFF image using the specified options.
+        // Save the PDF as a TIFF image.
         const string tiffPath = "output.tiff";
         pdfDoc.Save(tiffPath, tiffOptions);
 
-        // Validate that the TIFF file was created.
+        // Verify that the TIFF file was created.
         if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("The expected TIFF output file was not created.");
+            throw new InvalidOperationException("The TIFF output file was not created.");
+
+        // Optional cleanup of the intermediate PDF.
+        // File.Delete(pdfPath);
     }
 }

@@ -9,54 +9,63 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directories
+        // Define paths for temporary files.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a simple PNG image using Aspose.Drawing
         string imagePath = Path.Combine(artifactsDir, "sample.png");
+        string pdfPath = Path.Combine(artifactsDir, "sample.pdf");
+        string htmlPath = Path.Combine(artifactsDir, "sample.html");
+
+        // -----------------------------------------------------------------
+        // Create a simple PNG image using Aspose.Drawing (no System.Drawing).
+        // -----------------------------------------------------------------
         using (Bitmap bitmap = new Bitmap(100, 100))
         {
             using (Graphics graphics = Graphics.FromImage(bitmap))
             {
+                // Fill the bitmap with a solid color.
                 graphics.Clear(Color.Blue);
             }
+
+            // Save the bitmap to a file.
             bitmap.Save(imagePath, ImageFormat.Png);
         }
 
-        // Create a Word document, insert the image, and save it as PDF
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-        builder.Writeln("Sample PDF with an embedded image.");
+        // --------------------------------------------------------------
+        // Create a Word document, insert the image, and save it as PDF.
+        // --------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample PDF with an embedded image:");
         builder.InsertImage(imagePath);
-        string pdfPath = Path.Combine(artifactsDir, "sample.pdf");
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Load the PDF document
+        // --------------------------------------------------------------
+        // Load the PDF and save it as HTML with images embedded as Base64.
+        // --------------------------------------------------------------
         Document pdfDoc = new Document(pdfPath);
-
-        // Configure HtmlFixedSaveOptions to embed images as Base64 data URIs
         HtmlFixedSaveOptions htmlOptions = new HtmlFixedSaveOptions
         {
-            ExportEmbeddedImages = true,
+            ExportEmbeddedImages = true, // Enable Base64 embedding.
             PrettyFormat = true
         };
-
-        // Save the PDF as HTML with embedded images
-        string htmlPath = Path.Combine(artifactsDir, "output.html");
         pdfDoc.Save(htmlPath, htmlOptions);
 
-        // Validate that the HTML file was created
+        // ------------------------------
+        // Validate that the HTML contains Base64 image data.
+        // ------------------------------
         if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("Expected output HTML was not created.");
+            throw new InvalidOperationException("The HTML output file was not created.");
 
-        // Validate that the HTML contains Base64-encoded image data
         string htmlContent = File.ReadAllText(htmlPath);
         if (!htmlContent.Contains("data:image"))
-            throw new InvalidOperationException("HTML does not contain Base64-encoded image data.");
+            throw new InvalidOperationException("Images were not embedded as Base64 data URIs.");
 
-        // Clean up temporary files (optional)
+        // Optional: clean up temporary files (comment out if inspection is needed).
         // File.Delete(imagePath);
         // File.Delete(pdfPath);
+        // File.Delete(htmlPath);
+        // Directory.Delete(artifactsDir, true);
     }
 }

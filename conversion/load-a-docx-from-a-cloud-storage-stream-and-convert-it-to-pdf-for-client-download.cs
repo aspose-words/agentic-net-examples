@@ -6,41 +6,45 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample DOCX document.
-        Document source = new Document();
-        DocumentBuilder builder = new DocumentBuilder(source);
-        builder.Writeln("Sample content for cloud storage conversion.");
+        // Step 1: Create a sample DOCX document locally.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Sample DOCX content generated for cloud‑storage stream conversion.");
 
-        // Save the sample DOCX to a local file (simulating a file stored in the cloud).
-        const string inputPath = "input.docx";
-        source.Save(inputPath, SaveFormat.Docx);
+        // Save the sample document as a DOCX file (bootstrap for the input).
+        const string inputFileName = "input.docx";
+        sourceDoc.Save(inputFileName, SaveFormat.Docx);
 
-        // Load the DOCX into a memory stream to simulate downloading it from cloud storage.
-        byte[] docBytes = File.ReadAllBytes(inputPath);
-        using (MemoryStream cloudStream = new MemoryStream(docBytes))
+        // Step 2: Simulate a cloud storage stream by loading the DOCX file into a MemoryStream.
+        using (FileStream fileStream = new FileStream(inputFileName, FileMode.Open, FileAccess.Read))
+        using (MemoryStream cloudStream = new MemoryStream())
         {
-            // Ensure the stream position is at the beginning before loading.
-            cloudStream.Position = 0;
+            fileStream.CopyTo(cloudStream);
+            cloudStream.Position = 0; // Reset before reading.
 
-            // Load the document from the simulated cloud stream.
-            Document doc = new Document(cloudStream);
+            // Step 3: Load the document from the simulated cloud stream.
+            Document docFromCloud = new Document(cloudStream);
 
-            // Convert the document to PDF and write it to a response stream (simulating client download).
-            using (MemoryStream responseStream = new MemoryStream())
+            // Step 4: Convert the loaded document to PDF using another MemoryStream.
+            using (MemoryStream pdfStream = new MemoryStream())
             {
-                doc.Save(responseStream, SaveFormat.Pdf);
+                docFromCloud.Save(pdfStream, SaveFormat.Pdf);
 
-                // Verify that PDF data was written to the response stream.
-                if (responseStream.Length == 0)
-                    throw new InvalidOperationException("No PDF data was written to the simulated response stream.");
+                // Verify that PDF data was written.
+                if (pdfStream.Length == 0)
+                    throw new InvalidOperationException("PDF conversion produced an empty stream.");
 
-                // Optionally, write the PDF to a local file for verification.
-                const string outputPath = "output.pdf";
-                File.WriteAllBytes(outputPath, responseStream.ToArray());
+                // Optional: write the PDF to a file for verification.
+                const string outputFileName = "output.pdf";
+                pdfStream.Position = 0; // Reset before copying to file.
+                using (FileStream outFile = new FileStream(outputFileName, FileMode.Create, FileAccess.Write))
+                {
+                    pdfStream.CopyTo(outFile);
+                }
 
-                // Verify that the output file was created.
-                if (!File.Exists(outputPath))
-                    throw new InvalidOperationException("Expected output PDF was not created.");
+                // Verify that the output file exists.
+                if (!File.Exists(outputFileName))
+                    throw new InvalidOperationException("Expected output PDF file was not created.");
             }
         }
     }
