@@ -7,90 +7,64 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for dictionary and output files.
-        const string dictionaryPath = "hyph_en_US.dic";
-        const string outputBefore = "hyphenated_before.pdf";
-        const string outputAfter = "hyphenated_after.pdf";
+        // Path for the hyphenation dictionary.
+        const string dictFile = "hyph_en_US.dic";
 
         // -----------------------------------------------------------------
-        // Step 1: Create an initial Hunspell dictionary with basic patterns.
+        // 1. Create an initial Hunspell dictionary with a single pattern.
         // -----------------------------------------------------------------
-        // The dictionary format: first line is the encoding, subsequent lines are
-        // word=hyphenation-pattern (hyphens indicate allowed break points).
-        string initialDictionaryContent =
+        File.WriteAllText(dictFile,
             "UTF-8\n" +
-            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
-            "communication=com-mu-ni-ca-tion\n" +
-            // Note: No pattern for the technical term \"microprocessor\" yet.
-            "microprocessor=microprocessor\n";
+            "technologies=tech-no-lo-gi-es\n"); // pattern for the word "technologies"
 
-        File.WriteAllText(dictionaryPath, initialDictionaryContent);
+        // Register the dictionary for English (US).
+        Hyphenation.RegisterDictionary("en-US", dictFile);
 
-        // Register the dictionary for the \"en-US\" locale.
-        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
+        // -----------------------------------------------------------------
+        // 2. Build a document that contains technical terminology.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // --------------------------------------------------------------
-        // Step 2: Build a sample document that contains long words.
-        // --------------------------------------------------------------
-        Document docBefore = new Document();
-        DocumentBuilder builder = new DocumentBuilder(docBefore);
+        // Narrow page width forces line wrapping and hyphenation.
+        doc.FirstSection.PageSetup.PageWidth = 200;
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Narrow the page width to force line wrapping and hyphenation.
-        docBefore.FirstSection.PageSetup.PageWidth = 200;
-        docBefore.FirstSection.PageSetup.LeftMargin = 20;
-        docBefore.FirstSection.PageSetup.RightMargin = 20;
+        // Set the locale to match the registered dictionary.
+        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
 
-        // Write a paragraph with technical terminology.
-        builder.Font.Size = 12;
+        // Write sample text containing words that will be hyphenated.
         builder.Writeln(
-            "The extraordinarycharacteristically advanced communication " +
-            "systems rely on the microprocessor to perform complex calculations.");
+            "The field of technologies evolves rapidly. " +
+            "Understanding microprocessor architecture is essential.");
 
         // Enable automatic hyphenation.
-        docBefore.HyphenationOptions.AutoHyphenation = true;
+        doc.HyphenationOptions.AutoHyphenation = true;
 
-        // Save the document before adding the custom pattern.
-        docBefore.Save(outputBefore);
-        if (!File.Exists(outputBefore))
-            throw new InvalidOperationException($"Failed to create '{outputBefore}'.");
+        // Save the first PDF (uses the initial dictionary).
+        const string initialPdf = "hyphenated_initial.pdf";
+        doc.Save(initialPdf);
+        if (!File.Exists(initialPdf))
+            throw new InvalidOperationException("Initial PDF was not created.");
 
-        // --------------------------------------------------------------
-        // Step 3: Update the dictionary with a custom hyphenation pattern.
-        // --------------------------------------------------------------
-        // Append a proper hyphenation pattern for the technical term.
-        string updatedPattern = "microprocessor=micro-pro-cessor\n";
-        File.AppendAllText(dictionaryPath, updatedPattern);
+        // -----------------------------------------------------------------
+        // 3. Update the dictionary with an additional pattern.
+        // -----------------------------------------------------------------
+        // Append a new hyphenation rule for "microprocessor".
+        File.AppendAllText(dictFile, "microprocessor=micro-pro-cess-or\n");
 
-        // Unregister the old dictionary and register the updated one.
+        // Re‑register the updated dictionary.
         Hyphenation.UnregisterDictionary("en-US");
-        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
+        Hyphenation.RegisterDictionary("en-US", dictFile);
 
-        // --------------------------------------------------------------
-        // Step 4: Build a new document using the updated dictionary.
-        // --------------------------------------------------------------
-        Document docAfter = new Document();
-        DocumentBuilder builderAfter = new DocumentBuilder(docAfter);
+        // After changing the dictionary we need to rebuild the layout.
+        doc.UpdatePageLayout();
 
-        // Apply the same page setup.
-        docAfter.FirstSection.PageSetup.PageWidth = 200;
-        docAfter.FirstSection.PageSetup.LeftMargin = 20;
-        docAfter.FirstSection.PageSetup.RightMargin = 20;
-
-        // Write the same paragraph.
-        builderAfter.Font.Size = 12;
-        builderAfter.Writeln(
-            "The extraordinarycharacteristically advanced communication " +
-            "systems rely on the microprocessor to perform complex calculations.");
-
-        // Enable automatic hyphenation.
-        docAfter.HyphenationOptions.AutoHyphenation = true;
-
-        // Save the document after the dictionary update.
-        docAfter.Save(outputAfter);
-        if (!File.Exists(outputAfter))
-            throw new InvalidOperationException($"Failed to create '{outputAfter}'.");
-
-        // Clean up: optional removal of temporary files.
-        // File.Delete(dictionaryPath);
+        // Save a second PDF that reflects the updated dictionary.
+        const string updatedPdf = "hyphenated_updated.pdf";
+        doc.Save(updatedPdf);
+        if (!File.Exists(updatedPdf))
+            throw new InvalidOperationException("Updated PDF was not created.");
     }
 }

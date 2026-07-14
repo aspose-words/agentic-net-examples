@@ -7,26 +7,25 @@ public class HyphenationExample
 {
     public static void Main()
     {
-        // Prepare hyphenation dictionaries for English (US) and German (Switzerland).
+        // Paths for temporary dictionary files.
         const string enDictPath = "hyph_en_US.dic";
         const string deDictPath = "hyph_de_CH.dic";
 
-        // Minimal valid dictionary content.
+        // Create minimal English hyphenation dictionary.
         File.WriteAllText(enDictPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
+        // Create minimal German hyphenation dictionary.
         File.WriteAllText(deDictPath,
             "UTF-8\n" +
-            "internationalisierung=in-ter-na-tion-alisie-rung\n" +
-            "kommunikation=kom-mu-ni-ka-tion\n" +
-            "extraordinaer=ex-tra-or-di-naer\n");
+            "Beispielwortzusammensetzung=Beis-piel-wort-zu-sam-men-set-zung\n");
 
-        // Register the dictionaries.
-        Aspose.Words.Hyphenation.RegisterDictionary("en-US", enDictPath);
-        Aspose.Words.Hyphenation.RegisterDictionary("de-CH", deDictPath);
+        // Register both dictionaries.
+        Hyphenation.RegisterDictionary("en-US", enDictPath);
+        Hyphenation.RegisterDictionary("de-CH", deDictPath);
 
         // Create a new document.
         Document doc = new Document();
@@ -37,28 +36,28 @@ public class HyphenationExample
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Enable automatic hyphenation for the whole document.
-        doc.HyphenationOptions.AutoHyphenation = true;
-
-        // ---------- Section 1: English ----------
-        builder.Font.Size = 12;
+        // English paragraph.
         builder.Font.LocaleId = new CultureInfo("en-US").LCID;
         builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Insert a section break to start the next language.
+        // New section for German text.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // ---------- Section 2: German ----------
-        builder.Font.Size = 12;
         builder.Font.LocaleId = new CultureInfo("de-CH").LCID;
-        builder.Writeln("extraordinaer internationalisierung kommunikation");
+        builder.Writeln("Beispielwortzusammensetzung");
 
-        // Save the document to PDF to visualize hyphenation.
+        // Enable automatic hyphenation for the whole document.
+        doc.HyphenationOptions.AutoHyphenation = true;
+
+        // Save the result.
         const string outputPath = "HyphenatedOutput.pdf";
         doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Validate that the output file was created.
+        // Verify that the output file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Expected output PDF was not created.");
+            throw new InvalidOperationException("The expected output file was not created.");
+
+        // Clean up temporary dictionary files.
+        File.Delete(enDictPath);
+        File.Delete(deDictPath);
     }
 }

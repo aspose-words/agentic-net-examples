@@ -7,45 +7,46 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a minimal hyphenation dictionary for English (US).
+        const string dictFile = "hyph_en_US.dic";
+        File.WriteAllText(dictFile,
+            "UTF-8\n" +
+            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
+            "communication=com-mu-ni-ca-tion\n");
 
-        // Set a narrow page width to force line wrapping and hyphenation.
-        doc.FirstSection.PageSetup.PageWidth = 300; // points
+        // Register the dictionary so that Aspose.Words can hyphenate the words.
+        Hyphenation.RegisterDictionary("en-US", dictFile);
+
+        // Create a new document and configure page layout to force line wrapping.
+        Document doc = new Document();
+        doc.FirstSection.PageSetup.PageWidth = 300; // narrow width
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Write a long paragraph that will require hyphenation.
+        // Build content with long words that can be hyphenated.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Size = 12;
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Justify;
         builder.Writeln(
-            "Aspose.Words provides powerful hyphenation features that allow automatic breaking of long words " +
-            "across lines, improving the visual appearance of justified text in narrow columns.");
+            "extraordinarycharacteristically internationalization communication " +
+            "extraordinarycharacteristically internationalization communication.");
 
-        // Create a minimal hyphenation dictionary for English (US).
-        const string dictPath = "hyph_en_US.dic";
-        File.WriteAllText(dictPath,
-            "UTF-8\n" +
-            "Aspose.Words=As-pose.Words\n" +
-            "features=fea-tures\n" +
-            "automatic=au-to-matic\n" +
-            "justified=jus-ti-fied\n");
-
-        // Register the dictionary and enable automatic hyphenation.
-        Hyphenation.RegisterDictionary("en-US", dictPath);
+        // Enable automatic hyphenation and adjust its behavior.
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.HyphenationZone = 720; // increase zone to reduce gaps
+        // Use a positive value for HyphenationZone (default is 360 = 0.25 inch).
+        doc.HyphenationOptions.HyphenationZone = 360;
+        doc.HyphenationOptions.HyphenateCaps = true;
 
-        // Use compression justification to tighten spacing after hyphenation.
+        // Compress spacing for justified paragraphs to avoid large gaps.
         doc.JustificationMode = JustificationMode.Compress;
 
-        // Save the document to PDF.
-        const string outputPath = "HyphenatedCompressed.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Save the result.
+        const string outputFile = "AdjustedHyphenation.pdf";
+        doc.Save(outputFile, SaveFormat.Pdf);
 
-        // Validate that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The expected PDF output was not created.");
+        // Verify that the output file was created.
+        if (!File.Exists(outputFile))
+            throw new InvalidOperationException("The expected output file was not created.");
     }
 }

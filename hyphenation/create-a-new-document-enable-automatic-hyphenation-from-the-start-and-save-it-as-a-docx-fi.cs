@@ -11,24 +11,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph with long words to make hyphenation relevant.
+        // Add some long words to make hyphenation relevant.
         builder.Font.Size = 24;
         builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Narrow the page width so that the text wraps and hyphenation can occur.
+        // Narrow the page width so that words are forced to wrap and hyphenate.
         doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Enable automatic hyphenation for the document.
+        // Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+        doc.HyphenationOptions.HyphenationZone = 720;
+        doc.HyphenationOptions.HyphenateCaps = true;
 
         // Save the document as DOCX.
-        string outputPath = "HyphenatedDocument.docx";
-        doc.Save(outputPath);
+        const string outputPath = "HyphenatedDocument.docx";
+        doc.Save(outputPath, SaveFormat.Docx);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The expected output file was not created.");
+            throw new InvalidOperationException($"The file '{outputPath}' was not created.");
     }
 }

@@ -1,99 +1,91 @@
 using System;
 using System.IO;
-using System.Globalization;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Settings;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Base working directory.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "HyphenationBatch");
-        string inputDir = Path.Combine(baseDir, "Input");
-        string outputDir = Path.Combine(baseDir, "Output");
-        string logPath = Path.Combine(baseDir, "conversion.log");
+        // Prepare folders
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "OutputPdfs");
+        string logFile = Path.Combine(baseDir, "failed.txt");
 
-        // Ensure folders exist.
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
-        File.WriteAllText(logPath, string.Empty);
+        if (File.Exists(logFile)) File.Delete(logFile);
 
-        // Create a minimal hyphenation dictionary for English (en-US).
+        // Create a minimal hyphenation dictionary for English (en-US)
         string dictPath = Path.Combine(baseDir, "hyph_en_US.dic");
         File.WriteAllText(dictPath,
             "UTF-8\n" +
-            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "extraordinarycharacteristically=ex-tra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary once – it will be used for all documents.
+        // Register the dictionary
         Hyphenation.RegisterDictionary("en-US", dictPath);
+        if (!Hyphenation.IsDictionaryRegistered("en-US"))
+            throw new InvalidOperationException("Failed to register hyphenation dictionary.");
 
-        // Create sample DOCX files to demonstrate the batch process.
-        CreateSampleDocument(Path.Combine(inputDir, "Sample1.docx"),
-            "extraordinarycharacteristically internationalization communication " +
-            "extraordinarycharacteristically internationalization communication " +
-            "extraordinarycharacteristically internationalization communication");
+        // Create sample DOCX files
+        for (int i = 1; i <= 3; i++)
+        {
+            string docPath = Path.Combine(inputDir, $"Sample{i}.docx");
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        CreateSampleDocument(Path.Combine(inputDir, "Sample2.docx"),
-            "communication communication communication communication communication " +
-            "internationalization internationalization internationalization internationalization");
+            // Narrow page width to force line wrapping and hyphenation
+            doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.17 inches)
+            doc.FirstSection.PageSetup.LeftMargin = 20;
+            doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Process each DOCX file in the input folder.
+            // Enable automatic hyphenation for the document
+            doc.HyphenationOptions.AutoHyphenation = true;
+            doc.HyphenationOptions.HyphenateCaps = true;
+            doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+            doc.HyphenationOptions.HyphenationZone = 360; // default
+
+            // Write a paragraph with long words that can be hyphenated
+            builder.Font.Size = 12;
+            builder.Writeln(
+                "extraordinarycharacteristically internationalization communication " +
+                "extraordinarycharacteristically internationalization communication");
+
+            doc.Save(docPath);
+            if (!File.Exists(docPath))
+                throw new InvalidOperationException($"Failed to create sample document: {docPath}");
+        }
+
+        // Process each DOCX file
         foreach (string docxPath in Directory.GetFiles(inputDir, "*.docx"))
         {
             try
             {
-                // Load the document.
                 Document doc = new Document(docxPath);
 
-                // Enable automatic hyphenation.
+                // Ensure hyphenation options are set (in case the source lacks them)
                 doc.HyphenationOptions.AutoHyphenation = true;
+                doc.HyphenationOptions.HyphenateCaps = true;
 
-                // Ensure the document language matches the registered dictionary.
-                foreach (Run run in doc.GetChildNodes(NodeType.Run, true).OfType<Run>())
-                {
-                    run.Font.LocaleId = new CultureInfo("en-US").LCID;
-                }
+                string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
+                string pdfPath = Path.Combine(outputDir, pdfFileName);
 
-                // Narrow the page width to force line wrapping and hyphenation.
-                doc.FirstSection.PageSetup.PageWidth = 200;
-                doc.FirstSection.PageSetup.LeftMargin = 20;
-                doc.FirstSection.PageSetup.RightMargin = 20;
-
-                // Save as PDF.
-                string pdfPath = Path.Combine(outputDir,
-                    Path.GetFileNameWithoutExtension(docxPath) + ".pdf");
                 doc.Save(pdfPath, SaveFormat.Pdf);
 
-                // Verify that the PDF was created.
                 if (!File.Exists(pdfPath))
-                    throw new InvalidOperationException("PDF file was not created.");
+                    throw new InvalidOperationException($"PDF was not created: {pdfPath}");
             }
             catch (Exception ex)
             {
-                // Log any failures.
-                File.AppendAllText(logPath,
-                    $"{Path.GetFileName(docxPath)}: {ex.Message}{Environment.NewLine}");
+                // Log failure
+                File.AppendAllText(logFile, $"Failed to convert '{docxPath}': {ex.Message}{Environment.NewLine}");
             }
         }
 
-        // Optional: write a short summary to the console.
-        Console.WriteLine("Batch conversion completed.");
-        Console.WriteLine($"PDFs saved to: {outputDir}");
-        Console.WriteLine($"Log file: {logPath}");
-    }
-
-    // Helper method to create a simple DOCX file with the given text.
-    private static void CreateSampleDocument(string filePath, string text)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Size = 12;
-        builder.Writeln(text);
-        doc.Save(filePath, SaveFormat.Docx);
+        // Optional: indicate completion (no interactive output required)
+        // The program ends here.
     }
 }
