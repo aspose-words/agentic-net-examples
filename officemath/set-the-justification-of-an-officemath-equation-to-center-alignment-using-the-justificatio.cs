@@ -4,7 +4,7 @@ using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-public class SetOfficeMathJustification
+public class Program
 {
     public static void Main()
     {
@@ -12,44 +12,58 @@ public class SetOfficeMathJustification
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an EQ field that will later be converted to a real OfficeMath object.
-        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        // Insert a paragraph to hold the equation.
+        builder.Writeln("Equation with centered justification:");
 
-        // Write a simple fraction switch at the field separator.
-        builder.MoveTo(eqField.Separator);
-        builder.Write(@"\f(1,2)"); // fraction 1/2
+        // Insert an EQ field which will be converted to OfficeMath.
+        Field field = builder.InsertField(FieldType.FieldEquation, true);
 
-        // Return the cursor to the field start.
-        builder.MoveTo(eqField.Start);
+        // Move to the field separator and write a simple equation (fraction).
+        builder.MoveTo(field.Separator);
+        builder.Write(@"\f(1,2)");
 
-        // Update fields so the EQ field is evaluated and can be converted.
-        doc.UpdateFields();
+        // Update the field so that it can be converted to a real OfficeMath node.
+        field.Update();
 
-        // Retrieve the EQ field again (ensures the field is up‑to‑date).
-        eqField = (FieldEQ)doc.Range.Fields.OfType<FieldEQ>().FirstOrDefault();
-        if (eqField == null)
-            throw new InvalidOperationException("EQ field not found after update.");
+        // Cast the field to FieldEQ.
+        FieldEQ fieldEq = field as FieldEQ;
+        if (fieldEq == null)
+            throw new InvalidOperationException("Failed to cast field to FieldEQ.");
 
         // Convert the EQ field to an OfficeMath node.
-        OfficeMath officeMath = eqField.AsOfficeMath();
+        OfficeMath officeMath = fieldEq.AsOfficeMath();
         if (officeMath == null)
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
 
-        // Replace the field with the real OfficeMath node.
-        eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
-        eqField.Remove();
+        // Insert the OfficeMath node before the field start and remove the original field.
+        Node fieldStart = field.Start;
+        fieldStart.ParentNode.InsertBefore(officeMath, fieldStart);
+        field.Remove();
 
-        // Set display type before changing justification (required by API).
-        officeMath.DisplayType = OfficeMathDisplayType.Display;
-        // Center the equation.
-        officeMath.Justification = OfficeMathJustification.Center;
+        // Set justification only on top‑level equations.
+        if (officeMath.MathObjectType == MathObjectType.OMathPara)
+        {
+            officeMath.Justification = OfficeMathJustification.Center;
+        }
 
         // Save the document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "OfficeMathCentered.docx");
+        string outputPath = "JustifiedEquation.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+            throw new FileNotFoundException("The output document was not created.", outputPath);
+
+        // Reload the document to verify the justification persisted.
+        Document loadedDoc = new Document(outputPath);
+        NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
+        if (mathNodes.Count == 0)
+            throw new InvalidOperationException("No OfficeMath nodes found in the saved document.");
+
+        OfficeMath savedMath = mathNodes[0] as OfficeMath;
+        if (savedMath == null || savedMath.Justification != OfficeMathJustification.Center)
+            throw new InvalidOperationException("Justification was not applied correctly.");
+
+        Console.WriteLine("Document saved and equation justification set to center.");
     }
 }

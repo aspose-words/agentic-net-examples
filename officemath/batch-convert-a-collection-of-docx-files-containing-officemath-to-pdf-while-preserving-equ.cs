@@ -3,84 +3,82 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
+using Aspose.Words.Saving;
 
-public class Program
+public class BatchOfficeMathToPdf
 {
     public static void Main()
     {
-        // Define folders for input DOCX files and output PDF files.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputPdfs");
+        // Prepare folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputFolder = Path.Combine(baseDir, "InputDocs");
+        string outputFolder = Path.Combine(baseDir, "OutputPdfs");
 
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create sample DOCX files that contain OfficeMath equations.
-        for (int i = 1; i <= 3; i++)
+        // Create sample DOCX files with simple OfficeMath equations.
+        CreateSampleDocx(Path.Combine(inputFolder, "Equation1.docx"), @"\f(1,2)");   // fraction 1/2
+        CreateSampleDocx(Path.Combine(inputFolder, "Equation2.docx"), @"\r(3,x)");   // cube root of x
+        CreateSampleDocx(Path.Combine(inputFolder, "Equation3.docx"), @"\s \up2(a)"); // superscript a²
+
+        // Batch convert each DOCX to PDF.
+        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            string docPath = Path.Combine(inputFolder, $"Sample{i}.docx");
-            CreateSampleDocumentWithOfficeMath(docPath);
-        }
-
-        // Batch convert each DOCX file to PDF while preserving equation fidelity.
-        foreach (string docxFile in Directory.GetFiles(inputFolder, "*.docx"))
-        {
-            // Load the DOCX document.
-            Document doc = new Document(docxFile);
-
-            // Determine the corresponding PDF file path.
-            string pdfFileName = Path.GetFileNameWithoutExtension(docxFile) + ".pdf";
-            string pdfPath = Path.Combine(outputFolder, pdfFileName);
-
-            // Save as PDF.
+            Document doc = new Document(docxPath);
+            string pdfPath = Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(docxPath) + ".pdf");
             doc.Save(pdfPath, SaveFormat.Pdf);
 
-            // Validate that the PDF was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
+                throw new InvalidOperationException($"PDF was not created: {pdfPath}");
         }
 
-        // Optional: indicate completion.
         Console.WriteLine("Batch conversion completed successfully.");
     }
 
-    // Creates a DOCX file at the specified path containing a simple OfficeMath equation.
-    private static void CreateSampleDocumentWithOfficeMath(string filePath)
+    private static void CreateSampleDocx(string filePath, string eqArgument)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an EQ field with a simple fraction equation.
-        FieldEQ field = InsertFieldEQ(builder, @"\f(1,2)");
+        // Add a descriptive paragraph.
+        builder.Writeln("Sample equation:");
 
-        // Convert the EQ field to a real OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
+        // Insert the EQ field and convert it to a real OfficeMath node.
+        InsertEquation(builder, eqArgument);
 
-        // Insert the OfficeMath node before the field and remove the original field.
-        if (officeMath != null)
-        {
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            field.Remove();
-        }
+        // Add a blank line after the equation.
+        builder.Writeln();
 
         // Save the document as DOCX.
         doc.Save(filePath, SaveFormat.Docx);
     }
 
-    // Helper that inserts an EQ field, writes the argument string, and moves the builder back to the paragraph.
-    private static FieldEQ InsertFieldEQ(DocumentBuilder builder, string args)
+    private static void InsertEquation(DocumentBuilder builder, string eqArgument)
     {
-        // Insert the EQ field.
+        // Insert an EQ field.
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Move to the field separator and write the equation arguments.
+        // Write the EQ argument into the field separator.
         builder.MoveTo(field.Separator);
-        builder.Write(args);
+        builder.Write(eqArgument);
 
-        // Return the builder to the paragraph after the field.
-        builder.MoveTo(field.Start.ParentNode);
-        builder.InsertParagraph();
+        // Update the field so that the EQ code is recognized.
+        field.Update();
 
-        return field;
+        // Return to the field start.
+        builder.MoveTo(field.Start);
+
+        // Convert the field to OfficeMath.
+        OfficeMath officeMath = field.AsOfficeMath();
+
+        if (officeMath == null)
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+
+        // Insert the OfficeMath node before the field start.
+        field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+
+        // Remove the original field.
+        field.Remove();
     }
 }

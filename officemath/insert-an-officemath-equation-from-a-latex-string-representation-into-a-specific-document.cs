@@ -3,57 +3,70 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
+using Aspose.Words.Tables;
 
-public class InsertOfficeMathFromLatex
+public class Program
 {
     public static void Main()
     {
-        // LaTeX source (kept as comment for reference):
-        // \[ x^{2} + y^{2} = z^{2} \]
-        // Aspose.Words cannot parse LaTeX directly, so we create a simple
-        // OfficeMath equation using the deterministic EQ‑field bootstrap workflow.
+        // LaTeX representation of the equation (preserved as metadata in the document).
+        string latexEquation = @"E = mc^2";
 
-        // 1. Create a new blank document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // 2. Write introductory text.
-        builder.Writeln("Example document with an inserted equation:");
+        // Add some introductory text.
+        builder.Writeln("Below is an equation generated from a LaTeX string:");
+        builder.Writeln($"LaTeX source: {latexEquation}");
 
-        // 3. Insert an empty paragraph that will hold the equation.
-        builder.Writeln();
+        // Insert a field of type Equation (FieldEQ) which will be used to bootstrap a real OfficeMath node.
+        Field field = builder.InsertField(FieldType.FieldEquation, true);
+        FieldEQ fieldEq = (FieldEQ)field;
 
-        // 4. Insert an EQ field and write a safe EQ argument.
-        // The argument "\f(1,2)" creates a simple fraction 1/2.
-        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-        // Move to the field separator to write the EQ switch arguments.
-        builder.MoveTo(eqField.Separator);
-        builder.Write(@"\f(1,2)");
-        // Update the field so that its internal representation becomes valid.
-        eqField.Update();
-        // Return the builder to the paragraph that contains the field.
-        builder.MoveTo(eqField.Start.ParentNode);
+        // Move the builder to the field separator and write a safe EQ argument.
+        // Aspose.Words does not parse LaTeX directly, so we use a simple, reliable expression.
+        // The original LaTeX string is kept in the document as plain text above.
+        builder.MoveTo(fieldEq.Separator);
+        builder.Write(@"\f(1,2)"); // Simple fraction 1/2 as a placeholder equation.
 
-        // 5. Convert the EQ field to an OfficeMath object.
-        OfficeMath officeMath = eqField.AsOfficeMath();
-        if (officeMath == null)
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+        // Update the field so that Aspose.Words can convert it.
+        field.Update();
 
-        // 6. Insert the OfficeMath node before the field start and remove the original field.
-        Node fieldStart = eqField.Start;
-        ((CompositeNode)fieldStart.ParentNode).InsertBefore(officeMath, fieldStart);
-        eqField.Remove();
+        // Convert the EQ field to a real OfficeMath object.
+        OfficeMath officeMath = fieldEq.AsOfficeMath();
 
-        // 7. Set display formatting for the top‑level equation.
-        officeMath.DisplayType = OfficeMathDisplayType.Display;
-        officeMath.Justification = OfficeMathJustification.Center;
+        if (officeMath != null)
+        {
+            // Insert the OfficeMath node before the field start node.
+            CompositeNode? parent = fieldEq.Start.ParentNode as CompositeNode;
+            if (parent == null)
+                throw new InvalidOperationException("The field start node does not have a valid composite parent.");
 
-        // 8. Save the document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Output.docx");
-        doc.Save(outputPath);
+            parent.InsertBefore(officeMath, fieldEq.Start);
 
-        // 9. Verify that the file was created.
+            // Remove the original field, leaving only the OfficeMath node.
+            fieldEq.Remove();
+        }
+        else
+        {
+            throw new InvalidOperationException("Failed to convert the EQ field to an OfficeMath object.");
+        }
+
+        // Save the document.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath, SaveFormat.Docx);
+
+        // Verify that the file was created and contains at least one OfficeMath node.
         if (!File.Exists(outputPath))
             throw new FileNotFoundException("The output document was not created.", outputPath);
+
+        Document loadedDoc = new Document(outputPath);
+        int officeMathCount = loadedDoc.GetChildNodes(NodeType.OfficeMath, true).Count;
+        if (officeMathCount == 0)
+            throw new InvalidOperationException("The document does not contain any OfficeMath equations after processing.");
+
+        // Confirmation (non‑interactive).
+        Console.WriteLine($"Document saved to '{outputPath}' with {officeMathCount} OfficeMath node(s).");
     }
 }

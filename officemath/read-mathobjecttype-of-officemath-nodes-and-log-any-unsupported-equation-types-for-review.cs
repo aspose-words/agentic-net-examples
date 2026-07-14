@@ -1,11 +1,11 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Math;
 using Aspose.Words.Fields;
+using Aspose.Words.Math;
+using Aspose.Words.Saving;
 
-public class OfficeMathTypeReporter
+public class Program
 {
     public static void Main()
     {
@@ -14,66 +14,61 @@ public class OfficeMathTypeReporter
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert several equations using the deterministic EQ‑field bootstrap workflow.
-        // 1. Simple fraction: \f(1,2)
-        InsertAndConvertEquation(builder, @"\f(1,2)");
+        // Each equation uses a different switch to generate varied MathObjectTypes.
+        InsertEquation(builder, @"\f(1,2)");                 // Fraction
+        InsertEquation(builder, @"\r(3,x)");                 // Radical
+        InsertEquation(builder, @"\a \co2 (a,b,c,d)");      // Array (matrix‑like)
+        InsertEquation(builder, @"\i \su(n=1,5,n)");        // Integral with summation
+        InsertEquation(builder, @"\s \up8(Sup) \s \do8(Sub)"); // Subscript/Superscript
 
-        // 2. Radical (cube root): \r(3,x)
-        InsertAndConvertEquation(builder, @"\r(3,x)");
-
-        // 3. Array (2×2 matrix) with nested fractions.
-        InsertAndConvertEquation(builder, @"\a \co2 \vs1 \hs1( \f(1,2), \f(3,4), \f(5,6), \f(7,8) )");
-
-        // 4. Integral with limits: \i \su(n=1,5,n)
-        InsertAndConvertEquation(builder, @"\i \su(n=1,5,n)");
-
-        // Save the document (optional, for visual inspection).
-        string docPath = Path.Combine(Environment.CurrentDirectory, "OfficeMathTypes.docx");
+        // Save the sample document.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string docPath = Path.Combine(artifactsDir, "OfficeMathSample.docx");
         doc.Save(docPath);
 
         // Enumerate all OfficeMath nodes in the document.
         NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        List<string> unsupportedReports = new List<string>();
-
-        for (int i = 0; i < mathNodes.Count; i++)
+        using (StreamWriter reportWriter = new StreamWriter(Path.Combine(artifactsDir, "UnsupportedMathTypes.txt")))
         {
-            OfficeMath officeMath = (OfficeMath)mathNodes[i];
-            MathObjectType type = officeMath.MathObjectType;
-
-            // Consider OMathPara (top‑level equation) as supported; everything else is logged.
-            if (type != MathObjectType.OMathPara)
+            int index = 0;
+            foreach (OfficeMath officeMath in mathNodes)
             {
-                string report = $"Unsupported MathObjectType: {type} (Node index {i})";
-                Console.WriteLine(report);
-                unsupportedReports.Add(report);
+                // Log any MathObjectType that is not a top‑level paragraph (OMathPara).
+                if (officeMath.MathObjectType != MathObjectType.OMathPara)
+                {
+                    string message = $"Unsupported MathObjectType: {officeMath.MathObjectType} (Node index {index})";
+                    Console.WriteLine(message);
+                    reportWriter.WriteLine(message);
+                }
+                index++;
             }
         }
 
-        // Write a simple text report file if any unsupported types were found.
-        if (unsupportedReports.Count > 0)
-        {
-            string reportPath = Path.Combine(Environment.CurrentDirectory, "UnsupportedMathTypes.txt");
-            File.WriteAllLines(reportPath, unsupportedReports);
-            Console.WriteLine($"Report written to: {reportPath}");
-        }
-        else
-        {
-            Console.WriteLine("All OfficeMath nodes are of supported type OMathPara.");
-        }
+        // Verify that the report file was created.
+        string reportPath = Path.Combine(artifactsDir, "UnsupportedMathTypes.txt");
+        if (!File.Exists(reportPath))
+            throw new InvalidOperationException("Report file was not created.");
+
+        // Optionally, save the document again to demonstrate that the workflow completes.
+        string finalDocPath = Path.Combine(artifactsDir, "OfficeMathSample_Final.docx");
+        doc.Save(finalDocPath);
     }
 
-    // Inserts an EQ field with the given arguments, converts it to OfficeMath, and cleans up the field.
-    private static void InsertAndConvertEquation(DocumentBuilder builder, string eqArguments)
+    // Helper that inserts an EQ field, converts it to OfficeMath, and removes the field.
+    private static void InsertEquation(DocumentBuilder builder, string eqSwitch)
     {
-        // Insert the EQ field.
+        // Insert an empty EQ field.
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-        // Write the arguments into the field separator.
-        builder.MoveTo(field.Separator);
-        builder.Write(eqArguments);
-        // Return to the paragraph that contains the field and start a new paragraph for the next equation.
-        builder.MoveTo(field.Start.ParentNode);
-        builder.InsertParagraph();
 
-        // Convert the field to a real OfficeMath node.
+        // Write the switch/arguments into the field separator.
+        builder.MoveTo(field.Separator);
+        builder.Write(eqSwitch);
+
+        // Move back to the paragraph that contains the field.
+        builder.MoveTo(field.Start.ParentNode);
+
+        // Convert the field to a real OfficeMath object.
         OfficeMath officeMath = field.AsOfficeMath();
         if (officeMath != null)
         {
@@ -82,5 +77,8 @@ public class OfficeMathTypeReporter
             // Remove the original field.
             field.Remove();
         }
+
+        // Add a new paragraph after the equation for readability.
+        builder.InsertParagraph();
     }
 }

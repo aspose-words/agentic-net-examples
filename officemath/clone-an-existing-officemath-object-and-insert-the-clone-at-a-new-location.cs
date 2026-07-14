@@ -4,7 +4,7 @@ using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
-public class Program
+public class CloneOfficeMathExample
 {
     public static void Main()
     {
@@ -12,50 +12,58 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph with introductory text.
+        // Add a paragraph with some introductory text.
         builder.Writeln("Original equation:");
 
         // Insert an EQ field that will be converted to a real OfficeMath object.
         Field field = builder.InsertField(FieldType.FieldEquation, true);
-        FieldEQ fieldEQ = (FieldEQ)field;
+        if (field is not FieldEQ fieldEq)
+            throw new InvalidOperationException("Inserted field is not a FieldEQ.");
 
-        // Write a simple fraction equation into the field separator.
-        builder.MoveTo(fieldEQ.Separator);
-        builder.Write(@"\f(1,2)"); // Fraction 1/2.
+        // Write a simple equation into the field separator.
+        builder.MoveTo(fieldEq.Separator);
+        builder.Write(@"\f(1,2)"); // fraction 1 over 2
 
-        // Update the field so that the EQ code is recognized.
+        // Update the field so that the equation is parsed.
         field.Update();
 
-        // Return the builder cursor to the paragraph that contains the field.
-        builder.MoveTo(fieldEQ.Start.ParentNode);
-
-        // Convert the EQ field to an OfficeMath object.
-        OfficeMath originalMath = fieldEQ.AsOfficeMath();
+        // Convert the field to an OfficeMath node.
+        OfficeMath originalMath = fieldEq.AsOfficeMath();
         if (originalMath == null)
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+            throw new InvalidOperationException("Failed to convert field to OfficeMath.");
 
-        // Insert the OfficeMath node before the field start node.
-        fieldEQ.Start.ParentNode.InsertBefore(originalMath, fieldEQ.Start);
+        // Insert the OfficeMath node before the field start and remove the field.
+        Node fieldStart = fieldEq.Start;
+        fieldStart.ParentNode.InsertBefore(originalMath, fieldStart);
+        fieldEq.Remove();
 
-        // Remove the original field – the document now contains only the real OfficeMath node.
-        fieldEQ.Remove();
-
-        // Clone the existing OfficeMath node (deep clone to copy all child elements).
+        // Clone the existing OfficeMath node.
         OfficeMath clonedMath = (OfficeMath)originalMath.Clone(true);
 
-        // Insert the cloned OfficeMath into a new paragraph after the original one.
-        Paragraph originalParagraph = originalMath.ParentParagraph;
-        builder.MoveTo(originalParagraph);
-        builder.InsertParagraph(); // Creates a new empty paragraph after the current one.
-        Paragraph newParagraph = builder.CurrentParagraph;
-        newParagraph.PrependChild(clonedMath);
+        // Insert a new paragraph and place the cloned OfficeMath there.
+        builder.Writeln(); // creates a new empty paragraph.
+        builder.InsertNode(clonedMath);
 
-        // Save the document to disk.
-        string outputPath = "ClonedOfficeMath.docx";
+        // Save the document.
+        string outputPath = "CloneOfficeMath.docx";
         doc.Save(outputPath);
 
-        // Validate that the file was created.
+        // Validate that the file was saved and contains two top‑level OfficeMath nodes.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
+            throw new FileNotFoundException("Output file was not created.", outputPath);
+
+        Document loadedDoc = new Document(outputPath);
+        NodeCollection mathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true);
+        int topLevelCount = 0;
+        foreach (OfficeMath om in mathNodes)
+        {
+            if (om.MathObjectType == MathObjectType.OMathPara)
+                topLevelCount++;
+        }
+
+        if (topLevelCount != 2)
+            throw new Exception($"Expected 2 top‑level OfficeMath nodes, but found {topLevelCount}.");
+
+        Console.WriteLine($"Document saved to '{outputPath}' and contains {topLevelCount} equations.");
     }
 }

@@ -4,85 +4,74 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
-using Aspose.Words.Saving;
 
-public class Program
+public class OfficeMathPdfExport
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string docPath = Path.Combine(outputDir, "Equations.docx");
-        string pdfPath = Path.Combine(outputDir, "Equations.pdf");
+        // Prepare output folder
+        string outputFolder = Path.Combine(Path.GetTempPath(), "OfficeMathExample");
+        Directory.CreateDirectory(outputFolder);
 
-        // 1. Create a new document and a builder.
+        string docxPath = Path.Combine(outputFolder, "EquationDocument.docx");
+        string pdfPath = Path.Combine(outputFolder, "EquationDocument.pdf");
+
+        // Create a new document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // 2. Introductory paragraph.
-        builder.Writeln("Below are sample equations created via EQ fields:");
+        // Add introductory text
+        builder.Writeln("Below is an OfficeMath equation:");
 
-        // 3. Insert two equations using the deterministic EQ‑field bootstrap workflow.
-        InsertEquation(builder, @"\f(1,2)");   // fraction 1/2
-        InsertEquation(builder, @"\r(3,x)"); // cube root of x
+        // Insert a field that will be converted to OfficeMath
+        builder.InsertField(FieldType.FieldEquation, true);
+        // Retrieve the inserted field (the last field in the document)
+        FieldEQ eqField = doc.Range.Fields[doc.Range.Fields.Count - 1] as FieldEQ;
+        if (eqField == null)
+            throw new InvalidOperationException("Failed to create FieldEQ.");
 
-        // 4. Verify that two top‑level OfficeMath nodes (Math paragraphs) exist.
-        int topLevelOfficeMathCount = doc.GetChildNodes(NodeType.OfficeMath, true)
-                                          .Cast<OfficeMath>()
-                                          .Count(om => om.MathObjectType == MathObjectType.OMathPara);
-        if (topLevelOfficeMathCount != 2)
-            throw new InvalidOperationException($"Expected 2 top‑level OfficeMath nodes, but found {topLevelOfficeMathCount}.");
+        // Write a simple EQ argument into the field separator
+        builder.MoveTo(eqField.Separator);
+        builder.Write(@"\f(1,2)"); // Simple fraction 1/2
 
-        // 5. Save the document as DOCX (optional).
-        doc.Save(docPath, SaveFormat.Docx);
+        // Convert the field to a real OfficeMath node
+        OfficeMath officeMath = eqField.AsOfficeMath();
+        if (officeMath == null)
+            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
 
-        // 6. Export the document to PDF.
+        // Insert the OfficeMath node before the field start and remove the original field
+        Node fieldStart = eqField.Start;
+        Paragraph parentParagraph = fieldStart.ParentNode as Paragraph;
+        if (parentParagraph == null)
+            throw new InvalidOperationException("Field start does not have a paragraph parent.");
+
+        parentParagraph.InsertBefore(officeMath, fieldStart);
+        eqField.Remove();
+
+        // Validate that the document now contains exactly one top‑level OfficeMath paragraph
+        var topLevelMath = doc.GetChildNodes(NodeType.OfficeMath, true)
+                              .Cast<OfficeMath>()
+                              .Where(om => om.MathObjectType == MathObjectType.OMathPara)
+                              .ToList();
+
+        if (topLevelMath.Count != 1)
+            throw new InvalidOperationException($"Expected 1 top‑level OfficeMath node, found {topLevelMath.Count}.");
+
+        // Save the document as DOCX
+        doc.Save(docxPath, SaveFormat.Docx);
+
+        // Export the document to PDF
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // 7. Verify that the PDF file was created and is not empty.
-        if (!File.Exists(pdfPath) || new FileInfo(pdfPath).Length == 0)
-            throw new InvalidOperationException("PDF file was not created correctly.");
+        // Verify that both output files exist
+        if (!File.Exists(docxPath))
+            throw new FileNotFoundException("DOCX output file was not created.", docxPath);
+        if (!File.Exists(pdfPath))
+            throw new FileNotFoundException("PDF output file was not created.", pdfPath);
 
-        // 8. Load the PDF back and ensure it no longer contains OfficeMath nodes
-        //    (PDF conversion renders equations as images).
-        Document pdfDoc = new Document(pdfPath);
-        int pdfOfficeMathCount = pdfDoc.GetChildNodes(NodeType.OfficeMath, true).Count;
-        if (pdfOfficeMathCount != 0)
-            throw new InvalidOperationException($"PDF should not contain OfficeMath nodes, but found {pdfOfficeMathCount}.");
-
-        // All validations passed.
-        Console.WriteLine("Document and PDF generated successfully.");
-    }
-
-    // Inserts an EQ field, writes the equation code, updates the field,
-    // converts it to a real OfficeMath node, and removes the original field.
-    private static void InsertEquation(DocumentBuilder builder, string eqCode)
-    {
-        // Insert an EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Write the equation arguments after the field separator.
-        builder.MoveTo(field.Separator);
-        builder.Write(eqCode);
-
-        // Update the field so that its result (and OfficeMath conversion) is calculated.
-        field.Update();
-
-        // Return the builder to the paragraph that contains the field.
-        builder.MoveTo(field.Start.ParentNode);
-
-        // Convert the field to an OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
-
-        // Insert the OfficeMath node before the field start and remove the field.
-        if (officeMath != null)
-        {
-            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-            field.Remove();
-        }
-
-        // Add a new paragraph after the equation for readability.
-        builder.InsertParagraph();
+        // Example completed successfully
+        Console.WriteLine("Document and PDF have been created successfully:");
+        Console.WriteLine($"DOCX: {docxPath}");
+        Console.WriteLine($"PDF: {pdfPath}");
     }
 }

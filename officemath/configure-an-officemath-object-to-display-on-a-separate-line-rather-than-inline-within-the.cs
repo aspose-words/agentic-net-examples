@@ -12,54 +12,43 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that introduces the equation.
+        // Add introductory text.
         builder.Writeln("Below is an equation displayed on its own line:");
 
-        // Insert an EQ field with a simple fraction.
-        FieldEQ eqField = InsertFieldEQ(builder, @"\f(1,2)");
+        // Insert an EQ field (the field code initially contains "EQ").
+        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
 
-        // Ensure fields are up‑to‑date (not strictly required but safe).
-        doc.UpdateFields();
+        // Move to the field separator and write a simple fraction equation.
+        // This appends the EQ switch arguments after the "EQ" code.
+        builder.MoveTo(eqField.Separator);
+        builder.Write(@"\f(1,2)"); // 1 over 2
 
-        // Convert the EQ field to a real OfficeMath node.
+        // Update the field so that the EQ code is recognized.
+        eqField.Update();
+
+        // Return the builder to the paragraph that contains the field.
+        builder.MoveTo(eqField.Start.ParentNode);
+
+        // Convert the EQ field to a real OfficeMath object.
         OfficeMath officeMath = eqField.AsOfficeMath();
         if (officeMath == null)
             throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
 
-        // Replace the field with the OfficeMath node.
+        // Insert the OfficeMath node before the field start and remove the original field.
         eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
         eqField.Remove();
 
-        // Apply display formatting only to top‑level equations.
-        if (officeMath.MathObjectType == MathObjectType.OMathPara)
-        {
-            officeMath.DisplayType = OfficeMathDisplayType.Display;   // Show on its own line.
-            officeMath.Justification = OfficeMathJustification.Left; // Left‑justify.
-        }
+        // Configure the OfficeMath to display on a separate line.
+        // This should be done only on top‑level OfficeMath (MathObjectType.OMathPara).
+        officeMath.DisplayType = OfficeMathDisplayType.Display;
+        officeMath.Justification = OfficeMathJustification.Left;
 
         // Save the document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "OfficeMathDisplay.docx");
-        doc.Save(outputPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        doc.Save(outputPath, SaveFormat.Docx);
 
-        // Verify that the file was saved.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved.", outputPath);
-    }
-
-    // Helper that inserts an EQ field, writes the provided arguments, and starts a new paragraph.
-    private static FieldEQ InsertFieldEQ(DocumentBuilder builder, string args)
-    {
-        // Insert the EQ field. The field code will be "EQ".
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, false);
-
-        // Move to the field separator and write the EQ arguments (e.g., a fraction).
-        builder.MoveTo(field.Separator);
-        builder.Write(args);
-
-        // Return the builder to the paragraph that contains the field and start a new line.
-        builder.MoveTo(field.Start.ParentNode);
-        builder.InsertParagraph();
-
-        return field;
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

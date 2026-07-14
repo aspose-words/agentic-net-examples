@@ -10,72 +10,83 @@ public class UpdateOfficeMathJustification
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Paths for the sample and output documents.
+        string templatePath = "Template.docx";
+        string outputPath = "Updated.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with a few OfficeMath equations.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert several sample equations using the EQ field bootstrap workflow.
-        InsertEquation(builder, @"\f(1,2)"); // Simple fraction 1/2
-        InsertEquation(builder, @"\i \su(n=1,5,n)"); // Integral with summation
-        InsertEquation(builder, @"\r(3,x)"); // Cube root of x
+        // Insert three simple equations, each in its own paragraph.
+        InsertEquation(builder, @"\f(1,2)"); // fraction 1/2
+        InsertEquation(builder, @"\r(3,x)"); // cube root of x
+        InsertEquation(builder, @"\i \su(n=1,5,n)"); // integral with summation
 
-        // Convert all EQ fields to real OfficeMath objects and remove the original fields.
-        foreach (FieldEQ fieldEq in doc.Range.Fields.OfType<FieldEQ>().ToList())
-        {
-            OfficeMath officeMath = fieldEq.AsOfficeMath();
-            if (officeMath != null)
-            {
-                // Insert the OfficeMath node before the field start.
-                fieldEq.Start.ParentNode.InsertBefore(officeMath, fieldEq.Start);
-                // Remove the original EQ field.
-                fieldEq.Remove();
-            }
-        }
+        // Save the template document.
+        doc.Save(templatePath);
 
-        // Update justification of all top‑level OfficeMath equations to right alignment.
-        foreach (OfficeMath om in doc.GetChildNodes(NodeType.OfficeMath, true).Cast<OfficeMath>())
+        // -----------------------------------------------------------------
+        // 2. Reload the document and update justification of all top‑level equations.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(templatePath);
+
+        // Find all OfficeMath nodes.
+        var officeMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true)
+                                      .Cast<OfficeMath>()
+                                      .Where(om => om.MathObjectType == MathObjectType.OMathPara);
+
+        foreach (OfficeMath om in officeMathNodes)
         {
-            if (om.MathObjectType == MathObjectType.OMathPara)
-            {
-                // Ensure the equation is in display mode before setting justification.
-                om.DisplayType = OfficeMathDisplayType.Display;
-                om.Justification = OfficeMathJustification.Right;
-            }
+            // Ensure the equation is displayed on its own line before setting justification.
+            om.DisplayType = OfficeMathDisplayType.Display;
+            om.Justification = OfficeMathJustification.Right;
         }
 
         // Save the modified document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "UpdatedOfficeMath.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
+        loadedDoc.Save(outputPath);
 
-        // Validate that the file was saved.
+        // -----------------------------------------------------------------
+        // 3. Validate that the justification was applied.
+        // -----------------------------------------------------------------
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+            throw new InvalidOperationException($"Output file '{outputPath}' was not created.");
 
-        // Verify that each top‑level OfficeMath has the right justification.
         Document resultDoc = new Document(outputPath);
-        foreach (OfficeMath om in resultDoc.GetChildNodes(NodeType.OfficeMath, true).Cast<OfficeMath>())
+        var resultMaths = resultDoc.GetChildNodes(NodeType.OfficeMath, true)
+                                   .Cast<OfficeMath>()
+                                   .Where(om => om.MathObjectType == MathObjectType.OMathPara);
+
+        foreach (OfficeMath om in resultMaths)
         {
-            if (om.MathObjectType == MathObjectType.OMathPara)
-            {
-                if (om.Justification != OfficeMathJustification.Right)
-                    throw new Exception("Justification update failed for an equation.");
-            }
+            if (om.Justification != OfficeMathJustification.Right)
+                throw new InvalidOperationException("One or more equations do not have right justification.");
         }
 
-        // The program finishes without requiring any user interaction.
+        // All done.
     }
 
-    // Helper method to insert an EQ field with the specified arguments and convert it to a paragraph.
-    private static void InsertEquation(DocumentBuilder builder, string eqArguments)
+    // Inserts an EQ field, converts it to a real OfficeMath node, and moves the builder to the next paragraph.
+    private static void InsertEquation(DocumentBuilder builder, string eqArgs)
     {
-        // Insert an EQ field.
+        // Insert the EQ field.
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-        // Move to the field separator and write the EQ arguments.
+        // Write the EQ argument string.
         builder.MoveTo(field.Separator);
-        builder.Write(eqArguments);
-        // Return to the field start's parent node.
+        builder.Write(eqArgs);
+        // Return to the paragraph containing the field.
         builder.MoveTo(field.Start.ParentNode);
-        // End the paragraph after the equation.
+        // Convert the field to OfficeMath.
+        OfficeMath officeMath = field.AsOfficeMath();
+        if (officeMath != null)
+        {
+            // Insert the OfficeMath node before the field start and remove the field.
+            field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+            field.Remove();
+        }
+        // Start a new paragraph for the next equation.
         builder.InsertParagraph();
     }
 }
