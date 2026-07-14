@@ -1,102 +1,132 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Xml.Linq;
+using System.Xml;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+
+public class CommentInfo
+{
+    public int ParagraphIndex { get; set; }
+    public string Author { get; set; } = "";
+    public string Initial { get; set; } = "";
+    public DateTime Date { get; set; }
+    public string Text { get; set; } = "";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a temporary folder for all generated files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        // Prepare a temporary folder for the example files.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "CommentImportExample");
         Directory.CreateDirectory(workDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample XML file that represents exported comments.
-        // -----------------------------------------------------------------
+        // 1. Create a sample XML file that contains exported comment data.
         string xmlPath = Path.Combine(workDir, "comments.xml");
-        XDocument commentXml = new XDocument(
-            new XElement("Comments",
-                new XElement("Comment",
-                    new XElement("Author", "John Doe"),
-                    new XElement("Initial", "JD"),
-                    new XElement("Date", "2023-01-01T10:30:00"),
-                    new XElement("Text", "Review this paragraph."),
-                    new XElement("ParagraphIndex", "0")
-                ),
-                new XElement("Comment",
-                    new XElement("Author", "Jane Smith"),
-                    new XElement("Initial", "JS"),
-                    new XElement("Date", "2023-01-02T14:45:00"),
-                    new XElement("Text", "Consider rephrasing."),
-                    new XElement("ParagraphIndex", "2")
-                )
-            )
-        );
-        commentXml.Save(xmlPath);
+        CreateSampleCommentsXml(xmlPath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the XML file and parse comment data.
-        // -----------------------------------------------------------------
-        XDocument loadedXml = XDocument.Load(xmlPath);
-        var commentElements = loadedXml.Root?.Elements("Comment") ?? Enumerable.Empty<XElement>();
+        // 2. Load the comment data from the XML file.
+        List<CommentInfo> commentInfos = LoadCommentsFromXml(xmlPath);
 
-        // -----------------------------------------------------------------
-        // 3. Create a new Word document with some paragraphs.
-        // -----------------------------------------------------------------
+        // 3. Create a new blank document and add a few paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Store references to the created paragraphs for later comment attachment.
+        // Store the created paragraphs so we can attach comments to them later.
         List<Paragraph> paragraphs = new List<Paragraph>();
 
         for (int i = 0; i < 3; i++)
         {
-            builder.Writeln($"Paragraph {i + 1}");
-            // After Writeln, CurrentParagraph points to the paragraph we just added.
-            Paragraph? para = builder.CurrentParagraph;
-            if (para != null)
-                paragraphs.Add(para);
+            builder.Writeln($"Paragraph {i + 1}: This is sample text for demonstration purposes.");
+            Paragraph para = doc.FirstSection.Body.LastParagraph; // the paragraph just written
+            paragraphs.Add(para);
         }
 
-        // -----------------------------------------------------------------
         // 4. Attach each imported comment to the appropriate paragraph.
-        // -----------------------------------------------------------------
-        foreach (XElement elem in commentElements)
+        foreach (CommentInfo info in commentInfos)
         {
-            string author = (string?)elem.Element("Author") ?? "Unknown";
-            string initial = (string?)elem.Element("Initial") ?? "";
-            string dateStr = (string?)elem.Element("Date") ?? DateTime.MinValue.ToString("o");
-            string text = (string?)elem.Element("Text") ?? "";
-            string indexStr = (string?)elem.Element("ParagraphIndex") ?? "0";
+            // Guard against an invalid paragraph index.
+            if (info.ParagraphIndex < 0 || info.ParagraphIndex >= paragraphs.Count)
+                continue;
 
-            // Parse date and paragraph index safely.
-            DateTime dateTime = DateTime.TryParse(dateStr, out DateTime dt) ? dt : DateTime.Now;
-            int paraIndex = int.TryParse(indexStr, out int idx) ? idx : 0;
+            Paragraph targetParagraph = paragraphs[info.ParagraphIndex];
 
-            // Ensure the paragraph index is within the existing range.
-            if (paraIndex < 0 || paraIndex >= paragraphs.Count)
-                continue; // Skip invalid entries.
+            // Create the comment node with metadata.
+            Comment comment = new Comment(doc, info.Author, info.Initial, info.Date);
+            comment.SetText(info.Text);
 
-            Paragraph targetParagraph = paragraphs[paraIndex];
-
-            // Create the comment and set its text.
-            Comment comment = new Comment(doc, author, initial, dateTime);
-            comment.SetText(text);
-
-            // Append the comment to the target paragraph.
+            // Append the comment to the paragraph. This anchors the comment to the paragraph.
             targetParagraph.AppendChild(comment);
         }
 
-        // -----------------------------------------------------------------
         // 5. Save the resulting document.
-        // -----------------------------------------------------------------
-        string outputPath = Path.Combine(workDir, "DocumentWithImportedComments.docx");
-        doc.Save(outputPath);
+        string outPath = Path.Combine(workDir, "CommentedDocument.docx");
+        doc.Save(outPath);
 
-        // The example finishes without waiting for user input.
+        Console.WriteLine($"Document saved to: {outPath}");
+    }
+
+    // Creates a simple XML file with a few comment entries.
+    private static void CreateSampleCommentsXml(string filePath)
+    {
+        XmlDocument xmlDoc = new XmlDocument();
+
+        XmlElement root = xmlDoc.CreateElement("Comments");
+        xmlDoc.AppendChild(root);
+
+        // First comment attached to paragraph 0
+        XmlElement comment1 = xmlDoc.CreateElement("Comment");
+        comment1.SetAttribute("ParagraphIndex", "0");
+        comment1.SetAttribute("Author", "Alice");
+        comment1.SetAttribute("Initial", "A");
+        comment1.SetAttribute("Date", DateTime.Now.AddDays(-1).ToString("o"));
+        comment1.InnerText = "First comment on the first paragraph.";
+        root.AppendChild(comment1);
+
+        // Second comment attached to paragraph 2
+        XmlElement comment2 = xmlDoc.CreateElement("Comment");
+        comment2.SetAttribute("ParagraphIndex", "2");
+        comment2.SetAttribute("Author", "Bob");
+        comment2.SetAttribute("Initial", "B");
+        comment2.SetAttribute("Date", DateTime.Now.ToString("o"));
+        comment2.InnerText = "Another comment on the third paragraph.";
+        root.AppendChild(comment2);
+
+        xmlDoc.Save(filePath);
+    }
+
+    // Loads comment information from the XML file created above.
+    private static List<CommentInfo> LoadCommentsFromXml(string filePath)
+    {
+        var list = new List<CommentInfo>();
+        XmlDocument xmlDoc = new XmlDocument();
+        xmlDoc.Load(filePath);
+
+        XmlNodeList nodes = xmlDoc.SelectNodes("/Comments/Comment");
+        if (nodes == null) return list;
+
+        foreach (XmlNode node in nodes)
+        {
+            if (node.Attributes == null) continue;
+
+            var info = new CommentInfo();
+
+            if (int.TryParse(node.Attributes["ParagraphIndex"]?.Value, out int idx))
+                info.ParagraphIndex = idx;
+
+            info.Author = node.Attributes["Author"]?.Value ?? "";
+            info.Initial = node.Attributes["Initial"]?.Value ?? "";
+
+            if (DateTime.TryParse(node.Attributes["Date"]?.Value, out DateTime dt))
+                info.Date = dt;
+            else
+                info.Date = DateTime.Now;
+
+            info.Text = node.InnerText ?? "";
+
+            list.Add(info);
+        }
+
+        return list;
     }
 }

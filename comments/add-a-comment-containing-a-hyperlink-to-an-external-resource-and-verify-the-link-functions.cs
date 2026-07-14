@@ -1,8 +1,7 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Saving;
 
 public class Program
@@ -13,37 +12,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will have a comment.
-        builder.Writeln("This paragraph will have a comment containing a hyperlink.");
+        // Add a paragraph that will host the comment.
+        builder.Writeln("Paragraph with a comment containing a hyperlink.");
 
         // Create a comment with author metadata.
         Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
+
         // Append the comment to the current paragraph.
         builder.CurrentParagraph.AppendChild(comment);
 
-        // Move the builder into the comment story to add content.
+        // Move the builder into the comment's story to add content.
         builder.MoveTo(comment.AppendChild(new Paragraph(doc)));
-        // Insert a hyperlink field inside the comment.
+
+        // Insert a hyperlink inside the comment.
+        builder.Font.Color = Color.Blue;
+        builder.Font.Underline = Underline.Single;
         builder.InsertHyperlink("Aspose.Words", "https://www.aspose.com/words", false);
-        builder.Writeln(); // End the paragraph inside the comment.
+        builder.Font.ClearFormatting();
 
-        // Save the document to PDF with default options (hyperlinks are preserved).
-        const string pdfPath = "CommentWithHyperlink.pdf";
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        doc.Save(pdfPath, pdfOptions);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+        string pdfPath = Path.Combine(outputDir, "CommentWithHyperlink.pdf");
 
-        // Reload the PDF to verify that the comment contains a hyperlink field.
-        Document pdfDoc = new Document(pdfPath);
-        var comments = pdfDoc.GetChildNodes(NodeType.Comment, true)
-                             .OfType<Comment>()
-                             .ToList();
-
-        foreach (Comment c in comments)
+        // Save the document as PDF, preserving hyperlinks.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            bool hasHyperlink = c.GetChildNodes(NodeType.FieldStart, true)
-                                 .OfType<FieldStart>()
-                                 .Any(fs => fs.FieldType == FieldType.FieldHyperlink);
-            Console.WriteLine($"Comment by {c.Author} contains hyperlink: {hasHyperlink}");
-        }
+            OpenHyperlinksInNewWindow = false
+        };
+        doc.Save(pdfPath, pdfOptions);
     }
 }

@@ -7,64 +7,53 @@ public class DeleteCommentsByAuthor
 {
     public static void Main()
     {
-        // Prepare a temporary directory for the example files.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "CommentExample");
-        Directory.CreateDirectory(workDir);
+        // Define output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Paths for the input and output documents.
-        string inputPath = Path.Combine(workDir, "input.docx");
-        string outputPath = Path.Combine(workDir, "output.docx");
+        // Paths for the sample and result documents.
+        string samplePath = Path.Combine(outputDir, "sample.docx");
+        string resultPath = Path.Combine(outputDir, "result.docx");
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample document with several comments from different authors.
-        // -----------------------------------------------------------------
+        // Create a sample document with two comments from different authors.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph with a comment from John Doe.
+        // First paragraph with a comment from Alice.
         builder.Writeln("First paragraph.");
-        Comment comment1 = new Comment(doc, "John Doe", "JD", DateTime.Now);
-        comment1.SetText("Comment by John Doe.");
-        builder.CurrentParagraph.AppendChild(comment1);
+        Comment aliceComment = new Comment(doc, "Alice", "A", DateTime.Now);
+        aliceComment.SetText("Comment authored by Alice.");
+        builder.CurrentParagraph.AppendChild(aliceComment);
 
-        // Second paragraph with a comment from Jane Smith.
+        // Second paragraph with a comment from Bob.
         builder.Writeln("Second paragraph.");
-        Comment comment2 = new Comment(doc, "Jane Smith", "JS", DateTime.Now);
-        comment2.SetText("Comment by Jane Smith.");
-        builder.CurrentParagraph.AppendChild(comment2);
-
-        // Third paragraph with another comment from John Doe.
-        builder.Writeln("Third paragraph.");
-        Comment comment3 = new Comment(doc, "John Doe", "JD", DateTime.Now);
-        comment3.SetText("Another comment by John Doe.");
-        builder.CurrentParagraph.AppendChild(comment3);
+        Comment bobComment = new Comment(doc, "Bob", "B", DateTime.Now);
+        bobComment.SetText("Comment authored by Bob.");
+        builder.CurrentParagraph.AppendChild(bobComment);
 
         // Save the sample document.
-        doc.Save(inputPath);
+        doc.Save(samplePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and delete all comments authored by "John Doe".
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputPath);
-        string targetAuthor = "John Doe";
+        // Load the document we just created.
+        Document loadedDoc = new Document(samplePath);
 
-        var commentsToDelete = loadedDoc.GetChildNodes(NodeType.Comment, true)
-                                        .OfType<Comment>()
-                                        .Where(c => string.Equals(c.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
-                                        .ToList();
+        // Author whose comments should be removed.
+        const string targetAuthor = "Alice";
 
-        foreach (Comment c in commentsToDelete)
+        // Find all comments authored by the target author (case‑insensitive).
+        var commentsToRemove = loadedDoc
+            .GetChildNodes(NodeType.Comment, true)
+            .OfType<Comment>()
+            .Where(c => string.Equals(c.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        // Remove each matching comment safely.
+        foreach (Comment comment in commentsToRemove)
         {
-            c.Remove();
+            comment.Remove();
         }
 
-        // -----------------------------------------------------------------
-        // 3. Save the modified document.
-        // -----------------------------------------------------------------
-        loadedDoc.Save(outputPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Comments by \"{targetAuthor}\" have been removed.");
-        Console.WriteLine($"Modified document saved to: {outputPath}");
+        // Save the document after removal.
+        loadedDoc.Save(resultPath);
     }
 }

@@ -1,41 +1,45 @@
 using System;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 
-public class Program
+namespace AsposeWordsCommentsExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a paragraph that will contain a comment.
-        builder.Writeln("This is a paragraph that will have a comment.");
-
-        // Create a comment with custom author name, initials, and the current date/time.
-        Comment comment = new Comment(doc, "Alice Smith", "AS", DateTime.Now);
-        comment.SetText("Please review this paragraph.");
-
-        // Append the comment to the current paragraph if it exists.
-        Paragraph? paragraph = builder.CurrentParagraph;
-        if (paragraph != null)
+        public static void Main()
         {
-            paragraph.AppendChild(comment);
-        }
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-        // Save the document to the working directory.
-        const string outputPath = "CommentsSample.docx";
-        doc.Save(outputPath);
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enumerate all comments in the document and output their metadata.
-        var comments = doc.GetChildNodes(NodeType.Comment, true)
-                          .OfType<Comment>()
-                          .ToList();
+            // Add a paragraph that will contain the comment.
+            builder.Writeln("This is a paragraph that will have a comment.");
 
-        foreach (Comment c in comments)
-        {
-            Console.WriteLine($"Author: {c.Author}, Initials: {c.Initial}, Text: {c.GetText().Trim()}");
+            // Create a comment with custom author name and initials.
+            Comment comment = new Comment(doc, "Custom Author", "CA", DateTime.Now);
+            comment.SetText("This is a custom comment added programmatically.");
+
+            // Append the comment to the current paragraph.
+            builder.CurrentParagraph?.AppendChild(comment);
+
+            // Save the document.
+            string docPath = Path.Combine(outputDir, "DocumentWithCustomComment.docx");
+            doc.Save(docPath);
+
+            // Enumerate all comments in the document and output their metadata.
+            var comments = doc.GetChildNodes(NodeType.Comment, true)
+                .OfType<Comment>()
+                .ToList();
+
+            foreach (Comment c in comments)
+            {
+                Console.WriteLine($"Author: {c.Author}, Initial: {c.Initial}, Text: {c.GetText().Trim()}");
+            }
         }
     }
 }

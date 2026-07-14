@@ -1,85 +1,70 @@
 using System;
-using System.IO;
-using System.Linq;
 using System.Drawing;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure output directory exists
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a new document and add some content with comments
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph without comment
-        builder.Writeln("First paragraph without comment.");
+        // Add some sample paragraphs.
+        builder.Writeln("This is the first paragraph of the document.");
+        builder.Writeln("This is the second paragraph, which will have a comment.");
 
-        // Paragraph that will have a comment attached
-        builder.Writeln("Paragraph that will have a comment attached.");
-        Paragraph para1 = doc.FirstSection.Body.LastParagraph ?? throw new InvalidOperationException("Paragraph not found.");
+        // Create a comment anchored to the current paragraph.
+        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
+        comment1.SetText("Please review this paragraph for accuracy.");
+        // Append the comment to the paragraph.
+        builder.CurrentParagraph.AppendChild(comment1);
 
-        // Create first comment
-        Comment comment1 = new Comment(doc)
+        // Add another paragraph with a comment.
+        builder.Writeln("Another paragraph that also needs attention.");
+        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
+        comment2.SetText("Consider rephrasing this sentence.");
+        builder.CurrentParagraph.AppendChild(comment2);
+
+        // -----------------------------------------------------------------
+        // Define a custom character style that matches corporate branding.
+        // -----------------------------------------------------------------
+        const string corporateStyleName = "CorporateComment";
+        // Create the style if it does not already exist.
+        Style corporateStyle = doc.Styles[corporateStyleName];
+        if (corporateStyle == null)
         {
-            Author = "Alice Johnson",
-            Initial = "AJ",
-            DateTime = DateTime.Now
-        };
-        Paragraph commentPara1 = new Paragraph(doc);
-        commentPara1.AppendChild(new Run(doc, "Please review this paragraph for accuracy."));
-        comment1.AppendChild(commentPara1);
-        para1.AppendChild(comment1);
+            corporateStyle = doc.Styles.Add(StyleType.Character, corporateStyleName);
+            corporateStyle.Font.Name = "Arial";
+            corporateStyle.Font.Size = 10;
+            corporateStyle.Font.Color = Color.DarkBlue;
+            corporateStyle.Font.Bold = true;
+            corporateStyle.Font.Italic = false;
+        }
 
-        // Another paragraph needing attention
-        builder.Writeln("Another paragraph needing attention.");
-        Paragraph para2 = doc.FirstSection.Body.LastParagraph ?? throw new InvalidOperationException("Paragraph not found.");
-
-        // Create second comment
-        Comment comment2 = new Comment(doc)
-        {
-            Author = "Bob Smith",
-            Initial = "BS",
-            DateTime = DateTime.Now.AddDays(-1)
-        };
-        Paragraph commentPara2 = new Paragraph(doc);
-        commentPara2.AppendChild(new Run(doc, "Consider rephrasing this sentence."));
-        comment2.AppendChild(commentPara2);
-        para2.AppendChild(comment2);
-
-        // Define a custom style for comment text to match corporate branding
-        Style corporateStyle = doc.Styles.Add(StyleType.Paragraph, "CorporateComment");
-        corporateStyle.Font.Color = Color.Blue;
-        corporateStyle.Font.Bold = true;
-        corporateStyle.Font.Italic = true;
-        corporateStyle.Font.Size = 10;
-
-        // Apply the custom style to all comment text blocks
+        // ---------------------------------------------------------------
+        // Apply the custom style to all comment text blocks in the document.
+        // ---------------------------------------------------------------
         var comments = doc.GetChildNodes(NodeType.Comment, true)
-            .OfType<Comment>()
-            .ToList();
+                          .OfType<Comment>()
+                          .ToList();
 
         foreach (Comment c in comments)
         {
-            var commentParagraphs = c.GetChildNodes(NodeType.Paragraph, true)
-                .OfType<Paragraph>()
-                .ToList();
-
-            foreach (Paragraph p in commentParagraphs)
+            // Each comment may contain multiple paragraphs.
+            foreach (Paragraph para in c.Paragraphs)
             {
-                p.ParagraphFormat.Style = corporateStyle;
+                // Apply the style to every run within the paragraph.
+                foreach (Run run in para.Runs)
+                {
+                    run.Font.StyleName = corporateStyleName;
+                }
             }
         }
 
-        // Save the resulting document
-        string outputPath = Path.Combine(outputDir, "styled-comments.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
-
-        Console.WriteLine($"Document with styled comments saved to: {outputPath}");
+        // Save the modified document to the working directory.
+        doc.Save("DocumentWithStyledComments.docx");
     }
 }

@@ -8,77 +8,67 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputFolder);
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Paths for the original and revised documents.
-        string originalPath = Path.Combine(outputFolder, "original.docx");
-        string revisedPath = Path.Combine(outputFolder, "revised.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample document with comments from different authors.
-        // -----------------------------------------------------------------
+        // Create a sample document with several comments.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First paragraph with a comment from Alice.
+        // First paragraph with a comment from John Doe.
         builder.Writeln("This is the first paragraph.");
-        Comment aliceComment = new Comment(doc, "Alice", "A", DateTime.Now);
-        // Append the comment to the current paragraph.
-        builder.CurrentParagraph?.AppendChild(aliceComment);
-        // Move the builder inside the comment story and add comment text.
-        builder.MoveTo(aliceComment.AppendChild(new Paragraph(doc)));
-        builder.Write("Alice's comment.");
+        AddComment(builder, doc, "John Doe", "JD", "Review the first paragraph.");
 
-        // Second paragraph with a comment from Bob.
+        // Second paragraph with a comment from Jane Smith.
         builder.Writeln("This is the second paragraph.");
-        Comment bobComment = new Comment(doc, "Bob", "B", DateTime.Now);
-        builder.CurrentParagraph?.AppendChild(bobComment);
-        builder.MoveTo(bobComment.AppendChild(new Paragraph(doc)));
-        builder.Write("Bob's comment.");
+        AddComment(builder, doc, "Jane Smith", "JS", "Check the second paragraph.");
+
+        // Third paragraph with a comment from Alice Brown.
+        builder.Writeln("This is the third paragraph.");
+        AddComment(builder, doc, "Alice Brown", "AB", "Consider revising the third paragraph.");
 
         // Save the original document.
+        string originalPath = Path.Combine(outputDir, "original.docx");
         doc.Save(originalPath);
 
-        // ---------------------------------------------------------------
-        // 2. Load the document and filter comments based on author name.
-        // ---------------------------------------------------------------
-        Document loadedDoc = new Document(originalPath);
+        // Define the author whose comments we want to keep.
+        const string targetAuthor = "John Doe";
 
         // Enumerate all comment nodes safely.
-        var allComments = loadedDoc.GetChildNodes(NodeType.Comment, true)
-                                   .OfType<Comment>()
-                                   .ToList();
+        var allComments = doc.GetChildNodes(NodeType.Comment, true)
+                             .OfType<Comment>()
+                             .ToList();
 
-        const string acceptedAuthor = "Alice";
-
-        // Identify comments that should be removed (author does not match).
+        // Remove comments that are not authored by the target author.
         var commentsToRemove = allComments
-            .Where(c => !string.Equals(c.Author, acceptedAuthor, StringComparison.OrdinalIgnoreCase))
+            .Where(c => !string.Equals(c.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        // Remove the unwanted comments.
         foreach (Comment comment in commentsToRemove)
         {
-            comment.Remove();
+            // Ensure the comment node is still attached before removal.
+            if (comment.ParentNode != null)
+                comment.Remove();
         }
 
-        // Save the revised document containing only accepted comments.
-        loadedDoc.Save(revisedPath);
+        // Save the revised document containing only the kept comments.
+        string revisedPath = Path.Combine(outputDir, "revised.docx");
+        doc.Save(revisedPath);
+    }
 
-        // ---------------------------------------------------------------
-        // 3. Optional: Write a simple console report of remaining comments.
-        // ---------------------------------------------------------------
-        var remainingComments = loadedDoc.GetChildNodes(NodeType.Comment, true)
-                                         .OfType<Comment>()
-                                         .ToList();
+    // Helper method to create and attach a comment to the current paragraph.
+    private static void AddComment(DocumentBuilder builder, Document doc, string author, string initials, string text)
+    {
+        // Create a new comment with metadata.
+        Comment comment = new Comment(doc, author, initials, DateTime.Now);
+        comment.SetText(text);
 
-        Console.WriteLine("Comments kept in the revised document:");
-        foreach (Comment comment in remainingComments)
+        // Append the comment to the current paragraph if it exists.
+        Paragraph? paragraph = builder.CurrentParagraph;
+        if (paragraph != null)
         {
-            string text = comment.GetText().Trim();
-            Console.WriteLine($"- Author: {comment.Author}, Text: \"{text}\"");
+            paragraph.AppendChild(comment);
         }
     }
 }

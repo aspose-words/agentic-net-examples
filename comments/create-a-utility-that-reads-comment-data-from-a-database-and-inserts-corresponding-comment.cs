@@ -1,102 +1,100 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 namespace CommentInsertionExample
 {
     // Simple data model representing a comment record from a database.
-    public class CommentRecord
+    public class CommentData
     {
         public string Author { get; set; } = "";
         public string Initial { get; set; } = "";
-        public string Text { get; set; } = "";
         public DateTime DateTime { get; set; }
+        public string Text { get; set; } = "";
+        // Zero‑based index of the paragraph to which the comment will be attached.
+        public int ParagraphIndex { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Simulate retrieving comment data from a database.
-            List<CommentRecord> commentData = GetSampleCommentData();
+            // Simulated database records.
+            List<CommentData> commentRecords = new List<CommentData>
+            {
+                new CommentData
+                {
+                    Author = "Alice",
+                    Initial = "A",
+                    DateTime = DateTime.Now,
+                    Text = "Review this opening paragraph.",
+                    ParagraphIndex = 0
+                },
+                new CommentData
+                {
+                    Author = "Bob",
+                    Initial = "B",
+                    DateTime = DateTime.Now.AddMinutes(-5),
+                    Text = "Consider rephrasing this sentence.",
+                    ParagraphIndex = 2
+                },
+                new CommentData
+                {
+                    Author = "Carol",
+                    Initial = "C",
+                    DateTime = DateTime.Now.AddHours(-1),
+                    Text = "Add a reference here.",
+                    ParagraphIndex = 4
+                }
+            };
 
-            // Create a new blank document that will serve as the template.
+            // Create a blank document and add a few paragraphs that will serve as the template.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add an introductory paragraph to the document.
-            builder.Writeln("Document generated with comments from simulated database:");
-
-            // Insert a paragraph and a comment for each record.
-            foreach (CommentRecord record in commentData)
+            for (int i = 0; i < 5; i++)
             {
-                // Add a paragraph that the comment will be attached to.
-                builder.Writeln($"Paragraph for comment by {record.Author}:");
+                builder.Writeln($"Paragraph {i + 1}: This is sample text for paragraph {i + 1}.");
+            }
 
-                // Ensure the builder's current paragraph is not null.
-                Paragraph? targetParagraph = builder.CurrentParagraph;
+            // Insert comments based on the simulated data.
+            foreach (CommentData record in commentRecords)
+            {
+                // Safely obtain the target paragraph.
+                Paragraph? targetParagraph = doc.FirstSection?.Body?.Paragraphs.ElementAtOrDefault(record.ParagraphIndex) as Paragraph;
                 if (targetParagraph == null)
-                {
-                    // If for some reason there is no current paragraph, create one.
-                    targetParagraph = new Paragraph(doc);
-                    doc.FirstSection.Body.AppendChild(targetParagraph);
-                }
+                    continue; // Skip if the index is out of range.
 
-                // Create a new comment node and set its metadata.
-                Comment comment = new Comment(doc)
-                {
-                    Author = record.Author,
-                    Initial = record.Initial,
-                    DateTime = record.DateTime
-                };
+                // Move the builder to the target paragraph.
+                builder.MoveTo(targetParagraph);
 
-                // Add at least one paragraph and run inside the comment so it has visible text.
-                comment.AppendChild(new Paragraph(doc));
-                comment.FirstParagraph.AppendChild(new Run(doc, record.Text));
-
-                // Append the comment to the paragraph.
-                targetParagraph.AppendChild(comment);
+                // Create a new comment node with metadata.
+                Comment comment = new Comment(doc, record.Author, record.Initial, record.DateTime);
+                // Set the comment text (adds a paragraph internally).
+                comment.SetText(record.Text);
+                // Append the comment to the current paragraph.
+                builder.CurrentParagraph.AppendChild(comment);
             }
 
             // Save the resulting document.
-            const string outputPath = "CommentsInserted.docx";
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CommentsInserted.docx");
             doc.Save(outputPath);
 
-            // Optional: enumerate and display the inserted comments in the console.
-            var comments = doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>();
+            // Enumerate and display the inserted comments to verify.
+            var comments = doc.GetChildNodes(NodeType.Comment, true)
+                              .OfType<Comment>()
+                              .ToList();
+
             foreach (Comment c in comments)
             {
-                Console.WriteLine($"{c.Author} ({c.Initial}) on {c.DateTime:u}: {c.GetText().Trim()}");
+                Console.WriteLine($"{c.Author} ({c.Initial}) on {c.DateTime}: {c.GetText().Trim()}");
             }
-        }
 
-        // Generates sample comment records to mimic database rows.
-        private static List<CommentRecord> GetSampleCommentData()
-        {
-            return new List<CommentRecord>
-            {
-                new CommentRecord
-                {
-                    Author = "Alice Johnson",
-                    Initial = "AJ",
-                    Text = "Please review this section.",
-                    DateTime = DateTime.Now.AddDays(-2)
-                },
-                new CommentRecord
-                {
-                    Author = "Bob Smith",
-                    Initial = "BS",
-                    Text = "Consider rephrasing the previous sentence.",
-                    DateTime = DateTime.Now.AddDays(-1)
-                },
-                new CommentRecord
-                {
-                    Author = "Carol Lee",
-                    Initial = "CL",
-                    Text = "Add a reference here.",
-                    DateTime = DateTime.Now
-                }
-            };
+            // Indicate completion.
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

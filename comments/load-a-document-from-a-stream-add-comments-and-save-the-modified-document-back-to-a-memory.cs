@@ -1,59 +1,47 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a simple document in memory.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph.");
+        // Step 1: Create a simple document in memory.
+        Document originalDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
+        builder.Writeln("Hello World! This is the original document.");
 
-        // Save the document to a memory stream.
+        // Step 2: Save the document to a memory stream (input stream).
         using (MemoryStream inputStream = new MemoryStream())
         {
-            doc.Save(inputStream, SaveFormat.Docx);
+            originalDoc.Save(inputStream, SaveFormat.Docx);
             inputStream.Position = 0; // Reset for reading.
 
-            // Load the document from the memory stream.
+            // Step 3: Load the document from the memory stream.
             Document loadedDoc = new Document(inputStream);
 
-            // Add a comment to the first paragraph.
+            // Step 4: Add a comment to the first paragraph.
+            // Ensure the document has at least one paragraph.
             Paragraph? targetParagraph = loadedDoc.FirstSection?.Body?.FirstParagraph;
             if (targetParagraph != null)
             {
                 // Create a new comment with author metadata.
-                Comment comment = new Comment(loadedDoc, "Alice", "A", DateTime.Now);
+                Comment comment = new Comment(loadedDoc, "Alice Example", "AE", DateTime.Now);
+                // Set the visible text of the comment.
+                comment.SetText("Review this paragraph for clarity.");
 
-                // Ensure the comment contains visible text.
-                comment.AppendChild(new Paragraph(loadedDoc));
-                comment.FirstParagraph?.AppendChild(new Run(loadedDoc, "Please review this paragraph."));
-
-                // Attach the comment to the paragraph.
+                // Append the comment to the paragraph.
                 targetParagraph.AppendChild(comment);
             }
 
-            // Save the modified document to another memory stream.
+            // Step 5: Save the modified document to another memory stream (output stream).
             using (MemoryStream outputStream = new MemoryStream())
             {
                 loadedDoc.Save(outputStream, SaveFormat.Docx);
-                outputStream.Position = 0; // Reset for any further processing.
+                outputStream.Position = 0; // Reset if further processing is needed.
 
-                // Verify that the comment was added.
-                var comments = loadedDoc.GetChildNodes(NodeType.Comment, true)
-                                        .OfType<Comment>()
-                                        .ToList();
-
-                Console.WriteLine($"Number of comments in the document: {comments.Count}");
-                foreach (Comment c in comments)
-                {
-                    Console.WriteLine($"Author: {c.Author}, Text: {c.GetText().Trim()}");
-                }
+                // For demonstration purposes, write the size of the resulting document.
+                Console.WriteLine($"Modified document size: {outputStream.Length} bytes");
             }
         }
     }

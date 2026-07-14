@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 
 public class Program
@@ -10,27 +12,35 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Add a paragraph that will hold the comment.
-        builder.Writeln("Paragraph that will have a comment.");
+        builder.Writeln("This is a paragraph that will have a comment.");
 
         // Create a top‑level comment.
-        Comment topComment = new Comment(doc, "Alice", "A", DateTime.Now);
-        topComment.SetText("This is the original comment.");
+        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
+        comment.SetText("Please review this paragraph.");
 
         // Attach the comment to the current paragraph.
-        builder.CurrentParagraph.AppendChild(topComment);
+        builder.CurrentParagraph?.AppendChild(comment);
 
-        // Add a reply to the top‑level comment.
-        topComment.AddReply("Bob", "B", DateTime.Now, "This is a reply nested under the original comment.");
+        // Add a reply to the comment. The reply will be nested under the original comment.
+        comment.AddReply("Bob", "B", DateTime.Now, "I have reviewed it, looks good.");
 
         // Save the document so the comment and its reply are persisted.
-        doc.Save("CommentWithReply.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CommentReplyExample.docx");
+        doc.Save(outputPath);
 
-        // Optional: enumerate comments to verify the hierarchy.
-        foreach (Comment comment in doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>())
+        // Enumerate all comments to demonstrate the nesting.
+        var allComments = doc.GetChildNodes(NodeType.Comment, true)
+                             .OfType<Comment>()
+                             .ToList();
+
+        foreach (Comment c in allComments)
         {
-            string indent = comment.Ancestor == null ? "" : "    ";
-            Console.WriteLine($"{indent}Author: {comment.Author}");
-            Console.WriteLine($"{indent}Text: {comment.GetText().Trim()}");
+            // Top‑level comments have no ancestor.
+            string level = c.Ancestor == null ? "Top‑level" : "Reply";
+            Console.WriteLine($"{level} comment by {c.Author}: {c.GetText().Trim()}");
         }
+
+        // Indicate where the file was saved.
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }
