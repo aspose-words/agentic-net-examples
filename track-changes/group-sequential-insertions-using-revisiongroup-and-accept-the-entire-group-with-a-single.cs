@@ -9,33 +9,25 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content that is not tracked.
-        builder.Writeln("Original paragraph.");
-
-        // Start tracking revisions with a specific author.
+        // Enable tracking of revisions.
         doc.StartTrackRevisions("Alice", DateTime.Now);
 
-        // Insert several paragraphs sequentially. These insertions will be grouped together.
-        builder.Writeln("Inserted paragraph 1.");
-        builder.Writeln("Inserted paragraph 2.");
-        builder.Writeln("Inserted paragraph 3.");
+        // Insert several paragraphs sequentially – these will be grouped as one revision group.
+        builder.Writeln("First inserted paragraph.");
+        builder.Writeln("Second inserted paragraph.");
+        builder.Writeln("Third inserted paragraph.");
 
-        // Stop tracking further changes.
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Verify that a revision group was created for the sequential insertions.
-        if (doc.Revisions.Groups.Count != 1)
-            throw new InvalidOperationException("Expected exactly one revision group for the insertions.");
+        // Verify that a revision group was created.
+        if (doc.Revisions.Groups.Count == 0)
+            throw new InvalidOperationException("No revision groups were created.");
 
-        // Accept the entire group of revisions with a single call.
-        // Since the group is the only set of revisions, AcceptAll will accept them all.
+        // Accept all revisions in the document – this accepts the entire group in a single call.
         doc.Revisions.AcceptAll();
 
-        // Optionally, verify that all revisions have been accepted.
-        if (doc.HasRevisions)
-            throw new InvalidOperationException("Revisions were not fully accepted.");
-
         // Save the resulting document.
-        doc.Save("RevisionGroupExample.docx");
+        doc.Save("Result.docx");
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -7,52 +8,49 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content.
-        builder.Writeln("Document before image insertion.");
+        // Add some initial text (not a revision).
+        builder.Writeln("Initial text before tracking.");
 
-        // Start tracking revisions with a specific author.
-        string author = "Test Author";
+        // Start tracking revisions.
+        string author = "TestAuthor";
         doc.StartTrackRevisions(author, DateTime.Now);
 
-        // Insert a simple 1x1 pixel PNG image using a base64 string.
-        // This avoids the need for System.Drawing types.
-        const string pngBase64 =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=";
-        byte[] imageBytes = Convert.FromBase64String(pngBase64);
+        // Insert a simple 1x1 PNG image while tracking is enabled.
+        // This PNG is a transparent pixel encoded in base64.
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII=");
+        builder.InsertImage(pngBytes);
 
-        // Insert the image while tracking is enabled.
-        Shape insertedShape = builder.InsertImage(imageBytes);
+        // Add more text after the image (still tracked).
+        builder.Writeln("Text after image.");
 
-        // Stop tracking further changes.
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Save the document (optional for visual verification).
-        string outputPath = "TrackChangesImage.docx";
-        doc.Save(outputPath);
-
-        // Verify that a revision was created for the image insertion.
+        // Verify that an insertion revision exists for the image.
         if (!doc.HasRevisions)
-            throw new InvalidOperationException("No revisions were recorded.");
+            throw new InvalidOperationException("No revisions were created.");
 
-        Revision revision = doc.Revisions[0];
-        if (revision.RevisionType != RevisionType.Insertion)
-            throw new InvalidOperationException($"Expected an insertion revision, but got {revision.RevisionType}.");
+        // Find the first insertion revision that is a shape.
+        Revision imageRevision = doc.Revisions
+            .FirstOrDefault(r => r.RevisionType == RevisionType.Insertion && r.ParentNode is Shape);
 
-        if (revision.Author != author)
-            throw new InvalidOperationException($"Expected revision author '{author}', but got '{revision.Author}'.");
+        if (imageRevision == null)
+            throw new InvalidOperationException("Insertion revision for the image was not found.");
 
-        // Ensure the inserted shape is marked as an insert revision.
-        if (insertedShape == null)
-            throw new InvalidOperationException("Inserted shape not found.");
+        if (imageRevision.Author != author)
+            throw new InvalidOperationException($"Expected author '{author}', got '{imageRevision.Author}'.");
 
-        if (!insertedShape.IsInsertRevision)
-            throw new InvalidOperationException("The inserted image is not marked as an insert revision.");
+        // The parent node of the revision should be a Shape (the inserted image) and marked as an insert revision.
+        if (!(imageRevision.ParentNode is Shape shape) || !shape.IsInsertRevision)
+            throw new InvalidOperationException("The inserted image is not marked as an insertion revision.");
 
-        // If all checks pass, indicate success.
-        Console.WriteLine("Image insertion recorded as a revision successfully.");
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TrackChangesImage.docx");
+        doc.Save(outputPath);
     }
 }

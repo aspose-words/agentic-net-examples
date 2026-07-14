@@ -2,47 +2,52 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 
-public class Program
+namespace RevisionSummaryExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Write some initial text – this will NOT be a revision.
-        builder.Write("Original text. ");
-
-        // Start tracking revisions.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
-
-        // Insert new text – this will be recorded as an insertion revision.
-        builder.Write("Inserted text. ");
-
-        // Delete the original run – this will be recorded as a deletion revision.
-        Run originalRun = doc.FirstSection.Body.FirstParagraph.Runs[0];
-        originalRun.Remove();
-
-        // Stop tracking further changes.
-        doc.StopTrackRevisions();
-
-        // Count revisions by type.
-        Dictionary<RevisionType, int> revisionCounts = new Dictionary<RevisionType, int>();
-        foreach (Revision rev in doc.Revisions)
+        public static void Main()
         {
-            if (!revisionCounts.ContainsKey(rev.RevisionType))
-                revisionCounts[rev.RevisionType] = 0;
-            revisionCounts[rev.RevisionType]++;
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Write some initial text that will NOT be a revision.
+            builder.Write("Hello world! ");
+
+            // Start tracking revisions.
+            doc.StartTrackRevisions("John Doe", DateTime.Now);
+
+            // Insert new text – this will be recorded as an insertion revision.
+            builder.Write("Inserted text. ");
+
+            // Delete the original run – this will be recorded as a deletion revision.
+            // The first run contains "Hello world! ".
+            doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
+
+            // Stop tracking revisions.
+            doc.StopTrackRevisions();
+
+            // Count revisions by type.
+            var revisionCounts = new Dictionary<RevisionType, int>();
+            foreach (Revision rev in doc.Revisions)
+            {
+                if (revisionCounts.ContainsKey(rev.RevisionType))
+                    revisionCounts[rev.RevisionType]++;
+                else
+                    revisionCounts[rev.RevisionType] = 1;
+            }
+
+            int insertionCount = revisionCounts.ContainsKey(RevisionType.Insertion) ? revisionCounts[RevisionType.Insertion] : 0;
+            int deletionCount = revisionCounts.ContainsKey(RevisionType.Deletion) ? revisionCounts[RevisionType.Deletion] : 0;
+
+            // Output the summary.
+            Console.WriteLine($"Revision summary:");
+            Console.WriteLine($"Insertions: {insertionCount}");
+            Console.WriteLine($"Deletions: {deletionCount}");
+
+            // Save the document (optional, demonstrates file output).
+            doc.Save("RevisionsSummary.docx");
         }
-
-        int insertionCount = revisionCounts.ContainsKey(RevisionType.Insertion) ? revisionCounts[RevisionType.Insertion] : 0;
-        int deletionCount = revisionCounts.ContainsKey(RevisionType.Deletion) ? revisionCounts[RevisionType.Deletion] : 0;
-
-        // Output the summary.
-        Console.WriteLine($"Insertions: {insertionCount}");
-        Console.WriteLine($"Deletions: {deletionCount}");
-
-        // Save the document (optional, demonstrates file output).
-        doc.Save("RevisionsSummary.docx");
     }
 }

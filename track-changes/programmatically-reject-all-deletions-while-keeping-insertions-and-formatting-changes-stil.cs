@@ -9,24 +9,23 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content that will later be partially deleted.
-        builder.Write("This is the original paragraph. ");
+        // Write some initial text that will not be tracked as a revision.
+        builder.Writeln("Paragraph before tracking.");
 
         // Start tracking revisions.
-        doc.StartTrackRevisions("Reviewer", DateTime.Now);
+        doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Insert new text – this will be an insertion revision.
-        builder.Write("Inserted sentence. ");
+        // Insert a new paragraph – this will be an insertion revision.
+        builder.Writeln("This paragraph is an insertion revision.");
 
-        // Delete a portion of the original text – this will be a deletion revision.
-        // Remove the first run (the original sentence) to create a deletion revision.
-        Node firstRun = doc.FirstSection.Body.FirstParagraph.Runs[0];
-        firstRun.Remove();
+        // Delete the first paragraph – this will create a deletion revision.
+        Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+        firstParagraph.Remove();
 
-        // Stop tracking further changes.
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Reject only the deletion revisions, leaving insertions and any formatting changes untouched.
+        // Reject only deletion revisions, keep insertions and formatting changes.
         for (int i = doc.Revisions.Count - 1; i >= 0; i--)
         {
             Revision rev = doc.Revisions[i];
@@ -36,5 +35,9 @@ public class Program
 
         // Save the resulting document.
         doc.Save("Output.docx");
+
+        // Optional: display the final document text.
+        Console.WriteLine("Final document text:");
+        Console.WriteLine(doc.GetText().Trim());
     }
 }

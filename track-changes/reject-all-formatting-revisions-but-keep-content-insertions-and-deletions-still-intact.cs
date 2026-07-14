@@ -1,65 +1,49 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class Program
+namespace AsposeWordsTrackChangesDemo
 {
-    public static void Main()
+    public class Program
     {
-        // Create the original document.
-        Document original = new Document();
-        DocumentBuilder builder = new DocumentBuilder(original);
-        builder.Writeln("This is a sample paragraph.");
-        builder.Writeln("Another line of text.");
-        // Save the original to a memory stream for later comparison.
-        using (MemoryStream originalStream = new MemoryStream())
+        public static void Main()
         {
-            original.Save(originalStream, SaveFormat.Docx);
-            originalStream.Position = 0;
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Load the original document from the stream.
-            Document originalDoc = new Document(originalStream);
+            // Add initial content that will later be modified.
+            builder.Writeln("This is the original paragraph.");
 
-            // Create an edited version of the document.
-            Document editedDoc = (Document)originalDoc.Clone(true);
-            DocumentBuilder editBuilder = new DocumentBuilder(editedDoc);
+            // Start tracking revisions.
+            doc.StartTrackRevisions("DemoAuthor", DateTime.Now);
 
-            // ----- Insert a new paragraph (insertion revision) -----
-            editBuilder.MoveToDocumentEnd();
-            editBuilder.Writeln("Inserted paragraph.");
+            // ----- Insertion revision -----
+            // Insert a new paragraph – this will be recorded as an insertion.
+            builder.Writeln("This paragraph was inserted while tracking changes.");
 
-            // ----- Delete a paragraph (deletion revision) -----
-            // Remove the first paragraph.
-            Paragraph firstParagraph = editedDoc.FirstSection.Body.Paragraphs[0];
-            firstParagraph.Remove();
+            // ----- Formatting revision -----
+            // Change the style of the first paragraph – this should be recorded as a format change.
+            Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+            firstParagraph.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
 
-            // ----- Change formatting (format revision) -----
-            // Make the remaining text bold.
-            foreach (Paragraph para in editedDoc.FirstSection.Body.Paragraphs)
+            // ----- Deletion revision -----
+            // Remove a run from the first paragraph – this will be recorded as a deletion.
+            if (firstParagraph.Runs.Count > 0)
+                firstParagraph.Runs[0].Remove();
+
+            // Stop tracking revisions.
+            doc.StopTrackRevisions();
+
+            // Reject only formatting revisions, keep insertions and deletions intact.
+            foreach (Revision revision in doc.Revisions)
             {
-                foreach (Run run in para.Runs)
-                {
-                    run.Font.Bold = true;
-                }
-            }
-
-            // Compare the original with the edited document to generate revisions.
-            originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
-
-            // Reject only formatting revisions, keep insertions and deletions.
-            for (int i = originalDoc.Revisions.Count - 1; i >= 0; i--)
-            {
-                Revision rev = originalDoc.Revisions[i];
-                if (rev.RevisionType == RevisionType.FormatChange)
-                {
-                    rev.Reject();
-                }
+                if (revision.RevisionType == RevisionType.FormatChange)
+                    revision.Reject();
             }
 
             // Save the resulting document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
-            originalDoc.Save(outputPath);
+            doc.Save("Result.docx");
         }
     }
 }

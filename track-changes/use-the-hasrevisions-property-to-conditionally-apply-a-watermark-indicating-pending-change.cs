@@ -1,6 +1,6 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -10,33 +10,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add initial content that is not a revision.
-        builder.Writeln("Original content. ");
+        // Write some initial content that is not a revision.
+        builder.Writeln("This is the original content.");
 
-        // Start tracking revisions.
+        // Start tracking revisions and make a change.
         doc.StartTrackRevisions("Reviewer", DateTime.Now);
-
-        // Make some changes that will be recorded as revisions.
-        builder.Writeln("This line is added while tracking changes. ");
-
-        // Stop tracking revisions.
+        builder.Writeln("This line was added while tracking changes.");
+        // Stop tracking so further edits are not recorded as revisions.
         doc.StopTrackRevisions();
 
-        // If the document contains any revisions, add a watermark indicating pending changes.
+        // If the document has any revisions, add a watermark indicating pending changes.
         if (doc.HasRevisions)
         {
-            // Configure a semi‑transparent diagonal text watermark.
+            // Configure watermark options.
             TextWatermarkOptions options = new TextWatermarkOptions
             {
-                IsSemitrasparent = true,
-                Layout = WatermarkLayout.Diagonal
+                FontFamily = "Arial",
+                FontSize = 36,
+                Color = Color.LightGray,
+                Layout = WatermarkLayout.Diagonal,
+                IsSemitrasparent = true // Semi‑transparent watermark.
             };
 
-            // Apply the watermark to the document.
-            doc.Watermark.SetText("Pending Changes", options);
+            // Apply the text watermark to the document.
+            doc.Watermark.SetText("PENDING CHANGES", options);
         }
 
-        // Save the resulting document.
+        // Save the document.
         doc.Save("Output.docx");
     }
 }

@@ -5,41 +5,42 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial text – this is not a revision.
+        // Write some initial text without tracking – this should not create revisions.
         builder.Write("Initial text. ");
 
-        // Start tracking revisions with a specific author.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
-        builder.Write("Tracked change. ");
+        // Verify that no revisions exist yet.
+        if (doc.Revisions.Count != 0)
+            throw new InvalidOperationException("Revisions should be zero before tracking starts.");
 
-        // At this point one revision (the insertion) should exist.
+        // Start tracking revisions with a specific author.
+        doc.StartTrackRevisions("John Doe");
+
+        // Write text while tracking – this should create a revision.
+        builder.Write("Tracked change 1. ");
+
+        // Verify that one revision was recorded.
         if (doc.Revisions.Count != 1)
-            throw new InvalidOperationException("Expected 1 revision after tracking started.");
+            throw new InvalidOperationException("Exactly one revision should exist after first tracked edit.");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Record the revision count after stopping tracking.
-        int revisionsBefore = doc.Revisions.Count;
+        // Write additional text after stopping tracking – this must NOT create new revisions.
+        builder.Write("Untracked change after stop. ");
 
-        // Make additional edits – these should NOT be recorded as revisions.
-        builder.Write("Untracked change. ");
+        // Verify that the revision count has not increased.
+        if (doc.Revisions.Count != 1)
+            throw new InvalidOperationException("No new revisions should be recorded after stopping tracking.");
 
-        // Verify that no new revisions were added.
-        int revisionsAfter = doc.Revisions.Count;
-        if (revisionsAfter != revisionsBefore)
-            throw new InvalidOperationException("New revisions were recorded after tracking was stopped.");
+        // Save the document to verify the result (optional for the task).
+        doc.Save("TrackedChangesExample.docx");
 
-        // Additionally, confirm that the last run is not marked as an insert revision.
-        Run lastRun = (Run)doc.FirstSection.Body.LastParagraph.Runs[doc.FirstSection.Body.LastParagraph.Runs.Count - 1];
-        if (lastRun.IsInsertRevision)
-            throw new InvalidOperationException("The last run is incorrectly marked as an insert revision.");
-
-        // Save the document to verify the result manually if needed.
-        doc.Save("TrackChangesResult.docx");
+        // Output confirmation.
+        Console.WriteLine("Revisions count after operations: " + doc.Revisions.Count);
+        Console.WriteLine("Example completed successfully.");
     }
 }

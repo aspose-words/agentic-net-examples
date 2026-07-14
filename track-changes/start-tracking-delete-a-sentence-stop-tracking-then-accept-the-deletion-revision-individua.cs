@@ -1,7 +1,7 @@
 using System;
 using Aspose.Words;
 
-public class Program
+public class TrackChangesDemo
 {
     public static void Main()
     {
@@ -9,20 +9,20 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add three separate paragraphs (sentences).
-        builder.Writeln("First sentence.");
-        builder.Writeln("Second sentence.");
-        builder.Writeln("Third sentence.");
+        // Add three sentences – the middle one will be deleted while tracking.
+        builder.Writeln("This is the first sentence.");
+        builder.Writeln("This sentence will be deleted.");
+        builder.Writeln("This is the last sentence.");
 
-        // Start tracking revisions.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
+        // Start tracking revisions with a specific author.
+        doc.StartTrackRevisions("Demo Author", DateTime.Now);
 
-        // Delete the second paragraph while tracking is enabled.
-        // This will create a deletion-type revision.
-        Paragraph secondParagraph = doc.FirstSection.Body.Paragraphs[1];
-        secondParagraph.Remove();
+        // Delete the second paragraph (the sentence to be removed).
+        // This operation creates a deletion-type revision.
+        Paragraph paragraphToDelete = doc.FirstSection.Body.Paragraphs[1];
+        paragraphToDelete.Remove();
 
-        // Stop tracking revisions.
+        // Stop tracking further changes.
         doc.StopTrackRevisions();
 
         // Find the deletion revision and accept it individually.
@@ -38,7 +38,8 @@ public class Program
         // Save the resulting document.
         doc.Save("TrackChangesDemo.docx");
 
-        // Indicate completion (optional).
-        Console.WriteLine("Document processed and saved.");
+        // Output the final document text to the console (for verification).
+        Console.WriteLine("Final document text:");
+        Console.WriteLine(doc.GetText().Trim());
     }
 }
