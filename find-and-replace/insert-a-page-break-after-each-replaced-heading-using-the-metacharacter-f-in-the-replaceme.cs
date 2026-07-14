@@ -8,42 +8,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document with several headings.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a few headings (using the built‑in Heading1 style) and some body text.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the first chapter.");
+        builder.Writeln("Heading 1");
+        builder.Writeln("Content under heading 1.");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the second chapter.");
+        builder.Writeln("Heading 2");
+        builder.Writeln("Content under heading 2.");
 
-        // Save the original document (optional, just for reference).
-        doc.Save("input.docx");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Heading 3");
+        builder.Writeln("Content under heading 3.");
 
-        // Prepare a regular expression that matches the whole heading text.
-        Regex headingRegex = new Regex(@"Chapter \d+");
+        // Save the original document (optional, for inspection).
+        string inputPath = Path.Combine(Environment.CurrentDirectory, "Input.docx");
+        doc.Save(inputPath);
 
-        // Configure find‑replace options to enable substitution patterns.
+        // Replace each heading with the same text followed by a page break using the \f metacharacter.
+        Regex headingRegex = new Regex(@"Heading \d+");
         FindReplaceOptions options = new FindReplaceOptions
         {
-            UseSubstitutions = true   // Allows $0 to represent the whole match.
+            UseSubstitutions = true // Enable $0 substitution.
         };
-
-        // Replace each heading with itself followed by a page break.
-        // The form‑feed character (\f) is interpreted by Aspose.Words as a page break.
         int replacedCount = doc.Range.Replace(headingRegex, "$0\f", options);
 
-        // Verify that at least one replacement was performed.
         if (replacedCount == 0)
             throw new InvalidOperationException("No headings were replaced.");
 
         // Save the modified document.
-        doc.Save("output.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Output.docx");
+        doc.Save(outputPath);
     }
 }

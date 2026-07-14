@@ -1,45 +1,34 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
-using Aspose.Words.Replacing; // Required for FindReplaceOptions
-using Newtonsoft.Json; // Kept for compatibility as in original example
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-
-        // -------------------------------------------------
-        // 1. Create a sample document containing em dashes.
-        // -------------------------------------------------
+        // Create a sample document containing Unicode em dashes (U+2014).
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is an example—text with an em dash.");
+        builder.Writeln("This is an example—text with em dashes—used for replacement.");
         builder.Writeln("Another line—showing multiple—em dashes.");
-        doc.Save(inputPath);
+        // Save the original document (optional, just for inspection).
+        doc.Save("input.docx");
 
-        // -------------------------------------------------
-        // 2. Load the document and replace each em dash with a hyphen.
-        // -------------------------------------------------
-        Document loaded = new Document(inputPath);
+        // Load the document to perform find-and-replace.
+        Document loaded = new Document("input.docx");
 
-        // Regular expression that matches the Unicode em dash character (U+2014).
-        Regex emDashRegex = new Regex("\u2014");
+        // Define a regular expression that matches the em dash character.
+        Regex emDashRegex = new Regex("\u2014"); // Unicode em dash
 
-        // Perform the replacement using FindReplaceOptions.
+        // Replace each em dash with a standard hyphen.
         int replacedCount = loaded.Range.Replace(emDashRegex, "-", new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No em dash characters were found for replacement.");
+            throw new InvalidOperationException("No em dash characters were replaced.");
 
-        // -------------------------------------------------
-        // 3. Save the modified document.
-        // -------------------------------------------------
-        loaded.Save(outputPath);
+        // Save the modified document.
+        loaded.Save("output.docx");
     }
 }

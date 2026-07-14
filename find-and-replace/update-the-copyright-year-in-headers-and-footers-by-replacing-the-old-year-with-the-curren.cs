@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -7,33 +8,25 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder and file paths.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string inputPath = Path.Combine(artifactsDir, "input.docx");
-        string outputPath = Path.Combine(artifactsDir, "output.docx");
+        // Paths for the sample input and output documents.
+        const string inputPath = "input.docx";
+        const string outputPath = "output.docx";
 
         // -----------------------------------------------------------------
-        // Create a sample document that contains a header and a footer with
-        // an old copyright year (2022). This document will be saved and then
-        // processed.
+        // Create a sample document with a header and a footer containing an old year.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Header with old year.
+        // Insert header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("(C) 2022 Aspose Pty Ltd.");
+        builder.Writeln("(C) 2022 My Company");
 
-        // Footer with old year.
+        // Insert footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("(C) 2022 Aspose Pty Ltd.");
+        builder.Writeln("(C) 2022 My Company");
 
-        // Add a simple body paragraph so the document is not empty.
-        builder.MoveToDocumentEnd();
-        builder.Writeln("Sample body text.");
-
-        // Save the source document.
+        // Save the sample document.
         doc.Save(inputPath);
 
         // -----------------------------------------------------------------
@@ -43,36 +36,32 @@ public class Program
         Document loaded = new Document(inputPath);
 
         int currentYear = DateTime.Now.Year;
-        string oldYear = "2022";
-        string newYear = currentYear.ToString();
+        string replacementText = $"(C) {currentYear}";
+
+        // Regex to find the pattern "(C) 4-digit-year".
+        Regex yearPattern = new Regex(@"\(C\) \d{4}");
 
         int totalReplacements = 0;
-        FindReplaceOptions replaceOptions = new FindReplaceOptions();
 
+        // Iterate through every section and its header/footer collection.
         foreach (Section section in loaded.Sections)
         {
-            // Process primary header.
-            HeaderFooter header = section.HeadersFooters[HeaderFooterType.HeaderPrimary];
-            if (header != null)
+            foreach (HeaderFooter headerFooter in section.HeadersFooters)
             {
-                int replaced = header.Range.Replace(oldYear, newYear, replaceOptions);
-                totalReplacements += replaced;
-            }
-
-            // Process primary footer.
-            HeaderFooter footer = section.HeadersFooters[HeaderFooterType.FooterPrimary];
-            if (footer != null)
-            {
-                int replaced = footer.Range.Replace(oldYear, newYear, replaceOptions);
+                // Perform the replacement within the header/footer range.
+                int replaced = headerFooter.Range.Replace(yearPattern, replacementText, new FindReplaceOptions());
                 totalReplacements += replaced;
             }
         }
 
-        // Ensure that at least one replacement occurred.
+        // Validate that at least one replacement occurred.
         if (totalReplacements == 0)
             throw new InvalidOperationException("Expected at least one replacement in headers or footers.");
 
         // Save the modified document.
         loaded.Save(outputPath);
+
+        // Optional: indicate success.
+        Console.WriteLine($"Replaced {totalReplacements} occurrence(s). Output saved to '{outputPath}'.");
     }
 }

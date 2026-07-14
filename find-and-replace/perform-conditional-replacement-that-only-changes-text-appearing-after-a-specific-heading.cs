@@ -1,90 +1,99 @@
 using System;
 using System.IO;
-using System.Text;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Words.Drawing;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document with two headings and several occurrences of the word "target".
+        // Create a new document and populate it with headings and sample text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Heading 1");
-        builder.Writeln("This is a target before the second heading.");
-        builder.Writeln("Heading 2");
-        builder.Writeln("First target after heading 2.");
-        builder.Writeln("Another target after heading 2.");
+        // First heading and some text before the target heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Section 1");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is a target before heading.");
+        builder.Writeln("target");
 
-        // Set up find‑replace options with a custom callback that only replaces matches
-        // that appear after the specified heading.
-        var options = new FindReplaceOptions
+        // Second heading – replacements should start after this heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Section 2");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("target should be replaced");
+        builder.Writeln("Another target.");
+
+        // Locate the heading paragraph after which replacements are allowed.
+        Paragraph headingParagraph = doc.GetChildNodes(NodeType.Paragraph, true)
+            .Cast<Paragraph>()
+            .FirstOrDefault(p =>
+                p.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1 &&
+                p.GetText().Trim().Equals("Section 2", StringComparison.Ordinal));
+
+        // Set up the find‑replace options with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new ConditionalReplacer("Heading 2", "REPLACED")
+            ReplacingCallback = new ConditionalReplacer(headingParagraph)
         };
 
-        // Perform the replacement. The callback decides whether each match should be replaced.
-        int replacedCount = doc.Range.Replace("target", "REPLACED", options);
-
-        // Validate that at least one replacement occurred.
+        // Replace the word "target" only after the specified heading.
+        int replacedCount = doc.Range.Replace("target", "replaced", options);
         if (replacedCount == 0)
-            throw new InvalidOperationException("No replacements were made; the conditional logic may be incorrect.");
+            throw new InvalidOperationException("Expected at least one replacement after the heading.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        doc.Save("output.docx");
 
-        // Optional: indicate success (no interactive prompts required).
-        Console.WriteLine($"Replacements performed: {replacedCount}");
-        Console.WriteLine($"Document saved to: {Path.GetFullPath(outputPath)}");
+        // Create a simple JSON report of the operation.
+        var report = new { Replacements = replacedCount };
+        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText("report.json", json);
     }
 
-    // Callback that replaces a match only if it is located after a paragraph containing a specific heading.
+    // Callback that performs replacement only after a given heading paragraph.
     private class ConditionalReplacer : IReplacingCallback
     {
-        private readonly string _headingText;
-        private readonly string _replacementText;
+        private readonly Body _body;
+        private readonly int _headingParagraphIndex;
 
-        public ConditionalReplacer(string headingText, string replacementText)
+        public ConditionalReplacer(Paragraph headingParagraph)
         {
-            _headingText = headingText ?? throw new ArgumentNullException(nameof(headingText));
-            _replacementText = replacementText ?? throw new ArgumentNullException(nameof(replacementText));
+            if (headingParagraph?.ParentNode is Body body)
+            {
+                _body = body;
+                _headingParagraphIndex = body.Paragraphs.IndexOf(headingParagraph);
+            }
+            else
+            {
+                _body = null;
+                _headingParagraphIndex = -1;
+            }
         }
 
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // The node that contains the beginning of the match (usually a Run).
-            Node matchNode = args.MatchNode;
-            // Ascend to the containing paragraph.
-            Paragraph paragraph = matchNode?.ParentNode as Paragraph;
-            if (paragraph == null)
+            // Identify the paragraph that contains the current match.
+            Paragraph matchParagraph = args.MatchNode.GetAncestor(NodeType.Paragraph) as Paragraph;
+            if (matchParagraph == null)
                 return ReplaceAction.Skip;
 
-            // Walk backwards through preceding sibling nodes to see if the heading appears.
-            Node current = paragraph.PreviousSibling;
-            while (current != null)
+            // Ensure we are working within the same body as the heading.
+            if (matchParagraph.ParentNode is Body body && body == _body)
             {
-                if (current.NodeType == NodeType.Paragraph)
+                int matchIndex = body.Paragraphs.IndexOf(matchParagraph);
+                if (matchIndex > _headingParagraphIndex)
                 {
-                    string text = current.GetText().Trim();
-                    if (text.Equals(_headingText, StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Heading found before this paragraph – perform replacement.
-                        args.Replacement = _replacementText;
-                        return ReplaceAction.Replace;
-                    }
-
-                    // If another heading is encountered before the target heading, stop searching.
-                    // Assuming headings are distinct lines; adjust as needed.
-                    if (text.StartsWith("Heading", StringComparison.OrdinalIgnoreCase))
-                        break;
+                    args.Replacement = "replaced";
+                    return ReplaceAction.Replace;
                 }
-                current = current.PreviousSibling;
             }
 
-            // Heading not found in preceding paragraphs – skip this match.
+            // Skip matches that appear before the heading.
             return ReplaceAction.Skip;
         }
     }

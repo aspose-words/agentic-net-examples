@@ -11,18 +11,19 @@ public class Program
         string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
 
-        // Create a sample document containing the word "color" in different cases.
+        // Create a sample document containing various case forms of the word "color".
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("The color of the sky is blue.");
         builder.Writeln("She likes the Colour of roses.");
         builder.Writeln("COLOR is often used in design.");
+        builder.Writeln("No matching word here.");
         doc.Save(inputPath);
 
-        // Load the document we just created.
+        // Load the document from the file system.
         Document loaded = new Document(inputPath);
 
-        // Set up find/replace options for a case‑insensitive operation.
+        // Configure find‑replace options for case‑insensitive replacement.
         FindReplaceOptions options = new FindReplaceOptions
         {
             MatchCase = false // Ignore case when searching.

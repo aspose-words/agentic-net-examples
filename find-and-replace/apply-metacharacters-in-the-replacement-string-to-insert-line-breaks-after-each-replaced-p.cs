@@ -7,35 +7,45 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for the sample files.
-        string workDir = Path.Combine(Environment.CurrentDirectory, "FindReplaceDemo");
-        Directory.CreateDirectory(workDir);
+        // Define file names in the current directory.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
 
-        // Create a sample document with several paragraphs containing the word "TARGET".
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with several paragraphs containing a placeholder.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First paragraph with TARGET.");
-        builder.Writeln("Second paragraph without the keyword.");
-        builder.Writeln("Third paragraph with TARGET again.");
-        string inputPath = Path.Combine(workDir, "input.docx");
+
+        // Write three paragraphs, each containing the word "_PLACEHOLDER_".
+        builder.Writeln("_PLACEHOLDER_");
+        builder.Writeln("This paragraph does not contain the token.");
+        builder.Writeln("_PLACEHOLDER_");
+        builder.Writeln("_PLACEHOLDER_");
+
+        // Save the source document.
         doc.Save(inputPath);
 
-        // Load the document we just created.
-        Document loadedDoc = new Document(inputPath);
+        // -----------------------------------------------------------------
+        // 2. Load the document and perform find-and-replace.
+        //    The replacement string uses the meta‑character "&p" to insert a paragraph break
+        //    after each occurrence of the placeholder.
+        // -----------------------------------------------------------------
+        Document loaded = new Document(inputPath);
 
-        // Replace each occurrence of "TARGET" with "TARGET" followed by a paragraph break meta‑character.
-        // The meta‑character "&p" tells Aspose.Words to insert a paragraph break in the replacement text.
-        int replacedCount = loadedDoc.Range.Replace("TARGET", "TARGET&p", new FindReplaceOptions());
+        // Replace the placeholder with itself followed by a paragraph break.
+        int replacedCount = loaded.Range.Replace("_PLACEHOLDER_", "_PLACEHOLDER_&p", new FindReplaceOptions());
 
-        // Verify that at least one replacement was performed.
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Save the modified document.
-        string outputPath = Path.Combine(workDir, "output.docx");
-        loadedDoc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 3. Save the modified document.
+        // -----------------------------------------------------------------
+        loaded.Save(outputPath);
 
-        // Optional: output a simple confirmation (no interactive input required).
+        // Optional: write a short confirmation to the console.
         Console.WriteLine($"Replacements performed: {replacedCount}");
         Console.WriteLine($"Modified document saved to: {outputPath}");
     }

@@ -1,85 +1,87 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
-using System.Text.RegularExpressions;
 
-namespace FindAndReplaceExample
+public class Program
 {
-    // Callback that replaces only the first occurrence of a pattern in each section.
-    public class FirstOccurrencePerSectionReplacer : IReplacingCallback
+    public static void Main()
     {
-        // Tracks sections that have already performed a replacement.
-        private readonly HashSet<Section> _sectionsReplaced = new();
+        // Create a sample document with two sections, each containing three occurrences of the pattern.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        for (int sectionIndex = 1; sectionIndex <= 2; sectionIndex++)
+        {
+            if (sectionIndex > 1)
+                builder.InsertBreak(BreakType.SectionBreakNewPage); // Start a new section.
+
+            builder.Writeln($"--- Section {sectionIndex} start ---");
+
+            for (int occ = 1; occ <= 3; occ++)
+            {
+                builder.Writeln($"This is a PLACEHOLDER in section {sectionIndex}, occurrence {occ}.");
+            }
+
+            builder.Writeln($"--- Section {sectionIndex} end ---");
+        }
+
+        // Save the input document.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        doc.Save(inputPath);
+
+        // Load the document for processing.
+        Document loadedDoc = new Document(inputPath);
+
+        // Set up the replace callback that replaces only the first match per section.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new FirstOccurrencePerSectionReplacer()
+        };
+
+        // Perform the replacement.
+        int replacedCount = loadedDoc.Range.Replace("PLACEHOLDER", "REPLACED", options);
+
+        // Validate that a replacement occurred in each section (2 sections in this example).
+        if (replacedCount != 2)
+            throw new InvalidOperationException($"Expected 2 replacements (one per section), but got {replacedCount}.");
+
+        // Save the modified document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        loadedDoc.Save(outputPath);
+
+        // Output simple confirmation (no interactive input required).
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine($"Input document: {inputPath}");
+        Console.WriteLine($"Output document: {outputPath}");
+    }
+
+    // Callback that replaces only the first occurrence of the pattern in each section.
+    private class FirstOccurrencePerSectionReplacer : IReplacingCallback
+    {
+        private readonly HashSet<Section> _sectionsReplaced = new HashSet<Section>();
 
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Find the section that contains the current match.
-            Section? section = args.MatchNode?.GetAncestor(NodeType.Section) as Section;
-            if (section == null)
-                return ReplaceAction.Skip; // Safety check.
+            // Determine the section that contains the current match.
+            Node matchNode = args.MatchNode;
+            Section section = matchNode.GetAncestor(NodeType.Section) as Section;
 
-            // If this section has not been replaced yet, perform the replacement.
+            // Safety check – if we cannot locate a section, skip this match.
+            if (section == null)
+                return ReplaceAction.Skip;
+
+            // If this section has not been processed yet, replace the match.
             if (!_sectionsReplaced.Contains(section))
             {
                 _sectionsReplaced.Add(section);
-                // The replacement text is already supplied by the caller (args.Replacement),
-                // so we simply allow the replace operation to proceed.
+                args.Replacement = "REPLACED";
                 return ReplaceAction.Replace;
             }
 
-            // Skip subsequent matches in the same section.
+            // Otherwise, skip further matches in this section.
             return ReplaceAction.Skip;
-        }
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            // Create a sample document with multiple sections, each containing several occurrences of the word "pattern".
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Section 1
-            builder.Writeln("Section 1 - First occurrence: pattern.");
-            builder.Writeln("Section 1 - Second occurrence: pattern.");
-            builder.Writeln("Section 1 - Third occurrence: pattern.");
-
-            // Insert a new section.
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-            // Section 2
-            builder.Writeln("Section 2 - First occurrence: pattern.");
-            builder.Writeln("Section 2 - Second occurrence: pattern.");
-
-            // Insert another new section.
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-            // Section 3
-            builder.Writeln("Section 3 - Only occurrence: pattern.");
-
-            // Save the original document (optional, for inspection).
-            doc.Save("input.docx");
-
-            // Set up find-and-replace options with the custom callback.
-            FindReplaceOptions options = new FindReplaceOptions
-            {
-                ReplacingCallback = new FirstOccurrencePerSectionReplacer()
-            };
-
-            // Perform the replacement: replace the word "pattern" with "replaced" only on its first appearance per section.
-            int replacedCount = doc.Range.Replace("pattern", "replaced", options);
-
-            // Validate that we replaced exactly one occurrence per section (three sections in this example).
-            const int expectedReplacements = 3;
-            if (replacedCount != expectedReplacements)
-                throw new InvalidOperationException($"Expected {expectedReplacements} replacements, but got {replacedCount}.");
-
-            // Save the modified document.
-            doc.Save("output.docx");
         }
     }
 }

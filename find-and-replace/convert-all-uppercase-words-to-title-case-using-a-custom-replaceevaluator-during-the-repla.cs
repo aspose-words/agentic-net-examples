@@ -1,55 +1,63 @@
 using System;
-using System.Globalization;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Words.Drawing;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and add sample text.
+        // Create a sample document with uppercase words.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("THIS IS A SAMPLE DOCUMENT.");
-        builder.Writeln("IT CONTAINS UPPERCASE WORDS LIKE ASP.NET AND CSHARP.");
-        builder.Writeln("MixedCase words stay unchanged.");
+        builder.Writeln("THIS is a TEST document.");
+        builder.Writeln("IT contains UPPERCASE WORDS like ASP.NET and CSHARP.");
+        builder.Writeln("Mixed case words such as Hello should stay unchanged.");
 
-        // Save the original document (optional, just to illustrate the workflow).
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        // Save the original document (optional, for inspection).
+        doc.Save("input.docx");
 
-        // Regex that matches whole words composed entirely of uppercase letters (2 or more characters).
-        Regex upperCaseWordRegex = new Regex(@"\b[A-Z]{2,}\b");
+        // Set up the replace options with a custom callback.
+        FindReplaceOptions options = new FindReplaceOptions();
+        options.ReplacingCallback = new UppercaseToTitleCaseReplacer();
 
-        // Set up FindReplaceOptions with a custom callback that converts each match to title case.
-        FindReplaceOptions options = new FindReplaceOptions
-        {
-            ReplacingCallback = new TitleCaseReplacer()
-        };
+        // Regex matches whole words consisting of two or more uppercase letters.
+        Regex uppercaseWordPattern = new Regex(@"\b[A-Z]{2,}\b");
 
-        // Perform the replacement. The replacement string is ignored because the callback supplies the value.
-        int replacedCount = doc.Range.Replace(upperCaseWordRegex, string.Empty, options);
+        // Perform the replacement.
+        int replacedCount = doc.Range.Replace(uppercaseWordPattern, "", options);
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one uppercase word to be replaced.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+        doc.Save("output.docx");
     }
 
-    // Custom callback that converts each regex match to title case.
-    private class TitleCaseReplacer : IReplacingCallback
+    // Callback that converts each matched uppercase word to title case.
+    private class UppercaseToTitleCaseReplacer : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Convert the matched word to lower case, then to title case.
-            string lower = args.Match.Value.ToLowerInvariant();
-            string title = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(lower);
-            args.Replacement = title;
+            string original = args.Match.Value;
+            string titleCased = ToTitleCase(original);
+            args.Replacement = titleCased;
             return ReplaceAction.Replace;
+        }
+
+        // Converts a word like "HELLO" to "Hello".
+        private static string ToTitleCase(string word)
+        {
+            if (string.IsNullOrEmpty(word))
+                return word;
+
+            if (word.Length == 1)
+                return char.ToUpper(word[0]).ToString();
+
+            return char.ToUpper(word[0]) + word.Substring(1).ToLower();
         }
     }
 }

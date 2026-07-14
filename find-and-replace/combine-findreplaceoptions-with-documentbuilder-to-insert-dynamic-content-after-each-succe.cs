@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -6,58 +8,57 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and add some sample text.
+        // Create a sample document with placeholders.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First line with placeholder.");
-        builder.Writeln("Second line with placeholder.");
-        builder.Writeln("Third line without the keyword.");
+        builder.Writeln("First line with {placeholder}.");
+        builder.Writeln("Second line contains {placeholder} as well.");
+        builder.Writeln("{placeholder} appears at the beginning of this line.");
 
-        // Set up find‑replace options with a custom callback.
+        // Save the source document locally.
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
+
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
+
+        // Set up find-and-replace with a callback that inserts dynamic content after each replacement.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new InsertAfterReplacementCallback(doc)
+            ReplacingCallback = new InsertAfterCallback()
         };
 
-        // Replace the word "placeholder" and let the callback insert dynamic content.
-        int replacedCount = doc.Range.Replace("placeholder", "replaced", options);
-
+        // Perform the replacement.
+        int replacedCount = loaded.Range.Replace("{placeholder}", "VALUE", options);
         if (replacedCount == 0)
-            throw new InvalidOperationException("No replacements were performed.");
+            throw new InvalidOperationException("No replacements were made.");
 
         // Save the modified document.
-        doc.Save("output.docx");
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
     }
 
-    // Callback that inserts a new paragraph with dynamic content after each match.
-    private class InsertAfterReplacementCallback : IReplacingCallback
+    // Callback that inserts a line after the paragraph containing each match.
+    private class InsertAfterCallback : IReplacingCallback
     {
-        private readonly Document _document;
-        private int _insertionIndex = 0;
-
-        public InsertAfterReplacementCallback(Document document)
-        {
-            _document = document ?? throw new ArgumentNullException(nameof(document));
-        }
+        private int _matchIndex = 0;
 
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Increment a counter to generate unique dynamic text.
-            _insertionIndex++;
-            string dynamicText = $"[Inserted {_insertionIndex} at {DateTime.Now:HH:mm:ss}]";
+            _matchIndex++;
 
-            // The match is located inside a Run; its parent is a Paragraph.
-            Paragraph paragraph = args.MatchNode.ParentNode as Paragraph;
-            if (paragraph == null)
-                return ReplaceAction.Skip;
+            // Keep the original replacement text.
+            args.Replacement = "VALUE";
 
-            // Use a new DocumentBuilder to insert a paragraph after the current one.
-            DocumentBuilder cb = new DocumentBuilder(_document);
-            cb.MoveTo(paragraph);
-            cb.Writeln(dynamicText);
-
-            // Optionally modify the replacement text.
-            args.Replacement = "replaced";
+            // Locate the paragraph that contains the match.
+            if (args.MatchNode?.ParentNode is Paragraph paragraph)
+            {
+                // Use a DocumentBuilder to insert a new line after the paragraph.
+                // Cast the DocumentBase to Document to match the appropriate constructor.
+                DocumentBuilder cb = new DocumentBuilder((Document)args.MatchNode.Document);
+                cb.MoveTo(paragraph);
+                cb.Writeln($"[Inserted after replacement #{_matchIndex}]");
+            }
 
             return ReplaceAction.Replace;
         }

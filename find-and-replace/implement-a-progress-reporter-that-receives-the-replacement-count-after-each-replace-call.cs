@@ -1,92 +1,95 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
 
-namespace FindAndReplaceProgressDemo
+public class ReplacementProgressEntry
 {
-    // Simple progress reporter that receives the replacement count after each Replace call.
-    public class ProgressReporter
+    public string Pattern { get; set; } = "";
+    public int Count { get; set; }
+}
+
+public class ProgressReporter
+{
+    private readonly string _filePath;
+    private readonly List<ReplacementProgressEntry> _entries = new();
+
+    public ProgressReporter(string filePath)
     {
-        public void Report(int replacementCount, string operationDescription)
-        {
-            Console.WriteLine($"{operationDescription}: {replacementCount} replacement(s) performed.");
-        }
+        _filePath = filePath;
     }
 
-    // Optional logger that records each match found during a replace operation.
-    public class ReplaceLogger : IReplacingCallback
+    public void Report(string pattern, int count)
     {
-        public List<string> Matches { get; } = new List<string>();
-
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
-        {
-            Matches.Add(args.Match.Value);
-            // Perform the default replacement.
-            return ReplaceAction.Replace;
-        }
+        _entries.Add(new ReplacementProgressEntry { Pattern = pattern, Count = count });
+        File.WriteAllText(_filePath, JsonConvert.SerializeObject(_entries, Formatting.Indented));
     }
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Paths for the sample files.
+        const string inputPath = "input.docx";
+        const string outputPath = "output.docx";
+        const string progressPath = "progress.json";
+
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with placeholders to be replaced.
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello PLACEHOLDER1, this is a test.");
+        builder.Writeln("Another PLACEHOLDER2 appears.");
+        builder.Writeln("PLACEHOLDER1 again.");
+        doc.Save(inputPath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the document for processing.
+        // -----------------------------------------------------------------
+        Document loaded = new Document(inputPath);
+
+        // -----------------------------------------------------------------
+        // 3. Set up the progress reporter.
+        // -----------------------------------------------------------------
+        ProgressReporter reporter = new ProgressReporter(progressPath);
+
+        // -----------------------------------------------------------------
+        // 4. Define the replacement operations.
+        // -----------------------------------------------------------------
+        var replacements = new (string pattern, string replacement)[]
         {
-            // Create a sample document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Alpha beta gamma. Alpha beta gamma. Alpha beta gamma.");
-            const string inputPath = "input.docx";
-            doc.Save(inputPath);
+            ("PLACEHOLDER1", "Alice"),
+            ("PLACEHOLDER2", "Bob")
+        };
 
-            // Load the document from the file system.
-            Document loadedDoc = new Document(inputPath);
+        int totalReplacements = 0;
 
-            // Initialize progress reporter.
-            ProgressReporter reporter = new ProgressReporter();
+        // -----------------------------------------------------------------
+        // 5. Perform each replacement and report the count.
+        // -----------------------------------------------------------------
+        foreach (var (pattern, replacement) in replacements)
+        {
+            FindReplaceOptions options = new FindReplaceOptions(); // default options
+            int count = loaded.Range.Replace(pattern, replacement, options);
+            totalReplacements += count;
 
-            // Optional logger to demonstrate callback usage.
-            ReplaceLogger logger = new ReplaceLogger();
-            FindReplaceOptions options = new FindReplaceOptions
-            {
-                ReplacingCallback = logger
-            };
-
-            // First replacement: plain text.
-            int countAlpha = loadedDoc.Range.Replace("Alpha", "Delta", options);
-            reporter.Report(countAlpha, "Replace \"Alpha\" with \"Delta\"");
-
-            // Second replacement: plain text.
-            int countBeta = loadedDoc.Range.Replace("beta", "Epsilon", options);
-            reporter.Report(countBeta, "Replace \"beta\" with \"Epsilon\"");
-
-            // Third replacement: regex pattern.
-            int countGamma = loadedDoc.Range.Replace(new Regex("gamma"), "Zeta", options);
-            reporter.Report(countGamma, "Replace \"gamma\" with \"Zeta\"");
-
-            // Validate that at least one replacement occurred.
-            if (countAlpha + countBeta + countGamma == 0)
-                throw new InvalidOperationException("No replacements were performed.");
-
-            // Save the modified document.
-            const string outputPath = "output.docx";
-            loadedDoc.Save(outputPath);
-
-            // Optional: write a simple JSON report of matches (demonstrates Newtonsoft.Json usage).
-            var report = new
-            {
-                Replacements = new[]
-                {
-                    new { From = "Alpha", To = "Delta", Count = countAlpha },
-                    new { From = "beta", To = "Epsilon", Count = countBeta },
-                    new { From = "gamma", To = "Zeta", Count = countGamma }
-                },
-                MatchesFound = logger.Matches
-            };
-            string json = Newtonsoft.Json.JsonConvert.SerializeObject(report, Newtonsoft.Json.Formatting.Indented);
-            File.WriteAllText("replace_report.json", json);
+            // Report the count for this specific pattern.
+            reporter.Report(pattern, count);
         }
+
+        // -----------------------------------------------------------------
+        // 6. Validate that at least one replacement occurred.
+        // -----------------------------------------------------------------
+        if (totalReplacements == 0)
+            throw new InvalidOperationException("No replacements were performed.");
+
+        // -----------------------------------------------------------------
+        // 7. Save the modified document.
+        // -----------------------------------------------------------------
+        loaded.Save(outputPath);
     }
 }

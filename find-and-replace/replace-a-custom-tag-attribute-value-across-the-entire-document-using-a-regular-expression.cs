@@ -3,43 +3,69 @@ using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Aspose.Drawing;      // Required package (not used directly)
-using Newtonsoft.Json;    // Required package (not used directly)
+using Aspose.Drawing; // Required by Aspose.Words for font/color types
 
-public class ReplaceCustomTagAttribute
+namespace ReplaceCustomTagAttribute
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document with custom tags that contain an attribute to be replaced.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("<custom attr=\"oldValue1\"/>");
-        builder.Writeln("<custom attr=\"oldValue2\"/>");
-        builder.Writeln("<custom attr=\"keep\"/>");
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        public static void Main()
+        {
+            // Paths for the sample input and output documents.
+            const string inputPath = "sample_input.docx";
+            const string outputPath = "sample_output.docx";
 
-        // Load the document we just created.
-        Document loaded = new Document(inputPath);
+            // -----------------------------------------------------------------
+            // 1. Create a sample document containing a custom XML-like tag.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define a regular expression that matches the attribute value of the custom tag.
-        // This pattern finds attr="anyValue" and captures the whole attribute.
-        Regex attributeRegex = new Regex(@"attr=""[^""]*""", RegexOptions.IgnoreCase);
+            // Insert some paragraphs with the custom tag.
+            builder.Writeln(@"Here is a custom tag: <custom attr=""OldValue1"">Content A</custom>");
+            builder.Writeln(@"Another line with <custom attr=""OldValue2"">Content B</custom>.");
+            builder.Writeln(@"A line without the tag should stay unchanged.");
 
-        // Replace every occurrence of the attribute with a new value.
-        string replacement = @"attr=""newValue""";
-        FindReplaceOptions options = new FindReplaceOptions();
-        int replacedCount = loaded.Range.Replace(attributeRegex, replacement, options);
+            // Save the document so we can demonstrate loading it later.
+            doc.Save(inputPath);
 
-        // Validate that at least one replacement was performed.
-        if (replacedCount == 0)
-            throw new InvalidOperationException("No attribute values were replaced.");
+            // -----------------------------------------------------------------
+            // 2. Load the document from the file system.
+            // -----------------------------------------------------------------
+            Document loadedDoc = new Document(inputPath);
 
-        // Save the modified document.
-        const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+            // -----------------------------------------------------------------
+            // 3. Define a regular expression that matches the attribute value.
+            //    Pattern captures the part before the value and the closing quote,
+            //    allowing us to replace only the value while preserving the rest.
+            // -----------------------------------------------------------------
+            // Example tag: <custom attr="OldValue1">
+            // Regex groups:
+            //   1 => '<custom' plus any whitespace and other attributes up to 'attr="'
+            //   2 => the closing quote after the value
+            Regex attributeRegex = new Regex(@"(<custom\s+[^>]*attr="")[^""]*(""[^>]*>)", RegexOptions.IgnoreCase);
 
-        // Optional: write a simple confirmation to the console.
-        Console.WriteLine($"Replaced {replacedCount} attribute occurrence(s). Output saved to '{outputPath}'.");
+            // Replacement string inserts the new attribute value ("NewValue") between the captured groups.
+            const string newAttributeValue = "NewValue";
+            string replacement = $"$1{newAttributeValue}$2";
+
+            // -----------------------------------------------------------------
+            // 4. Perform the replacement across the whole document.
+            // -----------------------------------------------------------------
+            FindReplaceOptions options = new FindReplaceOptions(); // default options
+            int replacedCount = loadedDoc.Range.Replace(attributeRegex, replacement, options);
+
+            // Validate that at least one replacement occurred.
+            if (replacedCount == 0)
+                throw new InvalidOperationException("No attribute values were replaced. Check the regex pattern.");
+
+            // -----------------------------------------------------------------
+            // 5. Save the modified document.
+            // -----------------------------------------------------------------
+            loadedDoc.Save(outputPath);
+
+            // Optional: Write a short confirmation to the console (no user interaction required).
+            Console.WriteLine($"Replaced {replacedCount} attribute value(s). Output saved to '{outputPath}'.");
+        }
     }
 }

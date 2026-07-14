@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -10,81 +9,63 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with various date range formats.
+        // Create a sample document with date ranges in different formats.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Meeting dates: Jan 1 - Feb 5, 2021.");
-        builder.Writeln("Another range: 01/01/2021 to 02/05/2021.");
-        builder.Writeln("Third range: 2021-01-01 – 2021-02-05.");
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
+        builder.Writeln("The project runs from 01/01/2020 - 02/05/2020.");
+        builder.Writeln("Another period: 2020-03-10 to 2020-04-15.");
+        builder.Writeln("Mixed format: 12-31-2020 to 01/15/2021.");
+        doc.Save("input.docx");
 
-        // Load the document for processing.
-        Document loaded = new Document(inputPath);
+        // Load the document we just created.
+        Document loaded = new Document("input.docx");
 
-        // Regex that matches the three date‑range patterns used above.
-        string rangePattern = @"(?:(?:\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b\s*\d{1,2}\s*[-–]\s*\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b\s*\d{1,2},\s*\d{4})|(?:\d{2}/\d{2}/\d{4}\s*(?:to|[-–])\s*\d{2}/\d{2}/\d{4})|(?:\d{4}-\d{2}-\d{2}\s*[–-]\s*\d{4}-\d{2}-\d{2}))";
+        // Regular expression that matches two dates separated by '-' or 'to'.
+        // Supports MM/dd/yyyy, MM-dd-yyyy, yyyy-MM-dd and yyyy/MM/dd.
+        Regex dateRangeRegex = new Regex(
+            @"(?<d1>\d{2}[\/-]\d{2}[\/-]\d{4})\s*(?:-|to)\s*(?<d2>\d{2}[\/-]\d{2}[\/-]\d{4})" +
+            @"|(?<d3>\d{4}[\/-]\d{2}[\/-]\d{2})\s*(?:-|to)\s*(?<d4>\d{4}[\/-]\d{2}[\/-]\d{2})",
+            RegexOptions.Compiled);
 
-        // Set up the replace options with a custom callback.
+        // Set up find‑replace options with a custom callback that formats the dates.
         FindReplaceOptions options = new FindReplaceOptions
         {
             ReplacingCallback = new DateRangeReplacer()
         };
 
         // Perform the replacement. The callback supplies the actual replacement text.
-        int replacedCount = loaded.Range.Replace(new Regex(rangePattern, RegexOptions.IgnoreCase), string.Empty, options);
+        int replacedCount = loaded.Range.Replace(dateRangeRegex, string.Empty, options);
 
-        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
-            throw new InvalidOperationException("No date ranges were replaced.");
+            throw new InvalidOperationException("Expected at least one date range replacement.");
 
         // Save the modified document.
-        const string outputPath = "output.docx";
-        loaded.Save(outputPath);
+        loaded.Save("output.docx");
     }
 
-    // Callback that converts any matched date range to the format "yyyy-MM-dd to yyyy-MM-dd".
+    // Callback that parses the two dates found by the regex and rewrites them
+    // in a unified ISO format: yyyy-MM-dd to yyyy-MM-dd.
     private class DateRangeReplacer : IReplacingCallback
     {
-        // Regex that extracts individual dates from a matched range.
-        private static readonly Regex DateExtractor = new Regex(
-            @"\b(?:\d{4}-\d{2}-\d{2}|\d{2}/\d{2}/\d{4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2},?\s*\d{4})\b",
-            RegexOptions.IgnoreCase);
-
-        // Accepted date formats for parsing.
-        private static readonly string[] DateFormats = new[]
-        {
-            "yyyy-MM-dd",
-            "MM/dd/yyyy",
-            "MMM d, yyyy",
-            "MMM d,yyyy",
-            "MMM dd, yyyy",
-            "MMM dd,yyyy"
-        };
-
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Find the two dates inside the matched range.
-            MatchCollection dateMatches = DateExtractor.Matches(args.Match.Value);
-            if (dateMatches.Count != 2)
-                return ReplaceAction.Skip; // Unexpected format; leave unchanged.
+            Match match = args.Match;
 
-            // Parse both dates.
-            if (!TryParseDate(dateMatches[0].Value, out DateTime start) ||
-                !TryParseDate(dateMatches[1].Value, out DateTime end))
-                return ReplaceAction.Skip; // Parsing failed; leave unchanged.
+            // Determine which capture groups were matched.
+            string first = match.Groups["d1"].Success ? match.Groups["d1"].Value : match.Groups["d3"].Value;
+            string second = match.Groups["d2"].Success ? match.Groups["d2"].Value : match.Groups["d4"].Value;
 
-            // Build the unified replacement string.
-            args.Replacement = $"{start:yyyy-MM-dd} to {end:yyyy-MM-dd}";
+            DateTime dt1 = ParseDate(first);
+            DateTime dt2 = ParseDate(second);
+
+            args.Replacement = $"{dt1:yyyy-MM-dd} to {dt2:yyyy-MM-dd}";
             return ReplaceAction.Replace;
         }
 
-        private static bool TryParseDate(string text, out DateTime date)
+        private static DateTime ParseDate(string text)
         {
-            // Remove any trailing commas that may appear after month‑day.
-            string cleaned = text.Trim().TrimEnd(',');
-            return DateTime.TryParseExact(cleaned, DateFormats, CultureInfo.InvariantCulture,
-                DateTimeStyles.AllowWhiteSpaces, out date);
+            string[] formats = { "MM/dd/yyyy", "MM-dd-yyyy", "yyyy-MM-dd", "yyyy/MM/dd" };
+            return DateTime.ParseExact(text, formats, CultureInfo.InvariantCulture, DateTimeStyles.None);
         }
     }
 }

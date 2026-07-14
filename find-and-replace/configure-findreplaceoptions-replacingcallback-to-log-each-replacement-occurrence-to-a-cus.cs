@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json;
 
 public class Program
 {
@@ -13,78 +11,56 @@ public class Program
         // Create a sample document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("alpha beta alpha gamma alpha");
+        builder.Writeln("alpha beta alpha gamma beta alpha");
+        doc.Save("input.docx");
 
-        // Set up the custom logger.
-        ReplacementLogger logger = new ReplacementLogger();
+        // Load the document for processing.
+        Document loaded = new Document("input.docx");
 
-        // Configure FindReplaceOptions with the logger callback.
+        // Set up a logger that records each replacement occurrence.
+        var logger = new ReplaceLogger();
+
+        // Configure FindReplaceOptions to use the logger.
         FindReplaceOptions options = new FindReplaceOptions
         {
             ReplacingCallback = logger
         };
 
         // Perform the replacement.
-        int replacedCount = doc.Range.Replace("alpha", "omega", options);
+        int replacedCount = loaded.Range.Replace("alpha", "omega", options);
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement.");
 
         // Save the modified document.
-        doc.Save("output.docx");
+        loaded.Save("output.docx");
 
-        // Write the log to plain text and JSON files.
-        File.WriteAllText("log.txt", logger.GetPlainLog());
-        File.WriteAllText("log.json", logger.GetJsonLog());
-
-        // Output summary to console.
-        Console.WriteLine($"Replacements performed: {replacedCount}");
-        Console.WriteLine("Log written to log.txt and log.json.");
-    }
-}
-
-// Custom logger that records each replacement occurrence.
-public class ReplacementLogger : IReplacingCallback
-{
-    private readonly List<ReplacementRecord> _records = new List<ReplacementRecord>();
-
-    public ReplaceAction Replacing(ReplacingArgs args)
-    {
-        // Record the original match and the replacement text.
-        _records.Add(new ReplacementRecord
-        {
-            Original = args.Match.Value,
-            Replacement = args.Replacement,
-            MatchOffset = args.MatchOffset,
-            NodeType = args.MatchNode.NodeType.ToString()
-        });
-
-        // Continue with the default replacement.
-        return ReplaceAction.Replace;
+        // Write the log of replacements to a text file.
+        File.WriteAllText("replace_log.txt", logger.GetLog());
     }
 
-    // Returns a plain‑text representation of the log.
-    public string GetPlainLog()
+    // Custom logger that implements IReplacingCallback.
+    private class ReplaceLogger : IReplacingCallback
     {
-        StringBuilder sb = new StringBuilder();
-        foreach (var r in _records)
+        private readonly List<string> _matches = new List<string>();
+        private readonly StringWriter _logWriter = new StringWriter();
+
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
-            sb.AppendLine($"\"{r.Original}\" => \"{r.Replacement}\" at offset {r.MatchOffset} in {r.NodeType} node.");
+            // Record the matched text and its location.
+            _matches.Add(args.Match.Value);
+            _logWriter.WriteLine($"Matched \"{args.Match.Value}\" at offset {args.MatchOffset} in a {args.MatchNode.NodeType} node.");
+            // Proceed with the replacement.
+            return ReplaceAction.Replace;
         }
-        return sb.ToString();
-    }
 
-    // Returns a JSON representation of the log.
-    public string GetJsonLog()
-    {
-        return JsonConvert.SerializeObject(_records, Formatting.Indented);
-    }
-
-    // Simple DTO for serialization.
-    private class ReplacementRecord
-    {
-        public string Original { get; set; } = string.Empty;
-        public string Replacement { get; set; } = string.Empty;
-        public int MatchOffset { get; set; }
-        public string NodeType { get; set; } = string.Empty;
+        // Returns the accumulated log as a string.
+        public string GetLog()
+        {
+            _logWriter.WriteLine();
+            _logWriter.WriteLine("All matches:");
+            foreach (var m in _matches)
+                _logWriter.WriteLine(m);
+            return _logWriter.ToString();
+        }
     }
 }

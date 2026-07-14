@@ -8,41 +8,36 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
+        // Define file names in the current directory.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
 
-        // -------------------------------------------------
-        // Create a sample document containing version numbers.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 1. Create a sample document containing version numbers "1.0.0".
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Version 1.0.0 of the product.");
-        builder.Writeln("Another reference: 1.0.0.");
-        builder.Writeln("Do not change 1.0.1."); // Should remain unchanged.
+        builder.Writeln("Release notes:");
+        builder.Writeln("Version 1.0.0 – Initial release.");
+        builder.Writeln("Bug fixes are applied in version 1.0.0.");
+        builder.Writeln("Upcoming version will be 2.0.0.");
         doc.Save(inputPath);
 
-        // -------------------------------------------------
-        // Load the document and perform a regex replace.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 2. Load the document and replace all occurrences of "1.0.0"
+        //    with "2.0.0" using a regular expression.
+        // -----------------------------------------------------------------
         Document loaded = new Document(inputPath);
-
-        // Regex that matches the exact version string "1.0.0".
-        Regex versionRegex = new Regex(@"\b1\.0\.0\b");
-
-        // Use default FindReplaceOptions.
-        FindReplaceOptions options = new FindReplaceOptions();
-
-        // Replace all occurrences of "1.0.0" with "2.0.0".
-        int replacedCount = loaded.Range.Replace(versionRegex, "2.0.0", options);
+        Regex versionPattern = new Regex(@"\b1\.0\.0\b"); // matches whole "1.0.0"
+        int replacedCount = loaded.Range.Replace(versionPattern, "2.0.0", new FindReplaceOptions());
 
         // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one version number replacement.");
 
-        // -------------------------------------------------
-        // Save the modified document.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // 3. Save the modified document.
+        // -----------------------------------------------------------------
         loaded.Save(outputPath);
     }
 }
