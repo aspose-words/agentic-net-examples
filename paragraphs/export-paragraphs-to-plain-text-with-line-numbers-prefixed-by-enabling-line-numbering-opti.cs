@@ -7,35 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document and a builder to add sample paragraphs.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph.");
-        builder.Writeln("Third paragraph.");
+        // Enable line numbering for the whole section.
+        // Numbers will start at 1 and increase by 1 for each line.
+        builder.PageSetup.LineStartingNumber = 1;
+        builder.PageSetup.LineNumberCountBy = 1;
+        builder.PageSetup.LineNumberRestartMode = LineNumberRestartMode.Continuous;
 
-        // Configure plain‑text save options.
-        TxtSaveOptions txtOptions = new TxtSaveOptions();
+        // Add several paragraphs to the document.
+        builder.Writeln("First paragraph of the document.");
+        builder.Writeln("Second paragraph, containing more text.");
+        builder.Writeln("Third paragraph, demonstrating line numbering.");
+        builder.Writeln("Fourth paragraph, final example.");
 
-        // Save the document as plain text.
-        string tempFile = "TempExport.txt";
-        doc.Save(tempFile, txtOptions);
+        // Configure save options for plain‑text export.
+        // Line numbers are automatically included because line numbering is enabled in the document.
+        TxtSaveOptions saveOptions = new TxtSaveOptions();
 
-        // Read the exported text, prefix each line with its 1‑based line number, and display the result.
-        string[] lines = File.ReadAllLines(tempFile);
-        for (int i = 0; i < lines.Length; i++)
-        {
-            Console.WriteLine($"{i + 1}: {lines[i]}");
-        }
+        // Define the output file path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ExportedWithLineNumbers.txt");
 
-        // Write the numbered text to a final file.
-        string outputFile = "ExportedWithLineNumbers.txt";
-        string[] numberedLines = new string[lines.Length];
-        for (int i = 0; i < lines.Length; i++)
-        {
-            numberedLines[i] = $"{i + 1}: {lines[i]}";
-        }
-        File.WriteAllLines(outputFile, numberedLines);
+        // Save the document as plain text using the configured options.
+        doc.Save(outputPath, saveOptions);
+
+        // Display the resulting file content on the console.
+        Console.WriteLine("Exported text with line numbers:");
+        Console.WriteLine(File.ReadAllText(outputPath));
     }
 }

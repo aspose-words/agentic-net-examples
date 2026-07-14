@@ -3,28 +3,32 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class ExportDocumentToTxt
+public class Program
 {
     public static void Main()
     {
-        // Create a folder for output files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a new blank document.
+        // Create a blank document.
         Document doc = new Document();
 
-        // Add a primary header.
-        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        doc.FirstSection.HeadersFooters.Add(header);
-        header.AppendParagraph("Primary header");
+        // Add even header and footer.
+        HeaderFooter headerEven = new HeaderFooter(doc, HeaderFooterType.HeaderEven);
+        doc.FirstSection.HeadersFooters.Add(headerEven);
+        headerEven.AppendParagraph("Even header");
 
-        // Add a primary footer.
-        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
-        doc.FirstSection.HeadersFooters.Add(footer);
-        footer.AppendParagraph("Primary footer");
+        HeaderFooter footerEven = new HeaderFooter(doc, HeaderFooterType.FooterEven);
+        doc.FirstSection.HeadersFooters.Add(footerEven);
+        footerEven.AppendParagraph("Even footer");
 
-        // Add some body content with page breaks.
+        // Add primary header and footer.
+        HeaderFooter headerPrimary = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+        doc.FirstSection.HeadersFooters.Add(headerPrimary);
+        headerPrimary.AppendParagraph("Primary header");
+
+        HeaderFooter footerPrimary = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
+        doc.FirstSection.HeadersFooters.Add(footerPrimary);
+        footerPrimary.AppendParagraph("Primary footer");
+
+        // Add body content.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Page 1");
         builder.InsertBreak(BreakType.PageBreak);
@@ -32,19 +36,21 @@ public class ExportDocumentToTxt
         builder.InsertBreak(BreakType.PageBreak);
         builder.Write("Page 3");
 
-        // Configure TXT save options to exclude headers and footers.
+        // Configure save options to exclude headers and footers.
         TxtSaveOptions saveOptions = new TxtSaveOptions
         {
             ExportHeadersFootersMode = TxtExportHeadersFootersMode.None
         };
 
-        // Save the document as plain text.
-        string txtPath = Path.Combine(outputDir, "Document.txt");
-        doc.Save(txtPath, saveOptions);
+        // Ensure output directory exists and save the document as plain text.
+        string outDir = "Output";
+        Directory.CreateDirectory(outDir);
+        string outPath = Path.Combine(outDir, "DocumentWithoutHeadersFooters.txt");
+        doc.Save(outPath, saveOptions);
 
-        // Optional: display the saved text content.
-        string savedText = File.ReadAllText(txtPath);
-        Console.WriteLine("Saved TXT content without headers/footers:");
-        Console.WriteLine(savedText);
+        // Output the saved text to the console.
+        string result = File.ReadAllText(outPath);
+        Console.WriteLine("Saved text content:");
+        Console.WriteLine(result);
     }
 }

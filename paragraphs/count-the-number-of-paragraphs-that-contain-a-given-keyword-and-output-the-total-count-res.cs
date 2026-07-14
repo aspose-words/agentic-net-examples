@@ -9,29 +9,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample paragraphs to the document.
+        // Sample paragraphs – some contain the keyword "Aspose", others do not.
         builder.Writeln("This is the first paragraph.");
-        builder.Writeln("Aspose.Words is a powerful library.");
-        builder.Writeln("Another line without the keyword.");
-        builder.Writeln("Learning Aspose can be fun.");
+        builder.Writeln("Aspose.Words is a powerful library for document processing.");
+        builder.Writeln("Another paragraph without the keyword.");
+        builder.Writeln("Learning Aspose.Words can improve productivity.");
         builder.Writeln("Final paragraph.");
 
         // Define the keyword to search for.
         string keyword = "Aspose";
 
-        // Count the paragraphs that contain the keyword (case‑insensitive).
+        // Count paragraphs that contain the keyword (case‑insensitive).
         int count = 0;
         NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
         foreach (Paragraph para in paragraphs)
         {
-            // Get the full text of the paragraph (includes the paragraph break).
-            string text = para.GetText();
-
+            // Get the paragraph text without the trailing paragraph break.
+            string text = para.GetText().TrimEnd('\r', '\a');
             if (text.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
                 count++;
         }
 
-        // Output the total count.
-        Console.WriteLine($"Paragraphs containing \"{keyword}\": {count}");
+        // Output the result.
+        Console.WriteLine($"Number of paragraphs containing \"{keyword}\": {count}");
+
+        // Save the document (optional, demonstrates document creation).
+        doc.Save("ParagraphKeywordCount.docx");
     }
 }

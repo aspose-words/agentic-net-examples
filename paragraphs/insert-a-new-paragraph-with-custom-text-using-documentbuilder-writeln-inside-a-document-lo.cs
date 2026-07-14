@@ -9,16 +9,13 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Sample texts to insert as separate paragraphs.
-        string[] texts = { "First paragraph.", "Second paragraph.", "Third paragraph." };
-
-        // Insert each text as a new paragraph using Writeln inside a loop.
-        foreach (string text in texts)
+        // Insert several paragraphs inside a loop using Writeln.
+        for (int i = 1; i <= 5; i++)
         {
-            builder.Writeln(text);
+            builder.Writeln($"This is paragraph number {i}.");
         }
 
-        // Save the document.
-        doc.Save("Output.docx");
+        // Save the resulting document.
+        doc.Save("InsertedParagraphs.docx");
     }
 }

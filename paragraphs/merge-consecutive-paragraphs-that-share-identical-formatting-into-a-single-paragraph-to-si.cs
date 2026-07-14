@@ -1,8 +1,9 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
+using System.Drawing;
 
-public class MergeParagraphsExample
+public class Program
 {
     public static void Main()
     {
@@ -10,51 +11,80 @@ public class MergeParagraphsExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add several paragraphs. Some of them share the same formatting (Normal style).
+        // Apply a common formatting for the first group of paragraphs.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("First paragraph with Normal style.");
-        builder.Writeln("Second paragraph with Normal style."); // Same formatting as previous.
+        builder.Font.Size = 12;
+        builder.Font.Color = Color.Black;
 
-        // Change formatting to a different style.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("A heading paragraph."); // Different formatting.
+        // These two paragraphs have identical formatting and should be merged.
+        builder.Writeln("Paragraph 1 – same format.");
+        builder.Writeln("Paragraph 2 – same format.");
 
-        // Return to Normal style.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Third paragraph with Normal style."); // Same formatting as the first two, but not consecutive.
+        // Change formatting – this paragraph must stay separate.
+        builder.Font.Color = Color.Red;
+        builder.Writeln("Paragraph 3 – different format.");
 
-        // Merge consecutive paragraphs that have identical formatting.
-        ParagraphCollection paragraphs = doc.FirstSection.Body.Paragraphs;
+        // Revert to the original formatting – not consecutive with the first group,
+        // so it will remain a separate paragraph.
+        builder.Font.Color = Color.Black;
+        builder.Writeln("Paragraph 4 – same as first group.");
 
-        // Iterate through the collection, comparing each paragraph with its predecessor.
-        for (int i = 1; i < paragraphs.Count; i++)
+        // Merge consecutive paragraphs that share identical formatting.
+        MergeConsecutiveParagraphs(doc);
+
+        // Save the resulting document.
+        doc.Save("MergedParagraphs.docx");
+    }
+
+    // Returns true if two paragraphs have the same formatting that matters for merging.
+    private static bool HaveSameFormatting(Paragraph p1, Paragraph p2)
+    {
+        // Compare style identifier and name. If both are equal, we treat the formatting as identical.
+        // Additional properties (alignment, indents, etc.) can be added here if needed.
+        return p1.ParagraphFormat.StyleIdentifier == p2.ParagraphFormat.StyleIdentifier &&
+               string.Equals(p1.ParagraphFormat.StyleName, p2.ParagraphFormat.StyleName, StringComparison.Ordinal);
+    }
+
+    // Merges each paragraph with the previous one when their formatting matches.
+    private static void MergeConsecutiveParagraphs(Document doc)
+    {
+        // Work on the body of the first section.
+        Body body = doc.FirstSection.Body;
+        // ParagraphCollection provides indexed access.
+        ParagraphCollection paragraphs = body.Paragraphs;
+
+        int i = 1; // Start from the second paragraph.
+        while (i < paragraphs.Count)
         {
             Paragraph previous = paragraphs[i - 1];
             Paragraph current = paragraphs[i];
 
-            // Determine if the two paragraphs share the same formatting.
-            bool sameStyle = previous.ParagraphFormat.StyleIdentifier == current.ParagraphFormat.StyleIdentifier;
-            bool sameAlignment = previous.ParagraphFormat.Alignment == current.ParagraphFormat.Alignment;
-
-            // Add more property comparisons here if stricter matching is required.
-
-            if (sameStyle && sameAlignment)
+            if (HaveSameFormatting(previous, current))
             {
-                // Append the text of the current paragraph to the previous one.
-                // Trim the paragraph break characters that GetText() appends.
-                string currentText = current.GetText().TrimEnd('\r', '\n', '\x0c');
-                Run mergedRun = new Run(doc, currentText);
-                previous.AppendChild(mergedRun);
+                // Ensure the previous paragraph has at least one run to receive the text.
+                if (previous.Runs.Count == 0)
+                {
+                    Run emptyRun = new Run(doc);
+                    previous.AppendChild(emptyRun);
+                }
 
-                // Remove the now-merged current paragraph.
+                // Append the text of the current paragraph (without its terminating paragraph break)
+                // to the last run of the previous paragraph.
+                Run lastRun = (Run)previous.Runs[previous.Runs.Count - 1];
+                string currentText = current.GetText();
+                // Remove the final paragraph break character (\r) if present.
+                if (currentText.EndsWith("\r"))
+                    currentText = currentText.Substring(0, currentText.Length - 1);
+                lastRun.Text += currentText;
+
+                // Remove the current paragraph from the document.
                 current.Remove();
-
-                // After removal, the collection shrinks, so stay at the same index.
-                i--;
+                // Do not increment i because the next paragraph shifts into the current index.
+            }
+            else
+            {
+                i++; // Formatting differs – move to the next pair.
             }
         }
-
-        // Save the resulting document.
-        doc.Save("MergedParagraphs.docx");
     }
 }
