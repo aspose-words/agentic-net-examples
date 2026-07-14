@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Saving;
@@ -9,84 +8,48 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input and output.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        string inputDir = Path.Combine(workDir, "Input");
-        string outputDir = Path.Combine(workDir, "Output");
+        // Create a sample DOCX with multiple pages.
+        string docPath = "Sample.docx";
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Page 1 content.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 2 content.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 3 content.");
+        doc.Save(docPath);
 
-        Directory.CreateDirectory(inputDir);
+        // Prepare output directory.
+        string outputDir = "Output";
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX file with several pages.
-        // -----------------------------------------------------------------
-        string sourceDocPath = Path.Combine(inputDir, "Sample.docx");
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // Documents to process (single file in this example).
+        string[] sourceDocs = { docPath };
 
-        // Add three pages of text.
-        for (int i = 1; i <= 3; i++)
+        // Parallel batch processing: convert each DOCX to a multipage TIFF.
+        Parallel.ForEach(sourceDocs, sourcePath =>
         {
-            builder.Writeln($"This is page {i}.");
-            if (i < 3)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
-
-        // Save the source document.
-        sampleDoc.Save(sourceDocPath);
-
-        // -----------------------------------------------------------------
-        // 2. Prepare a list of source documents to be processed in parallel.
-        //    (Here we simply reuse the same file multiple times to simulate a batch.)
-        // -----------------------------------------------------------------
-        List<string> sourceFiles = new List<string>
-        {
-            sourceDocPath,
-            sourceDocPath,
-            sourceDocPath,
-            sourceDocPath
-        };
-
-        // -----------------------------------------------------------------
-        // 3. Process each document in parallel, rendering a multipage TIFF.
-        // -----------------------------------------------------------------
-        Parallel.ForEach(sourceFiles, (srcPath, state, index) =>
-        {
-            // Load the document.
-            Document doc = new Document(srcPath);
+            // Load the source document.
+            Document sourceDoc = new Document(sourcePath);
 
             // Configure image save options for a multipage TIFF.
-            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
-            {
-                // Each page will be stored as a separate frame in the TIFF.
-                PageLayout = MultiPageLayout.TiffFrames(),
-                // Optional: set resolution (dpi) for better quality.
-                Resolution = 300
-            };
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
+            options.PageLayout = MultiPageLayout.TiffFrames(); // Each page as a separate TIFF frame.
 
-            // Build the output file name.
-            string outPath = Path.Combine(outputDir, $"Result_{index}.tiff");
+            // Determine output file path.
+            string tiffFileName = Path.GetFileNameWithoutExtension(sourcePath) + ".tiff";
+            string tiffPath = Path.Combine(outputDir, tiffFileName);
 
             // Save the document as a multipage TIFF.
-            doc.Save(outPath, options);
+            sourceDoc.Save(tiffPath, options);
 
-            // Validate that the file was created.
-            if (!File.Exists(outPath))
-                throw new InvalidOperationException($"Failed to create TIFF file: {outPath}");
-
-            // Additional validation: ensure the source document has pages.
-            if (doc.PageCount == 0)
-                throw new InvalidOperationException($"Source document has no pages: {srcPath}");
+            // Validate that the TIFF file was created and is not empty.
+            if (!File.Exists(tiffPath))
+                throw new InvalidOperationException($"TIFF file was not created: {tiffPath}");
+            if (new FileInfo(tiffPath).Length == 0)
+                throw new InvalidOperationException($"TIFF file is empty: {tiffPath}");
         });
 
-        // -----------------------------------------------------------------
-        // 4. Final verification – list generated files.
-        // -----------------------------------------------------------------
-        Console.WriteLine("Multipage TIFF files generated:");
-        foreach (string file in Directory.GetFiles(outputDir, "*.tiff"))
-        {
-            FileInfo info = new FileInfo(file);
-            Console.WriteLine($"{Path.GetFileName(file)} – {info.Length} bytes");
-        }
+        // Execution completes without interactive prompts.
     }
 }

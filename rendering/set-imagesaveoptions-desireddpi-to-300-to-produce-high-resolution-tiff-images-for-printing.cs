@@ -7,30 +7,27 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directory and ensure it exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
         // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a high‑resolution TIFF rendering example.");
+        builder.Writeln("Sample text for high‑resolution TIFF rendering.");
 
-        // Configure image save options for TIFF with 300 DPI.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            Resolution = 300 // Sets both horizontal and vertical DPI.
-        };
+        // Configure image save options for TIFF with 300 dpi.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
+        options.Resolution = 300; // Desired DPI for both horizontal and vertical resolution.
+
+        // Define output path and ensure the directory exists.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HighResolution.tiff");
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 
         // Save the document as a TIFF image.
-        string tiffPath = Path.Combine(outputDir, "HighResolution.tiff");
-        doc.Save(tiffPath, saveOptions);
+        doc.Save(outputPath, options);
 
         // Verify that the file was created.
-        if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("TIFF file was not created.");
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The TIFF file was not created.");
 
-        // Optionally, report success.
-        Console.WriteLine($"TIFF image saved successfully at: {tiffPath}");
+        // Optionally, indicate success (no interactive input required).
+        Console.WriteLine("TIFF image saved successfully at: " + outputPath);
     }
 }

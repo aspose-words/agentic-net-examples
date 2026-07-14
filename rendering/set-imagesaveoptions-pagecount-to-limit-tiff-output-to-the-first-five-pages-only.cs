@@ -7,9 +7,9 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Create a sample document with more than five pages.
         Document doc = new Document();
@@ -22,21 +22,20 @@ public class Program
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Configure image save options for TIFF.
+        // Configure image save options for TIFF and limit to the first five pages.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
-
-        // Limit rendering to the first five pages (zero‑based indices 0‑4).
-        saveOptions.PageSet = new PageSet(new PageRange(0, 4));
+        // Page indices are zero‑based; pages 0‑4 correspond to the first five pages.
+        saveOptions.PageSet = new PageSet(0, 1, 2, 3, 4);
 
         // Save the TIFF file.
-        string outputPath = Path.Combine(artifactsDir, "FirstFivePages.tiff");
-        doc.Save(outputPath, saveOptions);
+        string tiffPath = Path.Combine(outputDir, "FirstFivePages.tiff");
+        doc.Save(tiffPath, saveOptions);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        if (!File.Exists(tiffPath))
             throw new InvalidOperationException("TIFF file was not created.");
 
-        // Optionally, output the result path (no user interaction required).
-        Console.WriteLine($"TIFF saved to: {outputPath}");
+        // Optionally, report success.
+        Console.WriteLine($"TIFF saved to: {tiffPath}");
     }
 }

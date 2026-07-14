@@ -7,54 +7,71 @@ public class Program
 {
     public static void Main()
     {
-        // Define source and output folders inside the system temporary directory.
-        string baseDir = Path.Combine(Path.GetTempPath(), "AsposeDemo", "Data");
-        string outputDir = Path.Combine(Path.GetTempPath(), "AsposeDemo", "Output");
+        // Define folders for input DOCX files and output TIFF files.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputTiffs");
 
         // Ensure the folders exist.
-        Directory.CreateDirectory(baseDir);
-        Directory.CreateDirectory(outputDir);
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Create a few sample DOCX documents.
-        for (int i = 1; i <= 3; i++)
-        {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-            builder.Writeln($"Sample document {i}");
-            builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Second page of document {i}");
+        // Create a few sample DOCX files to demonstrate batch conversion.
+        CreateSampleDocuments(inputFolder, 3);
 
-            string docxPath = Path.Combine(baseDir, $"Sample{i}.docx");
-            sampleDoc.Save(docxPath, SaveFormat.Docx);
-        }
-
-        // Prepare shared ImageSaveOptions for TIFF conversion.
+        // Configure shared ImageSaveOptions for TIFF conversion.
         ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            Resolution = 300,                 // 300 DPI
-            TiffCompression = TiffCompression.Lzw // LZW compression
+            // Use LZW compression (default) – can be changed as needed.
+            TiffCompression = TiffCompression.Lzw,
+            // Render at 300 DPI for decent quality.
+            Resolution = 300,
+            // Render each page as a separate frame in the multi‑page TIFF.
+            PageLayout = MultiPageLayout.TiffFrames()
         };
 
-        // Convert each DOCX file in the source folder to a multi‑page TIFF.
-        string[] docxFiles = Directory.GetFiles(baseDir, "*.docx");
-        foreach (string docxFile in docxFiles)
+        // Process each DOCX file in the input folder.
+        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            // Load the document. No password is required for these samples.
-            Document doc = new Document(docxFile);
+            // Load the source document.
+            Document doc = new Document(docxPath);
 
-            string tiffFileName = Path.GetFileNameWithoutExtension(docxFile) + ".tiff";
-            string tiffPath = Path.Combine(outputDir, tiffFileName);
+            // Determine the output TIFF file name.
+            string tiffPath = Path.Combine(
+                outputFolder,
+                Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
 
-            // Save the document as a multi‑page TIFF using the shared options.
+            // Save the document as a TIFF using the shared options.
             doc.Save(tiffPath, tiffOptions);
-
-            // Verify that the TIFF file was created.
-            if (!File.Exists(tiffPath))
-                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
         }
 
-        // All conversions completed successfully.
-        Console.WriteLine("Batch conversion completed. TIFF files are located in:");
-        Console.WriteLine(outputDir);
+        // Verify that each expected TIFF file was created.
+        foreach (string tiffPath in Directory.GetFiles(outputFolder, "*.tiff"))
+        {
+            if (!File.Exists(tiffPath))
+                throw new FileNotFoundException($"Failed to create TIFF file: {tiffPath}");
+        }
+
+        // Indicate successful completion.
+        Console.WriteLine("Batch conversion completed successfully.");
+    }
+
+    // Helper method to create a specified number of simple DOCX files.
+    private static void CreateSampleDocuments(string folder, int count)
+    {
+        for (int i = 1; i <= count; i++)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            builder.Writeln($"Sample Document {i}");
+            builder.Writeln("This is the first page.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("This is the second page.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("This is the third page.");
+
+            string docxPath = Path.Combine(folder, $"Sample{i}.docx");
+            doc.Save(docxPath, SaveFormat.Docx);
+        }
     }
 }

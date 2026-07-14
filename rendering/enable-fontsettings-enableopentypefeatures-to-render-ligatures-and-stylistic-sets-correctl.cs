@@ -8,44 +8,45 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document.
+        // Define output directory and file.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string tiffPath = Path.Combine(outputDir, "Ligatures.tiff");
+
+        // Create a new document and add text that contains common ligatures.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Use a font that supports OpenType ligatures (e.g., "Times New Roman").
-        builder.Font.Name = "Times New Roman";
+        // Use a font that supports ligatures (e.g., Arial).
+        builder.Font.Name = "Arial";
         builder.Font.Size = 48;
+        builder.Writeln("Ligatures demonstration:");
+        builder.Writeln("fi fl ffi ffl"); // Text with ligatures.
 
-        // Text containing ligatures (ff, fi, fl) and a stylistic set example.
-        builder.Writeln("Office: office, efficient, flake.");
+        // Configure FontSettings to point to the system fonts folder.
+        // This ensures the renderer can locate the required font files.
+        FontSettings fontSettings = new FontSettings();
+        string systemFonts = Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+        fontSettings.SetFontsFolder(systemFonts, true);
+        doc.FontSettings = fontSettings;
 
-        // Ensure OpenType features are not disabled via compatibility options.
-        doc.CompatibilityOptions.DisableOpenTypeFontFormattingFeatures = false;
-
-        // Assign default font settings (optional, demonstrates explicit configuration).
-        doc.FontSettings = new FontSettings();
-
-        // Configure image save options for TIFF output.
+        // Set up image save options for TIFF output.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
             // Render with high quality to preserve typographic features.
             UseAntiAliasing = true,
             UseHighQualityRendering = true,
-            // Set a reasonable resolution.
+            // Optional: increase resolution for clearer output.
             Resolution = 300
         };
 
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RenderedOutput.tiff");
+        // Render the document to a TIFF file.
+        doc.Save(tiffPath, saveOptions);
 
-        // Save the document as a TIFF image.
-        doc.Save(outputPath, saveOptions);
+        // Verify that the file was created.
+        if (!File.Exists(tiffPath))
+            throw new InvalidOperationException("TIFF file was not created.");
 
-        // Verify that the TIFF file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF output file.");
-
-        // Optionally, report success.
-        Console.WriteLine($"TIFF rendered successfully: {outputPath}");
+        // The example finishes without requiring user interaction.
     }
 }

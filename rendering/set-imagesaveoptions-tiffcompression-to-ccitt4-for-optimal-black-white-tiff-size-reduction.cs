@@ -7,32 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Hello World!");
 
-        // Configure image save options for TIFF with CCITT4 compression.
+        // Prepare an output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "BlackWhiteCcitt4.tiff");
+
+        // Configure ImageSaveOptions for TIFF with CCITT4 compression.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.Ccitt4,
-            // Render as black‑and‑white to maximize compression effectiveness.
-            ImageColorMode = ImageColorMode.BlackAndWhite
+            ImageColorMode = ImageColorMode.BlackAndWhite // Render as black‑white.
         };
 
-        // Define the output path and ensure the directory exists.
-        string outputPath = Path.Combine("Output", "sample_ccitt4.tiff");
-        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
-
-        // Save the document as a TIFF image using the specified options.
+        // Save the document as a TIFF image.
         doc.Save(outputPath, options);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+            throw new InvalidOperationException("TIFF file was not created.");
 
-        // Optionally, display the file size (no user interaction required).
-        long fileSize = new FileInfo(outputPath).Length;
-        Console.WriteLine($"TIFF file created at '{outputPath}' ({fileSize} bytes).");
+        Console.WriteLine($"TIFF saved to: {outputPath}");
     }
 }

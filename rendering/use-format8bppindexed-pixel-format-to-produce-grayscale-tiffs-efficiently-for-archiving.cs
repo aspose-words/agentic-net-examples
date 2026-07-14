@@ -14,33 +14,29 @@ public class Program
         // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document will be saved as a grayscale TIFF for archiving.");
-        builder.Writeln("The image is rendered using an indexed pixel format to keep the file size low.");
+        builder.Writeln("Sample text for a grayscale TIFF archive.");
+        builder.Writeln("This document will be rendered using a grayscale color mode.");
 
         // Configure image save options for TIFF.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Render the pages in grayscale.
+            // Render pages as grayscale images.
             ImageColorMode = ImageColorMode.Grayscale,
-            // Use an indexed pixel format (1‑bit) which is the closest available option.
-            PixelFormat = ImagePixelFormat.Format1bppIndexed,
-            // Apply CCITT Group 4 compression – efficient for bi‑level images.
-            TiffCompression = TiffCompression.Ccitt4,
-            // Set a reasonable resolution for archival quality.
+            // Optional: set a higher resolution for better quality.
             Resolution = 300
+            // PixelFormat.Format8bppIndexed is not available in Aspose.Words' ImagePixelFormat enum.
+            // The grayscale color mode provides the intended archival result.
         };
 
-        // Save the document as a TIFF file.
-        string outputPath = Path.Combine(artifactsDir, "GrayscaleIndexed.tiff");
+        // Save the document as a grayscale TIFF.
+        string outputPath = Path.Combine(artifactsDir, "Grayscale.tiff");
         doc.Save(outputPath, saveOptions);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+            throw new InvalidOperationException("Failed to create the grayscale TIFF file.");
 
-        // Optionally, report the file size (useful for archiving considerations).
-        long fileSize = new FileInfo(outputPath).Length;
-        Console.WriteLine($"TIFF saved successfully: {outputPath}");
-        Console.WriteLine($"File size: {fileSize} bytes");
+        // Indicate successful completion.
+        Console.WriteLine("Grayscale TIFF saved to: " + outputPath);
     }
 }

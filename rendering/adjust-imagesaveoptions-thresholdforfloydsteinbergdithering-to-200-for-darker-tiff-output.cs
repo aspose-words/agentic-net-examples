@@ -7,21 +7,16 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Prepare output directory.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
         // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello World! This is a sample document for TIFF rendering.");
 
-        // Add a heading and some text.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Sample Document");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This document is rendered to a TIFF image with a higher dithering threshold for darker output.");
-
-        // Configure TIFF save options with Floyd‑Steinberg dithering and a threshold of 200.
+        // Configure ImageSaveOptions for TIFF with Floyd‑Steinberg dithering and a higher threshold.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.Ccitt3,
@@ -29,12 +24,15 @@ public class Program
             ThresholdForFloydSteinbergDithering = 200
         };
 
-        // Save the document as a TIFF file.
-        string outputPath = Path.Combine(artifactsDir, "DitheredOutput.tiff");
-        doc.Save(outputPath, options);
+        // Save the document as a TIFF image.
+        string outPath = Path.Combine(artifactsDir, "Dithered.tiff");
+        doc.Save(outPath, options);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The TIFF file was not created.", outputPath);
+        // Validate that the file was created.
+        if (!File.Exists(outPath))
+            throw new InvalidOperationException("TIFF file was not created.");
+
+        // Output the result path and file size.
+        Console.WriteLine($"TIFF saved to {outPath} ({new FileInfo(outPath).Length} bytes).");
     }
 }

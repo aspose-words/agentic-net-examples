@@ -7,19 +7,19 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "LighterBinary.tiff");
-
         // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for OCR preprocessing.");
-        // Optionally insert an image to demonstrate binarization.
-        // builder.InsertImage("sample.jpg");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Sample Document for OCR Pre‑processing");
+        builder.Writeln("This document will be saved as a binary TIFF using a high threshold.");
 
-        // Configure TIFF save options for lighter binary output.
+        // Define the output folder and file.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string outputPath = Path.Combine(artifactsDir, "OcrReady.tiff");
+
+        // Configure ImageSaveOptions for TIFF with Floyd‑Steinberg dithering and a high threshold.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.Ccitt3,
@@ -32,8 +32,9 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+            throw new InvalidOperationException("The TIFF file was not created.");
 
-        // Optionally, you could add further processing here.
+        // Optionally, output the file size for quick verification.
+        Console.WriteLine($"TIFF saved successfully. Size: {new FileInfo(outputPath).Length} bytes");
     }
 }

@@ -7,11 +7,13 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for temporary documents and output images.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Create a folder to hold sample DOCX files and the resulting TIFFs.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
-        // Create a few sample DOCX files locally.
+        // -----------------------------------------------------------------
+        // Step 1: Bootstrap a few sample documents locally.
+        // -----------------------------------------------------------------
         for (int i = 1; i <= 2; i++)
         {
             Document sampleDoc = new Document();
@@ -21,34 +23,43 @@ public class Program
             builder.InsertBreak(BreakType.PageBreak);
             builder.Writeln($"Sample document {i} - Page 2.");
 
-            string docPath = Path.Combine(artifactsDir, $"Sample{i}.docx");
+            string docPath = Path.Combine(workDir, $"Sample{i}.docx");
             sampleDoc.Save(docPath);
         }
 
-        // Iterate over all DOC/DOCX files in the folder.
-        foreach (string docFile in Directory.GetFiles(artifactsDir, "*.doc*"))
+        // -----------------------------------------------------------------
+        // Step 2: Iterate over all DOC/DOCX files, render each to a TIFF
+        //         with a DPI of 250, and save the TIFF.
+        // -----------------------------------------------------------------
+        string[] docFiles = Directory.GetFiles(workDir, "*.doc*");
+
+        foreach (string docFile in docFiles)
         {
-            // Load the document.
+            // Load the source document.
             Document doc = new Document(docFile);
 
-            // Configure image save options for TIFF with 250 DPI.
+            // Configure image save options for TIFF output.
             ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                Resolution = 250 // Sets both horizontal and vertical DPI.
+                // Set the desired resolution (DPI).
+                Resolution = 250
             };
 
-            // Determine output TIFF file name.
-            string tiffPath = Path.ChangeExtension(docFile, ".tiff");
+            // Determine the output TIFF file name.
+            string tiffPath = Path.Combine(
+                workDir,
+                Path.GetFileNameWithoutExtension(docFile) + ".tiff");
 
-            // Save the entire document as a multipage TIFF.
+            // Save the document as a (multi‑page) TIFF.
             doc.Save(tiffPath, saveOptions);
 
             // Verify that the TIFF file was created.
             if (!File.Exists(tiffPath))
-                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
+                throw new InvalidOperationException($"Failed to create TIFF: {tiffPath}");
+
+            Console.WriteLine($"Converted '{Path.GetFileName(docFile)}' to TIFF at {tiffPath}");
         }
 
-        // Optional: indicate completion (no interactive prompts).
-        Console.WriteLine("DOC files have been rendered to TIFF images at 250 DPI.");
+        Console.WriteLine("All documents have been processed.");
     }
 }

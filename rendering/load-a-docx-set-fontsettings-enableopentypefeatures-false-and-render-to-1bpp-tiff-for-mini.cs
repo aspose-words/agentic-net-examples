@@ -8,46 +8,64 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define a folder for temporary files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create a sample DOCX document.
-        string sampleDocPath = Path.Combine(outputDir, "Sample.docx");
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("This is a sample document used for rendering to a 1bpp TIFF image.");
-        sampleDoc.Save(sampleDocPath);
+        // -----------------------------------------------------------------
+        // 1. Create a simple DOCX document and save it locally.
+        // -----------------------------------------------------------------
+        string sourceDocPath = Path.Combine(artifactsDir, "Sample.docx");
+        Document docToSave = new Document();
+        DocumentBuilder builder = new DocumentBuilder(docToSave);
+        builder.Writeln("This is a sample document used for rendering to a 1‑bpp TIFF image.");
+        docToSave.Save(sourceDocPath);
 
-        // Load the DOCX document.
-        Document doc = new Document(sampleDocPath);
+        // -----------------------------------------------------------------
+        // 2. Load the DOCX document.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(sourceDocPath);
 
-        // Configure FontSettings (without using banned OpenType APIs).
+        // -----------------------------------------------------------------
+        // 3. Configure FontSettings (no OpenType feature toggling needed).
+        // -----------------------------------------------------------------
         FontSettings fontSettings = new FontSettings();
-        doc.FontSettings = fontSettings;
+        loadedDoc.FontSettings = fontSettings;
 
-        // Set up image save options for 1bpp TIFF with CCITT compression.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // -----------------------------------------------------------------
+        // 4. Set up ImageSaveOptions for 1‑bpp TIFF output.
+        // -----------------------------------------------------------------
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Use CCITT4 compression which is suitable for 1bpp images.
+            // Use CCITT Group 4 compression, suitable for 1‑bpp images.
             TiffCompression = TiffCompression.Ccitt4,
-            // Force the pixel format to 1bpp indexed.
+
+            // Force the pixel format to 1‑bpp indexed.
             PixelFormat = ImagePixelFormat.Format1bppIndexed,
-            // Disable anti-aliasing to keep the image binary.
+
+            // Set a reasonable resolution.
+            Resolution = 300,
+
+            // Disable anti‑aliasing and high‑quality rendering to keep the file size minimal.
             UseAntiAliasing = false,
-            // Use default resolution (72 DPI) – can be adjusted if needed.
-            Resolution = 300
+            UseHighQualityRendering = false
         };
 
-        // Render and save the document as a TIFF image.
-        string tiffPath = Path.Combine(outputDir, "Rendered.tiff");
-        doc.Save(tiffPath, saveOptions);
+        // -----------------------------------------------------------------
+        // 5. Render the document to a single-page TIFF file.
+        // -----------------------------------------------------------------
+        string outputTiffPath = Path.Combine(artifactsDir, "Rendered.tiff");
+        loadedDoc.Save(outputTiffPath, tiffOptions);
 
-        // Verify that the TIFF file was created.
-        if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("Failed to create the TIFF output file.");
+        // -----------------------------------------------------------------
+        // 6. Verify that the output file was created.
+        // -----------------------------------------------------------------
+        if (!File.Exists(outputTiffPath))
+            throw new InvalidOperationException("The TIFF file was not created.");
 
-        // Optionally, output the result path.
-        Console.WriteLine($"TIFF image saved to: {tiffPath}");
+        // Output the size of the generated file.
+        long fileSize = new FileInfo(outputTiffPath).Length;
+        Console.WriteLine($"TIFF file created at: {outputTiffPath}");
+        Console.WriteLine($"File size: {fileSize} bytes");
     }
 }

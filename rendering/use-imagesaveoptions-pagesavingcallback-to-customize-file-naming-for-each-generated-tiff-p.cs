@@ -7,39 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
+        // Define output folder.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
         // Create a sample document with three pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First page.");
+        builder.Writeln("Page 1.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page.");
+        builder.Writeln("Page 2.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Third page.");
+        builder.Writeln("Page 3.");
 
-        // Configure ImageSaveOptions for TIFF output and assign a custom callback.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.PageSavingCallback = new CustomPageSavingCallback(outputDir);
+        // Configure ImageSaveOptions for TIFF and assign a custom PageSavingCallback.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        saveOptions.PageSavingCallback = new CustomPageSavingCallback(outputDir);
 
-        // Save the document. The callback will name each page file.
-        string dummyFileName = Path.Combine(outputDir, "output.tiff");
-        doc.Save(dummyFileName, options);
+        // Save the document. The callback will create separate TIFF files for each page.
+        string dummyFileName = Path.Combine(outputDir, "dummy.tiff"); // Name is overridden by the callback.
+        doc.Save(dummyFileName, saveOptions);
 
-        // Verify that each page file was created.
-        for (int i = 1; i <= doc.PageCount; i++)
+        // Verify that each expected page file was created.
+        for (int i = 0; i < doc.PageCount; i++)
         {
-            string pagePath = Path.Combine(outputDir, $"Page_{i}.tiff");
-            if (!File.Exists(pagePath))
-                throw new Exception($"Expected page file not found: {pagePath}");
+            string expectedPath = Path.Combine(outputDir, $"Page_{i}.tiff");
+            if (!File.Exists(expectedPath))
+                throw new FileNotFoundException($"Expected page file not found: {expectedPath}");
         }
 
         Console.WriteLine("TIFF pages saved successfully.");
     }
 
-    // Callback that sets a custom file name for each saved page.
+    // Callback that customizes the file name for each saved page.
     private class CustomPageSavingCallback : IPageSavingCallback
     {
         private readonly string _outputDir;
@@ -51,9 +51,13 @@ public class Program
 
         public void PageSaving(PageSavingArgs args)
         {
-            // PageIndex is zero‑based; add 1 for human‑readable numbering.
-            string fileName = Path.Combine(_outputDir, $"Page_{args.PageIndex + 1}.tiff");
-            args.PageFileName = fileName;
+            // Generate a custom file name for the current page.
+            string pageFileName = Path.Combine(_outputDir, $"Page_{args.PageIndex}.tiff");
+            args.PageFileName = pageFileName;
+
+            // Use a stream to write the page data.
+            args.PageStream = new FileStream(pageFileName, FileMode.Create);
+            args.KeepPageStreamOpen = false;
         }
     }
 }

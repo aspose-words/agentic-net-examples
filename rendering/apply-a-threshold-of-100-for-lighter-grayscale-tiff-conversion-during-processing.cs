@@ -8,35 +8,36 @@ public class Program
     public static void Main()
     {
         // Prepare output directory.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Sample text for grayscale TIFF conversion.");
+        // Insert a placeholder image (a small generated bitmap is not required; the document can be saved without it).
 
         // Configure TIFF save options:
         // - Grayscale color mode.
-        // - CCITT4 compression (binary).
-        // - Floyd‑Steinberg dithering with a custom threshold of 100.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+        // - CCITT3 compression (binary image compression).
+        // - Use Floyd‑Steinberg dithering with a threshold of 100 to obtain a lighter grayscale result.
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            TiffCompression = TiffCompression.Ccitt4,
             ImageColorMode = ImageColorMode.Grayscale,
+            TiffCompression = TiffCompression.Ccitt3,
             TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
             ThresholdForFloydSteinbergDithering = 100
         };
 
-        // Save the document as a TIFF image.
-        string outPath = Path.Combine(artifactsDir, "GrayscaleThreshold.tiff");
-        doc.Save(outPath, options);
+        // Save the document as a TIFF file.
+        string tiffPath = Path.Combine(outputDir, "GrayscaleThreshold.tiff");
+        doc.Save(tiffPath, tiffOptions);
 
         // Verify that the file was created.
-        if (!File.Exists(outPath))
+        if (!File.Exists(tiffPath))
             throw new InvalidOperationException("TIFF file was not created.");
 
-        // Inform the user (no input required).
-        Console.WriteLine($"TIFF saved to: {outPath}");
+        // Optionally, inform that the process completed.
+        Console.WriteLine($"TIFF saved to: {tiffPath}");
     }
 }
