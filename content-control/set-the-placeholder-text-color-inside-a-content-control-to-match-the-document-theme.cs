@@ -1,72 +1,57 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.BuildingBlocks;
 using Aspose.Words.Themes;
 
-namespace ContentControlPlaceholderTheme
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Ensure the document has a glossary document (required for building blocks).
+        if (doc.GlossaryDocument == null)
+            doc.GlossaryDocument = new GlossaryDocument();
+
+        // Access the document's theme and pick a theme color (Accent1 in this example).
+        Color themeAccentColor = doc.Theme.Colors.Accent1;
+
+        // Create a building block that will serve as the placeholder text.
+        GlossaryDocument glossary = doc.GlossaryDocument;
+        BuildingBlock placeholderBlock = new BuildingBlock(glossary)
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            Name = "MyPlaceholder"
+        };
 
-            // Ensure the document has a glossary (required for building blocks).
-            if (doc.GlossaryDocument == null)
-                doc.GlossaryDocument = new GlossaryDocument();
+        // The building block must contain a section with a body and a paragraph.
+        Section blockSection = new Section(glossary);
+        placeholderBlock.AppendChild(blockSection);
+        blockSection.EnsureMinimum(); // Creates Body and first Paragraph.
 
-            // Access the document theme and set a known accent color.
-            Theme theme = doc.Theme;
-            ThemeColors themeColors = theme.Colors;
-            themeColors.Accent1 = System.Drawing.Color.CornflowerBlue; // Example theme accent color.
+        // Add the placeholder run with the theme color.
+        Run placeholderRun = new Run(glossary, "Placeholder text matching theme color");
+        placeholderRun.Font.Color = themeAccentColor;
+        blockSection.Body.FirstParagraph.AppendChild(placeholderRun);
 
-            // -----------------------------------------------------------------
-            // Create a building block that will serve as the placeholder text.
-            // -----------------------------------------------------------------
-            GlossaryDocument glossary = doc.GlossaryDocument;
+        // Add the building block to the glossary document.
+        glossary.AppendChild(placeholderBlock);
 
-            BuildingBlock placeholderBlock = new BuildingBlock(glossary)
-            {
-                Name = "MyPlaceholder",
-                // Mark the block as a placeholder for a StructuredDocumentTag.
-                Type = BuildingBlockType.StructuredDocumentTagPlaceholderText
-            };
+        // Insert an inline plain‑text content control (structured document tag).
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "SampleControl",
+            Tag = "SampleTag",
+            PlaceholderName = "MyPlaceholder"
+        };
 
-            // Build the placeholder block: Section -> Body -> Paragraph -> Run.
-            Section blockSection = new Section(glossary);
-            // Ensure the section has a body and a paragraph.
-            blockSection.EnsureMinimum();
+        // Insert the content control into the first paragraph of the document.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(sdt);
 
-            // Create the run with placeholder text and apply the theme accent color.
-            Run placeholderRun = new Run(glossary, "Enter name here");
-            placeholderRun.Font.Color = themeColors.Accent1;
-
-            // Insert the run into the first paragraph of the section.
-            blockSection.Body.FirstParagraph.AppendChild(placeholderRun);
-
-            // Attach the section to the building block.
-            placeholderBlock.AppendChild(blockSection);
-
-            // Add the building block to the document glossary.
-            glossary.AppendChild(placeholderBlock);
-
-            // ---------------------------------------------------------------
-            // Insert an inline plain‑text content control linked to the placeholder.
-            // ---------------------------------------------------------------
-            StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-            {
-                Title = "Name",
-                PlaceholderName = "MyPlaceholder"
-            };
-
-            // Place the content control into the first paragraph of the document.
-            Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
-            firstParagraph.AppendChild(sdt);
-
-            // Save the resulting document.
-            doc.Save("PlaceholderTheme.docx");
-        }
+        // Save the resulting document.
+        doc.Save("PlaceholderThemeColor.docx");
     }
 }

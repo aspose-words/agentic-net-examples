@@ -1,10 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Aspose.Words.BuildingBlocks;
-using Newtonsoft.Json;
 
 public class Program
 {
@@ -14,45 +13,53 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a block‑level rich‑text content control.
+        // Insert a block‑level rich‑text content control that will hold the HTML.
         StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
             Title = "HtmlContent",
             Tag = "html-content"
         };
-
-        // Add a placeholder paragraph inside the content control.
-        Paragraph placeholder = new Paragraph(doc);
-        placeholder.AppendChild(new Run(doc, "Placeholder"));
-        richTextSdt.AppendChild(placeholder);
-
-        // Append the content control to the document body.
+        // A block‑level SDT must contain at least one paragraph.
+        Paragraph placeholderParagraph = new Paragraph(doc);
+        placeholderParagraph.AppendChild(new Run(doc, "Placeholder text"));
+        richTextSdt.AppendChild(placeholderParagraph);
         doc.FirstSection.Body.AppendChild(richTextSdt);
 
-        // Retrieve formatted HTML from a simple web service.
+        // Retrieve formatted HTML from a web service.
         string html;
         using (HttpClient httpClient = new HttpClient())
         {
-            // httpbin.org returns a small HTML page suitable for the example.
-            html = httpClient.GetStringAsync("https://httpbin.org/html").Result;
+            // Example public URL that returns simple HTML.
+            HttpResponseMessage response = httpClient.GetAsync("https://www.example.com").Result;
+            response.EnsureSuccessStatusCode();
+            html = response.Content.ReadAsStringAsync().Result;
         }
 
-        // Replace the existing contents of the rich‑text content control with the retrieved HTML.
-        richTextSdt.RemoveAllChildren();
+        // Find the previously created rich‑text content control by its title.
+        StructuredDocumentTag targetSdt = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .FirstOrDefault(s => s.Title == "HtmlContent");
 
-        // Create a new paragraph that will host the inserted HTML.
+        if (targetSdt == null)
+        {
+            throw new InvalidOperationException("Rich‑text content control not found.");
+        }
+
+        // Clear existing contents of the content control.
+        targetSdt.RemoveAllChildren();
+
+        // Insert a new paragraph into the SDT to host the HTML.
         Paragraph htmlParagraph = new Paragraph(doc);
-        richTextSdt.AppendChild(htmlParagraph);
+        targetSdt.AppendChild(htmlParagraph);
 
-        // Move the builder to the new paragraph and insert the HTML.
-        builder.MoveTo(htmlParagraph);
-        builder.InsertHtml(html);
-
-        // (Optional) Serialize the fetched HTML to a JSON file using Newtonsoft.Json.
-        string json = JsonConvert.SerializeObject(new { html }, Formatting.Indented);
-        File.WriteAllText("html.json", json);
+        // Use DocumentBuilder to insert the HTML inside the paragraph.
+        DocumentBuilder htmlBuilder = new DocumentBuilder(doc);
+        htmlBuilder.MoveTo(htmlParagraph);
+        htmlBuilder.InsertHtml(html);
 
         // Save the resulting document.
-        doc.Save("output.docx");
+        const string outputPath = "Result.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {Path.GetFullPath(outputPath)}");
     }
 }

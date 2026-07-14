@@ -1,81 +1,63 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 public class Program
 {
     public static void Main()
     {
-        // Sample JSON array.
-        string json = @"[
-            { ""Name"": ""Apple"" },
-            { ""Name"": ""Banana"" },
-            { ""Name"": ""Cherry"" }
-        ]";
-
-        // Deserialize JSON into a list of items.
-        List<Item> items = JsonConvert.DeserializeObject<List<Item>>(json)!;
-
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a title paragraph.
-        Paragraph title = new Paragraph(doc);
-        title.AppendChild(new Run(doc, "Fruit List"));
-        title.ParagraphFormat.StyleName = "Heading 1";
-        doc.FirstSection.Body.AppendChild(title);
-
-        // Create a repeating section content control.
-        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(
-            doc,
-            SdtType.RepeatingSection,
-            MarkupLevel.Block)
-        {
-            Title = "FruitRepeatingSection"
-        };
-
-        // Template paragraph inside the repeating section.
-        Paragraph templateParagraph = new Paragraph(doc);
-        templateParagraph.AppendChild(new Run(doc, "{{Item}}"));
-        repeatingSection.AppendChild(templateParagraph);
-
-        // Add the repeating section to the document body.
+        // Insert a block‑level repeating section content control.
+        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block);
         doc.FirstSection.Body.AppendChild(repeatingSection);
 
-        // For each item, clone the template paragraph, replace the placeholder, and add it as a repeating section item.
-        foreach (Item item in items)
+        // Create a template item inside the repeating section.
+        StructuredDocumentTag itemTemplate = new StructuredDocumentTag(doc, SdtType.RepeatingSectionItem, MarkupLevel.Block);
+        repeatingSection.AppendChild(itemTemplate);
+
+        // Add a paragraph with placeholder text to the template item.
+        Paragraph templateParagraph = new Paragraph(doc);
+        templateParagraph.AppendChild(new Run(doc, "Placeholder"));
+        itemTemplate.AppendChild(templateParagraph);
+
+        // Sample JSON array to import.
+        string json = @"[
+            { ""Name"": ""Alice"" },
+            { ""Name"": ""Bob"" },
+            { ""Name"": ""Charlie"" }
+        ]";
+
+        // Parse the JSON array.
+        JArray dataArray = JArray.Parse(json);
+
+        // For each JSON object, clone the template item and set its paragraph text.
+        foreach (JObject obj in dataArray)
         {
-            // Create a repeating section item control.
-            StructuredDocumentTag itemSdt = new StructuredDocumentTag(
-                doc,
-                SdtType.RepeatingSectionItem,
-                MarkupLevel.Block);
+            // Clone the template (deep clone).
+            StructuredDocumentTag clonedItem = (StructuredDocumentTag)itemTemplate.Clone(true);
 
-            // Clone the template paragraph.
-            Paragraph paraCopy = (Paragraph)templateParagraph.Clone(true);
+            // Retrieve the paragraph inside the cloned item.
+            Paragraph clonedParagraph = (Paragraph)clonedItem.GetChild(NodeType.Paragraph, 0, true);
+            if (clonedParagraph != null && clonedParagraph.Runs.Count > 0)
+            {
+                // Replace the placeholder text with the value from JSON.
+                clonedParagraph.Runs[0].Text = obj["Name"]?.ToString() ?? string.Empty;
+            }
 
-            // Replace placeholder with actual data.
-            paraCopy.Range.Replace("{{Item}}", item.Name);
-
-            // Add the paragraph to the item control.
-            itemSdt.AppendChild(paraCopy);
-
-            // Add the item control to the repeating section.
-            repeatingSection.AppendChild(itemSdt);
+            // Append the populated item to the repeating section.
+            repeatingSection.AppendChild(clonedItem);
         }
 
-        // Remove the original template paragraph (it has been used for cloning).
-        templateParagraph.Remove();
+        // Remove the original template item; it is no longer needed.
+        itemTemplate.Remove();
 
         // Save the resulting document.
-        doc.Save("RepeatingSectionFromJson.docx");
-    }
-
-    // Simple class matching the JSON structure.
-    private class Item
-    {
-        public string Name { get; set; } = string.Empty;
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RepeatingSectionFromJson.docx");
+        doc.Save(outputPath);
     }
 }

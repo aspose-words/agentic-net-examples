@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
@@ -9,92 +10,97 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Step 1: Create a sample document with various content controls.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a plain‑text content control.
-        StructuredDocumentTag plainText = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        // Plain text inline content control.
+        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "PlainTextControl",
-            Tag = "plain"
+            Title = "CustomerName",
+            Tag = "customer-name"
         };
-        plainText.RemoveAllChildren();
-        plainText.AppendChild(new Run(doc, "Plain text value"));
-        doc.FirstSection.Body.FirstParagraph.AppendChild(plainText);
+        plainTextSdt.RemoveAllChildren();
+        plainTextSdt.AppendChild(new Run(doc, "John Doe"));
+        builder.InsertNode(plainTextSdt);
 
-        // Insert a rich‑text content control.
-        StructuredDocumentTag richText = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        // Rich text block content control.
+        StructuredDocumentTag richTextSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
-            Title = "RichTextControl",
-            Tag = "rich"
+            Title = "Comments",
+            Tag = "comments"
         };
         Paragraph richParagraph = new Paragraph(doc);
-        richParagraph.AppendChild(new Run(doc, "Rich text value"));
-        richText.AppendChild(richParagraph);
-        doc.FirstSection.Body.AppendChild(richText);
+        richParagraph.AppendChild(new Run(doc, "This is a comment."));
+        richTextSdt.AppendChild(richParagraph);
+        doc.FirstSection.Body.AppendChild(richTextSdt);
 
-        // Insert a checkbox content control.
-        StructuredDocumentTag checkBox = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
+        // Checkbox inline content control.
+        StructuredDocumentTag checkboxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
         {
-            Title = "CheckBoxControl",
-            Tag = "checkbox",
+            Title = "Agree",
+            Tag = "agree",
             Checked = true
         };
-        doc.FirstSection.Body.FirstParagraph.AppendChild(checkBox);
+        builder.InsertNode(checkboxSdt);
 
-        // Insert a drop‑down list content control.
-        StructuredDocumentTag dropDown = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
+        // Drop‑down list inline content control.
+        StructuredDocumentTag dropdownSdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
         {
-            Title = "DropDownControl",
-            Tag = "dropdown"
+            Title = "Options",
+            Tag = "options"
         };
-        dropDown.ListItems.Add(new SdtListItem("Option 1", "1"));
-        dropDown.ListItems.Add(new SdtListItem("Option 2", "2"));
-        doc.FirstSection.Body.FirstParagraph.AppendChild(dropDown);
+        dropdownSdt.ListItems.Add(new SdtListItem("Option A", "A"));
+        dropdownSdt.ListItems.Add(new SdtListItem("Option B", "B"));
+        builder.InsertNode(dropdownSdt);
+
+        // Date inline content control.
+        StructuredDocumentTag dateSdt = new StructuredDocumentTag(doc, SdtType.Date, MarkupLevel.Inline)
+        {
+            Title = "Date",
+            Tag = "date",
+            DateDisplayFormat = "yyyy-MM-dd"
+        };
+        builder.InsertNode(dateSdt);
 
         // Save the sample document.
-        const string docPath = "sample.docx";
-        doc.Save(docPath);
+        const string samplePath = "sample.docx";
+        doc.Save(samplePath);
 
-        // Load the document back (demonstrates load operation).
-        Document loadedDoc = new Document(docPath);
+        // Step 2: Load the document and enumerate all content controls.
+        Document loadedDoc = new Document(samplePath);
+        IEnumerable<StructuredDocumentTag> sdtNodes = loadedDoc
+            .GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>();
 
-        // Collect information about each content control.
-        var reportItems = new List<ContentControlInfo>();
-        NodeCollection sdtNodes = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true);
-        foreach (Node node in sdtNodes)
+        // Prepare a simple DTO for JSON serialization.
+        var reportItems = new List<ControlInfo>();
+        foreach (StructuredDocumentTag sdt in sdtNodes)
         {
-            if (node is StructuredDocumentTag sdt)
+            reportItems.Add(new ControlInfo
             {
-                var info = new ContentControlInfo
-                {
-                    Title = sdt.Title,
-                    Tag = sdt.Tag,
-                    Type = sdt.SdtType.ToString(),
-                    Appearance = sdt.Appearance.ToString(),
-                    IsShowingPlaceholderText = sdt.IsShowingPlaceholderText
-                };
-                reportItems.Add(info);
-            }
+                Id = sdt.Id,
+                Type = sdt.SdtType.ToString(),
+                Title = sdt.Title,
+                Tag = sdt.Tag
+            });
         }
 
         // Serialize the report to JSON.
         string jsonReport = JsonConvert.SerializeObject(reportItems, Formatting.Indented);
-        const string jsonPath = "content-controls-report.json";
-        File.WriteAllText(jsonPath, jsonReport);
+        const string reportPath = "content_controls_report.json";
+        File.WriteAllText(reportPath, jsonReport);
 
-        // Output the report to the console.
-        Console.WriteLine("Content Control Summary:");
-        Console.WriteLine(jsonReport);
+        // Output a brief summary to the console.
+        Console.WriteLine($"Found {reportItems.Count} content controls. Report saved to '{reportPath}'.");
     }
 
-    // Simple DTO for JSON serialization.
-    private class ContentControlInfo
+    // DTO used for the JSON report.
+    private class ControlInfo
     {
+        public int Id { get; set; }
+        public string Type { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Tag { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty;
-        public string Appearance { get; set; } = string.Empty;
-        public bool IsShowingPlaceholderText { get; set; }
     }
 }

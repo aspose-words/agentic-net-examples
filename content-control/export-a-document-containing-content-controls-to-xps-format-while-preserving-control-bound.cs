@@ -4,64 +4,70 @@ using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
 
-namespace ContentControlExport
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Use DocumentBuilder for convenient content insertion.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a block-level RichText content control.
+        StructuredDocumentTag blockSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            Title = "BlockRichText",
+            Tag = "block-rich"
+        };
+        // The block SDT must contain at least one paragraph.
+        Paragraph blockParagraph = new Paragraph(doc);
+        blockParagraph.AppendChild(new Run(doc, "This is text inside a block-level RichText content control."));
+        blockSdt.AppendChild(blockParagraph);
+        // Append the block SDT to the document body.
+        doc.FirstSection.Body.AppendChild(blockSdt);
 
-            // Use DocumentBuilder for convenient text insertion.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert an inline PlainText content control.
+        StructuredDocumentTag inlineSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "InlinePlainText",
+            Tag = "inline-plain"
+        };
+        inlineSdt.RemoveAllChildren();
+        inlineSdt.AppendChild(new Run(doc, "Inline plain text"));
+        // Add the inline SDT to the current paragraph.
+        builder.Writeln(); // Ensure we are on a new paragraph.
+        Paragraph inlineParagraph = doc.FirstSection.Body.LastParagraph;
+        inlineParagraph.AppendChild(inlineSdt);
 
-            // Insert a heading to demonstrate outline handling (optional).
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Document with Content Controls");
+        // Insert a checkbox content control.
+        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
+        {
+            Title = "AgreeCheckBox",
+            Tag = "agree-checkbox",
+            Checked = false
+        };
+        // Add some descriptive text before the checkbox.
+        builder.Writeln(); // New paragraph for clarity.
+        Paragraph checkBoxParagraph = doc.FirstSection.Body.LastParagraph;
+        checkBoxParagraph.AppendChild(new Run(doc, "I agree to the terms: "));
+        checkBoxParagraph.AppendChild(checkBoxSdt);
 
-            // ---------- Inline plain‑text content control ----------
-            // Create an inline plain‑text StructuredDocumentTag.
-            StructuredDocumentTag inlineSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-            {
-                Title = "CustomerName",
-                Tag = "customer-name"
-            };
-            // Set the displayed text of the content control.
-            inlineSdt.RemoveAllChildren();
-            inlineSdt.AppendChild(new Run(doc, "Contoso Ltd."));
-
-            // Insert the inline content control into the current paragraph.
-            builder.InsertNode(inlineSdt);
-            builder.Writeln(); // Move to a new paragraph.
-
-            // ---------- Block‑level rich‑text content control ----------
-            // Create a block‑level rich‑text StructuredDocumentTag.
-            StructuredDocumentTag blockSdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-            {
-                Title = "SectionContent",
-                Tag = "section-content"
-            };
-            // Add a paragraph with some text inside the block content control.
-            Paragraph blockParagraph = new Paragraph(doc);
-            blockParagraph.AppendChild(new Run(doc, "This is a block‑level rich text content control."));
-            blockSdt.AppendChild(blockParagraph);
-
-            // Append the block content control to the document body.
-            doc.FirstSection.Body.AppendChild(blockSdt);
-
-            // ---------- Save the document as XPS preserving content control boundaries ----------
-            // Create XpsSaveOptions; default settings preserve the structure of content controls.
-            XpsSaveOptions xpsOptions = new XpsSaveOptions();
-
-            // Define output file path in the current working directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ContentControls.xps");
-
-            // Save the document to XPS format.
-            doc.Save(outputPath, xpsOptions);
-
-            // Inform that the operation completed (optional console output).
-            Console.WriteLine($"Document saved to XPS: {outputPath}");
+        // Optional: Output information about the content controls to the console.
+        foreach (StructuredDocumentTag sdt in doc.GetChildNodes(NodeType.StructuredDocumentTag, true))
+        {
+            Console.WriteLine($"Title: {sdt.Title}, Tag: {sdt.Tag}, Type: {sdt.SdtType}");
+            Console.WriteLine($"XML (minimal): {sdt.WordOpenXMLMinimal}");
         }
+
+        // Prepare XPS save options. No special options are required to preserve control boundaries.
+        XpsSaveOptions xpsOptions = new XpsSaveOptions();
+
+        // Save the document as XPS in the working directory.
+        string xpsPath = Path.Combine(Directory.GetCurrentDirectory(), "ContentControls.xps");
+        doc.Save(xpsPath, xpsOptions);
+
+        // Indicate completion.
+        Console.WriteLine($"Document saved to XPS: {xpsPath}");
     }
 }

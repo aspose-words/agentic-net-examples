@@ -1,9 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Markup;
 using Aspose.Words.Fields;
-using Newtonsoft.Json;
+using Aspose.Words.Markup;
 
 public class Program
 {
@@ -11,51 +11,42 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a block‑level rich‑text content control.
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        // Create an inline rich‑text content control (SDT).
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Inline)
         {
             Title = "HyperlinkControl",
-            Tag = "hyperlink-sdt"
+            Tag = "hyperlink"
         };
 
-        // Add a paragraph that will host the hyperlink inside the content control.
-        Paragraph paragraph = new Paragraph(doc);
-        sdt.AppendChild(paragraph);
-        doc.FirstSection.Body.AppendChild(sdt);
+        // Insert the content control into the first paragraph of the document.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(sdt);
 
-        // Move the builder to the newly created paragraph and insert a hyperlink field.
-        builder.MoveTo(paragraph);
-        builder.Font.Color = System.Drawing.Color.Blue;
-        builder.Font.Underline = Underline.Single;
+        // Insert a hyperlink directly inside the inline content control.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.MoveTo(sdt);
         builder.InsertHyperlink("Aspose", "https://www.aspose.com", false);
-        builder.Font.ClearFormatting();
 
-        // Save the document in DOCX format.
-        const string docxPath = "output.docx";
+        // Save the document as DOCX.
+        const string docxPath = "HyperlinkControl.docx";
         doc.Save(docxPath);
 
-        // Convert the document to HTML.
-        const string htmlPath = "output.html";
-        doc.Save(htmlPath, SaveFormat.Html);
+        // Load the saved document.
+        Document loadedDoc = new Document(docxPath);
 
-        // Verify that the hyperlink target URL is present in the generated HTML.
-        string htmlContent = File.ReadAllText(htmlPath);
-        bool urlFound = htmlContent.Contains("https://www.aspose.com");
+        // Locate the first hyperlink field in the document.
+        FieldHyperlink? hyperlinkField = loadedDoc.Range.Fields
+            .OfType<FieldHyperlink>()
+            .FirstOrDefault();
 
-        // Serialize verification result to JSON using Newtonsoft.Json.
-        var verificationResult = new
-        {
-            Url = "https://www.aspose.com",
-            Found = urlFound
-        };
-        string json = JsonConvert.SerializeObject(verificationResult, Formatting.Indented);
-        File.WriteAllText("verification.json", json);
+        // Verify that the hyperlink target URL matches the expected value.
+        const string expectedUrl = "https://www.aspose.com";
+        bool isUrlCorrect = hyperlinkField != null && hyperlinkField.Address == expectedUrl;
 
-        // Output the verification result to the console.
-        Console.WriteLine(urlFound
-            ? "Hyperlink URL verified successfully."
-            : "Hyperlink URL not found in the converted document.");
+        // Output the verification result.
+        Console.WriteLine(isUrlCorrect
+            ? $"Hyperlink target verified: {hyperlinkField!.Address}"
+            : "Hyperlink target verification failed.");
     }
 }

@@ -1,76 +1,77 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Tables;
+using Newtonsoft.Json;
 
-public class RepeatingSectionExample
+public class Program
 {
     public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a simple table with a header row.
-        Table table = new Table(doc);
-        doc.FirstSection.Body.AppendChild(table);
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Product");
+        builder.InsertCell();
+        builder.Write("Quantity");
+        builder.EndRow();
 
-        // Header row.
-        Row header = new Row(doc);
-        table.AppendChild(header);
-
-        Cell headerCell1 = new Cell(doc);
-        header.AppendChild(headerCell1);
-        Paragraph headerPara1 = new Paragraph(doc);
-        headerCell1.AppendChild(headerPara1);
-        headerPara1.AppendChild(new Run(doc, "Name"));
-
-        Cell headerCell2 = new Cell(doc);
-        header.AppendChild(headerCell2);
-        Paragraph headerPara2 = new Paragraph(doc);
-        headerCell2.AppendChild(headerPara2);
-        headerPara2.AppendChild(new Run(doc, "Value"));
+        // Insert the table into the document.
+        Table table = builder.EndTable();
 
         // Create a repeating section content control at the row level.
         StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Row);
-        repeatingSection.Title = "Items";
         table.AppendChild(repeatingSection);
 
         // Sample data collection.
-        var items = new List<(string Name, string Value)>
+        List<Item> items = new List<Item>
         {
-            ("Alice", "10"),
-            ("Bob", "20"),
-            ("Charlie", "30")
+            new Item { Name = "Apple", Quantity = 10 },
+            new Item { Name = "Banana", Quantity = 5 },
+            new Item { Name = "Cherry", Quantity = 20 }
         };
 
-        // For each item, add a repeating section item that contains a table row.
-        foreach (var item in items)
+        // For each item, create a repeating section item that contains a table row.
+        foreach (Item item in items)
         {
-            // Repeating section item (row level).
-            StructuredDocumentTag itemSdt = new StructuredDocumentTag(doc, SdtType.RepeatingSectionItem, MarkupLevel.Row);
-            repeatingSection.AppendChild(itemSdt);
+            // Create a repeating section item (row level).
+            StructuredDocumentTag repeatingItem = new StructuredDocumentTag(doc, SdtType.RepeatingSectionItem, MarkupLevel.Row);
+            repeatingSection.AppendChild(repeatingItem);
 
-            // The actual row that will be repeated.
-            Row dataRow = new Row(doc);
-            itemSdt.AppendChild(dataRow);
+            // Create a new row for this item.
+            Row row = new Row(doc);
+            repeatingItem.AppendChild(row);
 
-            // First cell – Name.
+            // First cell – product name.
             Cell nameCell = new Cell(doc);
-            dataRow.AppendChild(nameCell);
+            row.AppendChild(nameCell);
             Paragraph namePara = new Paragraph(doc);
             nameCell.AppendChild(namePara);
             namePara.AppendChild(new Run(doc, item.Name));
 
-            // Second cell – Value.
-            Cell valueCell = new Cell(doc);
-            dataRow.AppendChild(valueCell);
-            Paragraph valuePara = new Paragraph(doc);
-            valueCell.AppendChild(valuePara);
-            valuePara.AppendChild(new Run(doc, item.Value));
+            // Second cell – quantity.
+            Cell qtyCell = new Cell(doc);
+            row.AppendChild(qtyCell);
+            Paragraph qtyPara = new Paragraph(doc);
+            qtyCell.AppendChild(qtyPara);
+            qtyPara.AppendChild(new Run(doc, item.Quantity.ToString()));
         }
 
         // Save the resulting document.
-        doc.Save("RepeatingSectionTable.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RepeatingSectionTable.docx");
+        doc.Save(outputPath);
+    }
+
+    // Simple data model for demonstration.
+    private class Item
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
     }
 }

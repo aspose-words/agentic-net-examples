@@ -9,47 +9,54 @@ public class Program
 {
     public static void Main()
     {
-        // Create a source document with a block-level plain‑text content control.
-        Document sourceDoc = new Document();
-        StructuredDocumentTag originalSdt = new StructuredDocumentTag(sourceDoc, SdtType.PlainText, MarkupLevel.Block);
-        originalSdt.Title = "SampleControl";
-        originalSdt.Tag = "sample-control";
+        // Create a new blank document.
+        Document doc = new Document();
 
-        // Add some text inside the content control.
-        Paragraph sdtParagraph = new Paragraph(sourceDoc);
-        sdtParagraph.AppendChild(new Run(sourceDoc, "Original content"));
-        originalSdt.AppendChild(sdtParagraph);
+        // Ensure the document has at least one paragraph to host the original content control.
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph ?? new Paragraph(doc);
+        if (doc.FirstSection.Body.FirstParagraph == null)
+        {
+            doc.FirstSection.Body.AppendChild(firstParagraph);
+        }
 
-        // Insert the content control into the document body.
-        sourceDoc.FirstSection.Body.AppendChild(originalSdt);
+        // Create an inline plain‑text content control.
+        StructuredDocumentTag originalSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "OriginalControl",
+            Tag = "original"
+        };
+        originalSdt.RemoveAllChildren();
+        originalSdt.AppendChild(new Run(doc, "Original Content"));
+        firstParagraph.AppendChild(originalSdt);
 
-        // Save the source document.
-        const string sourcePath = "source.docx";
-        sourceDoc.Save(sourcePath);
+        // Add a second paragraph where the duplicate will be placed.
+        Paragraph secondParagraph = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(secondParagraph);
 
-        // Load the document back.
-        Document doc = new Document(sourcePath);
+        // Clone the original content control (deep clone) and adjust its metadata.
+        StructuredDocumentTag clonedSdt = (StructuredDocumentTag)originalSdt.Clone(true);
+        clonedSdt.Title = "ClonedControl";
+        clonedSdt.Tag = "cloned";
 
-        // Locate the original content control by its Title.
-        StructuredDocumentTag foundSdt = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+        // Insert the cloned content control into the second paragraph.
+        secondParagraph.AppendChild(clonedSdt);
+
+        // Save the resulting document.
+        const string outputDocPath = "DuplicatedContentControl.docx";
+        doc.Save(outputDocPath);
+
+        // Export information about all content controls to JSON.
+        var controlsInfo = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
-            .FirstOrDefault(s => s.Title == "SampleControl");
+            .Select(sdt => new
+            {
+                Title = sdt.Title,
+                Tag = sdt.Tag,
+                Text = sdt.GetText().Trim()
+            })
+            .ToList();
 
-        if (foundSdt == null)
-            throw new InvalidOperationException("Original content control not found.");
-
-        // Clone the content control (deep clone, including its children).
-        StructuredDocumentTag clonedSdt = (StructuredDocumentTag)foundSdt.Clone(true);
-
-        // Optionally modify the cloned control (e.g., change its title to avoid duplicates).
-        clonedSdt.Title = "SampleControlCopy";
-        clonedSdt.Tag = "sample-control-copy";
-
-        // Insert the cloned control after the original one.
-        doc.FirstSection.Body.InsertAfter(clonedSdt, foundSdt);
-
-        // Save the resulting document with the duplicated content control.
-        const string resultPath = "duplicated.docx";
-        doc.Save(resultPath);
+        string json = JsonConvert.SerializeObject(controlsInfo, Formatting.Indented);
+        File.WriteAllText("contentControls.json", json);
     }
 }

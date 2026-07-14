@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
@@ -8,81 +10,116 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare input and output folders.
-        string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Define folders
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputFolder = Path.Combine(baseDir, "InputDocs");
+        string outputFolder = Path.Combine(baseDir, "OutputDocs");
 
-        // Create sample documents if the input folder is empty.
-        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
-        {
-            CreateSampleDocument(Path.Combine(inputDir, "Sample1.docx"), "First sample document.");
-            CreateSampleDocument(Path.Combine(inputDir, "Sample2.docx"), "Second sample document.");
-        }
+        // Ensure folders exist
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Process each DOCX file in the input folder.
-        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
+        // Create sample documents
+        CreateSampleDocuments(inputFolder);
+
+        // Process each .docx file
+        var report = new List<DocumentReport>();
+        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            // Load the document.
             Document doc = new Document(filePath);
 
-            // Ensure word count properties are up‑to‑date.
-            doc.UpdateWordCount();
+            // Ensure header exists
+            HeaderFooter header = GetOrCreateHeader(doc);
 
-            // Gather metadata from built‑in properties.
-            var metadata = new
+            // Insert header content control with metadata
+            InsertHeaderMetadataControl(doc, header);
+
+            // Save processed document
+            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
+            doc.Save(outputPath);
+
+            // Add entry to report
+            report.Add(new DocumentReport
             {
+                FileName = Path.GetFileName(filePath),
                 Title = doc.BuiltInDocumentProperties.Title,
-                Author = doc.BuiltInDocumentProperties.Author,
-                Created = doc.BuiltInDocumentProperties.CreatedTime,
-                Words = doc.BuiltInDocumentProperties.Words,
-                Pages = doc.BuiltInDocumentProperties.Pages
-            };
+                Author = doc.BuiltInDocumentProperties.Author
+            });
+        }
 
-            // Serialize metadata to a formatted JSON string.
-            string json = JsonConvert.SerializeObject(metadata, Formatting.Indented);
+        // Write JSON report
+        string jsonReportPath = Path.Combine(outputFolder, "processing_report.json");
+        string json = JsonConvert.SerializeObject(report, Formatting.Indented);
+        File.WriteAllText(jsonReportPath, json);
+    }
 
-            // Ensure the primary header exists and obtain a reference to it.
-            HeaderFooter header = doc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
-            if (header == null)
-            {
-                header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-                doc.FirstSection.HeadersFooters.Add(header);
-            }
+    private static void CreateSampleDocuments(string folder)
+    {
+        for (int i = 1; i <= 3; i++)
+        {
+            Document doc = new Document();
+            doc.BuiltInDocumentProperties.Title = $"Sample Document {i}";
+            doc.BuiltInDocumentProperties.Author = $"Author {i}";
 
-            // Create a block‑level rich‑text content control.
-            StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
-            {
-                Title = "DocMetadata",
-                Tag = "metadata"
-            };
-
-            // Add a paragraph with the JSON metadata inside the content control.
             Paragraph para = new Paragraph(doc);
-            para.AppendChild(new Run(doc, json));
-            sdt.AppendChild(para);
+            Run run = new Run(doc, $"This is the content of sample document {i}.");
+            para.AppendChild(run);
+            doc.FirstSection.Body.AppendChild(para);
 
-            // Insert the content control into the header.
-            header.AppendChild(sdt);
-
-            // Save the modified document to the output folder.
-            string outPath = Path.Combine(outputDir, Path.GetFileName(filePath));
-            doc.Save(outPath);
+            string filePath = Path.Combine(folder, $"Sample{i}.docx");
+            doc.Save(filePath);
         }
     }
 
-    // Helper method to create a simple document with some built‑in properties.
-    private static void CreateSampleDocument(string path, string bodyText)
+    private static HeaderFooter GetOrCreateHeader(Document doc)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(bodyText);
+        Section firstSection = doc.FirstSection;
+        HeaderFooterCollection headers = firstSection.HeadersFooters;
+        HeaderFooter header = headers[HeaderFooterType.HeaderPrimary];
+        if (header == null)
+        {
+            header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+            headers.Add(header);
+        }
+        return header;
+    }
 
-        // Set sample built‑in properties.
-        doc.BuiltInDocumentProperties.Title = Path.GetFileNameWithoutExtension(path);
-        doc.BuiltInDocumentProperties.Author = "Aspose Sample";
+    private static void InsertHeaderMetadataControl(Document doc, HeaderFooter header)
+    {
+        // Create block-level rich text content control
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.RichText, MarkupLevel.Block)
+        {
+            Title = "DocumentMetadata",
+            Tag = "doc-metadata"
+        };
 
-        doc.Save(path);
+        // Build metadata text
+        string title = doc.BuiltInDocumentProperties.Title ?? "N/A";
+        string author = doc.BuiltInDocumentProperties.Author ?? "N/A";
+        string metadataText = $"Title: {title}; Author: {author}";
+
+        // Add paragraph with metadata inside the content control
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, metadataText);
+        para.AppendChild(run);
+        sdt.AppendChild(para);
+
+        // Insert the content control at the beginning of the header
+        Node firstNode = header.FirstChild;
+        if (firstNode != null)
+        {
+            header.InsertBefore(sdt, firstNode);
+        }
+        else
+        {
+            header.AppendChild(sdt);
+        }
+    }
+
+    private class DocumentReport
+    {
+        public string FileName { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
     }
 }

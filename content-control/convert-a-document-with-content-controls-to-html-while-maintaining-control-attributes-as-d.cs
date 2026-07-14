@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Saving;
@@ -9,51 +10,45 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a plain‑text content control.
-        StructuredDocumentTag plainSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
-        {
-            Title = "CustomerName",
-            Tag = "customer-name"
-        };
-        plainSdt.RemoveAllChildren();
-        plainSdt.AppendChild(new Run(doc, "John Doe"));
-        builder.InsertNode(plainSdt);
-        builder.Writeln(); // separate from next control
+        // Get the first paragraph of the document.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Insert a checkbox content control.
-        StructuredDocumentTag checkSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
-        {
-            Title = "Agree",
-            Tag = "agree",
-            Checked = false
-        };
-        builder.InsertNode(checkSdt);
-        builder.Writeln();
+        // ----- Plain text content control -----
+        StructuredDocumentTag plainTextSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
+        plainTextSdt.Title = "CustomerName";
+        plainTextSdt.Tag = "customer-name";
+        plainTextSdt.RemoveAllChildren();
+        plainTextSdt.AppendChild(new Run(doc, "Contoso"));
+        paragraph.AppendChild(plainTextSdt);
 
-        // Insert a drop‑down list content control.
-        StructuredDocumentTag dropSdt = new StructuredDocumentTag(doc, SdtType.DropDownList, MarkupLevel.Inline)
-        {
-            Title = "Country",
-            Tag = "country"
-        };
-        dropSdt.ListItems.Add(new SdtListItem("USA", "US"));
-        dropSdt.ListItems.Add(new SdtListItem("Canada", "CA"));
-        builder.InsertNode(dropSdt);
-        builder.Writeln();
+        // Add a space between controls.
+        paragraph.AppendChild(new Run(doc, " "));
 
-        // Save the source DOCX (optional, just for reference).
-        const string docxPath = "sample.docx";
-        doc.Save(docxPath);
+        // ----- Checkbox content control -----
+        StructuredDocumentTag checkBoxSdt = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline);
+        checkBoxSdt.Title = "Agree";
+        checkBoxSdt.Tag = "agree";
+        checkBoxSdt.Checked = true;
+        paragraph.AppendChild(checkBoxSdt);
 
-        // Convert the document to HTML. Content‑control attributes (Title, Tag) are exported as data‑attributes by default.
+        // Save the source DOCX file.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        doc.Save(inputPath);
+
+        // Load the document that contains the content controls.
+        Document loadedDoc = new Document(inputPath);
+
+        // Configure HTML save options.
+        // The ExportContentControlsAsDataAttributes property is not available in this version of Aspose.Words,
+        // so we simply use the default behavior which includes content control information in the HTML.
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
-        const string htmlPath = "sample.html";
-        doc.Save(htmlPath, htmlOptions);
 
-        // Output a short confirmation.
-        Console.WriteLine($"Document saved as '{docxPath}'.");
-        Console.WriteLine($"HTML conversion saved as '{htmlPath}'.");
+        // Save the document as HTML.
+        string htmlPath = Path.Combine(Directory.GetCurrentDirectory(), "output.html");
+        loadedDoc.Save(htmlPath, htmlOptions);
+
+        // Indicate that the conversion has finished.
+        Console.WriteLine("Conversion completed. HTML saved to: " + htmlPath);
     }
 }

@@ -10,68 +10,105 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Step 1: Create a sample document with a custom XML part.
         Document doc = new Document();
 
-        // Insert a plain‑text content control (SDT) with some sample text.
+        // Sample XML data that will be mapped to the content control.
+        string xmlContent = @"<root>
+    <person>
+        <firstName>John</firstName>
+        <lastName>Doe</lastName>
+        <age>30</age>
+    </person>
+</root>";
+
+        // Add the XML part to the document.
+        string xmlPartId = Guid.NewGuid().ToString("B");
+        CustomXmlPart xmlPart = doc.CustomXmlParts.Add(xmlPartId, xmlContent);
+
+        // Insert a plain‑text content control (SDT) into the first paragraph.
         StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
         {
-            Title = "SampleControl",
-            Tag = "sample-tag"
+            Title = "PersonInfo",
+            Tag = "person-info"
         };
-        sdt.RemoveAllChildren();
-        sdt.AppendChild(new Run(doc, "Hello, Aspose!"));
+        // Map the SDT to the <person> element in the custom XML part.
+        sdt.XmlMapping.SetMapping(xmlPart, "/root[1]/person[1]", string.Empty);
 
-        // Add the content control to the first paragraph of the document.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
-        paragraph.AppendChild(sdt);
+        // Add the SDT to the document body.
+        Paragraph para = doc.FirstSection.Body.FirstParagraph;
+        para.AppendChild(sdt);
 
-        // Save the document to the working directory.
+        // Save the sample document.
         const string docPath = "sample.docx";
         doc.Save(docPath);
 
-        // Load the document back (demonstrates the load rule).
+        // Step 2: Load the document and locate the content control.
         Document loadedDoc = new Document(docPath);
-
-        // Find the content control by its title.
-        StructuredDocumentTag foundSdt = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+        StructuredDocumentTag? targetSdt = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
-            .FirstOrDefault(tag => tag.Title == "SampleControl");
+            .FirstOrDefault(tag => tag.Title == "PersonInfo");
 
-        if (foundSdt == null)
-            throw new InvalidOperationException("Content control not found.");
+        if (targetSdt == null)
+        {
+            Console.WriteLine("Content control not found.");
+            return;
+        }
 
-        // Retrieve the inner XML of the content control.
-        string innerXml = foundSdt.WordOpenXML; // Full XML representation.
+        // Step 3: Retrieve the inner XML of the mapped node.
+        string innerXml = string.Empty;
+        if (targetSdt.XmlMapping.IsMapped)
+        {
+            CustomXmlPart mappedPart = targetSdt.XmlMapping.CustomXmlPart;
+            string partXml = Encoding.UTF8.GetString(mappedPart.Data);
+            XmlDocument partDoc = new XmlDocument();
+            partDoc.LoadXml(partXml);
 
-        // Prepare a simple XSLT that extracts the text node value.
-        const string xsltString = @"
+            // Use the XPath stored in the mapping to locate the node.
+            string xpath = targetSdt.XmlMapping.XPath;
+            XmlNode? mappedNode = partDoc.SelectSingleNode(xpath);
+            if (mappedNode != null)
+                innerXml = mappedNode.InnerXml;
+        }
+
+        if (string.IsNullOrEmpty(innerXml))
+        {
+            Console.WriteLine("Failed to retrieve inner XML.");
+            return;
+        }
+
+        // Step 4: Prepare a simple XSLT that converts the person data to plain text.
+        const string xsltPath = "transform.xslt";
+        string xsltContent = @"<?xml version='1.0' encoding='UTF-8'?>
 <xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>
   <xsl:output method='text' encoding='UTF-8'/>
-  <xsl:template match='*'>
-    <xsl:value-of select='.'/>
+  <xsl:template match='/'>
+    First Name: <xsl:value-of select='firstName'/>&#10;
+    Last Name: <xsl:value-of select='lastName'/>&#10;
+    Age: <xsl:value-of select='age'/>
   </xsl:template>
 </xsl:stylesheet>";
+        File.WriteAllText(xsltPath, xsltContent, Encoding.UTF8);
 
-        // Load the XSLT from the string.
+        // Step 5: Apply the XSLT transformation to the inner XML.
         XslCompiledTransform xslt = new XslCompiledTransform();
-        using (XmlReader xsltReader = XmlReader.Create(new StringReader(xsltString)))
+        xslt.Load(xsltPath);
+
+        using (StringReader sr = new StringReader($"<person>{innerXml}</person>"))
+        using (XmlReader xmlReader = XmlReader.Create(sr))
+        using (StringWriter sw = new StringWriter())
         {
-            xslt.Load(xsltReader);
+            xslt.Transform(xmlReader, null, sw);
+            string result = sw.ToString();
+
+            // Save the transformation result.
+            const string resultPath = "result.txt";
+            File.WriteAllText(resultPath, result, Encoding.UTF8);
+            Console.WriteLine($"Transformation completed. Result saved to '{resultPath}'.");
         }
 
-        // Perform the transformation.
-        string transformedResult;
-        using (StringReader xmlReader = new StringReader(innerXml))
-        using (XmlReader reader = XmlReader.Create(xmlReader))
-        using (StringWriter writer = new StringWriter())
-        {
-            xslt.Transform(reader, null, writer);
-            transformedResult = writer.ToString();
-        }
-
-        // Write the transformed result to a text file.
-        const string outputPath = "transformed.txt";
-        File.WriteAllText(outputPath, transformedResult, Encoding.UTF8);
+        // Clean up temporary XSLT file (optional).
+        if (File.Exists(xsltPath))
+            File.Delete(xsltPath);
     }
 }

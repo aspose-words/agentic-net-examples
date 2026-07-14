@@ -1,68 +1,50 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the sample files.
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
-        const string imagePath = "sample.png";
-
-        // Create a tiny PNG image to use in the example.
-        CreateSamplePng(imagePath);
-
-        // -----------------------------------------------------------------
-        // Create a document that contains picture content controls.
-        // -----------------------------------------------------------------
+        // Create a sample document that contains a picture content control.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First picture content control.
-        StructuredDocumentTag pictureSdt1 = builder.InsertStructuredDocumentTag(SdtType.Picture);
-        builder.InsertImage(imagePath);
-        builder.Writeln();
+        // Insert a picture content control at the current cursor position.
+        StructuredDocumentTag pictureSdt = builder.InsertStructuredDocumentTag(SdtType.Picture);
 
-        // Second picture content control.
-        StructuredDocumentTag pictureSdt2 = builder.InsertStructuredDocumentTag(SdtType.Picture);
-        builder.InsertImage(imagePath);
-        builder.Writeln();
+        // Insert a tiny PNG image (1x1 pixel) into the content control.
+        // The image is provided as a Base64‑encoded byte array to avoid external files.
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+        builder.InsertImage(pngBytes);
 
         // Save the source document.
+        const string inputPath = "input.docx";
         doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Load the document and replace picture content controls with inline images.
-        // -----------------------------------------------------------------
+        // Load the document that contains picture content controls.
         Document loadedDoc = new Document(inputPath);
 
-        // Collect all picture SDTs.
-        List<StructuredDocumentTag> pictureTags = loadedDoc
+        // Find all picture content controls in the document.
+        var pictureControls = loadedDoc
             .GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
             .Where(sdt => sdt.SdtType == SdtType.Picture)
             .ToList();
 
-        // Remove each picture content control but keep its inner image.
-        foreach (StructuredDocumentTag sdt in pictureTags)
+        // Replace each picture content control with its inner image.
+        foreach (var sdt in pictureControls)
         {
+            // Remove the SDT node but keep its child nodes (the image shape) in the document.
             sdt.RemoveSelfOnly();
         }
 
-        // Save the modified document.
+        // Save the resulting document where picture content controls have been removed.
+        const string outputPath = "output.docx";
         loadedDoc.Save(outputPath);
-    }
-
-    // Generates a 1x1 red PNG image from a Base64 string.
-    private static void CreateSamplePng(string filePath)
-    {
-        const string base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcV8AAAAASUVORK5CYII=";
-        byte[] bytes = Convert.FromBase64String(base64);
-        File.WriteAllBytes(filePath, bytes);
     }
 }
