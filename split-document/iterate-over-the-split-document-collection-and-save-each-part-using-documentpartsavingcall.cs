@@ -8,11 +8,8 @@ public class Program
     public static void Main()
     {
         // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Base name for the main file and split parts.
-        string baseName = "SplitDocument";
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
         // Create a sample document with three sections.
         Document doc = new Document();
@@ -23,60 +20,65 @@ public class Program
         builder.InsertBreak(BreakType.SectionBreakNewPage);
         builder.Writeln("Content of Section 3");
 
-        // Configure HTML save options to split by section.
-        HtmlSaveOptions options = new HtmlSaveOptions
+        // Define the base name for the split HTML files.
+        string baseFileName = "SplitDocument.html";
+
+        // Configure HTML save options to split by section and assign the callback.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
             DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-            DocumentPartSavingCallback = new SavedDocumentPartRename(outputDir, baseName, DocumentSplitCriteria.SectionBreak)
+            DocumentPartSavingCallback = new SavedDocumentPartRename(artifactsDir, baseFileName, DocumentSplitCriteria.SectionBreak)
         };
 
         // Save the document; the callback will be invoked for each part.
-        string mainFilePath = Path.Combine(outputDir, baseName + ".html");
-        doc.Save(mainFilePath, options);
+        doc.Save(Path.Combine(artifactsDir, baseFileName), saveOptions);
 
-        // Report the generated files.
-        string[] generatedFiles = Directory.GetFiles(outputDir, $"{baseName}*");
-        Console.WriteLine($"Generated {generatedFiles.Length} files:");
-        foreach (string file in generatedFiles)
-        {
-            Console.WriteLine(Path.GetFileName(file));
-        }
+        // Validate that the expected number of parts were created.
+        int expectedParts = doc.Sections.Count;
+        string[] partFiles = Directory.GetFiles(artifactsDir, $"{Path.GetFileNameWithoutExtension(baseFileName)} part *.html");
+        if (partFiles.Length != expectedParts)
+            throw new InvalidOperationException($"Expected {expectedParts} parts, but found {partFiles.Length}.");
+
+        // Optionally, display the created file names.
+        foreach (string file in partFiles)
+            Console.WriteLine("Created: " + Path.GetFileName(file));
     }
 
     // Callback that customizes the file name and stream for each document part.
     private class SavedDocumentPartRename : IDocumentPartSavingCallback
     {
-        private readonly string _outputDir;
-        private readonly string _baseName;
+        private readonly string _outputFolder;
+        private readonly string _baseFileName;
         private readonly DocumentSplitCriteria _criteria;
-        private int _count;
+        private int _partIndex;
 
-        public SavedDocumentPartRename(string outputDir, string baseName, DocumentSplitCriteria criteria)
+        public SavedDocumentPartRename(string outputFolder, string baseFileName, DocumentSplitCriteria criteria)
         {
-            _outputDir = outputDir;
-            _baseName = baseName;
+            _outputFolder = outputFolder;
+            _baseFileName = Path.GetFileNameWithoutExtension(baseFileName);
             _criteria = criteria;
+            _partIndex = 0;
         }
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
+            // Determine the type of split part for naming (section in this example).
             string partType = _criteria switch
             {
+                DocumentSplitCriteria.SectionBreak => "Section",
                 DocumentSplitCriteria.PageBreak => "Page",
                 DocumentSplitCriteria.ColumnBreak => "Column",
-                DocumentSplitCriteria.SectionBreak => "Section",
                 DocumentSplitCriteria.HeadingParagraph => "Heading",
                 _ => "Part"
             };
 
-            string partFileName = $"{_baseName}_part{++_count}_{partType}{Path.GetExtension(args.DocumentPartFileName)}";
+            // Build a unique file name for the part.
+            string partFileName = $"{_baseFileName} part {++_partIndex}, of type {partType}{Path.GetExtension(args.DocumentPartFileName)}";
 
-            // Set the file name that Aspose.Words will use.
+            // Set the file name (without path) and provide a stream to write the part.
             args.DocumentPartFileName = partFileName;
-
-            // Provide a custom stream to write the part.
-            string fullPath = Path.Combine(_outputDir, partFileName);
-            args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
+            args.DocumentPartStream = new FileStream(Path.Combine(_outputFolder, partFileName), FileMode.Create);
+            args.KeepDocumentPartStreamOpen = false;
         }
     }
 }

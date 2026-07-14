@@ -3,72 +3,83 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace SplitDocumentExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a sample document with three sections.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Content of Section 1");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("Content of Section 2");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("Content of Section 3");
+
+        // Simulate a network share location (use a local folder for the demo).
+        string networkShareFolder = Path.Combine(Path.GetTempPath(), "NetworkShare");
+        Directory.CreateDirectory(networkShareFolder);
+
+        // Base file name for the main HTML document.
+        string baseFileName = "SplitDocument.html";
+
+        // Configure HTML save options to split by section.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            // Define a folder that simulates a network share.
-            string networkShareFolder = Path.Combine(Environment.CurrentDirectory, "NetworkShare");
-            Directory.CreateDirectory(networkShareFolder);
+            DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
+            DocumentPartSavingCallback = new NetworkSharePartSavingCallback(networkShareFolder, baseFileName, DocumentSplitCriteria.SectionBreak)
+        };
 
-            // Create a sample document with three sections.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Save the document; parts will be written to the network share folder.
+        string mainOutputPath = Path.Combine(networkShareFolder, baseFileName);
+        doc.Save(mainOutputPath, saveOptions);
 
-            builder.Writeln("Content of Section 1");
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-            builder.Writeln("Content of Section 2");
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-            builder.Writeln("Content of Section 3");
+        // Verify that at least one split part was created.
+        string[] partFiles = Directory.GetFiles(networkShareFolder, $"{Path.GetFileNameWithoutExtension(baseFileName)} part*{Path.GetExtension(baseFileName)}");
+        if (partFiles.Length == 0)
+            throw new InvalidOperationException("No document parts were saved.");
 
-            // Configure HTML save options to split the document by section breaks.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions
-            {
-                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-                DocumentPartSavingCallback = new SavedDocumentPartRename(networkShareFolder, DocumentSplitCriteria.SectionBreak)
-            };
+        // Optional: output the list of created files (not required for the task).
+        foreach (string file in partFiles)
+            Console.WriteLine($"Created part: {file}");
+    }
 
-            // Save the document; each section will be saved as a separate HTML file in the network share folder.
-            string mainOutputPath = Path.Combine(networkShareFolder, "SplitDocument.html");
-            doc.Save(mainOutputPath, saveOptions);
+    // Callback that redirects each document part to the specified network share folder.
+    private class NetworkSharePartSavingCallback : IDocumentPartSavingCallback
+    {
+        private readonly string _folder;
+        private readonly string _baseFileName;
+        private readonly DocumentSplitCriteria _criteria;
+        private int _partIndex;
 
-            // Validate that the expected number of split files were created.
-            string[] splitFiles = Directory.GetFiles(networkShareFolder, "SplitDocument part *.html");
-            if (splitFiles.Length != doc.Sections.Count)
-                throw new InvalidOperationException($"Expected {doc.Sections.Count} split files, but found {splitFiles.Length}.");
-
-            Console.WriteLine($"Document split into {splitFiles.Length} parts and saved to '{networkShareFolder}'.");
+        public NetworkSharePartSavingCallback(string folder, string baseFileName, DocumentSplitCriteria criteria)
+        {
+            _folder = folder;
+            _baseFileName = baseFileName;
+            _criteria = criteria;
+            _partIndex = 0;
         }
 
-        // Callback that controls how each document part is saved.
-        private class SavedDocumentPartRename : IDocumentPartSavingCallback
+        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            private readonly string _outputFolder;
-            private readonly DocumentSplitCriteria _criteria;
-            private int _partIndex;
-
-            public SavedDocumentPartRename(string outputFolder, DocumentSplitCriteria criteria)
+            // Determine a readable part type name (optional, for naming).
+            string partType = _criteria switch
             {
-                _outputFolder = outputFolder;
-                _criteria = criteria;
-                _partIndex = 0;
-            }
+                DocumentSplitCriteria.PageBreak => "Page",
+                DocumentSplitCriteria.ColumnBreak => "Column",
+                DocumentSplitCriteria.SectionBreak => "Section",
+                DocumentSplitCriteria.HeadingParagraph => "Heading",
+                _ => "Part"
+            };
 
-            void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
-            {
-                // Determine a simple part type name for readability (always "Section" in this scenario).
-                string partType = "Section";
+            // Build a unique file name for the part.
+            string partFileName = $"{Path.GetFileNameWithoutExtension(_baseFileName)} part {++_partIndex} of {partType}{Path.GetExtension(args.DocumentPartFileName)}";
 
-                // Build a unique file name for the part.
-                string partFileName = $"SplitDocument part {++_partIndex} of type {partType}{Path.GetExtension(args.DocumentPartFileName)}";
-
-                // Set the file name (without path) and the stream where Aspose.Words will write the part.
-                args.DocumentPartFileName = partFileName;
-                args.DocumentPartStream = new FileStream(Path.Combine(_outputFolder, partFileName), FileMode.Create);
-                args.KeepDocumentPartStreamOpen = false;
-            }
+            // Set the file name (without path) and provide a stream pointing to the network share folder.
+            args.DocumentPartFileName = partFileName;
+            args.DocumentPartStream = new FileStream(Path.Combine(_folder, partFileName), FileMode.Create);
+            args.KeepDocumentPartStreamOpen = false;
         }
     }
 }

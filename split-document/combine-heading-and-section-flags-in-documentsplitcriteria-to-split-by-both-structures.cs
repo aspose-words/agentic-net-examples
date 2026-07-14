@@ -8,53 +8,55 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directory.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a sample document with headings and sections.
+        // Create a new document and build content with headings and sections.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First section with headings.
-        builder.Writeln("Content before first heading.");
+        // First heading (Heading 1) and some text.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1 - Section 1");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 2 - Section 1");
+        builder.Writeln("Heading 1 - Start of Document");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content after headings in first section.");
+        builder.Writeln("Paragraph under Heading 1.");
 
-        // Insert a section break.
+        // Insert a section break (new page) and add another heading.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Second section with headings.
-        builder.Writeln("Content before second heading.");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1 - Section 2");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 2 - Section 2");
+        builder.Writeln("Heading 2 - New Section");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content after headings in second section.");
+        builder.Writeln("Paragraph under Heading 2 in a new section.");
 
-        // Configure HtmlSaveOptions to split by both headings and sections.
+        // Add a third heading without a section break.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+        builder.Writeln("Heading 3 - Same Section");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Paragraph under Heading 3.");
+
+        // Set up HtmlSaveOptions to split by both headings and section breaks.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
+            // Combine flags using bitwise OR.
             DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph | DocumentSplitCriteria.SectionBreak,
-            DocumentSplitHeadingLevel = 2 // Split at Heading 1 and Heading 2 levels.
+            // Split at heading levels 1 and 2 (adjust as needed).
+            DocumentSplitHeadingLevel = 2
         };
 
+        // Base file name for the split output.
+        string baseFileName = Path.Combine(outputDir, "CombinedSplit.html");
+
         // Save the document; Aspose.Words will create multiple HTML files.
-        string baseFileName = Path.Combine(artifactsDir, "CombinedSplit.html");
         doc.Save(baseFileName, saveOptions);
 
         // Verify that split files were created.
-        string[] splitFiles = Directory.GetFiles(artifactsDir, "CombinedSplit*.html");
+        string[] splitFiles = Directory.GetFiles(outputDir, "CombinedSplit*.html");
         if (splitFiles.Length < 2)
-            throw new Exception("Expected multiple split HTML files, but only one was found.");
+            throw new InvalidOperationException("Expected multiple split HTML files, but fewer were created.");
 
         // Output the names of the generated files.
-        Console.WriteLine("Generated split HTML files:");
+        Console.WriteLine("Split HTML files created:");
         foreach (string file in splitFiles.OrderBy(f => f))
         {
             Console.WriteLine(Path.GetFileName(file));

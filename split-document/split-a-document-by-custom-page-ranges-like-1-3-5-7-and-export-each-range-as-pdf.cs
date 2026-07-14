@@ -11,9 +11,10 @@ public class SplitDocumentByCustomRanges
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a sample document with 7 pages.
+        // Create a sample document with at least 7 pages.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
         for (int i = 1; i <= 7; i++)
         {
             builder.Writeln($"This is page {i}.");
@@ -21,30 +22,37 @@ public class SplitDocumentByCustomRanges
                 builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Define custom page ranges (1‑based inclusive).
-        string[] rangeSpecs = { "1-3", "5-7" };
-
-        for (int i = 0; i < rangeSpecs.Length; i++)
+        // Define the custom page ranges (1‑based inclusive).
+        int[][] ranges = new int[][]
         {
-            // Parse the start and end page numbers.
-            string[] parts = rangeSpecs[i].Split('-');
-            int startPage = int.Parse(parts[0]); // 1‑based
-            int endPage = int.Parse(parts[1]);   // 1‑based
+            new int[] { 1, 3 }, // pages 1 to 3
+            new int[] { 5, 7 }  // pages 5 to 7
+        };
 
-            // Convert to zero‑based index for ExtractPages.
+        // Process each range.
+        foreach (var range in ranges)
+        {
+            int startPage = range[0];
+            int endPage = range[1];
+
+            // Validate range.
+            if (startPage < 1 || endPage > sourceDoc.PageCount || startPage > endPage)
+                throw new ArgumentException($"Invalid page range: {startPage}-{endPage}");
+
+            // Convert to zero‑based index and calculate count.
             int zeroBasedStart = startPage - 1;
-            int pageCount = endPage - startPage + 1;
+            int count = endPage - startPage + 1;
 
-            // Extract the specified page range.
-            Document extracted = sourceDoc.ExtractPages(zeroBasedStart, pageCount);
+            // Extract the pages into a new document.
+            Document extracted = sourceDoc.ExtractPages(zeroBasedStart, count);
 
-            // Save the extracted range as a PDF file.
-            string outFile = Path.Combine(outputDir, $"Part_{i + 1}_{startPage}_to_{endPage}.pdf");
+            // Save the extracted document as PDF.
+            string outFile = Path.Combine(outputDir, $"Extracted_{startPage}_{endPage}.pdf");
             extracted.Save(outFile, SaveFormat.Pdf);
 
             // Verify that the file was created.
             if (!File.Exists(outFile))
-                throw new InvalidOperationException($"Failed to create split PDF: {outFile}");
+                throw new InvalidOperationException($"Failed to create file: {outFile}");
         }
     }
 }
