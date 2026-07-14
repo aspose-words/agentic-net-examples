@@ -2,35 +2,42 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
-public class Program
+public class UpdateChartExample
 {
     public static void Main()
     {
-        // Create a new document.
+        // User preferences (hard‑coded for this example).
+        bool showTitle = true;
+        string newTitleText = "Quarterly Sales";
+        bool showLegend = false; // Set to true to display the legend.
+
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the document.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        // Insert a column chart.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        if (!chartShape.HasChart)
+            throw new InvalidOperationException("The inserted shape does not contain a chart.");
+
         Chart chart = chartShape.Chart;
 
-        // User‑defined preferences.
-        string newTitleText = "Sales Overview";
-        bool legendShouldBeVisible = false; // toggle legend visibility
-
-        // Update the chart title.
+        // Update the chart title according to preferences.
         ChartTitle title = chart.Title;
         title.Text = newTitleText;
-        title.Show = true; // ensure the title is displayed.
+        title.Show = showTitle;
+        // Optional: allow other elements to overlap the title.
+        title.Overlay = true;
 
-        // Toggle the legend visibility.
+        // Toggle legend visibility based on preferences.
         ChartLegend legend = chart.Legend;
-        legend.Position = legendShouldBeVisible
-            ? LegendPosition.Right   // show legend on the right.
-            : LegendPosition.None;   // hide the legend.
+        legend.Position = showLegend ? LegendPosition.Right : LegendPosition.None;
+        // Optional: allow other elements to overlap the legend.
+        legend.Overlay = true;
 
-        // Save the modified document.
+        // Save the document.
         doc.Save("UpdatedChart.docx");
     }
 }

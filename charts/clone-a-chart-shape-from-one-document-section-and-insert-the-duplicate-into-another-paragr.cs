@@ -3,31 +3,38 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-public class Program
+namespace ChartCloneExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph and insert the original chart.
-        builder.Writeln("Original chart:");
-        Shape originalChart = builder.InsertChart(ChartType.Column, 432, 252);
-        originalChart.Name = "OriginalChart";
+            // Insert a paragraph and a chart in the first section.
+            builder.Writeln("Section 1 - Original chart:");
+            Shape originalChartShape = builder.InsertChart(ChartType.Column, 400, 300);
+            Chart originalChart = originalChartShape.Chart;
+            originalChart.Title.Text = "Original Chart";
+            originalChart.Title.Show = true;
 
-        // Add a paragraph where the cloned chart will be placed.
-        builder.Writeln("Cloned chart:");
+            // Add a new section for the target paragraph.
+            builder.InsertBreak(BreakType.SectionBreakNewPage);
+            builder.Writeln("Section 2 - Target paragraph for cloned chart:");
 
-        // Verify that the shape actually contains a chart before cloning.
-        if (!originalChart.HasChart)
-            throw new InvalidOperationException("The shape does not contain a chart.");
+            // Clone the chart shape (deep clone to copy all child nodes).
+            Shape clonedChartShape = (Shape)originalChartShape.Clone(true);
 
-        // Clone the chart shape (deep clone) and insert it at the current position.
-        Shape clonedChart = (Shape)originalChart.Clone(true);
-        builder.InsertNode(clonedChart);
+            // Move the builder to the end of the document (after the paragraph we just wrote).
+            builder.MoveToDocumentEnd();
 
-        // Save the resulting document.
-        doc.Save("ClonedChart.docx");
+            // Insert the cloned chart shape at the current position.
+            builder.InsertNode(clonedChartShape);
+
+            // Save the resulting document.
+            doc.Save("ChartCloneExample.docx");
+        }
     }
 }

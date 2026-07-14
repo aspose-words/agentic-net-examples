@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -9,7 +8,7 @@ public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a sample DOCX with a chart and a specific title.
+        // Create a sample DOCX with a chart that has a known title.
         Document inputDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(inputDoc);
 
@@ -17,48 +16,44 @@ public class Program
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Set the chart title which we will later use to locate the chart.
+        // Set the chart title.
         chart.Title.Text = "Sales Chart";
         chart.Title.Show = true;
 
-        // Add some initial demo data.
+        // Populate the chart with initial data.
         chart.Series.Clear();
-        chart.Series.Add("Initial Series",
-            new[] { "Jan", "Feb", "Mar", "Apr" },
-            new[] { 5.0, 7.5, 3.2, 6.8 });
+        string[] initialCategories = { "Q1", "Q2", "Q3", "Q4" };
+        chart.Series.Add("2022", initialCategories, new double[] { 10, 20, 30, 40 });
 
-        // Save the document that will be loaded later.
+        // Save the input document.
         const string inputPath = "input.docx";
         inputDoc.Save(inputPath);
 
-        // Step 2: Load the existing document.
+        // Load the existing document.
         Document doc = new Document(inputPath);
 
-        // Step 3: Locate the chart shape by its title.
-        Shape? targetShape = doc.GetChildNodes(NodeType.Shape, true)
-            .OfType<Shape>()
-            .FirstOrDefault(s => s.HasChart && s.Chart.Title.Text == "Sales Chart");
+        // Locate the chart shape by its title.
+        Shape targetShape = null;
+        foreach (Node node in doc.GetChildNodes(NodeType.Shape, true))
+        {
+            if (node is Shape shape && shape.HasChart && shape.Chart.Title.Text == "Sales Chart")
+            {
+                targetShape = shape;
+                break;
+            }
+        }
 
         if (targetShape == null)
             throw new InvalidOperationException("Chart with the specified title was not found.");
 
-        // Step 4: Replace the chart's data source.
+        // Replace the chart's data source.
         Chart targetChart = targetShape.Chart;
-
-        // Clear existing series.
         targetChart.Series.Clear();
 
-        // Define new categories and values.
-        string[] newCategories = { "Q1", "Q2", "Q3", "Q4" };
-        double[] newValues = { 10.0, 20.0, 30.0, 40.0 };
+        string[] newCategories = { "Jan", "Feb", "Mar", "Apr" };
+        targetChart.Series.Add("2023", newCategories, new double[] { 15, 25, 35, 45 });
 
-        // Add a new series with the new data.
-        targetChart.Series.Add("New Sales Data", newCategories, newValues);
-
-        // Optionally, update the title to reflect the change.
-        targetChart.Title.Text = "Updated Sales Chart";
-
-        // Step 5: Save the updated document.
+        // Save the updated document.
         const string outputPath = "updated.docx";
         doc.Save(outputPath);
     }

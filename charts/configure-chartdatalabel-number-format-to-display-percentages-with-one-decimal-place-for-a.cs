@@ -12,31 +12,28 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a column chart.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
         Chart chart = chartShape.Chart;
 
         // Remove the demo data series.
         chart.Series.Clear();
 
-        // Define categories and values (values are fractions to be shown as percentages).
-        string[] categories = { "A", "B", "C" };
-        double[] values1 = { 0.25, 0.50, 0.75 };
-        double[] values2 = { 0.10, 0.30, 0.60 };
+        // Define categories and values for two series.
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        chart.Series.Add("Product A", categories, new double[] { 10, 20, 30, 40 });
+        chart.Series.Add("Product B", categories, new double[] { 15, 25, 35, 45 });
 
-        // Add two series.
-        ChartSeries series1 = chart.Series.Add("Series 1", categories, values1);
-        ChartSeries series2 = chart.Series.Add("Series 2", categories, values2);
-
-        // Enable data labels for each series and set the number format to one‑decimal‑place percentages.
+        // Enable data labels and configure them to show percentages with one decimal place.
         foreach (ChartSeries series in chart.Series)
         {
-            series.HasDataLabels = true; // Show data labels.
+            series.HasDataLabels = true;
 
-            // Apply the format to every data label in the series.
+            // Iterate over each data label in the series.
             for (int i = 0; i < series.DataLabels.Count; i++)
             {
-                series.DataLabels[i].NumberFormat.FormatCode = "0.0%";
-                series.DataLabels[i].ShowValue = true; // Display the formatted value.
+                ChartDataLabel label = series.DataLabels[i];
+                label.ShowPercentage = true;
+                label.NumberFormat.FormatCode = "0.0%";
             }
         }
 

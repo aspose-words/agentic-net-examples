@@ -1,9 +1,10 @@
+using System;
 using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Drawing;          // Required for the Shape class
 using Aspose.Words.Drawing.Charts;
 
-public class Program
+public class ChartDataLabelDefaultsExample
 {
     public static void Main()
     {
@@ -11,30 +12,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the document.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        // Insert a column chart and obtain its Chart object.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Remove the automatically generated demo series.
+        // Remove the demo data series that Aspose.Words adds by default.
         chart.Series.Clear();
 
         // Define categories for the X‑axis.
-        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        string[] categories = new[] { "Category 1", "Category 2", "Category 3" };
 
-        // Add sample series with data.
-        chart.Series.Add("Product A", categories, new double[] { 120, 150, 170, 130 });
-        chart.Series.Add("Product B", categories, new double[] { 80, 110, 140, 100 });
+        // Add two series with sample values.
+        chart.Series.Add("Series 1", categories, new double[] { 10, 20, 30 });
+        chart.Series.Add("Series 2", categories, new double[] { 15, 25, 35 });
 
-        // Apply the same data label settings to every series.
+        // Apply default data‑label formatting to every series.
         foreach (ChartSeries series in chart.Series)
         {
-            series.HasDataLabels = true;               // Enable data labels.
-            series.DataLabels.ShowValue = true;        // Show the numeric value.
-            series.DataLabels.Font.Size = 12;          // Consistent font size.
-            series.DataLabels.Font.Color = Color.DarkBlue; // Consistent font color.
+            // Enable data labels for the series.
+            series.HasDataLabels = true;
+
+            // Set a consistent font size and color for all data labels in the series.
+            series.DataLabels.Font.Size = 12;
+            series.DataLabels.Font.Color = Color.DarkBlue;
         }
 
-        // Save the document containing the chart.
+        // Save the document.
         doc.Save("ChartDataLabelDefaults.docx");
     }
 }

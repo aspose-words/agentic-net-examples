@@ -4,59 +4,59 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-public class Program
+public class ChartReadOnlyStreamExample
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a new document and insert a chart.
-        // -----------------------------------------------------------------
+        // Step 1: Create a new document and insert a chart.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape initialChart = builder.InsertChart(ChartType.Column, 432, 252);
+        Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
+        Chart chart = chartShape.Chart;
 
-        // Save the document to a byte array – this will be the source for the read‑only stream.
+        // Optional: customize the chart (e.g., set a title).
+        chart.Title.Text = "Sample Chart";
+        chart.Title.Show = true;
+
+        // Step 2: Save the document to a writable memory stream and obtain the byte array.
         byte[] docBytes;
-        using (MemoryStream ms = new MemoryStream())
+        using (MemoryStream writableStream = new MemoryStream())
         {
-            doc.Save(ms, SaveFormat.Docx);
-            docBytes = ms.ToArray();
+            doc.Save(writableStream, SaveFormat.Docx);
+            docBytes = writableStream.ToArray();
         }
 
-        // -----------------------------------------------------------------
-        // 2. Load the document from a read‑only stream.
-        //    MemoryStream(byte[], bool) with 'false' creates a non‑writable stream.
-        // -----------------------------------------------------------------
-        using (MemoryStream readOnlyStream = new MemoryStream(docBytes, false))
+        // Step 3: Create a read‑only memory stream from the byte array.
+        // The second parameter (writable: false) makes the stream read‑only.
+        using (MemoryStream readOnlyStream = new MemoryStream(docBytes, writable: false))
         {
+            // Load the document from the read‑only stream.
             Document readOnlyDoc = new Document(readOnlyStream);
-            DocumentBuilder roBuilder = new DocumentBuilder(readOnlyDoc);
+            DocumentBuilder readOnlyBuilder = new DocumentBuilder(readOnlyDoc);
 
             try
             {
-                // Attempt to modify the document by inserting another chart.
-                roBuilder.InsertChart(ChartType.Pie, 300, 300);
+                // Attempt to insert another chart into the document.
+                Shape newChartShape = readOnlyBuilder.InsertChart(ChartType.Pie, 300, 300);
+                Chart newChart = newChartShape.Chart;
+                newChart.Title.Text = "Additional Chart";
+                newChart.Title.Show = true;
 
-                // Trying to save back to the same read‑only stream will raise an exception.
+                // Attempt to save the modified document back to the same read‑only stream.
+                // This operation will throw because the stream does not support writing.
                 readOnlyDoc.Save(readOnlyStream, SaveFormat.Docx);
-
-                // If no exception occurs (unexpected), inform the user.
-                Console.WriteLine("Document saved to read‑only stream (unexpected).");
+                Console.WriteLine("Document saved successfully (unexpected).");
             }
             catch (Exception ex)
             {
-                // Expected path: the stream does not support writing.
-                Console.WriteLine($"Caught exception: {ex.GetType().Name} - {ex.Message}");
+                // Catch and display the exception that occurs due to the read‑only stream.
+                Console.WriteLine("An error occurred while saving to a read‑only stream:");
+                Console.WriteLine(ex.GetType().Name + ": " + ex.Message);
             }
-
-            // Save the modified document to a regular file to demonstrate that the
-            // in‑memory changes are valid despite the read‑only source stream.
-            readOnlyDoc.Save("ModifiedFromReadOnly.docx");
         }
 
-        // -----------------------------------------------------------------
-        // 3. Normal save of the original document (optional demonstration).
-        // -----------------------------------------------------------------
-        doc.Save("OriginalDocument.docx");
+        // Step 4: Save the original (unmodified) document to a file for verification.
+        doc.Save("output.docx");
+        Console.WriteLine("Original document saved as 'output.docx'.");
     }
 }

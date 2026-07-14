@@ -3,42 +3,32 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-namespace ChartDataLabelFontExample
+public class ChartDataLabelFontExample
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new document and a DocumentBuilder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a column chart into the document.
-            Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
-            Chart chart = chartShape.Chart;
+        // Insert a column chart.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        Chart chart = chartShape.Chart;
 
-            // Remove the demo data series that Aspose.Words adds by default.
-            chart.Series.Clear();
+        // Clear the default demo series and add a custom series.
+        chart.Series.Clear();
+        chart.Series.Add("Sales", new[] { "Q1", "Q2", "Q3" }, new double[] { 15000, 23000, 18000 });
 
-            // Add a custom series with categories and values.
-            chart.Series.Add(
-                "Quarterly Sales",
-                new[] { "Q1", "Q2", "Q3", "Q4" },
-                new double[] { 15000, 23000, 18000, 27000 });
+        // Enable data labels for the series.
+        ChartSeries series = chart.Series[0];
+        series.HasDataLabels = true;
 
-            // Get the first (and only) series we just added.
-            ChartSeries series = chart.Series[0];
+        // Customize the data label font: typeface, size, and bold styling.
+        series.DataLabels.Font.Name = "Arial";
+        series.DataLabels.Font.Size = 14;
+        series.DataLabels.Font.Bold = true;
 
-            // Enable data labels for the series.
-            series.HasDataLabels = true;
-
-            // Customize the font of all data labels in the series.
-            series.DataLabels.Font.Name = "Calibri";
-            series.DataLabels.Font.Size = 12;
-            series.DataLabels.Font.Bold = true;
-
-            // Save the document to a file.
-            doc.Save("ChartDataLabelFont.docx");
-        }
+        // Save the document.
+        doc.Save("ChartDataLabelFont.docx");
     }
 }

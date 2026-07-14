@@ -1,41 +1,28 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Drawing;               // Needed for the Shape class
+using Aspose.Words.Drawing.Charts;        // Chart related classes
 
-namespace RemoveChartSeriesExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a column chart that contains the default demo series.
-            Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
-            Chart chart = chartShape.Chart;
+        // Insert a column chart. The default chart contains three demo series.
+        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
+        Chart chart = chartShape.Chart;
 
-            // Get the series collection from the chart.
-            ChartSeriesCollection series = chart.Series;
+        // Verify that the chart has at least three series before attempting removal.
+        if (chart.Series.Count < 3)
+            throw new InvalidOperationException("The chart does not contain enough series to remove.");
 
-            // Index of the series we want to remove (e.g., the second series).
-            int indexToRemove = 1;
+        // Remove the third series (zero‑based index 2).
+        chart.Series.RemoveAt(2);
 
-            // Validate the index before calling RemoveAt.
-            if (indexToRemove >= 0 && indexToRemove < series.Count)
-            {
-                series.RemoveAt(indexToRemove);
-                Console.WriteLine($"Series at index {indexToRemove} removed.");
-            }
-            else
-            {
-                Console.WriteLine($"Index {indexToRemove} is out of range. No series removed.");
-            }
-
-            // Save the modified document.
-            doc.Save("RemoveSeries.docx");
-        }
+        // Save the modified document.
+        doc.Save("RemoveSeries.docx");
     }
 }
