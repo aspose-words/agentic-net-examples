@@ -1,31 +1,30 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace MailMergeExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert merge fields that will be filled during the mail merge.
-            builder.InsertField(" MERGEFIELD FullName ");
-            builder.InsertParagraph();
-            builder.InsertField(" MERGEFIELD Company ");
+        // Insert merge fields that will be filled during the mail merge.
+        builder.InsertField("MERGEFIELD FullName", "<FullName>");
+        builder.Writeln();
+        builder.InsertField("MERGEFIELD Address", "<Address>");
 
-            // Define the field names and corresponding values for a single record.
-            string[] fieldNames = { "FullName", "Company" };
-            object[] fieldValues = { "James Bond", "MI5 Headquarters" };
+        // Define the field names and corresponding values for a single record.
+        string[] fieldNames = { "FullName", "Address" };
+        object[] fieldValues = { "John Doe", "123 Main St, Anytown" };
 
-            // Perform the mail merge.
-            doc.MailMerge.Execute(fieldNames, fieldValues);
+        // Execute the mail merge.
+        doc.MailMerge.Execute(fieldNames, fieldValues);
 
-            // Save the merged document as a DOCX file.
-            doc.Save("MergedDocument.docx", SaveFormat.Docx);
-        }
+        // Save the merged document as DOCX.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "MergedDocument.docx");
+        doc.Save(outputPath, SaveFormat.Docx);
     }
 }

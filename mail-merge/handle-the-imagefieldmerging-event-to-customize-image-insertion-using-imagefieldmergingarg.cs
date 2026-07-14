@@ -1,64 +1,74 @@
 using System;
+using System.Data;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
-namespace AsposeWordsImageMergeExample
+public class Program
 {
-    // Implements the callback to handle image merge fields.
-    public class ImageMergeHandler : IFieldMergingCallback
+    public static void Main()
     {
-        // No custom processing required for text fields.
-        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
-        {
-        }
+        // Create a temporary folder for the sample image.
+        string tempFolder = Path.Combine(Path.GetTempPath(), "AsposeMailMergeSample");
+        Directory.CreateDirectory(tempFolder);
 
-        // Called when the mail merge engine encounters an image merge field.
-        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
+        // Write a minimal 1x1 PNG image to a file (no System.Drawing dependency).
+        string imagePath = Path.Combine(tempFolder, "sample.png");
+        byte[] pngData = new byte[]
         {
-            // The data source provides the image as a byte array.
-            // Convert the byte array to a memory stream and assign it to the event args.
-            if (args.FieldValue is byte[] imageBytes)
-            {
-                args.ImageStream = new MemoryStream(imageBytes);
-            }
-        }
+            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
+            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
+            0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
+            0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
+            0x54,0x78,0x9C,0x63,0x60,0x00,0x00,0x00,
+            0x02,0x00,0x01,0xE2,0x21,0xBC,0x33,0x00,
+            0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
+            0x42,0x60,0x82
+        };
+        File.WriteAllBytes(imagePath, pngData);
+
+        // Build a simple document with an image merge field.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // The field name is prefixed with "Image:" to indicate an image merge field.
+        builder.InsertField("MERGEFIELD Image:Photo");
+
+        // Prepare a data source that contains the file name of the image.
+        DataTable table = new DataTable("Images");
+        table.Columns.Add("Photo");
+        table.Rows.Add(imagePath);
+
+        // Assign a callback that will load the image from the file name.
+        doc.MailMerge.FieldMergingCallback = new ImageFilenameCallback();
+
+        // Execute the mail merge.
+        doc.MailMerge.Execute(table);
+
+        // Save the result.
+        string outputPath = Path.Combine(tempFolder, "Result.docx");
+        doc.Save(outputPath);
     }
 
-    public class Program
+    // Callback that handles image merge fields.
+    private class ImageFilenameCallback : IFieldMergingCallback
     {
-        public static void Main()
+        // No custom handling for text fields.
+        void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert an image merge field. The field name after the "Image:" prefix is "Photo".
-            builder.InsertField("MERGEFIELD Image:Photo");
-
-            // Assign the custom callback that will supply the image data.
-            doc.MailMerge.FieldMergingCallback = new ImageMergeHandler();
-
-            // Generate a simple in‑memory image (red pixel) and store it as a byte array.
-            byte[] imageData = CreateSampleImage();
-
-            // Perform the mail merge, supplying the image data for the "Photo" field.
-            doc.MailMerge.Execute(
-                new[] { "Photo" },               // Field names
-                new object[] { imageData }       // Corresponding values
-            );
-
-            // Save the resulting document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedImage.docx");
-            doc.Save(outputPath);
+            // Intentionally left blank.
         }
 
-        // Helper method that returns a small red PNG image as a byte array.
-        private static byte[] CreateSampleImage()
+        // Called when an image merge field is encountered.
+        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
         {
-            // Base64‑encoded 1×1 red PNG image.
-            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP8/5+hHgAHggJ/6VYVJwAAAABJRU5ErkJggg==";
-            return Convert.FromBase64String(base64Png);
+            // The field value contains the file name of the image.
+            string fileName = args.FieldValue?.ToString();
+            if (!string.IsNullOrEmpty(fileName) && File.Exists(fileName))
+            {
+                // Use the file name property to supply the image to the mail merge engine.
+                args.ImageFileName = fileName;
+            }
         }
     }
 }

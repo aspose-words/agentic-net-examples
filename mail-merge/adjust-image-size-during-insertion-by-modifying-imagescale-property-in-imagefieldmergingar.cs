@@ -2,68 +2,73 @@ using System;
 using System.Data;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
 using Aspose.Words.Fields;
+using Aspose.Words.MailMerging;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Create a temporary PNG image file without using System.Drawing.
+        // This is a 1x1 pixel transparent PNG encoded in base64.
+        string tempImagePath = Path.Combine(Path.GetTempPath(), "TempImage.png");
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+        File.WriteAllBytes(tempImagePath, pngBytes);
 
-        // Insert a MERGEFIELD that will accept an image during mail merge.
+        // Create a new document and insert an image merge field.
+        Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        // The field name must start with "Image:" so the mail merge engine treats it as an image field.
         builder.InsertField("MERGEFIELD Image:Photo");
 
-        // Prepare a simple data source with a single column that matches the merge field name.
+        // Prepare a data source with a single column that contains the image file name.
         DataTable table = new DataTable("Images");
-        table.Columns.Add("Photo");
-        table.Rows.Add("placeholder"); // Value is not used because we supply the image in the callback.
+        table.Columns.Add("Photo", typeof(string));
+        table.Rows.Add(tempImagePath);
 
-        // Assign a callback that will provide the image and adjust its size.
-        doc.MailMerge.FieldMergingCallback = new ImageResizerCallback();
-
-        // Execute the mail merge.
+        // Set a callback that will resize the image during the merge.
+        doc.MailMerge.FieldMergingCallback = new ImageResizer(150, 150, MergeFieldImageDimensionUnit.Point);
         doc.MailMerge.Execute(table);
 
-        // Update fields to reflect the merged content.
-        doc.UpdateFields();
-
         // Save the resulting document.
-        doc.Save("MergedImage.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedImage.docx");
+        doc.Save(outputPath);
+
+        // Clean up the temporary image file.
+        if (File.Exists(tempImagePath))
+            File.Delete(tempImagePath);
     }
 
-    // Callback that supplies an image and modifies its size during mail merge.
-    private class ImageResizerCallback : IFieldMergingCallback
+    // Callback that sets the image size for each merged image.
+    private class ImageResizer : IFieldMergingCallback
     {
-        // No custom processing required for text fields.
-        public void FieldMerging(FieldMergingArgs args)
+        private readonly double _width;
+        private readonly double _height;
+        private readonly MergeFieldImageDimensionUnit _unit;
+
+        public ImageResizer(double width, double height, MergeFieldImageDimensionUnit unit)
         {
+            _width = width;
+            _height = height;
+            _unit = unit;
         }
 
-        // Called when an image merge field is encountered.
+        // Not used for text fields.
+        public void FieldMerging(FieldMergingArgs args)
+        {
+            // No action required.
+        }
+
+        // Called for image merge fields.
         public void ImageFieldMerging(ImageFieldMergingArgs args)
         {
-            // A tiny 1x1 pixel PNG (transparent) encoded in Base64.
-            const string base64Png =
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
-                "Z6ZcAAAAASUVORK5CYII=";
+            // Provide the image file name from the data source.
+            args.ImageFileName = args.FieldValue.ToString();
 
-            // Decode the Base64 string to a byte array.
-            byte[] imageBytes = Convert.FromBase64String(base64Png);
-
-            // Write the image to a temporary file.
-            string tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".png");
-            File.WriteAllBytes(tempPath, imageBytes);
-
-            // Supply the image file name to the mail merge engine.
-            args.ImageFileName = tempPath;
-
-            // Adjust the image size to 50 % of its original dimensions.
-            // Use MergeFieldImageDimension with Percent unit for both width and height.
-            args.ImageWidth = new MergeFieldImageDimension(0.5, MergeFieldImageDimensionUnit.Percent);
-            args.ImageHeight = new MergeFieldImageDimension(0.5, MergeFieldImageDimensionUnit.Percent);
+            // Override the default dimensions.
+            args.ImageWidth = new MergeFieldImageDimension(_width, _unit);
+            args.ImageHeight = new MergeFieldImageDimension(_height, _unit);
         }
     }
 }

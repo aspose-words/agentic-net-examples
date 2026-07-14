@@ -1,60 +1,55 @@
 using System;
 using System.Data;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
-public class Program
+namespace MailMergeMissingFieldDemo
 {
-    public static void Main()
+    // Custom callback to handle missing merge fields.
+    public class MissingFieldHandler : IFieldMergingCallback
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert two merge fields: FirstName and LastName.
-        builder.InsertField("MERGEFIELD FirstName");
-        builder.Write(" ");
-        builder.InsertField("MERGEFIELD LastName");
-
-        // Prepare a data source that lacks the LastName column.
-        DataTable table = new DataTable("Employees");
-        table.Columns.Add("FirstName");
-        table.Rows.Add("John");
-        table.Rows.Add("Jane");
-
-        // Subscribe to the FieldMergingCallback to handle absent merge fields.
-        doc.MailMerge.FieldMergingCallback = new MissingFieldHandler();
-
-        // Execute the mail merge.
-        doc.MailMerge.Execute(table);
-
-        // Save the merged document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Merged.docx");
-        doc.Save(outputPath);
-    }
-
-    // Implements IFieldMergingCallback to provide custom handling for missing fields.
-    private class MissingFieldHandler : IFieldMergingCallback
-    {
-        // Called for each merge field encountered during mail merge.
+        // This method is called for each merge field encountered during the mail merge.
         void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
             // If the data source does not contain a value for this field, FieldValue will be null.
             if (args.FieldValue == null)
             {
-                // Log the missing field name (optional).
-                Console.WriteLine($"Missing field encountered: {args.FieldName}");
+                // Log the missing field name.
+                Console.WriteLine($"Missing merge field detected: {args.DocumentFieldName}");
 
-                // Insert placeholder text for the missing field.
-                args.Text = $"[Missing {args.FieldName}]";
+                // Provide a default value so the merge can continue without errors.
+                args.Text = "N/A";
             }
         }
 
-        // No special handling for image fields in this example.
-        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
+        // No image handling required for this example.
+        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args) { }
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            // Intentionally left blank.
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert a MERGEFIELD that will be missing from the data source.
+            builder.InsertField("MERGEFIELD FirstName");
+
+            // Prepare a data source that does NOT contain the "FirstName" column.
+            DataTable table = new DataTable("Employees");
+            table.Columns.Add("LastName");
+            table.Rows.Add("Doe");
+
+            // Assign the custom callback to handle missing fields.
+            doc.MailMerge.FieldMergingCallback = new MissingFieldHandler();
+
+            // Perform the mail merge. The callback will supply a default value for "FirstName".
+            doc.MailMerge.Execute(table);
+
+            // Save the resulting document.
+            doc.Save("Merged.docx");
         }
     }
 }
