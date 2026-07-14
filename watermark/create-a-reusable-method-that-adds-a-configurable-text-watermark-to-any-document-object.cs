@@ -1,37 +1,55 @@
 using System;
-using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
-    public static void Main()
+    // Adds a configurable text watermark to the provided Document.
+    public static void AddTextWatermark(
+        Document doc,
+        string text,
+        string fontFamily = "Arial",
+        float fontSize = 36f,
+        Color? color = null,
+        WatermarkLayout layout = WatermarkLayout.Diagonal,
+        bool isSemitransparent = false)
     {
-        // Create a blank document and add sample text.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
+        if (doc == null) throw new ArgumentNullException(nameof(doc));
+        if (string.IsNullOrWhiteSpace(text)) throw new ArgumentException("Watermark text cannot be null or whitespace.", nameof(text));
 
-        // Apply a configurable text watermark.
-        AddTextWatermark(doc, "CONFIDENTIAL", "Arial", 48, Color.Red, WatermarkLayout.Diagonal, false);
-
-        // Save the watermarked document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Watermarked.docx");
-        doc.Save(outputPath);
-    }
-
-    // Reusable method to add a text watermark with custom settings.
-    public static void AddTextWatermark(Document doc, string text, string fontFamily, float fontSize, Color color, WatermarkLayout layout, bool isSemitransparent)
-    {
-        TextWatermarkOptions options = new TextWatermarkOptions
+        var options = new TextWatermarkOptions
         {
             FontFamily = fontFamily,
             FontSize = fontSize,
-            Color = color,
+            Color = color ?? Color.Black,
             Layout = layout,
             IsSemitrasparent = isSemitransparent
         };
+
         doc.Watermark.SetText(text, options);
+    }
+
+    public static void Main()
+    {
+        // Create a blank document and add some sample content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document.");
+        builder.Writeln("The watermark should appear behind this text.");
+
+        // Apply a configurable text watermark.
+        AddTextWatermark(
+            doc,
+            text: "CONFIDENTIAL",
+            fontFamily: "Calibri",
+            fontSize: 48f,
+            color: Color.Red,
+            layout: WatermarkLayout.Diagonal,
+            isSemitransparent: false);
+
+        // Save the result.
+        const string outputPath = "WatermarkedDocument.docx";
+        doc.Save(outputPath);
     }
 }

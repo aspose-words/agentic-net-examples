@@ -4,74 +4,69 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
 
-public class Program
+public class TableCellWatermarkExample
 {
     public static void Main()
     {
-        // Create a blank document.
+        // Prepare output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a simple 1x1 transparent PNG to act as the watermark.
+        string imagePath = Path.Combine(artifactsDir, "watermark.png");
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+        File.WriteAllBytes(imagePath, pngBytes);
+
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a table with a horizontally merged cell in the first row.
-        builder.StartTable();
+        Table table = builder.StartTable();
 
         // First cell – start of the merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged cell with watermark");
+        builder.Write("Merged cell content");
 
-        // Second cell – merged with the previous one.
+        // Second cell – continues the merge.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
+        // End the first row.
         builder.EndRow();
 
-        // Second row – two normal cells.
+        // Second row – normal unmerged cells.
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
         builder.InsertCell();
         builder.Write("Row 2, Cell 1");
         builder.InsertCell();
         builder.Write("Row 2, Cell 2");
         builder.EndRow();
 
+        // Finish the table.
         builder.EndTable();
 
-        // -----------------------------------------------------------------
-        // Create a simple PNG image to use as a watermark.
-        // The image is a 1x1 red pixel encoded as a byte array.
-        // -----------------------------------------------------------------
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/lKXcAAAAAElFTkSuQmCC");
-        string imagePath = Path.Combine(Environment.CurrentDirectory, "watermark.png");
-        File.WriteAllBytes(imagePath, pngBytes);
+        // Retrieve the merged cell (first cell of the first row).
+        Cell mergedCell = table.FirstRow.FirstCell;
 
-        // -----------------------------------------------------------------
-        // Insert the image into the merged cell as a watermark.
-        // The shape is set to appear behind the text and not affect layout.
-        // -----------------------------------------------------------------
-        Table table = doc.FirstSection.Body.Tables[0];
-        Cell mergedCell = table.Rows[0].Cells[0]; // The first cell of the merged range.
+        // Move the builder cursor into the merged cell.
+        builder.MoveTo(mergedCell.FirstParagraph);
 
-        // Insert the image shape into the cell.
-        Shape watermarkShape = new Shape(doc, ShapeType.Image);
-        watermarkShape.ImageData.SetImage(imagePath);
+        // Insert the image as a floating shape inside the cell.
+        Shape watermarkShape = builder.InsertImage(imagePath);
         watermarkShape.WrapType = WrapType.None;          // No text wrapping.
-        watermarkShape.BehindText = true;                // Appear behind cell text.
-        watermarkShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Column;
-        watermarkShape.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
-        watermarkShape.Width = 100;   // Adjust size as needed.
-        watermarkShape.Height = 100;
+        watermarkShape.BehindText = true;                // Place behind cell text.
+        watermarkShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Column; // Position relative to the column.
 
-        // Add the shape to the first paragraph of the cell.
-        mergedCell.FirstParagraph.AppendChild(watermarkShape);
+        // Adjust size to fill the cell.
+        // Width is taken from the cell's format; height from the parent row's format.
+        watermarkShape.Width = mergedCell.CellFormat.Width;
+        watermarkShape.Height = mergedCell.ParentRow.RowFormat.Height;
 
         // Save the document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "output.docx");
+        string outputPath = Path.Combine(artifactsDir, "TableCellWatermark.docx");
         doc.Save(outputPath);
-
-        // Simple validation that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Document created successfully: " + outputPath);
-        }
     }
 }

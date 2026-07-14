@@ -4,21 +4,54 @@
     "slug": "watermark",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Use simple documented watermark workflows. Prefer Document.Watermark APIs when they directly match the task. For lower-level or cell-scoped scenarios, use compile-safe shape or image placement only when needed. Keep validation narrow and task-specific.",
+    "preferred_workflow": "Use simple documented watermark workflows. Prefer Document.Watermark APIs when they directly match the task. For lower-level watermark scenarios, work through header/footer shapes only when needed. Keep validation narrow and task-specific.",
     "required_packages": [
       "Aspose.Words"
+    ],
+    "package_versions": {
+      "Aspose.Words": "26.5.0"
+    },
+    "required_namespaces": [
+      "System",
+      "System.IO",
+      "Aspose.Words",
+      "Aspose.Words.Drawing",
+      "System.Drawing",
+      "Aspose.Words.Tables",
+      "Aspose.Words.Settings",
+      "Aspose.Words.Saving",
+      "System.Text.Json"
+    ],
+    "key_apis": [
+      "Document",
+      "DocumentBuilder",
+      "Directory",
+      "Path",
+      "Watermark",
+      "File",
+      "ImageWatermarkOptions",
+      "SaveFormat",
+      "MemoryStream",
+      "TextWatermarkOptions",
+      "Cell",
+      "Paragraph",
+      "Shape",
+      "Table",
+      "Row",
+      "CellFormat",
+      "RowFormat"
     ]
   },
   "stats": {
     "total_examples": 34,
-    "winner_counts": {
-      "both": 0,
-      "mcp": 34,
-      "llm": 0,
-      "none": 0
+    "publish_ready_successful_examples": 34,
+    "workflow_counts": {
+      "watermark-api": 1,
+      "watermark-workflow": 33
     },
-    "workflow_examples": {
-      "watermark-workflow": 34
+    "winner_counts": {
+      "existing_repo": 2,
+      "mcp": 32
     }
   },
   "rules_summary": {
@@ -41,387 +74,404 @@
       "Do not use unsupported WordArt or TextPath members in cell-level watermark tasks."
     ]
   },
+  "common_failure_patterns": [
+    {
+      "pattern": "Unsupported API invention",
+      "symptom": "Generated code references members that do not exist in the selected package version.",
+      "fix": "Replace invented members with documented Aspose.Words APIs already proven in this category."
+    },
+    {
+      "pattern": "Missing local bootstrap inputs",
+      "symptom": "The example assumes source files, folders, images, or data already exist.",
+      "fix": "Create deterministic local inputs before loading, processing, or validating them."
+    },
+    {
+      "pattern": "Over-broad validation",
+      "symptom": "The example fails at runtime while checking unrelated document internals.",
+      "fix": "Validate only the requested behavior and the existence of expected outputs."
+    }
+  ],
   "examples": [
     {
       "id": 1,
       "file_name": "load-a-word-document-from-a-file-path-and-add-a-text-watermark-using-watermark-settext.cs",
       "task": "Load a Word document from a file path and add a text watermark using Watermark.SetText.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 2,
       "file_name": "load-a-word-document-from-a-file-path-and-add-an-image-watermark-using-watermark-setimage.cs",
       "task": "Load a Word document from a file path and add an image watermark using Watermark.SetImage.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 3,
       "file_name": "load-a-word-document-from-a-memory-stream-and-apply-a-text-watermark-without-writing-to-di.cs",
       "task": "Load a Word document from a memory stream and apply a text watermark without writing to disk.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 4,
       "file_name": "insert-a-text-watermark-into-a-specific-table-cell-within-a-word-document-using-the-waterm.cs",
       "task": "Insert a text watermark into a specific table cell within a Word document using the Watermark class.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 5,
       "file_name": "add-a-watermark-to-a-table-cell-that-spans-multiple-rows-and-columns-in-a-complex-word-tab.cs",
       "task": "Add a watermark to a table cell that spans multiple rows and columns in a complex Word table.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 6,
       "file_name": "insert-a-watermark-into-a-table-cell-that-contains-merged-cells-without-disrupting-the-tab.cs",
       "task": "Insert a watermark into a table cell that contains merged cells without disrupting the table layout.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 7,
       "file_name": "insert-a-watermark-into-each-cell-of-the-first-row-of-a-table-using-the-watermark-class.cs",
       "task": "Insert a watermark into each cell of the first row of a table using the Watermark class.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 8,
       "file_name": "add-a-text-watermark-to-a-docx-document-using-watermark-settext-with-custom-font-settings.cs",
       "task": "Add a text watermark to a DOCX document using Watermark.SetText with custom font settings.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx",
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 9,
       "file_name": "use-watermark-settext-with-textwatermarkoptions-to-set-watermark-font-size-color-and-spaci.cs",
       "task": "Use Watermark.SetText with TextWatermarkOptions to set watermark font size, color, and spacing.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 10,
       "file_name": "add-a-confidential-text-watermark-to-all-new-documents-created-by-an-automated-report-gene.cs",
       "task": "Add a confidential text watermark to all new documents created by an automated report generator.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 11,
       "file_name": "combine-text-and-image-watermarks-by-first-setting-a-text-watermark-then-overlaying-an-ima.cs",
       "task": "Combine text and image watermarks by first setting a text watermark then overlaying an image watermark.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 12,
       "file_name": "customize-image-watermark-opacity-and-scaling-by-configuring-imagewatermarkoptions-before.cs",
       "task": "Customize image watermark opacity and scaling by configuring ImageWatermarkOptions before insertion.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 13,
-      "file_name": "insert-an-image-watermark-from-disk-into-a-document-after-calling-optimize.cs",
-      "task": "Insert an image watermark from disk into a document after calling Optimize.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
-      "workflow": "watermark-workflow",
+      "file_name": "insert-an-image-watermark-from-a-system-drawing-image-object-into-a-document-after-calling.cs",
+      "task": "Insert an image watermark from a System.Drawing.Image object into a document after calling Optimize.",
+      "workflow": "watermark-api",
       "outputs": [
-        "docx"
-      ]
+        "image"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 14,
       "file_name": "insert-an-image-watermark-from-a-file-path-into-a-word-document-after-optimizing-the-docum.cs",
       "task": "Insert an image watermark from a file path into a Word document after optimizing the document.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 15,
       "file_name": "use-watermark-setimage-with-a-stream-to-embed-a-logo-watermark-into-a-document-stored-in-a.cs",
       "task": "Use Watermark.SetImage with a stream to embed a logo watermark into a document stored in Azure Blob storage.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 16,
       "file_name": "use-watermark-setimage-with-a-byte-array-stream-to-embed-a-dynamically-generated-barcode-w.cs",
       "task": "Use Watermark.SetImage with a byte array stream to embed a dynamically generated barcode watermark.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
-      ]
+      ],
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 17,
       "file_name": "optimize-a-large-docx-file-before-applying-an-image-watermark-to-improve-performance-and-m.cs",
       "task": "Optimize a large DOCX file before applying an image watermark to improve performance and memory usage.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx",
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 18,
       "file_name": "remove-all-existing-watermarks-from-a-loaded-word-document-using-the-watermark-remove-meth.cs",
       "task": "Remove all existing watermarks from a loaded Word document using the Watermark.Remove method.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 19,
       "file_name": "create-a-utility-method-that-removes-all-watermarks-from-a-document-using-watermark-remove.cs",
       "task": "Create a utility method that removes all watermarks from a Document using Watermark.Remove.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 20,
       "file_name": "validate-that-a-document-contains-no-watermarks-before-publishing-by-using-watermarktype-n.cs",
       "task": "Validate that a document contains no watermarks before publishing by using WatermarkType.None check.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 21,
       "file_name": "use-watermarktype-enumeration-to-verify-a-document-has-no-watermark-before-adding-a-new-on.cs",
       "task": "Use WatermarkType enumeration to verify a document has no watermark before adding a new one.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 22,
       "file_name": "use-watermarktype-enumeration-to-switch-between-text-and-image-watermarks-based-on-user-se.cs",
       "task": "Use WatermarkType enumeration to switch between text and image watermarks based on user selection.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 23,
       "file_name": "save-a-watermarked-word-document-directly-to-pdf-format-while-preserving-watermark-appeara.cs",
       "task": "Save a watermarked Word document directly to PDF format while preserving watermark appearance.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc",
         "pdf"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 24,
       "file_name": "apply-a-text-watermark-to-a-word-document-and-then-save-the-document-as-docx.cs",
       "task": "Apply a text watermark to a Word document and then save the document as DOCX.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx",
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 25,
       "file_name": "apply-an-image-watermark-to-a-word-document-and-then-save-the-document-as-docx.cs",
       "task": "Apply an image watermark to a Word document and then save the document as DOCX.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx",
         "doc"
-      ]
+      ],
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 26,
       "file_name": "batch-process-a-folder-of-doc-files-to-add-the-same-image-watermark-to-each-document.cs",
       "task": "Batch process a folder of DOC files to add the same image watermark to each document.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 27,
       "file_name": "batch-process-multiple-word-documents-in-a-directory-to-add-a-text-watermark-to-each-file.cs",
       "task": "Batch process multiple Word documents in a directory to add a text watermark to each file.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 28,
       "file_name": "batch-process-multiple-word-documents-in-a-directory-to-remove-existing-watermarks-from-ea.cs",
       "task": "Batch process multiple Word documents in a directory to remove existing watermarks from each file.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 29,
       "file_name": "batch-convert-docx-files-to-pdf-while-adding-a-corporate-logo-image-watermark-to-each-pdf.cs",
       "task": "Batch convert DOCX files to PDF while adding a corporate logo image watermark to each PDF.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx",
         "doc",
         "pdf"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 30,
       "file_name": "create-a-command-line-tool-that-accepts-a-directory-path-and-adds-a-specified-watermark-to.cs",
-      "task": "Create a command‑line tool that accepts a directory path and adds a specified watermark to each file.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
+      "task": "Create a command-line tool that accepts a directory path and adds a specified watermark to each file.",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 31,
       "file_name": "use-a-configuration-file-to-define-watermark-text-font-and-opacity-then-apply-it-to-multip.cs",
       "task": "Use a configuration file to define watermark text, font, and opacity, then apply it to multiple documents.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 32,
       "file_name": "implement-a-unit-test-that-verifies-watermark-remove-successfully-deletes-a-previously-add.cs",
       "task": "Implement a unit test that verifies Watermark.Remove successfully deletes a previously added text watermark.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "docx"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 33,
       "file_name": "add-a-watermark-to-a-document-opened-from-a-network-share-ensuring-proper-disposal-of-file.cs",
       "task": "Add a watermark to a document opened from a network share, ensuring proper disposal of file handles.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 34,
       "file_name": "create-a-reusable-method-that-adds-a-configurable-text-watermark-to-any-document-object.cs",
       "task": "Create a reusable method that adds a configurable text watermark to any Document object.",
-      "winner": "mcp",
-      "selected_engine": "mcp",
       "workflow": "watermark-workflow",
       "outputs": [
         "doc"
-      ]
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
     }
   ]
 }

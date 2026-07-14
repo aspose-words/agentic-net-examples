@@ -10,21 +10,24 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Define watermark options: font size, color, and layout.
-        TextWatermarkOptions options = new TextWatermarkOptions
+        // Add a simple paragraph so the document has visible content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample document content.");
+
+        // Configure watermark options: font size, color, and layout (spacing effect).
+        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
         {
-            FontSize = 48,               // Set the font size of the watermark.
+            FontSize = 48,               // Set the watermark font size.
             Color = Color.Blue,          // Set the watermark color.
             FontFamily = "Arial",        // Optional: set a specific font family.
-            Layout = WatermarkLayout.Diagonal, // Layout of the watermark.
-            IsSemitrasparent = false    // Make the watermark fully opaque.
+            Layout = WatermarkLayout.Diagonal // Layout influences spacing/rotation.
         };
 
         // Apply the text watermark with the specified options.
-        doc.Watermark.SetText("CONFIDENTIAL", options);
+        doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
 
-        // Save the document to a file in the current directory.
-        string outputPath = "WatermarkedDocument.docx";
+        // Save the document to a file.
+        string outputPath = "Watermarked.docx";
         doc.Save(outputPath);
     }
 }

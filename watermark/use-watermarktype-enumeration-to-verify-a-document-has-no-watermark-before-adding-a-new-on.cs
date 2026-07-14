@@ -13,16 +13,17 @@ public class Program
         // Verify that the document currently has no watermark.
         if (doc.Watermark.Type == WatermarkType.None)
         {
-            // Since no watermark is present, add a text watermark.
-            doc.Watermark.SetText("Confidential");
+            // Add a text watermark because none exists.
+            doc.Watermark.SetText("Sample Watermark");
         }
 
-        // Prepare the output folder and file path.
-        string outputFolder = "Output";
-        Directory.CreateDirectory(outputFolder);
-        string outputFile = Path.Combine(outputFolder, "DocumentWithWatermark.docx");
+        // Define the output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
 
-        // Save the document with the newly added watermark.
-        doc.Save(outputFile);
+        // Ensure the directory exists.
+        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
+
+        // Save the document with the new watermark.
+        doc.Save(outputPath);
     }
 }

@@ -6,31 +6,36 @@ public class Program
 {
     public static void Main()
     {
-        // Simulate a network share by using a temporary folder.
-        string networkFolder = Path.Combine(Path.GetTempPath(), "NetworkShare");
-        Directory.CreateDirectory(networkFolder);
+        // Prepare a folder for temporary files.
+        string folder = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        Directory.CreateDirectory(folder);
 
-        // Paths for the source and output documents.
-        string sourcePath = Path.Combine(networkFolder, "sample.docx");
-        string outputPath = Path.Combine(networkFolder, "sample_watermarked.docx");
+        // Paths for the source document and the output document.
+        string sourcePath = Path.Combine(folder, "source.docx");
+        string outputPath = Path.Combine(folder, "watermarked.docx");
 
-        // Create a blank document and save it to the simulated network location.
+        // Create a blank document and save it to the source path.
         Document blankDoc = new Document();
         blankDoc.Save(sourcePath);
 
-        // Open the document from the network share using a FileStream to ensure handles are disposed.
-        using (FileStream stream = new FileStream(sourcePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        // Open the document via a FileStream to simulate loading from a network share.
+        // The using block guarantees that the file handle is released promptly.
+        using (FileStream stream = new FileStream(sourcePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read))
         {
             Document doc = new Document(stream);
 
-            // Add a text watermark.
+            // Add a text watermark to the loaded document.
             doc.Watermark.SetText("Confidential");
 
-            // Save the watermarked document.
+            // Save the watermarked document to the output path.
             doc.Save(outputPath);
         }
 
-        // Verify that the output file was created (no console output required).
-        bool created = File.Exists(outputPath);
+        // Optional verification that the output file was created.
+        // No interactive prompts are used.
+        if (File.Exists(outputPath))
+        {
+            // The file exists; processing completed successfully.
+        }
     }
 }
