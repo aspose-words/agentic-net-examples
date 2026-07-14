@@ -1,46 +1,87 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+public class ReplaceVbaProjectExample
 {
     public static void Main()
     {
-        // Create a blank document.
-        Document doc = new Document();
+        // Define file paths in the current directory.
+        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docm");
+        string replacedPath = Path.Combine(Directory.GetCurrentDirectory(), "Replaced.docm");
 
-        // ---------- Create an initial VBA project ----------
-        VbaProject originalProject = new VbaProject();
-        originalProject.Name = "OriginalProject";
+        // -------------------------------------------------
+        // Step 1: Create a blank document with an initial VBA project.
+        // -------------------------------------------------
+        Document originalDoc = new Document();
 
-        VbaModule originalModule = new VbaModule();
-        originalModule.Name = "OriginalModule";
-        originalModule.Type = VbaModuleType.ProceduralModule;
-        originalModule.SourceCode = "Sub Hello()\n    MsgBox \"Hello from original\"\nEnd Sub";
+        // Create the initial VBA project.
+        VbaProject initialProject = new VbaProject
+        {
+            Name = "InitialProject"
+        };
 
-        originalProject.Modules.Add(originalModule);
+        // Add a simple module to the initial project.
+        VbaModule initialModule = new VbaModule
+        {
+            Name = "InitialModule",
+            Type = VbaModuleType.ProceduralModule,
+            SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from the initial project!\"\nEnd Sub"
+        };
+        initialProject.Modules.Add(initialModule);
 
-        // Assign the original VBA project to the document.
-        doc.VbaProject = originalProject;
+        // Assign the VBA project to the document.
+        originalDoc.VbaProject = initialProject;
 
-        // Save the document with the original VBA project.
-        doc.Save("Original.docm");
+        // Save the document as a macro‑enabled file.
+        originalDoc.Save(originalPath, SaveFormat.Docm);
 
-        // ---------- Create a pre‑configured VBA project template ----------
-        VbaProject templateProject = new VbaProject();
-        templateProject.Name = "TemplateProject";
+        // -------------------------------------------------
+        // Step 2: Prepare a pre‑configured VBA project template.
+        // -------------------------------------------------
+        VbaProject templateProject = new VbaProject
+        {
+            Name = "TemplateProject"
+        };
 
-        VbaModule templateModule = new VbaModule();
-        templateModule.Name = "TemplateModule";
-        templateModule.Type = VbaModuleType.ProceduralModule;
-        templateModule.SourceCode = "Sub Hello()\n    MsgBox \"Hello from template\"\nEnd Sub";
+        // First module in the template.
+        VbaModule templateModule1 = new VbaModule
+        {
+            Name = "TemplateModule1",
+            Type = VbaModuleType.ProceduralModule,
+            SourceCode = "Sub TemplateMacro1()\n    MsgBox \"This is template macro 1.\"\nEnd Sub"
+        };
+        templateProject.Modules.Add(templateModule1);
 
-        templateProject.Modules.Add(templateModule);
+        // Second module in the template.
+        VbaModule templateModule2 = new VbaModule
+        {
+            Name = "TemplateModule2",
+            Type = VbaModuleType.ProceduralModule,
+            SourceCode = "Sub TemplateMacro2()\n    MsgBox \"This is template macro 2.\"\nEnd Sub"
+        };
+        templateProject.Modules.Add(templateModule2);
 
-        // Replace the document's VBA project with the template project.
-        doc.VbaProject = templateProject;
+        // -------------------------------------------------
+        // Step 3: Load the original document and replace its VBA project.
+        // -------------------------------------------------
+        Document docToReplace = new Document(originalPath);
 
-        // Save the document after replacement.
-        doc.Save("Replaced.docm");
+        // Replace the existing VBA project with the template project.
+        docToReplace.VbaProject = templateProject;
+
+        // Save the modified document.
+        docToReplace.Save(replacedPath, SaveFormat.Docm);
+
+        // -------------------------------------------------
+        // Step 4: Simple validation – output module names to console.
+        // -------------------------------------------------
+        Document validationDoc = new Document(replacedPath);
+        Console.WriteLine($"Document '{replacedPath}' now contains VBA project '{validationDoc.VbaProject.Name}'.");
+        foreach (VbaModule module in validationDoc.VbaProject.Modules)
+        {
+            Console.WriteLine($"Module: {module.Name}");
+        }
     }
 }

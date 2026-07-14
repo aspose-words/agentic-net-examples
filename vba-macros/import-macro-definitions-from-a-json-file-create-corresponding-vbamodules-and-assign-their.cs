@@ -5,76 +5,79 @@ using System.Text.Json;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+namespace AsposeWordsVbaImport
 {
     // Represents a macro definition read from JSON.
-    private class MacroDefinition
+    public class MacroDefinition
     {
         public string Name { get; set; }
-        public string Code { get; set; }
+        public string Type { get; set; }          // Expected values: "ProceduralModule", "DocumentModule", "ClassModule", "DesignerModule"
+        public string SourceCode { get; set; }
     }
 
-    public static void Main()
+    public class Program
     {
-        // Path for the temporary JSON file containing macro definitions.
-        string jsonPath = Path.Combine(Environment.CurrentDirectory, "macros.json");
+        public static void Main()
+        {
+            // Paths for the JSON input and the resulting macro‑enabled document.
+            string jsonPath = Path.Combine(Environment.CurrentDirectory, "macros.json");
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "ImportedMacros.docm");
 
-        // Sample JSON content: an array of macro definitions.
-        string sampleJson = @"
-        [
+            // Ensure a sample JSON file exists.
+            if (!File.Exists(jsonPath))
             {
-                ""Name"": ""HelloMacro"",
-                ""Code"": ""Sub HelloMacro()\n    MsgBox \""Hello from VBA!\""\nEnd Sub""
-            },
-            {
-                ""Name"": ""AddNumbers"",
-                ""Code"": ""Function AddNumbers(a As Integer, b As Integer) As Integer\n    AddNumbers = a + b\nEnd Function""
+                var sampleMacros = new List<MacroDefinition>
+                {
+                    new MacroDefinition
+                    {
+                        Name = "Module1",
+                        Type = "ProceduralModule",
+                        SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub"
+                    },
+                    new MacroDefinition
+                    {
+                        Name = "Module2",
+                        Type = "ProceduralModule",
+                        SourceCode = "Sub AddNumbers()\n    Dim a As Integer, b As Integer\n    a = 5\n    b = 7\n    MsgBox \"Sum = \" & (a + b)\nEnd Sub"
+                    }
+                };
+                string json = JsonSerializer.Serialize(sampleMacros, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(jsonPath, json);
             }
-        ]";
 
-        // Write the sample JSON to the file system.
-        File.WriteAllText(jsonPath, sampleJson);
+            // Read macro definitions from the JSON file.
+            string jsonContent = File.ReadAllText(jsonPath);
+            List<MacroDefinition> macros = JsonSerializer.Deserialize<List<MacroDefinition>>(jsonContent);
 
-        // Read and deserialize the JSON file into a list of macro definitions.
-        string jsonContent = File.ReadAllText(jsonPath);
-        List<MacroDefinition> macros = JsonSerializer.Deserialize<List<MacroDefinition>>(jsonContent);
+            // Create a blank Word document.
+            Document doc = new Document();
 
-        // Create a new blank Word document.
-        Document doc = new Document();
+            // Create a new VBA project and assign it to the document.
+            VbaProject project = new VbaProject();
+            project.Name = "ImportedMacrosProject";
+            doc.VbaProject = project;
 
-        // Create a new VBA project and assign it to the document.
-        VbaProject vbaProject = new VbaProject
-        {
-            Name = "ImportedMacrosProject"
-        };
-        doc.VbaProject = vbaProject;
-
-        // Add a VBA module for each macro definition.
-        foreach (MacroDefinition macro in macros)
-        {
-            // Guard against null source code.
-            string source = macro.Code ?? string.Empty;
-
-            VbaModule module = new VbaModule
+            // Add a VbaModule for each macro definition.
+            foreach (MacroDefinition macro in macros)
             {
-                Name = macro.Name,
-                Type = VbaModuleType.ProceduralModule,
-                SourceCode = source
-            };
+                VbaModule module = new VbaModule();
+                module.Name = macro.Name ?? "UnnamedModule";
 
-            doc.VbaProject.Modules.Add(module);
-        }
+                // Parse the module type string to the corresponding enum value.
+                if (Enum.TryParse<VbaModuleType>(macro.Type, out VbaModuleType moduleType))
+                    module.Type = moduleType;
+                else
+                    module.Type = VbaModuleType.ProceduralModule; // Default fallback.
 
-        // Save the document as a macro‑enabled file.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Result.docm");
-        doc.Save(outputPath);
+                // Guard against null source code.
+                module.SourceCode = macro.SourceCode ?? string.Empty;
 
-        // Simple verification: output the names of the added modules.
-        Console.WriteLine($"Document saved to: {outputPath}");
-        Console.WriteLine("Added VBA modules:");
-        foreach (VbaModule module in doc.VbaProject.Modules)
-        {
-            Console.WriteLine($"- {module.Name}");
+                // Add the module to the VBA project.
+                doc.VbaProject.Modules.Add(module);
+            }
+
+            // Save the document as a macro‑enabled .docm file.
+            doc.Save(outputPath);
         }
     }
 }

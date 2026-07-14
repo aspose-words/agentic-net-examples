@@ -1,51 +1,58 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+public class ExtractVbaMacros
 {
     public static void Main()
     {
-        // Define folders for sample documents and extracted macros.
-        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        string macrosDir = Path.Combine(Directory.GetCurrentDirectory(), "ExtractedMacros");
+        // Base folder for sample documents and extracted macro files.
+        string baseFolder = Path.Combine(Directory.GetCurrentDirectory(), "MacroDemo");
+        string docsFolder = Path.Combine(baseFolder, "Docs");
+        string outputFolder = Path.Combine(baseFolder, "ExtractedMacros");
 
-        Directory.CreateDirectory(dataDir);
-        Directory.CreateDirectory(macrosDir);
+        Directory.CreateDirectory(docsFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Create sample macro‑enabled documents if they do not already exist.
-        CreateSampleDocument(Path.Combine(dataDir, "Sample1.docm"), "ModuleA", "Sub HelloWorld()\n    MsgBox \"Hello from Sample1!\"\nEnd Sub");
-        CreateSampleDocument(Path.Combine(dataDir, "Sample2.docm"), "ModuleB", "Function AddNumbers(a As Integer, b As Integer) As Integer\n    AddNumbers = a + b\nEnd Function");
+        // -----------------------------------------------------------------
+        // Step 1: Create sample macro‑enabled documents (DOCM) if they do not exist.
+        // -----------------------------------------------------------------
+        CreateSampleDocument(Path.Combine(docsFolder, "Sample1.docm"), "ModuleA", "Sub HelloWorld()\n    MsgBox \"Hello from Sample1!\"\nEnd Sub");
+        CreateSampleDocument(Path.Combine(docsFolder, "Sample2.docm"), "ModuleB", "Function AddNumbers(a As Integer, b As Integer) As Integer\n    AddNumbers = a + b\nEnd Function");
 
-        // Process each .docm file in the data directory.
-        foreach (string docPath in Directory.GetFiles(dataDir, "*.docm"))
+        // -----------------------------------------------------------------
+        // Step 2: Load each DOCM file, extract VBA modules, and save their source code.
+        // -----------------------------------------------------------------
+        foreach (string docPath in Directory.GetFiles(docsFolder, "*.docm"))
         {
             // Load the document.
             Document doc = new Document(docPath);
 
-            // Ensure the document contains a VBA project.
+            // Verify that the document actually contains a VBA project.
             if (!doc.HasMacros || doc.VbaProject == null)
-                continue;
+                continue; // No macros to extract.
 
-            // Iterate through all VBA modules.
-            foreach (VbaModule module in doc.VbaProject.Modules)
+            VbaProject vbaProject = doc.VbaProject;
+            VbaModuleCollection modules = vbaProject.Modules;
+
+            // Iterate through all modules in the project.
+            foreach (VbaModule module in modules)
             {
                 // Guard against null source code.
                 string source = module.SourceCode ?? string.Empty;
 
-                // Build a filename that identifies the source document and module.
+                // Build a unique file name for the extracted macro.
                 string macroFileName = $"{Path.GetFileNameWithoutExtension(docPath)}_{module.Name}.bas";
-                string macroFilePath = Path.Combine(macrosDir, macroFileName);
+                string macroFilePath = Path.Combine(outputFolder, macroFileName);
 
-                // Write the macro source to a file.
+                // Write the source code to the file.
                 File.WriteAllText(macroFilePath, source);
             }
         }
     }
 
-    // Helper method to create a macro‑enabled document with a single module.
+    // Helper method to create a macro‑enabled document with a single VBA module.
     private static void CreateSampleDocument(string filePath, string moduleName, string moduleSource)
     {
         // If the file already exists we skip creation to avoid overwriting.
@@ -55,14 +62,14 @@ public class Program
         // Create a blank document.
         Document doc = new Document();
 
-        // Create a new VBA project and assign it to the document.
+        // Create a new VBA project and assign a name.
         VbaProject project = new VbaProject
         {
             Name = "SampleProject"
         };
         doc.VbaProject = project;
 
-        // Create a new module, set its properties, and add it to the project.
+        // Create a new VBA module, set its properties, and add it to the project.
         VbaModule module = new VbaModule
         {
             Name = moduleName,

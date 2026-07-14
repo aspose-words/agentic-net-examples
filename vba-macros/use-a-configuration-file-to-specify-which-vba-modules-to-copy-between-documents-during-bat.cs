@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
 public class Program
 {
-    // Simple configuration model.
-    private class CopyConfig
+    // Model that matches the JSON configuration file.
+    private class Config
     {
         public List<string> ModulesToCopy { get; set; } = new List<string>();
     }
@@ -16,76 +17,104 @@ public class Program
     public static void Main()
     {
         // Paths for the sample files.
-        string sourcePath = "source.docm";
-        string destPath = "dest.docm";
-        string configPath = "config.json";
+        string sourcePath = Path.Combine(Directory.GetCurrentDirectory(), "source.docm");
+        string destinationPath = Path.Combine(Directory.GetCurrentDirectory(), "destination.docm");
+        string configPath = Path.Combine(Directory.GetCurrentDirectory(), "config.json");
 
-        // 1. Create a configuration file that lists the module names to copy.
-        var config = new CopyConfig
-        {
-            ModulesToCopy = new List<string> { "ModuleA", "ModuleC" }
-        };
-        File.WriteAllText(configPath, JsonSerializer.Serialize(config));
-
-        // 2. Create a source macro‑enabled document with several VBA modules.
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample source document with a VBA project.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
-
-        // Ensure the source document has a VBA project.
         VbaProject sourceProject = new VbaProject { Name = "SourceProject" };
         sourceDoc.VbaProject = sourceProject;
 
-        // Helper to add a module.
-        void AddModule(string name, string code)
-        {
-            VbaModule module = new VbaModule
-            {
-                Name = name,
-                Type = VbaModuleType.ProceduralModule,
-                SourceCode = code
-            };
-            sourceDoc.VbaProject.Modules.Add(module);
-        }
-
-        AddModule("ModuleA", "Sub MacroA()\n    MsgBox \"Hello from A\"\nEnd Sub");
-        AddModule("ModuleB", "Sub MacroB()\n    MsgBox \"Hello from B\"\nEnd Sub");
-        AddModule("ModuleC", "Sub MacroC()\n    MsgBox \"Hello from C\"\nEnd Sub");
+        // Add a few VBA modules.
+        CreateVbaModule(sourceProject, "Module1", "Sub Hello()\n    MsgBox \"Hello from Module1\"\nEnd Sub");
+        CreateVbaModule(sourceProject, "Module2", "Sub Goodbye()\n    MsgBox \"Goodbye from Module2\"\nEnd Sub");
+        CreateVbaModule(sourceProject, "ExtraModule", "Sub Extra()\n    MsgBox \"Extra module\"\nEnd Sub");
 
         // Save the source document as a macro‑enabled file.
-        sourceDoc.Save(sourcePath);
+        sourceDoc.Save(sourcePath, SaveFormat.Docm);
 
-        // 3. Create an empty destination document that will receive the copied modules.
-        Document destDoc = new Document();
-
-        // Ensure the destination document has a VBA project.
-        VbaProject destProject = new VbaProject { Name = "DestinationProject" };
-        destDoc.VbaProject = destProject;
-
-        // 4. Load the configuration.
-        CopyConfig loadedConfig = JsonSerializer.Deserialize<CopyConfig>(File.ReadAllText(configPath));
-
-        // 5. Load the source document (already saved) to access its VBA project.
-        Document loadedSource = new Document(sourcePath);
-
-        // 6. Copy the specified modules.
-        foreach (string moduleName in loadedConfig.ModulesToCopy)
+        // -----------------------------------------------------------------
+        // Step 2: Write a configuration file that lists modules to copy.
+        // -----------------------------------------------------------------
+        var config = new Config
         {
-            // Retrieve the module from the source; guard against missing modules.
-            VbaModule sourceModule = loadedSource.VbaProject?.Modules[moduleName];
-            if (sourceModule != null)
-            {
-                // Clone the module to avoid referencing the original object.
-                VbaModule clonedModule = sourceModule.Clone();
+            ModulesToCopy = new List<string> { "Module1", "Module2" }
+        };
+        string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(configPath, json);
 
-                // Add the cloned module to the destination project.
-                destDoc.VbaProject.Modules.Add(clonedModule);
-            }
+        // -----------------------------------------------------------------
+        // Step 3: Load the configuration.
+        // -----------------------------------------------------------------
+        Config loadedConfig = JsonSerializer.Deserialize<Config>(File.ReadAllText(configPath)) ?? new Config();
+
+        // -----------------------------------------------------------------
+        // Step 4: Load the source and destination documents.
+        // -----------------------------------------------------------------
+        Document src = new Document(sourcePath);
+        Document dst = new Document(); // start with a blank document.
+
+        // Ensure the destination has a VBA project.
+        if (dst.VbaProject == null)
+        {
+            VbaProject destProject = new VbaProject { Name = "DestinationProject" };
+            dst.VbaProject = destProject;
         }
 
-        // 7. Save the destination document as a macro‑enabled file.
-        destDoc.Save(destPath);
+        // -----------------------------------------------------------------
+        // Step 5: Copy specified modules from source to destination.
+        // -----------------------------------------------------------------
+        foreach (string moduleName in loadedConfig.ModulesToCopy)
+        {
+            // Retrieve the module from the source project; may be null.
+            VbaModule srcModule = src.VbaProject?.Modules[moduleName];
+            if (srcModule == null)
+            {
+                Console.WriteLine($"Source module \"{moduleName}\" not found; skipping.");
+                continue;
+            }
 
-        // 8. Simple validation output (no user interaction).
-        Console.WriteLine($"Source document modules: {loadedSource.VbaProject.Modules.Count}");
-        Console.WriteLine($"Destination document modules: {destDoc.VbaProject.Modules.Count}");
+            // Clone the module to avoid referencing the original object.
+            VbaModule clonedModule = srcModule.Clone();
+
+            // If a module with the same name already exists in the destination, remove it.
+            VbaModule existing = dst.VbaProject?.Modules[moduleName];
+            if (existing != null)
+                dst.VbaProject?.Modules.Remove(existing);
+
+            // Add the cloned module to the destination project.
+            dst.VbaProject?.Modules.Add(clonedModule);
+            Console.WriteLine($"Copied module \"{moduleName}\" to destination.");
+        }
+
+        // -----------------------------------------------------------------
+        // Step 6: Save the destination document as a macro‑enabled file.
+        // -----------------------------------------------------------------
+        dst.Save(destinationPath, SaveFormat.Docm);
+
+        // -----------------------------------------------------------------
+        // Step 7: Simple validation output.
+        // -----------------------------------------------------------------
+        int moduleCount = dst.VbaProject?.Modules.Count ?? 0;
+        Console.WriteLine($"Destination document contains {moduleCount} VBA modules.");
+        foreach (VbaModule mod in dst.VbaProject?.Modules ?? Enumerable.Empty<VbaModule>())
+        {
+            Console.WriteLine($"- {mod.Name}");
+        }
+    }
+
+    // Helper method to create and add a VBA module to a project.
+    private static void CreateVbaModule(VbaProject project, string name, string sourceCode)
+    {
+        VbaModule module = new VbaModule
+        {
+            Name = name,
+            Type = VbaModuleType.ProceduralModule,
+            SourceCode = sourceCode ?? string.Empty
+        };
+        project.Modules.Add(module);
     }
 }

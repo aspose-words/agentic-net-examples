@@ -12,55 +12,63 @@ namespace VbaModuleCopyExample
             const string sourcePath = "Source.docm";
             const string destinationPath = "Destination.docm";
 
-            // ---------- Create a source document with a VBA project and a single module ----------
+            // -------------------------------------------------
+            // Create a source document with a VBA project and a single module.
+            // -------------------------------------------------
             Document sourceDoc = new Document();
 
-            // Create and assign a VBA project to the source document.
+            // Create and assign a new VBA project.
             VbaProject sourceProject = new VbaProject
             {
                 Name = "SourceProject"
             };
             sourceDoc.VbaProject = sourceProject;
 
-            // Create a VBA module, set its properties, and add it to the source project.
+            // Create a VBA module, set its properties, and add it to the project.
             VbaModule sourceModule = new VbaModule
             {
                 Name = "MyModule",
                 Type = VbaModuleType.ProceduralModule,
                 SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from source\"\nEnd Sub"
             };
-            sourceDoc.VbaProject.Modules.Add(sourceModule);
+            sourceProject.Modules.Add(sourceModule);
 
             // Save the source document in a macro‑enabled format.
-            sourceDoc.Save(sourcePath, SaveFormat.Docm);
+            sourceDoc.Save(sourcePath);
 
-            // ---------- Create a destination document ----------
-            Document destinationDoc = new Document();
+            // -------------------------------------------------
+            // Load the source document (simulating an existing file).
+            // -------------------------------------------------
+            Document src = new Document(sourcePath);
 
-            // Ensure the destination document has a VBA project.
-            if (destinationDoc.VbaProject == null)
+            // -------------------------------------------------
+            // Create a destination document and its VBA project.
+            // -------------------------------------------------
+            Document dest = new Document();
+
+            VbaProject destProject = new VbaProject
             {
-                VbaProject destProject = new VbaProject
-                {
-                    Name = "DestinationProject"
-                };
-                destinationDoc.VbaProject = destProject;
-            }
+                Name = "DestinationProject"
+            };
+            dest.VbaProject = destProject;
 
-            // ---------- Copy the module from source to destination ----------
-            // Retrieve the module by name from the source document.
-            VbaModule moduleToCopy = sourceDoc.VbaProject.Modules["MyModule"];
+            // -------------------------------------------------
+            // Copy the specified module from the source to the destination.
+            // -------------------------------------------------
+            VbaModule moduleToCopy = src.VbaProject?.Modules["MyModule"];
             if (moduleToCopy != null)
             {
-                // Clone the module to create an independent copy.
+                // Clone creates a deep copy of the module.
                 VbaModule copiedModule = moduleToCopy.Clone();
 
-                // Add the cloned module to the destination document's VBA project.
-                destinationDoc.VbaProject.Modules.Add(copiedModule);
+                // Add the cloned module to the destination project's collection.
+                destProject.Modules.Add(copiedModule);
             }
 
-            // Save the destination document, now containing the copied module.
-            destinationDoc.Save(destinationPath, SaveFormat.Docm);
+            // -------------------------------------------------
+            // Save the destination document with the copied module.
+            // -------------------------------------------------
+            dest.Save(destinationPath);
         }
     }
 }

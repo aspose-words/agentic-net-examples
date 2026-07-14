@@ -1,96 +1,100 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
 public class Program
 {
+    // List of deprecated function names and their replacements.
+    private static readonly (string OldName, string NewName)[] DeprecatedFunctions = new[]
+    {
+        ("OldFunc", "NewFunc"),
+        ("LegacyCalc", "ModernCalc")
+    };
+
     public static void Main()
     {
-        // Define file paths.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string originalPath = Path.Combine(artifactsDir, "Original.docm");
-        string updatedPath = Path.Combine(artifactsDir, "Updated.docm");
-
-        // -----------------------------------------------------------------
-        // 1. Create a macro‑enabled document with a VBA project and sample modules.
-        // -----------------------------------------------------------------
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Create a new VBA project if none exists.
-        VbaProject project = new VbaProject { Name = "SampleProject" };
-        doc.VbaProject = project;
+        // Ensure the document has a VBA project.
+        VbaProject vbaProject = new VbaProject { Name = "SampleProject" };
+        doc.VbaProject = vbaProject;
 
-        // Sample VBA module 1.
+        // Add a procedural module with sample VBA code containing deprecated functions.
         VbaModule module1 = new VbaModule
         {
             Name = "Module1",
             Type = VbaModuleType.ProceduralModule,
             SourceCode = @"
 Sub Test()
-    Call OldFunc
-    Call DeprecatedMethod
+    Dim result As Long
+    result = OldFunc(5)
+    MsgBox result
 End Sub
 
-Function OldFunc() As Integer
-    OldFunc = 1
-End Function
-"
+Function OldFunc(x As Long) As Long
+    OldFunc = x * 2
+End Function"
         };
         doc.VbaProject.Modules.Add(module1);
 
-        // Sample VBA module 2 (empty source to test null handling).
+        // Add another module to demonstrate multiple modules handling.
         VbaModule module2 = new VbaModule
         {
-            Name = "Module2",
+            Name = "Helper",
             Type = VbaModuleType.ProceduralModule,
-            SourceCode = null // Intentionally null.
+            SourceCode = @"
+Public Sub Compute()
+    Dim val As Double
+    val = LegacyCalc(3.14)
+    Debug.Print val
+End Sub
+
+Function LegacyCalc(y As Double) As Double
+    LegacyCalc = y ^ 2
+End Function"
         };
         doc.VbaProject.Modules.Add(module2);
 
-        // Save the document in macro‑enabled format.
-        doc.Save(originalPath, SaveFormat.Docm);
+        // Save the original macro‑enabled document.
+        const string originalPath = "Original.docm";
+        doc.Save(originalPath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and perform case‑insensitive replacement of deprecated functions.
-        // -----------------------------------------------------------------
+        // Load the document back (simulating a separate operation).
         Document loadedDoc = new Document(originalPath);
 
-        // Ensure the document actually contains a VBA project.
-        if (loadedDoc.HasMacros && loadedDoc.VbaProject != null)
+        // Verify that the document indeed contains macros.
+        if (!loadedDoc.HasMacros || loadedDoc.VbaProject == null)
         {
-            // Define deprecated function names and their replacements.
-            var replacements = new (string oldName, string newName)[]
-            {
-                ("OldFunc", "NewFunc"),
-                ("DeprecatedMethod", "ModernMethod")
-            };
-
-            foreach (VbaModule vbaModule in loadedDoc.VbaProject.Modules)
-            {
-                // Guard against null source code.
-                string source = vbaModule.SourceCode ?? string.Empty;
-                string updatedSource = source;
-
-                foreach (var (oldName, newName) in replacements)
-                {
-                    // Use word boundaries to avoid partial matches.
-                    string pattern = $@"\b{Regex.Escape(oldName)}\b";
-                    updatedSource = Regex.Replace(updatedSource, pattern, newName, RegexOptions.IgnoreCase);
-                }
-
-                // Apply the updated source back to the module.
-                vbaModule.SourceCode = updatedSource;
-            }
-
-            // Save the modified document.
-            loadedDoc.Save(updatedPath, SaveFormat.Docm);
+            Console.WriteLine("No VBA project found.");
+            return;
         }
 
-        // Indicate completion (no interactive input).
-        Console.WriteLine("VBA modules processed and saved to:");
-        Console.WriteLine(updatedPath);
+        // Iterate over all VBA modules and replace deprecated function names (case‑insensitive).
+        foreach (VbaModule vbaModule in loadedDoc.VbaProject.Modules)
+        {
+            // Guard against null source code.
+            string source = vbaModule.SourceCode ?? string.Empty;
+
+            // Perform replacements for each deprecated function.
+            foreach (var (oldName, newName) in DeprecatedFunctions)
+            {
+                // Use Regex with IgnoreCase to replace whole word occurrences.
+                string pattern = $@"\b{Regex.Escape(oldName)}\b";
+                source = Regex.Replace(source, pattern, newName, RegexOptions.IgnoreCase);
+            }
+
+            // Update the module's source code.
+            vbaModule.SourceCode = source;
+        }
+
+        // Save the updated document.
+        const string updatedPath = "Updated.docm";
+        loadedDoc.Save(updatedPath);
+
+        // Simple verification output.
+        Console.WriteLine($"Original document saved as: {originalPath}");
+        Console.WriteLine($"Updated document saved as: {updatedPath}");
     }
 }

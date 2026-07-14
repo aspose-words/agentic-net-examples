@@ -1,69 +1,63 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-namespace AsposeWordsVbaExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Create a new VBA project and assign it to the document.
-            VbaProject vbaProject = new VbaProject
-            {
-                Name = "ExampleProject"
-            };
-            doc.VbaProject = vbaProject;
+        // Create a new VBA project and assign it to the document.
+        VbaProject vbaProject = new VbaProject();
+        vbaProject.Name = "AsposeVbaProject";
+        doc.VbaProject = vbaProject;
 
-            // ----- Class module -----
-            // This module defines a class named MyClass with a public method SayHello.
-            VbaModule classModule = new VbaModule
-            {
-                Name = "MyClass",
-                Type = VbaModuleType.ClassModule,
-                SourceCode = @"
+        // ---------- Create a class module ----------
+        VbaModule classModule = new VbaModule();
+        classModule.Name = "MyClass";
+        classModule.Type = VbaModuleType.ClassModule;
+        classModule.SourceCode =
+@"Option Explicit
+
 Public Sub SayHello()
     MsgBox ""Hello from MyClass!""
 End Sub
-"
-            };
-            doc.VbaProject.Modules.Add(classModule);
+";
+        // Add the class module to the VBA project.
+        doc.VbaProject.Modules.Add(classModule);
 
-            // ----- Procedural module -----
-            // This module contains a macro that creates an instance of MyClass and calls SayHello.
-            VbaModule proceduralModule = new VbaModule
-            {
-                Name = "MainModule",
-                Type = VbaModuleType.ProceduralModule,
-                SourceCode = @"
-Public Sub Run()
+        // ---------- Create a procedural module that invokes the class method ----------
+        VbaModule procModule = new VbaModule();
+        procModule.Name = "MainModule";
+        procModule.Type = VbaModuleType.ProceduralModule;
+        procModule.SourceCode =
+@"Option Explicit
+
+Public Sub RunMacro()
     Dim obj As New MyClass
     obj.SayHello
 End Sub
-"
-            };
-            doc.VbaProject.Modules.Add(proceduralModule);
+";
+        // Add the procedural module to the VBA project.
+        doc.VbaProject.Modules.Add(procModule);
 
-            // Save the document as a macro‑enabled .docm file.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "VbaExample.docm");
-            doc.Save(outputPath);
+        // Save the document as a macro‑enabled file.
+        const string fileName = "VbaProjectExample.docm";
+        doc.Save(fileName);
 
-            // Load the saved document to verify that the VBA project and modules exist.
-            Document loadedDoc = new Document(outputPath);
-            Console.WriteLine($"Document has macros: {loadedDoc.HasMacros}");
-            Console.WriteLine($"VBA project name: {loadedDoc.VbaProject?.Name}");
-            Console.WriteLine($"Number of VBA modules: {loadedDoc.VbaProject?.Modules?.Count}");
+        // Load the saved document to verify the modules were added.
+        Document loadedDoc = new Document(fileName);
+        Console.WriteLine("Document has macros: " + loadedDoc.HasMacros);
+        Console.WriteLine("VBA Project Name: " + loadedDoc.VbaProject.Name);
+        Console.WriteLine("Modules count: " + loadedDoc.VbaProject.Modules.Count);
 
-            // Output the source code of each module (for demonstration purposes).
-            foreach (VbaModule module in loadedDoc.VbaProject.Modules)
-            {
-                Console.WriteLine($"--- Module: {module.Name} ({module.Type}) ---");
-                Console.WriteLine(module.SourceCode?.Trim());
-            }
+        // Output the source code of each module.
+        foreach (VbaModule module in loadedDoc.VbaProject.Modules)
+        {
+            Console.WriteLine("--- Module: " + module.Name + " (" + module.Type + ") ---");
+            Console.WriteLine(module.SourceCode ?? string.Empty);
         }
     }
 }

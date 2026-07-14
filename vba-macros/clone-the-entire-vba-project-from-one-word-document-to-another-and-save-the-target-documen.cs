@@ -7,8 +7,8 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        // Folder for generated files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
@@ -16,22 +16,27 @@ public class Program
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
 
-        // Create a new VBA project and add a simple module.
+        // Create a new VBA project and give it a name.
         VbaProject sourceProject = new VbaProject
         {
             Name = "SourceProject"
         };
 
-        VbaModule module1 = new VbaModule
+        // Create a procedural module with some simple VBA code.
+        VbaModule sourceModule = new VbaModule
         {
             Name = "Module1",
             Type = VbaModuleType.ProceduralModule,
-            SourceCode = "Sub Hello()\n    MsgBox \"Hello from source\"\nEnd Sub"
+            SourceCode = @"
+Sub HelloWorld()
+    MsgBox ""Hello from source document!""
+End Sub"
         };
 
-        sourceProject.Modules.Add(module1);
+        // Add the module to the project.
+        sourceProject.Modules.Add(sourceModule);
 
-        // Assign the VBA project to the document.
+        // Attach the VBA project to the document.
         sourceDoc.VbaProject = sourceProject;
 
         // Save the source document as a macro‑enabled file.
@@ -39,26 +44,33 @@ public class Program
         sourceDoc.Save(sourcePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the source document and clone its VBA project.
+        // 2. Load the source document (optional – we already have it in memory).
         // -----------------------------------------------------------------
         Document loadedSource = new Document(sourcePath);
 
-        // Ensure the source document actually contains macros.
-        if (!loadedSource.HasMacros)
-            throw new InvalidOperationException("Source document does not contain a VBA project.");
-
-        // Perform a deep clone of the VBA project.
+        // -----------------------------------------------------------------
+        // 3. Clone the entire VBA project from the source document.
+        // -----------------------------------------------------------------
         VbaProject clonedProject = loadedSource.VbaProject.Clone();
 
         // -----------------------------------------------------------------
-        // 3. Create a new target document and assign the cloned VBA project.
+        // 4. Create a new target document and assign the cloned VBA project.
         // -----------------------------------------------------------------
         Document targetDoc = new Document();
-
         targetDoc.VbaProject = clonedProject;
 
-        // Save the target document.
+        // Save the target document; it now contains the same VBA macros.
         string targetPath = Path.Combine(outputDir, "Target.docm");
         targetDoc.Save(targetPath);
+
+        // Simple validation – the target document should have macros.
+        if (targetDoc.HasMacros)
+        {
+            Console.WriteLine("VBA project successfully cloned to target document.");
+        }
+        else
+        {
+            Console.WriteLine("Cloning failed – target document has no macros.");
+        }
     }
 }
