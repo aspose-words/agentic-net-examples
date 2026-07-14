@@ -7,67 +7,80 @@ public class Program
 {
     public static void Main()
     {
-        // Run the TIFF rendering verification test.
-        VerifyTiffOutput();
-        Console.WriteLine("TIFF verification completed successfully.");
-    }
-
-    private static void VerifyTiffOutput()
-    {
-        // Prepare output folder.
+        // Folder for generated files.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a simple Word document.
+        // Create a simple document with a few lines of text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a test document for TIFF rendering.");
-        builder.InsertImage(CreateSamplePng()); // Insert a small image to ensure raster content.
+        builder.Writeln("First line of text.");
+        builder.Writeln("Second line of text.");
+        builder.Writeln("Third line of text.");
 
-        // Configure TIFF save options.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // ---------- Test 1: Verify LZW compression reduces file size ----------
+        string tiffLzwPath = Path.Combine(artifactsDir, "output_lzw.tiff");
+        ImageSaveOptions lzwOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Expected compression and pixel format.
-            TiffCompression = TiffCompression.Ccitt4,
-            PixelFormat = ImagePixelFormat.Format1bppIndexed,
-            // Render all pages into a single multi‑frame TIFF.
-            PageSet = new PageSet(0) // start from first page
+            TiffCompression = TiffCompression.Lzw,
+            PixelFormat = ImagePixelFormat.Format24BppRgb
         };
+        doc.Save(tiffLzwPath, lzwOptions);
+        ValidateFileExists(tiffLzwPath, "LZW compressed TIFF");
 
-        // Save the document as TIFF.
-        string tiffPath = Path.Combine(artifactsDir, "RenderedDocument.tiff");
-        doc.Save(tiffPath, tiffOptions);
+        string tiffNoCompressionPath = Path.Combine(artifactsDir, "output_none.tiff");
+        ImageSaveOptions noneOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            TiffCompression = TiffCompression.None,
+            PixelFormat = ImagePixelFormat.Format24BppRgb
+        };
+        doc.Save(tiffNoCompressionPath, noneOptions);
+        ValidateFileExists(tiffNoCompressionPath, "Uncompressed TIFF");
 
-        // ----- Validation -----
-        // 1. Verify that the file was created.
-        if (!File.Exists(tiffPath))
-            throw new InvalidOperationException($"TIFF file was not created at '{tiffPath}'.");
+        long sizeLzw = new FileInfo(tiffLzwPath).Length;
+        long sizeNone = new FileInfo(tiffNoCompressionPath).Length;
 
-        // 2. Verify that the file is not empty.
-        FileInfo info = new FileInfo(tiffPath);
-        if (info.Length == 0)
-            throw new InvalidOperationException("TIFF file is empty.");
+        if (sizeLzw >= sizeNone)
+            throw new Exception("LZW compression did not reduce the file size as expected.");
 
-        // 3. Verify that the save options were applied.
-        // (We cannot inspect the TIFF internals without System.Drawing or external libraries,
-        //  so we rely on the fact that Aspose.Words respects the options when saving.)
-        if (tiffOptions.TiffCompression != TiffCompression.Ccitt4)
-            throw new InvalidOperationException("Unexpected TIFF compression setting.");
+        // ---------- Test 2: Verify pixel format affects file size ----------
+        // 24‑bpp image (no compression)
+        string tiff24bppPath = Path.Combine(artifactsDir, "output_24bpp.tiff");
+        ImageSaveOptions fmt24Options = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            TiffCompression = TiffCompression.None,
+            PixelFormat = ImagePixelFormat.Format24BppRgb
+        };
+        doc.Save(tiff24bppPath, fmt24Options);
+        ValidateFileExists(tiff24bppPath, "24bpp TIFF");
 
-        if (tiffOptions.PixelFormat != ImagePixelFormat.Format1bppIndexed)
-            throw new InvalidOperationException("Unexpected TIFF pixel format setting.");
+        // 1‑bpp image – use CCITT4 compression which is well‑suited for 1‑bpp data
+        string tiff1bppPath = Path.Combine(artifactsDir, "output_1bpp.tiff");
+        ImageSaveOptions fmt1bppOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            TiffCompression = TiffCompression.Ccitt4,
+            PixelFormat = ImagePixelFormat.Format1bppIndexed
+        };
+        doc.Save(tiff1bppPath, fmt1bppOptions);
+        ValidateFileExists(tiff1bppPath, "1bpp TIFF");
+
+        long size24bpp = new FileInfo(tiff24bppPath).Length;
+        long size1bpp = new FileInfo(tiff1bppPath).Length;
+
+        // The 1‑bpp image should be smaller (or at least not larger) than the 24‑bpp image.
+        if (size1bpp > size24bpp)
+            throw new Exception("1bpp pixel format did not produce a smaller or equal file than 24bpp as expected.");
+
+        // If we reach this point, all validations passed.
+        Console.WriteLine("All TIFF rendering tests passed successfully.");
     }
 
-    // Helper method to create a tiny PNG image in memory and return its file path.
-    private static string CreateSamplePng()
+    private static void ValidateFileExists(string path, string description)
     {
-        // Use Aspose.Words' built‑in image generation via a temporary document.
-        // This avoids System.Drawing usage.
-        Document tempDoc = new Document();
-        DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-        tempBuilder.Writeln("PNG placeholder");
-        string pngPath = Path.Combine(Path.GetTempPath(), "sample.png");
-        tempDoc.Save(pngPath, SaveFormat.Png);
-        return pngPath;
+        if (!File.Exists(path))
+            throw new FileNotFoundException($"{description} file was not created: {path}");
+
+        if (new FileInfo(path).Length == 0)
+            throw new Exception($"{description} file is empty: {path}");
     }
 }

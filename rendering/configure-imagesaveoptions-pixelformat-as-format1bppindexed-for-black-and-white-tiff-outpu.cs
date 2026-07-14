@@ -7,33 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create a simple document.
+        // Create a simple Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
-        builder.Writeln("It will be saved as a black‑and‑white TIFF image.");
+        builder.Writeln("This is a sample document rendered as a black‑and‑white TIFF image.");
 
-        // Configure image save options for 1‑bpp TIFF.
+        // Prepare the folder for the output file.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string outputPath = Path.Combine(artifactsDir, "BlackWhite.tiff");
+
+        // Configure image save options for TIFF with 1‑bit indexed pixel format.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             PixelFormat = ImagePixelFormat.Format1bppIndexed,
-            // Optional: use a compression scheme suitable for 1‑bpp images.
+            // Optional: use a CCITT compression scheme suitable for 1‑bpp images.
             TiffCompression = TiffCompression.Ccitt4
         };
 
-        // Save the document.
-        string outputPath = Path.Combine(artifactsDir, "Document.BlackAndWhite.tiff");
+        // Save the document as a TIFF image.
         doc.Save(outputPath, options);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
 
-        // Optionally, report success (no interactive input required).
-        Console.WriteLine("TIFF saved to: " + outputPath);
+        // The program finishes automatically.
     }
 }

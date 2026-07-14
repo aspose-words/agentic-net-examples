@@ -9,50 +9,66 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders for output.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Define folders for the sample document and the resulting PDF.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a simple DOCX document that uses a TrueType font.
+        // Path for the generated PDF file.
+        string pdfPath = Path.Combine(outputDir, "SampleSubsetFonts.pdf");
+
+        // -----------------------------------------------------------------
+        // 1. Create a simple DOCX document that uses a TrueType font.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Use a common TrueType font. The default behavior will embed only the used glyphs.
+        // Use a common TrueType font. The exact font does not matter; Aspose.Words
+        // will embed the subset of glyphs that are actually used.
         builder.Font.Name = "Arial";
         builder.Font.Size = 24;
         builder.Writeln("Hello, Aspose.Words!");
         builder.Writeln("The quick brown fox jumps over the lazy dog.");
 
-        // Path for the resulting PDF.
-        string pdfPath = Path.Combine(artifactsDir, "SampleSubsetFonts.pdf");
-
-        // Configure PDF save options to ensure subsetting (EmbedFullFonts = false).
+        // -----------------------------------------------------------------
+        // 2. Configure PDF save options to embed only the used glyphs.
+        //    Subsetting is the default behavior (EmbedFullFonts = false).
+        // -----------------------------------------------------------------
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            EmbedFullFonts = false // Subset fonts – only used glyphs are embedded.
+            // Explicitly set to false for clarity – only used glyphs will be embedded.
+            EmbedFullFonts = false,
+            // Ensure that core fonts are not substituted, so the TrueType font is embedded.
+            UseCoreFonts = false
         };
 
-        // Render the document to PDF.
+        // Save the document as PDF with the specified options.
         doc.Save(pdfPath, pdfOptions);
 
-        // Verify that the PDF file was created.
+        // -----------------------------------------------------------------
+        // 3. Verify that the PDF file was created.
+        // -----------------------------------------------------------------
         if (!File.Exists(pdfPath))
             throw new FileNotFoundException("PDF file was not created.", pdfPath);
 
-        // Load the PDF content as text for simple inspection.
-        string pdfContent = File.ReadAllText(pdfPath, Encoding.ASCII);
+        // -----------------------------------------------------------------
+        // 4. Inspect the PDF content for markers that indicate font subsetting.
+        //    Subset fonts in PDFs are named with a six‑letter prefix followed by '+'.
+        //    Additionally, the presence of '/FontFile' or '/FontFile2' confirms embedding.
+        // -----------------------------------------------------------------
+        byte[] pdfBytes = File.ReadAllBytes(pdfPath);
+        string pdfText = Encoding.ASCII.GetString(pdfBytes);
 
-        // Look for a subset font name pattern (e.g., "ABCDEF+Arial").
-        bool hasSubsetFont = Regex.IsMatch(pdfContent, @"[A-Z]{6}\+");
+        bool hasSubsetFontName = Regex.IsMatch(pdfText, @"[A-Z]{6}\+");
+        bool hasEmbeddedFontMarker = pdfText.Contains("/FontFile") || pdfText.Contains("/FontFile2");
 
-        // Also check for a font file entry indicating embedding (e.g., /FontFile2).
-        bool hasEmbeddedFont = pdfContent.Contains("/FontFile2") || pdfContent.Contains("/FontFile");
-
-        if (!hasSubsetFont && !hasEmbeddedFont)
+        if (!hasSubsetFontName && !hasEmbeddedFontMarker)
             throw new InvalidOperationException("The PDF does not contain embedded subset font markers.");
 
-        // If execution reaches this point, the PDF was generated with subsetted fonts.
-        Console.WriteLine("PDF generated successfully with subsetted TrueType fonts at:");
+        // -----------------------------------------------------------------
+        // 5. Output a simple confirmation (no interactive input required).
+        // -----------------------------------------------------------------
+        Console.WriteLine("PDF generated successfully at:");
         Console.WriteLine(pdfPath);
+        Console.WriteLine("Embedded subset font markers detected: " + (hasSubsetFontName ? "Yes" : "No"));
     }
 }

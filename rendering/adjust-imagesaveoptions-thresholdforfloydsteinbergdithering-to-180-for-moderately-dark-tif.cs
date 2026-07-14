@@ -7,44 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create a new blank document.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add some content.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Sample Document");
-        builder.Writeln("This document will be saved as a TIFF image with custom dithering.");
+        builder.Writeln("This document will be saved as a TIFF image with Floyd‑Steinberg dithering.");
 
-        // Insert a simple 1x1 pixel PNG image (black) from a base64 string.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK7cAAAAASUVORK5CYII=";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
-        using (MemoryStream imageStream = new MemoryStream(imageBytes))
-        {
-            builder.InsertImage(imageStream);
-        }
+        // Prepare the output folder.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "Sample.tiff");
 
-        // Configure TIFF save options with Floyd‑Steinberg dithering and a higher threshold.
+        // Configure ImageSaveOptions for TIFF with Floyd‑Steinberg dithering.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
+            // Use CCITT Group 3 compression (common for B&W TIFFs).
             TiffCompression = TiffCompression.Ccitt3,
+            // Apply Floyd‑Steinberg dithering.
             TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
+            // Set the threshold to 180 for moderately dark images.
             ThresholdForFloydSteinbergDithering = 180
         };
 
-        // Save the document as a TIFF file.
-        string outputPath = Path.Combine(artifactsDir, "SampleDocument.tiff");
+        // Save the document as a TIFF image using the configured options.
         doc.Save(outputPath, options);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF output file.");
+            throw new InvalidOperationException("The TIFF file was not created.");
 
-        // Optionally, indicate success (no console input required).
-        Console.WriteLine("TIFF file saved successfully to: " + outputPath);
+        // Optionally, report success.
+        Console.WriteLine($"TIFF image saved successfully to: {outputPath}");
     }
 }

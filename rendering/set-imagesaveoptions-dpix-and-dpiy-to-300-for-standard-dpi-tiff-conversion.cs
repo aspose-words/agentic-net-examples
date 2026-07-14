@@ -7,30 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Define output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "StandardDPI.tiff");
-
-        // Create a new document and add some content.
+        // Create a simple Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document rendered to TIFF with 300 DPI.");
+        builder.Writeln("This is a sample document for TIFF conversion with 300 DPI.");
 
-        // Configure image save options for TIFF format.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            // Set horizontal and vertical resolution to 300 DPI.
-            HorizontalResolution = 300f,
-            VerticalResolution = 300f
-        };
+        // Configure image save options for TIFF with 300 DPI.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        // Set horizontal and vertical resolution (DPI) to 300.
+        saveOptions.HorizontalResolution = 300f;
+        saveOptions.VerticalResolution = 300f;
 
-        // Save the document as a TIFF image.
-        doc.Save(outputPath, options);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Define the output file path.
+        string outputPath = Path.Combine(outputDir, "Sample_300dpi.tiff");
+
+        // Save the document as a TIFF image using the configured options.
+        doc.Save(outputPath, saveOptions);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+            throw new InvalidOperationException("TIFF file was not created.");
 
-        // Optionally, output the file size to confirm creation.
-        Console.WriteLine($"TIFF file saved successfully. Size: {new FileInfo(outputPath).Length} bytes.");
+        // Optionally, output the file size for confirmation.
+        long fileSize = new FileInfo(outputPath).Length;
+        Console.WriteLine($"TIFF file saved successfully: {outputPath}");
+        Console.WriteLine($"File size: {fileSize} bytes");
     }
 }

@@ -7,12 +7,11 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
+        // Create a temporary folder for output files.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a multi‑page DOCX document.
-        string docPath = Path.Combine(outputDir, "MultiPage.docx");
+        // Build a sample multi‑page document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -22,25 +21,16 @@ public class Program
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Third page.");
 
-        // Save the source document.
-        doc.Save(docPath);
-
-        // Load the document for rendering.
-        Document loadedDoc = new Document(docPath);
-
-        // Configure ImageSaveOptions to render only the first page to TIFF.
+        // Configure image save options to render only the first page as a TIFF.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.PageSet = new PageSet(0); // zero‑based index of the first page.
+        options.PageSet = new PageSet(0); // Zero‑based index of the first page.
 
-        // Save the first page as a single‑page TIFF.
+        // Save the rendered TIFF.
         string tiffPath = Path.Combine(outputDir, "FirstPage.tiff");
-        loadedDoc.Save(tiffPath, options);
+        doc.Save(tiffPath, options);
 
-        // Verify that the TIFF file was created.
+        // Verify that the file was created.
         if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
-
-        Console.WriteLine("First page rendered to TIFF successfully at:");
-        Console.WriteLine(tiffPath);
+            throw new FileNotFoundException("The TIFF file was not created.", tiffPath);
     }
 }

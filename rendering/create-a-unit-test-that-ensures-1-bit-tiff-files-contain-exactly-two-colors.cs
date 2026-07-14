@@ -1,11 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
+using Aspose.Drawing;                 // Aspose.Drawing provides image handling
+using Aspose.Drawing.Imaging;        // For PixelFormat enumeration
 
 public class Program
 {
@@ -18,49 +16,42 @@ public class Program
         // Create a simple Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First page with some text.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page with more text.");
+        builder.Writeln("This is a test document for 1‑bit TIFF rendering.");
 
         // Configure TIFF save options for 1‑bit (black‑and‑white) output.
         ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Use CCITT4 compression which works with 1‑bpp images.
-            TiffCompression = TiffCompression.Ccitt4,
-            // Force 1‑bit pixel format.
-            PixelFormat = ImagePixelFormat.Format1bppIndexed,
-            // Ensure the image is rendered as black and white.
+            // Render as black‑and‑white.
             ImageColorMode = ImageColorMode.BlackAndWhite,
-            // Render each page as a separate frame in a multi‑page TIFF.
-            PageLayout = MultiPageLayout.TiffFrames()
+            // Ensure the pixel format is 1 bpp indexed.
+            PixelFormat = ImagePixelFormat.Format1bppIndexed,
+            // Use a CCITT compression scheme suitable for 1‑bit images.
+            TiffCompression = TiffCompression.Ccitt4,
+            // Render the first page (the document has only one page).
+            PageSet = new PageSet(0)
         };
 
         // Save the document as a TIFF file.
-        string tiffPath = Path.Combine(artifactsDir, "output.tiff");
+        string tiffPath = Path.Combine(artifactsDir, "OneBit.tiff");
         doc.Save(tiffPath, tiffOptions);
 
-        // Verify that the file exists.
+        // Verify that the file was created.
         if (!File.Exists(tiffPath))
             throw new FileNotFoundException("TIFF file was not created.", tiffPath);
 
-        // Load the TIFF using Aspose.Drawing (cross‑platform alternative to System.Drawing).
-        using (Bitmap bitmap = new Bitmap(tiffPath))
+        // Load the TIFF using Aspose.Drawing to inspect its pixel format and palette.
+        using (Image tiffImage = Image.FromFile(tiffPath))
         {
-            // Collect distinct colors.
-            HashSet<int> distinctColors = new HashSet<int>();
-            for (int y = 0; y < bitmap.Height; y++)
-            {
-                for (int x = 0; x < bitmap.Width; x++)
-                {
-                    distinctColors.Add(bitmap.GetPixel(x, y).ToArgb());
-                }
-            }
+            // Check that the image is indeed 1 bpp indexed.
+            if (tiffImage.PixelFormat != PixelFormat.Format1bppIndexed)
+                throw new InvalidOperationException("TIFF image is not 1‑bit indexed.");
 
-            // A 1‑bit image must contain exactly two colors.
-            if (distinctColors.Count != 2)
-                throw new InvalidOperationException($"TIFF file does not contain exactly two colors (found {distinctColors.Count}).");
+            // The palette of a 1‑bit image must contain exactly two colors.
+            int paletteEntries = tiffImage.Palette?.Entries?.Length ?? 0;
+            if (paletteEntries != 2)
+                throw new InvalidOperationException($"TIFF image palette contains {paletteEntries} colors; expected exactly 2.");
         }
 
-        Console.WriteLine("Unit test passed: 1‑bit TIFF contains exactly two colors.");
+        Console.WriteLine("1‑bit TIFF file was created and verified to contain exactly two colors.");
     }
 }

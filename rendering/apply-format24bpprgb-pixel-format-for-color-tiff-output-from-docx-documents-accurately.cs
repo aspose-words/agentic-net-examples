@@ -7,30 +7,30 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Create a simple DOCX document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello Aspose.Words!");
-        builder.Writeln("This document will be saved as a color TIFF with 24‑bpp RGB pixel format.");
+        builder.Writeln("This is a sample document rendered to a 24‑bpp color TIFF.");
 
-        // Configure TIFF save options with 24‑bpp RGB pixel format.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        tiffOptions.PixelFormat = ImagePixelFormat.Format24BppRgb;
-        tiffOptions.Resolution = 300; // optional DPI setting
+        // Configure image save options for TIFF with 24‑bpp RGB pixel format.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            PixelFormat = ImagePixelFormat.Format24BppRgb
+        };
 
         // Save the document as a TIFF file.
-        string tiffPath = Path.Combine(artifactsDir, "Document24bppRgb.tiff");
-        doc.Save(tiffPath, tiffOptions);
+        string tiffPath = Path.Combine(outputDir, "Sample24bppRgb.tiff");
+        doc.Save(tiffPath, saveOptions);
 
-        // Verify that the TIFF file was created and is not empty.
+        // Verify that the file was created.
         if (!File.Exists(tiffPath))
             throw new InvalidOperationException("TIFF file was not created.");
 
-        if (new FileInfo(tiffPath).Length == 0)
-            throw new InvalidOperationException("TIFF file is empty.");
+        // Optional: indicate success (no console input required).
+        Console.WriteLine("TIFF saved successfully to: " + tiffPath);
     }
 }

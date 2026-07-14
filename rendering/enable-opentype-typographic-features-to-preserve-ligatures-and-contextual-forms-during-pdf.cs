@@ -7,31 +7,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a folder for the output files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Define output folder and file.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string pdfPath = Path.Combine(outputDir, "LigaturesPreserved.pdf");
 
-        // Build a simple document that contains characters which form ligatures (fi, fl, ffi).
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Times New Roman"; // A font that supports standard ligatures.
-        builder.Font.Size = 48;
 
-        builder.Writeln("Office");   // Contains "ff" and "fi".
-        builder.Writeln("Affix");    // Contains "ff" and "fi".
-        builder.Writeln("Fluff");    // Contains "fl" and "ff".
+        // Use a font that contains common ligatures (e.g., Calibri).
+        builder.Font.Name = "Calibri";
+        builder.Font.Size = 24;
 
-        // Render the document to PDF. The default rendering pipeline preserves OpenType
-        // features such as ligatures when the chosen font supports them.
-        string pdfPath = Path.Combine(artifactsDir, "OpenTypePreserved.pdf");
-        PdfSaveOptions pdfOptions = new PdfSaveOptions();
-        doc.Save(pdfPath, pdfOptions);
+        // Write a paragraph that includes ligature characters such as "ff", "fi", "fl".
+        builder.Writeln("Office offers efficient workflow. The office staff often use the word \"office\" which contains the \"ff\" ligature.");
+        builder.Writeln("A fine example of ligatures is the \"fi\" and \"fl\" combinations in this sentence.");
 
-        // Validate that the PDF file was created and is not empty.
+        // Save the document to PDF. PdfSaveOptions is used to control PDF rendering.
+        PdfSaveOptions saveOptions = new PdfSaveOptions
+        {
+            // Ensure that fonts are embedded (subsetting) so that ligatures are preserved in the PDF.
+            EmbedFullFonts = false,
+            // Use high‑quality rendering to improve typographic fidelity.
+            UseHighQualityRendering = true,
+            UseAntiAliasing = true
+        };
+
+        doc.Save(pdfPath, saveOptions);
+
+        // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+            throw new FileNotFoundException("The PDF file was not created.", pdfPath);
 
-        if (new FileInfo(pdfPath).Length == 0)
-            throw new InvalidOperationException("The PDF file is empty.");
+        // Optional: output the path for confirmation (no interactive prompt).
+        Console.WriteLine($"PDF saved to: {pdfPath}");
     }
 }

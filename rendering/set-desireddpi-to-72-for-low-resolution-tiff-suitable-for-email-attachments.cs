@@ -7,33 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple Word document in memory.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a low‑resolution TIFF example.");
-        builder.Writeln("Suitable for email attachments.");
 
-        // Prepare the folder for the output file.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string tiffPath = Path.Combine(outputDir, "LowResolution.tiff");
+        // Add some sample content spanning a few pages.
+        builder.Writeln("This is page 1.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is page 2.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is page 3.");
 
-        // Configure image save options for TIFF with a low DPI (72).
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure image save options for TIFF with low resolution (72 DPI).
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // The Resolution property sets both horizontal and vertical DPI.
+            // Set both horizontal and vertical resolution to 72 DPI.
             Resolution = 72f
         };
 
-        // Save the document as a multipage TIFF.
-        doc.Save(tiffPath, options);
+        // Define the output file path in the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LowResolution.tiff");
 
-        // Verify that the file was created.
-        if (!File.Exists(tiffPath))
-            throw new FileNotFoundException("The TIFF file was not created.", tiffPath);
+        // Save the document as a multipage TIFF using the configured options.
+        doc.Save(outputPath, saveOptions);
 
-        // Optionally, report the file size (useful for debugging).
-        long fileSize = new FileInfo(tiffPath).Length;
-        Console.WriteLine($"TIFF saved successfully to '{tiffPath}'. Size: {fileSize} bytes.");
+        // Verify that the file was created successfully.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The TIFF file was not created.");
+
+        // Optional: output a confirmation message.
+        Console.WriteLine($"TIFF saved successfully at: {outputPath}");
     }
 }

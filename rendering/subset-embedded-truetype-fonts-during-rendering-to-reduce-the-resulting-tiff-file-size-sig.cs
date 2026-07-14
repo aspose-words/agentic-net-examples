@@ -7,63 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create output folder.
+        // Create output directory.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
         // Build a simple document that uses a TrueType font.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Arial"; // Common TrueType font.
-        builder.Writeln("The quick brown fox jumps over the lazy dog.");
-        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+        builder.Font.Name = "Arial"; // TrueType font available on most systems.
+        builder.Writeln("This is a sample text to demonstrate font subsetting during rendering.");
+        builder.Writeln("Rendering the document to a multi‑page TIFF with subsetted fonts reduces file size.");
 
-        // Enable embedding of TrueType fonts.
+        // Enable embedding of TrueType fonts and request subsetting.
         doc.FontInfos.EmbedTrueTypeFonts = true;
+        doc.FontInfos.SaveSubsetFonts = true;
 
-        // -----------------------------------------------------------------
-        // Render TIFF with full (non‑subsetted) embedded fonts.
-        // -----------------------------------------------------------------
-        doc.FontInfos.SaveSubsetFonts = false; // Do not subset fonts.
-        ImageSaveOptions fullOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure TIFF rendering options.
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            Resolution = 300
+            Resolution = 300,               // 300 DPI for decent quality.
+            PageSet = new PageSet(0)        // Render the first page (zero‑based index).
         };
-        string fullTiffPath = Path.Combine(outputDir, "Document_FullFonts.tiff");
-        doc.Save(fullTiffPath, fullOptions);
 
-        // -----------------------------------------------------------------
-        // Render TIFF with subsetted embedded fonts.
-        // -----------------------------------------------------------------
-        // NOTE: Font subsetting is not supported for image formats (TIFF, PNG, etc.).
-        // The SaveSubsetFonts property only affects DOC/DOCX/RTF saving.
-        // Therefore the file sizes may be identical. We still perform the operation
-        // to demonstrate the API usage without throwing an exception.
-        doc.FontInfos.SaveSubsetFonts = true; // Request subsetting (no effect for TIFF).
-        ImageSaveOptions subsetOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            Resolution = 300
-        };
-        string subsetTiffPath = Path.Combine(outputDir, "Document_SubsetFonts.tiff");
-        doc.Save(subsetTiffPath, subsetOptions);
+        // Save the document as a TIFF image.
+        string tiffPath = Path.Combine(outputDir, "Sample.tiff");
+        doc.Save(tiffPath, tiffOptions);
 
-        // Verify that both files were created.
-        if (!File.Exists(fullTiffPath) || !File.Exists(subsetTiffPath))
-            throw new InvalidOperationException("One or more TIFF files were not created.");
+        // Verify that the TIFF file was created.
+        if (!File.Exists(tiffPath))
+            throw new InvalidOperationException("TIFF file was not created.");
 
-        // Compare file sizes.
-        long fullSize = new FileInfo(fullTiffPath).Length;
-        long subsetSize = new FileInfo(subsetTiffPath).Length;
-
-        Console.WriteLine($"Full‑font TIFF size   : {fullSize} bytes");
-        Console.WriteLine($"Subset‑font TIFF size : {subsetSize} bytes");
-
-        // If subsetting had an effect, the subset file would be smaller.
-        // For TIFF this is not the case, so we only warn instead of throwing.
-        if (subsetSize >= fullSize)
-        {
-            Console.WriteLine("Warning: Subsetting did not reduce the TIFF file size. " +
-                              "Font subsetting is not supported for image formats.");
-        }
+        // Output basic information about the generated file.
+        FileInfo info = new FileInfo(tiffPath);
+        Console.WriteLine($"TIFF saved to: {tiffPath}");
+        Console.WriteLine($"File size: {info.Length} bytes");
     }
 }

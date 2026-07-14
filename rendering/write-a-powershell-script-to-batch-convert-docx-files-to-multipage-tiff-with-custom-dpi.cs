@@ -7,47 +7,57 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a working directory.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Set up folders for input DOCX files and output TIFF files.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        string inputDir = Path.Combine(baseDir, "Input");
+        string outputDir = Path.Combine(baseDir, "Output");
 
-        // Create sample DOCX files.
-        for (int i = 1; i <= 3; i++)
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
+
+        // Create sample DOCX files (the task must not rely on external files).
+        for (int i = 1; i <= 2; i++)
         {
-            string docPath = Path.Combine(workDir, $"Sample{i}.docx");
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+
             builder.Writeln($"Sample document {i} - Page 1.");
             builder.InsertBreak(BreakType.PageBreak);
             builder.Writeln($"Sample document {i} - Page 2.");
-            doc.Save(docPath);
+
+            string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
+            sampleDoc.Save(samplePath);
         }
 
-        // Output folder for TIFF files.
-        string tiffDir = Path.Combine(workDir, "TiffOutput");
-        Directory.CreateDirectory(tiffDir);
-
-        // Batch convert each DOCX to a multipage TIFF with custom DPI.
-        foreach (string docFile in Directory.GetFiles(workDir, "*.docx"))
+        // Batch convert each DOCX file to a multipage TIFF with custom DPI.
+        string[] docxFiles = Directory.GetFiles(inputDir, "*.docx");
+        foreach (string docxPath in docxFiles)
         {
-            Document doc = new Document(docFile);
+            // Load the source document.
+            Document doc = new Document(docxPath);
 
+            // Configure image save options for TIFF.
             ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                // Set desired DPI.
-                Resolution = 300f,
+                // Custom DPI (e.g., 300).
+                Resolution = 300,
                 // Render all pages into a single multi‑frame TIFF.
                 PageLayout = MultiPageLayout.TiffFrames()
             };
 
-            string tiffPath = Path.Combine(tiffDir, Path.GetFileNameWithoutExtension(docFile) + ".tiff");
+            // Determine output file name.
+            string tiffPath = Path.Combine(outputDir,
+                Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
+
+            // Save the document as a TIFF image.
             doc.Save(tiffPath, options);
 
-            // Verify that the file was created.
+            // Validate that the output file was created.
             if (!File.Exists(tiffPath))
-                throw new InvalidOperationException($"Failed to create TIFF for {docFile}");
+                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
         }
 
-        Console.WriteLine("Batch conversion to multipage TIFF completed successfully.");
+        // Indicate successful completion (no interactive prompts).
+        Console.WriteLine("Batch conversion completed successfully.");
     }
 }

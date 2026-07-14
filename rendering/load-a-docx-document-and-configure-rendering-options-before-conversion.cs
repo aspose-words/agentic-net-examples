@@ -11,48 +11,42 @@ public class Program
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX document locally.
-        // -----------------------------------------------------------------
-        string docPath = Path.Combine(artifactsDir, "Sample.docx");
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("Hello Aspose.Words rendering!");
-        builder.Writeln("This document will be converted with custom rendering options.");
-        sampleDoc.Save(docPath); // Save the source DOCX.
+        // Path for the sample DOCX file.
+        string sourceDocPath = Path.Combine(artifactsDir, "Sample.docx");
 
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX document.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
+        // Create a simple DOCX document if it does not already exist.
+        if (!File.Exists(sourceDocPath))
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello Aspose.Words!");
+            doc.Save(sourceDocPath);
+        }
 
-        // -----------------------------------------------------------------
-        // 3. Configure rendering options before conversion.
-        //    Example: render to PDF with grayscale images and high‑quality rendering.
-        // -----------------------------------------------------------------
+        // Load the DOCX document.
+        Document loadedDoc = new Document(sourceDocPath);
+
+        // Configure rendering options for PDF conversion.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            // Render all images in grayscale.
-            ColorMode = ColorMode.Grayscale,
-            // Use high‑quality (slower) rendering algorithms.
+            // Embed the full font data (no subsetting).
+            EmbedFullFonts = true,
+            // Use high‑quality rendering algorithms.
             UseHighQualityRendering = true,
-            // Do not embed full fonts; use subsetting to keep file size small.
-            EmbedFullFonts = false
+            // Render colors in grayscale.
+            ColorMode = ColorMode.Grayscale
         };
 
-        // -----------------------------------------------------------------
-        // 4. Save the document to PDF using the configured options.
-        // -----------------------------------------------------------------
-        string pdfPath = Path.Combine(artifactsDir, "Rendered.pdf");
+        // Path for the output PDF file.
+        string pdfPath = Path.Combine(artifactsDir, "Sample.pdf");
+
+        // Save the document as PDF using the configured options.
         loadedDoc.Save(pdfPath, pdfOptions);
 
-        // -----------------------------------------------------------------
-        // 5. Verify that the output file was created.
-        // -----------------------------------------------------------------
+        // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("The PDF file was not created.");
+            throw new Exception("Failed to create the PDF file.");
 
-        Console.WriteLine("Document successfully rendered to PDF:");
-        Console.WriteLine(pdfPath);
+        Console.WriteLine("PDF successfully created at: " + pdfPath);
     }
 }

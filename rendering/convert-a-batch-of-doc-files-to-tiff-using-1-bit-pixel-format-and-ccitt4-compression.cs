@@ -15,10 +15,10 @@ public class Program
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Create a few sample DOC files to demonstrate batch processing.
-        CreateSampleDocument(Path.Combine(inputFolder, "Sample1.doc"), "First document", 2);
-        CreateSampleDocument(Path.Combine(inputFolder, "Sample2.doc"), "Second document", 3);
-        CreateSampleDocument(Path.Combine(inputFolder, "Sample3.doc"), "Third document", 1);
+        // Create a few sample DOC files.
+        CreateSampleDocument(Path.Combine(inputFolder, "Sample1.doc"));
+        CreateSampleDocument(Path.Combine(inputFolder, "Sample2.doc"));
+        CreateSampleDocument(Path.Combine(inputFolder, "Sample3.doc"));
 
         // Process each DOC file in the input folder.
         foreach (string docPath in Directory.GetFiles(inputFolder, "*.doc"))
@@ -29,21 +29,19 @@ public class Program
             // Configure image save options for TIFF output.
             ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                // Render each page as a separate frame in a multi‑page TIFF.
-                PageLayout = MultiPageLayout.TiffFrames(),
-                // Use 1‑bit per pixel.
-                PixelFormat = ImagePixelFormat.Format1bppIndexed,
-                // Apply CCITT4 compression (suitable for 1‑bpp images).
+                // Use CCITT4 compression.
                 TiffCompression = TiffCompression.Ccitt4,
-                // Optional: set a reasonable resolution.
-                Resolution = 300
+                // Render the image as 1‑bit (black and white).
+                PixelFormat = ImagePixelFormat.Format1bppIndexed,
+                // Render each page as a separate frame in a multi‑page TIFF.
+                PageLayout = MultiPageLayout.TiffFrames()
             };
 
-            // Build the output file name.
+            // Determine the output file name.
             string outputFileName = Path.GetFileNameWithoutExtension(docPath) + ".tiff";
             string outputPath = Path.Combine(outputFolder, outputFileName);
 
-            // Save the document as a TIFF image.
+            // Save the document as a TIFF file.
             doc.Save(outputPath, options);
 
             // Verify that the TIFF file was created.
@@ -51,27 +49,24 @@ public class Program
                 throw new InvalidOperationException($"Failed to create TIFF file: {outputPath}");
         }
 
-        // Indicate successful completion (no interactive output required).
+        // Optional: indicate successful completion.
         Console.WriteLine("Batch conversion completed successfully.");
     }
 
-    // Helper method to create a simple DOC file with the specified title and number of pages.
-    private static void CreateSampleDocument(string filePath, string title, int pageCount)
+    // Helper method to create a simple DOC file with multiple pages.
+    private static void CreateSampleDocument(string filePath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln(title);
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        // Add some content spanning three pages.
+        builder.Writeln("This is the first page of the document.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is the second page of the document.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("This is the third page of the document.");
 
-        for (int i = 1; i <= pageCount; i++)
-        {
-            builder.Writeln($"This is page {i} of the document.");
-            if (i < pageCount)
-                builder.InsertBreak(BreakType.PageBreak);
-        }
-
-        doc.Save(filePath);
+        // Save the document in DOC format.
+        doc.Save(filePath, SaveFormat.Doc);
     }
 }

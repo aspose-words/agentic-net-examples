@@ -10,14 +10,18 @@ public class Program
         // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document for TIFF compression test.");
+        builder.Writeln("This is a sample document to be saved as a compressed TIFF image.");
 
-        // Prepare output directory and file path.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "Compressed.tiff");
+        // Prepare the output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Configure ImageSaveOptions: TIFF format, CCITT3 compression, 1bpp indexed pixel format.
+        // Define the output file path.
+        string outputPath = Path.Combine(artifactsDir, "Compressed.tiff");
+
+        // Configure image save options for smallest file size:
+        // - Use CCITT3 compression (good for black‑and‑white images).
+        // - Use 1‑bit per pixel indexed format.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.Ccitt3,
@@ -29,13 +33,10 @@ public class Program
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException("Failed to create the TIFF file.");
-        }
+            throw new InvalidOperationException("The TIFF file was not created.");
 
-        // Output the file size for reference.
+        // Optionally, output the file size (in bytes) to the console.
         long fileSize = new FileInfo(outputPath).Length;
-        Console.WriteLine($"TIFF file saved to: {outputPath}");
-        Console.WriteLine($"File size: {fileSize} bytes");
+        Console.WriteLine($"TIFF file saved successfully. Size: {fileSize} bytes.");
     }
 }

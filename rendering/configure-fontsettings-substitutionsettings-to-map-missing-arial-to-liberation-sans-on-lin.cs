@@ -7,41 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "MappedArial.pdf");
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some text using the Arial font (which may be missing on Linux).
+        // Write some text using a font that is typically missing on Linux.
         builder.Font.Name = "Arial";
-        builder.Writeln("This text is formatted with Arial. If Arial is unavailable, it should be substituted with Liberation Sans.");
+        builder.Writeln("This text is formatted with Arial, which should be substituted.");
 
-        // Configure font substitution.
-        FontSettings fontSettings = new FontSettings();
-
-        // Apply substitution only on non‑Windows platforms.
+        // Configure font substitution only on Linux/macOS platforms.
         PlatformID platform = Environment.OSVersion.Platform;
         bool isLinuxOrMac = platform == PlatformID.Unix || platform == PlatformID.MacOSX;
+
         if (isLinuxOrMac)
         {
-            // Map missing Arial to Liberation Sans.
-            fontSettings.SubstitutionSettings.TableSubstitution.SetSubstitutes("Arial", "Liberation Sans");
+            // Create FontSettings and add a substitution rule:
+            // If "Arial" is not found, use "Liberation Sans" instead.
+            FontSettings fontSettings = new FontSettings();
+            fontSettings.SubstitutionSettings.TableSubstitution.AddSubstitutes("Arial", "Liberation Sans");
+
+            // Assign the FontSettings to the document.
+            doc.FontSettings = fontSettings;
         }
 
-        // Assign the configured FontSettings to the document.
-        doc.FontSettings = fontSettings;
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontSubstitutionOutput.pdf");
 
         // Save the document as PDF.
-        doc.Save(outputPath);
+        doc.Save(outputPath, SaveFormat.Pdf);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output PDF file.");
+            throw new InvalidOperationException("The output PDF was not created.");
 
-        // Optionally, you could add further processing here.
+        // Optionally, you could add further validation here (e.g., check file size).
     }
 }

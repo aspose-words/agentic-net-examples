@@ -6,34 +6,34 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for generated files.
+        // Prepare a folder for output files.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Path of the sample DOCX that will be created.
+        // Path of the sample DOCX file.
         string sourcePath = Path.Combine(artifactsDir, "Sample.docx");
 
-        // -----------------------------------------------------------------
-        // Create a simple DOCX file locally.
-        // -----------------------------------------------------------------
-        Document docToCreate = new Document();
-        DocumentBuilder builder = new DocumentBuilder(docToCreate);
-        builder.Writeln("Hello Aspose.Words!");
-        docToCreate.Save(sourcePath);
+        // Create a sample DOCX document if it does not already exist.
+        if (!File.Exists(sourcePath))
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Hello Aspose.Words!");
+            doc.Save(sourcePath, SaveFormat.Docx);
+        }
 
-        // -----------------------------------------------------------------
-        // Load the DOCX file into a Document object using the API.
-        // -----------------------------------------------------------------
+        // Load the DOCX file into a Document object.
         Document loadedDoc = new Document(sourcePath);
 
-        // Simple validation that the document was loaded correctly.
-        // Use Contains to avoid issues with hidden paragraph marks.
+        // Verify that the document was loaded correctly.
         string loadedText = loadedDoc.GetText();
         if (!loadedText.Contains("Hello Aspose.Words!"))
-            throw new InvalidOperationException("The loaded document does not contain the expected text.");
+        {
+            throw new InvalidOperationException("Loaded document does not contain the expected text.");
+        }
 
-        // (Optional) Save the loaded document to a new file to prove it can be saved again.
-        string copyPath = Path.Combine(artifactsDir, "LoadedCopy.docx");
-        loadedDoc.Save(copyPath);
+        // Save a copy to demonstrate that the loaded document can be saved again.
+        string copyPath = Path.Combine(artifactsDir, "Copy.docx");
+        loadedDoc.Save(copyPath, SaveFormat.Docx);
     }
 }

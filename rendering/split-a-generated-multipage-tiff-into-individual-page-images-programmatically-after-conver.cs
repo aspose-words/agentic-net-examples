@@ -7,57 +7,57 @@ public class Program
 {
     public static void Main()
     {
-        // Define a folder for all output files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Define output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample multi‑page Word document.
-        // -----------------------------------------------------------------
+        // Create a sample multi‑page document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add three pages of simple text.
         builder.Writeln("Page 1 – Hello World!");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Page 2 – Aspose.Words");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3 – End of Document");
+        builder.Writeln("Page 3 – Split TIFF example.");
 
         // -----------------------------------------------------------------
-        // 2. Render the whole document to a single multi‑frame TIFF file.
+        // 1. Render the whole document to a multi‑page TIFF file.
         // -----------------------------------------------------------------
-        ImageSaveOptions multiPageTiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
-        // Use the TiffFrames layout so each page becomes a separate frame.
-        multiPageTiffOptions.PageLayout = MultiPageLayout.TiffFrames();
-        string multiPageTiffPath = Path.Combine(artifactsDir, "Multipage.tiff");
-        doc.Save(multiPageTiffPath, multiPageTiffOptions);
+        string multiPageTiffPath = Path.Combine(outputDir, "Document.MultiPage.tiff");
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            // TiffFrames layout renders each page as a separate frame in the TIFF.
+            PageLayout = MultiPageLayout.TiffFrames()
+        };
+        doc.Save(multiPageTiffPath, tiffOptions);
 
         // Verify that the multi‑page TIFF was created.
         if (!File.Exists(multiPageTiffPath))
             throw new FileNotFoundException("Failed to create the multi‑page TIFF.", multiPageTiffPath);
 
         // -----------------------------------------------------------------
-        // 3. Split the document into individual page images.
-        //    (Each page is saved as its own TIFF file.)
+        // 2. Split the multi‑page TIFF into individual page images.
+        //    (Render each page separately using PageSet.)
         // -----------------------------------------------------------------
         for (int pageIndex = 0; pageIndex < doc.PageCount; pageIndex++)
         {
-            ImageSaveOptions singlePageOptions = new ImageSaveOptions(SaveFormat.Tiff);
-            // Render only the current page (zero‑based index).
-            singlePageOptions.PageSet = new PageSet(pageIndex);
-            // Optional: set a higher resolution for clearer images.
-            singlePageOptions.Resolution = 300;
+            string pageTiffPath = Path.Combine(outputDir, $"Document.Page{pageIndex + 1}.tiff");
 
-            string pageTiffPath = Path.Combine(artifactsDir, $"Page_{pageIndex + 1}.tiff");
+            ImageSaveOptions singlePageOptions = new ImageSaveOptions(SaveFormat.Tiff)
+            {
+                // Render only the current page (zero‑based index).
+                PageSet = new PageSet(pageIndex)
+            };
+
             doc.Save(pageTiffPath, singlePageOptions);
 
-            // Verify that each page image was saved.
+            // Verify that each split page image was created.
             if (!File.Exists(pageTiffPath))
-                throw new FileNotFoundException($"Failed to save page {pageIndex + 1} image.", pageTiffPath);
+                throw new FileNotFoundException($"Failed to create page image for page {pageIndex + 1}.", pageTiffPath);
         }
 
         // All operations completed successfully.
-        Console.WriteLine("Multi‑page TIFF created and split into individual page images.");
+        Console.WriteLine("Multi‑page TIFF created and split into individual pages.");
     }
 }

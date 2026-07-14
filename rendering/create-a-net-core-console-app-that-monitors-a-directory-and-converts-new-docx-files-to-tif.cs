@@ -8,92 +8,71 @@ public class Program
 {
     public static void Main()
     {
-        // Define input and output folders relative to the executable location.
-        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        string inputDir = Path.Combine(baseDir, "Input");
-        string outputDir = Path.Combine(baseDir, "Output");
+        // Directory to watch for new DOCX files.
+        string watchDir = Path.Combine(Directory.GetCurrentDirectory(), "WatchFolder");
+        Directory.CreateDirectory(watchDir);
 
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Create a sample DOCX file so the watcher has something to process.
+        string sampleDocPath = Path.Combine(watchDir, "Sample.docx");
+        CreateSampleDocument(sampleDocPath);
 
-        // Set up a watcher that reacts to newly created DOCX files.
-        using (FileSystemWatcher watcher = new FileSystemWatcher())
+        // Set up a FileSystemWatcher to react to newly created DOCX files.
+        using var watcher = new FileSystemWatcher(watchDir, "*.docx")
         {
-            watcher.Path = inputDir;
-            watcher.Filter = "*.docx";
-            watcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.CreationTime;
-            watcher.Created += (sender, e) => ConvertDocxToTiff(e.FullPath, outputDir);
-            watcher.EnableRaisingEvents = true;
+            EnableRaisingEvents = true,
+            IncludeSubdirectories = false
+        };
+        watcher.Created += (sender, args) => ConvertDocxToTiff(args.FullPath);
 
-            // Create a sample DOCX file that will trigger the conversion.
-            string sampleDocPath = Path.Combine(inputDir, "SampleDocument.docx");
-            CreateSampleDocument(sampleDocPath);
-
-            // Give the watcher time to detect and process the file.
-            Thread.Sleep(3000);
+        // Process any DOCX files that already exist in the folder.
+        foreach (string existingFile in Directory.GetFiles(watchDir, "*.docx"))
+        {
+            ConvertDocxToTiff(existingFile);
         }
 
-        // Verify that the TIFF file was produced.
-        string expectedTiff = Path.Combine(outputDir, "SampleDocument.tiff");
-        if (!File.Exists(expectedTiff))
-            throw new InvalidOperationException("TIFF conversion failed: output file not found.");
+        // Allow a short period for the watcher to catch any additional files,
+        // then exit automatically.
+        Thread.Sleep(2000);
     }
 
-    // Generates a simple two‑page DOCX document.
+    // Generates a simple DOCX document with some text.
     private static void CreateSampleDocument(string filePath)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("First page of the sample document.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page of the sample document.");
-
-        doc.Save(filePath, SaveFormat.Docx);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello Aspose.Words!");
+        doc.Save(filePath);
     }
 
-    // Converts a DOCX file to a multi‑page TIFF image.
-    private static void ConvertDocxToTiff(string docxPath, string outputDir)
+    // Converts the specified DOCX file to a TIFF image using Aspose.Words.
+    private static void ConvertDocxToTiff(string docxPath)
     {
-        const int maxAttempts = 5;
-        int attempt = 0;
-
-        while (true)
+        try
         {
-            try
-            {
-                // Load the source document.
-                Document doc = new Document(docxPath);
+            // Load the DOCX document.
+            var doc = new Document(docxPath);
 
-                // Configure image save options for TIFF output.
-                ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
-                {
-                    // Render all pages into a single multi‑page TIFF.
-                    PageSet = new PageSet(0, doc.PageCount - 1),
-                    Resolution = 300 // 300 DPI for good quality.
-                };
-
-                // Build the output file path.
-                string tiffFileName = Path.GetFileNameWithoutExtension(docxPath) + ".tiff";
-                string tiffPath = Path.Combine(outputDir, tiffFileName);
-
-                // Save the document as TIFF.
-                doc.Save(tiffPath, options);
-                break; // Success – exit the retry loop.
-            }
-            catch (IOException) when (attempt < maxAttempts)
+            // Configure image save options for TIFF output.
+            var options = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                // The file may still be locked by the OS; wait briefly and retry.
-                attempt++;
-                Thread.Sleep(200);
-            }
-            catch (Exception ex)
-            {
-                // Log any other errors.
-                Console.Error.WriteLine($"Error converting '{docxPath}': {ex.Message}");
-                break;
-            }
+                // Example: set resolution to 300 DPI.
+                Resolution = 300
+            };
+
+            // Determine the output TIFF file path.
+            string tiffPath = Path.ChangeExtension(docxPath, ".tiff");
+
+            // Save the document as a TIFF image.
+            doc.Save(tiffPath, options);
+
+            // Verify that the TIFF file was created.
+            if (!File.Exists(tiffPath))
+                throw new InvalidOperationException($"TIFF file was not created: {tiffPath}");
+        }
+        catch (Exception ex)
+        {
+            // Log any errors to the standard error stream.
+            Console.Error.WriteLine($"Error converting '{docxPath}' to TIFF: {ex.Message}");
         }
     }
 }
