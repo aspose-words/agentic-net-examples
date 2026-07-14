@@ -4,65 +4,74 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class HyphenationPdfGenerator
+public class HyphenationExample
 {
     public static void Main(string[] args)
     {
-        // Determine language code (default to en-US if not supplied)
-        string language = args.Length >= 2 ? args[1] : "en-US";
+        // Determine input document path and language code.
+        string docPath = args.Length > 0 ? args[0] : "sample.docx";
+        string languageCode = args.Length > 1 ? args[1] : "en-US";
 
-        // Prepare a hyphenation dictionary file for the selected language.
-        string dictFileName = $"hyph_{language}.dic";
-        // Minimal dictionary content – includes a long word that can be hyphenated.
-        string dictContent = "UTF-8\nextraordinarycharacteristically=ex-tra-or-di-na-ry-char-ac-ter-is-ti-cal-ly\n";
-        File.WriteAllText(dictFileName, dictContent);
-        Hyphenation.RegisterDictionary(language, dictFileName);
+        // Prepare a minimal hyphenation dictionary for the requested language.
+        string dictFileName = $"hyph_{languageCode.Replace("-", "_")}.dic";
+        if (!File.Exists(dictFileName))
+        {
+            // The first line must specify the encoding.
+            // Subsequent lines contain word=hyphenated-pieces.
+            string dictContent =
+                "UTF-8\n" +
+                "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+                "internationalization=in-ter-na-tion-al-i-za-tion\n" +
+                "communication=com-mu-ni-ca-tion\n" +
+                "demonstration=de-mon-stra-tion\n" +
+                "hyphenation=hy-phen-a-tion\n";
+
+            File.WriteAllText(dictFileName, dictContent);
+        }
+
+        // Register the dictionary with Aspose.Words.
+        Hyphenation.RegisterDictionary(languageCode, dictFileName);
 
         Document doc;
-        string outputPath;
 
-        // If a valid input document path is provided, load it; otherwise create a sample document.
-        if (args.Length >= 1 && File.Exists(args[0]))
+        if (File.Exists(docPath))
         {
-            string inputPath = args[0];
-            doc = new Document(inputPath);
-            outputPath = Path.Combine(
-                Path.GetDirectoryName(inputPath) ?? Directory.GetCurrentDirectory(),
-                Path.GetFileNameWithoutExtension(inputPath) + "_hyphenated.pdf");
+            // Load the existing document.
+            doc = new Document(docPath);
         }
         else
         {
-            // Create a sample document with narrow page width to force line wrapping.
+            // Create a new document with sample text that will trigger hyphenation.
             doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Font.Size = 24;
-            builder.Writeln("extraordinarycharacteristically internationalization communication");
-            // Narrow page width so words wrap and hyphenation can be seen.
-            doc.FirstSection.PageSetup.PageWidth = 200;
-            doc.FirstSection.PageSetup.LeftMargin = 20;
-            doc.FirstSection.PageSetup.RightMargin = 20;
 
-            outputPath = Path.Combine(Directory.GetCurrentDirectory(), "sample_hyphenated.pdf");
+            // Narrow page width to force line wrapping.
+            Section section = doc.FirstSection;
+            section.PageSetup.PageWidth = 200; // points
+            section.PageSetup.LeftMargin = 20;
+            section.PageSetup.RightMargin = 20;
+
+            // Set the document language.
+            builder.Font.LocaleId = new CultureInfo(languageCode).LCID;
+
+            // Write sample text containing words from the dictionary.
+            builder.Writeln("extraordinarycharacteristically internationalization communication demonstration hyphenation");
         }
 
-        // Enable automatic hyphenation.
-        doc.HyphenationOptions.AutoHyphenation = true;
-
-        // Apply the language locale to all runs.
-        CultureInfo culture = new CultureInfo(language);
-        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
+        // Ensure the document language matches the requested language.
+        if (doc.Styles["Normal"]?.Font != null)
         {
-            run.Font.LocaleId = culture.LCID;
+            doc.Styles["Normal"].Font.LocaleId = new CultureInfo(languageCode).LCID;
         }
 
         // Save the document as PDF.
-        doc.Save(outputPath, SaveFormat.Pdf);
+        string pdfPath = Path.ChangeExtension(docPath, ".pdf");
+        doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The hyphenated PDF was not created.");
-
-        // Clean up the temporary dictionary file.
-        try { File.Delete(dictFileName); } catch { /* ignore cleanup errors */ }
+        // Validate that the PDF was created.
+        if (!File.Exists(pdfPath))
+        {
+            throw new InvalidOperationException($"PDF output was not created at '{pdfPath}'.");
+        }
     }
 }

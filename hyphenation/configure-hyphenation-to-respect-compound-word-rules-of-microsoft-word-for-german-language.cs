@@ -2,51 +2,60 @@ using System;
 using System.Globalization;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Settings;
 
-public class Program
+public class HyphenationCompoundWordExample
 {
     public static void Main()
     {
+        // Paths for temporary files.
+        const string dictionaryPath = "hyph_de_CH.dic";
+        const string outputPath = "GermanHyphenated.pdf";
+
+        // Create a minimal German hyphenation dictionary.
+        // The first line must specify the encoding, followed by word=hyphenation patterns.
+        // The pattern uses hyphens to indicate allowed break points.
+        File.WriteAllText(dictionaryPath,
+            "UTF-8\n" +
+            "Donaudampfschifffahrtsgesellschaft=Do-nau-dampf-schiff-fahrts-ge-sell-schaft\n" +
+            "Bundesverfassungsgericht=Bundes-ver-fas-sungs-ge-richt\n");
+
+        // Register the German dictionary.
+        Hyphenation.RegisterDictionary("de-CH", dictionaryPath);
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the locale to German (Switzerland) so that German hyphenation rules are applied.
-        builder.Font.LocaleId = new CultureInfo("de-CH").LCID;
-
-        // Add long German compound words that will need hyphenation when the line wraps.
-        builder.Writeln("Donaudampfschifffahrtsgesellschaftskapitänsmütze");
-        builder.Writeln("Rindfleischetikettierungsüberwachungsaufgabenübertragungsgesetz");
-
-        // Narrow the page width to force line wrapping.
-        doc.FirstSection.PageSetup.PageWidth = 300; // points
+        // Set a narrow page width to force line wrapping.
+        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.2 cm)
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Enable automatic hyphenation and configure its options.
+        // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch (in 1/20 point units)
-        doc.HyphenationOptions.HyphenateCaps = true;
+        // Hyphenate as close to the margin as possible – use a small positive value.
+        doc.HyphenationOptions.HyphenationZone = 1;
 
-        // Create a minimal German hyphenation dictionary file in the current folder.
-        string dictFileName = "hyph_de_CH.dic";
-        string dictContent =
-            "UTF-8\n" +
-            "Donaudampfschifffahrtsgesellschaft=Do-nau-dampf-schiff-fahrts-gesell-schaft\n" +
-            "Rindfleischetikettierungsüberwachungsaufgabenübertragungsgesetz=Rind-fleisch-etikett-ier-ungs-über-wach-ungs-auf-ga-ben-über-tra-gungs-ge-setz\n";
+        // Set the language of the text to German (Switzerland) – the same code used for the dictionary.
+        builder.Font.LocaleId = new CultureInfo("de-CH").LCID;
 
-        File.WriteAllText(dictFileName, dictContent);
+        // Write a paragraph containing long German compound words that require hyphenation.
+        builder.Writeln(
+            "Die Donaudampfschifffahrtsgesellschaft ist ein sehr langes Wort, " +
+            "das in der deutschen Sprache häufig hypheniert werden muss, " +
+            "um den Textfluss zu erhalten. " +
+            "Ein weiteres Beispiel ist das Bundesverfassungsgericht, " +
+            "das ebenfalls aus vielen Bestandteilen besteht.");
 
-        // Register the dictionary for the "de-CH" language.
-        Aspose.Words.Hyphenation.RegisterDictionary("de-CH", dictFileName);
+        // Save the document to PDF.
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Save the document as PDF to visualize hyphenation.
-        const string outputFile = "HyphenatedGerman.pdf";
-        doc.Save(outputFile, SaveFormat.Pdf);
+        // Verify that the output file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"The expected output file '{outputPath}' was not created.");
 
-        // Verify that the PDF was created.
-        if (!File.Exists(outputFile))
-            throw new InvalidOperationException("The expected PDF output file was not created.");
+        // Clean up temporary dictionary file.
+        File.Delete(dictionaryPath);
     }
 }

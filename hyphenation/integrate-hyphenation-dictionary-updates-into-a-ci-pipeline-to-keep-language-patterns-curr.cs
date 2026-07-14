@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
@@ -7,98 +8,75 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the dictionary and output files.
-        const string dictionaryPath = "hyph_en_US.dic";
-        const string outputPathV1 = "hyphenated_v1.pdf";
-        const string outputPathV2 = "hyphenated_v2.pdf";
+        // Paths for artifacts
+        const string dictPath = "hyph_en_US.dic";
+        const string pdfBeforePath = "hyphenated_before.pdf";
+        const string pdfAfterPath = "hyphenated_after.pdf";
+
+        // Ensure a clean environment
+        if (File.Exists(dictPath)) File.Delete(dictPath);
+        if (File.Exists(pdfBeforePath)) File.Delete(pdfBeforePath);
+        if (File.Exists(pdfAfterPath)) File.Delete(pdfAfterPath);
 
         // -----------------------------------------------------------------
         // Step 1: Create an initial hyphenation dictionary file.
+        // The dictionary follows the OpenOffice format: first line is the encoding,
+        // subsequent lines contain word=hyphenation-points.
         // -----------------------------------------------------------------
-        File.WriteAllText(dictionaryPath,
+        File.WriteAllText(dictPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
-            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-            "communication=com-mu-ni-ca-tion\n");
+            "internationalization=in-ter-na-tion-al-i-za-tion\n");
 
         // Register the dictionary for the "en-US" locale.
-        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
-
-        // Verify registration.
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-            throw new InvalidOperationException("Dictionary registration failed.");
+        Hyphenation.RegisterDictionary("en-US", dictPath);
 
         // -----------------------------------------------------------------
         // Step 2: Build a sample document that will trigger hyphenation.
         // -----------------------------------------------------------------
-        Document docV1 = new Document();
-        DocumentBuilder builder = new DocumentBuilder(docV1);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Narrow page width forces line wrapping.
-        docV1.FirstSection.PageSetup.PageWidth = 200;
-        docV1.FirstSection.PageSetup.LeftMargin = 20;
-        docV1.FirstSection.PageSetup.RightMargin = 20;
-
-        // Write a paragraph containing words defined in the dictionary.
-        builder.Font.Size = 12;
-        builder.Writeln(
-            "extraordinarycharacteristically internationalization communication " +
-            "demonstration of hyphenation handling in a CI pipeline scenario.");
+        // Use a narrow page width to force line wrapping.
+        doc.FirstSection.PageSetup.PageWidth = 200; // points
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
 
         // Enable automatic hyphenation.
-        docV1.HyphenationOptions.AutoHyphenation = true;
+        doc.HyphenationOptions.AutoHyphenation = true;
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+        doc.HyphenationOptions.HyphenationZone = 360; // 0.25 inch
+        doc.HyphenationOptions.HyphenateCaps = true;
 
-        // Save the first version of the PDF.
-        docV1.Save(outputPathV1, SaveFormat.Pdf);
+        // Set the paragraph locale to match the dictionary language.
+        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+        builder.Font.Size = 12;
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Validate output.
-        if (!File.Exists(outputPathV1))
-            throw new InvalidOperationException($"Expected file '{outputPathV1}' was not created.");
+        // Save the first PDF using the initial dictionary.
+        doc.Save(pdfBeforePath, SaveFormat.Pdf);
+        if (!File.Exists(pdfBeforePath))
+            throw new InvalidOperationException($"Failed to create '{pdfBeforePath}'.");
 
         // -----------------------------------------------------------------
         // Step 3: Simulate a CI pipeline update – modify the dictionary.
         // -----------------------------------------------------------------
-        // Append a new hyphenation pattern to the dictionary file.
-        File.AppendAllText(dictionaryPath,
-            "demonstration=de-mon-stra-tion\n");
+        // Append a new hyphenation pattern for the word "communication".
+        File.AppendAllText(dictPath,
+            "communication=com-mu-ni-ca-tion\n");
 
-        // Unregister the old dictionary and register the updated one.
+        // Re‑register the updated dictionary.
         Hyphenation.UnregisterDictionary("en-US");
-        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
+        Hyphenation.RegisterDictionary("en-US", dictPath);
 
-        // Verify re‑registration.
-        if (!Hyphenation.IsDictionaryRegistered("en-US"))
-            throw new InvalidOperationException("Updated dictionary registration failed.");
-
-        // -----------------------------------------------------------------
-        // Step 4: Build a second document using the updated dictionary.
-        // -----------------------------------------------------------------
-        Document docV2 = new Document();
-        DocumentBuilder builder2 = new DocumentBuilder(docV2);
-
-        // Apply the same page setup to keep layout consistent.
-        docV2.FirstSection.PageSetup.PageWidth = 200;
-        docV2.FirstSection.PageSetup.LeftMargin = 20;
-        docV2.FirstSection.PageSetup.RightMargin = 20;
-
-        builder2.Font.Size = 12;
-        builder2.Writeln(
-            "extraordinarycharacteristically internationalization communication " +
-            "demonstration of hyphenation handling after dictionary update.");
-
-        // Enable automatic hyphenation.
-        docV2.HyphenationOptions.AutoHyphenation = true;
-
-        // Save the second version of the PDF.
-        docV2.Save(outputPathV2, SaveFormat.Pdf);
-
-        // Validate output.
-        if (!File.Exists(outputPathV2))
-            throw new InvalidOperationException($"Expected file '{outputPathV2}' was not created.");
+        // Re‑save the document to a new PDF to reflect the updated patterns.
+        doc.Save(pdfAfterPath, SaveFormat.Pdf);
+        if (!File.Exists(pdfAfterPath))
+            throw new InvalidOperationException($"Failed to create '{pdfAfterPath}'.");
 
         // -----------------------------------------------------------------
-        // Completion message (optional, not interactive).
+        // Step 4: Validation – both PDFs should exist.
         // -----------------------------------------------------------------
-        Console.WriteLine("Hyphenation processing completed successfully.");
+        Console.WriteLine($"Generated PDFs:\n  {pdfBeforePath}\n  {pdfAfterPath}");
     }
 }

@@ -2,71 +2,56 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Settings;
 
 public class Program
 {
     public static void Main()
     {
         // Create a minimal hyphenation dictionary for English (US).
-        const string dictFile = "hyph_en_US.dic";
-        File.WriteAllText(dictFile,
+        const string dictPath = "hyph_en_US.dic";
+        File.WriteAllText(dictPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary so that hyphenation can be applied.
-        Hyphenation.RegisterDictionary("en-US", dictFile);
+        // Register the dictionary for the "en-US" locale.
+        Hyphenation.RegisterDictionary("en-US", dictPath);
 
-        // Measure PDF generation without hyphenation.
-        Document docWithoutHyphen = CreateSampleDocument();
-        docWithoutHyphen.HyphenationOptions.AutoHyphenation = false;
-        const string pdfWithout = "no_hyphenation.pdf";
-        var sw = Stopwatch.StartNew();
-        docWithoutHyphen.Save(pdfWithout);
-        sw.Stop();
-        long timeWithout = sw.ElapsedMilliseconds;
-        if (!File.Exists(pdfWithout))
-            throw new InvalidOperationException("PDF without hyphenation was not created.");
+        // Build a document with long words that can be hyphenated.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Font.Size = 24;
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // Measure PDF generation with hyphenation.
-        Document docWithHyphen = CreateSampleDocument();
-        docWithHyphen.HyphenationOptions.AutoHyphenation = true;
-        const string pdfWith = "hyphenation.pdf";
-        sw.Restart();
-        docWithHyphen.Save(pdfWith);
-        sw.Stop();
-        long timeWith = sw.ElapsedMilliseconds;
-        if (!File.Exists(pdfWith))
-            throw new InvalidOperationException("PDF with hyphenation was not created.");
-
-        // Output the timing results.
-        Console.WriteLine($"PDF generation time without hyphenation: {timeWithout} ms");
-        Console.WriteLine($"PDF generation time with hyphenation:    {timeWith} ms");
-    }
-
-    // Creates a sample document containing long text that will wrap and potentially hyphenate.
-    private static Document CreateSampleDocument()
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Narrow page width forces line wrapping.
-        doc.FirstSection.PageSetup.PageWidth = 300;
+        // Narrow page width forces line wrapping, making hyphenation visible.
+        doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Sample text with long words that can be hyphenated.
-        string sampleText = "extraordinarycharacteristically internationalization communication " +
-                            "extraordinarycharacteristically internationalization communication " +
-                            "extraordinarycharacteristically internationalization communication.";
+        // Measure rendering time without hyphenation.
+        doc.HyphenationOptions.AutoHyphenation = false;
+        const string pdfNoHyphen = "nonhyphenated.pdf";
+        Stopwatch swNoHyphen = Stopwatch.StartNew();
+        doc.Save(pdfNoHyphen, SaveFormat.Pdf);
+        swNoHyphen.Stop();
 
-        // Write the text multiple times to create several pages.
-        for (int i = 0; i < 5; i++)
-        {
-            builder.Writeln(sampleText);
-        }
+        // Measure rendering time with hyphenation.
+        doc.HyphenationOptions.AutoHyphenation = true;
+        const string pdfHyphen = "hyphenated.pdf";
+        Stopwatch swHyphen = Stopwatch.StartNew();
+        doc.Save(pdfHyphen, SaveFormat.Pdf);
+        swHyphen.Stop();
 
-        return doc;
+        // Validate that the PDF files were created.
+        if (!File.Exists(pdfNoHyphen))
+            throw new InvalidOperationException($"File '{pdfNoHyphen}' was not created.");
+        if (!File.Exists(pdfHyphen))
+            throw new InvalidOperationException($"File '{pdfHyphen}' was not created.");
+
+        // Output the measured times.
+        Console.WriteLine($"PDF generation without hyphenation: {swNoHyphen.ElapsedMilliseconds} ms");
+        Console.WriteLine($"PDF generation with hyphenation   : {swHyphen.ElapsedMilliseconds} ms");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using Aspose.Words;
 
@@ -6,42 +7,59 @@ public class Program
 {
     public static void Main()
     {
-        // Define the path for the French hyphenation dictionary.
-        string dictionaryPath = Path.Combine(Directory.GetCurrentDirectory(), "hyph_fr_FR.dic");
+        // Path for the French hyphenation dictionary.
+        const string dictionaryPath = "hyph_fr_FR.dic";
 
-        // Create a minimal valid French hyphenation dictionary.
-        // The first line must specify the encoding (UTF-8), followed by word=pattern lines.
+        // Create a minimal French hyphenation dictionary.
+        // The first line must be the encoding identifier (e.g., UTF-8).
+        // Subsequent lines contain word=hyphenated-pattern entries.
         string dictionaryContent =
             "UTF-8\n" +
-            "extraordinaire=ex-tra-or-di-nai-re\n" +
-            "internationalisation=in-ter-na-tio-na-li-sa-tion\n" +
-            "communication=co-mmu-ni-ca-tion\n";
+            "bonjour=bon-jour\n" +
+            "au-revoir=au-re-voir\n" +
+            "extraordinairement=ex-tra-or-di-na-i-re-ment";
 
         File.WriteAllText(dictionaryPath, dictionaryContent);
 
-        // Register the French dictionary with the language code "fr-FR".
+        // Verify that the dictionary file was created.
+        if (!File.Exists(dictionaryPath))
+            throw new InvalidOperationException($"Dictionary file '{dictionaryPath}' was not created.");
+
+        // Register the French dictionary with Aspose.Words.
         Hyphenation.RegisterDictionary("fr-FR", dictionaryPath);
 
-        // Verify that the dictionary was successfully registered.
+        // Confirm that the dictionary is now registered.
         if (!Hyphenation.IsDictionaryRegistered("fr-FR"))
             throw new InvalidOperationException("Failed to register the French hyphenation dictionary.");
 
-        // Retrieve the patterns by reading the dictionary file (for debugging purposes).
+        // Retrieve the patterns by reading the dictionary file.
+        // In a real scenario you might parse the file; here we simply output its contents.
         string loadedPatterns = File.ReadAllText(dictionaryPath);
-        Console.WriteLine("French hyphenation patterns:");
+
+        // Log the patterns for debugging purposes.
+        Console.WriteLine("French hyphenation patterns loaded from dictionary:");
         Console.WriteLine(loadedPatterns);
 
-        // Optional: demonstrate that the dictionary works by creating a document with French text.
+        // Demonstrate that the dictionary is usable by creating a document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Size = 24;
-        builder.Writeln("extraordinaire internationalisation communication");
-        doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.HyphenationZone = 720; // Increase zone to encourage hyphenation.
-        doc.Save("FrenchHyphenated.pdf");
+        builder.Font.LocaleId = new CultureInfo("fr-FR").LCID;
+        builder.Writeln("extraordinairement au-revoir bonjour");
 
-        // Validate that the output file was created.
-        if (!File.Exists("FrenchHyphenated.pdf"))
-            throw new InvalidOperationException("The PDF file was not created.");
+        // Enable automatic hyphenation so the dictionary is applied.
+        doc.HyphenationOptions.AutoHyphenation = true;
+
+        // Save the document to verify that hyphenation works (output not required by the task).
+        const string outputPath = "HyphenatedFrench.docx";
+        doc.Save(outputPath);
+
+        // Validate that the document was saved.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not created.");
+
+        // Optional cleanup (commented out to keep files for inspection).
+        // File.Delete(dictionaryPath);
+        // File.Delete(outputPath);
     }
 }

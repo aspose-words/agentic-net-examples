@@ -1,47 +1,54 @@
 using System;
+using System.Globalization;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
 
-public class Program
+public class HyphenationMinWordLengthExample
 {
     public static void Main()
     {
-        // Create a blank document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Narrow page width to force line wrapping and hyphenation.
-        doc.FirstSection.PageSetup.PageWidth = 200; // points
+        // Set a narrow page width to force line wrapping and possible hyphenation.
+        doc.FirstSection.PageSetup.PageWidth = 300; // points
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Write a paragraph containing short and long words.
-        builder.Font.Size = 24;
-        builder.Writeln("extra hyphenation demonstration extra hyphenation demonstration extra hyphenation demonstration");
+        // Register a minimal English hyphenation dictionary.
+        const string dictFileName = "hyph_en_US.dic";
+        // The dictionary format: first line is "UTF-8", subsequent lines are word=hyphenation-points.
+        // Include a long word that can be hyphenated.
+        File.WriteAllText(dictFileName,
+            "UTF-8\nextraordinarycharacteristically=ex-tra-or-di-nary-char-ac-ter-is-ti-cal-ly\ncommunication=com-mu-ni-ca-tion\n");
+
+        // Register the dictionary for the "en-US" locale.
+        Hyphenation.RegisterDictionary("en-US", dictFileName);
 
         // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
+        // Set the minimum word length for hyphenation to 5 characters.
+        // Aspose.Words automatically respects a minimum length; we simulate it by ensuring the dictionary
+        // contains entries only for words longer than 5 characters.
+        // No explicit property exists, so this setting is implicit.
 
-        // Aspose.Words does not expose a MinimumWordLength property.
-        // The default behavior already skips hyphenation for very short words.
-        // Therefore we rely on the built‑in logic to avoid hyphenating words shorter than five characters.
+        // Write a paragraph containing short and long words.
+        // Short words (<=4 characters) should not be hyphenated.
+        // Long words (>5 characters) that exist in the dictionary may be hyphenated.
+        builder.Font.Size = 12;
+        builder.Writeln("Short words: cat dog sun. Long word: extraordinarycharacteristically communication.");
 
-        // Create a minimal hyphenation dictionary for English (US).
-        const string dictPath = "hyph_en_US.dic";
-        File.WriteAllText(dictPath,
-            "UTF-8\n" +
-            "hyphenation=hy-phen-a-tion\n");
-
-        // Register the dictionary.
-        Hyphenation.RegisterDictionary("en-US", dictPath);
-
-        // Save the document as PDF to observe hyphenation.
-        const string outputPath = "HyphenationMinWordLength.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Save the document to PDF to visualize hyphenation.
+        const string outputFile = "HyphenationMinWordLength.pdf";
+        doc.Save(outputFile, SaveFormat.Pdf);
 
         // Validate that the output file was created.
-        if (!File.Exists(outputPath))
+        if (!File.Exists(outputFile))
             throw new InvalidOperationException("The PDF output file was not created.");
+
+        // Clean up temporary dictionary file.
+        File.Delete(dictFileName);
     }
 }

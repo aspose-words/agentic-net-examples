@@ -1,67 +1,83 @@
 using System;
+using System.Globalization;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Settings;
 
 public class Program
 {
     public static void Main()
     {
-        // File names for the temporary dictionary, source document and output document.
+        // Paths for temporary files
+        const string inputDocPath = "source.docx";
         const string dictionaryPath = "hyph_en_US.dic";
-        const string sourceDocPath = "source.docx";
-        const string outputDocPath = "hyphenated.docx";
+        const string outputDocPath = "hyphenated_output.docx";
 
-        // Minimal hyphenation dictionary in OpenOffice format.
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with long words that can be hyphenated
+        // -----------------------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Use a narrow page width to force line wrapping and hyphenation
+        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.2 inches)
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
+
+        // Set the document language to English (US)
+        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+
+        // Write a paragraph containing words that will be hyphenated
+        builder.Font.Size = 12;
+        builder.Writeln(
+            "extraordinarycharacteristically internationalization communication " +
+            "hyperresponsibility misunderstanding incomprehensibilities " +
+            "characteristically extraordinarycharacteristically");
+
+        // -----------------------------------------------------------------
+        // 2. Create a minimal hyphenation dictionary file locally
+        // -----------------------------------------------------------------
+        // The dictionary format: first line is "UTF-8", subsequent lines are
+        // word=hyphenation-points (hyphens separate syllable fragments)
         string dictionaryContent =
             "UTF-8\n" +
-            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
+            "extraordinarycharacteristically=ex-tra-or-di-nar-y-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-            "communication=com-mu-ni-ca-tion\n";
+            "communication=com-mu-ni-ca-tion\n" +
+            "hyperresponsibility=hy-per-re-spon-si-bi-li-ty\n" +
+            "misunderstanding=mis-un-der-stand-ing\n" +
+            "incomprehensibilities=in-com-pre-hen-si-bi-li-ties\n" +
+            "characteristically=char-ac-ter-is-ti-cal-ly\n";
 
-        // Write the dictionary to disk.
         File.WriteAllText(dictionaryPath, dictionaryContent);
 
-        // Register the dictionary for the "en-US" language.
+        // -----------------------------------------------------------------
+        // 3. Register the dictionary and enable automatic hyphenation
+        // -----------------------------------------------------------------
         Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
-        // Create a source document with long words that can be hyphenated.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-        // Use a large font size to make hyphenation visible.
-        builder.Font.Size = 24;
-
-        // Write a paragraph containing the words defined in the dictionary.
-        builder.Writeln(
-            "extraordinarycharacteristically internationalization communication");
-
-        // Narrow the page width to force line wrapping and thus hyphenation.
-        sourceDoc.FirstSection.PageSetup.PageWidth = 200; // points
-        sourceDoc.FirstSection.PageSetup.LeftMargin = 20;
-        sourceDoc.FirstSection.PageSetup.RightMargin = 20;
-
-        // Save the source document.
-        sourceDoc.Save(sourceDocPath);
-
-        // Load the previously saved document.
-        Document doc = new Document(sourceDocPath);
-
-        // Enable automatic hyphenation and configure its options.
+        // Enable automatic hyphenation for the document
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch (720 / 20 = 36 points)
         doc.HyphenationOptions.HyphenateCaps = true;
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
 
-        // Save the document with hyphenation applied.
-        doc.Save(outputDocPath);
+        // Force layout rebuild so hyphenation is applied before saving
+        doc.UpdatePageLayout();
 
-        // Verify that the output file was created.
+        // -----------------------------------------------------------------
+        // 4. Save the document preserving hyphenation marks
+        // -----------------------------------------------------------------
+        doc.Save(outputDocPath, SaveFormat.Docx);
+
+        // -----------------------------------------------------------------
+        // 5. Validate that the output file was created
+        // -----------------------------------------------------------------
         if (!File.Exists(outputDocPath))
-            throw new InvalidOperationException("The hyphenated document was not created.");
+            throw new InvalidOperationException($"The expected output file '{outputDocPath}' was not created.");
 
-        // Clean up temporary files (optional). Comment out the following lines if you wish to inspect the files.
-        File.Delete(dictionaryPath);
-        File.Delete(sourceDocPath);
-        // The output file is left on disk for the user to inspect.
+        // Clean up temporary files (optional)
+        // File.Delete(dictionaryPath);
+        // File.Delete(inputDocPath);
     }
 }

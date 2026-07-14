@@ -4,98 +4,114 @@ using System.Globalization;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Settings;
 
-public class HyphenationBatchProcessor
+public class Program
 {
+    // Entry point of the console application.
     public static void Main()
     {
-        // Base working directory.
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "HyphenationBatch");
-        string inputDir = Path.Combine(baseDir, "Input");
-        string outputDir = Path.Combine(baseDir, "Output");
+        // Prepare working directories.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "OutputPdfs");
+        string dictDir = Path.Combine(baseDir, "HyphenationDictionaries");
 
-        // Ensure clean folders.
-        if (Directory.Exists(baseDir))
-            Directory.Delete(baseDir, true);
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
+        Directory.CreateDirectory(dictDir);
 
-        // Create minimal hyphenation dictionaries.
-        string enDictPath = Path.Combine(baseDir, "hyph_en_US.dic");
-        string deDictPath = Path.Combine(baseDir, "hyph_de_CH.dic");
+        // Create minimal hyphenation dictionaries for English (US) and German (Switzerland).
+        CreateDictionary(dictDir, "en-US", @"UTF-8
+extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly
+internationalization=in-ter-na-tion-al-i-za-tion
+communication=com-mu-ni-ca-tion
+");
 
-        File.WriteAllText(enDictPath,
-            "UTF-8\n" +
-            "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
-            "internationalization=in-ter-na-tion-al-i-za-tion\n" +
-            "communication=com-mu-ni-ca-tion\n");
+        CreateDictionary(dictDir, "de-CH", @"UTF-8
+aussergewoehnlich=aus-ser-ge-woehn-lich
+internationalisierung=in-ter-na-tion-a-li-sie-rung
+kommunikation=ko-mmu-ni-ka-tion
+");
 
-        File.WriteAllText(deDictPath,
-            "UTF-8\n" +
-            "internationalisierung=in-ter-na-tion-a-lei-tung\n" +
-            "kommunikation=kom-mu-ni-ka-tion\n" +
-            "extraordinaer=ex-tra-or-di-när\n");
+        // Create sample DOCX files with language‑specific content.
+        CreateSampleDocument(Path.Combine(inputDir, "sample_en.docx"), "en-US",
+            "extraordinarycharacteristically internationalization communication extraordinarycharacteristically internationalization communication");
 
-        // Register dictionaries for the required languages.
-        Hyphenation.RegisterDictionary("en-US", enDictPath);
-        Hyphenation.RegisterDictionary("de-CH", deDictPath);
+        CreateSampleDocument(Path.Combine(inputDir, "sample_de.docx"), "de-CH",
+            "aussergewoehnlich internationalisierung kommunikation aussergewoehnlich internationalisierung kommunikation");
 
-        // Prepare sample documents.
-        var samples = new List<(string FileName, string Language, string Text)>
-        {
-            ("EnglishSample.docx", "en-US",
-                "extraordinarycharacteristically internationalization communication " +
-                "extraordinarycharacteristically internationalization communication"),
-            ("GermanSample.docx", "de-CH",
-                "extraordinaer internationalisierung kommunikation " +
-                "extraordinaer internationalisierung kommunikation")
-        };
-
-        foreach (var sample in samples)
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Narrow page width to force line wrapping.
-            doc.FirstSection.PageSetup.PageWidth = 200;
-            doc.FirstSection.PageSetup.LeftMargin = 20;
-            doc.FirstSection.PageSetup.RightMargin = 20;
-
-            // Set the locale for the paragraph runs.
-            builder.Font.LocaleId = new CultureInfo(sample.Language).LCID;
-            builder.Font.Size = 12;
-            builder.Writeln(sample.Text);
-
-            // Save the source DOCX.
-            string docxPath = Path.Combine(inputDir, sample.FileName);
-            doc.Save(docxPath);
-        }
-
-        // Process each DOCX: apply hyphenation and export to PDF.
+        // Process each DOCX file: apply hyphenation and export to PDF.
         foreach (string docxPath in Directory.GetFiles(inputDir, "*.docx"))
         {
+            // Load the document.
             Document doc = new Document(docxPath);
+
+            // Determine the language of the document from the first run's locale.
+            string language = DetectDocumentLanguage(doc) ?? "en-US";
+
+            // Register the appropriate hyphenation dictionary if not already registered.
+            string dictPath = Path.Combine(dictDir, $"hyph_{language.Replace("-", "_")}.dic");
+            if (!Hyphenation.IsDictionaryRegistered(language) && File.Exists(dictPath))
+                Hyphenation.RegisterDictionary(language, dictPath);
 
             // Enable automatic hyphenation.
             doc.HyphenationOptions.AutoHyphenation = true;
-            doc.HyphenationOptions.HyphenateCaps = true;
             doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-            doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch.
-
-            // Determine output PDF path.
-            string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
-            string pdfPath = Path.Combine(outputDir, pdfFileName);
+            doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
+            doc.HyphenationOptions.HyphenateCaps = true;
 
             // Save as PDF.
+            string pdfFileName = Path.GetFileNameWithoutExtension(docxPath) + ".pdf";
+            string pdfPath = Path.Combine(outputDir, pdfFileName);
             doc.Save(pdfPath, SaveFormat.Pdf);
 
             // Validate that the PDF was created.
             if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"PDF was not created: {pdfPath}");
+                throw new InvalidOperationException($"Failed to create PDF: {pdfPath}");
         }
 
-        // Optional: indicate completion (no interactive input).
-        Console.WriteLine("Batch hyphenation processing completed successfully.");
+        // Clean up (optional): uncomment the following lines if you want to remove temporary files after execution.
+        //Directory.Delete(inputDir, true);
+        //Directory.Delete(dictDir, true);
+        //Directory.Delete(outputDir, true);
+    }
+
+    // Creates a hyphenation dictionary file with the given language code and content.
+    private static void CreateDictionary(string directory, string language, string content)
+    {
+        string fileName = $"hyph_{language.Replace("-", "_")}.dic";
+        string fullPath = Path.Combine(directory, fileName);
+        File.WriteAllText(fullPath, content);
+    }
+
+    // Generates a sample DOCX file with the specified language locale and sample text.
+    private static void CreateSampleDocument(string filePath, string language, string sampleText)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Narrow page width to force line wrapping and hyphenation.
+        doc.FirstSection.PageSetup.PageWidth = 300; // points (~4.17 inches)
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
+
+        // Set the locale for the paragraph.
+        builder.Font.LocaleId = new CultureInfo(language).LCID;
+        builder.Font.Size = 12;
+        builder.Writeln(sampleText);
+
+        doc.Save(filePath);
+    }
+
+    // Attempts to detect the document language from the first run's locale.
+    private static string DetectDocumentLanguage(Document doc)
+    {
+        foreach (Run run in doc.GetChildNodes(NodeType.Run, true))
+        {
+            if (run.Font.LocaleId != 0)
+                return CultureInfo.GetCultureInfo(run.Font.LocaleId).Name;
+        }
+        return null;
     }
 }
