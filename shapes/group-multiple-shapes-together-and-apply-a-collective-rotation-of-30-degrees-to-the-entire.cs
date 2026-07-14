@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
@@ -14,13 +13,15 @@ public class Program
 
         // Insert a rectangle shape.
         Shape rect = builder.InsertShape(ShapeType.Rectangle, 150, 100);
-        rect.FillColor = Color.LightBlue;
-        rect.Stroke.Color = Color.DarkBlue;
+        rect.Left = 50;   // Position the rectangle.
+        rect.Top = 50;
+        rect.Stroke.Color = System.Drawing.Color.Blue;
 
         // Insert an ellipse shape.
         Shape ellipse = builder.InsertShape(ShapeType.Ellipse, 120, 120);
-        ellipse.FillColor = Color.LightCoral;
-        ellipse.Stroke.Color = Color.DarkRed;
+        ellipse.Left = 250; // Position the ellipse.
+        ellipse.Top = 80;
+        ellipse.Stroke.Color = System.Drawing.Color.Green;
 
         // Group the two shapes together. The group bounds are calculated automatically.
         GroupShape group = builder.InsertGroupShape(rect, ellipse);
@@ -28,12 +29,12 @@ public class Program
         // Apply a collective rotation of 30 degrees to the entire group.
         group.Rotation = 30;
 
-        // Save the document to the current directory.
+        // Save the document to the local file system.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "GroupShapeRotation.docx");
         doc.Save(outputPath);
 
         // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
+            throw new InvalidOperationException("The output document was not saved successfully.");
     }
 }

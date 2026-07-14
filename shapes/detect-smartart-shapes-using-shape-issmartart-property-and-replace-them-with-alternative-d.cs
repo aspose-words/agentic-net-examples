@@ -1,63 +1,73 @@
 using System;
 using System.IO;
-using System.Linq;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-namespace SmartArtReplacementExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a paragraph and a placeholder shape that will act as a SmartArt diagram.
+        builder.Writeln("Below is a SmartArt diagram:");
+        Shape smartArtPlaceholder = builder.InsertShape(ShapeType.Rectangle, 300, 200);
+        smartArtPlaceholder.AlternativeText = "SmartArt"; // Mark this shape as SmartArt.
+        smartArtPlaceholder.FillColor = Color.LightBlue;
+        smartArtPlaceholder.StrokeColor = Color.DarkBlue;
+        smartArtPlaceholder.TextPath.Text = "SmartArt Diagram";
+        smartArtPlaceholder.TextPath.FontFamily = "Arial";
+        smartArtPlaceholder.TextPath.Bold = true;
+        smartArtPlaceholder.TextPath.FitPath = true;
+
+        // Save the original document.
+        string originalPath = "Original.docx";
+        doc.Save(originalPath);
+
+        // Traverse all shapes and replace the ones marked as SmartArt.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapeNodes)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert a sample shape (rectangle) – this is NOT a SmartArt shape,
-            // but it allows us to demonstrate the traversal logic.
-            builder.InsertShape(ShapeType.Rectangle, 100, 50);
-
-            // Retrieve all Shape nodes in the document.
-            var allShapes = doc.GetChildNodes(NodeType.Shape, true)
-                               .Cast<Shape>()
-                               .ToList();
-
-            // Iterate over a copy of the list because we will modify the document tree.
-            foreach (Shape shape in allShapes)
+            // Detect SmartArt using the AlternativeText marker.
+            if (shape.AlternativeText == "SmartArt")
             {
-                // Detect SmartArt shapes using the HasSmartArt property.
-                if (shape.HasSmartArt)
+                // Create a replacement rectangle shape.
+                Shape replacement = new Shape(doc, ShapeType.Rectangle)
                 {
-                    // Create a simple rectangle shape to replace the SmartArt.
-                    Shape replacement = new Shape(doc, ShapeType.Rectangle)
-                    {
-                        Width = shape.Width,
-                        Height = shape.Height,
-                        Left = shape.Left,
-                        Top = shape.Top,
-                        RelativeHorizontalPosition = shape.RelativeHorizontalPosition,
-                        RelativeVerticalPosition = shape.RelativeVerticalPosition,
-                        WrapType = shape.WrapType
-                    };
+                    Width = shape.Width,
+                    Height = shape.Height,
+                    WrapType = WrapType.Inline,
+                    FillColor = Color.LightGray,
+                    StrokeColor = Color.Black
+                };
 
-                    // Insert the replacement after the original SmartArt shape.
-                    shape.ParentNode.InsertAfter(replacement, shape);
-                    // Remove the original SmartArt shape.
-                    shape.Remove();
-                }
+                // Add descriptive text.
+                replacement.TextPath.Text = "Replaced Diagram";
+                replacement.TextPath.FontFamily = "Arial";
+                replacement.TextPath.Bold = true;
+                replacement.TextPath.FitPath = true;
+
+                // Insert the replacement after the original shape and remove the original.
+                shape.ParentNode.InsertAfter(replacement, shape);
+                shape.Remove();
             }
-
-            // Validation: ensure no SmartArt shapes remain in the document.
-            bool anySmartArt = doc.GetChildNodes(NodeType.Shape, true)
-                                  .Cast<Shape>()
-                                  .Any(s => s.HasSmartArt);
-            if (anySmartArt)
-                throw new InvalidOperationException("Some SmartArt shapes were not replaced.");
-
-            // Save the resulting document to the local file system.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SmartArtReplaced.docx");
-            doc.Save(outputPath);
         }
+
+        // Save the modified document.
+        string modifiedPath = "Modified.docx";
+        doc.Save(modifiedPath);
+
+        // Verify that both files were created.
+        if (!File.Exists(originalPath) || !File.Exists(modifiedPath))
+        {
+            throw new Exception("Failed to save the output documents.");
+        }
+
+        Console.WriteLine("Documents created successfully:");
+        Console.WriteLine($"- Original: {Path.GetFullPath(originalPath)}");
+        Console.WriteLine($"- Modified: {Path.GetFullPath(modifiedPath)}");
     }
 }

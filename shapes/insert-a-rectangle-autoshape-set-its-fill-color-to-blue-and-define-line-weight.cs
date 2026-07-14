@@ -4,32 +4,39 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+namespace ShapeExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Insert a rectangle AutoShape with a width of 100 points and a height of 50 points.
-        Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+            // Initialize DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the fill color of the shape to blue.
-        rectangle.FillColor = Color.Blue;
+            // Insert a rectangle AutoShape with a size of 200x100 points.
+            Shape rectangle = builder.InsertShape(ShapeType.Rectangle, 200, 100);
 
-        // Define the line (stroke) weight of the shape.
-        rectangle.StrokeWeight = 2.0; // Thickness in points.
+            // Set the fill color of the shape to blue.
+            rectangle.FillColor = Color.Blue;
 
-        // Save the document to a file in the current directory.
-        string outputFile = Path.Combine(Directory.GetCurrentDirectory(), "RectangleShape.docx");
-        doc.Save(outputFile);
+            // Define the line (stroke) weight of the shape.
+            rectangle.StrokeWeight = 5.0; // Weight in points.
 
-        // Verify that the file was created.
-        if (!File.Exists(outputFile))
-            throw new InvalidOperationException("The document was not saved correctly.");
+            // Define the output file path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RectangleShape.docx");
 
-        // Indicate successful completion.
-        Console.WriteLine($"Document saved to: {outputFile}");
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Validate that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
+
+            // Optionally, inform that the operation succeeded (no console input required).
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
+        }
     }
 }

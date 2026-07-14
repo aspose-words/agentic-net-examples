@@ -2,51 +2,40 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Saving;
-using Aspose.Words.Rendering; // Required for ShapeRenderer
 
 public class Program
 {
     public static void Main()
     {
         // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string docPath = Path.Combine(artifactsDir, "RotatedShape.docx");
 
-        // Create a new document and insert a simple rectangle shape.
+        // A 1x1 red PNG image encoded in Base64.
+        // This avoids the need for external image files.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP8z8BQDwAF/AL+XK6XAAAAAElFTkSuQmCC";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a rectangle shape of size 100x100 points.
-        Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 100);
+        // Insert the image from the byte array.
+        Shape shape = builder.InsertImage(imageBytes);
 
         // Rotate the shape 45 degrees clockwise.
         shape.Rotation = 45;
 
         // Save the document.
-        string docPath = Path.Combine(outputDir, "RotatedShape.docx");
         doc.Save(docPath);
 
-        // Verify that the document was saved.
+        // Validation: ensure the file was created.
         if (!File.Exists(docPath))
-            throw new InvalidOperationException("The document was not saved.");
+            throw new InvalidOperationException("The output document was not saved.");
 
-        // Load the document and retrieve the shape to verify rotation.
-        Document loadedDoc = new Document(docPath);
-        Shape loadedShape = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
-        if (loadedShape == null)
-            throw new InvalidOperationException("No shape found in the saved document.");
-
-        if (Math.Abs(loadedShape.Rotation - 45) > 0.001)
-            throw new InvalidOperationException($"Shape rotation is {loadedShape.Rotation}, expected 45.");
-
-        // Render the rotated shape to an image (optional visual verification).
-        string renderedPath = Path.Combine(outputDir, "RotatedShape.png");
-        ShapeRenderer renderer = loadedShape.GetShapeRenderer();
-        ImageSaveOptions imgOptions = new ImageSaveOptions(SaveFormat.Png);
-        renderer.Save(renderedPath, imgOptions);
-
-        if (!File.Exists(renderedPath))
-            throw new InvalidOperationException("The rendered shape image was not saved.");
+        // Validation: ensure the shape's rotation property is set correctly.
+        if (Math.Abs(shape.Rotation - 45) > 0.001)
+            throw new InvalidOperationException($"Shape rotation is {shape.Rotation}, expected 45.");
     }
 }

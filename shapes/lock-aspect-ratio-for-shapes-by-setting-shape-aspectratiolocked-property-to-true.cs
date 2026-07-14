@@ -7,30 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Create a temporary directory for the sample files.
-        string tempDir = Path.Combine(Path.GetTempPath(), "AsposeWordsSample");
-        Directory.CreateDirectory(tempDir);
+        // Create a temporary image file to insert.
+        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
+        CreateSampleImage(imagePath);
 
-        // A 1x1 pixel PNG image encoded in Base64.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/6V6ZAAAAAElFTkSuQmCC";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
-
-        // Create a new Word document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the image into the document; this returns a Shape object.
-        Shape shape = builder.InsertImage(imageBytes);
+        // Insert the image as a shape.
+        Shape shape = builder.InsertImage(imagePath);
 
-        // Lock the aspect ratio of the shape.
+        // Lock the shape's aspect ratio.
         shape.AspectRatioLocked = true;
 
         // Save the document.
-        string outputPath = Path.Combine(tempDir, "AspectRatioLocked.docx");
-        doc.Save(outputPath);
+        string docPath = Path.Combine(Directory.GetCurrentDirectory(), "AspectRatioLocked.docx");
+        doc.Save(docPath);
 
-        // Validate that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not created.");
+        // Verify that the file was created.
+        if (!File.Exists(docPath))
+            throw new InvalidOperationException("The document was not saved successfully.");
+    }
+
+    // Creates a simple placeholder PNG image without using System.Drawing.
+    private static void CreateSampleImage(string path)
+    {
+        // This is a 1x1 pixel transparent PNG encoded in base64.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(path, pngBytes);
     }
 }

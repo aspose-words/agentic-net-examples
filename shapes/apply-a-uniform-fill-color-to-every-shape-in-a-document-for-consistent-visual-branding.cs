@@ -1,14 +1,10 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
-using Aspose.Words.Lists;
-using Aspose.Words.Saving;
-using System.Linq;
+using System.Drawing;
 
-public class UniformShapeFillExample
+public class Program
 {
     public static void Main()
     {
@@ -16,31 +12,31 @@ public class UniformShapeFillExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a few sample shapes of different types.
-        builder.InsertShape(ShapeType.Rectangle, 150, 80);
-        builder.InsertShape(ShapeType.Ellipse, 100, 100);
-        builder.InsertShape(ShapeType.Cloud, 120, 70);
-        builder.InsertShape(ShapeType.Star, 80, 80);
+        // Insert a few sample shapes.
+        builder.InsertShape(ShapeType.Rectangle, 100, 50);   // Inline rectangle.
+        builder.InsertShape(ShapeType.Ellipse, 80, 80);      // Inline ellipse.
+        builder.InsertShape(ShapeType.CloudCallout, RelativeHorizontalPosition.Page, 150,
+            RelativeVerticalPosition.Page, 150, 200, 100, WrapType.None); // Floating shape.
 
-        // Define the uniform fill color to be applied to every shape.
-        Color brandColor = Color.FromArgb(0xFF, 0x4A, 0x90, 0xE2); // Example brand blue.
+        // Define the uniform brand fill color.
+        Color brandColor = Color.FromArgb(255, 0, 120, 215); // Example blue shade.
 
-        // Traverse all shapes in the document and set their fill color.
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        // Apply the fill color to every shape in the document.
+        NodeCollection shapes = doc.GetChildNodes(NodeType.Shape, true);
+        foreach (Shape shape in shapes.OfType<Shape>())
         {
-            // Apply a solid fill color.
             shape.FillColor = brandColor;
         }
 
-        // Save the modified document to the current directory.
+        // Validation: ensure all shapes have the expected fill color.
+        foreach (Shape shape in shapes.OfType<Shape>())
+        {
+            if (shape.FillColor.ToArgb() != brandColor.ToArgb())
+                throw new InvalidOperationException("A shape did not receive the correct fill color.");
+        }
+
+        // Save the document.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UniformFillShapes.docx");
         doc.Save(outputPath);
-
-        // Validate that the file was created successfully.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
-
-        // The program ends here without waiting for user input.
     }
 }

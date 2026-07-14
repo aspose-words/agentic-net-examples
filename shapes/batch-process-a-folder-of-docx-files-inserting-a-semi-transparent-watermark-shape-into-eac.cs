@@ -1,55 +1,55 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using System.Drawing;
 
-public class BatchWatermarkProcessor
+public class Program
 {
     public static void Main()
     {
-        // Define input and output directories relative to the current working directory.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+        // Prepare input and output folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "OutputDocs");
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
+        // Create a few sample DOCX files in the input folder.
+        for (int i = 1; i <= 3; i++)
+        {
+            Document sampleDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+            builder.Writeln($"This is sample document #{i}.");
+            string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
+            sampleDoc.Save(samplePath);
+        }
 
-        // Process each DOCX file in the input folder.
-        foreach (string inputPath in Directory.GetFiles(inputFolder, "*.docx"))
+        // Process each DOCX file: add a semi‑transparent text watermark.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
             // Load the document.
-            Document doc = new Document(inputPath);
+            Document doc = new Document(filePath);
 
-            // Insert a semi‑transparent rectangle shape as a watermark into the primary header.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            // Configure watermark options (semi‑transparent).
+            TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+            {
+                IsSemitrasparent = true,               // Semi‑transparent.
+                FontSize = 48,
+                Color = Color.Gray,
+                Layout = WatermarkLayout.Diagonal
+            };
 
-            // Create a floating rectangle shape.
-            Shape watermark = builder.InsertShape(ShapeType.Rectangle, 500, 500); // size in points
+            // Apply the watermark.
+            doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
 
-            // Position the shape behind the text and center it on the page.
-            watermark.WrapType = WrapType.None;
-            watermark.BehindText = true;
-            watermark.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-            watermark.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-            watermark.HorizontalAlignment = HorizontalAlignment.Center;
-            watermark.VerticalAlignment = VerticalAlignment.Center;
+            // Save the modified document to the output folder.
+            string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
+            doc.Save(outputPath);
 
-            // Set a light gray fill color with 50 % transparency.
-            watermark.FillColor = Color.LightGray;
-            watermark.Fill.Transparency = 0.5; // 0 = opaque, 1 = fully transparent
-
-            // Remove the shape outline.
-            watermark.StrokeColor = Color.Transparent;
-
-            // Save the modified document to the output folder, preserving the original file name.
-            string outputPath = Path.Combine(outputFolder, Path.GetFileName(inputPath));
-            doc.Save(outputPath, SaveFormat.Docx);
-
-            // Validate that the file was saved successfully.
+            // Validate that the file was saved.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to save the watermarked document: {outputPath}");
+                throw new InvalidOperationException($"Failed to save watermark‑ed document: {outputPath}");
         }
     }
 }

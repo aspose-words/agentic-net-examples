@@ -7,39 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder and file name.
+        // Define an output folder and ensure it exists.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-        string filePath = Path.Combine(outputDir, "ShapeMetadata.docx");
+        string docPath = Path.Combine(outputDir, "ShapeMetadata.docx");
 
-        // Create a new document and insert a rectangle shape.
+        // Create a new document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a rectangle shape and store custom metadata in its Title property.
         Shape shape = builder.InsertShape(ShapeType.Rectangle, 100, 50);
+        shape.Title = "MyCustomMetadata";
 
-        // Store custom metadata in the shape's Title property.
-        string customTitle = "MyCustomMetadata123";
-        shape.Title = customTitle;
+        // Save the document containing the shape.
+        doc.Save(docPath);
 
-        // Save the document.
-        doc.Save(filePath);
+        // Load the document back from disk.
+        Document loadedDoc = new Document(docPath);
 
-        // Ensure the file was created.
-        if (!File.Exists(filePath))
-            throw new Exception("Failed to save the document.");
-
-        // Load the document and retrieve the shape.
-        Document loadedDoc = new Document(filePath);
+        // Retrieve the first shape in the document.
         Shape loadedShape = (Shape)loadedDoc.GetChild(NodeType.Shape, 0, true);
-        if (loadedShape == null)
-            throw new Exception("Shape not found in the loaded document.");
 
-        // Retrieve and verify the Title property.
-        string retrievedTitle = loadedShape.Title;
-        if (retrievedTitle != customTitle)
-            throw new Exception($"Title mismatch. Expected: {customTitle}, Got: {retrievedTitle}");
+        // Verify that the Title property was preserved.
+        if (loadedShape.Title != "MyCustomMetadata")
+            throw new InvalidOperationException("Shape title metadata was not preserved.");
 
-        // Indicate success.
-        Console.WriteLine("Shape title stored and retrieved successfully: " + retrievedTitle);
+        // Output the retrieved title (no user interaction required).
+        Console.WriteLine($"Retrieved shape title: {loadedShape.Title}");
     }
 }
