@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -7,61 +6,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Example 1: Attempt to insert a text input form field with an empty name.
-        string emptyName = string.Empty;
-        try
-        {
-            InsertTextInputSafe(builder, emptyName, "Enter your text here", 50);
-        }
-        catch (ArgumentException ex)
-        {
-            // Log a warning instead of throwing.
-            Console.WriteLine($"Warning: {ex.Message}");
-        }
+        // Attempt to insert a text input form field with an empty name.
+        InsertFormField(builder, "", () =>
+            builder.InsertTextInput("", TextFormFieldType.Regular, "", "Placeholder for empty name", 0));
 
         // Insert a valid text input form field.
-        InsertTextInputSafe(builder, "UserName", "Enter your name", 50);
+        InsertFormField(builder, "ValidTextField", () =>
+            builder.InsertTextInput("ValidTextField", TextFormFieldType.Regular, "", "Default text", 50));
 
-        // Example 2: Attempt to insert a checkbox form field with an empty name.
-        try
-        {
-            InsertCheckBoxSafe(builder, emptyName, false, 20);
-        }
-        catch (ArgumentException ex)
-        {
-            Console.WriteLine($"Warning: {ex.Message}");
-        }
+        // Attempt to insert a checkbox form field with an empty name.
+        InsertFormField(builder, "", () =>
+            builder.InsertCheckBox("", false, 20));
 
         // Insert a valid checkbox form field.
-        InsertCheckBoxSafe(builder, "AgreeTerms", false, 20);
+        InsertFormField(builder, "ValidCheckBox", () =>
+            builder.InsertCheckBox("ValidCheckBox", true, 20));
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FormFieldsExample.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Save the document.
+        doc.Save("FormFieldsOutput.docx");
     }
 
-    // Inserts a text input form field after validating the field name.
-    private static void InsertTextInputSafe(DocumentBuilder builder, string name, string placeholder, int maxLength)
+    // Helper method that validates the form field name before insertion.
+    private static void InsertFormField(DocumentBuilder builder, string name, Action insertAction)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Form field name cannot be empty.");
+        if (string.IsNullOrEmpty(name))
+        {
+            // Log a warning and skip insertion when the name is empty.
+            Console.WriteLine("Warning: Attempted to insert a form field with an empty name. Skipping insertion.");
+            return;
+        }
 
-        // Insert the text input form field using the Aspose.Words API.
-        builder.InsertTextInput(name, TextFormFieldType.Regular, "", placeholder, maxLength);
-    }
-
-    // Inserts a checkbox form field after validating the field name.
-    private static void InsertCheckBoxSafe(DocumentBuilder builder, string name, bool defaultChecked, int size)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Form field name cannot be empty.");
-
-        // Insert the checkbox form field using the Aspose.Words API.
-        builder.InsertCheckBox(name, defaultChecked, size);
+        // Name is valid; perform the insertion.
+        insertAction();
     }
 }

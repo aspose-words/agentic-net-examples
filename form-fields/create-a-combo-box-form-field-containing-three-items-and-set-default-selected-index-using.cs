@@ -4,24 +4,25 @@ using Aspose.Words.Fields;
 
 namespace AsposeWordsFormFieldsExample
 {
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
             // Create a new empty document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add a prompt before the combo box.
+            // Write a prompt before the combo box.
             builder.Write("Pick a fruit: ");
 
             // Define the items that will appear in the combo box.
             string[] items = { "Apple", "Banana", "Cherry" };
 
-            // Insert the combo box form field with a name, the items, and the default selected index (0 = "Apple").
-            FormField comboBox = builder.InsertComboBox("FruitCombo", items, 0);
+            // Insert a combo box form field with a name, the items, and set the default selected index.
+            // In this example the second item ("Banana") is selected by default (index 1).
+            FormField comboBox = builder.InsertComboBox("FruitCombo", items, 1);
 
-            // Save the document to disk.
+            // Save the document to the file system.
             doc.Save("ComboBoxFormField.docx");
         }
     }

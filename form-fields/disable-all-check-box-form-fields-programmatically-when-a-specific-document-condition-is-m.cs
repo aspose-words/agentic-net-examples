@@ -10,28 +10,48 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will act as the condition trigger.
-        builder.Writeln("Condition: DisableAll");
+        // Insert a text input form field that will act as the condition trigger.
+        // The field is named "ConditionField".
+        builder.Write("Condition (type 'Disable' to deactivate check boxes): ");
+        FormField conditionField = builder.InsertTextInput(
+            "ConditionField",
+            TextFormFieldType.Regular,
+            "",
+            "Enable", // placeholder text
+            0);
+        // Simulate user input by setting the result directly.
+        conditionField.Result = "Disable";
 
-        // Insert a few checkbox form fields.
-        builder.Write("Check 1: ");
-        builder.InsertCheckBox("CheckBox1", false, 0);
-        builder.Writeln();
+        builder.InsertBreak(BreakType.ParagraphBreak);
 
-        builder.Write("Check 2: ");
-        builder.InsertCheckBox("CheckBox2", true, 0);
-        builder.Writeln();
+        // Insert several check box form fields.
+        builder.Write("Option A: ");
+        builder.InsertCheckBox("CheckBoxA", false, 0);
+        builder.InsertBreak(BreakType.ParagraphBreak);
 
-        // Determine whether the specific condition is present in the document.
-        bool conditionMet = doc.GetText().Contains("DisableAll");
+        builder.Write("Option B: ");
+        builder.InsertCheckBox("CheckBoxB", true, 0);
+        builder.InsertBreak(BreakType.ParagraphBreak);
 
-        if (conditionMet)
+        builder.Write("Option C: ");
+        builder.InsertCheckBox("CheckBoxC", false, 0);
+        builder.InsertBreak(BreakType.ParagraphBreak);
+
+        // Determine whether the condition is met.
+        // The condition is satisfied when the text input field's result equals "Disable".
+        bool shouldDisable = false;
+        FormField fetchedCondition = doc.Range.FormFields["ConditionField"];
+        if (fetchedCondition != null && string.Equals(fetchedCondition.Result, "Disable", StringComparison.OrdinalIgnoreCase))
         {
-            // Iterate through all form fields in the document.
-            FormFieldCollection formFields = doc.Range.FormFields;
-            foreach (FormField field in formFields)
+            shouldDisable = true;
+        }
+
+        // If the condition is met, disable all check box form fields.
+        if (shouldDisable)
+        {
+            foreach (FormField field in doc.Range.FormFields)
             {
-                // Identify checkbox form fields and disable them.
+                // Only process check box fields.
                 if (field.Type == FieldType.FieldFormCheckBox)
                 {
                     field.Enabled = false;

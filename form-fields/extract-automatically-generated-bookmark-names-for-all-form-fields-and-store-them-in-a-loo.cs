@@ -7,58 +7,58 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to insert form fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Insert a combo box form field.
+        builder.Write("Choose a fruit: ");
+        FormField comboBox = builder.InsertComboBox("FruitCombo", new[] { "Apple", "Banana", "Cherry" }, 0);
+        builder.InsertBreak(BreakType.ParagraphBreak);
+
+        // Insert a check box form field.
+        builder.Write("Accept terms: ");
+        FormField checkBox = builder.InsertCheckBox("AcceptCheck", false, 50);
+        builder.InsertBreak(BreakType.ParagraphBreak);
+
         // Insert a text input form field.
         builder.Write("Enter your name: ");
-        FormField textField = builder.InsertTextInput(
-            "NameField",                     // field name (bookmark will be created with this name)
-            TextFormFieldType.Regular,       // field type
-            "",                              // default text (empty)
-            "John Doe",                      // placeholder text
-            50);                             // maximum length
-
-        // Insert a checkbox form field.
+        FormField textInput = builder.InsertTextInput("NameInput", TextFormFieldType.Regular, "", "John Doe", 50);
         builder.InsertBreak(BreakType.ParagraphBreak);
-        builder.Write("Accept terms: ");
-        FormField checkBox = builder.InsertCheckBox(
-            "AcceptTerms",   // field name
-            false,           // default unchecked
-            50);             // size in points
 
-        // Insert a combo box (dropdown) form field.
-        builder.InsertBreak(BreakType.ParagraphBreak);
-        builder.Write("Select country: ");
-        string[] countries = { "USA", "Canada", "Mexico" };
-        FormField comboBox = builder.InsertComboBox(
-            "Country",       // field name
-            countries,       // items
-            0);              // selected index
-
-        // Save the document so that the form fields (and their bookmarks) are persisted.
+        // Save the document (optional, demonstrates lifecycle rule).
         doc.Save("FormFields.docx");
 
-        // Ensure that at least one form field exists before processing.
+        // Access the collection of form fields.
         FormFieldCollection formFields = doc.Range.FormFields;
-        if (formFields.Count == 0)
-            throw new InvalidOperationException("The document does not contain any form fields.");
 
-        // Extract automatically generated bookmark names (they match the form field names)
-        // and store them in a lookup dictionary.
-        var bookmarkLookup = new Dictionary<string, FormField>(StringComparer.OrdinalIgnoreCase);
+        // Validate that at least one form field exists.
+        if (formFields.Count == 0)
+            throw new InvalidOperationException("No form fields were found in the document.");
+
+        // Create a lookup dictionary where the key is the automatically generated bookmark name.
+        Dictionary<string, FormField> bookmarkLookup = new Dictionary<string, FormField>(StringComparer.OrdinalIgnoreCase);
+
+        // Populate the dictionary.
         foreach (FormField field in formFields)
         {
-            // The Name property is the bookmark name created by the Insert* methods.
-            if (!string.IsNullOrEmpty(field.Name))
-                bookmarkLookup[field.Name] = field;
+            // The name of the form field is also the name of the automatically created bookmark.
+            string bookmarkName = field.Name;
+
+            // Ensure the bookmark actually exists in the document.
+            if (doc.Range.Bookmarks[bookmarkName] == null)
+                throw new InvalidOperationException($"Bookmark '{bookmarkName}' was not found.");
+
+            bookmarkLookup[bookmarkName] = field;
         }
 
-        // Demonstrate the lookup dictionary by printing each bookmark name and its field type.
+        // Example usage: print each bookmark name and its form field type.
         foreach (KeyValuePair<string, FormField> entry in bookmarkLookup)
         {
-            Console.WriteLine($"Bookmark: {entry.Key}, Field Type: {entry.Value.Type}");
+            Console.WriteLine($"Bookmark: {entry.Key}, FormField Type: {entry.Value.Type}");
         }
+
+        // Save the document again after processing (demonstrates saving after modifications if any).
+        doc.Save("FormFields_Processed.docx");
     }
 }

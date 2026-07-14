@@ -1,45 +1,49 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields; // Required for FormField
+using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Simulated external configuration: desired checked state for the checkbox.
-        bool configChecked = true; // This could be read from a file, environment variable, etc.
-
-        // -----------------------------------------------------------------
         // Create a new document and insert a checkbox form field.
-        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Write("Please tick the box: ");
+        builder.Write("Toggle this check box: ");
+        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 20);
+        doc.Save("FormWithCheckBox.docx");
 
-        // Insert a checkbox named "MyCheckBox" with an initial unchecked state.
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 0);
+        // Read external configuration (environment variable).
+        string env = Environment.GetEnvironmentVariable("CHECKBOX_CHECKED");
+        bool configChecked = false;
+        if (!string.IsNullOrEmpty(env) && bool.TryParse(env, out bool parsed))
+        {
+            configChecked = parsed;
+        }
 
-        // Save the initial document.
-        doc.Save("FormFields.docx");
+        // Locate the checkbox by name.
+        FormField targetField = doc.Range.FormFields["MyCheckBox"];
+        if (targetField == null)
+        {
+            throw new InvalidOperationException("Checkbox form field 'MyCheckBox' not found.");
+        }
 
-        // -----------------------------------------------------------------
-        // Load the document and toggle the checkbox based on the configuration.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document("FormFields.docx");
+        // Ensure the field is a checkbox.
+        if (targetField.Type != FieldType.FieldFormCheckBox)
+        {
+            throw new InvalidOperationException("Form field 'MyCheckBox' is not a checkbox.");
+        }
 
-        // Retrieve the checkbox form field by its name.
-        FormField field = loadedDoc.Range.FormFields["MyCheckBox"];
-        if (field == null)
-            throw new InvalidOperationException("Form field 'MyCheckBox' was not found in the document.");
+        // Set the checked state based on the configuration.
+        targetField.Checked = configChecked;
 
-        // Apply the configuration value to the Checked property.
-        field.Checked = configChecked;
+        // Validate the update.
+        if (targetField.Checked != configChecked)
+        {
+            throw new InvalidOperationException("Failed to set the checkbox state.");
+        }
 
-        // Validate that the property was set correctly.
-        if (field.Checked != configChecked)
-            throw new InvalidOperationException("Failed to update the checked state of the form field.");
-
-        // Save the updated document.
-        loadedDoc.Save("FormFields_Updated.docx");
+        // Save the modified document.
+        doc.Save("FormWithCheckBox_Toggled.docx");
     }
 }

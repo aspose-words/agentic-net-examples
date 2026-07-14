@@ -1,60 +1,50 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Fields;   // Required for FormField and TextFormFieldType
+using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Path for the sample document.
-        const string filePath = "FormFieldSample.docx";
+        // Path for the temporary document.
+        const string filePath = "FormFieldResult.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create a new document and insert a text input form field.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // Create a new document and add a text input field.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert some introductory text.
-        builder.Writeln("Please enter your name:");
-
-        // Insert a text input form field named "MyTextField".
-        // Parameters: name, type, default text, placeholder text, max length.
+        // Insert a text input form field with a name.
         FormField textField = builder.InsertTextInput(
-            "MyTextField",
-            TextFormFieldType.Regular,
-            "",
-            "John Doe",
-            50);
+            "MyTextField",                     // field name
+            TextFormFieldType.Regular,         // field type
+            "",                                // default text (empty)
+            "Placeholder",                     // text shown when empty
+            0);                                // maximum length (0 = unlimited)
 
-        // Save the document so it can be loaded later.
+        // Set the field's result so we have a value to read later.
+        textField.Result = "Hello Aspose";
+
+        // Save the document to disk.
         doc.Save(filePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document from disk.
-        // -----------------------------------------------------------------
+        // -------------------------------------------------
+        // Load the document and retrieve the form field.
+        // -------------------------------------------------
         Document loadedDoc = new Document(filePath);
 
-        // -----------------------------------------------------------------
-        // 3. Retrieve the form field by its name.
-        // -----------------------------------------------------------------
+        // Access the form field collection by name.
         FormField retrievedField = loadedDoc.Range.FormFields["MyTextField"];
 
         // Validate that the field exists.
         if (retrievedField == null)
-        {
-            throw new InvalidOperationException("Form field 'MyTextField' was not found in the document.");
-        }
+            throw new InvalidOperationException("Form field 'MyTextField' was not found.");
 
-        // -----------------------------------------------------------------
-        // 4. Read the Result property of the form field.
-        // -----------------------------------------------------------------
-        string fieldResult = retrievedField.Result;
+        // Read the Result property of the text input field.
+        string fieldResult = retrievedField.Result ?? string.Empty;
 
         // Output the result to the console.
-        Console.WriteLine($"Result of form field '{retrievedField.Name}': \"{fieldResult}\"");
-
-        // Save the processed document.
-        loadedDoc.Save("FormFieldSample_Processed.docx");
+        Console.WriteLine($"Form field '{retrievedField.Name}' result: {fieldResult}");
     }
 }

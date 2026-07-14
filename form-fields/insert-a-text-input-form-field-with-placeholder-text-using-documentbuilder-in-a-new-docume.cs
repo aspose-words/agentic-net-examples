@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-namespace AsposeWordsFormFieldExample
+namespace FormFieldExample
 {
     public class Program
     {
@@ -15,11 +15,11 @@ namespace AsposeWordsFormFieldExample
             // Write a prompt before the form field.
             builder.Write("Please enter your name: ");
 
-            // Insert a text input form field.
-            // Parameters: name, type, format, placeholder text, maxLength (0 = unlimited).
+            // Insert a text input form field with placeholder text.
+            // Parameters: name, type, format, placeholder text, max length (0 = unlimited).
             builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "Enter your name here", 0);
 
-            // Save the document.
+            // Save the document to a file.
             doc.Save("FormFieldTextInput.docx");
         }
     }

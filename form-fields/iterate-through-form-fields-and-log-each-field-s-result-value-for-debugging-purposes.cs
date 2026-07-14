@@ -11,45 +11,48 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a text input form field.
+        builder.Write("Enter your name: ");
         FormField textField = builder.InsertTextInput(
-            "TextField",                     // field name
+            "NameField",                     // field name
             TextFormFieldType.Regular,       // field type
             "",                              // default text (empty)
-            "Placeholder text",              // placeholder text
+            "John Doe",                      // placeholder text
             50);                             // maximum length
 
         // Insert a checkbox form field.
+        builder.InsertBreak(BreakType.ParagraphBreak);
+        builder.Write("Accept terms: ");
         FormField checkBox = builder.InsertCheckBox(
-            "CheckBox",                      // field name
+            "AcceptTerms",                   // field name
             false,                           // default unchecked
-            50);                             // size in points
+            15);                             // size in points
 
-        // Insert a combo box (dropdown) form field.
+        // Insert a dropdown (combo box) form field.
+        builder.InsertBreak(BreakType.ParagraphBreak);
+        builder.Write("Select a country: ");
         FormField comboBox = builder.InsertComboBox(
-            "DropDown",                      // field name
-            new[] { "Option1", "Option2", "Option3" }, // items
+            "CountryBox",                    // field name
+            new[] { "USA", "Canada", "UK" }, // items
             0);                              // default selected index
 
-        // Set some example values.
-        textField.Result = "Sample text";
-        checkBox.Checked = true;               // will affect Result as "1"
-        comboBox.DropDownSelectedIndex = 2;    // selects "Option3"
-
-        // Access the collection of all form fields in the document.
+        // Ensure that at least one form field exists.
         FormFieldCollection formFields = doc.Range.FormFields;
-
-        // Validate that at least one form field exists.
         if (formFields.Count == 0)
             throw new InvalidOperationException("The document does not contain any form fields.");
 
-        // Iterate through each form field and log its Result value.
+        // Iterate through all form fields and log their Result values.
         foreach (FormField field in formFields)
         {
-            // For debugging purposes we output the field name and its current result.
-            Console.WriteLine($"Field '{field.Name}' Result: {field.Result}");
+            // Guard against null (should not happen, but follows nullable safety rules).
+            if (field != null)
+            {
+                // For checkbox fields, Result is "1" (checked) or "0" (unchecked).
+                // For text and dropdown fields, Result contains the displayed text.
+                Console.WriteLine($"Field Name: {field.Name}, Result: {field.Result}");
+            }
         }
 
-        // Save the document to disk.
-        doc.Save("FormFieldsOutput.docx");
+        // Save the document (required by the validation rules).
+        doc.Save("FormFields.docx");
     }
 }
