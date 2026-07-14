@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -9,24 +8,17 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Build initial content so we have something to insert before.
+        // Use DocumentBuilder to add initial content.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Original content of the document.");
+        builder.Writeln("Original text.");
 
-        // Insert new text at the very beginning of the document's range.
-        DocumentBuilder inserter = new DocumentBuilder(doc);
-        inserter.MoveToDocumentStart();               // Position the cursor at the start.
-        inserter.Write("Inserted at start. ");        // Write the new text.
+        // Move the cursor to the very start of the document.
+        builder.MoveToDocumentStart();
 
-        // Optional verification: the document text should start with the inserted string.
-        string fullText = doc.GetText();
-        if (!fullText.StartsWith("Inserted at start.", StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException("Text was not inserted at the beginning of the range.");
-        }
+        // Insert new text at the beginning of the document's range.
+        builder.Write("Inserted text ");
 
-        // Save the modified document to the local file system.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "InsertedText.docx");
-        doc.Save(outputPath);
+        // Save the modified document.
+        doc.Save("Output.docx");
     }
 }

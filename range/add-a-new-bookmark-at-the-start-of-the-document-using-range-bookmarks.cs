@@ -7,40 +7,31 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to insert content and a bookmark at the very start of the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder's cursor to the beginning of the document.
+        // Move the builder cursor to the very beginning of the document.
         builder.MoveToDocumentStart();
 
-        // Start a bookmark named "StartBookmark".
-        builder.StartBookmark("StartBookmark");
+        // Insert a bookmark that starts and ends at the document start.
+        const string bookmarkName = "StartBookmark";
+        builder.StartBookmark(bookmarkName);
+        builder.EndBookmark(bookmarkName);
 
-        // Insert some text that will be inside the bookmark.
-        builder.Write("This text is inside the start bookmark.");
-
-        // End the bookmark.
-        builder.EndBookmark("StartBookmark");
-
-        // Optionally add more content after the bookmark.
-        builder.Writeln();
-        builder.Write("Additional document content.");
+        // Add some sample text after the bookmark so the document is not empty.
+        builder.Writeln("This is a sample document with a bookmark at the start.");
 
         // Verify that the bookmark was added using the Range.Bookmarks collection.
-        Bookmark bookmark = doc.Range.Bookmarks["StartBookmark"];
-        if (bookmark != null)
+        BookmarkCollection bookmarks = doc.Range.Bookmarks;
+        Console.WriteLine($"Total bookmarks: {bookmarks.Count}");
+        if (bookmarks.Count > 0)
         {
-            Console.WriteLine($"Bookmark '{bookmark.Name}' added successfully. Text: \"{bookmark.Text}\"");
-        }
-        else
-        {
-            Console.WriteLine("Failed to add the bookmark.");
+            Console.WriteLine($"First bookmark name: {bookmarks[0].Name}");
+            Console.WriteLine($"First bookmark text: \"{bookmarks[0].Text.Trim()}\"");
         }
 
         // Save the document to the local file system.
-        string outputPath = "Output.docx";
+        const string outputPath = "Output.docx";
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to '{outputPath}'.");
+        Console.WriteLine($"Document saved to \"{outputPath}\".");
     }
 }

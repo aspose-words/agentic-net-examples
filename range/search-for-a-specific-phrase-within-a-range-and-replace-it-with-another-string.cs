@@ -12,22 +12,21 @@ public class Program
 
         // Add sample text that contains the phrase we want to replace.
         builder.Writeln("This is a sample document. The quick brown fox jumps over the lazy dog.");
-        builder.Writeln("Aspose.Words makes document processing easy. Replace the phrase \"lazy dog\" now.");
+        builder.Writeln("Find and replace the phrase \"lazy dog\" with \"energetic cat\".");
 
-        // Define the phrase to search for and the replacement text.
+        // Define the phrase to search for and its replacement.
         string searchPhrase = "lazy dog";
-        string replacementText = "energetic cat";
+        string replacement = "energetic cat";
 
-        // Perform a simple find-and-replace on the whole document range.
-        int replacementsMade = doc.Range.Replace(searchPhrase, replacementText);
+        // Perform the replacement on the whole-document range.
+        int replacementsMade = doc.Range.Replace(searchPhrase, replacement);
 
-        // Optional verification (can be removed if not needed).
-        Console.WriteLine($"Replacements performed: {replacementsMade}");
-        Console.WriteLine("Resulting document text:");
+        // Output the result of the operation.
+        Console.WriteLine($"Replacements made: {replacementsMade}");
+        Console.WriteLine("Updated document text:");
         Console.WriteLine(doc.GetText().Trim());
 
-        // Save the modified document to the local file system.
-        string outputPath = "ModifiedDocument.docx";
-        doc.Save(outputPath);
+        // Save the modified document.
+        doc.Save("Output.docx");
     }
 }

@@ -5,30 +5,28 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder for editing.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a bookmark with some text inside it.
-        string bookmarkName = "MyBookmark";
+        const string bookmarkName = "MyBookmark";
         builder.StartBookmark(bookmarkName);
-        builder.Write("This text will be cleared.");
+        builder.Write("Text inside the bookmark.");
         builder.EndBookmark(bookmarkName);
 
-        // Save the original document (optional, for reference).
-        doc.Save("Original.docx");
-
-        // Retrieve the bookmark by name.
+        // Retrieve the bookmark from the document.
         Bookmark bookmark = doc.Range.Bookmarks[bookmarkName];
 
-        // Clear the text inside the bookmark without removing the bookmark itself.
+        // Clear the text that is enclosed by the bookmark.
+        // This does not remove the bookmark itself.
         bookmark.Text = string.Empty;
 
-        // Save the modified document.
-        doc.Save("ClearedBookmark.docx");
+        // Save the resulting document to verify the bookmark remains.
+        const string outputPath = "ClearedBookmark.docx";
+        doc.Save(outputPath);
 
-        // Output the document's full text to verify that the bookmark remains but its content is empty.
-        Console.WriteLine("Document text after clearing bookmark content:");
-        Console.WriteLine(doc.GetText());
+        // Output a simple confirmation.
+        Console.WriteLine($"Bookmark \"{bookmarkName}\" text cleared. Document saved to {outputPath}.");
     }
 }

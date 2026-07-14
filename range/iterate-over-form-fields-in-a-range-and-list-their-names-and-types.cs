@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-namespace AsposeWordsRangeExample
+namespace FormFieldRangeExample
 {
     public class Program
     {
@@ -27,17 +27,15 @@ namespace AsposeWordsRangeExample
             FormField textInput = builder.InsertTextInput("MyTextInput", TextFormFieldType.Regular, "", "Placeholder", 50);
             builder.InsertBreak(BreakType.ParagraphBreak);
 
-            // Get the collection of all form fields in the whole document range.
+            // Iterate over all form fields in the document's range and output their name and type.
             FormFieldCollection formFields = doc.Range.FormFields;
-
-            // Iterate over the collection and print each field's name and type.
             foreach (FormField field in formFields)
             {
-                Console.WriteLine($"Form field name: \"{field.Name}\", type: {field.Type}");
+                Console.WriteLine($"Form field name: {field.Name}, type: {field.Type}");
             }
 
-            // Save the document (optional, demonstrates that the document was created).
-            doc.Save("FormFieldsSample.docx");
+            // Save the document locally (optional, demonstrates saving workflow).
+            doc.Save("FormFields.docx");
         }
     }
 }

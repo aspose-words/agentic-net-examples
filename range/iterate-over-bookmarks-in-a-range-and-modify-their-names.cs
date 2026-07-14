@@ -11,25 +11,27 @@ namespace BookmarkRangeExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add sample bookmarks to the document.
+            // Insert a few bookmarks with some text inside each.
             for (int i = 1; i <= 3; i++)
             {
-                string bookmarkName = $"MyBookmark_{i}";
+                string bookmarkName = $"Bookmark_{i}";
                 builder.StartBookmark(bookmarkName);
                 builder.Write($"Text inside {bookmarkName}.");
                 builder.EndBookmark(bookmarkName);
                 builder.Writeln(); // Add a line break after each bookmark.
             }
 
-            // Iterate over all bookmarks in the document's range and modify their names.
+            // Get the collection of bookmarks that belong to the whole document range.
             BookmarkCollection bookmarks = doc.Range.Bookmarks;
+
+            // Iterate over each bookmark and modify its name.
             foreach (Bookmark bookmark in bookmarks)
             {
-                // Append "_Modified" to each bookmark name.
-                bookmark.Name = $"{bookmark.Name}_Modified";
+                // Append "_Renamed" to the original bookmark name.
+                bookmark.Name = $"{bookmark.Name}_Renamed";
             }
 
-            // Save the modified document.
+            // Save the modified document to disk.
             doc.Save("ModifiedBookmarks.docx");
         }
     }

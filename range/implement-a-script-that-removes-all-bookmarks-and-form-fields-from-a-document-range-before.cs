@@ -2,43 +2,40 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-namespace AsposeWordsRangeCleanup
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert sample text with bookmarks.
+        for (int i = 1; i <= 3; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Add some text with a bookmark.
-            builder.StartBookmark("SampleBookmark");
-            builder.Write("This text is inside a bookmark.");
-            builder.EndBookmark("SampleBookmark");
-            builder.Writeln();
-
-            // Insert a check box form field.
-            builder.InsertCheckBox("SampleCheckBox", false, 50);
-            builder.Writeln();
-
-            // Insert a combo box form field.
-            builder.InsertComboBox("SampleComboBox", new[] { "Option1", "Option2", "Option3" }, 0);
-            builder.Writeln();
-
-            // At this point the document contains bookmarks and form fields.
-            // Remove all bookmarks from the whole document range.
-            doc.Range.Bookmarks.Clear();
-
-            // Remove all form fields from the whole document range.
-            doc.Range.FormFields.Clear();
-
-            // Save the cleaned document.
-            const string outputPath = "CleanedDocument.docx";
-            doc.Save(outputPath);
-
-            // Indicate completion.
-            Console.WriteLine($"Document saved to '{outputPath}' with all bookmarks and form fields removed.");
+            string bmName = $"Bookmark_{i}";
+            builder.StartBookmark(bmName);
+            builder.Write($"Text inside {bmName}. ");
+            builder.EndBookmark(bmName);
         }
+
+        // Insert a few form fields.
+        builder.Writeln();
+        FormField combo = builder.InsertComboBox("ComboBox", new[] { "One", "Two", "Three" }, 0);
+        combo.CalculateOnExit = true;
+        builder.Writeln();
+        FormField check = builder.InsertCheckBox("CheckBox", false, 50);
+        builder.Writeln();
+        FormField text = builder.InsertTextInput("TextInput", TextFormFieldType.Regular, "", "Placeholder", 50);
+
+        // At this point the document contains bookmarks and form fields.
+        // Remove all bookmarks from the whole document range.
+        doc.Range.Bookmarks.Clear();
+
+        // Remove all form fields from the whole document range.
+        doc.Range.FormFields.Clear();
+
+        // Save the cleaned document.
+        doc.Save("Output.docx");
     }
 }

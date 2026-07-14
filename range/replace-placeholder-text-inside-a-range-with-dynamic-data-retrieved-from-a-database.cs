@@ -7,36 +7,40 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document with placeholder text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello {{Name}}!");
+        builder.Writeln("Your order number is {{OrderId}}.");
+        builder.Writeln("Thank you for shopping with us.");
 
-        // Write some placeholder text that will be replaced later.
-        builder.Writeln("Dear _FullName_,");
-        builder.Writeln("Welcome to _Company_.");
-        builder.Writeln("Your employee ID is _EmployeeID_.");
+        // Simulate retrieving dynamic data from a database using a DataTable.
+        DataTable dataTable = GetSampleData();
 
-        // Simulate retrieving data from a database.
-        // In a real scenario this DataTable would be filled by a DB query.
-        DataTable data = new DataTable();
-        data.Columns.Add("FullName", typeof(string));
-        data.Columns.Add("Company", typeof(string));
-        data.Columns.Add("EmployeeID", typeof(string));
-        data.Rows.Add("John Doe", "Acme Corp", "A12345");
+        // Assume the first row contains the data we need.
+        DataRow row = dataTable.Rows[0];
+        string name = row["Name"].ToString();
+        string orderId = row["OrderId"].ToString();
 
-        // Extract the values from the first (and only) row.
-        DataRow row = data.Rows[0];
-        string fullName = row["FullName"].ToString();
-        string company = row["Company"].ToString();
-        string employeeId = row["EmployeeID"].ToString();
-
-        // Replace the placeholders in the whole document range.
-        // The Replace method performs a case‑insensitive search.
-        doc.Range.Replace("_FullName_", fullName);
-        doc.Range.Replace("_Company_", company);
-        doc.Range.Replace("_EmployeeID_", employeeId);
+        // Replace placeholders in the whole document range.
+        // The placeholders are case‑insensitive by default.
+        doc.Range.Replace("{{Name}}", name);
+        doc.Range.Replace("{{OrderId}}", orderId);
 
         // Save the resulting document.
         doc.Save("Output.docx");
+    }
+
+    // Creates a DataTable that mimics data retrieved from a database.
+    private static DataTable GetSampleData()
+    {
+        DataTable table = new DataTable("CustomerOrders");
+        table.Columns.Add("Name", typeof(string));
+        table.Columns.Add("OrderId", typeof(string));
+
+        // Insert a sample record.
+        table.Rows.Add("John Doe", "A12345");
+
+        return table;
     }
 }

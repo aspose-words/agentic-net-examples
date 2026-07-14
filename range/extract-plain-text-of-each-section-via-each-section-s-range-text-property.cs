@@ -5,35 +5,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add content to two sections.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Content for the first section.
-        builder.Writeln("First section paragraph 1.");
-        builder.Writeln("First section paragraph 2.");
+        // Add text to the first section.
+        builder.Writeln("First section text.");
 
-        // Insert a new section break.
+        // Insert a new page section break and add text to the second section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("Second section text.");
 
-        // Content for the second section.
-        builder.Writeln("Second section content.");
+        // Insert a continuous section break and add text to the third section.
+        builder.InsertBreak(BreakType.SectionBreakContinuous);
+        builder.Writeln("Third section text.");
 
-        // Save the document locally.
-        string filePath = "Sample.docx";
+        // Save the document to the local file system.
+        const string filePath = "Sections.docx";
         doc.Save(filePath);
 
-        // Load the document back to demonstrate loading.
-        Document loadedDoc = new Document(filePath);
-
-        // Extract and display plain text of each section using Section.Range.Text.
-        for (int i = 0; i < loadedDoc.Sections.Count; i++)
+        // Iterate through each section and extract its plain text via the Section's Range.Text property.
+        for (int i = 0; i < doc.Sections.Count; i++)
         {
-            Section section = loadedDoc.Sections[i];
-            string sectionText = section.Range.Text.Trim(); // Trim control characters.
-            Console.WriteLine($"Section {i + 1} text:");
-            Console.WriteLine(sectionText);
-            Console.WriteLine("---");
+            Section section = doc.Sections[i];
+            // Trim removes trailing control characters such as section breaks.
+            string sectionText = section.Range.Text.Trim();
+            Console.WriteLine($"Section {i + 1} text: {sectionText}");
         }
     }
 }

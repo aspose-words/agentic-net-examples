@@ -1,56 +1,48 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;   // Needed for FormField, TextFormFieldType, FieldType
+using Aspose.Words.BuildingBlocks;
+using Aspose.Words.Fields;
 
-namespace AsposeWordsRangeExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Define file names in the current directory.
+        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "FormField.docx");
+        string updatedPath = Path.Combine(Directory.GetCurrentDirectory(), "FormFieldUpdated.docx");
+
+        // -------------------------------------------------
+        // Create a new document and insert a text input form field.
+        // -------------------------------------------------
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Write("Enter your name: ");
+        // Insert a regular text input form field with name "UserName".
+        builder.InsertTextInput("UserName", TextFormFieldType.Regular, "", "John Doe", 0);
+        builder.Writeln(); // End the paragraph.
+
+        // Save the original document.
+        doc.Save(originalPath);
+
+        // -------------------------------------------------
+        // Load the document and update the form field's value.
+        // -------------------------------------------------
+        Document loadedDoc = new Document(originalPath);
+
+        // Locate the form field by name within the document's range.
+        FormField textInput = loadedDoc.Range.FormFields["UserName"];
+        if (textInput != null)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Insert introductory text.
-            builder.Writeln("Please fill in the form field below:");
-
-            // Insert a text input form field.
-            // Parameters: name, type, format, default text, max length.
-            FormField textInput = builder.InsertTextInput(
-                "MyTextInput",
-                TextFormFieldType.Regular,
-                "",
-                "Initial value",
-                50);
-
-            // Save the original document (optional, just for reference).
-            doc.Save("Original.docx");
-
-            // ------------------------------------------------------------
-            // Update the value of the text input form field located in a given range.
-            // For this example, we use the range of the first section.
-            // ------------------------------------------------------------
-            Aspose.Words.Range targetRange = doc.FirstSection.Range;
-
-            // The range's FormFields collection contains all form fields that intersect the range.
-            if (targetRange.FormFields.Count > 0)
-            {
-                FormField fieldInRange = targetRange.FormFields[0];
-
-                // Verify that we have the expected field.
-                if (fieldInRange.Type == FieldType.FieldFormTextInput && fieldInRange.Name == "MyTextInput")
-                {
-                    // Update the field's result (the displayed value).
-                    fieldInRange.Result = "Updated value";
-                }
-            }
-
-            // Optionally update all fields in the document before saving.
-            doc.UpdateFields();
-
-            // Save the modified document.
-            doc.Save("Updated.docx");
+            // Update the displayed value of the text input form field.
+            textInput.Result = "Jane Smith";
         }
+
+        // Save the updated document.
+        loadedDoc.Save(updatedPath);
+
+        // Optional: output the new value to the console for verification.
+        Console.WriteLine($"Form field \"UserName\" updated to: {textInput?.Result}");
     }
 }
