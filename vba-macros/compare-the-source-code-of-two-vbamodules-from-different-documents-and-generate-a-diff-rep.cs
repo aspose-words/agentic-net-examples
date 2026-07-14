@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -9,7 +8,7 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Directory for temporary files.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
@@ -20,10 +19,10 @@ public class Program
 
         VbaModule module1 = new VbaModule
         {
-            Name = "Module1",
+            Name = "ModuleA",
             Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"Sub Test()
-    MsgBox ""Hello""
+            SourceCode = @"Sub Hello()
+    MsgBox ""Hello from Doc1!""
 End Sub"
         };
         doc1.VbaProject.Modules.Add(module1);
@@ -37,55 +36,59 @@ End Sub"
 
         VbaModule module2 = new VbaModule
         {
-            Name = "Module1",
+            Name = "ModuleA",
             Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"Sub Test()
-    MsgBox ""Hello World""
+            SourceCode = @"Sub Hello()
+    MsgBox ""Hello from Doc2!""
+    ' Added comment
 End Sub"
         };
         doc2.VbaProject.Modules.Add(module2);
         string doc2Path = Path.Combine(artifactsDir, "Doc2.docm");
         doc2.Save(doc2Path);
 
-        // Reload documents to simulate independent sources.
+        // Load the two documents for comparison.
         Document loadedDoc1 = new Document(doc1Path);
         Document loadedDoc2 = new Document(doc2Path);
 
-        // Retrieve modules (by name) from each document.
-        VbaModule loadedModule1 = loadedDoc1.VbaProject?.Modules["Module1"];
-        VbaModule loadedModule2 = loadedDoc2.VbaProject?.Modules["Module1"];
+        // Retrieve the modules (by name) – if not found, treat as empty source.
+        string moduleName = "ModuleA";
+        string source1 = GetModuleSource(loadedDoc1, moduleName);
+        string source2 = GetModuleSource(loadedDoc2, moduleName);
 
-        // Guard against missing modules or null source code.
-        string source1 = loadedModule1?.SourceCode ?? string.Empty;
-        string source2 = loadedModule2?.SourceCode ?? string.Empty;
-
-        // Split source code into lines for comparison.
+        // Generate a simple line‑by‑line diff report.
         string[] lines1 = source1.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
         string[] lines2 = source2.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
         int maxLines = Math.Max(lines1.Length, lines2.Length);
 
-        // Build diff report.
-        List<string> diffReport = new List<string>();
-        diffReport.Add("Diff report for VBA module 'Module1':");
+        Console.WriteLine("=== VBA Module Diff Report ===");
         for (int i = 0; i < maxLines; i++)
         {
             string line1 = i < lines1.Length ? lines1[i] : string.Empty;
             string line2 = i < lines2.Length ? lines2[i] : string.Empty;
 
-            if (!string.Equals(line1, line2, StringComparison.Ordinal))
+            if (line1 != line2)
             {
-                diffReport.Add($"Line {i + 1}:");
-                diffReport.Add($"  Doc1: \"{line1}\"");
-                diffReport.Add($"  Doc2: \"{line2}\"");
+                Console.WriteLine($"Line {i + 1}:");
+                Console.WriteLine($"  Doc1: {line1}");
+                Console.WriteLine($"  Doc2: {line2}");
             }
         }
 
-        // If no differences were found, note that.
-        if (diffReport.Count == 1)
-            diffReport.Add("No differences found.");
+        // Clean up temporary files (optional).
+        // File.Delete(doc1Path);
+        // File.Delete(doc2Path);
+    }
 
-        // Output the diff report to console.
-        foreach (string line in diffReport)
-            Console.WriteLine(line);
+    // Helper to safely obtain a module's source code.
+    private static string GetModuleSource(Document doc, string moduleName)
+    {
+        if (doc.HasMacros && doc.VbaProject != null)
+        {
+            VbaModule module = doc.VbaProject.Modules[moduleName];
+            if (module != null && !string.IsNullOrEmpty(module.SourceCode))
+                return module.SourceCode;
+        }
+        return string.Empty;
     }
 }

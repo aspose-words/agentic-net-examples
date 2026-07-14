@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class Program
+public class RemoveVbaReferenceExample
 {
     public static void Main()
     {
@@ -14,7 +14,7 @@ public class Program
         vbaProject.Name = "SampleProject";
         doc.VbaProject = vbaProject;
 
-        // Add a simple VBA module so the project is not empty.
+        // Add a simple procedural module so the document is truly macro‑enabled.
         VbaModule module = new VbaModule
         {
             Name = "SampleModule",
@@ -26,23 +26,30 @@ public class Program
         // Access the references collection.
         VbaReferenceCollection references = doc.VbaProject.References;
 
-        // Record the initial reference count.
+        // Record the initial count of references.
         int initialCount = references.Count;
         Console.WriteLine($"Initial reference count: {initialCount}");
 
-        // If there is at least one reference, remove the first one.
+        // If there is at least one reference, remove the last one and confirm the count decreases.
         if (initialCount > 0)
         {
-            references.RemoveAt(0);
+            // Remove the reference at the last index.
+            references.RemoveAt(initialCount - 1);
+
             int afterRemovalCount = references.Count;
             Console.WriteLine($"Reference count after removal: {afterRemovalCount}");
+
+            // Simple validation that the count decreased by one.
+            Console.WriteLine(afterRemovalCount == initialCount - 1
+                ? "Reference removal confirmed."
+                : "Reference count did not decrease as expected.");
         }
         else
         {
-            Console.WriteLine("No references found to remove.");
+            Console.WriteLine("No references were present to remove.");
         }
 
         // Save the document in a macro‑enabled format.
-        doc.Save("Output.docm");
+        doc.Save("RemoveVbaReferenceResult.docm");
     }
 }

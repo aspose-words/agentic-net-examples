@@ -4,7 +4,7 @@ using System.IO.Compression;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
-public class ExportVbaModules
+public class Program
 {
     public static void Main()
     {
@@ -12,7 +12,7 @@ public class ExportVbaModules
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Path for the sample macro-enabled document.
+        // Path for the temporary macro-enabled document.
         string docPath = Path.Combine(outputDir, "Sample.docm");
 
         // Create a new blank document.
@@ -25,56 +25,51 @@ public class ExportVbaModules
         };
         doc.VbaProject = project;
 
-        // Create first VBA module.
+        // Add a couple of VBA modules with sample code.
         VbaModule module1 = new VbaModule
         {
-            Name = "Module1",
+            Name = "ModuleOne",
             Type = VbaModuleType.ProceduralModule,
-            SourceCode = "Sub Hello()\n    MsgBox \"Hello from Module1\"\nEnd Sub"
+            SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello from ModuleOne\"\nEnd Sub"
         };
-        doc.VbaProject.Modules.Add(module1);
-
-        // Create second VBA module.
         VbaModule module2 = new VbaModule
         {
-            Name = "Module2",
+            Name = "ModuleTwo",
             Type = VbaModuleType.ProceduralModule,
-            SourceCode = "Sub Goodbye()\n    MsgBox \"Goodbye from Module2\"\nEnd Sub"
+            SourceCode = "Sub GoodbyeWorld()\n    MsgBox \"Goodbye from ModuleTwo\"\nEnd Sub"
         };
+        doc.VbaProject.Modules.Add(module1);
         doc.VbaProject.Modules.Add(module2);
 
-        // Save the document in macro‑enabled format.
+        // Save the document in macro-enabled format.
         doc.Save(docPath);
 
-        // Load the saved document (demonstrates a typical workflow).
+        // Reload the document to ensure we work with persisted data.
         Document loadedDoc = new Document(docPath);
 
-        // Verify that the document actually contains macros.
+        // Verify that the document contains a VBA project.
         if (!loadedDoc.HasMacros || loadedDoc.VbaProject == null)
         {
             Console.WriteLine("No VBA project found in the document.");
             return;
         }
 
-        // Path for the resulting ZIP archive.
+        // Prepare the ZIP archive path.
         string zipPath = Path.Combine(outputDir, "VbaModules.zip");
 
-        // Create the ZIP archive and add each VBA module as a separate file.
+        // Create the ZIP archive and add each VBA module as a separate entry.
         using (FileStream zipStream = new FileStream(zipPath, FileMode.Create))
-        using (ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Update))
+        using (ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Create))
         {
             foreach (VbaModule vbaModule in loadedDoc.VbaProject.Modules)
             {
+                // Use the module name with .bas extension to preserve original filenames.
+                string entryName = $"{vbaModule.Name}.bas";
+
                 // Ensure source code is not null.
                 string source = vbaModule.SourceCode ?? string.Empty;
 
-                // Use the original module name with a .bas extension.
-                string entryName = $"{vbaModule.Name}.bas";
-
-                // Create a new entry in the ZIP archive.
                 ZipArchiveEntry entry = archive.CreateEntry(entryName);
-
-                // Write the module source code into the entry.
                 using (StreamWriter writer = new StreamWriter(entry.Open()))
                 {
                     writer.Write(source);

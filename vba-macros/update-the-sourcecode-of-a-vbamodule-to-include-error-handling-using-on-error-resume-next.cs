@@ -6,59 +6,52 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the original and updated macro-enabled documents.
-        const string originalPath = "MacroOriginal.docm";
-        const string updatedPath = "MacroUpdated.docm";
-
-        // 1. Create a blank document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // 2. Create a VBA project and assign it to the document.
-        VbaProject project = new VbaProject
+        // Create a new VBA project and assign it to the document.
+        VbaProject vbaProject = new VbaProject();
+        vbaProject.Name = "SampleProject";
+        doc.VbaProject = vbaProject;
+
+        // Create a new VBA module with simple macro code (no error handling).
+        VbaModule vbaModule = new VbaModule();
+        vbaModule.Name = "TestModule";
+        vbaModule.Type = VbaModuleType.ProceduralModule;
+        vbaModule.SourceCode = "Sub TestMacro()\n    MsgBox \"Hello\"\nEnd Sub";
+
+        // Add the module to the VBA project.
+        doc.VbaProject.Modules.Add(vbaModule);
+
+        // Save the document as a macro-enabled file.
+        string initialPath = "MacroWithoutErrorHandling.docm";
+        doc.Save(initialPath);
+
+        // Load the saved document (optional, can continue using the same instance).
+        Document loadedDoc = new Document(initialPath);
+
+        // Ensure the document has a VBA project and the target module exists.
+        if (loadedDoc.HasMacros && loadedDoc.VbaProject != null)
         {
-            Name = "SampleProject"
-        };
-        doc.VbaProject = project;
-
-        // 3. Create a VBA module with a simple macro.
-        VbaModule module = new VbaModule
-        {
-            Name = "SampleModule",
-            Type = VbaModuleType.ProceduralModule,
-            SourceCode = @"Sub HelloWorld()
-    MsgBox ""Hello, World!""
-End Sub"
-        };
-
-        // 4. Add the module to the VBA project.
-        doc.VbaProject.Modules.Add(module);
-
-        // 5. Save the document that now contains the macro.
-        doc.Save(originalPath);
-
-        // 6. Load the saved document to demonstrate updating the module source.
-        Document loadedDoc = new Document(originalPath);
-
-        // 7. Verify that the document has macros and at least one module.
-        if (loadedDoc.HasMacros && loadedDoc.VbaProject != null && loadedDoc.VbaProject.Modules.Count > 0)
-        {
-            // Retrieve the first module (or use a name lookup if preferred).
-            VbaModule targetModule = loadedDoc.VbaProject.Modules[0];
-
-            // Guard against null source code.
-            string currentCode = targetModule.SourceCode ?? string.Empty;
-
-            // Define the error‑handling statement.
-            const string errorHandling = "On Error Resume Next";
-
-            // Prepend the error‑handling line if it is not already present.
-            if (!currentCode.Contains(errorHandling))
+            VbaModule targetModule = loadedDoc.VbaProject.Modules["TestModule"];
+            if (targetModule != null)
             {
-                targetModule.SourceCode = errorHandling + "\r\n" + currentCode;
+                // Guard against null source code.
+                string source = targetModule.SourceCode ?? string.Empty;
+
+                // Add "On Error Resume Next" at the beginning if it's not already present.
+                if (!source.StartsWith("On Error Resume Next", StringComparison.OrdinalIgnoreCase))
+                {
+                    targetModule.SourceCode = "On Error Resume Next\n" + source;
+                }
             }
         }
 
-        // 8. Save the document with the updated VBA source.
+        // Save the updated document.
+        string updatedPath = "MacroWithErrorHandling.docm";
         loadedDoc.Save(updatedPath);
+
+        // Indicate completion.
+        Console.WriteLine("VBA module source code updated with error handling.");
     }
 }

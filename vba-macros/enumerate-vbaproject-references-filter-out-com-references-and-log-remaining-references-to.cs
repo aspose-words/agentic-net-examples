@@ -6,6 +6,9 @@ public class Program
 {
     public static void Main()
     {
+        // Path for the temporary macro-enabled document.
+        const string filePath = "Sample.docm";
+
         // Create a new blank document.
         Document doc = new Document();
 
@@ -16,7 +19,7 @@ public class Program
         };
         doc.VbaProject = vbaProject;
 
-        // Add a simple procedural module with some VBA code.
+        // Add a simple VBA module so the document actually contains a VBA project.
         VbaModule module = new VbaModule
         {
             Name = "Module1",
@@ -25,33 +28,28 @@ public class Program
         };
         doc.VbaProject.Modules.Add(module);
 
-        // Save the document as a macro‑enabled file.
-        const string filePath = "Sample.docm";
+        // Save the document in macro-enabled format.
         doc.Save(filePath);
 
         // Reload the document to work with the saved VBA project.
         Document loadedDoc = new Document(filePath);
 
-        // Get the collection of VBA references (if any).
-        VbaReferenceCollection references = loadedDoc.VbaProject?.References;
+        // Get the collection of VBA references.
+        VbaReferenceCollection references = loadedDoc.VbaProject.References;
 
-        if (references != null && references.Count > 0)
+        Console.WriteLine($"Total VBA references: {references.Count}");
+
+        // Enumerate references, filter out COM references, and log the remaining ones.
+        foreach (VbaReference reference in references)
         {
-            // Enumerate references, filter out COM references, and log the rest.
-            foreach (VbaReference reference in references)
+            // COM references are of types Registered, Original, or Control.
+            if (reference.Type != VbaReferenceType.Registered &&
+                reference.Type != VbaReferenceType.Original &&
+                reference.Type != VbaReferenceType.Control)
             {
-                // COM references are of types Registered, Original, or Control.
-                if (reference.Type != VbaReferenceType.Registered &&
-                    reference.Type != VbaReferenceType.Original &&
-                    reference.Type != VbaReferenceType.Control)
-                {
-                    Console.WriteLine($"Reference Type: {reference.Type}, LibId: {reference.LibId}");
-                }
+                // Non‑COM reference (e.g., Project type). Log its details.
+                Console.WriteLine($"Reference Type: {reference.Type}, LibId: {reference.LibId}");
             }
-        }
-        else
-        {
-            Console.WriteLine("No VBA references found in the document.");
         }
     }
 }

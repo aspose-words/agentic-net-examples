@@ -6,47 +6,60 @@ namespace AsposeWordsVbaExample
 {
     public class Program
     {
+        // Standardized logging routine to prepend to each VBA module.
+        private const string LoggingRoutine = 
+            "'=== Error Logging Routine ===\n" +
+            "Sub LogError()\n" +
+            "    Debug.Print \"Error at \" & Now\n" +
+            "End Sub\n\n";
+
         public static void Main()
         {
-            // Create a blank document.
+            // Create a new blank document.
             Document doc = new Document();
 
-            // Create a new VBA project and assign it to the document.
-            VbaProject vbaProject = new VbaProject();
-            vbaProject.Name = "SampleProject";
+            // Ensure the document has a VBA project.
+            VbaProject vbaProject = new VbaProject
+            {
+                Name = "SampleProject"
+            };
             doc.VbaProject = vbaProject;
 
-            // Create sample VBA modules with some code.
-            VbaModule module1 = new VbaModule();
-            module1.Name = "Module1";
-            module1.Type = VbaModuleType.ProceduralModule;
-            module1.SourceCode = "Sub HelloWorld()\n    MsgBox \"Hello, World!\"\nEnd Sub";
+            // Add sample VBA modules.
+            AddSampleModule(doc, "Module1", 
+                "Sub Test1()\n" +
+                "    MsgBox \"Hello from Test1\"\n" +
+                "End Sub\n");
 
-            VbaModule module2 = new VbaModule();
-            module2.Name = "Module2";
-            module2.Type = VbaModuleType.ProceduralModule;
-            module2.SourceCode = "Function Add(a As Integer, b As Integer) As Integer\n    Add = a + b\nEnd Function";
+            AddSampleModule(doc, "Module2", 
+                "Function AddNumbers(a As Integer, b As Integer) As Integer\n" +
+                "    AddNumbers = a + b\n" +
+                "End Function\n");
 
-            // Add the modules to the VBA project.
-            doc.VbaProject.Modules.Add(module1);
-            doc.VbaProject.Modules.Add(module2);
-
-            // Standardized logging routine to prepend to each module.
-            const string loggingRoutine = "' Standard error logging routine\nSub LogError(errMsg As String)\n    Debug.Print \"Error: \" & errMsg\nEnd Sub\n\n";
-
-            // Insert the logging routine at the beginning of each module's source code.
+            // Insert the logging routine at the beginning of each module.
             foreach (VbaModule module in doc.VbaProject.Modules)
             {
+                // Guard against null source code.
                 string originalSource = module.SourceCode ?? string.Empty;
-                if (!originalSource.StartsWith("' Standard error logging routine"))
-                {
-                    module.SourceCode = loggingRoutine + originalSource;
-                }
+
+                // Prepend the logging routine.
+                module.SourceCode = LoggingRoutine + originalSource;
             }
 
-            // Save the document as a macro-enabled .docm file.
-            string outputPath = "OutputWithLogging.docm";
-            doc.Save(outputPath);
+            // Save the document in a macro-enabled format.
+            doc.Save("OutputWithLogging.docm");
+        }
+
+        // Helper method to create and add a VBA module with given name and source code.
+        private static void AddSampleModule(Document doc, string moduleName, string sourceCode)
+        {
+            VbaModule module = new VbaModule
+            {
+                Name = moduleName,
+                Type = VbaModuleType.ProceduralModule,
+                SourceCode = sourceCode
+            };
+            doc.VbaProject.Modules.Add(module);
         }
     }
 }

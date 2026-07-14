@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Vba;
 
@@ -7,97 +6,98 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string sourceDocPath = Path.Combine(Directory.GetCurrentDirectory(), "Source.docm");
-        string targetDocxPath = Path.Combine(Directory.GetCurrentDirectory(), "Target.docx");
-        string resultDocPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docm");
+        // File names used in the current directory.
+        string sourceDocxPath = "SourceDocument.docx";
+        string macroSourceDocmPath = "MacroSource.docm";
+        string resultDocmPath = "ResultDocument.docm";
 
         // -----------------------------------------------------------------
-        // Step 1: Create a source macro-enabled document with a VBA project.
+        // Step 1: Create a blank DOCX document that will become the target.
         // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
+        Document targetDoc = new Document();
+        targetDoc.Save(sourceDocxPath); // Saved as DOCX (no macros yet).
 
-        // Create a new VBA project and assign it to the source document.
-        VbaProject sourceProject = new VbaProject
-        {
-            Name = "SourceProject"
-        };
-        sourceDoc.VbaProject = sourceProject;
+        // -----------------------------------------------------------------
+        // Step 2: Create a macro‑enabled source document containing sample modules.
+        // -----------------------------------------------------------------
+        Document macroSourceDoc = new Document();
 
-        // Create first VBA module.
+        // Create a new VBA project for the source document.
+        VbaProject sourceProject = new VbaProject { Name = "SourceProject" };
+        macroSourceDoc.VbaProject = sourceProject;
+
+        // First VBA module.
         VbaModule module1 = new VbaModule
         {
-            Name = "Module1",
+            Name = "ModuleOne",
             Type = VbaModuleType.ProceduralModule,
             SourceCode = @"
 Sub HelloWorld()
-    MsgBox ""Hello from Module1!""
+    MsgBox ""Hello from ModuleOne!""
 End Sub"
         };
-        sourceProject.Modules.Add(module1);
+        macroSourceDoc.VbaProject.Modules.Add(module1);
 
-        // Create second VBA module.
+        // Second VBA module.
         VbaModule module2 = new VbaModule
         {
-            Name = "Module2",
+            Name = "ModuleTwo",
             Type = VbaModuleType.ProceduralModule,
             SourceCode = @"
-Sub GoodbyeWorld()
-    MsgBox ""Goodbye from Module2!""
+Sub ShowDate()
+    MsgBox ""Today's date is "" & Date
 End Sub"
         };
-        sourceProject.Modules.Add(module2);
+        macroSourceDoc.VbaProject.Modules.Add(module2);
 
-        // Save the source document as a macro-enabled file.
-        sourceDoc.Save(sourceDocPath, SaveFormat.Docm);
+        // Save the macro source document as a macro‑enabled .docm file.
+        macroSourceDoc.Save(macroSourceDocmPath);
 
         // -----------------------------------------------------------------
-        // Step 2: Create a plain DOCX document that will receive the macros.
+        // Step 3: Load the target DOCX document and ensure it has a VBA project.
         // -----------------------------------------------------------------
-        Document plainDoc = new Document();
-        plainDoc.Save(targetDocxPath, SaveFormat.Docx);
+        Document target = new Document(sourceDocxPath);
 
-        // Load the DOCX file.
-        Document targetDoc = new Document(targetDocxPath);
-
-        // Ensure the target document has a VBA project; create one if absent.
-        if (!targetDoc.HasMacros || targetDoc.VbaProject == null)
+        if (target.VbaProject == null)
         {
-            VbaProject targetProject = new VbaProject
+            VbaProject newProject = new VbaProject { Name = "TargetProject" };
+            target.VbaProject = newProject;
+        }
+
+        // -----------------------------------------------------------------
+        // Step 4: Load the macro source document and copy selected modules.
+        // -----------------------------------------------------------------
+        Document source = new Document(macroSourceDocmPath);
+
+        // Copy "ModuleOne" if it does not already exist in the target.
+        VbaModule sourceModule = source.VbaProject.Modules["ModuleOne"];
+        if (sourceModule != null && target.VbaProject.Modules["ModuleOne"] == null)
+        {
+            VbaModule clonedModule = sourceModule.Clone();
+            target.VbaProject.Modules.Add(clonedModule);
+        }
+
+        // Optionally copy the second module (index 1) if present and not already in the target.
+        if (source.VbaProject.Modules.Count > 1)
+        {
+            VbaModule secondModule = source.VbaProject.Modules[1];
+            if (secondModule != null && target.VbaProject.Modules[secondModule.Name] == null)
             {
-                Name = "TargetProject"
-            };
-            targetDoc.VbaProject = targetProject;
+                VbaModule clonedSecond = secondModule.Clone();
+                target.VbaProject.Modules.Add(clonedSecond);
+            }
         }
 
         // -----------------------------------------------------------------
-        // Step 3: Copy selected modules from the source document into the target.
+        // Step 5: Save the modified document as a macro‑enabled .docm file.
         // -----------------------------------------------------------------
-        // Load the source document again to access its VBA modules.
-        Document loadedSource = new Document(sourceDocPath);
-
-        // Example: copy only "Module1".
-        VbaModule sourceModule = loadedSource.VbaProject.Modules["Module1"];
-        if (sourceModule != null)
-        {
-            VbaModule clonedModule = sourceModule.Clone();
-            // Optionally, rename the cloned module to avoid name clashes.
-            clonedModule.Name = "CopiedModule1";
-            targetDoc.VbaProject.Modules.Add(clonedModule);
-        }
-
-        // Example: copy "Module2" as well.
-        sourceModule = loadedSource.VbaProject.Modules["Module2"];
-        if (sourceModule != null)
-        {
-            VbaModule clonedModule = sourceModule.Clone();
-            clonedModule.Name = "CopiedModule2";
-            targetDoc.VbaProject.Modules.Add(clonedModule);
-        }
+        target.Save(resultDocmPath);
 
         // -----------------------------------------------------------------
-        // Step 4: Save the resulting document as a macro-enabled file.
+        // Validation (optional): display macro information.
         // -----------------------------------------------------------------
-        targetDoc.Save(resultDocPath, SaveFormat.Docm);
+        Document validationDoc = new Document(resultDocmPath);
+        Console.WriteLine($"Document has macros: {validationDoc.HasMacros}");
+        Console.WriteLine($"Number of VBA modules: {validationDoc.VbaProject?.Modules.Count ?? 0}");
     }
 }
