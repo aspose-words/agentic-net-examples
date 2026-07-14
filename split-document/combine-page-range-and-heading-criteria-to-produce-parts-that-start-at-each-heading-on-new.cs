@@ -1,83 +1,88 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+namespace SplitDocumentExample
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample document with headings that start on new pages.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // First heading – will cause a split because of the heading level and page break.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.ParagraphFormat.PageBreakBefore = true; // Ensure the heading starts on a new page.
-        builder.Writeln("Chapter 1");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 1.");
-        builder.Writeln("More content of chapter 1.");
-
-        // Second heading.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.ParagraphFormat.PageBreakBefore = true;
-        builder.Writeln("Chapter 2");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 2.");
-
-        // Third heading.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.ParagraphFormat.PageBreakBefore = true;
-        builder.Writeln("Chapter 3");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content of chapter 3.");
-
-        // Configure HtmlSaveOptions to split by heading paragraphs and page breaks.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
+        public static void Main()
         {
-            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph | DocumentSplitCriteria.PageBreak,
-            DocumentSplitHeadingLevel = 1 // Split at Heading 1 paragraphs.
-        };
+            // Prepare output directory.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-        // Optional: customize the filenames of the split parts.
-        saveOptions.DocumentPartSavingCallback = new PartRenamer("CombinedSplit");
+            // Create a sample document with headings that start on new pages.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the document; Aspose.Words will create multiple HTML files.
-        string mainFilePath = Path.Combine(outputDir, "CombinedSplit.html");
-        doc.Save(mainFilePath, saveOptions);
+            for (int i = 1; i <= 3; i++)
+            {
+                if (i > 1)
+                {
+                    // Ensure each heading begins on a new page.
+                    builder.InsertBreak(BreakType.PageBreak);
+                }
 
-        // Verify that split parts were created.
-        string[] splitFiles = Directory.GetFiles(outputDir, "CombinedSplit_Part*.html");
-        if (splitFiles.Length == 0)
-            throw new Exception("No split parts were generated.");
+                // Insert a Heading 1 paragraph.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+                builder.Writeln($"Heading {i}");
 
-        // (Optional) Output the list of generated files.
-        foreach (string file in splitFiles)
-            Console.WriteLine($"Generated: {Path.GetFileName(file)}");
-    }
+                // Insert some normal content under the heading.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+                builder.Writeln($"Content for heading {i} - paragraph 1.");
+                builder.Writeln($"Content for heading {i} - paragraph 2.");
+            }
 
-    // Callback to rename each document part produced by the split operation.
-    private class PartRenamer : IDocumentPartSavingCallback
-    {
-        private readonly string _baseName;
-        private int _counter;
+            // Save the source document (optional, for inspection).
+            string sourcePath = Path.Combine(outputDir, "Source.docx");
+            doc.Save(sourcePath);
 
-        public PartRenamer(string baseName)
-        {
-            _baseName = baseName;
-            _counter = 0;
+            // Configure HtmlSaveOptions to split at page breaks and heading paragraphs.
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html)
+            {
+                DocumentSplitCriteria = DocumentSplitCriteria.PageBreak | DocumentSplitCriteria.HeadingParagraph,
+                DocumentSplitHeadingLevel = 1, // Split at Heading 1 level.
+                ExportHeadersFootersMode = ExportHeadersFootersMode.None,
+                DocumentPartSavingCallback = new PartSavingCallback(outputDir)
+            };
+
+            // Save the document; Aspose.Words will invoke the callback for each split part.
+            string mainOutputPath = Path.Combine(outputDir, "Combined.html");
+            doc.Save(mainOutputPath, saveOptions);
+
+            // Validate that split parts were created.
+            string[] partFiles = Directory.GetFiles(outputDir, "Part_*.html");
+            if (partFiles.Length == 0)
+                throw new Exception("No split parts were generated.");
+
+            Console.WriteLine($"Document split into {partFiles.Length} parts:");
+            foreach (string file in partFiles)
+                Console.WriteLine($" - {Path.GetFileName(file)}");
         }
 
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+        // Callback that assigns deterministic filenames for each document part.
+        private class PartSavingCallback : IDocumentPartSavingCallback
         {
-            string extension = Path.GetExtension(args.DocumentPartFileName);
-            args.DocumentPartFileName = $"{_baseName}_Part{++_counter}{extension}";
+            private readonly string _outputFolder;
+            private int _partIndex = 0;
+
+            public PartSavingCallback(string outputFolder)
+            {
+                _outputFolder = outputFolder;
+            }
+
+            void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+            {
+                // Generate a simple sequential filename.
+                string partFileName = $"Part_{++_partIndex}.html";
+
+                // Set the filename (without path) and provide a stream for the part.
+                args.DocumentPartFileName = partFileName;
+                args.DocumentPartStream = new FileStream(Path.Combine(_outputFolder, partFileName), FileMode.Create);
+                // The stream will be closed automatically after saving the part.
+            }
         }
     }
 }

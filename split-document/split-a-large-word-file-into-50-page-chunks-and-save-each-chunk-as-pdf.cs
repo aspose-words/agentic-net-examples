@@ -3,53 +3,57 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+namespace SplitDocumentExample
 {
-    public static void Main()
+    public class Program
     {
-        // Folder for output PDF chunks.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample large document with a known number of pages.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
-
-        const int totalPages = 200; // Example size; adjust as needed.
-        for (int i = 1; i <= totalPages; i++)
+        public static void Main()
         {
-            builder.Writeln($"This is page {i}.");
-            if (i < totalPages)
-                builder.InsertBreak(BreakType.PageBreak);
+            // Folder for output PDF chunks.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+
+            // Create a sample large document (e.g., 200 pages).
+            Document sourceDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+            const int totalSamplePages = 200;
+            for (int i = 1; i <= totalSamplePages; i++)
+            {
+                builder.Writeln($"This is page {i}.");
+                if (i < totalSamplePages)
+                    builder.InsertBreak(BreakType.PageBreak);
+            }
+
+            // Ensure layout is up‑to‑date so PageCount is accurate.
+            sourceDoc.UpdatePageLayout();
+            int totalPages = sourceDoc.PageCount;
+
+            // Split the document into 50‑page chunks.
+            const int chunkSize = 50;
+            int chunkCount = (totalPages + chunkSize - 1) / chunkSize;
+
+            for (int i = 0; i < chunkCount; i++)
+            {
+                // ExtractPages uses zero‑based page index.
+                int startPageZero = i * chunkSize; // zero‑based start page
+                int pagesToExtract = Math.Min(chunkSize, totalPages - startPageZero);
+
+                // Extract the required page range.
+                Document chunk = sourceDoc.ExtractPages(startPageZero, pagesToExtract);
+
+                // Save each chunk as a PDF file.
+                string chunkPath = Path.Combine(outputDir, $"Chunk_{i + 1}.pdf");
+                chunk.Save(chunkPath, SaveFormat.Pdf);
+            }
+
+            // Validate that all expected PDF files were created.
+            for (int i = 0; i < chunkCount; i++)
+            {
+                string expectedPath = Path.Combine(outputDir, $"Chunk_{i + 1}.pdf");
+                if (!File.Exists(expectedPath))
+                    throw new InvalidOperationException($"Expected output file not found: {expectedPath}");
+            }
         }
-
-        // Ensure the layout is up‑to‑date so PageCount is accurate.
-        sourceDoc.UpdatePageLayout();
-        int pageCount = sourceDoc.PageCount;
-
-        const int chunkSize = 50; // Number of pages per PDF chunk.
-
-        int chunkIndex = 1;
-        for (int start = 0; start < pageCount; start += chunkSize)
-        {
-            int pagesRemaining = pageCount - start;
-            int count = Math.Min(chunkSize, pagesRemaining);
-
-            // Extract the required page range into a new document.
-            Document chunk = sourceDoc.ExtractPages(start, count);
-
-            // Save the chunk as PDF.
-            string outPath = Path.Combine(outputDir, $"Chunk_{chunkIndex}.pdf");
-            chunk.Save(outPath, SaveFormat.Pdf);
-
-            // Verify that the file was created.
-            if (!File.Exists(outPath))
-                throw new InvalidOperationException($"Failed to create PDF chunk: {outPath}");
-
-            chunkIndex++;
-        }
-
-        // Optional: indicate completion (no interactive prompts).
-        Console.WriteLine($"Document split into {chunkIndex - 1} PDF files in \"{outputDir}\".");
     }
 }

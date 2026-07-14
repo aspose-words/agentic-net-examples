@@ -1,67 +1,63 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitOutput");
         Directory.CreateDirectory(outputDir);
 
-        // Create a sample document with two sections having different orientations.
+        // Create a sample document with two sections having different page orientations.
         string sourcePath = Path.Combine(outputDir, "Source.docx");
-        CreateSampleDocument(sourcePath);
+        Document sourceDoc = CreateSampleDocument();
+        sourceDoc.Save(sourcePath);
 
-        // Load the source document.
-        Document sourceDoc = new Document(sourcePath);
+        // Load the document.
+        Document doc = new Document(sourcePath);
 
         // Split the document by sections, preserving formatting and orientation.
-        for (int i = 0; i < sourceDoc.Sections.Count; i++)
+        for (int i = 0; i < doc.Sections.Count; i++)
         {
-            // Create a new empty document and remove the default empty section.
+            // Create a new empty document for the current part.
             Document partDoc = new Document();
-            partDoc.RemoveAllChildren();
+            partDoc.RemoveAllChildren(); // Remove the default empty section.
 
-            // Import the current section from the source document.
-            Section importedSection = (Section)partDoc.ImportNode(sourceDoc.Sections[i], true, ImportFormatMode.KeepSourceFormatting);
-
-            // Append the imported section to the new document.
+            // Import the current section into the new document.
+            NodeImporter importer = new NodeImporter(doc, partDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(doc.Sections[i], true);
             partDoc.AppendChild(importedSection);
 
-            // Save the split part as DOCX.
+            // Save the split part as a DOCX file.
             string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
-            partDoc.Save(partPath, SaveFormat.Docx);
+            partDoc.Save(partPath);
 
-            // Validate that the file was created.
+            // Verify that the file was created.
             if (!File.Exists(partPath))
                 throw new InvalidOperationException($"Failed to create split part: {partPath}");
         }
-
-        // No console output required.
     }
 
-    private static void CreateSampleDocument(string filePath)
+    // Creates a sample document containing two sections with distinct page setups.
+    private static Document CreateSampleDocument()
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First section – portrait orientation.
-        builder.PageSetup.Orientation = Orientation.Portrait;
-        builder.Writeln("Section 1 – Portrait orientation.");
-        builder.Writeln("This is some sample text in the first section.");
+        // First section – default portrait orientation.
+        builder.Writeln("This is the first section (Portrait).");
+        builder.Writeln("It contains some sample text.");
 
         // Insert a section break to start a new section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Second section – landscape orientation.
+        // Change page orientation for the second section to landscape.
         builder.PageSetup.Orientation = Orientation.Landscape;
-        builder.Writeln("Section 2 – Landscape orientation.");
-        builder.Writeln("This is some sample text in the second section.");
+        builder.Writeln("This is the second section (Landscape).");
+        builder.Writeln("Page orientation is preserved when splitting.");
 
-        // Save the sample document.
-        doc.Save(filePath, SaveFormat.Docx);
+        return doc;
     }
 }

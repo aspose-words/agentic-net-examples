@@ -5,32 +5,50 @@ using Aspose.Words.Saving;
 
 namespace SplitDocumentExample
 {
-    // Callback that assigns deterministic filenames to each split part.
-    class SectionPartSavingCallback : IDocumentPartSavingCallback
+    // Callback that assigns custom filenames for each split part.
+    public class SplitDocumentPartCallback : IDocumentPartSavingCallback
     {
-        private readonly string _baseFileName;
+        private readonly string _baseName;
+        private readonly DocumentSplitCriteria _criteria;
         private int _partIndex = 0;
+        private readonly string _outputFolder;
 
-        public SectionPartSavingCallback(string baseFileName)
+        public SplitDocumentPartCallback(string baseName, DocumentSplitCriteria criteria, string outputFolder)
         {
-            _baseFileName = baseFileName;
+            _baseName = baseName;
+            _criteria = criteria;
+            _outputFolder = outputFolder;
         }
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Generate names like "Document_Part1.html", "Document_Part2.html", etc.
-            string extension = Path.GetExtension(args.DocumentPartFileName);
-            args.DocumentPartFileName = $"{_baseFileName}_Part{++_partIndex}{extension}";
+            // Determine a readable part type name.
+            string partType = _criteria switch
+            {
+                DocumentSplitCriteria.PageBreak => "Page",
+                DocumentSplitCriteria.ColumnBreak => "Column",
+                DocumentSplitCriteria.SectionBreak => "Section",
+                DocumentSplitCriteria.HeadingParagraph => "Heading",
+                _ => "Part"
+            };
+
+            // Build a unique filename for the part.
+            string partFileName = $"{_baseName} part {++_partIndex}, of type {partType}{Path.GetExtension(args.DocumentPartFileName)}";
+
+            // Set the filename and stream where Aspose.Words will write this part.
+            args.DocumentPartFileName = partFileName;
+            string fullPath = Path.Combine(_outputFolder, partFileName);
+            args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
         }
     }
 
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            // Folder for all generated files.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+            // Define an output directory for all generated files.
+            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(artifactsDir);
 
             // -----------------------------------------------------------------
             // 1. Create a sample document with multiple sections.
@@ -38,48 +56,56 @@ namespace SplitDocumentExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // First section.
-            builder.Writeln("Section 1 - First paragraph.");
+            builder.Writeln("This is content of Section 1.");
+            // Insert a section break (new page) to start Section 2.
             builder.InsertBreak(BreakType.SectionBreakNewPage);
-            builder.Writeln("Section 1 - Second paragraph.");
+            builder.Writeln("This is content of Section 2.");
 
-            // Second section.
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-            builder.Writeln("Section 2 - Only paragraph.");
-
-            // -----------------------------------------------------------------
-            // 2. Create a DocumentSplitCriteria object and set it to split by sections.
-            // -----------------------------------------------------------------
-            DocumentSplitCriteria splitCriteria = DocumentSplitCriteria.SectionBreak;
+            // Save the original document (optional, for reference).
+            string sourcePath = Path.Combine(artifactsDir, "SourceDocument.docx");
+            doc.Save(sourcePath);
 
             // -----------------------------------------------------------------
-            // 3. Configure HtmlSaveOptions to use the split criteria.
+            // 2. Configure HtmlSaveOptions to split the document by sections.
             // -----------------------------------------------------------------
             HtmlSaveOptions saveOptions = new HtmlSaveOptions
             {
-                DocumentSplitCriteria = splitCriteria,
-                DocumentPartSavingCallback = new SectionPartSavingCallback("Document")
+                // Create a DocumentSplitCriteria object and set it to split at section breaks.
+                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak
             };
 
-            // -----------------------------------------------------------------
-            // 4. Save the document. The save operation will produce one HTML file
-            //    per section because of the split criteria.
-            // -----------------------------------------------------------------
-            string mainFilePath = Path.Combine(outputDir, "Document.html");
-            doc.Save(mainFilePath, saveOptions);
+            // Assign the custom callback that will name each split part.
+            saveOptions.DocumentPartSavingCallback = new SplitDocumentPartCallback(
+                baseName: "SectionPart",
+                criteria: saveOptions.DocumentSplitCriteria,
+                outputFolder: artifactsDir);
 
             // -----------------------------------------------------------------
-            // 5. Validate that the expected split files exist.
+            // 3. Save the document; Aspose.Words will generate separate files.
             // -----------------------------------------------------------------
-            for (int i = 1; i <= doc.Sections.Count; i++)
+            string mainHtmlPath = Path.Combine(artifactsDir, "Combined.html");
+            doc.Save(mainHtmlPath, saveOptions);
+
+            // -----------------------------------------------------------------
+            // 4. Validate that the expected split files were created.
+            // -----------------------------------------------------------------
+            // Expected filenames based on the callback logic.
+            string[] expectedFiles =
             {
-                string partPath = Path.Combine(outputDir, $"Document_Part{i}.html");
-                if (!File.Exists(partPath))
-                    throw new FileNotFoundException($"Expected split file not found: {partPath}");
+                Path.Combine(artifactsDir, "SectionPart part 1, of type Section.html"),
+                Path.Combine(artifactsDir, "SectionPart part 2, of type Section.html")
+            };
+
+            foreach (string filePath in expectedFiles)
+            {
+                if (!File.Exists(filePath))
+                {
+                    throw new FileNotFoundException($"Expected split file not found: {filePath}");
+                }
             }
 
-            // Indicate successful completion.
-            Console.WriteLine("Document split into sections and saved successfully.");
+            // If execution reaches this point, the split operation succeeded.
+            Console.WriteLine("Document split by sections completed successfully.");
         }
     }
 }

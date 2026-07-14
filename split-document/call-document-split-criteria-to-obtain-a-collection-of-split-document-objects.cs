@@ -3,67 +3,74 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 
-public class Program
+public class SplitDocumentExample
 {
     public static void Main()
     {
-        // Define output folder and ensure it exists
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define directories for input and output.
+        string baseDir = Directory.GetCurrentDirectory();
+        string outputDir = Path.Combine(baseDir, "Output");
 
-        // Create a sample document with three sections
+        // Ensure the output directory exists.
+        if (!Directory.Exists(outputDir))
+            Directory.CreateDirectory(outputDir);
+
+        // Create a sample document with three sections.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        for (int i = 1; i <= 3; i++)
-        {
-            builder.Writeln($"This is the content of section {i}.");
+        // Section 1
+        builder.Writeln("Section 1 - Paragraph 1");
+        builder.Writeln("Section 1 - Paragraph 2");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-            // Insert a section break after each section except the last one
-            if (i < 3)
-                builder.InsertBreak(BreakType.SectionBreakNewPage);
-        }
+        // Section 2
+        builder.Writeln("Section 2 - Paragraph 1");
+        builder.Writeln("Section 2 - Paragraph 2");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Save the source document (optional, for inspection)
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
+        // Section 3
+        builder.Writeln("Section 3 - Paragraph 1");
+        builder.Writeln("Section 3 - Paragraph 2");
+
+        // Save the original document for reference.
+        string sourcePath = Path.Combine(outputDir, "SourceDocument.docx");
         sourceDoc.Save(sourcePath);
 
-        // Split the document by sections
-        for (int idx = 0; idx < sourceDoc.Sections.Count; idx++)
-        {
-            // Clone the current section
-            Section clonedSection = sourceDoc.Sections[idx].Clone();
+        // Split the document by its sections.
+        List<Document> splitDocuments = new List<Document>();
 
-            // Create a new document and import the cloned section into it
+        for (int i = 0; i < sourceDoc.Sections.Count; i++)
+        {
+            // Create a new empty document.
             Document splitDoc = new Document();
 
-            // ImportNode requires an ImportFormatMode enum as the third argument
-            Section importedSection = (Section)splitDoc.ImportNode(
-                clonedSection,
-                true, // Import child nodes
-                ImportFormatMode.KeepSourceFormatting);
+            // Remove any default nodes (the constructor adds a blank section).
+            splitDoc.RemoveAllChildren();
 
-            // Append the imported section to the new document
+            // Import the current section from the source document.
+            Section importedSection = (Section)splitDoc.ImportNode(sourceDoc.Sections[i], true);
+
+            // Append the imported section to the new document.
             splitDoc.AppendChild(importedSection);
 
-            // Ensure the document has the minimal required structure
-            splitDoc.EnsureMinimum();
+            // Add the split document to the collection.
+            splitDocuments.Add(splitDoc);
 
-            // Save the split document
-            string splitPath = Path.Combine(outputDir, $"Section_{idx + 1}.docx");
+            // Save each split part.
+            string splitPath = Path.Combine(outputDir, $"SplitPart_{i + 1}.docx");
             splitDoc.Save(splitPath);
         }
 
-        // Validate that all split files were created
-        for (int i = 1; i <= sourceDoc.Sections.Count; i++)
+        // Validate that the expected number of split files were created.
+        for (int i = 0; i < splitDocuments.Count; i++)
         {
-            string expectedPath = Path.Combine(outputDir, $"Section_{i}.docx");
+            string expectedPath = Path.Combine(outputDir, $"SplitPart_{i + 1}.docx");
             if (!File.Exists(expectedPath))
                 throw new FileNotFoundException($"Expected split file not found: {expectedPath}");
         }
 
-        // Indicate successful completion
-        Console.WriteLine("Document split into sections successfully. Files are located at:");
-        Console.WriteLine(outputDir);
+        // Indicate successful completion.
+        Console.WriteLine("Document split completed successfully.");
     }
 }

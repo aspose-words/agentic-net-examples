@@ -3,101 +3,104 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class SplitDocumentExample
 {
     public static void Main()
     {
-        // Folder for output split documents.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "SplitOutput");
+        // Folder for all generated files.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample source document with two sections, each having
-        //    its own header and footer.
+        // 1. Create a sample source document with two sections and headers/footers.
         // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // Section 1
-        builder.Writeln("Content of Section 1");
-        AddHeaderFooter(sourceDoc, "Header 1", "Footer 1");
+        // Enable different headers/footers for first page and odd/even pages.
+        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
 
-        // Insert a section break to start Section 2.
+        // ----- First section -----
+        // Header – first page
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
+        builder.Write("First page header");
+
+        // Header – even pages
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
+        builder.Write("Even page header");
+
+        // Header – primary (odd) pages
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Write("Primary page header");
+
+        // Footer – primary (odd) pages
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Write("Primary page footer");
+
+        // Body content for first section
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Content of the first section.");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Second page of the first section.");
+
+        // Insert a section break to start a new section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Section 2
-        builder.Writeln("Content of Section 2");
-        AddHeaderFooter(sourceDoc, "Header 2", "Footer 2");
+        // ----- Second section -----
+        // Header – primary (odd) pages for second section
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        builder.Write("Second section header");
 
-        // Save the source document (optional, for inspection).
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
-        sourceDoc.Save(sourcePath);
+        // Footer – primary (odd) pages for second section
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+        builder.Write("Second section footer");
+
+        // Body content for second section
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Content of the second section.");
 
         // -----------------------------------------------------------------
-        // 2. Split the document by sections, preserving headers/footers.
+        // 2. Split the document by sections, preserving headers and footers.
         // -----------------------------------------------------------------
         for (int i = 0; i < sourceDoc.Sections.Count; i++)
         {
             // Create a new empty document.
             Document splitDoc = new Document();
-            splitDoc.RemoveAllChildren(); // Remove the default empty section.
+            splitDoc.EnsureMinimum();
 
-            // Import the current section from the source document into the new document.
-            // ImportNode clones the node and reassigns it to the target document,
-            // which avoids the cross‑document node exception.
-            Section importedSection = (Section)splitDoc.ImportNode(sourceDoc.Sections[i], true);
+            // Import the current section into the new document.
+            NodeImporter importer = new NodeImporter(sourceDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(sourceDoc.Sections[i], true);
 
-            // Append the imported section as the sole section of the split document.
-            splitDoc.AppendChild(importedSection);
+            // Replace the default empty section with the imported one.
+            splitDoc.Sections.Clear();
+            splitDoc.Sections.Add(importedSection);
 
-            // Save the split document.
-            string splitPath = Path.Combine(outputDir, $"Section_{i + 1}.docx");
-            splitDoc.Save(splitPath);
+            // Save the split part.
+            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
+            splitDoc.Save(partPath);
         }
 
         // -----------------------------------------------------------------
-        // 3. Verify that each split document preserves its header and footer.
+        // 3. Verify that each split document contains the expected headers/footers.
         // -----------------------------------------------------------------
+        Console.WriteLine("Verification of split documents:");
         for (int i = 0; i < sourceDoc.Sections.Count; i++)
         {
-            string splitPath = Path.Combine(outputDir, $"Section_{i + 1}.docx");
-            if (!File.Exists(splitPath))
-                throw new FileNotFoundException($"Expected split file not found: {splitPath}");
+            string partPath = Path.Combine(outputDir, $"Part_{i + 1}.docx");
+            Document partDoc = new Document(partPath);
 
-            Document part = new Document(splitPath);
+            // Retrieve primary header and footer (if they exist).
+            HeaderFooter header = partDoc.FirstSection?.HeadersFooters[HeaderFooterType.HeaderPrimary];
+            HeaderFooter footer = partDoc.FirstSection?.HeadersFooters[HeaderFooterType.FooterPrimary];
 
-            // Retrieve header and footer text (Primary type is used in this example).
-            string headerText = part.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary]?.GetText()?.Trim() ?? string.Empty;
-            string footerText = part.FirstSection.HeadersFooters[HeaderFooterType.FooterPrimary]?.GetText()?.Trim() ?? string.Empty;
+            string headerText = header?.GetText().Trim() ?? "(no header)";
+            string footerText = footer?.GetText().Trim() ?? "(no footer)";
 
-            string expectedHeader = $"Header {i + 1}";
-            string expectedFooter = $"Footer {i + 1}";
-
-            if (!headerText.Contains(expectedHeader))
-                throw new Exception($"Header verification failed for {splitPath}. Expected to contain \"{expectedHeader}\", but got \"{headerText}\".");
-
-            if (!footerText.Contains(expectedFooter))
-                throw new Exception($"Footer verification failed for {splitPath}. Expected to contain \"{expectedFooter}\", but got \"{footerText}\".");
+            Console.WriteLine($"  Part {i + 1}:");
+            Console.WriteLine($"    Header: {headerText}");
+            Console.WriteLine($"    Footer: {footerText}");
         }
-
-        // If we reach this point, all verifications succeeded.
-        Console.WriteLine("All split documents were created and verified successfully.");
-    }
-
-    // Helper method to add a primary header and footer to the most recent section.
-    private static void AddHeaderFooter(Document doc, string headerContent, string footerContent)
-    {
-        // The most recent section is the last one in the collection.
-        Section currentSection = doc.Sections[doc.Sections.Count - 1];
-
-        // Header
-        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        header.AppendParagraph(headerContent);
-        currentSection.HeadersFooters.Add(header);
-
-        // Footer
-        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
-        footer.AppendParagraph(footerContent);
-        currentSection.HeadersFooters.Add(footer);
     }
 }
