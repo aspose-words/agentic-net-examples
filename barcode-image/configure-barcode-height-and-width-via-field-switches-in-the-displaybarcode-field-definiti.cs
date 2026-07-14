@@ -13,20 +13,22 @@ public class Program
         // Insert a DISPLAYBARCODE field using the typed API.
         FieldDisplayBarcode barcodeField = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
-        // Set basic barcode properties.
-        barcodeField.BarcodeType = "QR";               // QR code type.
-        barcodeField.BarcodeValue = "1234567890";      // Data to encode.
+        // Configure the barcode type and value.
+        barcodeField.BarcodeType = "CODE39";
+        barcodeField.BarcodeValue = "12345ABCDE";
 
-        // Configure the barcode's height (in TWIPS) and width scaling factor.
-        // Height: 1500 TWIPS ≈ 1.04 inches.
-        // ScalingFactor: 200 means the barcode width will be doubled.
-        barcodeField.SymbolHeight = "1500";
-        barcodeField.ScalingFactor = "200";
+        // Set the height of the barcode symbol (in twips; 1 inch = 1440 twips).
+        // Example: 2000 twips ≈ 1.39 inches.
+        barcodeField.SymbolHeight = "2000";
 
-        // Apply the changes to the document.
+        // Set the scaling factor (percentage) to control the width proportionally.
+        // Example: 150% makes the barcode 1.5 times wider than the default.
+        barcodeField.ScalingFactor = "150";
+
+        // Update fields so that the changes are applied.
         doc.UpdateFields();
 
-        // Save the document to the local file system.
-        doc.Save("DisplayBarcodeField.docx");
+        // Save the document to the current directory.
+        doc.Save("DisplayBarcodeHeightWidth.docx");
     }
 }

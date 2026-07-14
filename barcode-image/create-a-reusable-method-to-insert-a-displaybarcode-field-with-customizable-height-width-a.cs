@@ -2,52 +2,34 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-namespace BarcodeDemo
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        // Inserts a DISPLAYBARCODE field with the specified parameters.
-        // heightInTwips and scalingFactor are optional; pass null to leave default.
-        private static void InsertDisplayBarcode(DocumentBuilder builder, string barcodeValue, string barcodeType, string heightInTwips = null, string scalingFactor = null)
-        {
-            // Create a typed DISPLAYBARCODE field.
-            var field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Set required properties.
-            field.BarcodeValue = barcodeValue;
-            field.BarcodeType = barcodeType;
+        // Insert a DISPLAYBARCODE field with custom parameters.
+        InsertDisplayBarcode(builder, "123456789012", "EAN13", "1000", "250");
 
-            // Optional customizations.
-            if (!string.IsNullOrEmpty(heightInTwips))
-                field.SymbolHeight = heightInTwips;          // Height in TWIPS (1/1440 inch).
+        // Update fields so the barcode is rendered in the document.
+        doc.UpdateFields();
 
-            if (!string.IsNullOrEmpty(scalingFactor))
-                field.ScalingFactor = scalingFactor;         // Scaling factor as a percentage (e.g., "250").
+        // Save the document to the local file system.
+        doc.Save("DisplayBarcode.docx");
+    }
 
-            // Update the document fields so the result reflects the new settings.
-            builder.Document.UpdateFields();
-        }
+    // Reusable method that inserts a DISPLAYBARCODE field with customizable height and scaling.
+    public static void InsertDisplayBarcode(DocumentBuilder builder, string barcodeValue, string barcodeType, string symbolHeight, string scalingFactor)
+    {
+        // Insert a typed DISPLAYBARCODE field.
+        FieldDisplayBarcode field = (FieldDisplayBarcode)builder.InsertField(FieldType.FieldDisplayBarcode, true);
 
-        public static void Main()
-        {
-            // Create a new blank document.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-
-            // Example 1: EAN13 barcode with custom height and scaling.
-            InsertDisplayBarcode(builder, "501234567890", "EAN13", "1000", "250");
-            builder.Writeln();
-
-            // Example 2: QR code with different size settings.
-            InsertDisplayBarcode(builder, "ABC123", "QR", "1200", "300");
-            builder.Writeln();
-
-            // Example 3: CODE39 barcode with default size.
-            InsertDisplayBarcode(builder, "12345ABCDE", "CODE39");
-            builder.Writeln();
-
-            // Save the document to the current directory.
-            doc.Save("DisplayBarcode.docx");
-        }
+        // Set the required properties.
+        field.BarcodeValue = barcodeValue;
+        field.BarcodeType = barcodeType;
+        field.SymbolHeight = symbolHeight;   // Height in TWIPS (1/1440 inch).
+        field.ScalingFactor = scalingFactor; // Scaling factor as a percentage (10‑1000).
     }
 }
