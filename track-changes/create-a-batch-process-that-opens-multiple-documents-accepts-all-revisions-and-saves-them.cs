@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 
@@ -6,54 +7,53 @@ public class BatchAcceptRevisions
 {
     public static void Main()
     {
-        // Folder to store sample documents.
-        string docsFolder = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
-        Directory.CreateDirectory(docsFolder);
+        // Directory to store sample documents.
+        string docsDir = Path.Combine(Directory.GetCurrentDirectory(), "SampleDocs");
+        Directory.CreateDirectory(docsDir);
 
-        // Create sample documents with revisions if they do not already exist.
-        for (int i = 1; i <= 3; i++)
+        // List of document file names to process.
+        List<string> docFiles = new List<string>
         {
-            string filePath = Path.Combine(docsFolder, $"Sample{i}.docx");
-            if (!File.Exists(filePath))
-            {
-                Document doc = new Document();
-                DocumentBuilder builder = new DocumentBuilder(doc);
+            Path.Combine(docsDir, "Document1.docx"),
+            Path.Combine(docsDir, "Document2.docx"),
+            Path.Combine(docsDir, "Document3.docx")
+        };
 
-                // Initial content (no revision).
-                builder.Writeln("Original content.");
+        // Create sample documents with revisions.
+        foreach (string filePath in docFiles)
+        {
+            // Create a new empty document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-                // Start tracking revisions.
-                doc.StartTrackRevisions($"Author{i}", DateTime.Now);
+            // Write initial content (no revision).
+            builder.Writeln("Original content.");
 
-                // Make some changes that will be recorded as revisions.
-                builder.Writeln($"Added line {i}.");
-                builder.Writeln($"Another change {i}.");
+            // Start tracking revisions to generate changes.
+            doc.StartTrackRevisions("BatchUser", DateTime.Now);
 
-                // Stop tracking.
-                doc.StopTrackRevisions();
+            // Add revised content.
+            builder.Writeln("Added line 1.");
+            builder.Writeln("Added line 2.");
 
-                // Save the document.
-                doc.Save(filePath);
-            }
+            // Stop tracking.
+            doc.StopTrackRevisions();
+
+            // Save the document (creates the file).
+            doc.Save(filePath);
         }
 
-        // Process each document: accept all revisions and save in place.
-        string[] files = Directory.GetFiles(docsFolder, "*.docx");
-        foreach (string file in files)
+        // Batch process: open each document, accept all revisions, and save in place.
+        foreach (string filePath in docFiles)
         {
-            Document doc = new Document(file);
+            // Load the existing document.
+            Document doc = new Document(filePath);
 
-            // Accept all tracked changes if any exist.
-            if (doc.HasRevisions)
-            {
-                doc.AcceptAllRevisions();
-            }
+            // Accept all tracked changes.
+            doc.AcceptAllRevisions();
 
-            // Overwrite the original file with the updated document.
-            doc.Save(file);
+            // Save back to the same file (overwrites original).
+            doc.Save(filePath);
         }
-
-        // Optional: indicate completion.
-        Console.WriteLine("All documents processed and revisions accepted.");
     }
 }

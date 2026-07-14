@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 
-public class Program
+public class RevisionExporter
 {
     public static void Main()
     {
@@ -11,51 +11,46 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add initial content (not a revision).
-        builder.Writeln("This is the original paragraph.");
+        // Write initial content that will not be tracked.
+        builder.Writeln("Original paragraph. ");
 
         // Start tracking revisions with a specific author and timestamp.
         doc.StartTrackRevisions("Alice", DateTime.Now);
 
-        // Insert new content – this will be recorded as an insertion revision.
-        builder.Writeln("This paragraph was added while tracking changes.");
+        // Insert a new paragraph – this will be recorded as an insertion revision.
+        builder.Writeln("Inserted paragraph while tracking. ");
 
-        // Delete a run from the first paragraph – this will be recorded as a deletion revision.
-        // The first paragraph currently has one run ("This is the original paragraph.\r").
-        // Removing it creates a deletion revision.
-        if (doc.FirstSection.Body.FirstParagraph.Runs.Count > 0)
-        {
-            doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
-        }
+        // Delete the first run (the word "Original") to create a deletion revision.
+        Run firstRun = doc.FirstSection.Body.FirstParagraph.Runs[0];
+        firstRun.Remove();
 
         // Stop tracking further changes.
         doc.StopTrackRevisions();
+
+        // Save the document (optional, demonstrates that revisions are persisted).
+        doc.Save("TrackedDocument.docx");
 
         // Export revision metadata to a CSV file.
         string csvPath = "Revisions.csv";
         using (StreamWriter writer = new StreamWriter(csvPath, false, Encoding.UTF8))
         {
             // Write CSV header.
-            writer.WriteLine("RevisionType,Author,DateTime,Text");
+            writer.WriteLine("Author,DateTime,RevisionType,Text");
 
-            // Iterate through all revisions in the document.
+            // Iterate through each revision and write its details.
             foreach (Revision rev in doc.Revisions)
             {
-                string type = rev.RevisionType.ToString();
-                string author = rev.Author;
-                string date = rev.DateTime.ToString("o"); // ISO 8601 format.
-                // Get the text associated with the revision; replace line breaks and commas to keep CSV integrity.
-                string text = rev.ParentNode?.GetText()
-                    .Replace("\r", " ")
-                    .Replace("\n", " ")
-                    .Replace(",", " ")
-                    .Trim();
+                // Get the text associated with the revision's parent node, if any.
+                string text = rev.ParentNode != null
+                    ? rev.ParentNode.GetText()
+                        .Replace("\r", " ")
+                        .Replace("\n", " ")
+                        .Replace(",", " ")
+                    : string.Empty;
 
-                writer.WriteLine($"{type},{author},{date},{text}");
+                // Write a CSV line with author, ISO 8601 date, revision type, and text.
+                writer.WriteLine($"{rev.Author},{rev.DateTime:o},{rev.RevisionType},{text}");
             }
         }
-
-        // Save the document with revisions for reference.
-        doc.Save("TrackedDocument.docx");
     }
 }

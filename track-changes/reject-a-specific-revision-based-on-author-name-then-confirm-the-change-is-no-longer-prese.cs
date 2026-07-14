@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 
 public class Program
@@ -9,52 +10,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial content that is not a revision.
-        builder.Write("Original text. ");
+        // Add some initial content that is not a revision.
+        builder.Writeln("Original paragraph.");
 
-        // First author makes a revision.
+        // Track changes made by John Doe.
         doc.StartTrackRevisions("John Doe", DateTime.Now);
-        builder.Write("John's addition. ");
+        builder.Writeln("Paragraph added by John.");
         doc.StopTrackRevisions();
 
-        // Second author makes a revision.
+        // Track changes made by Jane Smith.
         doc.StartTrackRevisions("Jane Smith", DateTime.Now);
-        builder.Write("Jane's addition. ");
+        builder.Writeln("Paragraph added by Jane.");
         doc.StopTrackRevisions();
 
-        // Verify that both revisions exist.
-        if (doc.Revisions.Count != 2)
-            throw new InvalidOperationException("Expected 2 revisions before rejection.");
-
-        // Reject revisions authored by "Jane Smith".
-        // Collect matching revisions first to avoid modifying the collection while iterating.
-        var revisionsToReject = new System.Collections.Generic.List<Revision>();
+        // Collect revisions authored by John Doe.
+        List<Revision> revisionsToReject = new List<Revision>();
         foreach (Revision rev in doc.Revisions)
         {
-            if (rev.Author == "Jane Smith")
+            if (rev.Author == "John Doe")
                 revisionsToReject.Add(rev);
         }
 
+        // Reject the collected revisions.
         foreach (Revision rev in revisionsToReject)
+        {
             rev.Reject();
-
-        // Confirm the revision by Jane has been removed.
-        if (doc.Revisions.Count != 1)
-            throw new InvalidOperationException("Expected 1 revision after rejection.");
-
-        // The document text should no longer contain Jane's addition.
-        string expectedText = "Original text. John's addition. ";
-        string actualText = doc.GetText();
-        if (!actualText.Contains("Jane's addition"))
-        {
-            // Success: Jane's text is not present.
-        }
-        else
-        {
-            throw new InvalidOperationException("Jane's revision was not successfully rejected.");
         }
 
-        // Save the resulting document.
-        doc.Save("Output.docx");
+        // Verify that no revision from John Doe remains.
+        foreach (Revision rev in doc.Revisions)
+        {
+            if (rev.Author == "John Doe")
+                throw new InvalidOperationException("John Doe revision was not removed.");
+        }
+
+        // Save the document to demonstrate the result.
+        doc.Save("Result.docx");
+
+        // Output confirmation.
+        Console.WriteLine($"Revisions by John Doe have been rejected. Remaining revisions: {doc.Revisions.Count}");
     }
 }

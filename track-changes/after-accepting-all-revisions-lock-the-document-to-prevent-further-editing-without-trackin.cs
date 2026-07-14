@@ -1,7 +1,5 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 
 public class Program
 {
@@ -11,36 +9,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content that will not be tracked.
-        builder.Writeln("Original content.");
+        // Add some initial content (this will not be a revision).
+        builder.Writeln("This is the original paragraph.");
 
-        // Start tracking revisions with a specific author.
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        // Start tracking revisions.
+        doc.StartTrackRevisions("John Doe");
 
-        // Perform edits that will be recorded as revisions.
-        builder.Writeln("Added line 1.");
-        builder.Writeln("Added line 2.");
+        // Make changes that will be recorded as revisions.
+        builder.Writeln("This paragraph was added while tracking changes.");
+        builder.Writeln("Another inserted line.");
 
-        // Stop tracking further changes.
+        // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Verify that revisions were created.
-        if (!doc.HasRevisions)
-            throw new InvalidOperationException("Expected revisions were not created.");
-
-        // Accept all revisions, removing them from the document.
+        // Accept all tracked changes so the document has no pending revisions.
         doc.AcceptAllRevisions();
 
-        // Ensure all revisions have been accepted.
-        if (doc.HasRevisions)
-            throw new InvalidOperationException("Revisions were not fully accepted.");
+        // Protect the document to prevent further editing without enabling tracking.
+        // Using ReadOnly protection; a password is optional.
+        doc.Protect(ProtectionType.ReadOnly, "securePassword");
 
-        // Protect the document so that any further editing requires tracking changes.
-        // Use AllowOnlyRevisions to lock the document for editing without tracking.
-        doc.Protect(ProtectionType.AllowOnlyRevisions, "password");
-
-        // Save the resulting document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LockedDocument.docx");
-        doc.Save(outputPath);
+        // Save the resulting document.
+        doc.Save("LockedDocument.docx");
     }
 }

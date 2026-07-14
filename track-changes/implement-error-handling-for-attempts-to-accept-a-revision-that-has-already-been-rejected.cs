@@ -1,58 +1,46 @@
 using System;
 using Aspose.Words;
 
-public class TrackChangesErrorHandling
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and add initial content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Write initial text (no revision will be created for this).
         builder.Writeln("Original paragraph.");
 
-        // Start tracking revisions with a specific author.
-        doc.StartTrackRevisions("Alice", DateTime.Now);
+        // Enable track changes.
+        doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Add a new paragraph – this will be recorded as an insertion revision.
+        // Make a change that will be recorded as a revision.
         builder.Writeln("Inserted paragraph.");
 
-        // Remove the first paragraph to create a deletion revision.
-        // The paragraph to delete is the first one (index 0).
-        Paragraph paraToDelete = doc.FirstSection.Body.Paragraphs[0];
-        paraToDelete.Remove();
-
-        // Stop tracking further changes.
+        // Stop tracking.
         doc.StopTrackRevisions();
 
-        // At this point the document has two revisions:
-        // 0 – Deletion of the original paragraph.
-        // 1 – Insertion of the new paragraph.
-        Console.WriteLine($"Total revisions after modifications: {doc.Revisions.Count}");
+        // Ensure a revision was created.
+        if (doc.Revisions.Count == 0)
+            throw new InvalidOperationException("No revisions were generated.");
 
-        // Reject the deletion revision (index 0).
-        Revision deletionRevision = doc.Revisions[0];
-        deletionRevision.Reject();
-        Console.WriteLine("Deletion revision rejected.");
+        // Get the first revision.
+        Revision revision = doc.Revisions[0];
 
-        // Attempt to accept the same revision again.
-        // Since the revision has been removed from the collection, this should raise an exception.
+        // Reject the revision.
+        revision.Reject();
+
+        // Attempt to accept the same revision after it has been rejected.
         try
         {
-            deletionRevision.Accept();
-            Console.WriteLine("Unexpectedly accepted a rejected revision.");
+            revision.Accept();
+            Console.WriteLine("Revision accepted successfully (unexpected).");
         }
         catch (Exception ex)
         {
-            // Handle the error gracefully.
-            Console.WriteLine($"Error while accepting a rejected revision: {ex.Message}");
+            Console.WriteLine($"Error accepting already rejected revision: {ex.GetType().Name} - {ex.Message}");
         }
 
-        // Verify the remaining revisions count.
-        Console.WriteLine($"Revisions count after handling: {doc.Revisions.Count}");
-
-        // Save the resulting document.
-        doc.Save("TrackChangesErrorHandling.docx");
+        // Verify that the revision collection is now empty.
+        Console.WriteLine($"Revisions count after reject: {doc.Revisions.Count}");
     }
 }

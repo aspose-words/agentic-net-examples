@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 
 public class Program
@@ -10,25 +12,31 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Write some initial content that is not a revision.
-        builder.Writeln("Original paragraph.");
+        builder.Writeln("Original paragraph. ");
 
-        // First author: Alice – start tracking revisions.
-        string targetAuthor = "Alice";
-        doc.StartTrackRevisions(targetAuthor, DateTime.Now);
-        builder.Writeln("Paragraph added by Alice."); // Revision authored by Alice.
+        // ---------- Revisions by Alice ----------
+        doc.StartTrackRevisions("Alice", DateTime.Now);
+        builder.Writeln("Alice's inserted paragraph. ");
+        // Delete a run to create a deletion revision for Alice.
+        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
         doc.StopTrackRevisions();
 
-        // Second author: Bob – start tracking revisions.
-        string otherAuthor = "Bob";
-        doc.StartTrackRevisions(otherAuthor, DateTime.Now);
-        builder.Writeln("Paragraph added by Bob."); // Revision authored by Bob.
+        // ---------- Revisions by Bob ----------
+        doc.StartTrackRevisions("Bob", DateTime.Now);
+        builder.Writeln("Bob's inserted paragraph. ");
+        // Delete a run to create a deletion revision for Bob.
+        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
         doc.StopTrackRevisions();
 
+        // At this point the document contains revisions from both authors.
         // Accept only revisions authored by Alice and reject all others.
-        // Iterate backwards to avoid modifying the collection while enumerating.
-        for (int i = doc.Revisions.Count - 1; i >= 0; i--)
+        string targetAuthor = "Alice";
+
+        // Copy revisions to a list because the collection changes during accept/reject.
+        List<Revision> revisions = doc.Revisions.Cast<Revision>().ToList();
+
+        foreach (Revision rev in revisions)
         {
-            Revision rev = doc.Revisions[i];
             if (rev.Author == targetAuthor)
                 rev.Accept();
             else

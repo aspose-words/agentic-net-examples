@@ -5,31 +5,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to edit it.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some text without tracking – this should not create revisions.
-        builder.Write("Initial content. ");
+        // Write some text without tracking – this will not be a revision.
+        builder.Writeln("Original text.");
 
-        // Verify that there are no revisions at this point.
-        bool hasRevisions = doc.HasRevisions;
-        Console.WriteLine($"Has revisions before tracking? {hasRevisions}");
+        // Enable tracking of revisions.
+        doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Start tracking revisions with a specific author and timestamp.
-        doc.StartTrackRevisions("Jane Doe", DateTime.Now);
+        // Write text while tracking is enabled – this will be recorded as a revision.
+        builder.Writeln("Added revision text.");
 
-        // Any changes made after this call are recorded as revisions.
-        builder.Write("Added revision text. ");
-
-        // Stop tracking to avoid further changes being recorded.
+        // Stop tracking further changes.
         doc.StopTrackRevisions();
 
-        // Check again for revisions.
-        hasRevisions = doc.HasRevisions;
-        Console.WriteLine($"Has revisions after tracking? {hasRevisions}");
+        // Determine whether the document contains any revisions.
+        bool hasRevisions = doc.HasRevisions;
 
-        // Optionally, save the document to inspect the revisions manually.
-        doc.Save("RevisionsDemo.docx");
+        // Output the result.
+        Console.WriteLine($"Document has revisions: {hasRevisions}");
+
+        // Save the document (optional, demonstrates lifecycle usage).
+        doc.Save("RevisionsCheck.docx");
     }
 }

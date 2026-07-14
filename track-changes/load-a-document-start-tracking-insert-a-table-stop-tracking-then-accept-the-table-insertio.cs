@@ -6,39 +6,59 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Paths for the temporary original document and the final result.
+        const string originalPath = "original.docx";
+        const string finalPath = "final.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create a simple document and save it – this provides a file to load.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Initial content.");
+        doc.Save(originalPath);
 
-        // Add some initial content that will not be tracked.
-        builder.Writeln("Initial content before tracking.");
+        // -----------------------------------------------------------------
+        // 2. Load the document we just created.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(originalPath);
+        DocumentBuilder loadedBuilder = new DocumentBuilder(loadedDoc);
 
-        // Start tracking revisions.
-        doc.StartTrackRevisions("Demo Author", DateTime.Now);
+        // -----------------------------------------------------------------
+        // 3. Start tracking revisions.
+        // -----------------------------------------------------------------
+        loadedDoc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Insert a simple 2‑cell table while tracking is enabled.
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.EndRow();
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndTable();
+        // -----------------------------------------------------------------
+        // 4. Insert a table while tracking is active – this creates an insertion revision.
+        // -----------------------------------------------------------------
+        loadedBuilder.StartTable();
+        loadedBuilder.InsertCell();
+        loadedBuilder.Write("Cell 1");
+        loadedBuilder.InsertCell();
+        loadedBuilder.Write("Cell 2");
+        loadedBuilder.EndRow();
+        loadedBuilder.EndTable();
 
-        // Stop tracking revisions.
-        doc.StopTrackRevisions();
+        // -----------------------------------------------------------------
+        // 5. Stop tracking revisions.
+        // -----------------------------------------------------------------
+        loadedDoc.StopTrackRevisions();
 
-        // Accept only the table insertion revision.
-        foreach (Revision rev in doc.Revisions)
+        // -----------------------------------------------------------------
+        // 6. Accept only the table insertion revision(s).
+        // -----------------------------------------------------------------
+        foreach (Revision rev in loadedDoc.Revisions)
         {
             if (rev.RevisionType == RevisionType.Insertion && rev.ParentNode.NodeType == NodeType.Table)
             {
                 rev.Accept();
-                break; // Table insertion is a single revision; exit after accepting.
             }
         }
 
-        // Save the resulting document.
-        doc.Save("TableRevisionAccepted.docx");
+        // -----------------------------------------------------------------
+        // 7. Save the resulting document.
+        // -----------------------------------------------------------------
+        loadedDoc.Save(finalPath);
     }
 }

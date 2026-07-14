@@ -6,40 +6,45 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the sample input and output documents.
-        string inputPath = "RevisionsInput.docx";
-        string outputPath = "RevisionsCleaned.docx";
+        // Paths for the temporary files.
+        string originalPath = "OriginalWithRevisions.docx";
+        string cleanedPath = "Cleaned.docx";
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document that contains tracked changes.
+        // 1. Create a sample document and generate some revisions.
         // -----------------------------------------------------------------
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Normal text – not a revision.
-        builder.Writeln("This is the original paragraph.");
+        builder.Writeln("This text will not be a revision.");
 
-        // Start tracking revisions, add some text, then stop tracking.
-        sampleDoc.StartTrackRevisions("SampleAuthor");
-        builder.Writeln("This line was added while tracking changes.");
-        sampleDoc.StopTrackRevisions();
+        // Start tracking revisions.
+        doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Save the document that now contains revisions.
-        sampleDoc.Save(inputPath);
+        // These writes will be recorded as revisions.
+        builder.Writeln("First revision line.");
+        builder.Writeln("Second revision line.");
+
+        // Stop tracking – further edits are not revisions.
+        doc.StopTrackRevisions();
+
+        // Save the document that contains revisions.
+        doc.Save(originalPath);
 
         // -----------------------------------------------------------------
         // 2. Load the document with revisions, accept all of them, and save.
         // -----------------------------------------------------------------
-        Document docWithRevisions = new Document(inputPath);
+        Document loadedDoc = new Document(originalPath);
 
-        // Ensure that revisions are present; otherwise the task would be meaningless.
-        if (!docWithRevisions.HasRevisions)
+        // Ensure the document actually has revisions before proceeding.
+        if (!loadedDoc.HasRevisions)
             throw new InvalidOperationException("The loaded document does not contain any revisions.");
 
         // Accept every revision in the document.
-        docWithRevisions.AcceptAllRevisions();
+        loadedDoc.AcceptAllRevisions();
 
-        // Save the cleaned document to a new file.
-        docWithRevisions.Save(outputPath);
+        // Save the cleaned document (no revisions remain).
+        loadedDoc.Save(cleanedPath);
     }
 }

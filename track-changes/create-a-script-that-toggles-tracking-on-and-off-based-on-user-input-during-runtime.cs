@@ -5,46 +5,57 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        // Determine the mode based on command‑line arguments.
-        // If no argument is supplied, default to "off".
-        string mode = args.Length > 0 ? args[0].ToLowerInvariant() : "off";
-
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial content that is not a revision.
-        builder.Writeln("Initial content. ");
+        // Write some initial content that is not tracked.
+        builder.Write("Initial content. ");
 
-        if (mode == "on")
+        // Determine whether to enable tracking based on the first command‑line argument.
+        // Expected values: "on" to start tracking, anything else (or missing) leaves tracking disabled.
+        bool enableTracking = args.Length > 0 && args[0].Equals("on", StringComparison.OrdinalIgnoreCase);
+
+        if (enableTracking)
         {
-            // Enable tracking of revisions.
-            doc.StartTrackRevisions("User", DateTime.Now);
+            // Start tracking revisions with a specified author.
+            doc.StartTrackRevisions("ConsoleUser", DateTime.Now);
 
-            // Add text while tracking is active – this will create an insertion revision.
-            builder.Writeln("Tracked change: added while tracking is ON.");
+            // This text will be recorded as an insertion revision.
+            builder.Write("This text is tracked as a revision. ");
 
-            // Stop tracking so subsequent edits are not recorded as revisions.
+            // Stop tracking so subsequent changes are not recorded.
             doc.StopTrackRevisions();
 
-            // Save the document showing tracked changes.
-            doc.Save("TrackingOn.docx");
+            // This text will not be a revision.
+            builder.Write("This text is added after tracking stopped. ");
         }
-        else // mode == "off" or any other value
+        else
         {
-            // Ensure tracking is not active.
-            // (If it were previously started, we stop it.)
-            doc.StopTrackRevisions();
-
-            // Add text without tracking – no revisions will be created.
-            builder.Writeln("Untracked change: added while tracking is OFF.");
-
-            // Save the document without any revisions.
-            doc.Save("TrackingOff.docx");
+            // No tracking – all changes are normal edits.
+            builder.Write("Tracking is disabled; this text is a normal edit. ");
         }
 
-        // For demonstration purposes, output the number of revisions created.
-        Console.WriteLine($"Mode: {mode}");
-        Console.WriteLine($"Revisions count: {doc.Revisions.Count}");
+        // Inspect revisions if any were created.
+        if (doc.HasRevisions)
+        {
+            Console.WriteLine($"Document has {doc.Revisions.Count} revision(s):");
+            foreach (Revision rev in doc.Revisions)
+            {
+                Console.WriteLine($"- Author: {rev.Author}, Type: {rev.RevisionType}, Text: \"{rev.ParentNode.GetText().Trim()}\"");
+            }
+
+            // Accept all revisions to finalize the document.
+            doc.AcceptAllRevisions();
+        }
+        else
+        {
+            Console.WriteLine("Document has no revisions.");
+        }
+
+        // Save the resulting document.
+        const string outputPath = "Output.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }
