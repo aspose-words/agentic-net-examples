@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -10,34 +11,30 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Add a custom paragraph style to the document.
+        // Add a custom paragraph style named "MyCustomStyle".
         Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
 
         // Configure the style's paragraph formatting.
-        ParagraphFormat fmt = customStyle.ParagraphFormat;
+        // 1. Border – apply a single blue line to all sides.
+        BorderCollection borders = customStyle.ParagraphFormat.Borders;
+        borders.LineStyle = LineStyle.Single;
+        borders.Color = Color.Blue;
+        borders.LineWidth = 2.0;
 
-        // Apply a solid border to all sides of the paragraph.
-        foreach (Border border in fmt.Borders)
-        {
-            border.LineStyle = LineStyle.Single;
-            border.LineWidth = 2.0;               // points
-            border.Color = Color.Blue;
-        }
+        // 2. Background shading – light yellow fill.
+        customStyle.ParagraphFormat.Shading.BackgroundPatternColor = Color.LightYellow;
 
-        // Set a background color (shading) for the paragraph.
-        fmt.Shading.BackgroundPatternColor = Color.LightYellow;
+        // 3. Indentation – 20 points on left and right.
+        customStyle.ParagraphFormat.LeftIndent = 20;
+        customStyle.ParagraphFormat.RightIndent = 20;
 
-        // Define indentation values.
-        fmt.LeftIndent = 20;        // points
-        fmt.RightIndent = 20;       // points
-        fmt.FirstLineIndent = 10;   // points
-
-        // Insert a paragraph and apply the custom style.
+        // Use DocumentBuilder to insert a paragraph that uses the custom style.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.ParagraphFormat.StyleName = "MyCustomStyle";
-        builder.Writeln("This paragraph uses a custom style with a border, background color, and indentation.");
+        builder.Writeln("This paragraph demonstrates a custom style with a border, background color, and indentation.");
 
-        // Save the document to a file.
-        doc.Save("CustomStyleParagraph.docx");
+        // Save the document to a file in the same folder as the executable.
+        string outputPath = "CustomStyleParagraph.docx";
+        doc.Save(outputPath);
     }
 }

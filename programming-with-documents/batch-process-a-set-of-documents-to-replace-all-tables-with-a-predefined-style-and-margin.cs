@@ -1,110 +1,105 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
 public class Program
 {
-    // Predefined style name that will be applied to every table.
-    private const string TableStyleName = "MyPredefinedTableStyle";
-
-    // Margin (left indent) that will be applied to every table, measured in points.
-    private const double TableLeftIndent = 20.0;
-
     public static void Main()
     {
-        // Directories for sample source documents and processed output.
-        string sourceDir = Path.Combine(Directory.GetCurrentDirectory(), "Docs");
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Processed");
+        // Define folders for input and output documents.
+        string baseDir = Directory.GetCurrentDirectory();
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "OutputDocs");
 
-        Directory.CreateDirectory(sourceDir);
+        // Ensure the directories exist.
+        Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create a few sample documents that contain tables.
-        // -----------------------------------------------------------------
-        for (int i = 1; i <= 3; i++)
-        {
-            Document sampleDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // Create sample documents with tables if they do not already exist.
+        CreateSampleDocument(Path.Combine(inputDir, "Sample1.docx"));
+        CreateSampleDocument(Path.Combine(inputDir, "Sample2.docx"));
 
-            // Add a simple 2x2 table with some text.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write($"Doc {i} - Row 1, Cell 1");
-            builder.InsertCell();
-            builder.Write($"Doc {i} - Row 1, Cell 2");
-            builder.EndRow();
-
-            builder.InsertCell();
-            builder.Write($"Doc {i} - Row 2, Cell 1");
-            builder.InsertCell();
-            builder.Write($"Doc {i} - Row 2, Cell 2");
-            builder.EndRow();
-
-            builder.EndTable();
-
-            // Save the sample document.
-            string samplePath = Path.Combine(sourceDir, $"Sample{i}.docx");
-            sampleDoc.Save(samplePath);
-        }
-
-        // -----------------------------------------------------------------
-        // Step 2: Process each document – replace all tables with the
-        // predefined style and apply the left‑indent margin.
-        // -----------------------------------------------------------------
-        foreach (string filePath in Directory.GetFiles(sourceDir, "*.docx"))
+        // Process each .docx file in the input directory.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
         {
             // Load the document.
             Document doc = new Document(filePath);
 
-            // Ensure the predefined table style exists in the current document.
-            EnsureTableStyleExists(doc);
-
-            // Iterate over all tables in the document.
-            NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-            foreach (Table tbl in tables)
+            // Ensure the predefined table style exists in the document.
+            const string styleName = "MyPredefinedTableStyle";
+            TableStyle tableStyle;
+            if (!doc.Styles.Any(s => s.Name == styleName))
             {
-                // Apply the predefined style.
-                tbl.StyleName = TableStyleName;
-
-                // Apply the left‑indent margin.
-                tbl.LeftIndent = TableLeftIndent;
-
-                // Optional: expand style to direct formatting if further inspection is needed.
-                // doc.ExpandTableStylesToDirectFormatting(); // Uncomment if required.
+                // Add a new table style.
+                tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, styleName);
+                // Configure style properties (example settings).
+                tableStyle.Borders.Color = System.Drawing.Color.Blue;
+                tableStyle.Borders.LineStyle = LineStyle.Single;
+                tableStyle.Borders.LineWidth = 1.0;
+                tableStyle.Shading.BackgroundPatternColor = System.Drawing.Color.LightYellow;
+                tableStyle.CellSpacing = 5.0;
+                tableStyle.BottomPadding = 5.0;
+                tableStyle.TopPadding = 5.0;
+                tableStyle.LeftPadding = 5.0;
+                tableStyle.RightPadding = 5.0;
+            }
+            else
+            {
+                tableStyle = (TableStyle)doc.Styles[styleName];
             }
 
-            // Save the processed document to the output folder.
+            // Iterate through all tables in the document.
+            NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+            foreach (Table table in tables)
+            {
+                // Apply the predefined style.
+                table.Style = tableStyle;
+
+                // Apply margin settings (example: left indent of 20 points).
+                table.LeftIndent = 20.0;
+
+                // Optionally adjust other table formatting.
+                table.CellSpacing = 5.0;
+                table.BottomPadding = 5.0;
+                table.TopPadding = 5.0;
+                table.LeftPadding = 5.0;
+                table.RightPadding = 5.0;
+            }
+
+            // Save the modified document to the output directory.
             string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
             doc.Save(outputPath);
         }
-
-        // The program finishes automatically; no user interaction is required.
     }
 
-    /// <summary>
-    /// Adds the predefined table style to the document if it does not already exist.
-    /// </summary>
-    /// <param name="doc">The document to which the style will be added.</param>
-    private static void EnsureTableStyleExists(Document doc)
+    // Helper method to create a simple document containing a single table.
+    private static void CreateSampleDocument(string filePath)
     {
-        // Check whether the style already exists.
-        if (doc.Styles[TableStyleName] != null)
+        // If the file already exists, skip creation.
+        if (File.Exists(filePath))
             return;
 
-        // Create a new table style.
-        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, TableStyleName);
-        tableStyle.RowStripe = 2;                     // Apply row banding.
-        tableStyle.CellSpacing = 5;                    // Space between cells (points).
-        tableStyle.BottomPadding = 5;
-        tableStyle.TopPadding = 5;
-        tableStyle.LeftPadding = 5;
-        tableStyle.RightPadding = 5;
-        tableStyle.Shading.BackgroundPatternColor = Color.AntiqueWhite;
-        tableStyle.Borders.Color = Color.Blue;
-        tableStyle.Borders.LineStyle = LineStyle.DotDash;
-        tableStyle.Borders.LineWidth = 0.5;
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a table with two rows and two columns.
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1,1");
+        builder.InsertCell();
+        builder.Write("Cell 1,2");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("Cell 2,1");
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
+        builder.EndRow();
+
+        builder.EndTable();
+
+        // Save the sample document.
+        doc.Save(filePath);
     }
 }

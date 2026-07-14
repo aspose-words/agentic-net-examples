@@ -3,41 +3,35 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class BreakForwardLinkExample
+public class Program
 {
     public static void Main()
     {
         // Define output folder and ensure it exists.
-        string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the first text box.
-        Shape shape1 = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        // Insert four text boxes.
+        Shape shape1 = builder.InsertShape(ShapeType.TextBox, 100, 100);
         TextBox textBox1 = shape1.TextBox;
-        builder.Writeln(); // Move cursor after the shape.
+        builder.Writeln();
 
-        // Insert the second text box (the middle one we will break the link from).
-        Shape shape2 = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        Shape shape2 = builder.InsertShape(ShapeType.TextBox, 100, 100);
         TextBox textBox2 = shape2.TextBox;
         builder.Writeln();
 
-        // Insert the third text box.
-        Shape shape3 = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        Shape shape3 = builder.InsertShape(ShapeType.TextBox, 100, 100);
         TextBox textBox3 = shape3.TextBox;
         builder.Writeln();
 
-        // Insert a fourth text box to demonstrate that text flow stops after breaking the link.
-        Shape shape4 = builder.InsertShape(ShapeType.TextBox, 200, 100);
+        Shape shape4 = builder.InsertShape(ShapeType.TextBox, 100, 100);
         TextBox textBox4 = shape4.TextBox;
-        // Move the builder inside the fourth text box and add some text.
-        builder.MoveTo(shape4.LastParagraph);
-        builder.Write("This box is not linked.");
 
-        // Link the first three text boxes together (1 -> 2 -> 3).
+        // Link the first three text boxes: 1 -> 2 -> 3.
         if (textBox1.IsValidLinkTarget(textBox2))
             textBox1.Next = textBox2;
 
@@ -50,7 +44,6 @@ public class BreakForwardLinkExample
             textBox3.Previous.BreakForwardLink();
 
         // Save the resulting document.
-        string outputPath = Path.Combine(artifactsDir, "BreakForwardLink.docx");
-        doc.Save(outputPath);
+        doc.Save(Path.Combine(artifactsDir, "BreakForwardLink.docx"));
     }
 }

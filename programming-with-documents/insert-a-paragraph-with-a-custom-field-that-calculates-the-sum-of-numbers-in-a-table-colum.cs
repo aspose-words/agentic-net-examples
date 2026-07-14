@@ -10,8 +10,8 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table with two columns.
-        builder.StartTable();
+        // Build a simple table with a header and three data rows.
+        Table table = builder.StartTable();
 
         // Header row.
         builder.InsertCell();
@@ -41,22 +41,24 @@ public class Program
         builder.Write("30");
         builder.EndRow();
 
-        // Row that will contain the sum of the numbers in the second column.
-        builder.InsertCell();
-        builder.Write("Total");
-        builder.InsertCell();
-        // Insert a formula field that sums the cells above in this column.
-        // The field is placed inside a paragraph (the cell's paragraph).
-        builder.InsertField("= SUM(ABOVE) ");
-        builder.EndRow();
-
         // Finish the table.
         builder.EndTable();
 
-        // Update all fields so the sum is calculated.
+        // Insert a new paragraph after the table.
+        builder.Writeln();
+
+        // Write a label for the total.
+        builder.Write("Total quantity: ");
+
+        // Insert a formula field that sums the numbers above in the same column.
+        // The field code "=SUM(ABOVE)" tells Word to add all numeric values in the column above this cell.
+        // Use the overload that does not update immediately; we will update all fields later.
+        builder.InsertField("=SUM(ABOVE)", "");
+
+        // Recalculate all fields so the SUM field shows the correct result.
         doc.UpdateFields();
 
-        // Save the document.
-        doc.Save("SumField.docx");
+        // Save the document to disk.
+        doc.Save("TableSumField.docx");
     }
 }

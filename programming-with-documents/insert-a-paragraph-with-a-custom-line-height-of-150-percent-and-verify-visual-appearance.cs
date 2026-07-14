@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -7,26 +8,28 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set line spacing to 150 % of the default (12 pt) line height.
-        // Using the Multiple rule with a value of 18 pt gives 1.5 × 12 pt = 18 pt.
+        // Set line spacing to 150% (1.5 lines). One line = 12 points, so 1.5 lines = 18 points.
         builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 18; // 150 % line height.
+        builder.ParagraphFormat.LineSpacing = 18; // 12 * 1.5 = 18 points
 
-        // Insert a paragraph that uses the custom line height.
-        builder.Writeln("This paragraph has a line height of 150 %.");
+        // Insert a paragraph with some text.
+        builder.Writeln("This paragraph has a custom line height of 150%.");
 
-        // Save the document to disk.
-        const string outputPath = "CustomLineHeight.docx";
+        // Save the document to the local file system.
+        string outputPath = "ParagraphLineHeight.docx";
         doc.Save(outputPath);
 
-        // Reload the document to verify that the formatting was saved correctly.
-        Document loadedDoc = new Document(outputPath);
-        Paragraph firstParagraph = loadedDoc.FirstSection.Body.FirstParagraph;
+        // Verify that the paragraph's formatting was applied correctly.
+        Paragraph para = doc.FirstSection.Body.Paragraphs[0];
+        bool ruleCorrect = para.ParagraphFormat.LineSpacingRule == LineSpacingRule.Multiple;
+        bool spacingCorrect = Math.Abs(para.ParagraphFormat.LineSpacing - 18) < 0.001;
 
-        // Output the applied line spacing settings.
-        Console.WriteLine($"LineSpacingRule: {firstParagraph.ParagraphFormat.LineSpacingRule}");
-        Console.WriteLine($"LineSpacing (points): {firstParagraph.ParagraphFormat.LineSpacing}");
+        Console.WriteLine($"Line spacing rule set correctly: {ruleCorrect}");
+        Console.WriteLine($"Line spacing value set correctly: {spacingCorrect}");
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

@@ -1,11 +1,11 @@
 using System;
 using System.IO;
-using System.Drawing; // Required for Color
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
 
-public class GradientTextBoxExample
+public class Program
 {
     public static void Main()
     {
@@ -14,36 +14,33 @@ public class GradientTextBoxExample
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a floating text box shape.
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.WrapType = WrapType.None;
-        textBox.Width = 300;
-        textBox.Height = 150;
-        textBox.Left = 100;
-        textBox.Top = 100;
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 100);
+        textBox.WrapType = WrapType.None; // Ensure the shape is floating.
 
-        // Apply a one‑color vertical gradient fill to the text box.
-        // Foreground color: LightBlue, style: Vertical, variant: Variant1, degree: 0.2 (light to dark).
-        textBox.Fill.OneColorGradient(Color.LightBlue, GradientStyle.Vertical, GradientVariant.Variant1, 0.2);
-
-        // Add a paragraph with a run of text inside the text box.
+        // Add a centered paragraph with some text inside the text box.
         Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Gradient Filled Text Box");
-        para.AppendChild(run);
         textBox.AppendChild(para);
+        para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        Run run = new Run(doc, "Gradient Text Box");
+        para.AppendChild(run);
 
-        // Insert the text box into the document body.
-        builder.InsertNode(textBox);
+        // Apply a one‑color horizontal gradient fill to the text box.
+        textBox.Fill.OneColorGradient(
+            Color.LightBlue,               // Gradient foreground color.
+            GradientStyle.Horizontal,      // Gradient direction.
+            GradientVariant.Variant2,      // Gradient variant.
+            0.2);                          // Lightness factor (0.0‑1.0).
 
-        // Ensure the output directory exists.
+        // Optionally set the gradient angle (not needed for horizontal style).
+        textBox.Fill.GradientAngle = 0;
+
+        // Prepare PDF save options. Using default options is sufficient for gradient rendering.
+        PdfSaveOptions pdfOptions = new PdfSaveOptions();
+
+        // Define output path in the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "GradientTextBox.pdf");
-        Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 
-        // Save the document as PDF. Use PdfSaveOptions to keep drawing fidelity.
-        PdfSaveOptions pdfOptions = new PdfSaveOptions
-        {
-            // Render DrawingML (DML) shapes to preserve gradient details.
-            DmlRenderingMode = DmlRenderingMode.DrawingML
-        };
+        // Save the document as PDF.
         doc.Save(outputPath, pdfOptions);
     }
 }

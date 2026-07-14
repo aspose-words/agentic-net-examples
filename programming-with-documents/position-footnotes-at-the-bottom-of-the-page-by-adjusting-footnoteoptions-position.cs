@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Notes;
 
@@ -11,19 +10,18 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some text and insert a footnote.
+        // Write some text and add a footnote.
         builder.Write("Hello world! ");
-        builder.InsertFootnote(FootnoteType.Footnote, "This is a footnote placed at the bottom of the page.");
+        builder.InsertFootnote(FootnoteType.Footnote, "Footnote contents.");
 
-        // Set footnote position to the bottom of each page.
+        // Position all footnotes at the bottom of each page.
         doc.FootnoteOptions.Position = FootnotePosition.BottomOfPage;
 
-        // Prepare output directory and file path.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "FootnoteBottomOfPage.docx");
+        // Ensure the output folder exists.
+        string artifactsDir = "Artifacts";
+        System.IO.Directory.CreateDirectory(artifactsDir);
 
         // Save the document.
-        doc.Save(outputPath);
+        doc.Save(System.IO.Path.Combine(artifactsDir, "PositionFootnote.docx"));
     }
 }

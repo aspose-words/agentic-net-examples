@@ -1,53 +1,48 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
+using Aspose.Words.Saving;
 
-namespace RestartListNumberingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // First section heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Section 1");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+
+        // Create a numbered list and configure it to restart at each new section.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+        list.IsRestartAtEachSection = true;
+
+        // Apply the list to the following paragraphs.
+        builder.ListFormat.List = list;
+        builder.Writeln("Item 1");
+        builder.Writeln("Item 2");
+
+        // Insert a section break (new page) to start a new section.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // Second section heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Section 2");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+
+        // Continue using the same list; numbering will restart at 1 because of IsRestartAtEachSection.
+        builder.ListFormat.List = list;
+        builder.Writeln("Item 1");
+        builder.Writeln("Item 2");
+
+        // Save the document. Use a compliance level that supports the restart property.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // First section – heading and a numbered list.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("First Section");
-
-            // Use the default numbered list template.
-            builder.ListFormat.ApplyNumberDefault();
-            builder.Writeln("Item 1");
-            builder.Writeln("Item 2");
-            builder.ListFormat.RemoveNumbers();
-
-            // Insert a section break so the next content starts in a new section.
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-            // Second section – heading.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Second Section");
-
-            // Create a list that restarts numbering at each section.
-            List restartList = doc.Lists.Add(ListTemplate.NumberDefault);
-            restartList.IsRestartAtEachSection = true;
-
-            // Apply the list to the builder and add items.
-            builder.ListFormat.List = restartList;
-            builder.Writeln("Item 1");
-            builder.Writeln("Item 2");
-            builder.Writeln("Item 3");
-            builder.ListFormat.RemoveNumbers();
-
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // Save the document.
-            string outputPath = Path.Combine(outputDir, "RestartList.docx");
-            doc.Save(outputPath);
-        }
+            Compliance = OoxmlCompliance.Iso29500_2008_Transitional
+        };
+        doc.Save("RestartList.docx", saveOptions);
     }
 }

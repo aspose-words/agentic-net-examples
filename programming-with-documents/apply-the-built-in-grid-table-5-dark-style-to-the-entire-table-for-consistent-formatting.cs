@@ -2,50 +2,52 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableStyleExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Start a table and add a few rows/cells.
-        Table table = builder.StartTable();
+            // Initialize DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First row (header)
-        builder.InsertCell();
-        builder.Write("Product");
-        builder.InsertCell();
-        builder.Write("Quantity");
-        builder.EndRow();
+            // Start a new table.
+            Table table = builder.StartTable();
 
-        // Second row
-        builder.InsertCell();
-        builder.Write("Apples");
-        builder.InsertCell();
-        builder.Write("10");
-        builder.EndRow();
+            // Insert the first cell (required before applying any table formatting).
+            builder.InsertCell();
+            builder.Write("Header 1");
+            builder.InsertCell();
+            builder.Write("Header 2");
+            builder.EndRow();
 
-        // Third row
-        builder.InsertCell();
-        builder.Write("Bananas");
-        builder.InsertCell();
-        builder.Write("20");
-        builder.EndRow();
+            // Apply the built‑in "Grid Table 5 Dark" style to the whole table.
+            table.StyleIdentifier = StyleIdentifier.GridTable5Dark;
 
-        // Finish the table.
-        builder.EndTable();
+            // Apply the style to all parts of the table.
+            table.StyleOptions = TableStyleOptions.Default;
 
-        // Apply the built‑in "Grid Table 5 Dark" style to the whole table.
-        table.StyleIdentifier = StyleIdentifier.GridTable5Dark;
-        // Apply the style to all parts of the table (header, rows, columns, banding, etc.).
-        table.StyleOptions = TableStyleOptions.Default;
+            // Optional: adjust column widths to fit the content.
+            table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Optionally auto‑fit the table to its contents.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+            // Add a few more rows with sample data.
+            for (int i = 1; i <= 3; i++)
+            {
+                builder.InsertCell();
+                builder.Write($"Item {i}");
+                builder.InsertCell();
+                builder.Write($"{i * 10}");
+                builder.EndRow();
+            }
 
-        // Save the document to the local file system.
-        doc.Save("GridTableStyle.docx");
+            // End the table.
+            builder.EndTable();
+
+            // Save the document to the local file system.
+            doc.Save("GridTable5Dark.docx");
+        }
     }
 }

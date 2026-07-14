@@ -1,51 +1,47 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableMerge
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x3 table (2 rows, 3 columns) for demonstration.
-            builder.StartTable();
+        // Start a table.
+        builder.StartTable();
 
-            // First row – three separate cells.
-            builder.InsertCell();
-            builder.Write("R1C1");
-            builder.InsertCell();
-            builder.Write("R1C2");
-            builder.InsertCell();
-            builder.Write("R1C3");
-            builder.EndRow();
+        // ---------- First row ----------
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 2");
+        builder.EndRow();
 
-            // Second row – three cells that will be merged (first two cells).
-            // Insert the first cell and mark it as the start of a merged range.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.First;
-            builder.Write("Merged Cell");
+        // ---------- Second row ----------
+        // Insert the first cell of the second row and mark it as the start of a horizontal merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.Write("Merged cell (Row 2, Cells 1+2)");
 
-            // Insert the second cell and merge it with the previous cell.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-            // No text is written to this cell because it is merged.
+        // Insert the second cell of the second row and merge it with the previous cell.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // No text is needed for the merged cell.
+        builder.EndRow();
 
-            // Insert the third cell (remains independent).
-            builder.CellFormat.HorizontalMerge = CellMerge.None;
-            builder.InsertCell();
-            builder.Write("R2C3");
+        // End the table.
+        builder.EndTable();
 
-            // Finish the second row and the table.
-            builder.EndRow();
-            builder.EndTable();
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-            // Save the document to a file.
-            doc.Save("MergedTable.docx");
-        }
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "MergedTable.docx");
+        doc.Save(outputPath);
     }
 }

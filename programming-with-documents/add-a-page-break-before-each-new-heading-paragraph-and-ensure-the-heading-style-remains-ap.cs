@@ -8,51 +8,43 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Create a DocumentBuilder attached to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add an introductory paragraph (normal style).
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is an introductory paragraph that precedes the first heading.");
+        // Add a normal paragraph before the first heading.
+        builder.Writeln("This is an introductory paragraph.");
 
-        // Insert a page break before the first heading.
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Add Heading 1. The heading style is applied after the page break.
+        // ----- First heading (Heading 1) -----
+        // Force a page break before the heading.
+        builder.ParagraphFormat.PageBreakBefore = true;
+        // Apply the Heading 1 style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1: Getting Started");
+        builder.Writeln("Heading 1");
 
-        // Add some body text under the heading.
+        // Reset page‑break flag for following normal paragraphs.
+        builder.ParagraphFormat.PageBreakBefore = false;
+        // Use the Normal style for body text.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content for Chapter 1 goes here. It follows the heading on a new page.");
+        builder.Writeln("Content under Heading 1.");
 
-        // Insert a page break before the next heading.
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Add Heading 2. The heading style remains applied.
+        // ----- Second heading (Heading 2) -----
+        builder.ParagraphFormat.PageBreakBefore = true;
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1: Overview");
+        builder.Writeln("Heading 1.1");
 
-        // Add body text under the second heading.
+        // Normal paragraph after the second heading.
+        builder.ParagraphFormat.PageBreakBefore = false;
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Details for Section 1.1 are presented here.");
+        builder.Writeln("More content under Heading 1.1.");
 
-        // Insert a page break before another heading.
-        builder.InsertBreak(BreakType.PageBreak);
+        // ----- Third heading (Heading 1) -----
+        builder.ParagraphFormat.PageBreakBefore = true;
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Heading 2");
 
-        // Add Heading 2 again.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.2: Details");
-
-        // Add body text under the third heading.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Further information for Section 1.2.");
-
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeadingPageBreak.docx");
-
-        // Save the document to the specified file.
+        // Save the document to a local file.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string outputPath = Path.Combine(artifactsDir, "HeadingsWithPageBreaks.docx");
         doc.Save(outputPath);
     }
 }

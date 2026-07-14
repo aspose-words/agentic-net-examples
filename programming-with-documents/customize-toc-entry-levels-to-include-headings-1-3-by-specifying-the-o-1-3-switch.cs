@@ -6,21 +6,22 @@ public class Program
 {
     public static void Main()
     {
-        // Create a folder for output files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Initialize a new blank document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents that includes heading levels 1‑3.
-        // \\o "1-3" specifies the range of heading levels to include.
-        // \\h makes entries hyperlinks, \\z hides page numbers in web layout, \\u builds the TOC from outline levels.
+        // Insert a Table of Contents (TOC) that includes heading levels 1 through 3.
+        // The switch \o "1-3" tells Word to pick up headings of levels 1‑3.
+        // Additional switches:
+        //   \h – make entries clickable hyperlinks,
+        //   \z – hide page numbers in web layout,
+        //   \u – use outline levels.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+
+        // Insert a page break so that the headings appear after the TOC.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Add sample headings that will appear in the TOC.
+        // Add sample headings that will be captured by the TOC.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Heading 1");
 
@@ -32,11 +33,19 @@ public class Program
         builder.Writeln("Heading 1.2.1");
         builder.Writeln("Heading 1.2.2");
 
-        // Update fields so the TOC reflects the inserted headings.
+        // Add a heading level 4 to demonstrate that it is excluded from the TOC.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading4;
+        builder.Writeln("Heading 1.2.2.1 (Not in TOC)");
+
+        // Update all fields in the document so the TOC reflects the added headings.
         doc.UpdateFields();
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(artifactsDir, "CustomToc.docx");
+        // Define the output path for the generated document.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "CustomizedToc.docx");
+
+        // Save the document.
         doc.Save(outputPath);
     }
 }

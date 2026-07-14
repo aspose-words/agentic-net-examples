@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
+using Aspose.Words.Drawing.Charts;
 
 public class Program
 {
@@ -13,22 +13,17 @@ public class Program
         // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply the built‑in "Title" style to the first paragraph.
+        // Insert the first paragraph with some text.
+        builder.Writeln("My Document Title");
+
+        // Apply the built‑in "Title" style to the paragraph.
         builder.ParagraphFormat.StyleName = "Title";
 
-        // Ensure the paragraph appears in the outline by setting its outline level.
+        // Ensure the paragraph appears in the document outline by setting an outline level.
         builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level1;
 
-        // Write the title text.
-        builder.Writeln("Document Title");
-
-        // Add a normal paragraph after the title.
-        builder.ParagraphFormat.StyleName = "Normal";
-        builder.ParagraphFormat.OutlineLevel = OutlineLevel.BodyText;
-        builder.Writeln("This is the body of the document.");
-
-        // Determine an output path in the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TitleStyle.docx");
+        // Define the output file path (in the current directory).
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "TitleStyleOutline.docx");
 
         // Save the document.
         doc.Save(outputPath);

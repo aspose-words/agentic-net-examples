@@ -9,21 +9,23 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add some text and footnotes.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Write("This is a sample sentence with a footnote.");
+
+        // Insert sample text with footnotes.
+        builder.Write("First paragraph. ");
         builder.InsertFootnote(FootnoteType.Footnote, "First footnote.");
-        builder.Write(" Another sentence with a second footnote.");
+        builder.Write(" Second paragraph. ");
         builder.InsertFootnote(FootnoteType.Footnote, "Second footnote.");
 
-        // Change the footnote numbering style to lower‑case Roman numerals.
+        // Change footnote numbering style to lower‑case Roman numerals.
         doc.FootnoteOptions.NumberStyle = NumberStyle.LowercaseRoman;
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "FootnoteNumberStyle.docx");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Save the document.
+        string outputPath = Path.Combine(outputDir, "FootnotesLowerRoman.docx");
         doc.Save(outputPath);
     }
 }

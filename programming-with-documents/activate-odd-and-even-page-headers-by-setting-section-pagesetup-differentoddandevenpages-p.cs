@@ -1,40 +1,39 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder and file name.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "OddEvenHeaders.docx");
-
-        // Create a new blank document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable different headers/footers for odd and even pages.
+        // Enable different headers for odd and even pages.
         builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
 
-        // Header for odd-numbered pages (primary header).
+        // Create a header that will appear on odd-numbered pages.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Header for odd pages");
+        builder.Writeln("Header for odd pages");
 
-        // Header for even-numbered pages.
+        // Create a header that will appear on even-numbered pages.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
-        builder.Write("Header for even pages");
+        builder.Writeln("Header for even pages");
 
-        // Return to the main document body and add some pages.
+        // Return to the main document body.
         builder.MoveToSection(0);
-        builder.Writeln("Page 1 (odd)");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2 (even)");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3 (odd)");
 
-        // Save the document.
+        // Add a few pages to demonstrate the odd/even headers.
+        builder.Writeln("Page 1");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 2");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 3");
+
+        // Determine an output path in the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OddEvenHeaders.docx");
         doc.Save(outputPath);
     }
 }

@@ -1,46 +1,54 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsHeaderTextBoxExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Move the cursor to the primary header of the first section.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            // Create a DocumentBuilder which will be used to insert content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a floating text box shape.
-        Shape textBox = new Shape(doc, ShapeType.TextBox);
-        textBox.Width = 200;               // Width in points.
-        textBox.Height = 50;               // Height in points.
-        textBox.WrapType = WrapType.None;  // Prevent text wrapping.
-        textBox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        textBox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        textBox.Left = 50;                 // Position from the left edge of the page.
-        textBox.Top = 20;                  // Position from the top edge of the page.
+            // Move the cursor to the primary header of the first section.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Add a paragraph with a run of text inside the text box.
-        Paragraph para = new Paragraph(doc);
-        Run run = new Run(doc, "Header TextBox");
-        para.AppendChild(run);
-        textBox.AppendChild(para);
+            // Insert a floating text box shape into the header.
+            // Width = 200 points, Height = 50 points.
+            Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
+            // Ensure the shape does not wrap with surrounding text.
+            textBox.WrapType = WrapType.None;
 
-        // Insert the text box into the header.
-        builder.InsertNode(textBox);
+            // Add a paragraph inside the text box and center its text.
+            Paragraph para = new Paragraph(doc);
+            textBox.AppendChild(para);
+            para.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
-        // Return to the main body of the document.
-        builder.MoveToSection(0);
-        builder.Writeln("First page content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page content.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Third page content.");
+            // Add the actual text that will appear inside the text box.
+            Run run = new Run(doc, "Header TextBox");
+            para.AppendChild(run);
 
-        // Save the document to a file in the current directory.
-        doc.Save("HeaderWithTextBox.docx");
+            // Return the cursor to the main body of the document.
+            builder.MoveToSection(0);
+
+            // Add some body content spanning multiple pages to demonstrate the header.
+            builder.Writeln("Page 1");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("Page 2");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("Page 3");
+
+            // Define the output file path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderWithTextBox.docx");
+
+            // Save the document to disk.
+            doc.Save(outputPath);
+        }
     }
 }

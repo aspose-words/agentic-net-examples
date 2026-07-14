@@ -1,35 +1,33 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
 
-namespace AsposeWordsParagraphFormatting
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Use DocumentBuilder to add content.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Use DocumentBuilder to add content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Set paragraph alignment to Justify.
-            builder.ParagraphFormat.Alignment = ParagraphAlignment.Justify;
+        // Set paragraph alignment to justified.
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Justify;
 
-            // Enable word wrap (wrap by whole words) for the paragraph.
-            builder.ParagraphFormat.WordWrap = true;
+        // Ensure word wrap is enabled (wrap by whole words).
+        builder.ParagraphFormat.WordWrap = true;
 
-            // Write a sample paragraph that will demonstrate the justification and word wrap.
-            builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
-                            "Sed non risus. Suspendisse lectus tortor, dignissim sit amet, " +
-                            "adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. " +
-                            "Maecenas ligula massa, varius a, semper congue, euismod non, mi.");
+        // Add a long paragraph to demonstrate justification and wrapping.
+        string longText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                          "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. " +
+                          "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi " +
+                          "ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit " +
+                          "in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur " +
+                          "sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt " +
+                          "mollit anim id est laborum.";
+        builder.Writeln(longText);
 
-            // Save the document to the local file system.
-            string outputPath = "JustifiedParagraph.docx";
-            doc.Save(outputPath);
-        }
+        // Save the document to a file.
+        doc.Save("JustifiedParagraph.docx");
     }
 }

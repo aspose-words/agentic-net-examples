@@ -10,17 +10,19 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Attach a DocumentBuilder to the document.
+        // Initialize a DocumentBuilder attached to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some text that will be referenced by the footnote.
-        builder.Write("This is a sentence with a footnote.");
+        // Add some text that will be referenced by the footnote.
+        builder.Write("This is a sentence with a footnote reference.");
 
         // Insert a footnote at the current cursor position with custom text.
         builder.InsertFootnote(FootnoteType.Footnote, "This is the footnote text.");
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "FootnoteExample.docx");
+        // Determine an output file path in the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FootnoteExample.docx");
+
+        // Save the document to the specified path.
         doc.Save(outputPath);
     }
 }

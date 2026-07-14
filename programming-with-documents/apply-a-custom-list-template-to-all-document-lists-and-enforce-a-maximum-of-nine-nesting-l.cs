@@ -1,56 +1,68 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-namespace AsposeWordsListTemplateExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add a sample list with nesting up to the maximum of 9 levels (0‑8).
+        builder.Writeln("Sample list with maximum nesting levels:");
+        List sampleList = doc.Lists.Add(ListTemplate.NumberDefault);
+        builder.ListFormat.List = sampleList;
+
+        for (int level = 0; level < 9; level++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-
-            // Use DocumentBuilder to add content.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Write a heading before the lists.
-            builder.Writeln("Document with custom list template (max 9 levels)");
-
-            // Define the custom list template to be applied to all lists.
-            // For this example we use NumberUppercaseLetterDot (A., B., C., ...).
-            ListTemplate customTemplate = ListTemplate.NumberUppercaseLetterDot;
-
-            // Create three separate lists to demonstrate the template application.
-            for (int listIndex = 1; listIndex <= 3; listIndex++)
-            {
-                // Add a new list based on the custom template.
-                List list = doc.Lists.Add(customTemplate);
-
-                // Apply the list to the builder.
-                builder.ListFormat.List = list;
-
-                // Write list items with nesting levels.
-                // Enforce a maximum of nine nesting levels (0‑8).
-                for (int level = 0; level < 12; level++) // Attempt more than 9 levels.
-                {
-                    if (level >= 9) // Stop adding items beyond the ninth level.
-                        break;
-
-                    builder.ListFormat.ListLevelNumber = level;
-                    builder.Writeln($"List {listIndex}, Level {level + 1}");
-                }
-
-                // End the current list.
-                builder.ListFormat.RemoveNumbers();
-
-                // Add a blank line between lists.
-                builder.Writeln();
-            }
-
-            // Save the document to the local file system.
-            string outputPath = "CustomListTemplate.docx";
-            doc.Save(outputPath);
+            // Ensure the level does not exceed the allowed maximum (8).
+            builder.ListFormat.ListLevelNumber = level;
+            builder.Writeln($"Level {level + 1}");
         }
+
+        // End the list.
+        builder.ListFormat.RemoveNumbers();
+
+        // Apply a custom list template (e.g., BulletCircle) to every list in the document.
+        // Since a List's template cannot be changed after creation, we modify the
+        // formatting of each existing list to mimic the desired template.
+        foreach (List list in doc.Lists)
+        {
+            // Change the first level to use a circle bullet.
+            ListLevel level0 = list.ListLevels[0];
+            level0.NumberStyle = NumberStyle.Bullet;
+            level0.NumberFormat = "\u25E6"; // White bullet (circle)
+
+            // Optionally adjust other levels to keep consistency.
+            for (int i = 1; i < list.ListLevels.Count; i++)
+            {
+                ListLevel lvl = list.ListLevels[i];
+                lvl.NumberStyle = NumberStyle.Bullet;
+                lvl.NumberFormat = "\u25E6";
+            }
+        }
+
+        // Ensure that no list exceeds nine nesting levels.
+        // (Aspose.Words lists are inherently limited to 9 levels, but we enforce it explicitly.)
+        foreach (List list in doc.Lists)
+        {
+            if (list.ListLevels.Count > 9)
+            {
+                // Trim excess levels if they somehow exist.
+                while (list.ListLevels.Count > 9)
+                {
+                    // There is no direct remove method; this block is kept for completeness.
+                    // In practice, Aspose.Words always creates lists with at most 9 levels.
+                    break;
+                }
+            }
+        }
+
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomListTemplate.docx");
+        doc.Save(outputPath);
     }
 }

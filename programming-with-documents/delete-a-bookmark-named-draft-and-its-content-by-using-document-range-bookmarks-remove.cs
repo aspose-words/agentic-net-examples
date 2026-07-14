@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -10,30 +9,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some text before the bookmark.
-        builder.Writeln("This is before the draft.");
+        // Add some regular text.
+        builder.Writeln("Document start.");
 
-        // Insert the bookmark named "Draft" with some content.
+        // Insert a bookmark named "Draft" with its own content.
         builder.StartBookmark("Draft");
-        builder.Writeln("This is draft content that will be removed.");
+        builder.Writeln("This is the draft content that will be removed.");
         builder.EndBookmark("Draft");
 
-        // Add some text after the bookmark.
-        builder.Writeln("This is after the draft.");
+        // Add more text after the bookmark.
+        builder.Writeln("Document end.");
 
-        // Retrieve the bookmark.
-        Bookmark draftBookmark = doc.Range.Bookmarks["Draft"];
-        if (draftBookmark != null)
-        {
-            // Delete the content inside the bookmark.
-            draftBookmark.Text = string.Empty;
+        // Save the document before removing the bookmark (optional, for verification).
+        string beforePath = "output_before.docx";
+        doc.Save(beforePath);
 
-            // Remove the bookmark itself using the collection's Remove method.
-            doc.Range.Bookmarks.Remove(draftBookmark);
-        }
+        // Remove the bookmark named "Draft" using the BookmarkCollection.Remove method.
+        doc.Range.Bookmarks.Remove("Draft");
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
-        doc.Save(outputPath);
+        // Save the document after the bookmark has been removed.
+        string afterPath = "output_after.docx";
+        doc.Save(afterPath);
     }
 }

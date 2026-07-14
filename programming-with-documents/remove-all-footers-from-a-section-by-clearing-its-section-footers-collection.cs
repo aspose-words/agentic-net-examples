@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -7,20 +8,27 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to add a primary footer and a first-page footer.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add a primary footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
         builder.Writeln("Primary footer text.");
+
+        // Add a first-page footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterFirst);
         builder.Writeln("First page footer text.");
 
-        // At this point the section contains footers.
-        // Remove all footers by clearing the HeadersFooters collection of the first section.
-        // This removes both header and footer nodes; for the purpose of the task we only needed to remove footers.
+        // Add an even-page footer.
+        builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
+        builder.Writeln("Even page footer text.");
+
+        // Remove all footers (and any headers) from the first section.
         doc.FirstSection.HeadersFooters.Clear();
 
         // Save the resulting document.
-        doc.Save("Output.docx");
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "DocumentWithoutFooters.docx");
+        doc.Save(outputPath);
     }
 }

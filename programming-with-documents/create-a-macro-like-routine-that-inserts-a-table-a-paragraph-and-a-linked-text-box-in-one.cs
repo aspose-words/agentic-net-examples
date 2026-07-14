@@ -1,78 +1,67 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        // Macro‑like routine that inserts a table, a paragraph and a linked text box.
-        private static void InsertElements(DocumentBuilder builder)
-        {
-            // ----- Insert a simple 2x2 table -----
-            builder.StartTable();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // First row
-            builder.InsertCell();
-            builder.Write("Row 1, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 1, Cell 2");
-            builder.EndRow();
+        // ---------- Insert a table ----------
+        builder.StartTable();
 
-            // Second row
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 2");
-            builder.EndRow();
+        // First row, first cell.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 1");
 
-            builder.EndTable();
+        // First row, second cell.
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 2");
 
-            // ----- Insert a paragraph after the table -----
-            builder.Writeln("This paragraph follows the table.");
+        // End the first row.
+        builder.EndRow();
 
-            // ----- Insert two text boxes and link them -----
-            // First text box (source)
-            Shape shape1 = builder.InsertShape(ShapeType.TextBox, 200, 100);
-            shape1.WrapType = WrapType.None;
-            shape1.HorizontalAlignment = HorizontalAlignment.Center;
-            shape1.VerticalAlignment = VerticalAlignment.Top;
+        // Second row, first cell.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 1");
 
-            // Add text to the first text box
-            builder.MoveTo(shape1.FirstParagraph);
-            builder.Write("First linked text box");
+        // Second row, second cell.
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
 
-            // Second text box (target)
-            Shape shape2 = builder.InsertShape(ShapeType.TextBox, 200, 100);
-            shape2.WrapType = WrapType.None;
-            shape2.HorizontalAlignment = HorizontalAlignment.Center;
-            shape2.VerticalAlignment = VerticalAlignment.Top;
+        // End the second row and the table.
+        builder.EndRow();
+        builder.EndTable();
 
-            // Add text to the second text box
-            builder.MoveTo(shape2.FirstParagraph);
-            builder.Write("Second linked text box");
+        // ---------- Insert a paragraph ----------
+        builder.Writeln("This paragraph follows the table.");
 
-            // Link the first text box to the second one if the link is valid
-            TextBox tb1 = shape1.TextBox;
-            TextBox tb2 = shape2.TextBox;
-            if (tb1.IsValidLinkTarget(tb2))
-                tb1.Next = tb2;
-        }
+        // ---------- Insert a linked text box ----------
+        // Insert a free‑floating text box shape.
+        Shape textBox = builder.InsertShape(
+            ShapeType.TextBox,
+            RelativeHorizontalPosition.Margin, 0,
+            RelativeVerticalPosition.Margin, 0,
+            200, // width in points
+            100, // height in points
+            WrapType.None);
 
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Add text to the text box.
+        textBox.FirstParagraph.AppendChild(new Run(doc, "Content of the linked text box."));
 
-            // Create a DocumentBuilder attached to the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Set the hyperlink for the shape using the HRef property.
+        textBox.HRef = "https://www.example.com";
+        // Optional: open the link in a new window and set a screen tip.
+        textBox.Target = "New Window";
+        textBox.ScreenTip = "Open example.com";
 
-            // Perform the combined insertion.
-            InsertElements(builder);
-
-            // Save the resulting document.
-            doc.Save("LinkedElements.docx");
-        }
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MacroLikeOutput.docx");
+        doc.Save(outputPath);
     }
 }

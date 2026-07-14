@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -24,15 +23,14 @@ public class Program
         }
         builder.EndTable();
 
-        // Delete the third column (index 2) from each row while keeping other cell data.
+        // Delete the third column (zero‑based index 2) from each row.
         foreach (Row row in table.Rows)
         {
             if (row.Cells.Count > 2)
                 row.Cells.RemoveAt(2);
         }
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DeleteThirdColumn.docx");
-        doc.Save(outputPath);
+        // Save the modified document.
+        doc.Save("DeletedThirdColumn.docx");
     }
 }
