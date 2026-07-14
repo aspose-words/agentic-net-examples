@@ -6,59 +6,63 @@ using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-public class Step
+public class InstructionManualGenerator
 {
-    public string Description { get; set; } = string.Empty;
-}
+    // Model that matches the JSON structure.
+    public class InstructionData
+    {
+        public List<string> Steps { get; set; } = new();
+    }
 
-public class Model
-{
-    public List<Step> Steps { get; set; } = new();
-}
-
-public class Program
-{
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-        // Prepare sample JSON data representing an array of steps.
-        const string jsonFile = "steps.json";
+        // -----------------------------------------------------------------
+        // 1. Prepare sample JSON data file.
+        // -----------------------------------------------------------------
+        string jsonPath = "steps.json";
         string jsonContent = @"{
-            ""Steps"": [
-                { ""Description"": ""Preheat the oven to 180°C (350°F)."" },
-                { ""Description"": ""Mix flour, sugar, and butter in a bowl."" },
-                { ""Description"": ""Add eggs and stir until smooth."" },
-                { ""Description"": ""Pour the batter into a greased pan."" },
-                { ""Description"": ""Bake for 25 minutes or until golden brown."" }
-            ]
-        }";
-        File.WriteAllText(jsonFile, jsonContent);
+  ""Steps"": [
+    ""Preheat the oven to 180°C."",
+    ""Mix flour and sugar in a bowl."",
+    ""Add eggs and whisk thoroughly."",
+    ""Pour batter into a pan and bake for 30 minutes."",
+    ""Let it cool before serving.""
+  ]
+}";
+        File.WriteAllText(jsonPath, jsonContent);
 
-        // Deserialize JSON into a strongly‑typed model.
-        Model model = JsonConvert.DeserializeObject<Model>(jsonContent) ?? new Model();
+        // -----------------------------------------------------------------
+        // 2. Load the JSON into a strongly‑typed model.
+        // -----------------------------------------------------------------
+        InstructionData model = JsonConvert.DeserializeObject<InstructionData>(jsonContent)!;
 
-        // Create a new blank document that will serve as the template.
+        // -----------------------------------------------------------------
+        // 3. Create a blank Word document that will serve as the template.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply a numbered list style to the paragraphs that will contain the steps.
-        List numberedList = doc.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = numberedList;
+        // Apply a numbered list style to the paragraph that will contain the loop.
+        builder.ListFormat.List = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Insert LINQ Reporting tags.
-        // <<restartNum>> must be placed immediately before the <<foreach>> tag in the same numbered paragraph.
-        builder.Writeln("<<restartNum>><<foreach [step in model.Steps]>>");
-        // Each iteration writes the step description as a separate numbered paragraph.
-        builder.Writeln("<<[step.Description]>>");
-        builder.Writeln("<</foreach>>");
+        // Insert the LINQ Reporting tags.
+        // <<restartNum>> ensures numbering starts at 1 for this list.
+        // The foreach iterates over the Steps collection from the model.
+        builder.Writeln("<<restartNum>><<foreach [step in Steps]>> <<[step]>> <</foreach>>");
 
-        // Build the report using the template and the strongly‑typed data source.
+        // End the list formatting.
+        builder.ListFormat.RemoveNumbers();
+
+        // -----------------------------------------------------------------
+        // 4. Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
+        // Pass the model as the data source and give it a name ("model").
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated instruction manual.
+        // -----------------------------------------------------------------
+        // 5. Save the generated instruction manual.
+        // -----------------------------------------------------------------
         doc.Save("InstructionManual.docx");
     }
 }

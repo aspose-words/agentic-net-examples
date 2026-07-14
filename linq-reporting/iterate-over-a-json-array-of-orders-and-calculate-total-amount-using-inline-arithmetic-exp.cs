@@ -1,55 +1,73 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Reporting; // ReportingEngine namespace
+using Aspose.Words.Reporting; // Ensure ReportingEngine is available
+using Aspose.Words.Reporting; // For JsonDataSource
+using Aspose.Words.Reporting; // For JsonDataLoadOptions
+using Newtonsoft.Json;
+
+public class Order
+{
+    public string CustomerName { get; set; } = "";
+    public double Amount { get; set; }
+}
+
+public class OrdersRoot
+{
+    public List<Order> Orders { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
+        // Register code page provider for Aspose.Words (required on .NET Core).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data (array of orders)
-        string jsonContent = @"
-[
-    { ""OrderId"": 1001, ""CustomerName"": ""Alice"", ""Quantity"": 3, ""UnitPrice"": 19.99 },
-    { ""OrderId"": 1002, ""CustomerName"": ""Bob"",   ""Quantity"": 5, ""UnitPrice"": 9.50 },
-    { ""OrderId"": 1003, ""CustomerName"": ""Carol"", ""Quantity"": 2, ""UnitPrice"": 45.00 }
-]";
-        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "orders.json");
-        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
+        // Prepare sample JSON data.
+        string jsonPath = "orders.json";
+        var sampleData = new OrdersRoot
+        {
+            Orders = new List<Order>
+            {
+                new Order { CustomerName = "Alice", Amount = 120.5 },
+                new Order { CustomerName = "Bob", Amount = 80.0 },
+                new Order { CustomerName = "Charlie", Amount = 45.75 }
+            }
+        };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Create a template document with LINQ Reporting tags
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Configure JSON data load options to always generate a root object.
+        var jsonLoadOptions = new Aspose.Words.Reporting.JsonDataLoadOptions
+        {
+            AlwaysGenerateRootObject = true
+        };
+
+        // Load JSON data source.
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath, jsonLoadOptions);
+
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
         builder.Writeln("Orders Report");
-        builder.Writeln("<<foreach [order in orders]>>");
-        builder.Writeln("Order ID: <<[order.OrderId]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Quantity: <<[order.Quantity]>>");
-        builder.Writeln("Unit Price: $<<[order.UnitPrice]>>");
-        // Inline arithmetic expression to calculate total amount per order
-        builder.Writeln("Total: $<<[order.Quantity * order.UnitPrice]>>");
+        // Loop through each order.
+        builder.Writeln("<<foreach [order in data.Orders]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>> - Amount: <<[order.Amount]>>");
         builder.Writeln("<</foreach>>");
+        // Calculate total using an inline arithmetic expression.
+        builder.Writeln("Total Amount: <<[data.Orders.Sum(o => o.Amount)]>>");
 
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting
-        Document reportDoc = new Document(templatePath);
-
-        // Create a JSON data source from the file
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
-
-        // Build the report using the data source name "orders"
+        // Build the report using the JSON data source.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, jsonDataSource, "orders");
+        // Pass the data source name "data" so that template tags can reference it.
+        engine.BuildReport(template, jsonDataSource, "data");
 
-        // Save the generated report
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OrdersReport.docx");
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        template.Save("OrdersReport.docx");
     }
 }

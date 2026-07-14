@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Collection of tags to be displayed.
+    // Initialize the collection to avoid nullable warnings.
     public List<string> Tags { get; set; } = new();
 }
 
@@ -14,39 +15,58 @@ public class Program
 {
     public static void Main()
     {
-        // ---------- Create template ----------
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Register code page provider (required by Aspose.Words for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Show tag list only when the collection contains at least one element.
+        // Paths for the template and the generated reports.
+        string templatePath = "Template.docx";
+        string reportWithTagsPath = "Report_WithTags.docx";
+        string reportWithoutTagsPath = "Report_WithoutTags.docx";
+
+        // -------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Header.
+        builder.Writeln("Tag List:");
+
+        // Conditional block: display the list only if the collection has any items.
         builder.Writeln("<<if [model.Tags.Any()]>>");
-        builder.Writeln("Tag list:");
+
+        // Loop through each tag.
         builder.Writeln("<<foreach [tag in model.Tags]>>- <<[tag]>>");
         builder.Writeln("<</foreach>>");
+
+        // End of conditional block.
         builder.Writeln("<</if>>");
 
         // Save the template to disk.
-        doc.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // ---------- Load template ----------
-        var loadedDoc = new Document(templatePath);
+        // -------------------------------------------------
+        // 2. Load the template and build a report with tags.
+        // -------------------------------------------------
+        Document docWithTags = new Document(templatePath);
 
-        // ---------- Prepare data ----------
-        var model = new ReportModel
+        ReportModel modelWithTags = new ReportModel
         {
-            Tags = new List<string> { "Tag1", "Tag2", "Tag3" }
+            Tags = new List<string> { "Alpha", "Beta", "Gamma" }
         };
 
-        // ---------- Build report ----------
-        var engine = new ReportingEngine();
-        engine.BuildReport(loadedDoc, model, "model");
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(docWithTags, modelWithTags, "model");
+        docWithTags.Save(reportWithTagsPath);
 
-        // ---------- Save result ----------
-        var outputPath = "Report.docx";
-        loadedDoc.Save(outputPath);
+        // -------------------------------------------------
+        // 3. Build a report where the tag collection is empty.
+        // -------------------------------------------------
+        Document docWithoutTags = new Document(templatePath);
 
-        // Indicate completion.
-        Console.WriteLine("Report generated: " + outputPath);
+        ReportModel modelWithoutTags = new ReportModel(); // Tags list is empty.
+
+        engine.BuildReport(docWithoutTags, modelWithoutTags, "model");
+        docWithoutTags.Save(reportWithoutTagsPath);
     }
 }

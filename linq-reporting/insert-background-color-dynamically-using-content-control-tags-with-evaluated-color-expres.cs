@@ -1,52 +1,62 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;                     // Needed for Encoding
 using Aspose.Words;
-using Aspose.Words.Reporting;
+using Aspose.Words.Reporting;          // LINQ Reporting engine namespace
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare sample data.
+        // Sample data model
         var model = new ReportModel
         {
             Items = new List<Item>
             {
                 new Item { Name = "Apple",  BgColor = "LightYellow" },
-                new Item { Name = "Banana", BgColor = "LightGreen" },
-                new Item { Name = "Cherry", BgColor = "LightCoral" },
-                new Item { Name = "Date",   BgColor = "LightGray" }
+                new Item { Name = "Banana", BgColor = "#FFFACD" },
+                new Item { Name = "Cherry", BgColor = "LightCoral" }
             }
         };
 
-        // Create a template document with LINQ Reporting tags.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // -----------------------------------------------------------------
+        // Create the template document programmatically
+        // -----------------------------------------------------------------
+        const string templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
+        // LINQ Reporting tags
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<backColor [item.BgColor]>>Item: <<[item.Name]>> <</backColor>>");
+        builder.Writeln("<<backColor [item.BgColor]>> <<[item.Name]>> <</backColor>>");
         builder.Writeln("<</foreach>>");
 
-        // Build the report using the template and the data model.
-        var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+        // Save the template to disk
+        doc.Save(templatePath);
 
-        // Save the generated report.
-        template.Save("Report.docx");
+        // -----------------------------------------------------------------
+        // Load the template and build the report
+        // -----------------------------------------------------------------
+        var templateDoc = new Document(templatePath);
+        var engine = new ReportingEngine();               // Use the correct ReportingEngine class
+        engine.BuildReport(templateDoc, model, "model");   // Root object name must match the tags
+
+        // Save the final report
+        templateDoc.Save("Report.docx");
     }
 }
 
-// Root data model.
+// ---------------------------------------------------------------------
+// Data model classes (must be public with public properties)
+// ---------------------------------------------------------------------
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
 }
 
-// Item model used in the foreach loop.
 public class Item
 {
     public string Name { get; set; } = string.Empty;

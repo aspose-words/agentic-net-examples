@@ -1,51 +1,90 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Person
 {
-    // Nullable property to allow null values.
+    // Name may be null to demonstrate fallback.
     public string? Name { get; set; }
 }
 
 public class ReportModel
 {
-    // Collection of persons to iterate over.
-    public List<Person> Persons { get; set; } = new();
+    // Wrapper object referenced in the template as "model".
+    public Person Person { get; set; } = new Person();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a template document programmatically.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Ensure the working directory exists.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(workDir);
 
-        // Begin a foreach loop over the Persons collection.
-        builder.Writeln("<<foreach [p in Persons]>>");
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string reportPath = Path.Combine(workDir, "report.docx");
 
-        // If the Name is not null, display it; otherwise, show default text.
-        builder.Writeln(
-            "<<if [p.Name != null]>>Name: <<[p.Name]>> <</if>>" +
-            "<<if [p.Name == null]>>Name: (no name)<</if>>");
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
+        // Write a label.
+        builder.Writeln("Customer Name:");
 
-        // Prepare sample data with one person having a name and another with null.
-        ReportModel model = new ReportModel();
-        model.Persons.Add(new Person { Name = "Alice" });
-        model.Persons.Add(new Person { Name = null });
+        // If the Name property is not null, output its value.
+        builder.Writeln("<<if [model.Person.Name != null]>>");
+        builder.Writeln("<<[model.Person.Name]>>");
+        builder.Writeln("<</if>>");
 
-        // Build the report using the LINQ Reporting engine.
+        // If the Name property is null, output a default placeholder.
+        builder.Writeln("<<if [model.Person.Name == null]>>");
+        builder.Writeln("[No Name Provided]");
+        builder.Writeln("<</if>>");
+
+        // Save the template to disk (required before BuildReport).
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Prepare the data model with a null Name to trigger the fallback.
+        ReportModel model = new ReportModel
+        {
+            Person = new Person
+            {
+                Name = null // Intentionally null.
+            }
+        };
+
+        // Create the reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        // No special options are required for this example.
-        engine.Options = ReportBuildOptions.None;
+
+        // Build the report using the model; the root object name is "model".
         engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        doc.Save("Report.docx");
+        doc.Save(reportPath);
+
+        // -----------------------------------------------------------------
+        // 3. Demonstrate the same template with a non‑null value.
+        // -----------------------------------------------------------------
+        Document docWithName = new Document(templatePath);
+        ReportModel modelWithName = new ReportModel
+        {
+            Person = new Person
+            {
+                Name = "Alice Johnson"
+            }
+        };
+        engine.BuildReport(docWithName, modelWithName, "model");
+        string reportWithNamePath = Path.Combine(workDir, "report_with_name.docx");
+        docWithName.Save(reportWithNamePath);
     }
 }

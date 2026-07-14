@@ -1,64 +1,30 @@
 using System;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Simple wrapper class required as a root data source for the report.
-    public class DummyRoot
+    public static void Main()
     {
-        // No members needed for this example.
-    }
+        // Create a blank document that will serve as the template.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider (required for some environments).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Insert a LINQ Reporting tag that uses the static TimeSpan.Parse method.
+        // Use double quotes for the string literal inside the tag.
+        builder.Writeln("Duration: <<[TimeSpan.Parse(\"02:15:30\")]>>");
 
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string reportPath = "Report.docx";
+        // Initialize the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
 
-            // -------------------------------------------------
-            // 1. Create the template document with a LINQ Reporting tag.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Register System.TimeSpan so that static members can be accessed from the template.
+        engine.KnownTypes.Add(typeof(TimeSpan));
 
-            // The tag uses the static TimeSpan.Parse method to convert a duration string.
-            // Use double quotes inside the expression to avoid char literal parsing errors.
-            builder.Writeln("Parsed duration: <<[TimeSpan.Parse(\"02:15:30\")]>>");
+        // Build the report. No data source is required for this example,
+        // so we pass an empty object as the root data source.
+        engine.BuildReport(template, new object());
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template document for reporting.
-            // -------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // -------------------------------------------------
-            // 3. Configure the ReportingEngine.
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-
-            // Register System.TimeSpan so that static parsing can be used in the template.
-            engine.KnownTypes.Add(typeof(TimeSpan));
-
-            // -------------------------------------------------
-            // 4. Build the report.
-            // -------------------------------------------------
-            // The template does not reference any data source members, but BuildReport still requires one.
-            // We pass an instance of DummyRoot with a root name that does not appear in the template.
-            engine.BuildReport(reportDoc, new DummyRoot(), "dummy");
-
-            // -------------------------------------------------
-            // 5. Save the generated report.
-            // -------------------------------------------------
-            reportDoc.Save(reportPath);
-        }
+        // Save the generated document.
+        template.Save("Report.docx");
     }
 }

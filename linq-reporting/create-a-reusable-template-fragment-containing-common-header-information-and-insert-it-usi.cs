@@ -1,89 +1,92 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 
-public class Program
+namespace AsposeWordsLinqReportingIncludeExample
 {
-    public static void Main()
+    // Data model used by the template.
+    public class ReportModel
     {
-        // Required for code page support (e.g., when using certain data sources).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-        // -----------------------------------------------------------------
-        // Create a reusable header fragment that contains the report title.
-        // -----------------------------------------------------------------
-        Document headerFragment = new Document();
-        DocumentBuilder headerBuilder = new DocumentBuilder(headerFragment);
-        // The title will be filled from the root data source named "model".
-        headerBuilder.Writeln("Report Title: <<[model.Title]>>");
-        headerFragment.Save("HeaderFragment.docx");
-
-        // ---------------------------------------------------------------
-        // Build the main template document.
-        // It will include the header fragment and then iterate over Items.
-        // ---------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder templateBuilder = new DocumentBuilder(template);
-
-        // Insert the external header fragment directly into the template.
-        // This avoids the need for the <<doc>> tag, which expects a data source.
-        Document loadedHeader = new Document("HeaderFragment.docx");
-        templateBuilder.InsertDocument(loadedHeader, ImportFormatMode.KeepSourceFormatting);
-
-        // Simple foreach loop to list items.
-        templateBuilder.Writeln("<<foreach [item in Items]>>");
-        templateBuilder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-        templateBuilder.Writeln("<</foreach>>");
-
-        template.Save("Template.docx");
-
-        // ---------------------------------------------------------------
-        // Load the template and generate the final report.
-        // ---------------------------------------------------------------
-        Document report = new Document("Template.docx");
-
-        // Sample data model.
-        ReportModel model = new()
-        {
-            Title = "Quarterly Sales Report",
-            Items = new()
-            {
-                new Item { Index = 1, Name = "Product A" },
-                new Item { Index = 2, Name = "Product B" },
-                new Item { Index = 3, Name = "Product C" }
-            }
-        };
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(report, model, "model");
-
-        // Save the generated report.
-        report.Save("Report.docx");
+        public string Title { get; set; } = "";
+        public string Body { get; set; } = "";
     }
-}
 
-// ---------------------------------------------------------------------
-// Root data model referenced in the template as "model".
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public string Title { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
+    // Wrapper for the header document so it can be referenced by the <<doc>> tag.
+    public class HeaderWrapper
+    {
+        public Document Document { get; set; } = null!;
+    }
 
-// ---------------------------------------------------------------------
-// Simple item class used in the foreach loop.
-// ---------------------------------------------------------------------
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Working directory – the example runs in a writable folder.
+            string workDir = Directory.GetCurrentDirectory();
+
+            // -----------------------------------------------------------------
+            // 1. Create a reusable header fragment (HeaderTemplate.docx).
+            // -----------------------------------------------------------------
+            string headerPath = Path.Combine(workDir, "HeaderTemplate.docx");
+            Document headerDoc = new Document();
+            DocumentBuilder headerBuilder = new DocumentBuilder(headerDoc);
+
+            // Header content with LINQ Reporting tags.
+            headerBuilder.Writeln("<<[model.Title]>>");
+            headerBuilder.Writeln("------------------------------");
+            headerDoc.Save(headerPath);
+
+            // Load the header document so it can be passed to the <<doc>> tag.
+            HeaderWrapper headerWrapper = new HeaderWrapper
+            {
+                Document = new Document(headerPath)
+            };
+
+            // -----------------------------------------------------------------
+            // 2. Create the main template that includes the header fragment.
+            // -----------------------------------------------------------------
+            string mainPath = Path.Combine(workDir, "MainTemplate.docx");
+            Document mainDoc = new Document();
+            DocumentBuilder mainBuilder = new DocumentBuilder(mainDoc);
+
+            // Include the previously created header fragment using the supported <<doc>> tag.
+            // The tag expects a data source named "src" with a public Document property.
+            mainBuilder.Writeln("<<doc [src.Document]>>");
+            // Body content with a tag.
+            mainBuilder.Writeln("<<[model.Body]>>");
+            mainDoc.Save(mainPath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            ReportModel model = new ReportModel
+            {
+                Title = "Monthly Sales Report",
+                Body = "This month we achieved a 15% increase in revenue."
+            };
+
+            // -----------------------------------------------------------------
+            // 4. Load the main template and build the report.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(mainPath);
+            ReportingEngine engine = new ReportingEngine
+            {
+                // Remove empty paragraphs that may appear after tag processing.
+                Options = ReportBuildOptions.RemoveEmptyParagraphs
+            };
+
+            // Build the report using two data sources: the model (named "model")
+            // and the header wrapper (named "src").
+            engine.BuildReport(reportDoc,
+                new object[] { model, headerWrapper },
+                new[] { "model", "src" });
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            string outputPath = Path.Combine(workDir, "ReportOutput.docx");
+            reportDoc.Save(outputPath);
+        }
+    }
 }

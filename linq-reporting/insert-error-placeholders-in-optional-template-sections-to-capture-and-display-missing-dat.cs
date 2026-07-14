@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,77 +7,64 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple template with LINQ Reporting tags.
-        var templatePath = "template.docx";
-        CreateTemplate(templatePath);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Load the template document.
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+
+        // -----------------------------------------------------------------
+        // 1. Create a simple data model.
+        // -----------------------------------------------------------------
+        var model = new ReportModel();
+
+        // -----------------------------------------------------------------
+        // 2. Build the template document programmatically.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Normal field – will be replaced with the actual value.
+        builder.Writeln("Existing value: <<[model.Existing]>>");
+
+        // Missing field – the property does not exist in the model.
+        // The <<error>> placeholder will capture the warning when InlineErrorMessages is enabled.
+        builder.Writeln("Missing value: <<[model.Missing]>> <<error>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Load the template and generate the report.
+        // -----------------------------------------------------------------
         var doc = new Document(templatePath);
-
-        // Prepare the data model. Intentionally omit the MissingProperty to trigger a warning.
-        var model = new ReportModel
+        var engine = new ReportingEngine
         {
-            CustomerName = "Acme Corp",
-            HasOrders = true,
-            Orders = new List<Order>
-            {
-                new Order { Name = "Widget" },
-                new Order { Name = "Gadget" }
-            }
+            // Enable inline error messages so that <<error>> tags are populated.
+            Options = ReportBuildOptions.InlineErrorMessages
         };
 
-        // Configure the reporting engine to inline error messages.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
-        engine.MissingMemberMessage = "Missing";
-
-        // Build the report.
+        // BuildReport returns a bool indicating success when InlineErrorMessages is set.
         bool success = engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        var outputPath = "output.docx";
-        doc.Save(outputPath);
+        // Save the resulting document.
+        doc.Save(reportPath);
 
         // Output simple status information.
         Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Report saved to: {outputPath}");
-    }
-
-    private static void CreateTemplate(string path)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Basic data insertion.
-        builder.Writeln("Report for <<[model.CustomerName]>>");
-
-        // Optional section that may be omitted.
-        builder.Writeln("<<if [model.HasOrders]>>");
-        builder.Writeln("Orders:");
-        builder.Writeln("<<foreach [order in model.Orders]>>");
-        builder.Writeln("- <<[order.Name]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</if>>");
-
-        // Reference to a missing member to generate an inline error.
-        builder.Writeln("Missing field: <<[model.MissingProperty]>>");
-
-        // Placeholder to capture any inline error messages.
-        builder.Writeln("<<error>>");
-
-        doc.Save(path);
+        Console.WriteLine($"Template saved to: {templatePath}");
+        Console.WriteLine($"Report saved to: {reportPath}");
     }
 }
 
-// Data model classes.
+// ---------------------------------------------------------------------
+// Data model used by the report.
+// ---------------------------------------------------------------------
 public class ReportModel
 {
-    public string CustomerName { get; set; } = string.Empty;
-    public bool HasOrders { get; set; }
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Order
-{
-    public string Name { get; set; } = string.Empty;
+    // Initialize to avoid nullable warnings.
+    public string Existing { get; set; } = "Present";
+    // Note: No property named 'Missing' is defined on purpose.
 }

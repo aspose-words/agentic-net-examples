@@ -12,7 +12,7 @@ namespace LinqReportingExample
         public string Name { get; set; } = string.Empty;
     }
 
-    // Wrapper model that will be passed to the reporting engine.
+    // Wrapper class that will be passed as the root data source.
     public class ReportModel
     {
         public List<Customer> Customers { get; set; } = new();
@@ -22,57 +22,33 @@ namespace LinqReportingExample
     {
         public static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add a title.
-            builder.Writeln("Customer Names Report");
-            builder.Writeln();
-
-            // LINQ Reporting tags:
-            //   <<foreach [c in Customers]>> ... <</foreach>>
-            //   <<[c.Name]>> outputs the customer's name.
+            // Build a LINQ Reporting template.
+            // Header.
+            builder.Writeln("Customer List:");
+            // Start a foreach loop over the Customers collection.
             builder.Writeln("<<foreach [c in Customers]>>");
-            builder.Writeln("- <<[c.Name]>>");
+            // Output each customer's name using a formatted expression tag.
+            builder.Writeln(" - <<[c.Name]>>");
+            // End the foreach block.
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            // Prepare sample data.
+            ReportModel model = new ReportModel();
+            model.Customers.Add(new Customer { Name = "Alice Johnson" });
+            model.Customers.Add(new Customer { Name = "Bob Smith" });
+            model.Customers.Add(new Customer { Name = "Charlie Davis" });
 
-            // -----------------------------------------------------------------
-            // 2. Load the template back (required by the workflow).
-            // -----------------------------------------------------------------
-            var document = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare sample data.
-            // -----------------------------------------------------------------
-            var model = new ReportModel
-            {
-                Customers = new List<Customer>
-                {
-                    new Customer { Name = "Alice Johnson" },
-                    new Customer { Name = "Bob Smith" },
-                    new Customer { Name = "Charlie Davis" }
-                }
-            };
-
-            // -----------------------------------------------------------------
-            // 4. Build the report using Aspose.Words LINQ Reporting engine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
+            // Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
             // The root object name in the template is "model".
-            engine.BuildReport(document, model, "model");
+            engine.BuildReport(doc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            document.Save(outputPath);
+            // Save the generated report.
+            doc.Save("LinqReportingOutput.docx");
         }
     }
 }

@@ -1,80 +1,85 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the final report.
+        // Create a template document that contains an image tag inside a textbox.
         const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        CreateTemplate(templatePath);
 
-        // -------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Load the template.
+        var template = new Document(templatePath);
 
-        // Simple title placeholder.
-        builder.Writeln("<<[model.Title]>>");
-
-        // Insert a textbox that will host the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
-        builder.MoveTo(textBox.FirstParagraph);
-        // Image tag that expects a Stream from the model.
-        builder.Write("<<image [model.ImageStream] -fitSize>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // 2. Load the template back before building the report.
-        // -------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        // -------------------------------------------------
-        // 3. Prepare the data model.
-        // -------------------------------------------------
-        ReportModel model = new()
+        // Prepare the data model.
+        var model = new ReportModel
         {
-            Title = "Custom Image Loader Example"
+            // The ImageUrl property is kept for compatibility but will not be used for downloading.
+            ImageUrl = "https://via.placeholder.com/150"
         };
 
-        // -------------------------------------------------
-        // 4. Build the report using LINQ Reporting Engine.
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(template, model, "model");
 
-        // -------------------------------------------------
-        // 5. Save the generated report.
-        // -------------------------------------------------
-        loadedTemplate.Save(reportPath);
+        // Save the generated report.
+        template.Save("Report.docx");
+    }
+
+    // Creates a simple Word document with a textbox that hosts an image tag.
+    private static void CreateTemplate(string filePath)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Insert a textbox to host the image tag.
+        var textBox = builder.InsertShape(Aspose.Words.Drawing.ShapeType.TextBox, 200, 120);
+        builder.MoveTo(textBox.FirstParagraph);
+        // The image tag expects a Stream; the model provides it via ImageStream property.
+        builder.Write("<<image [model.ImageStream] -fitSize>>");
+
+        doc.Save(filePath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model used by the template. The ImageStream property returns
-// a small PNG image from an in‑memory byte array, avoiding external
-// network calls that can fail at runtime.
-// ---------------------------------------------------------------------
+// Data model used by the LINQ Reporting engine.
 public class ReportModel
 {
-    public string Title { get; set; } = string.Empty;
+    // URL of the image (kept for reference; not used for downloading in this example).
+    public string ImageUrl { get; set; } = string.Empty;
 
-    // Returns a Stream containing a 1×1 pixel PNG image.
+    // Returns a fresh MemoryStream containing a small placeholder PNG image.
+    // The stream is positioned at the beginning, as required by the engine.
     public Stream ImageStream
     {
         get
         {
-            // Base64‑encoded PNG (1×1 transparent pixel).
-            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK9cAAAAASUVORK5CYII=";
-            byte[] imageBytes = Convert.FromBase64String(base64Png);
-            // Aspose.Words will close the stream after use.
-            return new MemoryStream(imageBytes);
+            // Retrieve the image bytes from the helper (no network calls).
+            var bytes = ImageService.DownloadImageBytes(ImageUrl).Result;
+            var stream = new MemoryStream(bytes);
+            stream.Position = 0;
+            return stream;
         }
+    }
+}
+
+// Helper that provides image bytes. In this example we embed a tiny PNG to avoid external calls.
+public static class ImageService
+{
+    // Base64‑encoded 1×1 pixel PNG (transparent).
+    private const string Base64Png =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YVhZVIAAAAASUVORK5CYII=";
+
+    // Returns the image bytes synchronously wrapped in a Task.
+    public static Task<byte[]> DownloadImageBytes(string url)
+    {
+        // Decode the embedded PNG.
+        byte[] imageBytes = Convert.FromBase64String(Base64Png);
+        return Task.FromResult(imageBytes);
     }
 }

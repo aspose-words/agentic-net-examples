@@ -1,61 +1,73 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Data model used by the template.
-    public class Order
+    public static void Main()
     {
-        // Initialize to avoid nullable warnings.
-        public string CustomerName { get; set; } = string.Empty;
-        public decimal Discount { get; set; }
-    }
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Paths for the temporary template and the final report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
-
-            // -------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Insert a simple line with a placeholder for the customer's name.
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-
-            // Conditional block: show the discount only when it is greater than zero.
-            // The syntax must be exactly <<if [condition]>> ... <</if>>.
-            builder.Writeln("<<if [order.Discount > 0]>>Discount: <<[order.Discount]>> <</if>>");
-
-            // Save the template to disk so it can be loaded later.
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template and build the report.
-            // -------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // Sample data source.
-            Order order = new Order
+            Orders = new List<Order>
             {
-                CustomerName = "John Doe",
-                Discount = 15.5m // Change to 0 to see the conditional block omitted.
-            };
+                new Order
+                {
+                    CustomerName = "Alice Johnson",
+                    TotalAmount = 250.00m,
+                    Discount = 25.00m
+                },
+                new Order
+                {
+                    CustomerName = "Bob Smith",
+                    TotalAmount = 180.00m,
+                    Discount = 0.00m
+                }
+            }
+        };
 
-            // Create the reporting engine and generate the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, order, "order");
+        // Create a template document programmatically.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // -------------------------------------------------
-            // 3. Save the generated report.
-            // -------------------------------------------------
-            reportDoc.Save(reportPath);
-        }
+        builder.Writeln("Order Report");
+        builder.Writeln("------------------------------");
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Total Amount: $<<[order.TotalAmount]>>");
+        builder.Writeln("<<if [order.Discount > 0]>>Discount: $<<[order.Discount]>> (<<[order.Discount / order.TotalAmount * 100]>>%)<</if>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("------------------------------");
+
+        // Save the template (optional, for inspection).
+        const string templatePath = "Template.docx";
+        doc.Save(templatePath);
+
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
+
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public decimal TotalAmount { get; set; }
+    public decimal Discount { get; set; }
 }

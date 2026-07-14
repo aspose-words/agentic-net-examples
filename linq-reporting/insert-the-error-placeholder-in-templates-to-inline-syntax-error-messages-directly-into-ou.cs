@@ -1,52 +1,48 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Model
+namespace InlineErrorMessagesExample
 {
-    public string Name { get; set; } = "John Doe";
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model with a single property.
+    public class Customer
     {
-        // Register code page provider (required for some environments).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Initialize to avoid nullable warnings.
+        public string Name { get; set; } = "John Doe";
+    }
 
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare the data source.
+            var model = new Customer();
 
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string resultPath = Path.Combine(outputDir, "result.docx");
+            // Create a new blank document and insert LINQ Reporting tags.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        // Create a template document with a correct tag and an intentional error tag.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Missing: <<[model.Missing]>>"); // This member does not exist.
-        templateDoc.Save(templatePath);
+            // Correct tag – will be replaced with the customer's name.
+            builder.Writeln("Customer: <<[model.Name]>>");
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+            // Incorrect tag – references a non‑existent member and will generate an error.
+            builder.Writeln("Missing property: <<[model.Missing]>>");
 
-        // Prepare the data source.
-        Model model = new Model();
+            // Inline error placeholder – will be replaced with the error message produced above.
+            builder.Writeln("Error details: <<error>>");
 
-        // Configure the reporting engine to inline error messages.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
+            // Configure the reporting engine to inline error messages.
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report; the returned flag indicates if parsing succeeded.
-        bool success = engine.BuildReport(doc, model, "model");
+            // Build the report. The third argument is the name used in the template to reference the root object.
+            bool success = engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        doc.Save(resultPath);
+            // Save the resulting document.
+            doc.Save("ReportWithInlineErrors.docx");
 
-        // Output the result status.
-        Console.WriteLine($"Report build success: {success}");
-        Console.WriteLine($"Report saved to: {resultPath}");
+            // Output the success flag (optional, not required for the example to run).
+            Console.WriteLine($"Report generation successful: {success}");
+        }
     }
 }

@@ -1,65 +1,73 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Data model used as the root object for the report.
-    public class Order
+    public static void Main()
     {
-        // Product name.
-        public string Product { get; set; } = string.Empty;
-
-        // Quantity stored as double to demonstrate explicit casting.
-        public double Quantity { get; set; }
-
-        // Method that expects an integer parameter.
-        public string GetQuantityString(int qty)
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            return $"Qty: {qty}";
-        }
+            Items = new List<Item>
+            {
+                new Item { Name = "Apple", Quantity = 5.7 },
+                new Item { Name = "Banana", Quantity = 3.2 },
+                new Item { Name = "Cherry", Quantity = 10.0 }
+            }
+        };
+
+        // Create the template document and save it.
+        const string templatePath = "template.docx";
+        CreateTemplate(templatePath);
+
+        // Load the template.
+        var doc = new Document(templatePath);
+
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        doc.Save("report.docx");
     }
 
-    public class Program
+    private static void CreateTemplate(string filePath)
     {
-        public static void Main()
-        {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // -------------------------------------------------
-            // Create the template document programmatically.
-            // -------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // Title.
+        builder.Writeln("Items Report");
+        builder.Writeln();
 
-            // Insert LINQ Reporting tags.
-            // The expression casts Quantity (double) to int before passing it to GetQuantityString.
-            builder.Writeln("Product: <<[order.Product]>>");
-            builder.Writeln("Quantity: <<[order.GetQuantityString((int)order.Quantity)]>>");
+        // Begin foreach loop over the Items collection.
+        builder.Writeln("<<foreach [item in model.Items]>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Output each item's name.
+        builder.Writeln("Name: <<[item.Name]>>");
 
-            // -------------------------------------------------
-            // Load the template and build the report.
-            // -------------------------------------------------
-            var doc = new Document(templatePath);
+        // Output the quantity cast explicitly to int.
+        builder.Writeln("Quantity (int): <<[(int)item.Quantity]>>");
 
-            // Sample data source.
-            var order = new Order
-            {
-                Product = "Apple",
-                Quantity = 7.9 // Will be cast to 7 in the template.
-            };
+        // End foreach loop.
+        builder.Writeln("<</foreach>>");
 
-            // Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, order, "order");
+        // Save the template.
+        doc.Save(filePath);
+    }
 
-            // Save the generated report.
-            doc.Save(reportPath);
-        }
+    // Root data model.
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
+    // Item model used in the collection.
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public double Quantity { get; set; }
     }
 }

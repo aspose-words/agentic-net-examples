@@ -5,59 +5,66 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    // Data model classes
+    public class Order
     {
-        // Create a blank document and a builder to add content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a simple title.
-        builder.Writeln("Report");
-
-        // Insert LINQ Reporting tags.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Name: <<[item.Name]>>");
-        builder.Writeln("Quantity: <<[item.Quantity]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Prepare the data model.
-        ReportModel model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "Apple", Quantity = 5 },
-                new Item { Name = "Banana", Quantity = 3 },
-                new Item { Name = "Orange", Quantity = 7 }
-            }
-        };
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Serialize the generated report to a memory stream.
-        using (MemoryStream stream = new MemoryStream())
-        {
-            doc.Save(stream, SaveFormat.Docx);
-            stream.Position = 0; // Reset for further processing (e.g., emailing).
-
-            // Demonstrate that the stream contains data.
-            Console.WriteLine($"Report generated. Stream length: {stream.Length} bytes.");
-        }
-    }
-
-    // Root data model referenced by the template.
-    public class ReportModel
-    {
+        public string CustomerName { get; set; } = "";
         public List<Item> Items { get; set; } = new();
     }
 
-    // Simple item class used in the report.
     public class Item
     {
+        public int Index { get; set; }
         public string Name { get; set; } = "";
-        public int Quantity { get; set; }
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // 1. Create a template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Add a title.
+            builder.Writeln("Order Report");
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln();
+
+            // Begin a foreach loop over the collection of items.
+            builder.Writeln("<<foreach [item in order.Items]>>");
+            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+            builder.Writeln("<</foreach>>");
+
+            // 2. Prepare sample data.
+            Order sampleOrder = new Order
+            {
+                CustomerName = "John Doe",
+                Items = new List<Item>
+                {
+                    new Item { Index = 1, Name = "Apple" },
+                    new Item { Index = 2, Name = "Banana" },
+                    new Item { Index = 3, Name = "Cherry" }
+                }
+            };
+
+            // 3. Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // default options
+            bool success = engine.BuildReport(template, sampleOrder, "order");
+
+            // 4. Serialize the generated report to a memory stream.
+            using MemoryStream reportStream = new MemoryStream();
+            template.Save(reportStream, SaveFormat.Docx);
+            reportStream.Position = 0; // Reset for further processing (e.g., emailing).
+
+            // Optional: write the stream to a file to verify the output.
+            File.WriteAllBytes("GeneratedReport.docx", reportStream.ToArray());
+
+            // Indicate completion.
+            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Stream length: {reportStream.Length} bytes.");
+        }
     }
 }

@@ -2,68 +2,57 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class ReportModel
 {
-    // Wrapper class for the data source used by the LINQ Reporting engine.
-    public class ReportModel
-    {
-        // The external document that will be inserted into the template.
-        public Document Document { get; set; } = new Document();
-    }
+    // Holds the external document to be inserted.
+    public Document External { get; set; } = new Document();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // -----------------------------------------------------------------
+        // 1. Create an external Word document that will be inserted later.
+        // -----------------------------------------------------------------
+        const string externalPath = "external.docx";
+        Document externalDoc = new Document();
+        DocumentBuilder extBuilder = new DocumentBuilder(externalDoc);
+        extBuilder.Writeln("This is the content of the external document.");
+        externalDoc.Save(externalPath);
+
+        // -----------------------------------------------------------------
+        // 2. Create the template document with a placeholder for insertion.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder tmplBuilder = new DocumentBuilder(template);
+        tmplBuilder.Writeln("=== Report Start ===");
+        // The placeholder uses the LINQ Reporting 'doc' tag.
+        tmplBuilder.Writeln("<<doc [model.External]>>");
+        tmplBuilder.Writeln("=== Report End ===");
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data model that supplies the external document.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
         {
-            // -----------------------------------------------------------------
-            // Step 1: Create the external Word document that will be inserted.
-            // -----------------------------------------------------------------
-            Document externalDoc = new Document();
-            DocumentBuilder externalBuilder = new DocumentBuilder(externalDoc);
-            externalBuilder.Writeln("This is the content of the external document.");
-            externalBuilder.Writeln("It will be inserted dynamically into the template.");
-            const string externalPath = "ExternalDocument.docx";
-            externalDoc.Save(externalPath);
+            // Load the previously saved external document.
+            External = new Document(externalPath)
+        };
 
-            // -----------------------------------------------------------------
-            // Step 2: Create the template document with a placeholder tag.
-            // The tag <<doc [src.Document]>> tells the reporting engine to insert
-            // the Document object referenced by src.Document.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
-            templateBuilder.Writeln("=== Report Start ===");
-            templateBuilder.Writeln("<<doc [src.Document]>>"); // Placeholder for the external document.
-            templateBuilder.Writeln("=== Report End ===");
-            const string templatePath = "TemplateDocument.docx";
-            templateDoc.Save(templatePath);
+        // -----------------------------------------------------------------
+        // 4. Build the report using the ReportingEngine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(template, model, "model");
 
-            // -----------------------------------------------------------------
-            // Step 3: Load the saved template and the external document.
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-            Document loadedExternal = new Document(externalPath);
-
-            // -----------------------------------------------------------------
-            // Step 4: Prepare the data model for the reporting engine.
-            // The root name "src" must match the name used in the template tag.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel
-            {
-                Document = loadedExternal
-            };
-
-            // -----------------------------------------------------------------
-            // Step 5: Build the report using the LINQ Reporting engine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(loadedTemplate, model, "src");
-
-            // -----------------------------------------------------------------
-            // Step 6: Save the final document.
-            // -----------------------------------------------------------------
-            const string outputPath = "ReportWithInsertedDocument.docx";
-            loadedTemplate.Save(outputPath);
-        }
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        const string outputPath = "output.docx";
+        template.Save(outputPath);
     }
 }

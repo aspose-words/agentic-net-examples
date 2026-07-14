@@ -1,64 +1,21 @@
 using System;
 using System.Collections.Generic;
-using Aspose.Words;
-using Aspose.Words.Reporting;
+using System.Linq;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model used by the LINQ Reporting template.
-    public class ReportModel
+    public static void Main()
     {
-        // Initialize the collection to avoid nullable warnings.
-        public List<int> Numbers { get; set; } = new();
-    }
+        // Sample collection of integers.
+        List<int> numbers = new List<int> { 10, 20, 30, 40, 50, 60 };
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // -----------------------------------------------------------------
-            // 1. Create the LINQ Reporting template programmatically.
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+        // Calculate the index of the second-to-last element.
+        int secondToLastIndex = numbers.Count - 2;
 
-            // Write a simple list of numbers using a foreach tag.
-            builder.Writeln("Numbers:");
-            builder.Writeln("<<foreach [n in model.Numbers]>>");
-            builder.Writeln("<<[n]>>");
-            builder.Writeln("<</foreach>>");
+        // Use ElementAt to fetch the element at that index.
+        int secondToLast = numbers.ElementAt(secondToLastIndex);
 
-            // Use ElementAt to fetch the second‑to‑last item by calculating the length.
-            builder.Writeln("Second to last: <<[model.Numbers.ElementAt(model.Numbers.Count - 2)]>>");
-
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back for report generation.
-            // -----------------------------------------------------------------
-            var document = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            var model = new ReportModel
-            {
-                Numbers = new List<int> { 10, 20, 30, 40, 50 }
-            };
-
-            // -----------------------------------------------------------------
-            // 4. Build the report using Aspose.Words LINQ Reporting engine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-            engine.BuildReport(document, model, "model");
-
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            document.Save(outputPath);
-        }
+        // Output the result.
+        Console.WriteLine($"Second-to-last element: {secondToLast}");
     }
 }

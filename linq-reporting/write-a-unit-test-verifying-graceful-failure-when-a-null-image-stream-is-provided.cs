@@ -2,53 +2,45 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
 
-public class ImageStreamNullTest
+public class Model
 {
-    // Model class used by the LINQ Reporting engine.
-    public class ReportModel
-    {
-        // This property intentionally returns null to simulate a missing image stream.
-        public Stream? ImageStream { get; set; } = null;
-    }
+    // The image stream can be null to simulate a missing image.
+    public Stream ImageStream { get; set; }
+}
 
+public class Program
+{
     public static void Main()
     {
         // Create a blank document that will serve as the template.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a textbox to host the image tag (required by the engine).
-        var textBox = builder.InsertShape(Aspose.Words.Drawing.ShapeType.TextBox, 200, 120);
+        // Insert a textbox to host the image tag (required by LINQ Reporting).
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
-        // LINQ Reporting tag that expects a Stream (or other supported types) for the image.
+
+        // LINQ Reporting tag that expects a Stream, byte[], Image or a path.
         builder.Write("<<image [model.ImageStream]>>");
 
-        // Prepare the data model with a null Stream.
-        ReportModel model = new ReportModel();
+        // Prepare the data model with a null image stream.
+        var model = new Model { ImageStream = null };
 
-        // Configure the reporting engine to emit inline error messages instead of throwing.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
+        // Configure the reporting engine to inline error messages instead of throwing.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Build the report. The method returns false when parsing fails and InlineErrorMessages is set.
-        bool success = engine.BuildReport(template, model, "model");
+        // Build the report. The method returns false when an error occurs and InlineErrorMessages is enabled.
+        bool success = engine.BuildReport(doc, model, "model");
 
-        // Verify that the engine reported a failure (graceful handling of the null stream).
-        if (!success)
-        {
-            Console.WriteLine("Test passed: BuildReport returned false as expected for null image stream.");
-        }
-        else
-        {
-            Console.WriteLine("Test failed: BuildReport succeeded unexpectedly.");
-        }
+        // Output the result. Expecting graceful failure (success == false).
+        Console.WriteLine($"Report build success: {success}");
 
-        // Optionally, save the resulting document to inspect the inline error message.
+        // Save the resulting document to inspect the inline error message (optional).
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ReportWithError.docx");
-        template.Save(outputPath);
-        Console.WriteLine($"Report saved to: {outputPath}");
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

@@ -2,46 +2,59 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingDemo
 {
-    public static void Main()
+    // Simple data model.
+    public class Person
     {
-        // Sample data model.
-        ReportModel model = new ReportModel
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Name = "John Doe"
-        };
+            // Paths for the template and the generated report.
+            string templatePath = "template.docx";
+            string reportPath = "report.docx";
 
-        // Create a template document that uses the default LINQ Reporting delimiters (<< >>).
-        string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+            // -------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Load the template.
-        Document doc = new Document(templatePath);
+            // Use default LINQ Reporting tags <<[expr]>> for the placeholders.
+            builder.Writeln("Customer Report");
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Age: <<[person.Age]>>");
 
-        // Build the report. The third argument is the name used in the template to reference the data source.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // Save the generated report.
-        string reportPath = "Report.docx";
-        doc.Save(reportPath);
+            // -------------------------------------------------
+            // 2. Load the template back for reporting.
+            // -------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
+
+            // -------------------------------------------------
+            // 3. Configure the ReportingEngine.
+            // -------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+
+            // -------------------------------------------------
+            // 4. Build the report using a data source.
+            // -------------------------------------------------
+            Person data = new Person { Name = "John Doe", Age = 30 };
+
+            // The root object name ("person") must match the placeholder prefix.
+            engine.BuildReport(loadedTemplate, data, "person");
+
+            // -------------------------------------------------
+            // 5. Save the generated report.
+            // -------------------------------------------------
+            loadedTemplate.Save(reportPath);
+        }
     }
-
-    private static void CreateTemplate(string path)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Use the default tag syntax required by Aspose.Words LINQ Reporting Engine.
-        builder.Writeln("Hello, <<[model.Name]>>!");
-
-        doc.Save(path);
-    }
-}
-
-// Simple data model with a non‑nullable property initialized to avoid warnings.
-public class ReportModel
-{
-    public string Name { get; set; } = string.Empty;
 }

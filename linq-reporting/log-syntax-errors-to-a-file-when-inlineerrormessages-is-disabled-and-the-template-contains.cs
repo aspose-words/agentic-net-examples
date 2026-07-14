@@ -1,81 +1,57 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
-namespace AsposeWordsLinqReportingExample
+public class ReportModel
 {
-    // Simple data model used by the template.
-    public class ReportModel
-    {
-        public string Name { get; set; } = "John Doe";
-    }
+    public string Name { get; set; } = "John Doe";
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare folders.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "output.docx");
+        string logPath = Path.Combine(workDir, "error.log");
+
+        // Create a template document with a valid and an invalid LINQ Reporting tag.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello <<[model.Name]>>!");               // Valid expression.
+        builder.Writeln("This will cause an error: <<[model.Missing]>>"); // Invalid expression.
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var template = new Document(templatePath);
+
+        // Prepare the data model.
+        var model = new ReportModel();
+
+        // Configure the reporting engine without InlineErrorMessages.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // InlineErrorMessages is disabled.
+
+        try
         {
-            // Register code page provider (required for some Aspose.Words features).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Attempt to build the report. This will throw on syntax errors.
+            bool success = engine.BuildReport(template, model, "model");
 
-            // Define file paths.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(outputDir);
-            string templatePath = Path.Combine(outputDir, "template.docx");
-            string reportPath = Path.Combine(outputDir, "report.docx");
-            string errorLogPath = Path.Combine(outputDir, "error.log");
-
-            // -----------------------------------------------------------------
-            // 1. Create a template document with both a valid and an invalid tag.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Valid expression tag.
-            builder.Writeln("<<[model.Name]>>");
-
-            // Invalid expression tag (missing closing ">>").
-            builder.Writeln("<<[model.Name]");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template document for reporting.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the reporting engine without InlineErrorMessages.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine
-            {
-                // Ensure InlineErrorMessages flag is NOT set.
-                Options = ReportBuildOptions.None
-            };
-
-            // -----------------------------------------------------------------
-            // 4. Build the report and capture any syntax errors.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel();
-
-            try
-            {
-                // BuildReport will throw an exception because the template contains a syntax error.
-                bool success = engine.BuildReport(doc, model, "model");
-
-                // If, for any reason, the build succeeds, save the generated report.
-                if (success)
-                {
-                    doc.Save(reportPath);
-                }
-            }
-            catch (Exception ex)
-            {
-                // Log the exception message (syntax error details) to a file.
-                File.WriteAllText(errorLogPath, ex.Message);
-            }
+            // If no exception, save the generated document.
+            if (success)
+                template.Save(outputPath);
+        }
+        catch (Exception ex)
+        {
+            // Log the syntax error details to a file.
+            File.WriteAllText(logPath, $"Report generation failed: {ex.Message}");
         }
     }
 }

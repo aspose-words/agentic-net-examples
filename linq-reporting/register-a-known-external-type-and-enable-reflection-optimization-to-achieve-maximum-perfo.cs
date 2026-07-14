@@ -1,67 +1,77 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
     // Sample data model.
-    public class Order
+    public class ReportModel
     {
-        public string CustomerName { get; set; } = string.Empty;
         public List<Item> Items { get; set; } = new();
     }
 
     public class Item
     {
-        public int Index { get; set; }
         public string Name { get; set; } = string.Empty;
+        public decimal Price { get; set; }
     }
 
-    // External static helper that will be registered as a known type.
-    public static class Formatter
+    // External type whose static members will be used in the template.
+    public static class MyHelper
     {
-        public static string Upper(string value) => value?.ToUpperInvariant() ?? string.Empty;
+        public static string FormatPrice(decimal price) => $"${price:F2}";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Enable reflection optimization for maximum performance.
-            ReportingEngine.UseReflectionOptimization = true;
+            // Ensure output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+            Directory.CreateDirectory(outputDir);
 
-            // Create a template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // 1. Create the template document programmatically.
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("Items:");
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("- <<[Formatter.Upper(item.Name)]>>");
+            // LINQ Reporting tags.
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("<<[item.Name]>> - <<[MyHelper.FormatPrice(item.Price)]>>");
             builder.Writeln("<</foreach>>");
 
-            // Prepare sample data.
-            Order order = new Order
+            // Save the template.
+            templateDoc.Save(templatePath);
+
+            // 2. Load the template for reporting.
+            Document doc = new Document(templatePath);
+
+            // 3. Prepare a large data set.
+            ReportModel model = new ReportModel();
+            for (int i = 1; i <= 1000; i++)
             {
-                CustomerName = "John Doe",
-                Items = new List<Item>
+                model.Items.Add(new Item
                 {
-                    new Item { Index = 1, Name = "apple" },
-                    new Item { Index = 2, Name = "banana" },
-                    new Item { Index = 3, Name = "cherry" }
-                }
-            };
+                    Name = $"Product {i}",
+                    Price = i * 1.23m
+                });
+            }
 
-            // Configure the reporting engine.
+            // 4. Configure the ReportingEngine.
+            ReportingEngine.UseReflectionOptimization = true; // Enable reflection optimization.
             ReportingEngine engine = new ReportingEngine();
-            engine.KnownTypes.Add(typeof(Formatter));
 
-            // Build the report using the root object name "order".
-            engine.BuildReport(template, order, "order");
+            // Register the external type so its static members can be used in the template.
+            engine.KnownTypes.Add(typeof(MyHelper));
 
-            // Save the generated report.
-            template.Save("Report.docx");
+            // 5. Build the report.
+            engine.BuildReport(doc, model, "model");
+
+            // 6. Save the generated report.
+            string reportPath = Path.Combine(outputDir, "Report.docx");
+            doc.Save(reportPath);
         }
     }
 }

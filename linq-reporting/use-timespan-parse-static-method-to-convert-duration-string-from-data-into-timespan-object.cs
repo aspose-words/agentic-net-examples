@@ -1,17 +1,16 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Data model containing a duration string and a parsed TimeSpan.
-    public class Order
+    // Data model used by the LINQ Reporting engine.
+    public class ReportModel
     {
-        // Sample duration string in "hh:mm:ss" format.
-        public string DurationString { get; set; } = "02:15:30";
+        // Original duration string from the data source.
+        public string DurationString { get; set; } = "01:30:45";
 
-        // Parses the string using TimeSpan.Parse.
+        // Converts the string to a TimeSpan using TimeSpan.Parse.
         public TimeSpan Duration => TimeSpan.Parse(DurationString);
     }
 
@@ -19,43 +18,28 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-            string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+            // 1. Create a blank Word document that will serve as the template.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Insert a simple paragraph with a LINQ Reporting tag that references the TimeSpan property.
+            builder.Writeln("Duration: <<[model.Duration]>>");
 
-            // Insert a LINQ Reporting tag that will display the parsed TimeSpan.
-            builder.Writeln("Duration: <<[order.Duration]>>");
+            // 2. Prepare the data source.
+            ReportModel model = new ReportModel
+            {
+                // Example value; can be changed to test different inputs.
+                DurationString = "02:15:30"
+            };
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template document.
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            Order order = new Order(); // DurationString is already initialized.
-
-            // -----------------------------------------------------------------
-            // 4. Build the report using Aspose.Words ReportingEngine.
-            // -----------------------------------------------------------------
+            // 3. Build the report using the ReportingEngine.
             ReportingEngine engine = new ReportingEngine();
-            // No special options are required for this simple example.
-            engine.BuildReport(loadedTemplate, order, "order");
+            // The root object name in the template is "model", so we pass it explicitly.
+            engine.BuildReport(template, model, "model");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            loadedTemplate.Save(reportPath);
+            // 4. Save the generated document.
+            const string outputPath = "LinqReporting_TimeSpanReport.docx";
+            template.Save(outputPath);
         }
     }
 }

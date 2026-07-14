@@ -4,79 +4,76 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Simple data model used by the LINQ Reporting template.
+    // Simple data model for the report.
     public class Order
     {
-        public string CustomerName { get; set; } = "John Doe";
+        public string CustomerName { get; set; } = string.Empty;
         public List<Item> Items { get; set; } = new();
     }
 
     public class Item
     {
         public int Index { get; set; }
-        public string Name { get; set; } = "";
+        public string Name { get; set; } = string.Empty;
     }
 
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Header with the customer's name.
+        builder.Writeln("Order for <<[order.CustomerName]>>");
+        builder.Writeln();
+
+        // Loop over the collection of items.
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template back (simulating a real-world scenario).
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare sample data.
+        // -----------------------------------------------------------------
+        Order sampleOrder = new Order
         {
-            // Prepare sample data.
-            Order order = new Order
+            CustomerName = "John Doe",
+            Items = new List<Item>
             {
-                CustomerName = "Acme Corp",
-                Items = new List<Item>
-                {
-                    new Item { Index = 1, Name = "Widget A" },
-                    new Item { Index = 2, Name = "Widget B" },
-                    new Item { Index = 3, Name = "Widget C" }
-                }
-            };
+                new Item { Index = 1, Name = "Apple" },
+                new Item { Index = 2, Name = "Banana" },
+                new Item { Index = 3, Name = "Cherry" }
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // Step 1: Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // 4. Enable reflection optimization and build the report.
+        // -----------------------------------------------------------------
+        ReportingEngine.UseReflectionOptimization = true; // Enable runtime proxy generation.
+        ReportingEngine engine = new ReportingEngine();
 
-            // Insert a title.
-            builder.Writeln("Order Report");
-            builder.Writeln();
+        // The root object name in the template is "order".
+        engine.BuildReport(doc, sampleOrder, "order");
 
-            // Insert a placeholder for the customer name.
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln();
-
-            // Insert a foreach block to list items.
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // Step 2: Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // Enable reflection optimization for large collections.
-            ReportingEngine.UseReflectionOptimization = true;
-
-            ReportingEngine engine = new ReportingEngine();
-
-            // Build the report using the root object name "order".
-            engine.BuildReport(reportDoc, order, "order");
-
-            // Save the generated report.
-            string reportPath = "Report.docx";
-            reportDoc.Save(reportPath);
-
-            // Inform the user (no interactive input required).
-            Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
-        }
+        // -----------------------------------------------------------------
+        // 5. Save the generated report.
+        // -----------------------------------------------------------------
+        doc.Save(reportPath);
     }
 }

@@ -1,33 +1,43 @@
 using System;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace RestrictedMembersExample
+namespace AsposeWordsLinqReportingExample
 {
-    // Custom attribute to mark properties that are allowed to be accessed in the template.
+    // Custom attribute to mark properties that are allowed to be exposed in reports.
     [AttributeUsage(AttributeTargets.Property)]
     public sealed class ExposeAttribute : Attribute { }
 
-    // Sample data model with some properties marked with the custom attribute.
+    // Original data model with some properties marked for exposure.
     public class Person
     {
         [Expose] public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-        [Expose] public string Email { get; set; } = string.Empty;
-        public string SecretNote { get; set; } = string.Empty;
+        [Expose] public int Age { get; set; }
+        public decimal Salary { get; set; }
     }
 
-    // Wrapper that only exposes properties marked with [Expose].
-    public class PersonReport
+    // Wrapper model that only contains the exposed properties.
+    public class PersonDto
     {
-        public string Name { get; }
-        public string Email { get; }
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
 
-        public PersonReport(Person source)
+        public PersonDto(Person source)
         {
             Name = source.Name;
-            Email = source.Email;
+            Age = source.Age;
+        }
+    }
+
+    // Root object passed to the reporting engine.
+    public class ReportModel
+    {
+        public PersonDto Person { get; set; }
+
+        public ReportModel(Person person)
+        {
+            Person = new PersonDto(person);
         }
     }
 
@@ -35,56 +45,51 @@ namespace RestrictedMembersExample
     {
         public static void Main()
         {
-            // Register code page provider (required for some data sources).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-            // 1. Create a simple Word template with LINQ Reporting tags.
-            var templatePath = "template.docx";
-            CreateTemplate(templatePath);
+            // 1. Create the template document programmatically.
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // 2. Prepare sample data.
-            var person = new Person
-            {
-                Name = "John Doe",
-                Age = 42,
-                Email = "john.doe@example.com",
-                SecretNote = "This should not be visible in the report."
-            };
+            builder.Writeln("Employee Report");
+            builder.Writeln("Name : <<[model.Person.Name]>>");
+            builder.Writeln("Age  : <<[model.Person.Age]>>");
+            // This field will try to access a non‑exposed member; it will be treated as missing.
+            builder.Writeln("Salary: <<[model.Person.Salary]>>");
+
+            templateDoc.Save(templatePath);
+
+            // 2. Load the template (simulating a separate load step).
+            Document doc = new Document(templatePath);
 
             // 3. Restrict the original Person type so its members cannot be accessed directly.
-            //    This forces the engine to use the wrapper that only contains exposed members.
             ReportingEngine.SetRestrictedTypes(typeof(Person));
 
-            // 4. Build the report using the wrapper as the root data source.
-            var doc = new Document(templatePath);
-            var engine = new ReportingEngine
+            // 4. Prepare sample data.
+            Person samplePerson = new Person
             {
-                // Allow missing members so that attempts to access non‑exposed properties do not throw.
-                Options = ReportBuildOptions.AllowMissingMembers,
-                MissingMemberMessage = string.Empty
+                Name = "John Doe",
+                Age = 35, // Fixed value
+                Salary = 75000m
             };
 
-            var wrapper = new PersonReport(person);
-            engine.BuildReport(doc, wrapper, "model");
+            ReportModel model = new ReportModel(samplePerson);
 
-            // 5. Save the generated report.
-            doc.Save("Report.docx");
-        }
+            // 5. Build the report.
+            ReportingEngine engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.AllowMissingMembers,
+                MissingMemberMessage = "N/A"
+            };
 
-        // Helper method to create a Word document containing the required tags.
-        private static void CreateTemplate(string filePath)
-        {
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            engine.BuildReport(doc, model, "model");
 
-            builder.Writeln("Customer Report");
-            builder.Writeln("----------------");
-            builder.Writeln("Name : <<[model.Name]>>");
-            builder.Writeln("Email: <<[model.Email]>>");
-            // This line attempts to access a non‑exposed property; it will be ignored.
-            builder.Writeln("Age  : <<[model.Age]>>");
-
-            doc.Save(filePath);
+            // 6. Save the generated report.
+            string reportPath = Path.Combine(outputDir, "Report.docx");
+            doc.Save(reportPath);
         }
     }
 }

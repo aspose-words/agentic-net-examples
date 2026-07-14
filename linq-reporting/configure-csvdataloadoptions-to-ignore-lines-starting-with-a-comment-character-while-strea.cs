@@ -4,97 +4,60 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsCsvReporting
+public class CsvCommentExample
 {
-    // Simple data model representing a person.
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+        // Register code page provider for CSV encoding support.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Paths for temporary files.
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
+
+        // Create a template document with LINQ Reporting tags.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+        template.Save(templatePath);
+
+        // Prepare CSV data with comment lines.
+        string csvContent = @"Name,Age
+# This line is a comment and should be ignored
+Alice,30
+Bob,25
+# Another comment
+Charlie,35";
+
+        // Write CSV data to a memory stream.
+        using (MemoryStream csvStream = new MemoryStream(Encoding.UTF8.GetBytes(csvContent)))
         {
-            // Register code page provider for legacy encodings (required by Aspose.Words on .NET 5+).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Define file names in the current working directory.
-            string csvPath = Path.Combine(Environment.CurrentDirectory, "people.csv");
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "template.docx");
-            string reportPath = Path.Combine(Environment.CurrentDirectory, "report.docx");
-
-            // -----------------------------------------------------------------
-            // 1. Create a sample CSV file with comment lines.
-            // -----------------------------------------------------------------
-            // The comment character is '#'. Lines starting with this character will be ignored.
-            string[] csvLines =
+            // Configure CSV loading options to recognize headers and comment lines.
+            CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true)
             {
-                "# This is a comment line and should be skipped",
-                "Name,Age",
-                "Alice,30",
-                "# Another comment that must be ignored",
-                "Bob,45",
-                "Charlie,25"
-            };
-            File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
-
-            // -----------------------------------------------------------------
-            // 2. Create a Word template containing LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Add a title.
-            builder.Writeln("People Report");
-            builder.Writeln();
-
-            // Begin a foreach loop over the CSV data source named "persons".
-            builder.Writeln("<<foreach [person in persons]>>");
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Load the template (simulating a separate load step).
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 4. Configure CSV loading options to ignore comment lines.
-            // -----------------------------------------------------------------
-            CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true) // first line has headers
-            {
-                Delimiter = ',',          // default delimiter, set explicitly for clarity
-                CommentChar = '#',        // lines starting with '#' are ignored
-                QuoteChar = '"'           // default quote character
+                Delimiter = ',',
+                CommentChar = '#'
             };
 
-            // -----------------------------------------------------------------
-            // 5. Create a CsvDataSource from the CSV file stream using the options.
-            // -----------------------------------------------------------------
-            using (FileStream csvStream = File.OpenRead(csvPath))
-            {
-                CsvDataSource dataSource = new CsvDataSource(csvStream, loadOptions);
+            // Create a CSV data source from the stream with the specified options.
+            CsvDataSource dataSource = new CsvDataSource(csvStream, loadOptions);
 
-                // -----------------------------------------------------------------
-                // 6. Build the report using the ReportingEngine.
-                // -----------------------------------------------------------------
-                ReportingEngine engine = new ReportingEngine();
-                engine.BuildReport(loadedTemplate, dataSource, "persons");
+            // Load the template document (demonstrating the load step).
+            Document doc = new Document(templatePath);
 
-                // -----------------------------------------------------------------
-                // 7. Save the generated report.
-                // -----------------------------------------------------------------
-                loadedTemplate.Save(reportPath);
-            }
+            // Build the report using the data source. The root name in the template is "persons".
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, dataSource, "persons");
 
-            // The example finishes here. The generated report.docx contains the data
-            // from the CSV file, with comment lines correctly ignored.
+            // Save the generated report.
+            doc.Save(outputPath);
         }
+
+        // Clean up temporary template file.
+        if (File.Exists(templatePath))
+            File.Delete(templatePath);
     }
 }

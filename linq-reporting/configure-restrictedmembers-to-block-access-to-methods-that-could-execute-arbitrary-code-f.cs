@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,33 +8,51 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document and a builder to insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Register code page provider (required for some Aspose.Words features).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // The tag attempts to obtain the base type of a string (System.Type) and then output it.
-        // This will be blocked by the restricted type configuration.
+        // -----------------------------------------------------------------
+        // 1. Create a template document with a tag that tries to access a
+        //    restricted type (System.Type). The tag attempts to obtain the
+        //    base type of an empty string.
+        // -----------------------------------------------------------------
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+        builder.Writeln("Attempt to access restricted type:");
+        // The 'var' tag creates a variable 'typeVar' by calling GetType().
         builder.Writeln("<<var [typeVar = \"\".GetType().BaseType]>>");
-        builder.Writeln("<<[typeVar]>>");
+        // Output the variable. If the type is restricted the result will be empty.
+        builder.Writeln("Result: <<[typeVar]>>");
 
-        // Restrict access to System.Type members (and derived types) for security.
+        // Save the template to disk.
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and configure the ReportingEngine.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
+
+        // Restrict the System.Type type so its members cannot be accessed from templates.
         ReportingEngine.SetRestrictedTypes(typeof(System.Type));
 
-        // Allow missing members so the engine does not throw when the restricted member is accessed.
-        ReportingEngine engine = new ReportingEngine
+        var engine = new ReportingEngine
         {
+            // Allow missing members to avoid exceptions when the restricted type is accessed.
             Options = ReportBuildOptions.AllowMissingMembers
         };
 
-        // Build the report. The root object is not used, so we pass an empty object.
-        engine.BuildReport(doc, new object());
+        // Build the report. No data source is needed for this example.
+        engine.BuildReport(doc, new object(), "");
 
-        // Save the resulting document.
-        const string outputPath = "RestrictedReport.docx";
+        // -----------------------------------------------------------------
+        // 3. Save the generated document and display its text.
+        // -----------------------------------------------------------------
+        const string outputPath = "output.docx";
         doc.Save(outputPath);
 
-        // Output the document text to the console (should be empty because the access was blocked).
-        Console.WriteLine("Report generated. Document text:");
+        // Output the resulting text to the console.
+        Console.WriteLine("=== Generated Document Text ===");
         Console.WriteLine(doc.GetText().Trim());
     }
 }

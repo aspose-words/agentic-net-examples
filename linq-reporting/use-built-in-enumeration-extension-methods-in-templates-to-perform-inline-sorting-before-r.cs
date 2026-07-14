@@ -1,72 +1,62 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
-
-        // -------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Products sorted by price (ascending):");
-        // Inline sorting using the OrderBy LINQ extension method.
-        builder.Writeln("<<foreach [p in model.Products.OrderBy(p => p.Price)]>>");
-        builder.Writeln("<<[p.Name]>> - $<<[p.Price]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // 2. Load the template and prepare the data model.
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        ReportModel model = new ReportModel
+        // Prepare sample data (unsorted).
+        var model = new ReportModel
         {
-            Products = new List<Product>
+            Persons = new List<Person>
             {
-                new Product { Name = "Apple",  Price = 1.20m },
-                new Product { Name = "Banana", Price = 0.80m },
-                new Product { Name = "Cherry", Price = 2.50m },
-                new Product { Name = "Date",   Price = 3.00m }
+                new() { Name = "Alice", Age = 30 },
+                new() { Name = "Bob", Age = 25 },
+                new() { Name = "Charlie", Age = 35 }
             }
         };
 
-        // -------------------------------------------------
-        // 3. Build the report using ReportingEngine.
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // No special options required.
-        engine.BuildReport(doc, model, "model");
+        // Create a template document programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // -------------------------------------------------
-        // 4. Save the generated report.
-        // -------------------------------------------------
-        doc.Save(reportPath);
+        builder.Writeln("Persons sorted by Age (ascending):");
+        builder.Writeln("<<foreach [p in Persons.OrderBy(p => p.Age)]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        templateDoc.Save(templatePath);
+
+        // Load the template for reporting.
+        var loadDoc = new Document(templatePath);
+
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
+        bool success = engine.BuildReport(loadDoc, model, "model");
+
+        // Save the generated report.
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        loadDoc.Save(reportPath);
+
+        // Optional: indicate success (no console interaction required).
+        // The program ends here.
     }
-}
-
-// -----------------------------------------------------------------
-// Data model classes (public, non‑nullable properties initialized).
-// -----------------------------------------------------------------
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-}
-
-public class Product
-{
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
 }

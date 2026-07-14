@@ -3,6 +3,17 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Product
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
@@ -10,46 +21,38 @@ public class Program
         // Prepare sample data.
         var model = new ReportModel
         {
-            Products = new List<Product>
+            Products = new()
             {
-                new Product { Name = "Apple",  Price = 1.25m },
-                new Product { Name = "Banana", Price = 0.75m },
-                new Product { Name = "Coffee", Price = 4.99m }
+                new Product { Name = "Apple", Price = 0.99m },
+                new Product { Name = "Banana", Price = 0.59m },
+                new Product { Name = "Cherry", Price = 2.49m }
             }
         };
 
-        // Build the template document in memory.
+        // Create a template document.
+        var templatePath = "Template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // LINQ Reporting tags.
+        builder.Writeln("Product Price Report");
+        builder.Writeln(string.Empty);
         builder.Writeln("<<foreach [p in Products]>>");
-        // Use a pre‑formatted property to render the price as currency.
-        builder.Writeln("<<[p.Name]>> - <<[p.FormattedPrice]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Price: <<[p.Price.ToString(\"C\")]>>");
+        builder.Writeln(string.Empty);
         builder.Writeln("<</foreach>>");
 
-        // Generate the report.
+        doc.Save(templatePath);
+
+        // Load the template and build the report.
+        var template = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(template, model, "model");
 
-        // Save the result.
-        doc.Save("ReportCurrency.docx");
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        template.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {outputPath}");
     }
-}
-
-// Wrapper class that serves as the root data source for the report.
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-}
-
-// Simple product class with public properties.
-// Includes a read‑only property that returns the price formatted as currency.
-public class Product
-{
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-
-    // Returns the price formatted using the standard .NET currency format string.
-    public string FormattedPrice => Price.ToString("c");
 }

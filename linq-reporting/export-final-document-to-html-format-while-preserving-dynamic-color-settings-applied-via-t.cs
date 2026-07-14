@@ -12,51 +12,52 @@ public class Program
         // Prepare sample data.
         var model = new ReportModel
         {
-            Products = new List<Product>
+            Items = new List<Item>
             {
-                new Product { Name = "Apple",  Color = "Red" },
-                new Product { Name = "Banana", Color = "GoldenRod" },
-                new Product { Name = "Grapes", Color = "#800080" } // purple
+                new Item { Name = "Apple",  ColorName = "Red" },
+                new Item { Name = "Banana", ColorName = "#FFD700" }, // gold
+                new Item { Name = "Grape",  ColorName = "Purple" }
             }
         };
 
-        // Create a template document with LINQ Reporting tags.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create the template document programmatically.
+        var templatePath = Path.Combine("Output", "Template.docx");
+        Directory.CreateDirectory(Path.GetDirectoryName(templatePath)!);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Product List:");
-        builder.Writeln("<<foreach [p in Products]>>");
-        // Dynamic text color applied via the textColor tag.
-        builder.Writeln("<<textColor [p.Color]>><<[p.Name]>> <</textColor>>");
+        builder.Writeln("Report with dynamic text colors:");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("<<textColor [item.ColorName]>>Item: <<[item.Name]>> <</textColor>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Save the template.
+        doc.Save(templatePath);
 
-        // Load the template back (simulating a separate load step).
+        // Load the template (optional, shown for completeness).
         var loadedDoc = new Document(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
+        // Build the report using LINQ Reporting Engine.
         var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
         engine.BuildReport(loadedDoc, model, "model");
 
-        // Save the final document as HTML, preserving the color formatting.
-        string htmlPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.html");
-        var htmlOptions = new HtmlSaveOptions(SaveFormat.Html);
-        loadedDoc.Save(htmlPath, htmlOptions);
+        // Save the final document to HTML while preserving the color tags.
+        var htmlPath = Path.Combine("Output", "Report.html");
+        var saveOptions = new HtmlSaveOptions(); // No ExportColorNames property needed.
+        loadedDoc.Save(htmlPath, saveOptions);
     }
 }
 
-// Wrapper class used as the root data source for the report.
+// Root data model.
 public class ReportModel
 {
-    public List<Product> Products { get; set; } = new();
+    public List<Item> Items { get; set; } = new();
 }
 
-// Simple data model representing a product with a name and a color.
-public class Product
+// Item used in the foreach loop.
+public class Item
 {
     public string Name { get; set; } = string.Empty;
-    public string Color { get; set; } = string.Empty;
+    public string ColorName { get; set; } = string.Empty;
 }

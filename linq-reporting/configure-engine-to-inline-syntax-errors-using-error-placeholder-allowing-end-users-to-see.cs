@@ -1,62 +1,49 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReportingInlineErrors
 {
-    // Simple data model used by the template.
-    public class Model
+    // Simple data model used as the root object for the report.
+    public class Person
     {
-        // Initialized to avoid nullable warnings.
-        public string Name { get; set; } = "John Doe";
+        public string Name { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Prepare output folder.
-            string outputDir = "Output";
-            Directory.CreateDirectory(outputDir);
+            // Register code page provider (required for some Aspose.Words features).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(outputDir, "template.docx");
-            string resultPath = Path.Combine(outputDir, "result.docx");
+            // Create a new blank document and a builder to insert LINQ Reporting tags.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // -----------------------------------------------------------------
-            // Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Insert a valid tag that will be replaced with the person's name.
+            builder.Writeln("Customer: <<[model.Name]>>");
 
-            // Valid tag – will be replaced with the model's Name property.
-            builder.Writeln("Customer Name: <<[model.Name]>>");
+            // Insert an invalid tag (property does not exist) to trigger an inline error message.
+            builder.Writeln("Invalid field: <<[model.Unknown]>>");
 
-            // Deliberate syntax error – references a non‑existent member.
-            // With InlineErrorMessages enabled, the engine will insert an error message here.
-            builder.Writeln("Invalid tag: <<[model.NonExistent]>>");
+            // Prepare the data source.
+            Person model = new Person { Name = "John Doe" };
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-
+            // Configure the reporting engine to inline error messages.
             ReportingEngine engine = new ReportingEngine();
-            // Configure the engine to inline error messages.
             engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Build the report using the model as the data source.
-            bool success = engine.BuildReport(doc, new Model(), "model");
+            // Build the report. The returned flag indicates whether parsing succeeded.
+            bool success = engine.BuildReport(doc, model, "model");
 
-            // Output the success flag (true if parsing succeeded, false otherwise).
-            Console.WriteLine($"BuildReport success: {success}");
+            // Output the success flag to the console.
+            Console.WriteLine($"Report build success: {success}");
 
-            // Save the generated report.
-            doc.Save(resultPath);
+            // Save the resulting document.
+            doc.Save("ReportWithInlineErrors.docx");
         }
     }
 }

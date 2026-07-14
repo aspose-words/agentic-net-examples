@@ -5,53 +5,62 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingDemo
 {
-    // Data model for each item.
+    // Data model classes
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
     public class Item
     {
         public string Name { get; set; } = string.Empty;
         public int Score { get; set; }
     }
 
-    // Wrapper model that will be passed to the reporting engine.
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document and a builder to construct the template.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Step 1: Create the template document with LINQ Reporting tags
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Begin a foreach loop over the Items collection.
+            // Begin a foreach loop over Items
             builder.Writeln("<<foreach [item in Items]>>");
 
-            // Use a textColor tag with a conditional expression to set the color based on the Score.
-            // Red for Score < 50, Green for Score >= 80, otherwise Black.
+            // Use a conditional expression to choose the text color based on Score
+            // Green for >=80, Orange for >=50, otherwise Red
             builder.Writeln(
-                "<<textColor [item.Score < 50 ? \"Red\" : item.Score >= 80 ? \"Green\" : \"Black\"]>>" +
-                "Item: <<[item.Name]>>, Score: <<[item.Score]>>" +
+                "<<textColor [item.Score >= 80 ? \"Green\" : item.Score >= 50 ? \"Orange\" : \"Red\"]>>" +
+                "Name: <<[item.Name]>>, Score: <<[item.Score]>>" +
                 " <</textColor>>");
 
-            // End the foreach loop.
+            // End the foreach loop
             builder.Writeln("<</foreach>>");
 
-            // Prepare sample data.
-            ReportModel model = new ReportModel();
-            model.Items.Add(new Item { Name = "Alice", Score = 45 });
-            model.Items.Add(new Item { Name = "Bob", Score = 73 });
-            model.Items.Add(new Item { Name = "Charlie", Score = 88 });
+            // Save the template to disk
+            const string templatePath = "Template.docx";
+            templateDoc.Save(templatePath);
 
-            // Build the report using the LINQ Reporting engine.
+            // Step 2: Prepare sample data
+            ReportModel model = new ReportModel
+            {
+                Items = new List<Item>
+                {
+                    new Item { Name = "Alice", Score = 92 },
+                    new Item { Name = "Bob",   Score = 76 },
+                    new Item { Name = "Carol", Score = 43 }
+                }
+            };
+
+            // Step 3: Load the template and build the report
+            Document reportDoc = new Document(templatePath);
             ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // default options
-            engine.BuildReport(doc, model, "model");
+            engine.BuildReport(reportDoc, model, "model");
 
-            // Save the generated report.
-            doc.Save("Report.docx");
+            // Step 4: Save the generated report
+            const string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
         }
     }
 }

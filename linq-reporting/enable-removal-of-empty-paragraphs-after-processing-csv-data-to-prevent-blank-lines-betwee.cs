@@ -3,59 +3,52 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Working directory.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        string csvPath = Path.Combine(workDir, "Data.csv");
-        string outputPath = Path.Combine(workDir, "Report.docx");
-
-        // 1. Create a CSV file. The second row is empty and would generate an empty paragraph.
-        File.WriteAllText(csvPath,
-            "Name,Age\r\n" +
-            "John,30\r\n" +
-            ",\r\n" +
-            "Alice,25\r\n");
-
-        // 2. Build a template document that contains LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>> Age: <<[person.Age]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        template.Save(templatePath);
-
-        // 3. Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // 4. Configure CSV loading options (header row present).
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true)
+        public static void Main()
         {
-            HasHeaders = true,
-            Delimiter = ',',
-            QuoteChar = '"',
-            CommentChar = '#'
-        };
+            // Prepare sample CSV data.
+            const string csvFileName = "people.csv";
+            File.WriteAllLines(csvFileName, new[]
+            {
+                "Name,Age,City",          // Header row
+                "John Doe,30,New York",   // Normal row
+                ",,,",                    // Empty row – will produce empty paragraph
+                "Jane Smith,25,London"    // Another normal row
+            });
 
-        // 5. Create the CSV data source.
-        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
+            // Create a template document with LINQ Reporting tags.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // 6. Build the report with the RemoveEmptyParagraphs option to delete blank lines.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
-        };
-        engine.BuildReport(reportDoc, csvData, "persons");
+            // Begin a foreach loop over the CSV rows (exposed as "persons").
+            builder.Writeln("<<foreach [person in persons]>>");
+            // Write each field on its own paragraph.
+            builder.Writeln("<<[person.Name]>> - <<[person.Age]>> - <<[person.City]>>");
+            // End the foreach loop.
+            builder.Writeln("<</foreach>>");
 
-        // 7. Save the final document.
-        reportDoc.Save(outputPath);
+            // Load the CSV data source with headers.
+            CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
+            CsvDataSource dataSource = new CsvDataSource(csvFileName, loadOptions);
 
-        Console.WriteLine($"Report generated: {outputPath}");
+            // Configure the reporting engine to remove empty paragraphs after processing.
+            ReportingEngine engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.RemoveEmptyParagraphs
+            };
+
+            // Build the report using the template and CSV data source.
+            engine.BuildReport(doc, dataSource, "persons");
+
+            // Save the generated report.
+            const string outputFileName = "Report.docx";
+            doc.Save(outputFileName);
+
+            // Optional: indicate completion (no interactive input required).
+            Console.WriteLine($"Report generated: {Path.GetFullPath(outputFileName)}");
+        }
     }
 }

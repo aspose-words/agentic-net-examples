@@ -6,53 +6,60 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-}
-
 public class Program
 {
     public static void Main()
     {
         // Prepare sample JSON data.
         string jsonPath = "people.json";
-        string jsonContent = @"[
-            { ""Name"": ""Alice"", ""Age"": 30 },
-            { ""Name"": ""bob"",   ""Age"": 25 },
-            { ""Name"": ""ALICE"", ""Age"": 28 }
-        ]";
-        File.WriteAllText(jsonPath, jsonContent);
+        File.WriteAllText(jsonPath,
+            @"[
+                { ""Name"": ""Alice"",   ""Category"": ""Admin"" },
+                { ""Name"": ""Bob"",     ""Category"": ""User"" },
+                { ""Name"": ""Charlie"", ""Category"": ""admin"" },
+                { ""Name"": ""Diana"",   ""Category"": ""Guest"" }
+            ]");
 
         // Deserialize JSON into a list of Person objects.
-        List<Person> allPersons = JsonConvert.DeserializeObject<List<Person>>(File.ReadAllText(jsonPath)) ?? new List<Person>();
+        List<Person> allPeople = JsonConvert.DeserializeObject<List<Person>>(File.ReadAllText(jsonPath))!;
 
-        // Filter entries where Name equals "alice" (case‑insensitive).
-        List<Person> filteredPersons = allPersons
-            .Where(p => string.Equals(p.Name, "alice", StringComparison.OrdinalIgnoreCase))
+        // Filter entries where Category equals \"admin\" (case‑insensitive).
+        List<Person> filtered = allPeople
+            .Where(p => string.Equals(p.Category, "admin", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        // Create a template document programmatically.
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Filtered Persons:");
-        builder.Writeln("<<foreach [p in persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        // Wrap the filtered collection for the reporting engine.
+        ReportModel model = new()
+        {
+            People = filtered
+        };
+
+        // Create a Word template with LINQ Reporting tags.
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
+
+        builder.Writeln("<<foreach [person in People]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Category: <<[person.Category]>>");
         builder.Writeln("<</foreach>>");
-        templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        // Build the report.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report using the filtered list as the data source.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(reportDoc, filteredPersons, "persons");
-
-        // Save the final report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
+}
+
+// Data entity representing a person.
+public class Person
+{
+    public string Name { get; set; } = "";
+    public string Category { get; set; } = "";
+}
+
+// Wrapper class used as the root data source for the report.
+public class ReportModel
+{
+    public List<Person> People { get; set; } = new();
 }

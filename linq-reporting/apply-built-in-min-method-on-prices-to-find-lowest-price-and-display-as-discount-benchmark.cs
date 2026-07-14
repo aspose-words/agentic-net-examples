@@ -1,38 +1,38 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Linq; // Needed for LINQ methods
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    // List of product prices.
+    public List<decimal> Prices { get; set; } = new();
+
+    // Exposes the minimum price for the template.
+    public decimal MinPrice => Prices?.Min() ?? 0m;
+}
 
 public class Program
 {
     public static void Main()
     {
+        // Create a blank document and a builder to insert content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a LINQ Reporting tag that references the MinPrice property.
+        builder.Writeln("Discount benchmark price: <<[model.MinPrice]>>");
+
         // Prepare sample data.
-        var model = new ReportModel
-        {
-            Prices = new List<decimal> { 199.99m, 149.50m, 179.75m, 129.00m }
-        };
+        ReportModel model = new ReportModel();
+        model.Prices.AddRange(new[] { 19.99m, 24.50m, 15.75m, 29.99m });
 
-        // Create a blank document and insert a LINQ Reporting tag that references the minimum price.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Discount benchmark (lowest price): <<[model.MinPrice]>>");
-
-        // Build the report using the model as the data source.
-        var engine = new ReportingEngine();
+        // Build the report using the model as the root data source.
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
         // Save the generated document.
-        doc.Save("DiscountBenchmark.docx");
+        doc.Save("Report.docx");
     }
-}
-
-// Public data model required by the LINQ Reporting engine.
-public class ReportModel
-{
-    public List<decimal> Prices { get; set; } = new();
-
-    // Expose the minimum price as a property so the template can access it.
-    public decimal MinPrice => Prices.Min();
 }

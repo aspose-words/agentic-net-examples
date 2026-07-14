@@ -1,84 +1,79 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Data model for a single line item.
-    public class OrderItem
+    public static void Main()
     {
-        public string Description { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-    }
+        // Register code page provider for Aspose.Words (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    // Wrapper model that will be passed to the reporting engine.
-    public class ReportModel
-    {
-        public List<OrderItem> Items { get; set; } = new();
-    }
+        // Paths for the template and the generated report
+        string templatePath = "InvoiceTemplate.docx";
+        string reportPath = "InvoiceReport.docx";
 
-    public class Program
-    {
-        public static void Main()
+        // -------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Invoice");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Item: <<[item.Description]>>");
+        builder.Writeln("Qty: <<[item.Quantity]>>");
+        builder.Writeln("Price: <<[item.UnitPrice]>>");
+        builder.Writeln("Line Total: <<[item.Quantity * item.UnitPrice]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // 2. Load the template for report generation
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // -------------------------------------------------
+        // 3. Prepare the data model
+        // -------------------------------------------------
+        var model = new ReportModel
         {
-            // 1. Prepare sample data.
-            var model = new ReportModel
+            Items = new List<OrderItem>
             {
-                Items = new List<OrderItem>
-                {
-                    new OrderItem { Description = "Apple",  Quantity = 3, UnitPrice = 0.50m },
-                    new OrderItem { Description = "Banana", Quantity = 5, UnitPrice = 0.30m },
-                    new OrderItem { Description = "Orange", Quantity = 2, UnitPrice = 0.80m }
-                }
-            };
+                new OrderItem { Description = "Widget A", Quantity = 3, UnitPrice = 19.99m },
+                new OrderItem { Description = "Widget B", Quantity = 5, UnitPrice = 9.50m },
+                new OrderItem { Description = "Widget C", Quantity = 2, UnitPrice = 24.75m }
+            }
+        };
 
-            // 2. Create a template document programmatically.
-            const string templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
+        // -------------------------------------------------
+        // 4. Build the report using the LINQ Reporting engine
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-            builder.Writeln("Invoice");
-            builder.Writeln(); // empty line
-
-            // Start the foreach band before the table.
-            builder.Writeln("<<foreach [item in Items]>>");
-
-            // Build the table that will be repeated for each item.
-            Table table = builder.StartTable();
-
-            // Header row.
-            builder.InsertCell(); builder.Writeln("Item");
-            builder.InsertCell(); builder.Writeln("Qty");
-            builder.InsertCell(); builder.Writeln("Price");
-            builder.InsertCell(); builder.Writeln("Line Total");
-            builder.EndRow();
-
-            // Data row – each iteration of the foreach will populate a new row.
-            builder.InsertCell(); builder.Writeln("<<[item.Description]>>");
-            builder.InsertCell(); builder.Writeln("<<[item.Quantity]>>");
-            builder.InsertCell(); builder.Writeln("<<[item.UnitPrice]>>");
-            // Calculate line total directly in the expression tag.
-            builder.InsertCell(); builder.Writeln("<<[item.Quantity * item.UnitPrice]>>");
-            builder.EndRow();
-
-            // Finish the table and close the foreach band.
-            builder.EndTable();
-            builder.Writeln("<</foreach>>");
-
-            // Save the template.
-            builder.Document.Save(templatePath);
-
-            // 3. Load the template for report generation.
-            var doc = new Document(templatePath);
-
-            // 4. Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // 5. Save the final report.
-            doc.Save("Report.docx");
-        }
+        // -------------------------------------------------
+        // 5. Save the generated report
+        // -------------------------------------------------
+        reportDoc.Save(reportPath);
     }
+}
+
+// Root wrapper class referenced in the template as <<[model]>> (named "model" in BuildReport)
+public class ReportModel
+{
+    public List<OrderItem> Items { get; set; } = new();
+}
+
+// Data item class used inside the foreach band
+public class OrderItem
+{
+    public string Description { get; set; } = string.Empty;
+    public int Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
 }

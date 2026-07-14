@@ -1,62 +1,50 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Reporting; // Ensure reporting namespace is available
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Simple address model – used only for JSON serialization, not directly by the report.
-    public class Address
+    public static void Main()
     {
-        public string Street { get; set; } = "";
-        public string City { get; set; } = "";
-        public string Country { get; set; } = "";
-    }
+        // Register code page provider (required for some environments)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample JSON data
+        string jsonPath = "addresses.json";
+        string jsonContent = @"{
+            ""Addresses"": [
+                { ""Street"": ""123 Main St"", ""City"": ""Springfield"", ""State"": ""IL"", ""Zip"": ""62704"" },
+                { ""Street"": ""456 Oak Ave"", ""City"": ""Metropolis"", ""State"": ""NY"", ""Zip"": ""10001"" },
+                { ""Street"": ""789 Pine Rd"", ""City"": ""Gotham"", ""State"": ""NJ"", ""Zip"": ""07097"" }
+            ]
+        }";
+        File.WriteAllText(jsonPath, jsonContent);
+
+        // Create a template document programmatically
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Address List:");
+        // Loop over the Addresses collection in the JSON root object named 'data'
+        builder.Writeln("<<foreach [addr in data.Addresses]>>");
+        // Build full address line using inline string concatenation
+        builder.Writeln("<<[addr.Street + \", \" + addr.City + \", \" + addr.State + \" \" + addr.Zip]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Configure JSON data source with options to always generate a root object
+        JsonDataLoadOptions loadOptions = new JsonDataLoadOptions
         {
-            // Prepare sample JSON data (an array of address objects).
-            var sampleAddresses = new List<Address>
-            {
-                new Address { Street = "221B Baker Street", City = "London", Country = "UK" },
-                new Address { Street = "1600 Pennsylvania Ave NW", City = "Washington", Country = "USA" },
-                new Address { Street = "1 Infinite Loop", City = "Cupertino", Country = "USA" }
-            };
+            AlwaysGenerateRootObject = true
+        };
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath, loadOptions);
 
-            // Serialize to JSON and write to a local file.
-            string jsonPath = "addresses.json";
-            File.WriteAllText(jsonPath, System.Text.Json.JsonSerializer.Serialize(sampleAddresses));
+        // Build the report
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, jsonDataSource, "data");
 
-            // Create a Word document that will serve as the template.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Add a heading.
-            builder.Writeln("Address Report");
-            builder.Writeln("----------------");
-
-            // Begin a foreach loop over the JSON array (named "addresses").
-            builder.Writeln("<<foreach [addr in addresses]>>");
-            // Build a full address line using inline string concatenation.
-            builder.Writeln("<<[addr.Street + \", \" + addr.City + \", \" + addr.Country]>>");
-            // End the foreach loop.
-            builder.Writeln("<</foreach>>");
-
-            // Load the JSON data as a data source for the reporting engine.
-            JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
-
-            // Build the report.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, jsonDataSource, "addresses");
-
-            // Save the generated report.
-            doc.Save("AddressReport.docx");
-
-            // Clean up temporary JSON file.
-            File.Delete(jsonPath);
-        }
+        // Save the generated report
+        doc.Save("Report.docx");
     }
 }

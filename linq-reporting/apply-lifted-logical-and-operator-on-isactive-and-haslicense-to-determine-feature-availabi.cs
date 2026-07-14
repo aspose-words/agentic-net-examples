@@ -2,46 +2,73 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace LinqReportingLiftedAndExample
 {
-    public static void Main()
+    // Model class used as the data source for the report.
+    public class FeatureModel
     {
-        // Prepare the data model.
-        var model = new ReportModel
-        {
-            IsActive = true,
-            HasLicense = null // Nullable bool to demonstrate lifted logical AND behavior.
-        };
+        // Name of the feature.
+        public string Feature { get; set; } = "Premium Feature";
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Feature available (IsActive && HasLicense): <<[model.FeatureAvailable]>>");
-        doc.Save(templatePath);
+        // Nullable boolean indicating whether the feature is active.
+        public bool? IsActive { get; set; }
 
-        // Load the template back before building the report.
-        var loadedDoc = new Document(templatePath);
-
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(loadedDoc, model, "model");
-
-        // Save the final report.
-        var outputPath = "Report.docx";
-        loadedDoc.Save(outputPath);
+        // Nullable boolean indicating whether the user has a license for the feature.
+        public bool? HasLicense { get; set; }
     }
-}
 
-// Public data model aligned with the template.
-public class ReportModel
-{
-    // Nullable booleans to allow lifted logical AND.
-    public bool? IsActive { get; set; } = false;
-    public bool? HasLicense { get; set; } = false;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
 
-    // Feature availability using lifted && operator.
-    // The single '&' operator works with nullable booleans and returns a nullable result.
-    public bool? FeatureAvailable => IsActive & HasLicense;
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Write a title.
+            builder.Writeln("Feature Availability Report");
+            builder.Writeln();
+
+            // Insert the feature name.
+            builder.Writeln("Feature: <<[model.Feature]>>");
+            builder.Writeln();
+
+            // Use a lifted logical AND (&&) on the nullable booleans.
+            // The expression evaluates to true only when both operands are true.
+            // If either operand is null, it is treated as false via the null‑coalescing operator.
+            builder.Writeln("<<if [(model.IsActive ?? false) && (model.HasLicense ?? false)]>>Status: Available<</if>>");
+            builder.Writeln("<<if [!((model.IsActive ?? false) && (model.HasLicense ?? false))]>>Status: Not Available<</if>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Prepare the data source.
+            // -----------------------------------------------------------------
+            FeatureModel model = new FeatureModel
+            {
+                // Both conditions are true → feature is available.
+                IsActive = true,
+                HasLicense = true
+            };
+
+            // -----------------------------------------------------------------
+            // 3. Load the template and build the report.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
+
+            // Build the report using the model as the root object named "model".
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the generated report.
+            reportDoc.Save(reportPath);
+        }
+    }
 }

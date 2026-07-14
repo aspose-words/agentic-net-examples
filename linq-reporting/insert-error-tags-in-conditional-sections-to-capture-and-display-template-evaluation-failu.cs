@@ -2,58 +2,77 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model used by the template.
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
-        // Note: No property called 'Salary' – it will be referenced intentionally to cause an error.
+        // Register code page provider (required for some environments)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Paths for the template and the generated report
+        const string templatePath = "template.docx";
+        const string outputPath = "output.docx";
+
+        // -------------------------------------------------
+        // 1. Create the template document with LINQ tags
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Simple title
+        builder.Writeln("LINQ Reporting – Inline Error Demo");
+        builder.Writeln();
+
+        // Conditional block that references a missing property (will cause an error)
+        builder.Writeln("<<if [model.Missing]>>");
+        builder.Writeln("This text is inside a failing condition.");
+        // <<error>> tag will be replaced with the evaluation error message
+        builder.Writeln("<<error>>");
+        builder.Writeln("<</if>>");
+        builder.Writeln();
+
+        // Conditional block that evaluates correctly
+        builder.Writeln("<<if [model.Value > 0]>>");
+        builder.Writeln("The supplied value is: <<[model.Value]>>");
+        builder.Writeln("<</if>>");
+
+        // Save the template to disk
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // 2. Load the template and build the report
+        // -------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // Sample data model (intentionally missing the 'Missing' property)
+        var model = new ReportModel { Value = 42 };
+
+        // Configure the reporting engine to inline error messages
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.InlineErrorMessages
+        };
+
+        // Build the report; the root object name is "model"
+        bool success = engine.BuildReport(reportDoc, model, "model");
+
+        // -------------------------------------------------
+        // 3. Save the generated report
+        // -------------------------------------------------
+        reportDoc.Save(outputPath);
+
+        // Optional: indicate success/failure in console (no user interaction required)
+        Console.WriteLine(success
+            ? "Report generated successfully."
+            : "Report generated with errors (see inline messages).");
     }
 
-    public class Program
+    // Data model used by the template
+    public class ReportModel
     {
-        public static void Main()
-        {
-            // Paths for the temporary template and the final report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+        // Existing property referenced by a valid condition
+        public int Value { get; set; }
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            // Write a simple greeting.
-            builder.Writeln("Hello, <<[model.Name]>>!");
-
-            // Conditional section that references a missing member 'Salary'.
-            // The <<error>> tag will capture any evaluation failure when InlineErrorMessages is enabled.
-            builder.Writeln("<<if [model.Salary > 5000]>>High salary<<error>><</if>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back and build the report.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
-            var model = new Person(); // Root object for the template.
-
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.InlineErrorMessages; // Enable inline error messages.
-
-            // Build the report; the root object name must match the tag prefix used in the template.
-            bool success = engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            doc.Save(reportPath);
-
-            // Output the result of the build operation.
-            Console.WriteLine($"Report generation success flag: {success}");
-            Console.WriteLine($"Report saved to: {reportPath}");
-        }
+        // Note: No 'Missing' property is defined on purpose to trigger an error
     }
 }

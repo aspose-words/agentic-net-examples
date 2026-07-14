@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,64 +8,45 @@ public class Program
 {
     public static void Main()
     {
-        // Enable reflection optimization globally.
+        // Register code page provider for CSV parsing (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Enable reflection optimization globally (default is true, but set explicitly).
         ReportingEngine.UseReflectionOptimization = true;
 
-        // Prepare file paths in the current working directory.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        string csvPath = Path.Combine(workDir, "people.csv");
-        string outputPath = Path.Combine(workDir, "ReportOutput.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create a simple LINQ Reporting template.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Report generated from CSV data:");
-        // Begin a foreach loop over the CSV data source named "persons".
-        builder.Writeln("<<foreach [p in persons]>>");
-        // Output each row's fields.
-        builder.Writeln("- <<[p.Name]>>: <<[p.Age]>> years old");
-        // End the foreach block.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Create a small CSV file with headers.
-        // -----------------------------------------------------------------
-        string[] csvLines =
+        // Create a small CSV file with headers.
+        string csvPath = "people.csv";
+        File.WriteAllLines(csvPath, new[]
         {
             "Name,Age",
             "Alice,30",
-            "Bob,25",
-            "Charlie,35"
-        };
-        File.WriteAllLines(csvPath, csvLines);
+            "Bob,25"
+        });
 
-        // -----------------------------------------------------------------
-        // 3. Disable reflection optimization for this small CSV import.
-        // -----------------------------------------------------------------
-        ReportingEngine.UseReflectionOptimization = false;
+        // Build a template document containing LINQ Reporting tags.
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-        // Load CSV data with appropriate options (has headers).
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-        CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
-
-        // Load the previously saved template.
+        // Load the saved template for reporting.
         Document reportDoc = new Document(templatePath);
+
+        // Configure CSV data source options (first line contains headers).
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
+        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+
+        // Disable reflection optimization for this small CSV import to avoid overhead.
+        ReportingEngine.UseReflectionOptimization = false;
 
         // Build the report using the CSV data source.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, csvData, "persons");
+        engine.BuildReport(reportDoc, csvDataSource, "persons");
 
         // Save the generated report.
-        reportDoc.Save(outputPath);
-
-        // (Optional) Re‑enable reflection optimization for subsequent operations.
-        ReportingEngine.UseReflectionOptimization = true;
+        reportDoc.Save("report.docx");
     }
 }

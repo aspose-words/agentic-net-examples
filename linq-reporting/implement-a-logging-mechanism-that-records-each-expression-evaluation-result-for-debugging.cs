@@ -1,78 +1,112 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public static class Program
 {
     public static void Main()
     {
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Create a template document with LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: $<<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
+
         // Prepare sample data.
-        var model = new ReportModel
+        Order order = new Order
         {
-            Items = new()
+            CustomerName = "John Doe",
+            Items = new List<Item>
             {
-                new Item { Index = 1, Name = "Alpha" },
-                new Item { Index = 2, Name = "Beta" },
-                new Item { Index = 3, Name = "Gamma" }
+                new Item { Name = "Apple", Price = 1.20m },
+                new Item { Name = "Banana", Price = 0.80m },
+                new Item { Name = "Cherry", Price = 2.50m }
             }
         };
 
-        // Create a template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Begin a foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
-        // Use the LogHelper to record each expression evaluation.
-        builder.Writeln("Index: <<[LogHelper.Log(item.Index)]>>");
-        builder.Writeln("Name : <<[LogHelper.Log(item.Name)]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Configure the reporting engine.
-        var engine = new ReportingEngine();
-        // Register the helper type so its static members can be used in the template.
-        engine.KnownTypes.Add(typeof(LogHelper));
-
         // Build the report.
-        engine.BuildReport(doc, model, "model");
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, order, "order");
 
         // Save the generated report.
-        doc.Save("ReportOutput.docx");
+        doc.Save("Report.docx");
 
-        // Output the logged evaluation results.
-        Console.WriteLine("Expression Evaluation Log:");
-        foreach (var entry in LogHelper.Logs)
-        {
-            Console.WriteLine(entry);
-        }
+        // Write the evaluation log to a file.
+        File.WriteAllLines("log.txt", Logger.Entries);
     }
 }
 
-// Simple data model for the report.
-public class ReportModel
+// Simple logger that records evaluation messages.
+public static class Logger
 {
-    public List<Item> Items { get; set; } = new();
+    private static readonly List<string> _entries = new List<string>();
+    public static IReadOnlyList<string> Entries => _entries;
+
+    public static void Log(string message)
+    {
+        _entries.Add($"{DateTime.Now:O} - {message}");
+    }
 }
 
-// Individual item displayed in the report.
+// Data model for the report.
+public class Order
+{
+    private string _customerName = "";
+    private List<Item> _items = new();
+
+    public string CustomerName
+    {
+        get
+        {
+            Logger.Log($"Order.CustomerName evaluated: {_customerName}");
+            return _customerName;
+        }
+        set => _customerName = value ?? "";
+    }
+
+    public List<Item> Items
+    {
+        get
+        {
+            Logger.Log("Order.Items accessed");
+            return _items;
+        }
+        set => _items = value ?? new List<Item>();
+    }
+}
+
+// Data model for each item.
 public class Item
 {
-    public int Index { get; set; }
-    public string Name { get; set; } = string.Empty;
-}
+    private string _name = "";
+    private decimal _price;
 
-// Helper class used in the template to log expression values.
-public static class LogHelper
-{
-    // Stores log entries.
-    public static List<string> Logs { get; } = new();
-
-    // Logs the provided value and returns its string representation for the template.
-    public static string Log(object? value)
+    public string Name
     {
-        var text = value?.ToString() ?? "null";
-        Logs.Add($"Evaluated: {text}");
-        return text;
+        get
+        {
+            Logger.Log($"Item.Name evaluated: {_name}");
+            return _name;
+        }
+        set => _name = value ?? "";
+    }
+
+    public decimal Price
+    {
+        get
+        {
+            Logger.Log($"Item.Price evaluated: {_price}");
+            return _price;
+        }
+        set => _price = value;
     }
 }

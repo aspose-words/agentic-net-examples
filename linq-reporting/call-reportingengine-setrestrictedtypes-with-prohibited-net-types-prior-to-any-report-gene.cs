@@ -1,59 +1,48 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
     // Simple data model used by the template.
-    public class Person
+    public class Model
     {
         // Initialize to avoid nullable warnings.
-        public string Name { get; set; } = "World";
+        public string Name { get; set; } = "Aspose User";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Define paths for the template and the generated report.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            string reportPath = Path.Combine(outputDir, "Report.docx");
+            // Folder for temporary files.
+            const string outputDir = "Output";
+            System.IO.Directory.CreateDirectory(outputDir);
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // 1. Create a template document with a LINQ Reporting tag.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+            builder.Writeln("Hello, <<[model.Name]>>!");
+            string templatePath = System.IO.Path.Combine(outputDir, "Template.docx");
+            template.Save(templatePath);
 
-            // Insert a simple LINQ Reporting tag that references the data model.
-            builder.Writeln("Hello <<[person.Name]>>!");
+            // 2. Load the template (simulating a separate load step).
+            Document doc = new Document(templatePath);
 
-            // Save the template to disk (required before loading for report generation).
-            templateDoc.Save(templatePath);
+            // 3. Restrict access to sensitive .NET types before any report generation.
+            // Example: prevent the template from accessing System.Environment and System.IO.FileInfo.
+            ReportingEngine.SetRestrictedTypes(typeof(System.Environment), typeof(System.IO.FileInfo));
 
-            // -----------------------------------------------------------------
-            // 2. Set restricted .NET types before any report generation.
-            // -----------------------------------------------------------------
-            // Example: restrict access to the System.Environment type.
-            ReportingEngine.SetRestrictedTypes(typeof(System.Environment));
+            // 4. Prepare the data source.
+            Model model = new Model();
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+            // 5. Build the report.
             ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-            // Prepare the data source.
-            Person model = new Person { Name = "Aspose.Words" };
-
-            // Build the report using the root object name "person".
-            engine.BuildReport(loadedTemplate, model, "person");
-
-            // Save the generated report.
-            loadedTemplate.Save(reportPath);
+            // 6. Save the generated report.
+            string resultPath = System.IO.Path.Combine(outputDir, "Result.docx");
+            doc.Save(resultPath);
         }
     }
 }

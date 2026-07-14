@@ -8,48 +8,38 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare XML data containing CDATA sections.
-        string xmlContent = @"<items>
-  <item>
-    <title><![CDATA[Hello <World>]]></title>
-    <description><![CDATA[This is a description with special characters: & < >]]></description>
-  </item>
-  <item>
-    <title><![CDATA[Second Item]]></title>
-    <description><![CDATA[Another description]]></description>
-  </item>
-</items>";
-
-        // Create a template document programmatically.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Report generated from XML with CDATA sections:");
-        builder.Writeln("<<foreach [item in items]>>");
-        builder.Writeln("Title: <<[item.title]>>");
-        builder.Writeln("Description: <<[item.description]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
+        // 1. Create a template document with LINQ Reporting tags.
+        var templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report Title: <<[report.Title]>>");
+        builder.Writeln("Report Content: <<[report.Content]>>");
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        // 2. Prepare XML data containing CDATA sections.
+        var xmlContent = @"<?xml version='1.0' encoding='utf-8'?>
+<Report>
+  <Title><![CDATA[Sample <Report> Title]]></Title>
+  <Content><![CDATA[This is the content with special characters: <, >, &, ""quotes"".]]></Content>
+</Report>";
+        using var xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlContent));
+        xmlStream.Position = 0; // Ensure the stream is ready for reading.
 
-        // Create an XmlDataSource from the XML string.
-        using (MemoryStream xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlContent)))
-        {
-            XmlDataSource dataSource = new XmlDataSource(xmlStream);
+        // 3. Load the template document.
+        var doc = new Document(templatePath);
 
-            // Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-            engine.BuildReport(reportDoc, dataSource, "items");
-        }
+        // 4. Create an XmlDataSource from the XML stream.
+        var xmlDataSource = new XmlDataSource(xmlStream);
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // 5. Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, xmlDataSource, "report");
+
+        // 6. Save the generated report.
+        var outputPath = "ReportOutput.docx";
+        doc.Save(outputPath);
+
+        // Indicate completion (no interactive input required).
+        Console.WriteLine($"Report generated successfully: {outputPath}");
     }
 }

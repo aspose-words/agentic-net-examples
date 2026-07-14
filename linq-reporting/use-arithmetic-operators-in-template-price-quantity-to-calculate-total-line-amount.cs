@@ -1,77 +1,93 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingArithmeticExample
+public class LineItem
 {
-    // Data model classes
-    public class Order
-    {
-        // Initialize to avoid nullable warnings
-        public List<Item> Items { get; set; } = new();
-    }
+    public string Description { get; set; } = "";
+    public decimal Price { get; set; }
+    public int Quantity { get; set; }
+}
 
-    public class Item
-    {
-        public decimal Price { get; set; }
-        public int Quantity { get; set; }
+public class Order
+{
+    public List<LineItem> Items { get; set; } = new();
+    public string OrderNumber { get; set; } = "";
+}
 
-        // Calculated property used in the template (LINQ Reporting does not support inline arithmetic)
-        public decimal Total => Price * Quantity;
-    }
-
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data
+        var order = new Order
         {
-            // Paths for the template and the generated report
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
-
-            // -------------------------------------------------
-            // 1. Create the template document programmatically
-            // -------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            // Write LINQ Reporting tags into the template
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Price: <<[item.Price]>>");
-            builder.Writeln("Quantity: <<[item.Quantity]>>");
-            // Use the calculated property instead of an inline expression
-            builder.Writeln("Total: <<[item.Total]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Prepare sample data
-            // -------------------------------------------------
-            var order = new Order
+            OrderNumber = "ORD-001",
+            Items = new List<LineItem>
             {
-                Items = new List<Item>
-                {
-                    new Item { Price = 19.99m, Quantity = 2 },
-                    new Item { Price = 5.50m,  Quantity = 5 },
-                    new Item { Price = 12.30m, Quantity = 1 }
-                }
-            };
+                new LineItem { Description = "Widget A", Price = 9.99m, Quantity = 3 },
+                new LineItem { Description = "Widget B", Price = 14.50m, Quantity = 2 },
+                new LineItem { Description = "Widget C", Price = 4.75m, Quantity = 5 }
+            }
+        };
 
-            // -------------------------------------------------
-            // 3. Load the template and build the report
-            // -------------------------------------------------
-            var doc = new Document(templatePath);
-            var engine = new ReportingEngine();
+        // Create template document
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Build the report using the root object name "order"
-            engine.BuildReport(doc, order, "order");
+        builder.Writeln($"Order Number: <<[order.OrderNumber]>>");
+        builder.Writeln();
 
-            // -------------------------------------------------
-            // 4. Save the generated report
-            // -------------------------------------------------
-            doc.Save(reportPath);
-        }
+        // Begin foreach loop over Items
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Create table header
+        var table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Description");
+        builder.InsertCell();
+        builder.Writeln("Price");
+        builder.InsertCell();
+        builder.Writeln("Quantity");
+        builder.InsertCell();
+        builder.Writeln("Total");
+        builder.EndRow();
+
+        // Table row for each item
+        builder.InsertCell();
+        builder.Writeln("<<[item.Description]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Price]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Quantity]>>");
+        builder.InsertCell();
+        // Arithmetic expression: price * quantity
+        builder.Writeln("<<[item.Price * item.Quantity]>>");
+        builder.EndRow();
+
+        // End table and foreach
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+
+        // Save the template
+        doc.Save(templatePath);
+
+        // Load template for report generation
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
+        // Build the report using the order object as root named "order"
+        engine.BuildReport(reportDoc, order, "order");
+
+        // Ensure output directory exists
+        var outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+        var outputPath = Path.Combine(outputDir, "Report.docx");
+        reportDoc.Save(outputPath);
+
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

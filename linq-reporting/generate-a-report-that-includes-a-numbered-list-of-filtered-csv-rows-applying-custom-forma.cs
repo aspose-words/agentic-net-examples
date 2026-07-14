@@ -1,98 +1,103 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Aspose.Words;
-using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure code page provider is registered (required for some CSV parsing scenarios).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for CSV reading.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         // 1. Create sample CSV data.
         string csvPath = "data.csv";
-        File.WriteAllLines(csvPath, new[]
-        {
-            "Id,Name,Value",
-            "1,Alpha,30",
-            "2,Beta,75",
-            "3,Gamma,120",
-            "4,Delta,45",
-            "5,Epsilon,200"
-        });
+        File.WriteAllText(csvPath,
+            "Id,Name,Amount\r\n" +
+            "1,Apple,30\r\n" +
+            "2,Banana,75\r\n" +
+            "3,Cherry,120\r\n" +
+            "4,Date,45\r\n" +
+            "5,Elderberry,200\r\n");
 
-        // 2. Load CSV rows into a list of Item objects.
-        List<Item> allItems = new List<Item>();
-        foreach (var line in File.ReadAllLines(csvPath).Skip(1)) // Skip header.
+        // 2. Load CSV and filter rows (Amount > 50).
+        var items = new List<Item>();
+        var lines = File.ReadAllLines(csvPath);
+        for (int i = 1; i < lines.Length; i++) // skip header
         {
-            var parts = line.Split(',');
+            var parts = lines[i].Split(',');
             if (parts.Length != 3) continue;
-            if (!int.TryParse(parts[0], out int id)) continue;
-            string name = parts[1];
-            if (!int.TryParse(parts[2], out int value)) continue;
-            allItems.Add(new Item { Id = id, Name = name, Value = value });
+            if (!double.TryParse(parts[2], NumberStyles.Any, CultureInfo.InvariantCulture, out double amount))
+                continue;
+            if (amount <= 50) continue; // filter condition
+
+            items.Add(new Item
+            {
+                Index = items.Count + 1,
+                Name = parts[1],
+                Value = amount
+            });
         }
 
-        // 3. Filter rows (e.g., keep items with Value > 50).
-        List<Item> filteredItems = allItems.Where(i => i.Value > 50).ToList();
+        var model = new ReportModel { Items = items };
 
-        // 4. Prepare the root data model.
-        ReportModel model = new ReportModel { Items = filteredItems };
+        // 3. Create the LINQ Reporting template.
+        string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // 5. Create the template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Use a numbered list.
+        var list = templateDoc.Lists.Add(Aspose.Words.Lists.ListTemplate.NumberArabicDot);
+        builder.ListFormat.List = list;
 
-        // Title.
-        builder.Writeln("Filtered Items Report:");
-        builder.Writeln();
-
-        // Create a numbered list.
-        List numberedList = template.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = numberedList;
-
-        // Insert the restartNum tag before the foreach loop in the same numbered paragraph.
+        // Place <<restartNum>> before the foreach in the same numbered paragraph.
         builder.Writeln("<<restartNum>><<foreach [item in Items]>>");
 
-        // Paragraph content with conditional formatting:
-        // Items with Value > 100 get a light gray background.
+        // Even-indexed items get a light gray background.
         builder.Writeln(
-            "<<if [item.Value > 100]>><<backColor [\"LightGray\"]>><<[item.Name]>> <</backColor>><</if>>" +
-            "<<if [item.Value <= 100]>><<[item.Name]>> <</if>>- <<[item.Value]>>");
+            "<<if [item.Index % 2 == 0]>>" +
+            "<<backColor [\"LightGray\"]>><<[item.Index]>>. <<[item.Name]>> - <<[item.Value]>> <</backColor>><</if>>");
 
-        // Close the foreach block.
+        // Odd-indexed items have normal formatting.
+        builder.Writeln(
+            "<<if [item.Index % 2 != 0]>>" +
+            "<<[item.Index]>>. <<[item.Name]>> - <<[item.Value]>>" +
+            "<</if>>");
+
+        // End the foreach block.
         builder.Writeln("<</foreach>>");
 
-        // End the list.
+        // Reset list formatting.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the template (optional, for inspection).
-        template.Save("template.docx");
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // 6. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-        engine.BuildReport(template, model, "model");
+        // 4. Load the template and build the report.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // 7. Save the final report.
-        template.Save("Report.docx");
+        // 5. Save the final report.
+        string outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }
 
-// Root data model exposed to the template.
+// Data model for a CSV row.
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = "";
+    public double Value { get; set; }
+}
+
+// Wrapper class used as the root data source in the template.
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
-}
-
-// Simple data entity representing a CSV row.
-public class Item
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = "";
-    public int Value { get; set; }
 }

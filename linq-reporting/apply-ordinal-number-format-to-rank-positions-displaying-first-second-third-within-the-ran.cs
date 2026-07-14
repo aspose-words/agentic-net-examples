@@ -1,66 +1,84 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class RankingItem
+public class Player
 {
-    public string Name { get; set; } = "";
     public int Position { get; set; }
+    public string Name { get; set; } = string.Empty;
+
+    // Returns ordinal text for the position (First, Second, Third, etc.).
+    public string RankText
+    {
+        get
+        {
+            return Position switch
+            {
+                1 => "First",
+                2 => "Second",
+                3 => "Third",
+                _ => Position + GetOrdinalSuffix(Position)
+            };
+        }
+    }
+
+    private static string GetOrdinalSuffix(int number)
+    {
+        int abs = Math.Abs(number);
+        int lastTwo = abs % 100;
+        if (lastTwo >= 11 && lastTwo <= 13)
+            return "th";
+
+        return (abs % 10) switch
+        {
+            1 => "st",
+            2 => "nd",
+            3 => "rd",
+            _ => "th"
+        };
+    }
 }
 
 public class ReportModel
 {
-    public List<RankingItem> Rankings { get; set; } = new();
+    public List<Player> Players { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
+        // 1. Create the template document with LINQ Reporting tags.
+        var templatePath = "RankingTemplate.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("Ranking Report");
+        builder.Writeln("<<foreach [player in Players]>>");
+        builder.Writeln("<<[player.RankText]>> - <<[player.Name]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Document.Save(templatePath);
+
+        // 2. Load the template for report generation.
+        var doc = new Document(templatePath);
+
+        // 3. Prepare sample data.
         var model = new ReportModel
         {
-            Rankings = new List<RankingItem>
+            Players = new List<Player>
             {
-                new RankingItem { Position = 1, Name = "Alice" },
-                new RankingItem { Position = 2, Name = "Bob" },
-                new RankingItem { Position = 3, Name = "Charlie" }
+                new Player { Position = 1, Name = "Alice" },
+                new Player { Position = 2, Name = "Bob" },
+                new Player { Position = 3, Name = "Charlie" },
+                new Player { Position = 4, Name = "Diana" }
             }
         };
 
-        // -----------------------------------------------------------------
-        // Step 1: Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Ranking Report");
-        builder.Writeln(); // Empty line for readability.
-
-        // Begin foreach loop over Rankings collection.
-        builder.Writeln("<<foreach [item in Rankings]>>");
-        // Apply ordinal text format to the Position field (First, Second, Third, ...).
-        builder.Writeln("<<[item.Position]:ordinalText>> - <<[item.Name]>>");
-        // End foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        const string templatePath = "RankingTemplate.docx";
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Step 2: Load the template and build the report.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
+        // 4. Build the report using the ReportingEngine.
         var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // Default options.
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report using the model as the root data source named "model".
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "RankingReport.docx";
-        reportDoc.Save(outputPath);
+        // 5. Save the generated report.
+        doc.Save("RankingReport.docx");
     }
 }

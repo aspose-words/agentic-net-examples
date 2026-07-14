@@ -1,80 +1,92 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
+using Aspose.Words.Saving;
 
-// Ensure code page support for Aspose.Words
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-public class Person
-{
-    public string? Name { get; set; }
-    public int Age { get; set; }
-}
-
-// Make the class partial to match the test harness definition.
-public partial class Program
+public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files (created in the current working directory)
-        string templatePath = "template.docx";
-        string jsonPath = "people.json";
-        string outputPath = "report.docx";
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // 1. Create sample JSON data (some entries have empty Name to produce empty paragraphs)
-        var people = new List<Person>
+        // -----------------------------------------------------------------
+        // 1. Create a static template (no data binding) with an empty paragraph.
+        // -----------------------------------------------------------------
+        string staticTemplatePath = Path.Combine(outputDir, "StaticTemplate.docx");
+        Document staticTemplate = new Document();
+        DocumentBuilder staticBuilder = new DocumentBuilder(staticTemplate);
+        staticBuilder.Writeln("=== Static Section ===");
+        staticBuilder.Writeln(""); // This empty paragraph should be preserved.
+        staticBuilder.Writeln("End of static content.");
+        staticTemplate.Save(staticTemplatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Create a JSON-driven template with a foreach loop.
+        // -----------------------------------------------------------------
+        string jsonTemplatePath = Path.Combine(outputDir, "JsonTemplate.docx");
+        Document jsonTemplate = new Document();
+        DocumentBuilder jsonBuilder = new DocumentBuilder(jsonTemplate);
+        jsonBuilder.Writeln("=== JSON Section ===");
+        jsonBuilder.Writeln("<<foreach [item in Items]>>");
+        jsonBuilder.Writeln("<<[item.Name]>>"); // May produce empty paragraph.
+        jsonBuilder.Writeln("<</foreach>>");
+        jsonBuilder.Writeln("End of JSON content.");
+        jsonTemplate.Save(jsonTemplatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare sample JSON data.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
         {
-            new Person { Name = "Alice", Age = 30 },
-            new Person { Name = "", Age = 25 },          // Empty name -> empty paragraph after tag removal
-            new Person { Name = "Bob", Age = 40 },
-            new Person { Name = null, Age = 22 }        // Null name also results in empty paragraph
+            Items = new List<Item>
+            {
+                new Item { Name = "Alice" },
+                new Item { Name = "" },      // This will generate an empty paragraph.
+                new Item { Name = "Bob" },
+                new Item { Name = null }    // Null also results in an empty paragraph.
+            }
         };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(people));
 
-        // 2. Build the template document programmatically
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 4. Load the static template (no processing needed).
+        // -----------------------------------------------------------------
+        Document staticDoc = new Document(staticTemplatePath);
 
-        // Static section that must remain untouched
-        builder.Writeln("=== Static Section ===");
-        builder.Writeln("This paragraph should stay even if it becomes empty after processing.");
+        // -----------------------------------------------------------------
+        // 5. Load the JSON template and build the report with removal of empty paragraphs.
+        // -----------------------------------------------------------------
+        Document jsonDoc = new Document(jsonTemplatePath);
+        ReportingEngine jsonEngine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.RemoveEmptyParagraphs
+        };
+        jsonEngine.BuildReport(jsonDoc, model, "model");
 
-        // Insert a section break to separate static content from JSON‑driven content
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // -----------------------------------------------------------------
+        // 6. Append the processed JSON document to the static document.
+        // -----------------------------------------------------------------
+        staticDoc.AppendDocument(jsonDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // JSON‑driven section
-        builder.Writeln("=== JSON Generated Section ===");
-        // Begin foreach over the JSON array; the root name will be "persons"
-        builder.Writeln("<<foreach [person in persons]>>");
-        // The exclamation mark after the tag tells the engine to remove the paragraph if the tag resolves to empty
-        builder.Writeln("<<[person.Name]!>>");
-        builder.Writeln("<</foreach>>");
+        // -----------------------------------------------------------------
+        // 7. Save the final combined document.
+        // -----------------------------------------------------------------
+        string resultPath = Path.Combine(outputDir, "CombinedReport.docx");
+        staticDoc.Save(resultPath, SaveFormat.Docx);
+    }
 
-        // Save the template to disk
-        doc.Save(templatePath);
+    // Data model aligned with the JSON template.
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // 3. Load the template (demonstrating the load step)
-        var loadedTemplate = new Document(templatePath);
-
-        // 4. Prepare the JSON data source
-        var jsonDataSource = new JsonDataSource(jsonPath);
-
-        // 5. Configure the reporting engine to remove empty paragraphs
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
-
-        // 6. Build the report; the root object name must match the tag reference ("persons")
-        engine.BuildReport(loadedTemplate, jsonDataSource, "persons");
-
-        // 7. Save the final report
-        loadedTemplate.Save(outputPath);
-
-        // Optional cleanup (commented out to keep files for inspection)
-        // File.Delete(templatePath);
-        // File.Delete(jsonPath);
+    public class Item
+    {
+        // Name may be null or empty; the engine will handle it.
+        public string? Name { get; set; } = string.Empty;
     }
 }

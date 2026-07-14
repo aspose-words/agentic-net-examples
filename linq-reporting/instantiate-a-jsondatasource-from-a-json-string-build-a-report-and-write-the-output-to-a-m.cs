@@ -3,52 +3,54 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Sample JSON data.
+        // Register code page provider for Aspose.Words (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Create a simple JSON string that will serve as the data source
         string json = @"{
             ""Title"": ""Sample Report"",
             ""Items"": [
-                { ""Name"": ""Apple"",  ""Quantity"": 10 },
-                { ""Name"": ""Banana"", ""Quantity"": 5 },
-                { ""Name"": ""Cherry"", ""Quantity"": 12 }
+                { ""Index"": 1, ""Name"": ""First item"" },
+                { ""Index"": 2, ""Name"": ""Second item"" },
+                { ""Index"": 3, ""Name"": ""Third item"" }
             ]
         }";
 
-        // Create a JsonDataSource from the JSON string using a memory stream.
-        using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        var jsonDataSource = new JsonDataSource(jsonStream);
+        // Build the template document programmatically
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Write the title tag
+        builder.Writeln("<<[json.Title]>>");
+        builder.Writeln(); // empty line
 
-        // Insert LINQ Reporting tags.
-        builder.Writeln("<<[data.Title]>>");
-        builder.Writeln("<<foreach [item in data.Items]>>");
-        builder.Writeln(" - <<[item.Name]>>: <<[item.Quantity]>>");
+        // Begin a foreach loop over the Items collection
+        builder.Writeln("<<foreach [item in json.Items]>>");
+        // Write each item's fields
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+        // End the foreach loop
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Create a JsonDataSource from the JSON string using a memory stream
+        using MemoryStream jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        jsonStream.Position = 0; // Ensure the stream is at the beginning
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
 
-        // Load the template back before building the report.
-        var reportDoc = new Document(templatePath);
+        // Build the report using the ReportingEngine
+        ReportingEngine engine = new ReportingEngine();
+        // The root name "json" matches the tags used in the template
+        engine.BuildReport(doc, jsonDataSource, "json");
 
-        // Build the report using the JsonDataSource.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, jsonDataSource, "data");
+        // Save the generated report to a memory stream (DOCX format)
+        using MemoryStream outputStream = new MemoryStream();
+        doc.Save(outputStream, SaveFormat.Docx);
 
-        // Write the generated report to a memory stream.
-        using var outputStream = new MemoryStream();
-        reportDoc.Save(outputStream, SaveFormat.Docx);
-
-        // Optionally, display the size of the generated report.
-        Console.WriteLine($"Report generated. Size: {outputStream.Length} bytes");
+        // Optionally, display the size of the generated document
+        Console.WriteLine($"Report generated. Output size: {outputStream.Length} bytes.");
     }
 }

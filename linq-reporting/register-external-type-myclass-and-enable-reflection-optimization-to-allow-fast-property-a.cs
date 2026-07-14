@@ -2,44 +2,35 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class MyClass
 {
-    // Sample external type to be used in the template.
-    public class MyClass
+    // Static property that will be accessed from the template.
+    public static string Greeting => "Hello from MyClass!";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        // Static property accessed from the template.
-        public static string Value { get; } = "42";
+        // Enable reflection optimization for faster property access.
+        ReportingEngine.UseReflectionOptimization = true;
 
-        // Static method accessed from the template.
-        public static string GetMessage()
-        {
-            return "Hello from MyClass!";
-        }
-    }
+        // Create a template document in memory.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Insert a LINQ Reporting tag that references the external type.
+        builder.Writeln("<<[MyClass.Greeting]>>");
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Enable reflection optimization for faster property access.
-            ReportingEngine.UseReflectionOptimization = true;
+        // Set up the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        // Register the external type so it can be used in the template.
+        engine.KnownTypes.Add(typeof(MyClass));
 
-            // Create a simple template document with LINQ Reporting tags.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Value: <<[MyClass.Value]>>");
-            builder.Writeln("Message: <<[MyClass.GetMessage()]>>");
+        // Build the report. A dummy data source is sufficient because the template only uses the external type.
+        object dummyData = new object();
+        engine.BuildReport(doc, dummyData, "data");
 
-            // Set up the reporting engine and register the external type.
-            ReportingEngine engine = new ReportingEngine();
-            engine.KnownTypes.Add(typeof(MyClass));
-
-            // Build the report. No data source is required because the template uses only static members.
-            engine.BuildReport(doc, new object());
-
-            // Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        // Save the generated document.
+        doc.Save("ReportOutput.docx");
     }
 }

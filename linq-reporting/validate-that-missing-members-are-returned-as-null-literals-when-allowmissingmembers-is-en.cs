@@ -1,74 +1,46 @@
 using System;
 using System.Data;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class MissingMembersDemo
 {
     public static void Main()
     {
-        // Prepare file paths in the current working directory.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-        string resultPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -------------------------------------------------
-        // 1. Create a template document with LINQ Reporting tags
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Insert LINQ Reporting tags that reference members which do not exist.
+        builder.Writeln("Member: <<[missingObject.Name]>>");
+        builder.Writeln("Foreach test: <<foreach [in missingObject]>><<[Id]>><</foreach>>");
 
-        // Tag that tries to access a missing member.
-        builder.Writeln("<<[missingObject.First().id]>>");
+        // Configure the reporting engine to treat missing members as null literals.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
+        // Do not set MissingMemberMessage so that missing members are rendered as empty (null).
 
-        // Foreach loop over a missing collection – also missing members.
-        builder.Writeln("<<foreach [in missingObject]>><<[id]>><</foreach>>");
+        // Build the report using an empty DataSet as the data source.
+        engine.BuildReport(doc, new DataSet(), "");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Save the resulting document (optional, for visual inspection).
+        const string outputPath = "ReportWithMissingMembers.docx";
+        doc.Save(outputPath);
 
-        // -------------------------------------------------
-        // 2. Load the template (simulating a real scenario)
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -------------------------------------------------
-        // 3. Configure the ReportingEngine to allow missing members
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.AllowMissingMembers,
-            // Optional: customize the message shown for a missing plain member.
-            // Leaving it empty makes the engine output a null literal (empty string).
-            MissingMemberMessage = string.Empty
-        };
-
-        // Use an empty DataSet as the data source – it contains no members.
-        DataSet emptyData = new DataSet();
-
-        // Build the report. The third parameter is the data source name; an empty string means we don't reference the object itself.
-        engine.BuildReport(doc, emptyData, "");
-
-        // -------------------------------------------------
-        // 4. Save the generated report
-        // -------------------------------------------------
-        doc.Save(resultPath);
-
-        // -------------------------------------------------
-        // 5. Verify the output – missing members should be empty.
-        // -------------------------------------------------
+        // Retrieve the plain text of the document to verify the output.
         string resultText = doc.GetText();
 
-        Console.WriteLine("=== Generated Report Text ===");
-        Console.WriteLine(resultText);
-        Console.WriteLine("=== Validation ===");
-        if (string.IsNullOrWhiteSpace(resultText))
+        // Validation: missing members should produce empty placeholders, not the literal text "Missed" or any value.
+        bool memberIsEmpty = resultText.Contains("Member: ") && !resultText.Contains("Member: Missed") && !resultText.Contains("Member: null");
+        bool foreachIsEmpty = resultText.Contains("Foreach test: ") && !resultText.Contains("Foreach test: null");
+
+        if (memberIsEmpty && foreachIsEmpty)
         {
-            Console.WriteLine("Success: Missing members were rendered as null literals (empty).");
+            Console.WriteLine("Missing members were rendered as null (empty) as expected.");
         }
         else
         {
-            Console.WriteLine("Failure: Unexpected content found.");
+            Console.WriteLine("Unexpected output. Verify that AllowMissingMembers is enabled correctly.");
         }
     }
 }

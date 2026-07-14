@@ -2,39 +2,36 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Person
 {
-    // Data model with first and last name properties.
-    public class Person
-    {
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
-    }
+    // Initialize properties to avoid nullable warnings.
+    public string FirstName { get; set; } = string.Empty;
+    public string LastName { get; set; } = string.Empty;
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Create a blank document that will serve as the template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert a LINQ Reporting tag that concatenates first and last name with a space.
+        builder.Writeln("Full Name: <<[model.FirstName + \" \" + model.LastName]>>");
+
+        // Prepare sample data.
+        Person model = new Person
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            FirstName = "John",
+            LastName = "Doe"
+        };
 
-            // Insert a LINQ Reporting tag that concatenates first and last name with a space.
-            builder.Writeln("Full Name: <<[person.FirstName + \" \" + person.LastName]>>");
+        // Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // Prepare sample data.
-            Person person = new Person
-            {
-                FirstName = "John",
-                LastName = "Doe"
-            };
-
-            // Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, person, "person");
-
-            // Save the generated report.
-            doc.Save("Report.docx");
-        }
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }

@@ -1,63 +1,80 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public string Department { get; set; } = "";
+    public string Name { get; set; } = "";
+}
+
+public class Group
+{
+    public string Key { get; set; } = "";
+    public List<string> Items { get; set; } = new();
+}
+
+public class ReportModel
+{
+    public List<Group> Groups { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
         // Prepare sample data.
-        List<Item> items = new()
+        var persons = new List<Person>
         {
-            new Item { Category = "Fruits", Name = "Apple" },
-            new Item { Category = "Fruits", Name = "Banana" },
-            new Item { Category = "Fruits", Name = "Cherry" },
-            new Item { Category = "Vegetables", Name = "Carrot" },
-            new Item { Category = "Vegetables", Name = "Lettuce" },
-            new Item { Category = "Grains", Name = "Rice" },
-            new Item { Category = "Grains", Name = "Wheat" }
+            new Person { Department = "Engineering", Name = "Alice" },
+            new Person { Department = "Engineering", Name = "Bob" },
+            new Person { Department = "HR", Name = "Carol" },
+            new Person { Department = "HR", Name = "Dave" },
+            new Person { Department = "Marketing", Name = "Eve" }
         };
 
-        // Group items by Category.
-        List<Group> groups = items
-            .GroupBy(i => i.Category)
-            .Select(g => new Group { Key = g.Key, Items = g.ToList() })
-            .ToList();
-
-        // Wrap groups into a root model.
-        ReportModel model = new() { Groups = groups };
+        // Group persons by department and map to the model used by the reporting engine.
+        var model = new ReportModel
+        {
+            Groups = persons
+                .GroupBy(p => p.Department)
+                .Select(g => new Group
+                {
+                    Key = g.Key,
+                    Items = g.Select(p => p.Name).ToList()
+                })
+                .ToList()
+        };
 
         // -----------------------------------------------------------------
         // Create the LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Create a bulleted list style.
+        // Create a bulleted list style that will be applied to the paragraphs.
         List bulletList = templateDoc.Lists.Add(ListTemplate.BulletDefault);
+
+        // Begin outer foreach over groups.
+        builder.Writeln("<<foreach [g in model.Groups]>>");
+
+        // Apply the list to the group title (first level bullet).
         builder.ListFormat.List = bulletList;
-        builder.ListFormat.ListLevelNumber = 0; // top‑level bullets for groups.
+        builder.Writeln("<<[g.Key]>>");
 
-        // Outer foreach – iterate over groups.
-        builder.Writeln("<<foreach [group in Groups]>>");
-        // Group header (top‑level bullet).
-        builder.Writeln("<<[group.Key]>>");
+        // Indent to second level for items inside the group.
+        builder.ListFormat.ListIndent();
 
-        // Switch to second list level for items inside each group.
-        builder.ListFormat.ListLevelNumber = 1;
-
-        // Inner foreach – iterate over items of the current group.
-        builder.Writeln("<<foreach [item in group.Items]>>");
-        // Item name (second‑level bullet).
-        builder.Writeln("<<[item.Name]>>");
+        // Begin inner foreach over items of the current group.
+        builder.Writeln("<<foreach [p in g.Items]>>");
+        builder.Writeln("<<[p]>>");
         builder.Writeln("<</foreach>>");
 
-        // Return to top‑level for the next group header.
-        builder.ListFormat.ListLevelNumber = 0;
+        // Outdent back to first level and close the outer foreach.
+        builder.ListFormat.ListOutdent();
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
@@ -67,32 +84,18 @@ public class Program
         // -----------------------------------------------------------------
         // Load the template and build the report.
         // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // No special options required.
+
+        // Build the report using the model; the root object name is "model".
+        bool success = engine.BuildReport(reportDoc, model, "model");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        const string reportPath = "Report.docx";
+        reportDoc.Save(reportPath);
+
+        // Optional: indicate success.
+        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
-public class Item
-{
-    public string Category { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-}
-
-public class Group
-{
-    public string Key { get; set; } = string.Empty;
-    public List<Item> Items { get; set; } = new();
-}
-
-public class ReportModel
-{
-    public List<Group> Groups { get; set; } = new();
 }

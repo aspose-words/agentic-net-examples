@@ -3,72 +3,61 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class RunItem
+namespace AsposeWordsLinqReportingExample
 {
-    public string Status { get; set; } = "";
-    public string Description { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<RunItem> Items { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model for the report.
+    public class ReportModel
     {
-        // Paths for the template and the final report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        // Collection of items to be displayed in the report.
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+    // Individual item with a status field.
+    public class Item
+    {
+        public string Status { get; set; } = string.Empty;
+    }
 
-        // Title.
-        builder.Writeln("Task Status Report");
-        builder.Writeln();
-
-        // Begin a foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        // Use the textColor tag. The color expression selects a color based on the item's status.
-        // Green for Completed, Orange for Pending, Red for any other status.
-        builder.Writeln(
-            "<<textColor [item.Status == \"Completed\" ? \"Green\" : item.Status == \"Pending\" ? \"Orange\" : \"Red\"]>>" +
-            "Status: <<[item.Status]>> - <<[item.Description]>> " +
-            "<</textColor>>");
-
-        // End the foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        template.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // Sample data.
-        var model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            Items = new List<RunItem>
+            // 1. Create a blank document and insert the LINQ Reporting template.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Begin a foreach loop over the Items collection.
+            builder.Writeln("<<foreach [item in Items]>>");
+
+            // Use the textColor tag. The color expression selects a color based on the item's status.
+            // The expression returns a known color name string.
+            builder.Writeln(
+                "<<textColor [item.Status == \"Completed\" ? \"Green\" : " +
+                "item.Status == \"Pending\" ? \"Orange\" : \"Red\"]>>" +
+                "<<[item.Status]>>" +
+                "<</textColor>>");
+
+            // End the foreach loop.
+            builder.Writeln("<</foreach>>");
+
+            // 2. Prepare sample data.
+            ReportModel model = new()
             {
-                new RunItem { Status = "Completed", Description = "Generate invoice" },
-                new RunItem { Status = "Pending",   Description = "Review contract" },
-                new RunItem { Status = "Failed",   Description = "Deploy update" }
-            }
-        };
+                Items = new List<Item>
+                {
+                    new() { Status = "Completed" },
+                    new() { Status = "Pending" },
+                    new() { Status = "Failed" },
+                    new() { Status = "Completed" }
+                }
+            };
 
-        // Create the reporting engine and generate the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // 3. Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-        // Save the final document.
-        doc.Save(reportPath);
+            // 4. Save the generated report.
+            doc.Save("Report.docx");
+        }
     }
 }

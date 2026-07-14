@@ -1,12 +1,16 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReporting
 {
-    // Simple data model with only a Name property.
+    // Simple data model with a Customer property.
     public class ReportModel
+    {
+        public CustomerInfo Customer { get; set; } = new CustomerInfo();
+    }
+
+    public class CustomerInfo
     {
         public string Name { get; set; } = string.Empty;
     }
@@ -15,61 +19,64 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // Create an output folder.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
 
             // -----------------------------------------------------------------
-            // Step 1: Create a template document programmatically.
+            // 1. Create a template document programmatically.
             // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            // Normal field – will be replaced with the model's Name value.
-            builder.Writeln("Name: <<[model.Name]>>");
+            // Existing field – will be replaced with actual data.
+            builder.Writeln("Customer Name: <<[model.Customer.Name]>>");
 
-            // Missing field – does not exist in the model. With AllowMissingMembers,
-            // it will be treated as null and the MissingMemberMessage will be inserted.
-            builder.Writeln("Missing: <<[model.MissingField]>>");
+            // Missing field – will be treated as null and an inline error message will be inserted.
+            builder.Writeln("Missing Field: <<[model.MissingObject.Id]>>");
 
-            // Syntax error – an unsupported switch is used.
-            // With InlineErrorMessages, the engine will embed an error message directly into the output.
-            builder.Writeln("Syntax error: <<[model.Name] -unknown>>");
+            // Missing collection – the foreach loop will be ignored (treated as empty) and no error will be thrown.
+            builder.Writeln("<<foreach [item in model.MissingCollection]>>Item: <<[item]>> <</foreach>>");
 
             // Save the template to disk.
-            string templatePath = Path.Combine(outputDir, "Template.docx");
             templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // Step 2: Load the template document for reporting.
+            // 2. Load the template document for reporting.
             // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
+            var reportDoc = new Document(templatePath);
 
             // -----------------------------------------------------------------
-            // Step 3: Prepare the data source.
+            // 3. Prepare the data source.
             // -----------------------------------------------------------------
-            ReportModel model = new ReportModel { Name = "John Doe" };
+            var model = new ReportModel
+            {
+                Customer = new CustomerInfo { Name = "John Doe" }
+                // Note: No MissingObject or MissingCollection members are defined.
+            };
 
             // -----------------------------------------------------------------
-            // Step 4: Configure the ReportingEngine.
+            // 4. Configure the ReportingEngine with the required options.
             // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.AllowMissingMembers | ReportBuildOptions.InlineErrorMessages;
-            engine.MissingMemberMessage = "N/A";
+            var engine = new ReportingEngine
+            {
+                // Treat missing members as null and embed syntax error messages.
+                Options = ReportBuildOptions.AllowMissingMembers | ReportBuildOptions.InlineErrorMessages,
+                MissingMemberMessage = "Missing"
+            };
 
-            // Build the report. The third argument is the name used in the template tags.
-            bool success = engine.BuildReport(doc, model, "model");
+            // Build the report. The root object name is "model" to match the tags in the template.
+            bool success = engine.BuildReport(reportDoc, model, "model");
 
             // -----------------------------------------------------------------
-            // Step 5: Save the generated report.
+            // 5. Save the generated report.
             // -----------------------------------------------------------------
-            string reportPath = Path.Combine(outputDir, "Report.docx");
-            doc.Save(reportPath);
+            reportDoc.Save(reportPath);
 
-            // Output the result status.
+            // Output the result of the build operation.
             Console.WriteLine($"Report generation successful: {success}");
-            Console.WriteLine($"Template saved to: {templatePath}");
-            Console.WriteLine($"Report saved to: {reportPath}");
+            Console.WriteLine($"Template: {templatePath}");
+            Console.WriteLine($"Report: {reportPath}");
         }
     }
 }

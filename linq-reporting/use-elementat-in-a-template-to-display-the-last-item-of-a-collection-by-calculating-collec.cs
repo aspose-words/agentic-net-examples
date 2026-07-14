@@ -5,50 +5,58 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Simple data model with a collection of items.
+    public class ReportModel
     {
-        // Prepare sample data.
-        ReportModel model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "Alpha" },
-                new Item { Name = "Beta" },
-                new Item { Name = "Gamma" }
-            }
-        };
-
-        // Create a template document programmatically.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        // Use ElementAt together with Count to fetch the last item's Name.
-        builder.Writeln("Last item: <<[model.Items.ElementAt(model.Items.Count - 1).Name]>>");
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        public List<Item> Items { get; set; } = new();
     }
-}
 
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+    }
 
-// Simple item class.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Prepare sample data.
+            var model = new ReportModel();
+            model.Items.Add(new Item { Name = "Apple" });
+            model.Items.Add(new Item { Name = "Banana" });
+            model.Items.Add(new Item { Name = "Cherry" });
+
+            // -----------------------------------------------------------------
+            // Step 1: Create a template document with a LINQ Reporting tag.
+            // -----------------------------------------------------------------
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // The tag uses ElementAt together with Count to fetch the last item.
+            builder.Writeln("Last item in collection: <<[model.Items.ElementAt(model.Items.Count - 1).Name]>>");
+
+            // Save the template to disk.
+            doc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // Step 2: Load the template and build the report.
+            // -----------------------------------------------------------------
+            var template = new Document(templatePath);
+            var engine = new ReportingEngine();
+
+            // Build the report using the model; the root name is "model".
+            engine.BuildReport(template, model, "model");
+
+            // -----------------------------------------------------------------
+            // Step 3: Save the generated report.
+            // -----------------------------------------------------------------
+            var outputPath = "Report.docx";
+            template.Save(outputPath);
+
+            // The program finishes without waiting for user input.
+        }
+    }
 }

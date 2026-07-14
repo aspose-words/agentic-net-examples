@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -10,43 +8,53 @@ public class Program
     public static void Main()
     {
         // Prepare sample data.
-        var model = new ReportModel();
-        var persons = new List<Person>();
-        foreach (var i in Enumerable.Range(1, 5))
+        var model = new ReportModel
         {
-            persons.Add(new Person { Name = $"Person {i}", Age = 20 + i });
-        }
-        model.Persons = persons;
+            Persons = new()
+            {
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 },
+                new Person { Name = "Charlie", Age = 35 }
+            }
+        };
 
         // Create a template document with LINQ Reporting tags.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("People Report");
+        const string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
         builder.Writeln("<<foreach [p in Persons]>>");
         builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
         builder.Writeln("<</foreach>>");
-        doc.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // Load the template and build the report.
-        var template = new Document(templatePath);
+        // Load the template for report generation.
+        var doc = new Document(templatePath);
+
+        // Build the report using the model as the root data source.
         var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(doc, model, "model");
 
         // Save the generated report.
-        var outputPath = "Report.docx";
-        template.Save(outputPath);
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
+
+        // Demonstrate a foreach loop without explicit type (using var) on the data collection.
+        foreach (var person in model.Persons)
+        {
+            Console.WriteLine($"{person.Name} is {person.Age} years old.");
+        }
     }
 }
 
 // Data model classes.
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
 public class ReportModel
 {
     public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

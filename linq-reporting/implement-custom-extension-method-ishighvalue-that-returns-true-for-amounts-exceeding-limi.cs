@@ -1,59 +1,75 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExtensionDemo
+namespace LinqReportingExtensionExample
 {
-    // Extension method used in the LINQ Reporting template.
-    public static class Extensions
+    // Data model used as the root object for the report.
+    public class Order
+    {
+        public decimal Amount { get; set; }
+
+        public Order(decimal amount) => Amount = amount;
+    }
+
+    // Static class that contains the custom extension method.
+    public static class DecimalExtensions
     {
         // Returns true if the amount exceeds the specified limit.
         public static bool IsHighValue(this decimal amount, decimal limit) => amount > limit;
-    }
-
-    // Data model for the report.
-    public class Item
-    {
-        public decimal Amount { get; set; } = 0m;
-    }
-
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a blank document that will serve as the template.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            const string templatePath = "Template.docx";
 
-            // Build the LINQ Reporting template.
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Amount: <<[item.Amount]>>");
-            // Call the custom extension method IsHighValue with a limit of 1000.
-            builder.Writeln("<<if [item.Amount.IsHighValue(1000)]>>High Value<</if>>");
-            builder.Writeln("<</foreach>>");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Prepare sample data.
-            ReportModel model = new ReportModel();
-            model.Items.Add(new Item { Amount = 500m });
-            model.Items.Add(new Item { Amount = 1500m });
-            model.Items.Add(new Item { Amount = 2500m });
+            // Insert tags that will be processed by the LINQ Reporting engine.
+            // <<[order.Amount]>>      – displays the raw amount.
+            // <<[order.Amount.IsHighValue(100)]>> – calls the custom extension method.
+            builder.Writeln("Amount: <<[order.Amount]>>");
+            builder.Writeln("Is high (>100): <<[order.Amount.IsHighValue(100)]>>");
 
-            // Configure the reporting engine.
+            // Save the template to disk (required before loading it for reporting).
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template document.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            Order order = new Order(150m); // Sample order with an amount of 150.
+
+            // -----------------------------------------------------------------
+            // 4. Configure and run the ReportingEngine.
+            // -----------------------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.AllowMissingMembers; // Enable extension method usage.
-            engine.KnownTypes.Add(typeof(Extensions)); // Register the type containing the extension method.
 
-            // Build the report using the model as the root data source named "model".
-            engine.BuildReport(doc, model, "model");
+            // Register the static class that contains the extension method so that
+            // the engine can resolve it during expression evaluation.
+            engine.KnownTypes.Add(typeof(DecimalExtensions));
 
-            // Save the generated report.
-            doc.Save("Report.docx");
+            // Allow the engine to resolve extension methods on value types.
+            engine.Options = ReportBuildOptions.AllowMissingMembers;
+
+            // Build the report. The root object name must match the name used in the tags.
+            engine.BuildReport(reportDoc, order, "order");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
         }
     }
 }

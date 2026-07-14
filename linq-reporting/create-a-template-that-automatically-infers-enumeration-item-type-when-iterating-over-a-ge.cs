@@ -3,68 +3,54 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace AsposeWordsLinqReportingDemo
 {
-    // Data model classes
+    // Root data model that will be passed to the reporting engine.
     public class ReportModel
     {
-        // The engine will infer the item type (Item) when iterating over this list.
+        // The generic list whose item type will be inferred automatically by the engine.
         public List<Item> Items { get; set; } = new();
     }
 
+    // Simple item class used in the generic list.
     public class Item
     {
-        public string Name { get; set; } = "";
-        public int Quantity { get; set; }
+        public int Index { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+            // Prepare sample data.
+            var model = new ReportModel();
+            model.Items.Add(new Item { Index = 1, Name = "Apple" });
+            model.Items.Add(new Item { Index = 2, Name = "Banana" });
+            model.Items.Add(new Item { Index = 3, Name = "Cherry" });
 
-            builder.Writeln("Report generated with Aspose.Words LINQ Reporting:");
-            // The foreach tag iterates over the generic list 'Items'.
-            // The engine automatically infers that each element is of type 'Item'.
+            // Create a new blank document that will serve as the template.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // Write static text.
+            builder.Writeln("Item List:");
+            // Insert a foreach tag that iterates over the generic list.
+            // The engine will infer that each element is of type 'Item'.
             builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("- Name: <<[item.Name]>>");
-            builder.Writeln("- Quantity: <<[item.Quantity]>>");
+            // Inside the loop we can reference the properties of each inferred item.
+            builder.Writeln("  Index: <<[item.Index]>>, Name: <<[item.Name]>>");
+            // Close the foreach block.
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            // Build the report using the model as the root data source.
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None;
+            // The root object name must match the name used in the template ("model").
+            engine.BuildReport(doc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 2. Load the template for report generation.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare sample data.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel();
-            model.Items.Add(new Item { Name = "Apple", Quantity = 10 });
-            model.Items.Add(new Item { Name = "Banana", Quantity = 7 });
-            model.Items.Add(new Item { Name = "Cherry", Quantity = 15 });
-
-            // -----------------------------------------------------------------
-            // 4. Build the report using the ReportingEngine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            // The root object name in the template is "model".
-            engine.BuildReport(reportDoc, model, "model");
-
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "ReportOutput.docx";
-            reportDoc.Save(outputPath);
+            // Save the generated report.
+            doc.Save("Report.docx");
         }
     }
 }

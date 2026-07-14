@@ -2,80 +2,62 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AppendDocumentExample
+public class ReportModel
 {
-    // Data model used by the LINQ Reporting engine.
-    public class ReportModel
-    {
-        // Flag that determines whether the appendix should be included.
-        public bool IncludeAppendix { get; set; }
+    // Flag to control inclusion of the appendix.
+    public bool IncludeAppendix { get; set; } = false;
 
-        // The appendix document to be merged when the flag is true.
-        public Document? AppendixDoc { get; set; }
-    }
+    // The document that will be inserted when the flag is true.
+    public Document Appendix { get; set; } = new();
 
-    public class Program
+    // Timestamp that will be displayed in the template.
+    public string GeneratedOn { get; set; } = string.Empty;
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // File names for the temporary documents.
+        const string templatePath = "Template.docx";
+        const string appendixPath = "Appendix.docx";
+        const string resultPath   = "Result.docx";
+
+        // ---------- Create the appendix document ----------
+        var appendixDoc = new Document();
+        var appendixBuilder = new DocumentBuilder(appendixDoc);
+        appendixBuilder.Writeln("=== Appendix ===");
+        appendixBuilder.Writeln("This is the appended appendix content.");
+        appendixDoc.Save(appendixPath);
+
+        // ---------- Create the main template document ----------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("=== Main Report ===");
+        builder.Writeln("Report generated on: <<[model.GeneratedOn]>>");
+        // Conditional inclusion of the appendix.
+        builder.Writeln("<<if [model.IncludeAppendix]>>");
+        builder.Writeln("<<doc [model.Appendix]>>");
+        builder.Writeln("<</if>>");
+        templateDoc.Save(templatePath);
+
+        // ---------- Load documents ----------
+        var loadedTemplate = new Document(templatePath);
+        var loadedAppendix = new Document(appendixPath);
+
+        // ---------- Prepare data model ----------
+        var model = new ReportModel
         {
-            // Paths for the temporary files.
-            const string templatePath = "Template.docx";
-            const string appendixPath = "Appendix.docx";
-            const string outputPath = "Result.docx";
+            IncludeAppendix = true, // Set to false to omit the appendix.
+            Appendix = loadedAppendix,
+            GeneratedOn = DateTime.Now.ToString("yyyy-MM-dd HH:mm")
+        };
 
-            // -------------------------------------------------
-            // 1. Create the main template document.
-            // -------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder tmplBuilder = new DocumentBuilder(template);
+        // ---------- Build the report ----------
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, model, "model");
 
-            tmplBuilder.Writeln("=== Main Report ===");
-            tmplBuilder.Writeln("This part of the document is always present.");
-
-            // Conditional block: include the appendix only when IncludeAppendix == true.
-            tmplBuilder.Writeln("<<if [IncludeAppendix]>>");
-            // The <<doc>> tag inserts another document.
-            tmplBuilder.Writeln("<<doc [AppendixDoc]>>");
-            tmplBuilder.Writeln("<</if>>");
-
-            // Save the template to disk.
-            template.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Create the appendix document that may be merged.
-            // -------------------------------------------------
-            Document appendix = new Document();
-            DocumentBuilder appBuilder = new DocumentBuilder(appendix);
-            appBuilder.Writeln("=== Appendix ===");
-            appBuilder.Writeln("This content is added only when the flag is true.");
-            appendix.Save(appendixPath);
-
-            // -------------------------------------------------
-            // 3. Load the documents back (simulating a real scenario).
-            // -------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-            Document loadedAppendix = new Document(appendixPath);
-
-            // -------------------------------------------------
-            // 4. Prepare the data model.
-            // -------------------------------------------------
-            ReportModel model = new ReportModel
-            {
-                IncludeAppendix = true,          // Change to false to omit the appendix.
-                AppendixDoc = loadedAppendix
-            };
-
-            // -------------------------------------------------
-            // 5. Build the report using the LINQ Reporting engine.
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            // The root name in the template is "model".
-            engine.BuildReport(loadedTemplate, model, "model");
-
-            // -------------------------------------------------
-            // 6. Save the final document.
-            // -------------------------------------------------
-            loadedTemplate.Save(outputPath);
-        }
+        // ---------- Save the final document ----------
+        loadedTemplate.Save(resultPath);
     }
 }

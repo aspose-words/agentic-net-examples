@@ -4,89 +4,69 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace LinqReportingExample
 {
-    // Simple data entity used in the report.
-    public class Record
+    // Simple data item used in the report.
+    public class Item
     {
-        public int Id { get; set; }
+        public int Index { get; set; }
         public string Name { get; set; } = string.Empty;
-        public int Value { get; set; }
     }
 
-    // Custom data source that streams a large number of records lazily.
-    public class LargeDataSource : IEnumerable<Record>
+    // Custom data source that streams items lazily.
+    public class LargeDataSource : IEnumerable<Item>
     {
         private readonly int _count;
 
-        public LargeDataSource(int count)
-        {
-            _count = count;
-        }
+        public LargeDataSource(int count) => _count = count;
 
-        public IEnumerator<Record> GetEnumerator()
+        public IEnumerator<Item> GetEnumerator()
         {
-            // Yield records one by one to avoid loading everything into memory at once.
-            for (int i = 1; i <= _count; i++)
+            for (int i = 0; i < _count; i++)
             {
-                yield return new Record
-                {
-                    Id = i,
-                    Name = $"Item {i}",
-                    Value = i * 10
-                };
+                // Simulate expensive data retrieval.
+                yield return new Item { Index = i, Name = $"Item {i}" };
             }
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
-    // Wrapper class that exposes the collection to the LINQ Reporting engine.
+    // Wrapper model exposing the collection to the template.
     public class ReportModel
     {
-        public IEnumerable<Record> Records { get; set; } = new List<Record>();
+        public IEnumerable<Item> Items { get; set; } = Array.Empty<Item>();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // 1. Create the template document programmatically.
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            // Create a blank document and a builder to insert LINQ Reporting tags.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            builder.Writeln("=== Large Data Report ===");
-            // LINQ Reporting foreach tag iterating over the Records collection.
-            builder.Writeln("<<foreach [rec in Records]>>");
-            builder.Writeln("Id: <<[rec.Id]>>, Name: <<[rec.Name]>>, Value: <<[rec.Value]>>");
+            // Add a title.
+            builder.Writeln("Large Data Set Report");
+            builder.Writeln();
+
+            // Insert a foreach block that iterates over Items.
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("Index: <<[item.Index]>>  Name: <<[item.Name]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            templateDoc.Save(templatePath);
-
-            // 2. Load the template for report generation.
-            var doc = new Document(templatePath);
-
-            // 3. Prepare the data model with a streaming data source.
-            var model = new ReportModel
+            // Prepare the model with a large data source (e.g., 10,000 items).
+            ReportModel model = new ReportModel
             {
-                // Stream 10,000 records without holding them all in memory.
-                Records = new LargeDataSource(10_000)
+                Items = new LargeDataSource(10000)
             };
 
-            // 4. Build the report using the ReportingEngine.
-            var engine = new ReportingEngine();
-            // No special options are required for this simple example.
-            engine.Options = ReportBuildOptions.None;
+            // Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
             engine.BuildReport(doc, model, "model");
 
-            // 5. Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-
-            // Inform the user (no interactive input required).
-            Console.WriteLine($"Report generated successfully: {outputPath}");
+            // Save the generated report.
+            doc.Save("LargeDataReport.docx");
         }
     }
 }

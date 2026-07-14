@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
@@ -12,119 +10,103 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing (if needed).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // File paths (relative to the working directory).
+        string csvPath = "data.csv";
+        string templatePath = "template.docx";
+        string outputPath = "report.docx";
 
         // -----------------------------------------------------------------
         // 1. Create sample CSV data.
         // -----------------------------------------------------------------
-        string csvPath = "data.csv";
-        string[] csvLines =
+        // Header: Category,Item
+        var csvLines = new[]
         {
             "Category,Item",
             "Fruits,Apple",
             "Fruits,Banana",
             "Fruits,Orange",
             "Vegetables,Carrot",
-            "Vegetables,Tomato",
-            "Vegetables,Potato"
+            "Vegetables,Potato",
+            "Vegetables,Tomato"
         };
-        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
+        File.WriteAllLines(csvPath, csvLines);
 
         // -----------------------------------------------------------------
-        // 2. Load CSV into a DataTable.
+        // 2. Load CSV and build a hierarchical model.
         // -----------------------------------------------------------------
-        DataTable table = new DataTable();
-        table.Columns.Add("Category", typeof(string));
-        table.Columns.Add("Item", typeof(string));
+        var groups = File.ReadAllLines(csvPath)
+                         .Skip(1) // Skip header.
+                         .Select(l => l.Split(','))
+                         .Where(p => p.Length == 2)
+                         .Select(p => new { Category = p[0].Trim(), Item = p[1].Trim() })
+                         .GroupBy(x => x.Category)
+                         .Select(g => new Group
+                         {
+                             Category = g.Key,
+                             Items = g.Select(x => x.Item).ToList()
+                         })
+                         .ToList();
 
-        foreach (string line in File.ReadAllLines(csvPath).Skip(1))
-        {
-            string[] parts = line.Split(',');
-            if (parts.Length == 2)
-                table.Rows.Add(parts[0].Trim(), parts[1].Trim());
-        }
-
-        // -----------------------------------------------------------------
-        // 3. Group data by category and build a model for the report.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
-        {
-            Categories = table.AsEnumerable()
-                .GroupBy(r => r.Field<string>("Category"))
-                .Select(g => new CategoryGroup
-                {
-                    Category = g.Key,
-                    Items = g.Select(r => r.Field<string>("Item")).ToList()
-                })
-                .ToList()
-        };
+        var model = new ReportModel { Groups = groups };
 
         // -----------------------------------------------------------------
-        // 4. Create the LINQ Reporting template programmatically.
+        // 3. Create the LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
-        string templatePath = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Create a bulleted list.
-        List bulletList = templateDoc.Lists.Add(ListTemplate.BulletDefault);
-        builder.ListFormat.List = bulletList;
+        // Begin outer foreach over groups.
+        builder.Writeln("<<foreach [group in Groups]>>");
 
-        // Outer foreach – categories.
-        builder.Writeln("<<foreach [cat in Categories]>>");
-
-        // Category bullet (level 0).
+        // Apply first‑level bullet (category).
+        List list = templateDoc.Lists.Add(ListTemplate.BulletDefault);
+        builder.ListFormat.List = list;
         builder.ListFormat.ListLevelNumber = 0;
-        builder.Writeln("<<[cat.Category]>>");
+        builder.Writeln("<<[group.Category]>>");
 
-        // Inner foreach – items.
-        builder.Writeln("<<foreach [itm in cat.Items]>>");
+        // Begin inner foreach over items.
+        builder.Writeln("<<foreach [item in group.Items]>>");
 
-        // Item bullet (level 1).
+        // Apply second‑level bullet (item).
         builder.ListFormat.ListLevelNumber = 1;
-        builder.Writeln("<<[itm]>>");
+        builder.Writeln("<<[item]>>");
 
-        // Close inner foreach.
+        // End inner foreach.
         builder.Writeln("<</foreach>>");
 
-        // Reset to level 0 for the next category.
-        builder.ListFormat.ListLevelNumber = 0;
-
-        // Close outer foreach.
+        // End outer foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
+        // Reset list formatting for any following content.
+        builder.ListFormat.RemoveNumbers();
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 5. Load the template and build the report.
+        // 4. Build the report using the ReportingEngine.
         // -----------------------------------------------------------------
         Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
-        };
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(reportDoc, model, "model");
 
         // -----------------------------------------------------------------
-        // 6. Save the final document.
+        // 5. Save the generated report.
         // -----------------------------------------------------------------
-        string outputPath = "Report.docx";
         reportDoc.Save(outputPath);
     }
 }
 
 // ---------------------------------------------------------------------
-// Data model classes.
+// Data model classes (public, non‑nullable properties are initialized).
 // ---------------------------------------------------------------------
 public class ReportModel
 {
-    public List<CategoryGroup> Categories { get; set; } = new();
+    public List<Group> Groups { get; set; } = new();
 }
 
-public class CategoryGroup
+public class Group
 {
-    public string Category { get; set; } = "";
+    public string Category { get; set; } = string.Empty;
     public List<string> Items { get; set; } = new();
 }

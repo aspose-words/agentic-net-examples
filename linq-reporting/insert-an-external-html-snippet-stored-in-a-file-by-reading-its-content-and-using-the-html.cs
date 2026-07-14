@@ -3,67 +3,62 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingHtmlInsert
+public class Program
 {
-    // Model class used as the root data source for the report.
-    public class ReportModel
+    public static void Main()
     {
-        // Holds the HTML snippet that will be inserted into the document.
-        public string HtmlSnippet { get; set; } = string.Empty;
-    }
+        // Register code page provider for broader encoding support.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Paths for the template, HTML snippet, and the generated report.
+        string templatePath = "Template.docx";
+        string htmlSnippetPath = "snippet.html";
+        string outputPath = "Report.docx";
+
+        // -----------------------------------------------------------------
+        // Step 1: Create a simple template containing an HTML switch tag.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // The tag will be replaced with the HTML content from the data source.
+        builder.Writeln("<<[model.HtmlSnippet] -html>>");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Step 2: Prepare the HTML snippet file.
+        // -----------------------------------------------------------------
+        // For demonstration, write a sample HTML fragment if the file does not exist.
+        if (!File.Exists(htmlSnippetPath))
         {
-            // -----------------------------------------------------------------
-            // 1. Prepare the external HTML snippet file.
-            // -----------------------------------------------------------------
-            const string htmlFileName = "snippet.html";
-            const string htmlContent = "<p style='color:blue;'>Hello <b>World</b> from HTML snippet.</p>";
-            File.WriteAllText(htmlFileName, htmlContent);
-
-            // -----------------------------------------------------------------
-            // 2. Create the template document programmatically.
-            //    The template contains a LINQ Reporting tag that references the model's HtmlSnippet property
-            //    and uses the -html switch to render the string as HTML.
-            // -----------------------------------------------------------------
-            const string templateFileName = "Template.docx";
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Insert the LINQ Reporting tag.
-            builder.Writeln("<<[model.HtmlSnippet] -html>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templateFileName);
-
-            // -----------------------------------------------------------------
-            // 3. Load the template for report generation.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templateFileName);
-
-            // -----------------------------------------------------------------
-            // 4. Load the HTML snippet from the external file and populate the model.
-            // -----------------------------------------------------------------
-            string htmlFromFile = File.ReadAllText(htmlFileName);
-            ReportModel model = new ReportModel { HtmlSnippet = htmlFromFile };
-
-            // -----------------------------------------------------------------
-            // 5. Build the report using Aspose.Words LINQ Reporting Engine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            // No special options are required for this simple scenario.
-            engine.BuildReport(reportDoc, model, "model");
-
-            // -----------------------------------------------------------------
-            // 6. Save the final document.
-            // -----------------------------------------------------------------
-            const string outputFileName = "Report.docx";
-            reportDoc.Save(outputFileName);
-
-            // Optional: indicate completion.
-            Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputFileName)}");
+            const string sampleHtml = "<h2 style='color:steelblue;'>Hello from HTML snippet!</h2>" +
+                                      "<p>This paragraph is inserted via LINQ Reporting.</p>";
+            File.WriteAllText(htmlSnippetPath, sampleHtml);
         }
+
+        // Read the HTML content from the external file.
+        string htmlContent = File.ReadAllText(htmlSnippetPath);
+
+        // -----------------------------------------------------------------
+        // Step 3: Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+        var model = new ReportModel { HtmlSnippet = htmlContent };
+
+        ReportingEngine engine = new ReportingEngine();
+        // The root object name must match the tag's reference ("model").
+        engine.BuildReport(reportDoc, model, "model");
+
+        // -----------------------------------------------------------------
+        // Step 4: Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(outputPath);
     }
+}
+
+// Data model used by the LINQ Reporting engine.
+public class ReportModel
+{
+    // Holds the HTML snippet that will be inserted into the document.
+    public string HtmlSnippet { get; set; } = string.Empty;
 }

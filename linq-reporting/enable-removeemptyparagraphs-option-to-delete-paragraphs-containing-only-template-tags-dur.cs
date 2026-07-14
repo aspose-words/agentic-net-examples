@@ -1,48 +1,60 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
 namespace AsposeWordsLinqReporting
 {
     // Simple data model used by the template.
     public class ReportModel
     {
-        // Empty value – the paragraph containing only this tag will be removed.
         public string Name { get; set; } = string.Empty;
+        public string Empty { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider (required by Aspose.Words in some environments).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Create a template document with LINQ Reporting tags.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Create a blank document and a builder to insert the template.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Paragraph with a normal value.
+            builder.Writeln("Customer Name: <<[model.Name]>>");
+            // Paragraph that contains only a tag whose value will be empty.
+            builder.Writeln("This paragraph will be removed: <<[model.Empty]>>");
+            // Another paragraph to show that the document remains valid after removal.
+            builder.Writeln("Report generated successfully.");
 
-            // Paragraph that contains only a LINQ Reporting tag.
-            builder.Writeln("<<[model.Name]>>");
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-            // Paragraph with regular text – it should remain after the report is built.
-            builder.Writeln("Static paragraph that stays.");
+            // Prepare the data source.
+            var model = new ReportModel
+            {
+                Name = "John Doe",
+                Empty = string.Empty // This will cause the paragraph to become empty.
+            };
 
-            // Prepare the data source. The Name property is empty, so the tag resolves to an empty string.
-            ReportModel model = new ReportModel();
+            // Load the template for reporting.
+            var document = new Document(templatePath);
 
-            // Configure the reporting engine to remove empty paragraphs after tag processing.
-            ReportingEngine engine = new ReportingEngine
+            // Configure the reporting engine to remove empty paragraphs.
+            var engine = new ReportingEngine
             {
                 Options = ReportBuildOptions.RemoveEmptyParagraphs
             };
 
-            // Build the report. The root object name must match the tag prefix ("model").
-            engine.BuildReport(doc, model, "model");
+            // Build the report. The root object name is "model" to match the tags.
+            engine.BuildReport(document, model, "model");
 
-            // Save the resulting document.
-            doc.Save("ReportWithRemovedEmptyParagraphs.docx");
+            // Save the generated report.
+            const string outputPath = "Report.docx";
+            document.Save(outputPath);
+
+            // Indicate completion (no interactive prompts).
+            Console.WriteLine($"Report saved to '{outputPath}'.");
         }
     }
 }

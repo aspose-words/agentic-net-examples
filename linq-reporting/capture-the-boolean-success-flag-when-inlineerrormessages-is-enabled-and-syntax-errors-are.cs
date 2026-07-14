@@ -1,64 +1,74 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Simple data model used by the template.
+    public class Model
     {
-        // Prepare a simple data model.
-        var model = new SampleModel
+        // Initialize to avoid nullable warnings.
+        public string Name { get; set; } = "John Doe";
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Name = "Alice",
-            Items = new List<string> { "Item1", "Item2" }
-        };
+            // Register code page provider (required for some Aspose.Words features).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a template document with a deliberate syntax error (missing closing foreach tag).
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        CreateTemplate(templatePath);
+            // Paths for the template and the generated report.
+            const string templatePath = "template.docx";
+            const string outputPath = "output.docx";
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // Step 1: Create a template document programmatically.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-        // Configure the reporting engine to inline error messages.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.InlineErrorMessages;
+            // Correct tag – will be replaced with the model's Name value.
+            builder.Writeln("Customer Name: <<[model.Name]>>");
 
-        // Build the report and capture the success flag.
-        bool success = engine.BuildReport(doc, model, "model");
+            // Intentional syntax error – missing closing brackets.
+            // This will trigger an inline error message when InlineErrorMessages is enabled.
+            builder.Writeln("Broken Tag: <<[model.Name]");
 
-        // Output the success flag.
-        Console.WriteLine($"BuildReport success: {success}");
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // Save the generated report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        doc.Save(reportPath);
-    }
+            // -----------------------------------------------------------------
+            // Step 2: Load the template and build the report.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+            var model = new Model();
 
-    // Creates a template document with a syntax error for demonstration.
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            var engine = new ReportingEngine
+            {
+                // Enable inline error messages.
+                Options = ReportBuildOptions.InlineErrorMessages
+            };
 
-        // Correct tag.
-        builder.Writeln("Hello, <<[model.Name]>>!");
+            // BuildReport returns a Boolean indicating whether parsing succeeded.
+            bool success;
+            try
+            {
+                success = engine.BuildReport(doc, model, "model");
+            }
+            catch (Exception ex)
+            {
+                // If an unexpected exception occurs, treat the build as unsuccessful.
+                Console.WriteLine($"Exception during report build: {ex.Message}");
+                success = false;
+            }
 
-        // Intentional syntax error: foreach tag without a closing tag.
-        builder.Writeln("<<foreach [item in model.Items]>>");
-        builder.Writeln("Item: <<[item]>>");
-        // Add the missing closing tag to make the template valid.
-        builder.Writeln("<</foreach>>");
+            // Save the generated report.
+            doc.Save(outputPath);
 
-        doc.Save(filePath);
-    }
-
-    // Sample data model used by the template.
-    public class SampleModel
-    {
-        public string Name { get; set; } = string.Empty;
-        public List<string> Items { get; set; } = new();
+            // Output the success flag.
+            Console.WriteLine($"Report build success: {success}");
+        }
     }
 }

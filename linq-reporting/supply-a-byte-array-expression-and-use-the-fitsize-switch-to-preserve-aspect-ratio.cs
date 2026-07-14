@@ -8,40 +8,50 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare a simple 1x1 PNG image as a byte array.
+        var model = new ReportModel();
 
-        // Insert a textbox that will hold the image.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        // Insert a textbox that will act as the image container.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 200);
+        // Move the cursor inside the textbox.
         builder.MoveTo(textBox.FirstParagraph);
-
-        // LINQ Reporting tag that uses a byte[] expression and the -fitSize switch.
-        builder.Write("<<image [model.ImageBytes] -fitSize>>");
+        // Insert the image tag that uses the byte array expression and the -fitSize switch.
+        builder.Writeln("<<image [model.ImageBytes] -fitSize>>");
 
         // Save the template to disk.
         const string templatePath = "Template.docx";
         template.Save(templatePath);
 
-        // Load the template for reporting.
-        Document report = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        // Build the report using the model object; the root name in the template is "model".
+        engine.BuildReport(doc, model, "model");
 
-        // Prepare the data model with a sample PNG image as a byte array.
-        ReportModel model = new ReportModel();
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, model, "model");
-
-        // Save the generated report.
-        report.Save("Report.docx");
+        // Save the final document.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }
 
-// Data model used by the LINQ Reporting engine.
+// Public data model required by the template.
 public class ReportModel
 {
-    // A 1x1 pixel transparent PNG image encoded in Base64.
-    public byte[] ImageBytes { get; set; } = Convert.FromBase64String(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/6VbZAAAAAElFTkSuQmCC");
+    // Byte array that holds the image data.
+    public byte[] ImageBytes { get; set; }
+
+    public ReportModel()
+    {
+        // A 1x1 pixel transparent PNG (base64 encoded).
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        ImageBytes = Convert.FromBase64String(base64Png);
+    }
 }

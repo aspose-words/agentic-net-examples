@@ -3,78 +3,72 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+namespace LinqReportingRestrictMembersExample
 {
-    // Initialize properties to avoid nullable warnings.
-    public string Name { get; set; } = string.Empty;
-    public string Secret { get; set; } = string.Empty;
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model.
+    public class Person
     {
-        // Paths for the template and the generated report.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // The <<restrictMembers>> tag is not required for the current Aspose.Words version.
-        // Member access is restricted via ReportingEngine.SetRestrictedTypes below.
-        // builder.Writeln("<<restrictMembers>>"); // Removed to avoid parsing error.
-
-        // Allowed member access.
-        builder.Writeln("Name: <<[person.Name]>>");
-
-        // This member will be blocked because the Person type is restricted.
-        builder.Writeln("Secret: <<[person.Secret]>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Restrict access to the Person type (all its members become inaccessible).
-        // -----------------------------------------------------------------
-        ReportingEngine.SetRestrictedTypes(typeof(Person));
-
-        // -----------------------------------------------------------------
-        // 4. Configure the reporting engine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
+    public class Program
+    {
+        public static void Main()
         {
-            // Allow missing members so that restricted members are treated as null.
-            Options = ReportBuildOptions.AllowMissingMembers
-        };
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-        // Optional: customize the message shown for missing members.
-        engine.MissingMemberMessage = string.Empty;
+            // -----------------------------------------------------------------
+            // 1. Create a template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // -----------------------------------------------------------------
-        // 5. Prepare the data source.
-        // -----------------------------------------------------------------
-        Person person = new Person { Name = "John Doe", Secret = "TopSecret" };
+            // Write tags that reference the Person object's members.
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Age: <<[person.Age]>>");
 
-        // -----------------------------------------------------------------
-        // 6. Build the report. The root object name must match the tag reference.
-        // -----------------------------------------------------------------
-        engine.BuildReport(doc, person, "person");
+            // Save the template.
+            templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 7. Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save(reportPath);
+            // -----------------------------------------------------------------
+            // 2. Load the template for report generation.
+            // -----------------------------------------------------------------
+            Document doc = new Document(templatePath);
 
-        // Indicate completion.
-        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
+            // -----------------------------------------------------------------
+            // 3. Configure the ReportingEngine to restrict access to the Person type.
+            //    This is the security measure requested (equivalent to <<restrictMembers>>).
+            // -----------------------------------------------------------------
+            // Restrict all members of the Person type.
+            ReportingEngine.SetRestrictedTypes(typeof(Person));
+
+            // Allow missing members so that restricted members are rendered as empty strings
+            // instead of throwing an exception.
+            ReportingEngine engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.AllowMissingMembers
+            };
+            engine.MissingMemberMessage = string.Empty; // Optional: customize missing member output.
+
+            // -----------------------------------------------------------------
+            // 4. Build the report using a Person instance as the data source.
+            // -----------------------------------------------------------------
+            Person person = new Person { Name = "John Doe", Age = 42 };
+
+            // The root object name used in the template is "person".
+            engine.BuildReport(doc, person, "person");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            string reportPath = Path.Combine(outputDir, "Report.docx");
+            doc.Save(reportPath);
+
+            // The example finishes without waiting for user input.
+        }
     }
 }

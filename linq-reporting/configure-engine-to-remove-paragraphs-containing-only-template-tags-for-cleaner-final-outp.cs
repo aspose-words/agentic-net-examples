@@ -3,75 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class ReportModel
 {
-    // Simple data model used by the LINQ Reporting template.
-    public class ReportModel
-    {
-        // Required property – initialized to avoid nullable warnings.
-        public string Name { get; set; } = string.Empty;
+    // Non‑nullable property – initialized to avoid warnings.
+    public string Name { get; set; } = string.Empty;
 
-        // Optional property – can be null; when null the corresponding paragraph should disappear.
-        public string? Optional { get; set; }
-    }
+    // Nullable property – may be null, causing the tag to become empty.
+    public string? EmptyTag { get; set; }
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Paths for the temporary template and the final report.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-            string outputPath   = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+            Name = "John Doe",
+            EmptyTag = null // This will result in an empty tag after processing.
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a template document programmatically.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Paragraph that will always contain data.
-            builder.Writeln("Name: <<[model.Name]>>");
+        // Paragraph that will always contain data.
+        builder.Writeln("Customer: <<[model.Name]>>");
 
-            // Paragraph that contains only a tag. If the tag resolves to an empty value,
-            // the whole paragraph should be removed by the reporting engine.
-            builder.Writeln("<<[model.Optional]>>");
+        // Paragraph that contains only a tag which resolves to an empty value.
+        builder.Writeln("<<[model.EmptyTag]>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Configure the reporting engine to remove empty paragraphs.
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.RemoveEmptyParagraphs
+        };
 
-            // -----------------------------------------------------------------
-            // 2. Load the template for report generation.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
+        // Build the report using the model as the root data source.
+        engine.BuildReport(doc, model, "model");
 
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel
-            {
-                Name = "John Doe",
-                Optional = null // This will cause the second paragraph to become empty.
-            };
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-            // -----------------------------------------------------------------
-            // 4. Configure and run the LINQ Reporting engine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine
-            {
-                // Remove paragraphs that become empty after tag processing.
-                Options = ReportBuildOptions.RemoveEmptyParagraphs
-            };
+        // Save the resulting document.
+        string outputPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(outputPath);
 
-            // Build the report. The root object name must match the tag prefix ("model").
-            engine.BuildReport(doc, model, "model");
-
-            // -----------------------------------------------------------------
-            // 5. Save the final report.
-            // -----------------------------------------------------------------
-            doc.Save(outputPath);
-
-            // Inform the user (no interactive input required).
-            Console.WriteLine($"Report generated successfully: {outputPath}");
-        }
+        // Inform the user where the file was saved.
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

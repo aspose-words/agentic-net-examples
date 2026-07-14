@@ -1,58 +1,48 @@
 using System;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Model
 {
-    // Simple data model with an HTML snippet.
-    public class ReportModel
+    // HTML snippet that will be rendered inside the paragraph.
+    public string HtmlSnippet { get; set; } = "<b>Bold Text</b> and <i>Italic Text</i>";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        // Initialize with sample HTML to avoid nullable warnings.
-        public string HtmlSnippet { get; set; } = "<b>Bold Text</b> and <i>Italic Text</i>";
-    }
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        const string templateFile = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Register code page provider for any encoding needs.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Insert a paragraph containing the LINQ Reporting HTML tag.
+        // The tag will be replaced with the HTML from Model.HtmlSnippet.
+        builder.Writeln("<<[model.HtmlSnippet] -html>>");
 
-            // Paths for the temporary template and final report.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-            string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+        // Save the template to disk.
+        templateDoc.Save(templateFile);
 
-            // -------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // 2. Load the template and prepare the data model.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templateFile);
+        var data = new Model(); // Model instance with sample HTML.
 
-            // Paragraph that will contain the HTML snippet.
-            builder.Writeln("Paragraph start: ");
-            // LINQ Reporting tag that injects HTML from the bound expression.
-            builder.Writeln("<<[model.HtmlSnippet] -html>>");
-            builder.Writeln(" :Paragraph end.");
+        // -----------------------------------------------------------------
+        // 3. Build the report using the ReportingEngine.
+        // -----------------------------------------------------------------
+        var engine = new ReportingEngine();
+        // The root object name in the template is "model".
+        engine.BuildReport(reportDoc, data, "model");
 
-            // Save the template to disk as required by the workflow.
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template and build the report.
-            // -------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-            ReportModel model = new ReportModel();
-
-            ReportingEngine engine = new ReportingEngine();
-            // BuildReport overload with root name "model" to match the tag.
-            engine.BuildReport(loadedTemplate, model, "model");
-
-            // -------------------------------------------------
-            // 3. Save the generated report.
-            // -------------------------------------------------
-            loadedTemplate.Save(reportPath);
-        }
+        // -----------------------------------------------------------------
+        // 4. Save the generated report.
+        // -----------------------------------------------------------------
+        const string outputFile = "Report.docx";
+        reportDoc.Save(outputFile);
     }
 }

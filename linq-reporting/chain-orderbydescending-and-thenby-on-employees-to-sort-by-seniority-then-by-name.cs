@@ -4,9 +4,9 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+namespace AsposeWordsLinqReportingExample
 {
-    // Data model representing an employee.
+    // Simple data entity representing an employee.
     public class Employee
     {
         public string Name { get; set; } = string.Empty;
@@ -19,7 +19,7 @@ namespace LinqReportingExample
         }
     }
 
-    // Wrapper class that will be passed to the reporting engine.
+    // Wrapper model that will be passed to the reporting engine.
     public class ReportModel
     {
         public List<Employee> Employees { get; set; } = new();
@@ -29,40 +29,44 @@ namespace LinqReportingExample
     {
         public static void Main()
         {
-            // Sample employee data.
-            var employees = new List<Employee>
+            // 1. Prepare sample data.
+            var model = new ReportModel
             {
-                new Employee("Alice", 5),
-                new Employee("Bob", 3),
-                new Employee("Charlie", 5),
-                new Employee("David", 2)
+                Employees = new List<Employee>
+                {
+                    new Employee("Alice Johnson", 5),
+                    new Employee("Bob Smith", 3),
+                    new Employee("Charlie Davis", 5),
+                    new Employee("Diana Evans", 2)
+                }
             };
 
-            // Chain OrderByDescending (seniority) then ThenBy (name).
-            var sortedEmployees = employees
-                .OrderByDescending(e => e.Seniority)
-                .ThenBy(e => e.Name)
-                .ToList();
-
-            // Prepare the model for the report.
-            var model = new ReportModel { Employees = sortedEmployees };
-
-            // Create a blank Word document.
+            // 2. Create a template document programmatically.
+            var templatePath = "Template.docx";
             var doc = new Document();
             var builder = new DocumentBuilder(doc);
 
-            // Build the LINQ Reporting template.
             builder.Writeln("Employee Report");
-            builder.Writeln("<<foreach [e in Employees]>>");
-            builder.Writeln("Name: <<[e.Name]>>, Seniority: <<[e.Seniority]>>");
+            builder.Writeln("Sorted by seniority (descending) then by name (ascending):");
+            // LINQ Reporting foreach tag with chained OrderByDescending and ThenBy.
+            builder.Writeln("<<foreach [emp in Employees.OrderByDescending(e => e.Seniority).ThenBy(e => e.Name)]>>");
+            builder.Writeln("Name: <<[emp.Name]>> | Seniority: <<[emp.Seniority]>>");
             builder.Writeln("<</foreach>>");
 
-            // Generate the report using the ReportingEngine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            // Save the template to disk before building the report (required by lifecycle rule).
+            doc.Save(templatePath);
 
-            // Save the resulting document.
-            doc.Save("EmployeeReport.docx");
+            // 3. Load the template and build the report.
+            var templateDoc = new Document(templatePath);
+            var engine = new ReportingEngine();
+            engine.BuildReport(templateDoc, model, "model");
+
+            // 4. Save the generated report.
+            var outputPath = "EmployeeReport.docx";
+            templateDoc.Save(outputPath);
+
+            // Inform the user (no interactive input required).
+            Console.WriteLine($"Report generated: {outputPath}");
         }
     }
 }

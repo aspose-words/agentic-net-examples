@@ -1,78 +1,53 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Person
 {
-    // Data model classes
-    public class Person
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
 
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider (required for some data sources).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data.
+        List<Person> persons = new()
         {
-            // Paths for the template and the generated report
-            const string templatePath = "template.docx";
-            const string reportPath = "report.docx";
+            new Person { Name = "Alice", Age = 30 },
+            new Person { Name = "Bob", Age = 25 },
+            new Person { Name = "Charlie", Age = 35 }
+        };
+        ReportModel model = new() { Persons = persons };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document with a foreach tag that iterates
-            //    over the Persons collection of the root object "model".
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a blank document and insert LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Correct foreach syntax: no type declaration, use the root object name.
-            builder.Writeln("<<foreach [p in model.Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
+        // Correct foreach syntax – the iteration variable type is inferred.
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
 
-            // Save the template before building the report
-            templateDoc.Save(templatePath);
+        // Build the report using the model as the data source.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(doc, model, null);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template back (required by the workflow rules)
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare sample data
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel
-            {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice", Age = 30 },
-                    new Person { Name = "Bob", Age = 25 },
-                    new Person { Name = "Charlie", Age = 35 }
-                }
-            };
-
-            // -----------------------------------------------------------------
-            // 4. Build the report using ReportingEngine
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // No special options needed
-
-            // The root object name in the template is "model"
-            engine.BuildReport(loadedTemplate, model, "model");
-
-            // -----------------------------------------------------------------
-            // 5. Save the generated report
-            // -----------------------------------------------------------------
-            loadedTemplate.Save(reportPath);
-
-            Console.WriteLine($"Report generated successfully: {reportPath}");
-        }
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }

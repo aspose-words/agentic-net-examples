@@ -1,34 +1,28 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+namespace AsposeWordsLinqReportingExample
 {
-    // Data model for the report.
+    // Root data model for the report.
     public class ReportModel
     {
-        // Collection of categories.
         public List<Category> Categories { get; set; } = new();
     }
 
+    // Represents a category that contains a collection of items.
     public class Category
     {
-        // Category name.
         public string Name { get; set; } = string.Empty;
-
-        // Items belonging to this category.
         public List<Item> Items { get; set; } = new();
     }
 
+    // Represents an individual item.
     public class Item
     {
-        // Item name.
+        public int Index { get; set; }
         public string Name { get; set; } = string.Empty;
-
-        // Quantity of the item.
-        public int Quantity { get; set; }
     }
 
     public class Program
@@ -36,74 +30,66 @@ namespace AsposeWordsLinqReportingDemo
         public static void Main()
         {
             // -----------------------------------------------------------------
-            // 1. Prepare sample data.
+            // 1. Create the template document with LINQ Reporting tags.
             // -----------------------------------------------------------------
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
+
+            builder.Writeln("Categories Report:");
+            builder.Writeln("<<foreach [category in Categories]>>");
+            builder.Writeln("Category: <<[category.Name]>>");
+            builder.Writeln("Items:");
+            builder.Writeln("<<foreach [item in category.Items]>>");
+            builder.Writeln("- <<[item.Index]>>: <<[item.Name]>>");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and prepare the data source.
+            // -----------------------------------------------------------------
+            var document = new Document(templatePath);
+
             var model = new ReportModel
             {
-                Categories =
+                Categories = new List<Category>
                 {
                     new Category
                     {
                         Name = "Fruits",
-                        Items =
+                        Items = new List<Item>
                         {
-                            new Item { Name = "Apple", Quantity = 10 },
-                            new Item { Name = "Banana", Quantity = 5 }
+                            new Item { Index = 1, Name = "Apple" },
+                            new Item { Index = 2, Name = "Banana" },
+                            new Item { Index = 3, Name = "Cherry" }
                         }
                     },
                     new Category
                     {
                         Name = "Vegetables",
-                        Items =
+                        Items = new List<Item>
                         {
-                            new Item { Name = "Carrot", Quantity = 7 },
-                            new Item { Name = "Tomato", Quantity = 12 }
+                            new Item { Index = 1, Name = "Carrot" },
+                            new Item { Index = 2, Name = "Lettuce" }
                         }
                     }
                 }
             };
 
             // -----------------------------------------------------------------
-            // 2. Create the template document programmatically.
+            // 3. Build the report using the ReportingEngine.
             // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            builder.Writeln("Hierarchical Report");
-            builder.Writeln();
-
-            // Outer foreach over categories.
-            builder.Writeln("<<foreach [category in Categories]>>");
-            builder.Writeln("Category: <<[category.Name]>>");
-            builder.Writeln("Items:");
-
-            // Inner foreach over items of the current category.
-            builder.Writeln("<<foreach [item in category.Items]>>");
-            builder.Writeln("- <<[item.Name]>> (Qty: <<[item.Quantity]>>)");
-            builder.Writeln("<</foreach>>"); // End inner foreach.
-
-            builder.Writeln("<</foreach>>"); // End outer foreach.
-
-            // Save the template to a temporary file.
-            const string templatePath = "ReportTemplate.docx";
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
             var engine = new ReportingEngine();
-
-            // Build the report using the model as the root data source named "model".
-            engine.BuildReport(doc, model, "model");
+            engine.BuildReport(document, model, "model");
 
             // -----------------------------------------------------------------
             // 4. Save the generated report.
             // -----------------------------------------------------------------
-            const string outputPath = "ReportOutput.docx";
-            doc.Save(outputPath);
-
-            // The program finishes without waiting for user input.
+            const string outputPath = "Report.docx";
+            document.Save(outputPath);
         }
     }
 }

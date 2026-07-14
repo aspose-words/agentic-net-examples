@@ -4,61 +4,41 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Simple data model for the report.
+    // Simple data model with price and tax rate.
     public class Invoice
     {
         // Initialize properties to avoid nullable warnings.
-        public decimal Price { get; set; } = 0m;
-        public decimal TaxRate { get; set; } = 0m;
+        public double Price { get; set; } = 199.99;
+        public double TaxRate { get; set; } = 0.08; // 8 %
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "InvoiceTemplate.docx";
-            const string reportPath = "InvoiceReport.docx";
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            // Write static text and LINQ Reporting tags.
-            builder.Writeln("Invoice");
-            builder.Writeln("------------------------------");
+            // Insert LINQ Reporting tags. The root object name will be "invoice".
             builder.Writeln("Price: <<[invoice.Price]>>");
             builder.Writeln("Tax Rate: <<[invoice.TaxRate]>>");
-            // Calculate tax using an expression tag.
-            builder.Writeln("Tax Amount (Price * TaxRate): <<[invoice.Price * invoice.TaxRate]>>");
-            builder.Writeln("------------------------------");
-            builder.Writeln("Total: <<[invoice.Price + (invoice.Price * invoice.TaxRate)]>>");
+            // Calculate tax using an expression inside the delimiters.
+            builder.Writeln("Tax Amount: <<[invoice.Price * invoice.TaxRate]>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+            // Prepare the data source.
+            Invoice invoice = new Invoice();
 
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            var reportDoc = new Document(templatePath);
+            // Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, invoice, "invoice");
 
-            // Sample data.
-            var invoice = new Invoice
-            {
-                Price = 199.99m,
-                TaxRate = 0.07m // 7% tax
-            };
+            // Save the generated document.
+            const string outputPath = "InvoiceReport.docx";
+            doc.Save(outputPath);
 
-            // Create the reporting engine.
-            var engine = new ReportingEngine();
-
-            // Build the report using the root object name "invoice".
-            engine.BuildReport(reportDoc, invoice, "invoice");
-
-            // Save the generated report.
-            reportDoc.Save(reportPath);
+            // Optionally inform the user where the file was saved.
+            Console.WriteLine($"Report generated: {outputPath}");
         }
     }
 }

@@ -1,73 +1,87 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingWhereExample
+public class Program
 {
-    // External type with a static property used in the LINQ filter.
-    public static class FilterHelper
+    public static void Main()
     {
-        // Minimum age for filtering persons.
-        public static int MinAge { get; set; } = 30;
-    }
+        // Prepare output folder
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-    // Data model representing a person.
-    public class Person
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
-    }
+        // Create template document
+        string templatePath = Path.Combine(outputDir, "ReportTemplate.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    // Root data source for the report.
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+        builder.Writeln("=== Orders Report ===");
+        // Use model.Settings to expose external settings in the template
+        builder.Writeln("Filter threshold (MinAmount): <<[model.Settings.MinAmount]>>");
+        builder.Writeln();
+        builder.Writeln("<<foreach [order in model.Orders]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>, Amount: <<[order.Amount]>>");
+        builder.Writeln("<</foreach>>");
 
-    class Program
-    {
-        static void Main()
+        templateDoc.Save(templatePath);
+
+        // Sample data
+        List<Order> allOrders = new()
         {
-            // 1. Prepare sample data.
-            var model = new ReportModel
-            {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice", Age = 25 },
-                    new Person { Name = "Bob",   Age = 35 },
-                    new Person { Name = "Carol", Age = 45 }
-                }
-            };
+            new Order { CustomerName = "Alice", Amount = 120m },
+            new Order { CustomerName = "Bob", Amount = 200m },
+            new Order { CustomerName = "Charlie", Amount = 350m },
+            new Order { CustomerName = "Diana", Amount = 80m }
+        };
 
-            // 2. Create a template document with LINQ Reporting tags.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+        // External settings object
+        Settings settings = new() { MinAmount = 150m };
 
-            // Use Where extension method with a lambda that references the external static property.
-            builder.Writeln("<<foreach [p in Persons.Where(p => p.Age > FilterHelper.MinAge)]>>");
-            builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
+        // Advanced filtering using Where with external settings property
+        List<Order> filteredOrders = allOrders
+            .Where(o => o.Amount > settings.MinAmount)
+            .ToList();
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Model for the report, now includes Settings
+        ReportModel model = new()
+        {
+            Orders = filteredOrders,
+            Settings = settings
+        };
 
-            // 3. Load the template for report generation.
-            var doc = new Document(templatePath);
+        // Load template and build report
+        Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
 
-            // 4. Configure the ReportingEngine.
-            var engine = new ReportingEngine();
-            // Register the external type so its static members can be used in expressions.
-            engine.KnownTypes.Add(typeof(FilterHelper));
+        // Build the report using the model as the root object named "model"
+        engine.BuildReport(reportDoc, model, "model");
 
-            // 5. Build the report. Use the overload without a root name to reference members directly.
-            engine.BuildReport(doc, model);
+        // Save the generated report
+        string outputPath = Path.Combine(outputDir, "ReportOutput.docx");
+        reportDoc.Save(outputPath);
 
-            // 6. Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        Console.WriteLine($"Report generated: {outputPath}");
     }
+}
+
+// Data model classes
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+    public Settings Settings { get; set; } = new();
+}
+
+// External settings class
+public class Settings
+{
+    public decimal MinAmount { get; set; }
 }

@@ -2,96 +2,92 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Lists;
 
-public class Program
+namespace AsposeWordsLinqReportingDemo
 {
-    public static void Main()
+    // Data model classes
+    public class ReportModel
     {
-        // Create a blank document that will serve as the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public List<Category> Categories { get; set; } = new();
+    }
 
-        // Begin the outer foreach loop over categories.
-        builder.Writeln("<<foreach [category in Categories]>>");
+    public class Category
+    {
+        public string Name { get; set; } = "";
+        public string Bookmark { get; set; } = "";
+        public List<Item> Items { get; set; } = new();
+    }
 
-        // Create a numbered list for categories.
-        builder.ListFormat.List = doc.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.ListLevelNumber = 0;
+    public class Item
+    {
+        public string Name { get; set; } = "";
+        public string Bookmark { get; set; } = "";
+    }
 
-        // Each category name is wrapped in a bookmark tag.
-        builder.Writeln("<<bookmark [category.Name]>><<[category.Name]>><</bookmark>>");
-
-        // Begin the inner foreach loop over products of the current category.
-        builder.Writeln("<<foreach [product in category.Products]>>");
-
-        // Indent the inner list (level 1) and use a bullet for each product.
-        builder.ListFormat.ListLevelNumber = 1;
-        builder.Writeln("- <<bookmark [product.Name]>><<[product.Name]>><</bookmark>>");
-
-        // End inner foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Reset list level back to the outer level.
-        builder.ListFormat.ListLevelNumber = 0;
-
-        // End outer foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Remove list formatting from subsequent paragraphs.
-        builder.ListFormat.List = null;
-
-        // Prepare sample data.
-        ReportModel model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            Categories = new List<Category>
+            // Prepare sample data
+            var model = new ReportModel
             {
-                new Category
+                Categories = new List<Category>
                 {
-                    Name = "Fruits",
-                    Products = new List<Product>
+                    new Category
                     {
-                        new Product { Name = "Apple" },
-                        new Product { Name = "Banana" }
-                    }
-                },
-                new Category
-                {
-                    Name = "Vegetables",
-                    Products = new List<Product>
+                        Name = "Fruits",
+                        Bookmark = "bmFruits",
+                        Items = new List<Item>
+                        {
+                            new Item { Name = "Apple",  Bookmark = "bmApple" },
+                            new Item { Name = "Banana", Bookmark = "bmBanana" }
+                        }
+                    },
+                    new Category
                     {
-                        new Product { Name = "Carrot" },
-                        new Product { Name = "Tomato" }
+                        Name = "Vegetables",
+                        Bookmark = "bmVegetables",
+                        Items = new List<Item>
+                        {
+                            new Item { Name = "Carrot", Bookmark = "bmCarrot" },
+                            new Item { Name = "Tomato", Bookmark = "bmTomato" }
+                        }
                     }
                 }
-            }
-        };
+            };
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(doc, model, "model");
+            // -----------------------------------------------------------------
+            // Step 1: Create the template document programmatically
+            // -----------------------------------------------------------------
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+            builder.Writeln("Report with nested lists and bookmarks:");
+            builder.Writeln("<<foreach [category in Categories]>>");
+            // Category bookmark and name
+            builder.Writeln("<<bookmark [category.Bookmark]>><<[category.Name]>> <</bookmark>>");
+            // Items under the category
+            builder.Writeln("<<foreach [item in category.Items]>>");
+            builder.Writeln("\t- <<bookmark [item.Bookmark]>><<[item.Name]>> <</bookmark>>");
+            builder.Writeln("<</foreach>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // Step 2: Load the template and build the report
+            // -----------------------------------------------------------------
+            var loadedTemplate = new Document(templatePath);
+            var engine = new ReportingEngine();
+
+            // Build the report using the model as the root data source named "model"
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // Save the generated report
+            const string reportPath = "Report.docx";
+            loadedTemplate.Save(reportPath);
+        }
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Category> Categories { get; set; } = new();
-}
-
-// Category containing a list of products.
-public class Category
-{
-    public string Name { get; set; } = string.Empty;
-    public List<Product> Products { get; set; } = new();
-}
-
-// Simple product model.
-public class Product
-{
-    public string Name { get; set; } = string.Empty;
 }

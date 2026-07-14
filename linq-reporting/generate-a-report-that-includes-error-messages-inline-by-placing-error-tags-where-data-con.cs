@@ -1,56 +1,75 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+namespace AsposeWordsLinqReportingExample
 {
-    public string Name { get; set; } = "";
-    public string AgeString { get; set; } = "";
-    public string DateString { get; set; } = "";
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model used by the LINQ Reporting engine.
+    public class ReportModel
     {
-        // Prepare sample data with values that will cause conversion errors.
-        var model = new ReportModel
+        // Valid string property.
+        public string Name { get; set; } = string.Empty;
+
+        // Valid integer property.
+        public int Age { get; set; }
+
+        // This property is intentionally omitted to trigger a conversion error in the template.
+        // The engine will insert an inline error message because ReportBuildOptions.InlineErrorMessages is enabled.
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Name = "John Doe",
-            AgeString = "NotANumber",          // int.Parse will fail
-            DateString = "InvalidDateValue"    // DateTime.Parse will fail
-        };
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
 
-        // Create a template document programmatically.
-        const string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+            // -----------------------------------------------------------------
+            // Step 1: Create a Word template programmatically and insert LINQ
+            // Reporting tags. One of the tags references a non‑existent member to
+            // demonstrate inline error messages.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Age: <<[int.Parse(model.AgeString)]>>");
-        builder.Writeln("Date: <<[DateTime.Parse(model.DateString)]>>");
+            builder.Writeln("Customer Report");
+            builder.Writeln("----------------");
+            builder.Writeln("Name: <<[model.Name]>>");
+            builder.Writeln("Age: <<[model.Age]>>");
+            // This tag will cause a conversion/missing‑member error.
+            builder.Writeln("Missing: <<[model.NonExisting]>>");
 
-        // Save the template to disk before building the report.
-        templateDoc.Save(templatePath);
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // Load the template document.
-        var doc = new Document(templatePath);
+            // -----------------------------------------------------------------
+            // Step 2: Load the template and build the report using the data model.
+            // -----------------------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
 
-        // Configure the reporting engine to inline error messages.
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
+            // Populate the model with sample data.
+            ReportModel model = new ReportModel
+            {
+                Name = "John Doe",
+                Age = 30
+            };
 
-        // Build the report. The method returns a flag indicating whether parsing succeeded.
-        bool success = engine.BuildReport(doc, model, "model");
+            // Configure the reporting engine to inline error messages.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-        // Save the generated report.
-        const string outputPath = "ReportWithInlineErrors.docx";
-        doc.Save(outputPath);
+            // Build the report. The third parameter ("model") matches the root name used
+            // in the template tags (<<[model.Property]>>).
+            bool success = engine.BuildReport(loadedTemplate, model, "model");
 
-        // Optionally, write the result to the console (no interactive input required).
-        Console.WriteLine($"Report generation success: {success}");
-        Console.WriteLine($"Output saved to: {outputPath}");
+            // Save the generated report.
+            loadedTemplate.Save(reportPath);
+
+            // Output the result of the build operation.
+            Console.WriteLine($"Report generation successful: {success}");
+            Console.WriteLine($"Report saved to: {Path.GetFullPath(reportPath)}");
+        }
     }
 }

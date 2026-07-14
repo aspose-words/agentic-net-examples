@@ -1,58 +1,38 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class Model
-{
-    public List<Person> Persons { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-        // ---------- Create the template document ----------
-        const string templateFile = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // 1. Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
         // Use the default LINQ Reporting delimiters << and >>.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>> years old");
-        builder.Writeln("<</foreach>>");
+        // The tag references the root object name "model" and its Greeting property.
+        builder.Writeln("<<[model.Greeting]>>");
 
-        templateDoc.Save(templateFile);
-
-        // ---------- Load the template ----------
-        var doc = new Document(templateFile);
-
-        // ---------- Prepare sample data ----------
-        var model = new Model
+        // 2. Prepare the data model that will be bound to the template.
+        ReportModel model = new ReportModel
         {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 }
-            }
+            Greeting = "Hello, Aspose.Words LINQ Reporting!"
         };
 
-        // ---------- Configure ReportingEngine ----------
-        var engine = new ReportingEngine();
+        // 3. Configure the ReportingEngine (no custom delimiters needed).
+        ReportingEngine engine = new ReportingEngine();
 
-        // ---------- Build the report ----------
-        engine.BuildReport(doc, model, "model");
+        // 4. Build the report. The root object name must match the name used in the template tags.
+        engine.BuildReport(template, model, "model");
 
-        // ---------- Save the generated report ----------
-        doc.Save("Report.docx");
+        // 5. Save the generated report.
+        template.Save("CustomDelimiterReport.docx");
+    }
+
+    // Simple public data model with a single property.
+    public class ReportModel
+    {
+        public string Greeting { get; set; } = string.Empty;
     }
 }

@@ -1,76 +1,80 @@
 using System;
 using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Lists;
+using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingBookmarks
 {
-    // Simple data model for list items.
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public string BookmarkName { get; set; } = "";
-    }
-
-    // Wrapper class required for LINQ Reporting root object.
+    // Data model for the report.
     public class ReportModel
     {
+        // Collection of items to be listed.
         public List<Item> Items { get; set; } = new();
     }
 
-    public static void Main()
+    // Individual list item.
+    public class Item
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        // Text displayed for the item.
+        public string Title { get; set; } = string.Empty;
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Name of the bookmark that will be placed around the item.
+        public string BookmarkName { get; set; } = string.Empty;
+    }
 
-        // Create a numbered list style.
-        List list = templateDoc.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = list;
-
-        // Insert LINQ Reporting tags.
-        // The foreach tag iterates over the Items collection.
-        // Inside each iteration we place a bookmark whose name comes from the data source.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<bookmark [item.BookmarkName]>>");
-        builder.Writeln("<<[item.Name]>>");
-        builder.Writeln("<</bookmark>>");
-        builder.Writeln("<</foreach>>");
-
-        // End the list formatting.
-        builder.ListFormat.RemoveNumbers();
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // Prepare sample data.
-        ReportModel model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            Items = new List<Item>
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
+
+            // Apply a numbered list style to subsequent paragraphs.
+            builder.ListFormat.List = template.Lists.Add(ListTemplate.NumberDefault);
+            builder.Writeln("Report Items:");
+
+            // LINQ Reporting tags:
+            //   <<foreach [item in Items]>> ... <</foreach>>
+            //   <<bookmark [item.BookmarkName]>> ... <</bookmark>>
+            builder.Writeln("<<foreach [item in Items]>>");
+            builder.Writeln("<<bookmark [item.BookmarkName]>>");
+            builder.Writeln("<<[item.Title]>>");
+            builder.Writeln("<</bookmark>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Prepare sample data.
+            // -----------------------------------------------------------------
+            var model = new ReportModel
             {
-                new Item { Name = "First item", BookmarkName = "bmFirst" },
-                new Item { Name = "Second item", BookmarkName = "bmSecond" },
-                new Item { Name = "Third item", BookmarkName = "bmThird" }
-            }
-        };
+                Items = new List<Item>
+                {
+                    new Item { Title = "First list item", BookmarkName = "bmFirst" },
+                    new Item { Title = "Second list item", BookmarkName = "bmSecond" },
+                    new Item { Title = "Third list item", BookmarkName = "bmThird" }
+                }
+            };
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // -----------------------------------------------------------------
+            // 3. Load the template and build the report.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+            var engine = new ReportingEngine();
 
-        // Save the final report.
-        doc.Save(reportPath);
+            // Build the report using the model as the root object named "model".
+            engine.BuildReport(doc, model, "model");
+
+            // Save the generated report.
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
     }
 }

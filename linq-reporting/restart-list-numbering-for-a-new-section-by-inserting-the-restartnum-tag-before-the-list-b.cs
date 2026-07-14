@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,94 +8,104 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any legacy encodings Aspose.Words might need.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
 
         // -----------------------------------------------------------------
         // 1. Create the LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Title.
-        builder.Writeln("Orders Report");
-        builder.Writeln();
+        // Simple title.
+        builder.Writeln("LINQ Reporting – List Numbering Restart Example");
 
-        // Outer foreach iterates over the collection of orders.
-        builder.Writeln("<<foreach [order in Orders]>>");
+        // Outer loop over sections.
+        builder.Writeln("<<foreach [section in Sections]>>");
 
-        // Display the client name.
-        builder.Writeln("Client: <<[order.ClientName]>>");
+        // Section heading.
+        builder.Writeln("Section: <<[section.Name]>>");
 
-        // Numbered list of services for the current order.
-        // The <<restartNum>> tag restarts numbering for each order.
-        builder.Writeln("1. <<restartNum>><<foreach [service in order.Services]>> <<[service.Name]>> <</foreach>>");
+        // Numbered list of items. The <<restartNum>> tag forces numbering to restart
+        // for each new section because it is placed before the inner foreach in the same paragraph.
+        builder.Writeln("1. <<restartNum>><<foreach [item in section.Items]>> <<[item.Description]>> <</foreach>>");
 
-        // End of the outer foreach.
+        // End of outer loop.
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
         // 2. Prepare the data model.
         // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        var model = new ReportModel
         {
-            Orders = new List<Order>
+            Sections = new()
             {
-                new Order
+                new Section
                 {
-                    ClientName = "Acme Corp",
-                    Services = new List<Service>
+                    Name = "First Section",
+                    Items = new()
                     {
-                        new Service { Name = "Consulting" },
-                        new Service { Name = "Implementation" },
-                        new Service { Name = "Support" }
+                        new Item { Description = "First item" },
+                        new Item { Description = "Second item" },
+                        new Item { Description = "Third item" }
                     }
                 },
-                new Order
+                new Section
                 {
-                    ClientName = "Globex Inc",
-                    Services = new List<Service>
+                    Name = "Second Section",
+                    Items = new()
                     {
-                        new Service { Name = "Analysis" },
-                        new Service { Name = "Design" }
+                        new Item { Description = "Alpha" },
+                        new Item { Description = "Beta" }
+                    }
+                },
+                new Section
+                {
+                    Name = "Third Section",
+                    Items = new()
+                    {
+                        new Item { Description = "One" },
+                        new Item { Description = "Two" },
+                        new Item { Description = "Three" },
+                        new Item { Description = "Four" }
                     }
                 }
             }
         };
 
         // -----------------------------------------------------------------
-        // 3. Load the template and build the report.
+        // 3. Build the report using the LINQ Reporting engine.
         // -----------------------------------------------------------------
-        Document report = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        // No special options are required for this example.
-        engine.BuildReport(report, model, "model");
+        // Load the template (could also reuse the same Document instance).
+        Document reportDoc = new Document(templatePath);
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        report.Save(outputPath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final report.
+        reportDoc.Save(outputPath);
     }
 }
 
 // ---------------------------------------------------------------------
-// Data model classes (public, non‑nullable properties are initialized).
+// Data model classes.
 // ---------------------------------------------------------------------
 public class ReportModel
 {
-    public List<Order> Orders { get; set; } = new();
+    public List<Section> Sections { get; set; } = new();
 }
 
-public class Order
-{
-    public string ClientName { get; set; } = string.Empty;
-    public List<Service> Services { get; set; } = new();
-}
-
-public class Service
+public class Section
 {
     public string Name { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Description { get; set; } = string.Empty;
 }

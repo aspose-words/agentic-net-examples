@@ -7,53 +7,59 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document with LINQ Reporting tags.
+        // Create a simple template document with LINQ Reporting tags.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Iterate over each <person> element.
-        builder.Writeln("<<foreach [p in person]>>");
-        // This element exists in the XML.
-        builder.Writeln("Age: <<[p.Age]>>");
-        // This element is missing in the XML; it will be treated as an empty string.
-        builder.Writeln("Name: <<[p.Name]>>");
+        // Header.
+        builder.Writeln("Customer Report");
+        builder.Writeln("----------------");
+
+        // Use a foreach loop over a collection named "persons".
+        builder.Writeln("<<foreach [person in persons]>>");
+        // The XML may miss the Age element; we want it to appear as an empty string.
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age:  <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
-        const string templatePath = "Template.docx";
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "template.docx");
         template.Save(templatePath);
 
-        // Create an XML data source where the <Name> element is omitted.
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<people>
+        // Load the template back (simulating a real scenario where the template is a file).
+        Document loadedTemplate = new Document(templatePath);
+
+        // Sample XML data: the second person lacks the <Age> element.
+        string xmlContent = @"
+<persons>
     <person>
-        <Age>45</Age>
-    </person>
-    <person>
-        <Age>30</Age>
         <Name>John Doe</Name>
+        <Age>30</Age>
     </person>
-</people>";
-        const string xmlPath = "Data.xml";
-        File.WriteAllText(xmlPath, xmlContent);
+    <person>
+        <Name>Jane Smith</Name>
+        <!-- Age element is missing for Jane -->
+    </person>
+</persons>";
 
-        // Load the template document.
-        Document doc = new Document(templatePath);
+        // Create an XmlDataSource from the XML string.
+        using MemoryStream xmlStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(xmlContent));
+        XmlDataSource xmlDataSource = new XmlDataSource(xmlStream);
 
-        // Load the XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
+        // Configure the ReportingEngine to treat missing members as empty strings.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
+        // Optional: customize the message shown for missing members (empty string suppresses any output).
+        engine.MissingMemberMessage = string.Empty;
 
-        // Configure the reporting engine to treat missing members as empty strings.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.AllowMissingMembers
-        };
-
-        // Build the report. The root object name matches the top‑level XML element.
-        engine.BuildReport(doc, dataSource, "people");
+        // Build the report. The data source name must match the collection name used in the template.
+        engine.BuildReport(loadedTemplate, xmlDataSource, "persons");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "report.docx");
+        loadedTemplate.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

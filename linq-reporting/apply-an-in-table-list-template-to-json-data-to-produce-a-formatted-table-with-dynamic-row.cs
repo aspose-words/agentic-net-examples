@@ -1,74 +1,76 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample JSON data.
-        var products = new List<Product>
-        {
-            new Product { Id = 1, Name = "Apple", Quantity = 10 },
-            new Product { Id = 2, Name = "Banana", Quantity = 20 },
-            new Product { Id = 3, Name = "Cherry", Quantity = 15 }
-        };
+        // Paths for the template, JSON data and the final report.
+        string templatePath = "template.docx";
+        string jsonPath = "data.json";
+        string outputPath = "report.docx";
 
-        const string jsonPath = "data.json";
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(products, Formatting.Indented));
+        // 1. Create sample JSON data (an array of objects).
+        string jsonContent = @"[
+            { ""Index"": 1, ""Name"": ""Apple"",  ""Quantity"": 10 },
+            { ""Index"": 2, ""Name"": ""Banana"", ""Quantity"": 20 },
+            { ""Index"": 3, ""Name"": ""Cherry"", ""Quantity"": 15 }
+        ]";
+        File.WriteAllText(jsonPath, jsonContent);
 
-        // Create the template document with an in‑table list.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // 2. Build the template document programmatically.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Product List:");
-        builder.Writeln("<<foreach [p in items]>>");
+        builder.Writeln("Product List");
+        builder.Writeln("==============");
+        builder.Writeln("<<foreach [item in items]>>");
 
-        // Table header.
-        var table = builder.StartTable();
+        // Start a table with a header row.
+        Table table = builder.StartTable();
+
         builder.InsertCell();
-        builder.Writeln("Id");
+        builder.Writeln("Index");
         builder.InsertCell();
         builder.Writeln("Name");
         builder.InsertCell();
         builder.Writeln("Quantity");
         builder.EndRow();
 
-        // Table row bound to the JSON data.
+        // Data row – placeholders will be replaced by JSON values.
         builder.InsertCell();
-        builder.Writeln("<<[p.Id]>>");
+        builder.Writeln("<<[item.Index]>>");
         builder.InsertCell();
-        builder.Writeln("<<[p.Name]>>");
+        builder.Writeln("<<[item.Name]>>");
         builder.InsertCell();
-        builder.Writeln("<<[p.Quantity]>>");
+        builder.Writeln("<<[item.Quantity]>>");
         builder.EndRow();
 
         builder.EndTable();
+
         builder.Writeln("<</foreach>>");
 
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Load the template and bind the JSON data source.
-        var document = new Document(templatePath);
-        var jsonData = new JsonDataSource(jsonPath);
+        // 3. Load the template document for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        var engine = new ReportingEngine();
-        engine.BuildReport(document, jsonData, "items");
+        // 4. Create a JsonDataSource from the JSON file.
+        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
 
-        // Save the generated report.
-        const string reportPath = "Report.docx";
-        document.Save(reportPath);
+        // 5. Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
+        engine.BuildReport(reportDoc, jsonDataSource, "items");
+
+        // 6. Save the generated report.
+        reportDoc.Save(outputPath);
+
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
-}
-
-// Simple data model matching the JSON structure.
-public class Product
-{
-    public int Id { get; set; } = 0;
-    public string Name { get; set; } = "";
-    public int Quantity { get; set; } = 0;
 }

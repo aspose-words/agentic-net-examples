@@ -1,70 +1,100 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    // Holds image data as a byte array that the LINQ reporting engine can use.
-    public byte[] Image { get; set; } = Array.Empty<byte>();
-
-    // Additional sample data.
-    public string Title { get; set; } = string.Empty;
-}
+using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for output files.
+        // Prepare output folder.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple 1x1 PNG image in memory (no System.Drawing usage).
-        // -----------------------------------------------------------------
-        // This is a minimal valid PNG (transparent pixel) encoded in Base64.
-        const string base64Png =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        // Create sample image byte arrays (red and blue 1x1 PNG).
+        byte[] redPng = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=");
+        byte[] bluePng = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/6V6VAAAAAElFTkSuQmCC");
 
-        // -----------------------------------------------------------------
-        // 2. Build the data model for the report.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        // Build data model – use image byte arrays for the reporting engine.
+        var model = new ReportModel
         {
-            Image = imageBytes,
-            Title = "Sample Image Report"
+            Products = new List<Product>
+            {
+                new Product { Name = "Red Square", ImageData = redPng },
+                new Product { Name = "Blue Square", ImageData = bluePng }
+            }
         };
 
         // -----------------------------------------------------------------
-        // 3. Create the template document programmatically.
+        // 1. Create the LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Optional title paragraph.
-        builder.Writeln($"<<[model.Title]>>");
-        builder.Writeln();
+        // Begin foreach loop over Products.
+        builder.Writeln("<<foreach [p in Products]>>");
 
-        // Insert a textbox that will host the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+        // Create a table with two columns: Name and Image.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Image");
+        builder.EndRow();
+
+        // Data row.
+        builder.InsertCell();
+        builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell();
+
+        // Image must be placed inside a textbox.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
         builder.MoveTo(textBox.FirstParagraph);
-        // The image tag expects an expression that evaluates to a supported image type (byte[] here).
-        builder.Write("<<image [model.Image] -fitSize>>");
+        builder.Write("<<image [p.ImageData] -fitSize>>");
+
+        builder.EndRow();
+        builder.EndTable();
+
+        // End foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 4. Build the report using the LINQ Reporting engine.
+        // 2. Load the template and build the report.
         // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // No special options required.
-        engine.BuildReport(doc, model, "model");
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        string resultPath = Path.Combine(outputDir, "ReportWithImage.docx");
-        doc.Save(resultPath);
+        // Build the report using the model as the root data source.
+        engine.BuildReport(reportDoc, model);
+
+        // Save the final report.
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        reportDoc.Save(reportPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
+
+public class Product
+{
+    public string Name { get; set; } = string.Empty;
+    // The reporting engine accepts a byte array containing image data.
+    public byte[] ImageData { get; set; } = Array.Empty<byte>();
 }

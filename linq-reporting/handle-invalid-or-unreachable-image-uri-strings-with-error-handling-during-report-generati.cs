@@ -1,98 +1,89 @@
 using System;
 using System.IO;
-using System.Net;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Original (potentially unreachable) URL.
-    private readonly string _originalUrl = "http://nonexistent.example.com/image.jpg";
-
-    // Returns a reachable image path: the original URL if reachable,
-    // otherwise a local placeholder image.
-    public string ImagePath
-    {
-        get
-        {
-            // Try a simple HEAD request to see if the URL is reachable.
-            try
-            {
-                var request = WebRequest.Create(_originalUrl);
-                request.Method = "HEAD";
-                using var response = request.GetResponse();
-                // If we get a response, assume the image can be loaded.
-                return _originalUrl;
-            }
-            catch
-            {
-                // Fallback to a local placeholder image.
-                return Path.Combine(Directory.GetCurrentDirectory(), "placeholder.png");
-            }
-        }
-    }
+    // URI or file path to the image. Initialized to avoid nullable warnings.
+    public string ImageUri { get; set; } = string.Empty;
 }
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 0. Prepare a local placeholder image (1x1 pixel PNG).
-        // -----------------------------------------------------------------
-        const string placeholderPath = "placeholder.png";
-        if (!File.Exists(placeholderPath))
-        {
-            // Base64-encoded 1x1 transparent PNG.
-            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WcAAAAASUVORK5CYII=";
-            byte[] pngBytes = Convert.FromBase64String(base64Png);
-            File.WriteAllBytes(placeholderPath, pngBytes);
-        }
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Create a simple 1x1 pixel PNG image from a Base64 string.
+        const string base64Png =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YVbZc8AAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        string validImagePath = Path.Combine(outputDir, "sample.png");
+        File.WriteAllBytes(validImagePath, pngBytes);
 
         // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
+        // Step 1: Create the LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Image Report");
 
-        builder.Writeln("Image insertion test (invalid URI handling):");
-
-        // Insert a textbox that will host the image tag.
+        // Insert a textbox that will host the image.
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+        // Move the cursor inside the textbox.
         builder.MoveTo(textBox.FirstParagraph);
-
-        // LINQ Reporting image tag. The -fitSize switch scales the image to the textbox size.
-        builder.Write("<<image [model.ImagePath] -fitSize>>");
+        // LINQ Reporting tag that inserts an image from the model.
+        builder.Write("<<image [model.ImageUri] -fitSize>>");
 
         // Save the template to disk.
-        template.Save(templatePath);
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template and prepare the data model.
+        // Step 2: Generate a report with a valid image URI.
         // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        ReportModel model = new();
+        var reportValid = new Document(templatePath);
+        var modelValid = new ReportModel { ImageUri = validImagePath };
 
-        // -----------------------------------------------------------------
-        // 3. Build the report with inline error messages enabled.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
+        var engine = new ReportingEngine
         {
+            // Inline error messages will be inserted if the image cannot be loaded.
             Options = ReportBuildOptions.InlineErrorMessages
         };
 
-        // BuildReport returns a bool indicating success when InlineErrorMessages is set.
-        bool success = engine.BuildReport(reportDoc, model, "model");
-
-        Console.WriteLine($"Report generation success flag: {success}");
+        bool successValid = engine.BuildReport(reportValid, modelValid, "model");
+        string validReportPath = Path.Combine(outputDir, "report_valid.docx");
+        reportValid.Save(validReportPath);
 
         // -----------------------------------------------------------------
-        // 4. Save the generated report.
+        // Step 3: Generate a report with an invalid/unreachable image URI.
         // -----------------------------------------------------------------
-        reportDoc.Save(reportPath);
+        var reportInvalid = new Document(templatePath);
+        var modelInvalid = new ReportModel { ImageUri = Path.Combine(outputDir, "nonexistent.png") };
+
+        bool successInvalid;
+        try
+        {
+            // BuildReport will return false when an error occurs and InlineErrorMessages is set.
+            successInvalid = engine.BuildReport(reportInvalid, modelInvalid, "model");
+        }
+        catch (Exception ex)
+        {
+            // If an unexpected exception occurs, treat the build as failed.
+            Console.WriteLine($"Unexpected error while building report: {ex.Message}");
+            successInvalid = false;
+        }
+
+        string invalidReportPath = Path.Combine(outputDir, "report_invalid.docx");
+        reportInvalid.Save(invalidReportPath);
+
+        // Output the results.
+        Console.WriteLine($"Valid image report generated: {successValid} -> {validReportPath}");
+        Console.WriteLine($"Invalid image report generated: {successInvalid} -> {invalidReportPath}");
     }
 }

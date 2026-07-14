@@ -3,71 +3,74 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingForeachExample
+namespace AsposeWordsLinqReportingDemo
 {
-    // Data model representing an invoice.
+    // Simple data model representing an invoice.
     public class Invoice
     {
         public int Id { get; set; }
-        public string Customer { get; set; } = string.Empty;
         public decimal Amount { get; set; }
+        public DateTime Date { get; set; }
+
+        // Initialize properties to avoid nullable warnings.
+        public Invoice()
+        {
+            Id = 0;
+            Amount = 0m;
+            Date = DateTime.MinValue;
+        }
     }
 
-    // Wrapper class required by the ReportingEngine to expose the collection.
-    public class ReportModel
+    // Wrapper class that holds the collection of invoices.
+    public class ReportData
     {
         public List<Invoice> Invoices { get; set; } = new();
+
+        // Sample data bootstrap.
+        public ReportData()
+        {
+            Invoices.Add(new Invoice { Id = 1001, Amount = 250.75m, Date = new DateTime(2023, 1, 15) });
+            Invoices.Add(new Invoice { Id = 1002, Amount = 480.00m, Date = new DateTime(2023, 2, 3) });
+            Invoices.Add(new Invoice { Id = 1003, Amount = 125.50m, Date = new DateTime(2023, 3, 22) });
+        }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "InvoiceTemplate.docx";
-            const string reportPath = "InvoiceReport.docx";
+            // 1. Create a template document programmatically.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
+            // Insert a heading.
             builder.Writeln("Invoice Report");
-            // Correct foreach syntax: no explicit type inside the tag.
-            builder.Writeln("<<foreach [inv in Invoices]>>");
-            builder.Writeln("Id: <<[inv.Id]>>, Customer: <<[inv.Customer]>>, Amount: <<[inv.Amount]>>");
+            builder.Writeln();
+
+            // Use the foreach tag (correct syntax) to iterate over the collection.
+            builder.Writeln("<<foreach [inv in model.Invoices]>>");
+            builder.Writeln("Invoice ID: <<[inv.Id]>>");
+            builder.Writeln("Date: <<[inv.Date]>>");
+            builder.Writeln("Amount: $<<[inv.Amount]>>");
             builder.Writeln("<</foreach>>");
 
             // Save the template to disk.
-            templateDoc.Save(templatePath);
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Prepare sample data.
-            // -----------------------------------------------------------------
-            var model = new ReportModel
-            {
-                Invoices = new List<Invoice>
-                {
-                    new Invoice { Id = 1, Customer = "Acme Corp", Amount = 1234.56m },
-                    new Invoice { Id = 2, Customer = "Globex Inc", Amount = 7890.12m },
-                    new Invoice { Id = 3, Customer = "Soylent Co", Amount = 345.67m }
-                }
-            };
+            // 2. Load the template document.
+            var doc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine();
+            // 3. Prepare the data source.
+            var data = new ReportData();
 
-            // The root object name ("model") must match the name used in the template tags.
-            engine.BuildReport(reportDoc, model, "model");
+            // 4. Build the report using the LINQ Reporting engine.
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, data, "model");
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            reportDoc.Save(reportPath);
+            // 5. Save the generated report.
+            const string reportPath = "Report.docx";
+            doc.Save(reportPath);
         }
     }
 }

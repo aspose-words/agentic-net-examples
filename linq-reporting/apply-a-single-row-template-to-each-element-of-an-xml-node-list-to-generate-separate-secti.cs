@@ -3,94 +3,79 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
 
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-public partial class Program
+public class LinqReportingXmlExample
 {
     public static void Main()
     {
-        // Create a deterministic output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider for any legacy encodings that Aspose.Words might need.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        string xmlPath = Path.Combine(outputDir, "Items.xml");
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string resultPath = Path.Combine(outputDir, "Report.docx");
-
-        // 1. Generate sample XML data.
-        CreateSampleXml(xmlPath);
-
-        // 2. Build the LINQ Reporting template programmatically.
-        CreateTemplateDocument(templatePath);
-
-        // 3. Load the template and the XML data source.
-        Document templateDoc = new Document(templatePath);
-        XmlDataSource xmlData = new XmlDataSource(xmlPath);
-
-        // 4. Execute the report. The root name used in the template is "Items".
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(templateDoc, xmlData, "Items");
-
-        // 5. Save the generated report.
-        templateDoc.Save(resultPath, SaveFormat.Docx);
-
-        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}.");
-        Console.WriteLine($"Result saved to: {resultPath}");
-    }
-
-    // Generates a simple XML file with a list of items.
-    private static void CreateSampleXml(string filePath)
-    {
-        string xmlContent =
-@"<?xml version=""1.0"" encoding=""UTF-8""?>
+        // -----------------------------------------------------------------
+        // 1. Create sample XML data file.
+        // -----------------------------------------------------------------
+        const string xmlFileName = "data.xml";
+        string xmlContent = @"<?xml version=""1.0"" encoding=""UTF-8""?>
 <Items>
     <Item>
-        <Name>Apple</Name>
-        <Price>1.23</Price>
+        <Title>First Item</Title>
+        <Description>This is the first item's description.</Description>
     </Item>
     <Item>
-        <Name>Banana</Name>
-        <Price>0.99</Price>
+        <Title>Second Item</Title>
+        <Description>This is the second item's description.</Description>
     </Item>
     <Item>
-        <Name>Cherry</Name>
-        <Price>2.50</Price>
+        <Title>Third Item</Title>
+        <Description>This is the third item's description.</Description>
     </Item>
 </Items>";
-        File.WriteAllText(filePath, xmlContent, Encoding.UTF8);
-    }
+        File.WriteAllText(xmlFileName, xmlContent, Encoding.UTF8);
 
-    // Creates a Word template containing a foreach block that repeats a section per XML item.
-    private static void CreateTemplateDocument(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 2. Build a template document that contains a foreach tag which will be
+        //    applied to each <Item> element.
+        // -----------------------------------------------------------------
+        const string templateFileName = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Title for the whole document.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
-        builder.Writeln("Product Catalog");
+        // Opening foreach tag – iterate over each <Item> element.
+        // The root object name is "Items", so we iterate over the collection "Items".
+        builder.Writeln("<<foreach [item in Items]>>");
 
-        // Start of the foreach block – iterate over Item elements.
-        builder.Writeln("<<foreach [item in Item]>>");
+        // Insert a section break so each item starts in a new section.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
 
-        // Each item will start on a new page.
-        builder.InsertBreak(BreakType.PageBreak);
+        // Content that will be repeated for every <Item>.
+        builder.Writeln("Title: <<[item.Title]>>");
+        builder.Writeln("Description: <<[item.Description]>>");
 
-        // Heading for the item.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("<<[item.Name]>>");
-
-        // Simple paragraph with the price.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Price: $<<[item.Price]>>");
-
-        // End of the foreach block.
+        // Closing foreach tag.
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        doc.Save(filePath, SaveFormat.Docx);
+        // Save the template to disk.
+        templateDoc.Save(templateFileName);
+
+        // -----------------------------------------------------------------
+        // 3. Load the template and bind the XML data source.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templateFileName);
+
+        // Load XML data source from the file stream.
+        using (FileStream xmlStream = File.OpenRead(xmlFileName))
+        {
+            XmlDataSource xmlDataSource = new XmlDataSource(xmlStream);
+
+            // Build the report. The root object name must match the top‑level XML element.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, xmlDataSource, "Items");
+        }
+
+        // -----------------------------------------------------------------
+        // 4. Save the generated report.
+        // -----------------------------------------------------------------
+        const string outputFileName = "output.docx";
+        reportDoc.Save(outputFileName);
     }
 }

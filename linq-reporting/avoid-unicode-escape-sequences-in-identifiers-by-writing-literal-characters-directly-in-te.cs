@@ -1,68 +1,56 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingUnicodeDemo
+public class Program
 {
-    // Model class with Unicode characters directly in property names.
-    public class Person
+    public static void Main()
     {
-        // Property name "名前" (Japanese for "Name").
-        public string 名前 { get; set; } = string.Empty;
+        // Register code page provider (required for Aspose.Words).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Property name "年齢" (Japanese for "Age").
-        public int 年齢 { get; set; }
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data with a Unicode property name.
+        var persons = new List<Person>
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            new Person { 名 = "山田太郎", Age = 30 },
+            new Person { 名 = "李小龍", Age = 35 },
+            new Person { 名 = "José", Age = 28 }
+        };
 
-            // -------------------------------------------------
-            // Step 1: Create a Word template with LINQ tags.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        var model = new ReportModel { Persons = persons };
 
-            // Simple paragraph with Unicode property references.
-            builder.Writeln("顧客情報:"); // "Customer Information:" in Japanese.
-            builder.Writeln("名前: <<[model.名前]>>");
-            builder.Writeln("年齢: <<[model.年齢]>>");
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
+        var builder = new DocumentBuilder();
+        builder.Writeln("<<foreach [person in Persons]>>");
+        builder.Writeln("Name: <<[person.名]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Document.Save(templatePath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Load the template and build the report.
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // -------------------------------------------------
-            // Step 2: Load the template and prepare data.
-            // -------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // Sample data.
-            Person person = new Person
-            {
-                名前 = "山田太郎", // Example Japanese name.
-                年齢 = 30
-            };
-
-            // -------------------------------------------------
-            // Step 3: Build the report using ReportingEngine.
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            // No special options are required for this simple example.
-            engine.BuildReport(reportDoc, person, "model");
-
-            // -------------------------------------------------
-            // Step 4: Save the generated report.
-            // -------------------------------------------------
-            reportDoc.Save(reportPath);
-
-            // Indicate completion (no interactive input).
-            Console.WriteLine("Report generated successfully: " + reportPath);
-        }
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
+}
+
+// Wrapper class that matches the root object name used in BuildReport.
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+// Data model with a Unicode identifier used directly in the template.
+public class Person
+{
+    public string 名 { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

@@ -1,76 +1,90 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+using Aspose.Words.Tables;   // Required for the Table class
 
-public class Person
+namespace AsposeWordsLinqReporting
 {
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    public class Program
     {
-        // -----------------------------------------------------------------
-        // 1. Prepare sample data.
-        // -----------------------------------------------------------------
-        var model = new ReportModel();
-        model.Persons.Add(new Person { Name = "John Doe", Age = 30 });
-        model.Persons.Add(new Person { Name = "Jane Smith", Age = 25 });
+        public static void Main()
+        {
+            // -----------------------------------------------------------------
+            // 1. Create sample XML data source.
+            // -----------------------------------------------------------------
+            const string xmlFileName = "people.xml";
+            File.WriteAllText(xmlFileName,
+                @"<Persons>
+                    <Person>
+                        <Name>John Doe</Name>
+                        <Age>30</Age>
+                    </Person>
+                    <Person>
+                        <Name>Jane Smith</Name>
+                        <Age>25</Age>
+                    </Person>
+                    <Person>
+                        <Name>Bob Johnson</Name>
+                        <Age>40</Age>
+                    </Person>
+                </Persons>");
 
-        // -----------------------------------------------------------------
-        // 2. Build the template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+            // -----------------------------------------------------------------
+            // 2. Build a template document that contains a table with a foreach tag.
+            // -----------------------------------------------------------------
+            const string templateFileName = "template.docx";
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        builder.Writeln("People Report");
-        builder.Writeln(); // empty line
+            builder.Writeln("Persons Report");
 
-        // Start a foreach block that iterates over the Persons collection.
-        builder.Writeln("<<foreach [person in Persons]>>");
+            // Begin foreach loop over the XML collection named "persons".
+            builder.Writeln("<<foreach [p in persons]>>");
 
-        // Create a table that will be repeated for each person.
-        Table table = builder.StartTable();
+            // Create a table that will be repeated for each person.
+            Table table = builder.StartTable();
 
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Age");
-        builder.EndRow();
+            // Table header.
+            builder.InsertCell();
+            builder.Writeln("Name");
+            builder.InsertCell();
+            builder.Writeln("Age");
+            builder.EndRow();
 
-        // Data row – the engine will replace the tags with actual values.
-        builder.InsertCell();
-        builder.Writeln("<<[person.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[person.Age]>>");
-        builder.EndRow();
+            // Row that will be repeated for each person.
+            builder.InsertCell();
+            builder.Writeln("<<[p.Name]>>");
+            builder.InsertCell();
+            builder.Writeln("<<[p.Age]>>");
+            builder.EndRow();
 
-        builder.EndTable();
+            // End of table and foreach.
+            builder.EndTable();
+            builder.Writeln("<</foreach>>");
 
-        // Close the foreach block.
-        builder.Writeln("<</foreach>>");
+            // Save the template to disk.
+            template.Save(templateFileName);
 
-        // -----------------------------------------------------------------
-        // 3. Build the report using the LINQ Reporting engine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        // Use a data source name ("model") so that the template can reference it if needed.
-        engine.BuildReport(template, model, "model");
+            // -----------------------------------------------------------------
+            // 3. Load the template and generate the report using the XML data source.
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templateFileName);
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated document.
-        // -----------------------------------------------------------------
-        template.Save("Report.docx");
+            using (FileStream xmlStream = File.OpenRead(xmlFileName))
+            {
+                XmlDataSource dataSource = new XmlDataSource(xmlStream);
+
+                ReportingEngine engine = new ReportingEngine();
+                engine.Options = ReportBuildOptions.None; // No special options required.
+                engine.BuildReport(reportDoc, dataSource, "persons");
+            }
+
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputFileName = "output.docx";
+            reportDoc.Save(outputFileName);
+        }
     }
 }

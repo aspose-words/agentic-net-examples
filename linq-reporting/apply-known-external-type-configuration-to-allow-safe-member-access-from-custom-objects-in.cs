@@ -1,82 +1,58 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model.
-    public class ReportModel
+    public static void Main()
     {
-        public List<Person> Persons { get; set; } = new();
-    }
+        // Register code page provider (required for some encodings)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+        // Create a template document with LINQ Reporting tags
+        string templatePath = "template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Current date (raw): <<[Date]>>");
+        builder.Writeln("Formatted date (custom helper): <<[MyHelper.FormatDate(Date)]>>");
+        builder.Writeln("Pi value (Math): <<[Math.PI]>>");
+        templateDoc.Save(templatePath);
 
-    // External type whose static members will be accessed from the template.
-    public static class Utils
-    {
-        public static string GetGreeting(string name) => $"Hello, {name}!";
-    }
+        // Load the template for reporting
+        Document doc = new Document(templatePath);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare the data model
+        ReportModel model = new ReportModel
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            Date = DateTime.Now
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        // Configure the ReportingEngine and register known types
+        ReportingEngine engine = new ReportingEngine();
+        engine.KnownTypes.Add(typeof(MyHelper));
+        engine.KnownTypes.Add(typeof(Math));
 
-            // Begin a foreach loop over the Persons collection.
-            builder.Writeln("<<foreach [p in Persons]>>");
-            // Output each person's name and a greeting obtained via a static method.
-            builder.Writeln("<<[p.Name]>> says: <<[Utils.GetGreeting(p.Name)]>>");
-            // End the foreach loop.
-            builder.Writeln("<</foreach>>");
+        // Build the report using the model as the root object named "model"
+        engine.BuildReport(doc, model, "model");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Save the generated report
+        string outputPath = "output.docx";
+        doc.Save(outputPath);
+    }
+}
 
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare the data source.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
+// Public data model class
+public class ReportModel
+{
+    public DateTime Date { get; set; } = DateTime.Now;
+}
 
-            var model = new ReportModel
-            {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice", Age = 30 },
-                    new Person { Name = "Bob", Age = 25 },
-                    new Person { Name = "Charlie", Age = 35 }
-                }
-            };
-
-            // -----------------------------------------------------------------
-            // 3. Configure the ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-
-            // Register the external type so its static members can be used safely.
-            engine.KnownTypes.Add(typeof(Utils));
-
-            // Build the report using the model as the root data source named "model".
-            engine.BuildReport(doc, model, "model");
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            doc.Save(reportPath);
-        }
+// Static helper class with a method accessible from the template
+public static class MyHelper
+{
+    public static string FormatDate(DateTime dt)
+    {
+        return dt.ToString("yyyy-MM-dd");
     }
 }

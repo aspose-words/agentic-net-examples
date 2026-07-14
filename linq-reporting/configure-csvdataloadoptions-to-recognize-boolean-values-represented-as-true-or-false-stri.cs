@@ -8,34 +8,11 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing.
+        // Register code page provider for CSV encoding support.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for temporary files.
-        string templatePath = "Template.docx";
-        string csvPath = "Data.csv";
-        string outputPath = "Report.docx";
-
-        // ---------- Create the template document ----------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Add a heading.
-        builder.Writeln("People Report");
-        builder.Writeln();
-
-        // Begin a foreach block over the CSV rows (named "persons").
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Active: <<[person.IsActive]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk, then reload it as required by the lifecycle rule.
-        templateDoc.Save(templatePath);
-        Document loadedTemplate = new Document(templatePath);
-
-        // ---------- Create sample CSV data ----------
-        // The CSV has a header row and a boolean column represented as true/false strings.
+        // Prepare sample CSV data with boolean values as true/false strings.
+        string csvPath = "persons.csv";
         string[] csvLines =
         {
             "Name,IsActive",
@@ -45,23 +22,37 @@ public class Program
         };
         File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
 
-        // ---------- Configure CSV load options ----------
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true) // first line contains headers
+        // Create a Word template containing LINQ Reporting tags.
+        string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Active: <<[person.IsActive]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
+
+        // Load the template document.
+        var doc = new Document(templatePath);
+
+        // Configure CSV load options to recognize headers and default delimiter.
+        var loadOptions = new CsvDataLoadOptions(hasHeaders: true)
         {
-            Delimiter = ',',   // default delimiter
-            QuoteChar = '"',   // default quote character
-            CommentChar = '#', // any comment lines start with '#'
+            Delimiter = ',',
+            QuoteChar = '"',
+            // Boolean values represented as "true"/"false" are parsed automatically.
+            // No additional configuration is required.
         };
 
-        // ---------- Create CSV data source ----------
-        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+        // Create a CSV data source using the configured options.
+        var csvDataSource = new CsvDataSource(csvPath, loadOptions);
 
-        // ---------- Build the report ----------
-        ReportingEngine engine = new ReportingEngine();
-        // The data source name "persons" matches the tag used in the template.
-        engine.BuildReport(loadedTemplate, csvDataSource, "persons");
+        // Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, csvDataSource, "persons");
 
         // Save the generated report.
-        loadedTemplate.Save(outputPath);
+        string reportPath = "Report.docx";
+        doc.Save(reportPath);
     }
 }

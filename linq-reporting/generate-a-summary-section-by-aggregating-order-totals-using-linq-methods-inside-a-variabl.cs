@@ -1,16 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Order
 {
+    public Order(string customerName, decimal total)
+    {
+        CustomerName = customerName;
+        Total = total;
+    }
+
     public string CustomerName { get; set; } = "";
     public decimal Total { get; set; }
 }
 
 public class ReportModel
 {
+    public ReportModel()
+    {
+        Orders = new List<Order>();
+    }
+
     public List<Order> Orders { get; set; } = new();
 }
 
@@ -18,36 +30,30 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create sample data.
+        var model = new ReportModel
+        {
+            Orders = new()
+            {
+                new Order("Alice", 120.50m),
+                new Order("Bob",   75.00m),
+                new Order("Carol", 210.30m)
+            }
+        };
 
-        builder.Writeln("Order Report");
-        builder.Writeln("----------------");
+        // Build the template document.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Repeat each order.
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>> - Total: $<<[order.Total]>>");
-        builder.Writeln("<</foreach>>");
+        builder.Writeln("Order Summary");
+        // LINQ aggregation inside a variable tag expression.
+        builder.Writeln("Total Amount: <<[model.Orders.Sum(o => o.Total)]>>");
 
-        builder.Writeln();
-        builder.Writeln("Summary:");
-        builder.Writeln("Total Orders: <<[Orders.Count]>>");
-        // Aggregate order totals using LINQ inside a tag expression.
-        builder.Writeln("Grand Total: $<<[Orders.Sum(o => o.Total)]>>");
+        // Generate the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Prepare sample data.
-        ReportModel model = new ReportModel();
-        model.Orders.Add(new Order { CustomerName = "Alice", Total = 120.50m });
-        model.Orders.Add(new Order { CustomerName = "Bob", Total = 75.00m });
-        model.Orders.Add(new Order { CustomerName = "Charlie", Total = 210.25m });
-
-        // Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(template, model, "model");
-
-        // Save the generated report.
-        template.Save("OrderReport.docx");
+        // Save the result.
+        doc.Save("Report.docx");
     }
 }

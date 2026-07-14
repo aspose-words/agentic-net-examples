@@ -1,44 +1,44 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    // Initialize with UTC now to avoid nullable warnings.
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider for Aspose.Words if needed.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare sample data model.
+        var model = new ReportModel
+        {
+            CreatedDate = DateTime.UtcNow
+        };
 
-        // Use a valid LINQ Reporting expression that formats the date via ToString().
-        builder.Writeln("Report generated at: <<[model.CreatedDate.ToString(\"yyyy-MM-ddTHH:mm:ss\")]>>");
+        // Create a template document with an expression tag that formats the date as ISO 8601.
+        const string templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Report generated at: {=CreatedDate:yyyy-MM-ddTHH:mm:ss}");
+        doc.Save(templatePath);
 
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        template.Save(templatePath);
+        // Load the template and build the report.
+        var templateDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(templateDoc, model, "model");
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        // Save the generated report.
+        const string outputPath = "output.docx";
+        templateDoc.Save(outputPath);
 
-        // Prepare the data source.
-        ReportModel model = new ReportModel();
-
-        // Build the report using LINQ Reporting Engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the final report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        reportDoc.Save(reportPath);
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
     }
+}
+
+public class ReportModel
+{
+    public DateTime CreatedDate { get; set; }
 }

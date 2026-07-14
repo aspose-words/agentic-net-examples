@@ -1,60 +1,62 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Order
+namespace LinqReportingLambdaFilter
 {
-    public int Id { get; set; }
-    public string CustomerName { get; set; } = "";
-    public decimal TotalAmount { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model for an order.
+    public class Order
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        public string CustomerName { get; set; } = string.Empty;
+        public decimal TotalAmount { get; set; }
+    }
+
+    // Wrapper model that holds the collection and the threshold.
+    public class ReportModel
+    {
+        public List<Order> Orders { get; set; } = new();
+        public decimal Threshold { get; set; }
+    }
+
+    class Program
+    {
+        static void Main()
         {
-            Orders = new List<Order>
+            // 1. Prepare sample data.
+            var model = new ReportModel
             {
-                new Order { Id = 1, CustomerName = "Alice", TotalAmount = 75m },
-                new Order { Id = 2, CustomerName = "Bob",   TotalAmount = 150m },
-                new Order { Id = 3, CustomerName = "Carol", TotalAmount = 250m },
-                new Order { Id = 4, CustomerName = "Dave",  TotalAmount = 45m }
-            }
-        };
+                Threshold = 100m,
+                Orders = new List<Order>
+                {
+                    new Order { CustomerName = "Alice", TotalAmount = 75m },
+                    new Order { CustomerName = "Bob",   TotalAmount = 150m },
+                    new Order { CustomerName = "Carol", TotalAmount = 200m },
+                    new Order { CustomerName = "Dave",  TotalAmount = 50m }
+                }
+            };
 
-        // Create a template document programmatically.
-        string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+            // 2. Create the template document programmatically.
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Orders with total amount > 100:");
-        // Use a lambda expression inside the foreach tag to filter the collection.
-        builder.Writeln("<<foreach [order in Orders.Where(o => o.TotalAmount > 100)]>>");
-        builder.Writeln("- <<[order.Id]>>: <<[order.CustomerName]>> - $<<[order.TotalAmount]>>");
-        builder.Writeln("<</foreach>>");
+            builder.Writeln("Orders with total amount greater than <<[model.Threshold]>>:");
+            // Use a lambda expression inside the foreach tag to filter the collection.
+            builder.Writeln("<<foreach [order in model.Orders.Where(o => o.TotalAmount > model.Threshold)]>>");
+            builder.Writeln("- <<[order.CustomerName]>>: $<<[order.TotalAmount]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+            // Save the template before building the report.
+            doc.Save(templatePath);
 
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
+            // 3. Load the template and build the report.
+            var loadedDoc = new Document(templatePath);
+            var engine = new ReportingEngine();
+            engine.BuildReport(loadedDoc, model, "model");
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
+            // 4. Save the generated report.
+            loadedDoc.Save("Report.docx");
+        }
     }
 }

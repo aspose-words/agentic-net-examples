@@ -7,58 +7,47 @@ public class Program
     public static void Main()
     {
         // Prepare sample data.
-        var model = new ReportModel
+        Person person = new Person
         {
-            Person = new Person
-            {
-                Name = "John Doe",
-                BirthDate = new DateTime(1990, 5, 15)
-            }
+            Name = "John Doe",
+            BirthDate = new DateTime(1990, 5, 15)
         };
 
         // Create a template document programmatically.
-        var templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Name: <<[model.Person.Name]>>");
-        builder.Writeln("Age: <<[DateHelper.CalculateAge(model.Person.BirthDate)]>>");
-        doc.Save(templatePath);
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Load the template and build the report.
-        var loadedDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        // Insert LINQ Reporting tags.
+        builder.Writeln("Name: <<[model.Name]>>");
+        builder.Writeln("Age: <<[DateHelper.CalculateAge(model.BirthDate)]>>");
 
-        // Register the helper class so its static members can be used in expressions.
+        // Register the helper class so its static members can be used in the template.
+        ReportingEngine engine = new ReportingEngine();
         engine.KnownTypes.Add(typeof(DateHelper));
 
-        engine.BuildReport(loadedDoc, model, "model");
+        // Build the report using the template and the data source.
+        engine.BuildReport(template, person, "model");
 
         // Save the generated report.
-        var outputPath = "report.docx";
-        loadedDoc.Save(outputPath);
+        template.Save("Report.docx");
     }
 }
 
-// Data model classes.
-public class ReportModel
-{
-    public Person Person { get; set; } = new Person();
-}
-
+// Data model class.
 public class Person
 {
     public string Name { get; set; } = string.Empty;
     public DateTime BirthDate { get; set; }
 }
 
-// Helper class with the custom static method.
+// Helper class containing the custom static method.
 public static class DateHelper
 {
     // Calculates age based on the provided birth date.
     public static int CalculateAge(DateTime birthDate)
     {
-        var today = DateTime.Today;
-        var age = today.Year - birthDate.Year;
+        DateTime today = DateTime.Today;
+        int age = today.Year - birthDate.Year;
         if (birthDate > today.AddYears(-age))
             age--;
         return age;

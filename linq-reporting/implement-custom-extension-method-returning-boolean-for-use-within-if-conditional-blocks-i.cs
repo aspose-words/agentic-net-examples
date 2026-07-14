@@ -2,96 +2,73 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
+
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = "";
+
+    // Custom method usable in LINQ Reporting templates
+    public bool IsEven() => Index % 2 == 0;
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        var templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
+        // Sample data
+        var model = new ReportModel();
+        for (int i = 1; i <= 5; i++)
+        {
+            model.Items.Add(new Item { Index = i, Name = $"Item {i}" });
+        }
 
-        // Loop over the collection of persons.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
+        // Create template
+        const string templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Show status for adults.
-        builder.Writeln("<<if [p.IsAdult()]>>Status: Adult<</if>>");
+        // Begin foreach block
+        builder.Writeln("<<foreach [item in Items]>>");
 
-        // Show status for minors – use a comparison instead of the '!' operator,
-        // because the engine cannot apply '!' to an object.
-        builder.Writeln("<<if [p.IsAdult() == false]>>Status: Minor<</if>>");
+        // Table header
+        Table table = builder.StartTable();
+        builder.InsertCell(); builder.Writeln("Index");
+        builder.InsertCell(); builder.Writeln("Name");
+        builder.EndRow();
 
+        // Data row
+        builder.InsertCell();
+        builder.Writeln(
+            "<<if [item.IsEven()]>>" +
+            "<<backColor [\"LightGray\"]>><<[item.Index]>> <</backColor>><</if>>" +
+            "<<if [item.IsEven() == false]>>" +
+            "<<[item.Index]>> <</if>>");
+        builder.InsertCell();
+        builder.Writeln(
+            "<<if [item.IsEven()]>>" +
+            "<<backColor [\"LightGray\"]>><<[item.Name]>> <</backColor>><</if>>" +
+            "<<if [item.IsEven() == false]>>" +
+            "<<[item.Name]>> <</if>>");
+        builder.EndRow();
+
+        // End table and foreach
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        builder.Document.Save(templatePath);
+        // Save the template
+        doc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model.
-        // -----------------------------------------------------------------
-        var model = new ReportModel
-        {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 15 }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 4. Configure the reporting engine.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine
-        {
-            // Allow missing members so that the engine treats absent members as null.
-            Options = ReportBuildOptions.AllowMissingMembers
-        };
-
-        // Register the class that contains the extension method.
-        engine.KnownTypes.Add(typeof(MyExtensions));
-
-        // -----------------------------------------------------------------
-        // 5. Build the report.
-        // -----------------------------------------------------------------
-        engine.BuildReport(doc, model, "model");
-
-        // -----------------------------------------------------------------
-        // 6. Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save("Report.docx");
+        // Build report
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+        reportDoc.Save("Report.docx");
     }
-}
-
-// ---------------------------------------------------------------------
-// Root data model.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-// ---------------------------------------------------------------------
-// Simple data entity.
-// ---------------------------------------------------------------------
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-}
-
-// ---------------------------------------------------------------------
-// Extension methods usable in templates.
-// ---------------------------------------------------------------------
-public static class MyExtensions
-{
-    // Returns true if the person is 18 or older.
-    public static bool IsAdult(this Person person) => person.Age >= 18;
 }

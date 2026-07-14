@@ -1,61 +1,57 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class CsvReportExample
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider for CSV parsing.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample CSV file.
-        // The CSV uses double quotes to enclose a field that contains a comma and quotes.
-        // To embed a quote inside a quoted field we double it.
-        string csvPath = Path.Combine(outputDir, "SampleData.csv");
-        string[] csvLines =
-        {
-            "Name,Comment",
-            "Alice,\"\"\"Hello, World!\"\"\"",
-            "Bob,No quotes"
-        };
-        File.WriteAllLines(csvPath, csvLines);
+        // Prepare sample CSV data with a custom single‑quote as the quote character.
+        const string csvPath = "people.csv";
+        File.WriteAllText(csvPath,
+@"Id,Name,Comment
+1,'Alice','""Hello, World""'
+2,'Bob','""Goodbye, World""'");
 
-        // 2. Create a Word template with LINQ Reporting tags.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Use a foreach loop to iterate over CSV rows.
-        builder.Writeln("<<foreach [row in data]>>");
-        builder.Writeln("Name: <<[row.Name]>>");
-        builder.Writeln("Comment: <<[row.Comment]>>");
-        builder.Writeln("<</foreach>>");
-
-        templateDoc.Save(templatePath);
-
-        // 3. Load the template document.
-        Document reportDoc = new Document(templatePath);
-
-        // 4. Configure CSV load options.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true) // first line has headers
+        // Configure CSV loading options: headers present, comma delimiter, single‑quote as quote char.
+        var loadOptions = new CsvDataLoadOptions(true)
         {
             Delimiter = ',',
-            QuoteChar = '"', // standard double‑quote character
-            HasHeaders = true
+            QuoteChar = '\''
         };
 
-        // 5. Create CSV data source.
-        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+        // Create a CSV data source from the file using the custom options.
+        var csvDataSource = new CsvDataSource(csvPath, loadOptions);
 
-        // 6. Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, csvDataSource, "data");
+        // Build a simple Word template programmatically.
+        const string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // 7. Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        reportDoc.Save(reportPath);
+        // Insert LINQ Reporting tags.
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Id: <<[person.Id]>>");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Comment: <<[person.Comment]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        templateDoc.Save(templatePath);
+
+        // Load the template (demonstrating load step).
+        var loadedTemplate = new Document(templatePath);
+
+        // Build the report using the CSV data source.
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, csvDataSource, "persons");
+
+        // Save the generated report.
+        const string reportPath = "report.docx";
+        loadedTemplate.Save(reportPath);
     }
 }

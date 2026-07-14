@@ -1,56 +1,54 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Model
+namespace AsposeWordsLinqReportingExample
 {
-    // Sample data model with a non‑nullable property initialized to avoid warnings.
-    public string Name { get; set; } = "";
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model used in the template.
+    public class Model
     {
-        // -----------------------------------------------------------------
-        // 1. Create a simple template document containing a LINQ Reporting tag.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Hello <<[model.Name]>>!"); // Tag will be replaced by the model value.
+        public string Name { get; set; } = "World";
+    }
 
-        // Save the template to a local file.
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
+    // Wrapper that sets the static UseReflectionOptimization flag to false for the duration of the using block.
+    public class EngineScope : IDisposable
+    {
+        public ReportingEngine Engine { get; }
 
-        // -----------------------------------------------------------------
-        // 2. Load the template back from disk.
-        // -----------------------------------------------------------------
-        var loadedTemplate = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the data source (root object) for the report.
-        // -----------------------------------------------------------------
-        var model = new Model { Name = "World" };
-
-        // -----------------------------------------------------------------
-        // 4. Build the report inside a using block while disabling reflection optimization.
-        // -----------------------------------------------------------------
-        using (var dummyStream = new MemoryStream()) // Using block as required; the stream itself is not used.
+        public EngineScope()
         {
-            // Disable the reflection optimization for this report generation.
+            // Disable reflection optimization for this template.
             ReportingEngine.UseReflectionOptimization = false;
-
-            // Create the reporting engine and build the report.
-            var engine = new ReportingEngine();
-            engine.BuildReport(loadedTemplate, model, "model");
+            Engine = new ReportingEngine();
         }
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        const string outputPath = "Report.docx";
-        loadedTemplate.Save(outputPath);
+        public void Dispose()
+        {
+            // Restore the default value after the report is built.
+            ReportingEngine.UseReflectionOptimization = true;
+        }
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a template document with a LINQ Reporting tag.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+            builder.Writeln("Hello <<[model.Name]>>!");
+
+            // Prepare the data source.
+            Model model = new Model { Name = "Aspose.Words" };
+
+            // Build the report with reflection optimization disabled.
+            using (var scope = new EngineScope())
+            {
+                scope.Engine.BuildReport(template, model, "model");
+            }
+
+            // Save the generated report.
+            template.Save("Report.docx");
+        }
     }
 }

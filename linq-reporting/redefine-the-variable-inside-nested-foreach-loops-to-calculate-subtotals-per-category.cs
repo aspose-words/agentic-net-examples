@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,78 +8,107 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        ReportModel model = new()
+        // Ensure the output folder exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // 1. Create the LINQ Reporting template programmatically.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        CreateTemplate(templatePath);
+
+        // 2. Prepare the data model.
+        ReportModel model = new ReportModel
         {
             Categories = new List<Category>
             {
-                new()
+                new Category
                 {
                     Name = "Fruits",
                     Items = new List<Item>
                     {
-                        new() { Name = "Apple", Price = 1.20m },
-                        new() { Name = "Banana", Price = 0.80m },
-                        new() { Name = "Orange", Price = 1.50m }
+                        new Item { Name = "Apple", Price = 1.20m },
+                        new Item { Name = "Banana", Price = 0.80m },
+                        new Item { Name = "Orange", Price = 1.50m }
                     }
                 },
-                new()
+                new Category
                 {
                     Name = "Vegetables",
                     Items = new List<Item>
                     {
-                        new() { Name = "Carrot", Price = 0.60m },
-                        new() { Name = "Broccoli", Price = 1.10m }
+                        new Item { Name = "Carrot", Price = 0.60m },
+                        new Item { Name = "Broccoli", Price = 1.10m }
                     }
                 }
             }
         };
 
-        // Create a template document with LINQ Reporting tags.
-        string templatePath = "Template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("<<foreach [cat in Categories]>>");
-        builder.Writeln("Category: <<[cat.Name]>>");
-        builder.Writeln("<<foreach [item in cat.Items]>>");
-        builder.Writeln("- <<[item.Name]>>: $<<[item.Price]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("Subtotal: $<<[cat.Subtotal]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // Load the template for reporting.
+        // 3. Load the template and build the report.
         Document doc = new Document(templatePath);
-
-        // Build the report.
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        // 4. Save the generated report.
+        string resultPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(resultPath);
+    }
+
+    // Creates a simple Word document containing LINQ Reporting tags.
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Title
+        builder.Writeln("Category Report");
+        builder.Writeln();
+
+        // Outer foreach: iterate over categories.
+        builder.Writeln("<<foreach [cat in model.Categories]>>");
+        builder.Writeln("Category: <<[cat.Name]>>");
+        builder.Writeln();
+
+        // Inner foreach: iterate over items within a category.
+        builder.Writeln("<<foreach [item in cat.Items]>>");
+        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Subtotal for the current category.
+        builder.Writeln("Subtotal: $<<[cat.Subtotal]>>");
+        builder.Writeln();
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(filePath);
     }
 }
 
-// Data model classes.
+// Root data model passed to the reporting engine.
 public class ReportModel
 {
     public List<Category> Categories { get; set; } = new();
 }
 
+// Represents a category containing multiple items.
 public class Category
 {
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
     public List<Item> Items { get; set; } = new();
 
-    // Subtotal calculated per category.
-    public decimal Subtotal => Items.Sum(i => i.Price);
+    // Calculated subtotal for the category.
+    public decimal Subtotal => CalculateSubtotal();
+
+    private decimal CalculateSubtotal()
+    {
+        decimal sum = 0;
+        foreach (var i in Items)
+            sum += i.Price;
+        return sum;
+    }
 }
 
+// Represents an individual item.
 public class Item
 {
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
 }

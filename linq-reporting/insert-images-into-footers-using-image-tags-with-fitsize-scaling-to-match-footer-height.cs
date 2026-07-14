@@ -1,65 +1,71 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
 
 public class Program
 {
+    // Simple data model used by the LINQ Reporting template.
+    public class ReportModel
+    {
+        // Path to the image that will be inserted into the footer.
+        public string ImagePath { get; set; } = string.Empty;
+    }
+
     public static void Main()
     {
-        // Paths for the template, image and final report.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "Template.docx");
-        string imagePath = Path.Combine(workDir, "sample.png");
-        string reportPath = Path.Combine(workDir, "Report.docx");
+        // Ensure the output folder exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple PNG image (1x1 pixel, red) from a Base64 string.
-        // -----------------------------------------------------------------
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9YVYcVYAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        File.WriteAllBytes(imagePath, pngBytes);
+        // Create a tiny PNG image (1x1 pixel, red) from a Base64 string.
+        string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9WcK4VQAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        string imagePath = Path.Combine(outputDir, "sample.png");
+        File.WriteAllBytes(imagePath, imageBytes);
 
-        // -----------------------------------------------------------------
-        // 2. Build the template document programmatically.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Build the LINQ Reporting template.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        CreateTemplate(templatePath, imagePath);
 
-        // Move to the primary footer.
+        // Load the template document.
+        Document doc = new Document(templatePath);
+
+        // Prepare the data model.
+        ReportModel model = new ReportModel { ImagePath = imagePath };
+
+        // Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the final document.
+        string resultPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(resultPath);
+    }
+
+    // Creates a Word document that contains a footer with an image tag.
+    private static void CreateTemplate(string filePath, string placeholderImagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Move to the primary footer of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
 
-        // Insert a textbox that will host the image tag.
+        // Insert a textbox that will hold the image tag.
         Shape textBox = builder.InsertShape(ShapeType.TextBox, 100, 30);
+        // Ensure the cursor is inside the textbox.
         builder.MoveTo(textBox.FirstParagraph);
 
         // Write the LINQ Reporting image tag with -fitSize switch.
+        // The tag will be replaced with the actual image during report generation.
         builder.Write("<<image [model.ImagePath] -fitSize>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Optionally add some static text after the image.
+        builder.Writeln(" Footer text");
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and populate it using ReportingEngine.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-
-        // Data model exposing the image path.
-        var model = new ReportModel { ImagePath = imagePath };
-
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        reportDoc.Save(reportPath);
+        // Save the template.
+        doc.Save(filePath);
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model used by the LINQ Reporting engine.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public string ImagePath { get; set; } = string.Empty;
 }

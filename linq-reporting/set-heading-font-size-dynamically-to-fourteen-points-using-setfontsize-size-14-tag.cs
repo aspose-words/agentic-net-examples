@@ -1,55 +1,41 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class ReportModel
 {
-    // Simple data model for the report.
-    public class ReportModel
+    public string Title { get; set; } = "Dynamic Heading";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public string Title { get; set; } = "Dynamic Heading";
-    }
+        // Create sample data.
+        var model = new ReportModel();
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Ensure code pages are available (required for some data sources).
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Create a template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string outputPath = "Report.docx";
+        // Set the font size for the heading to 14 points.
+        builder.Font.Size = 14;
 
-            // ---------- Create the template document ----------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Insert a heading placeholder that will be replaced by the model's Title.
+        builder.Writeln("<<[model.Title]>>");
 
-            // Set the heading font size to 14 points.
-            builder.Font.Size = 14;
+        // Save the template to a local file.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-            // Insert a LINQ Reporting tag that will be replaced by the model's Title.
-            builder.Writeln("<<[model.Title]>>");
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // ---------- Prepare the data ----------
-            ReportModel model = new ReportModel
-            {
-                Title = "Report Heading – Fourteen Point Font"
-            };
-
-            // ---------- Build the report ----------
-            Document reportDoc = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine();
-
-            // Populate the template with data.
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the final report.
-            reportDoc.Save(outputPath);
-        }
+        // Save the generated report.
+        doc.Save("Report.docx");
     }
 }

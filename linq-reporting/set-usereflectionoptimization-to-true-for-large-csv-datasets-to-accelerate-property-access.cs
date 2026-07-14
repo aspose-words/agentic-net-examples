@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,56 +8,52 @@ public class Program
 {
     public static void Main()
     {
-        // Working directory.
-        string workDir = Directory.GetCurrentDirectory();
+        // Register code page provider for CSV parsing (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // ---------- Create sample CSV data ----------
-        string csvPath = Path.Combine(workDir, "people.csv");
-        using (var writer = new StreamWriter(csvPath))
+        // ---------- Create a sample CSV file ----------
+        const string csvFile = "persons.csv";
+        using (var writer = new StreamWriter(csvFile))
         {
-            // Header.
-            writer.WriteLine("Name,Age");
-            // Sample rows (simulating a larger dataset).
-            for (int i = 1; i <= 1000; i++)
+            // Header row
+            writer.WriteLine("Name,Age,Country");
+            // Generate 100 sample records
+            for (int i = 1; i <= 100; i++)
             {
-                writer.WriteLine($"Person {i},{20 + (i % 30)}");
+                writer.WriteLine($"Person{i},{20 + i % 30},Country{i % 5}");
             }
         }
 
-        // ---------- Create a template document ----------
-        string templatePath = Path.Combine(workDir, "template.docx");
+        // ---------- Build a template document with LINQ Reporting tags ----------
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-
-        // LINQ Reporting tags: iterate over the CSV rows (exposed as 'persons').
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        builder.Writeln("Person List:");
+        builder.Writeln("<<foreach [p in persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Age: <<[p.Age]>>");
+        builder.Writeln("Country: <<[p.Country]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
+        // Save the template (optional, demonstrates the load step later).
+        const string templatePath = "template.docx";
         templateDoc.Save(templatePath);
 
-        // ---------- Load the template for reporting ----------
-        var doc = new Document(templatePath);
+        // Load the template document back.
+        var loadedTemplate = new Document(templatePath);
 
-        // ---------- Configure CSV data source ----------
-        var loadOptions = new CsvDataLoadOptions(true) // CSV has headers.
-        {
-            Delimiter = ',',
-            CommentChar = '#',
-            QuoteChar = '"'
-        };
-        var csvDataSource = new CsvDataSource(csvPath, loadOptions);
+        // ---------- Prepare CSV data source ----------
+        var csvLoadOptions = new CsvDataLoadOptions(true); // CSV has headers.
+        var csvDataSource = new CsvDataSource(csvFile, csvLoadOptions);
 
-        // ---------- Enable reflection optimization ----------
+        // ---------- Enable reflection optimization for large data sets ----------
         ReportingEngine.UseReflectionOptimization = true;
 
         // ---------- Build the report ----------
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, csvDataSource, "persons");
+        engine.BuildReport(loadedTemplate, csvDataSource, "persons");
 
         // ---------- Save the generated report ----------
-        string reportPath = Path.Combine(workDir, "Report.docx");
-        doc.Save(reportPath);
+        const string outputPath = "report.docx";
+        loadedTemplate.Save(outputPath);
     }
 }

@@ -1,71 +1,66 @@
 using System;
 using System.Globalization;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Extension method used inside the LINQ Reporting expression tag.
-    public static class DateExtensions
+    // Extension method container. The method is static and will be called as a static method from the template.
+    public static class DateTimeExtensions
     {
-        // Formats the date according to the specified locale (culture name, e.g., "en-US", "fr-FR").
-        public static string ToLocaleString(this DateTime date, string locale)
+        // Formats the date according to the specified locale (culture name, e.g., "en-US").
+        public static string FormatDate(DateTime date, string locale)
         {
             var culture = new CultureInfo(locale);
-            // Use short date pattern for the given culture.
-            return date.ToString(culture.DateTimeFormat.ShortDatePattern, culture);
+            // Long date pattern.
+            return date.ToString("D", culture);
         }
     }
 
-    // Simple data model that will be bound to the template.
+    // Simple data model for the report.
     public class Order
     {
+        // Sample date property.
         public DateTime OrderDate { get; set; } = DateTime.Now;
-        public string CustomerName { get; set; } = "John Doe";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Prepare sample data.
+            // 1. Create the template document programmatically.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
+
+            // Use static method syntax in the LINQ Reporting tags.
+            builder.Writeln("Order date (US format): <<[DateTimeExtensions.FormatDate(order.OrderDate, \"en-US\")]>>");
+            builder.Writeln("Order date (German format): <<[DateTimeExtensions.FormatDate(order.OrderDate, \"de-DE\")]>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // 2. Load the template for reporting.
+            var doc = new Document(templatePath);
+
+            // 3. Prepare the data source.
             var order = new Order
             {
-                OrderDate = new DateTime(2023, 5, 1),
-                CustomerName = "Alice Smith"
+                // Example specific date.
+                OrderDate = new DateTime(2023, 12, 25)
             };
 
-            // Create a blank document that will serve as the template.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            // 4. Configure the ReportingEngine.
+            var engine = new ReportingEngine();
+            // Register the type that contains the static method.
+            engine.KnownTypes.Add(typeof(DateTimeExtensions));
 
-            // Insert a paragraph with a LINQ Reporting expression tag that calls the custom extension method.
-            // The tag will format the OrderDate according to the French locale.
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln("Order date (French format): <<[order.OrderDate.ToLocaleString(\"fr-FR\")]>>");
-            builder.Writeln("Order date (US format): <<[order.OrderDate.ToLocaleString(\"en-US\")]>>");
-
-            // Configure the reporting engine.
-            var engine = new ReportingEngine
-            {
-                // Allow the engine to resolve the extension method.
-                Options = ReportBuildOptions.AllowMissingMembers
-            };
-            // Register the static class that contains the extension method.
-            engine.KnownTypes.Add(typeof(DateExtensions));
-
-            // Build the report using the document template and the data source.
-            // The root object name must match the name used in the template tags ("order").
+            // 5. Build the report.
             engine.BuildReport(doc, order, "order");
 
-            // Ensure the output directory exists.
-            var outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // Save the generated report.
-            var outputPath = Path.Combine(outputDir, "Report.docx");
-            doc.Save(outputPath);
+            // 6. Save the generated report.
+            const string reportPath = "Report.docx";
+            doc.Save(reportPath);
         }
     }
 }

@@ -3,80 +3,60 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsCsvStreamingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Register code page provider (required for some CSV encodings)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Path for a temporary large CSV file
+        string csvPath = Path.Combine(Path.GetTempPath(), "large.csv");
+
+        // Generate a CSV file with many rows (e.g., 5000 rows)
+        GenerateCsv(csvPath, 5000);
+
+        // Create a Word template document programmatically
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        builder.Writeln("Report generated from CSV data:");
+        builder.Writeln("Id\tName\tAge");
+        // LINQ Reporting foreach tag that iterates over the CSV rows
+        builder.Writeln("<<foreach [row in persons]>>");
+        builder.Writeln("<<[row.Id]>>\t<<[row.Name]>>\t<<[row.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Build the report using a CsvDataSource that reads from a stream
+        using (FileStream csvStream = File.OpenRead(csvPath))
         {
-            // Register code page provider for CSV parsing (required for some encodings).
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+            // Load options: first line contains headers, comma delimiter
+            CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
+            loadOptions.Delimiter = ',';
 
-            // Prepare folders.
-            string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-            string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(dataFolder);
-            Directory.CreateDirectory(outputFolder);
+            CsvDataSource dataSource = new CsvDataSource(csvStream, loadOptions);
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(template, dataSource, "persons");
+        }
 
-            // Path to the large CSV file.
-            string csvPath = Path.Combine(dataFolder, "large.csv");
+        // Save the generated report
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ReportFromCsv.docx");
+        template.Save(outputPath);
 
-            // Generate a large CSV file if it does not already exist.
-            if (!File.Exists(csvPath))
+        // Clean up the temporary CSV file
+        File.Delete(csvPath);
+    }
+
+    // Helper method to create a CSV file with the specified number of rows
+    private static void GenerateCsv(string path, int rowCount)
+    {
+        using (StreamWriter writer = new StreamWriter(path))
+        {
+            writer.WriteLine("Id,Name,Age"); // Header
+            for (int i = 1; i <= rowCount; i++)
             {
-                using (var writer = new StreamWriter(csvPath))
-                {
-                    writer.WriteLine("Id,Name,Value"); // Header row.
-                    for (int i = 0; i < 10000; i++)
-                    {
-                        writer.WriteLine($"{i},Name{i},{i * 10}");
-                    }
-                }
+                writer.WriteLine($"{i},Name_{i},{20 + (i % 30)}");
             }
-
-            // -----------------------------------------------------------------
-            // Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            builder.Writeln("CSV Report");
-            // Iterate over the CSV rows (data source name will be "rows").
-            builder.Writeln("<<foreach [row in rows]>>");
-            builder.Writeln("Id: <<[row.Id]>>, Name: <<[row.Name]>>, Value: <<[row.Value]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk (required before BuildReport).
-            string templatePath = Path.Combine(dataFolder, "template.docx");
-            template.Save(templatePath);
-
-            // Load the template document.
-            Document reportDoc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // Stream the CSV file using CsvDataSource (no full load into memory).
-            // -----------------------------------------------------------------
-            using (FileStream csvStream = new FileStream(csvPath, FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                // Configure CSV loading options: first line contains headers.
-                CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-                loadOptions.Delimiter = ','; // Default delimiter, set explicitly for clarity.
-
-                // Create the CSV data source from the stream.
-                CsvDataSource csvDataSource = new CsvDataSource(csvStream, loadOptions);
-
-                // Build the report using the reporting engine.
-                ReportingEngine engine = new ReportingEngine();
-                engine.BuildReport(reportDoc, csvDataSource, "rows");
-            }
-
-            // Save the generated report.
-            string reportPath = Path.Combine(outputFolder, "Report.docx");
-            reportDoc.Save(reportPath);
-
-            // Indicate completion.
-            Console.WriteLine("Report generated successfully at:");
-            Console.WriteLine(reportPath);
         }
     }
 }

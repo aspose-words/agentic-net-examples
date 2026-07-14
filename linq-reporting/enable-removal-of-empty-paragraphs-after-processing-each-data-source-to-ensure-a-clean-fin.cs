@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,62 +9,75 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for some Aspose.Words features)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for the template and the final report.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        string reportPath = Path.Combine(outputDir, "Report.docx");
+        // Paths for the template and the final report
+        string templatePath = "Template.docx";
+        string outputPath = "Report.docx";
 
-        // 1. Create the LINQ Reporting template.
+        // -------------------------------------------------
+        // Create the LINQ Reporting template programmatically
+        // -------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Persons Report");
+        // Title
+        builder.Writeln("People Report");
+        builder.Writeln();
+
+        // Foreach block that will be populated from the data source
         builder.Writeln("<<foreach [p in Persons]>>");
-        // This line may become empty if Age is null, producing an empty paragraph.
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Age: <<[p.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // A paragraph that will become empty if the collection is empty
+        builder.Writeln();
+        builder.Writeln("End of Report");
+
+        // Save the template to disk
         templateDoc.Save(templatePath);
 
-        // 2. Load the template for reporting.
+        // -------------------------------------------------
+        // Load the template and build the report
+        // -------------------------------------------------
         Document reportDoc = new Document(templatePath);
 
-        // 3. Prepare sample data with some missing values.
+        // Prepare data: first a populated list, then an empty list to demonstrate removal
         ReportModel model = new ReportModel
         {
             Persons = new List<Person>
             {
                 new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = null },   // Missing age -> empty paragraph.
-                new Person { Name = "Charlie", Age = 25 }
+                new Person { Name = "Bob", Age = 45 }
             }
         };
 
-        // 4. Configure the ReportingEngine to remove empty paragraphs.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        // Configure the ReportingEngine to remove empty paragraphs after processing
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.RemoveEmptyParagraphs
+        };
 
-        // 5. Build the report using the model as the root object named "model".
+        // Build the report using the model; the root name in the template is "model"
         engine.BuildReport(reportDoc, model, "model");
 
-        // 6. Save the final document.
-        reportDoc.Save(reportPath);
+        // Save the final document
+        reportDoc.Save(outputPath);
     }
 }
 
-// Wrapper class that matches the root name used in the template.
+// -----------------------------------------------------------------
+// Data model classes (public with initialized properties to avoid warnings)
+// -----------------------------------------------------------------
 public class ReportModel
 {
     public List<Person> Persons { get; set; } = new();
 }
 
-// Simple data entity.
 public class Person
 {
     public string Name { get; set; } = string.Empty;
-    public int? Age { get; set; }
+    public int Age { get; set; }
 }

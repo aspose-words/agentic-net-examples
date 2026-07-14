@@ -1,54 +1,66 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+namespace AsposeWordsLinqReportingExample
 {
-    // Sample data properties. Optional may be null, causing an empty paragraph after rendering.
-    public string Name { get; set; } = "John Doe";
-    public string? Optional { get; set; } = null;
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model used by the LINQ Reporting template.
+    public class ReportModel
     {
-        // Prepare a simple template document with a placeholder that can become empty.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Non‑nullable properties are initialized to avoid warnings.
+        public string Name { get; set; } = string.Empty;
+        public string OptionalText { get; set; } = string.Empty;
+    }
 
-        // Paragraph with a regular value.
-        builder.Writeln("Name: <<[model.Name]>>");
-        // Paragraph that contains only a tag which may resolve to an empty string.
-        builder.Writeln("<<[model.Optional]>>");
-        // Final paragraph to show the document after processing.
-        builder.Writeln("End of report.");
-
-        // Save the template locally (optional, shown for completeness).
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
-
-        // Load the template back (demonstrates the load step).
-        Document doc = new Document(templatePath);
-
-        // Create the data source.
-        ReportModel model = new ReportModel();
-
-        // Configure the reporting engine to remove empty paragraphs after tags are processed.
-        ReportingEngine engine = new ReportingEngine
+    public class Program
+    {
+        public static void Main()
         {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
-        };
+            // -----------------------------------------------------------------
+            // 1. Create a template document that contains a placeholder which may be empty.
+            // -----------------------------------------------------------------
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-        // Build the report. The root object name must match the tag prefix used in the template.
-        engine.BuildReport(doc, model, "model");
+            // Paragraph with a required value.
+            builder.Writeln("Customer: <<[model.Name]>>");
 
-        // Save the final document.
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+            // Paragraph that can become empty after rendering (OptionalText may be empty).
+            builder.Writeln("Note: <<[model.OptionalText]>>");
 
-        // Indicate completion (no interactive prompts).
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+
+            // Populate the model – OptionalText is left empty to trigger removal.
+            var model = new ReportModel
+            {
+                Name = "John Doe",
+                OptionalText = string.Empty // This will result in an empty paragraph.
+            };
+
+            // Configure the ReportingEngine to remove empty paragraphs after processing.
+            var engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.RemoveEmptyParagraphs
+            };
+
+            // Build the report. The root object name must match the tag prefix used in the template.
+            engine.BuildReport(doc, model, "model");
+
+            // -----------------------------------------------------------------
+            // 3. Save the final document.
+            // -----------------------------------------------------------------
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+
+            // Optional: output a short confirmation.
+            Console.WriteLine($"Report generated and saved to '{outputPath}'.");
+        }
     }
 }

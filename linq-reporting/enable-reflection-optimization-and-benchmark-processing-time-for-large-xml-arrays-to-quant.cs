@@ -1,8 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
-using System.Xml.Linq;
+using System.Xml.Serialization;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -10,87 +10,84 @@ public class Program
 {
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        // Prepare output directory
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Paths for the template and data files.
+        // Generate large data set
+        List<Order> orders = new();
+        for (int i = 0; i < 2000; i++)
+        {
+            var order = new Order
+            {
+                CustomerName = $"Customer {i}",
+                Items = new()
+                {
+                    new Item { Name = "Item A", Quantity = i % 5 + 1 },
+                    new Item { Name = "Item B", Quantity = (i + 2) % 5 + 1 }
+                }
+            };
+            orders.Add(order);
+        }
+
+        // Optional: serialize to XML (demonstrates XML handling)
+        string xmlPath = Path.Combine(outputDir, "orders.xml");
+        var serializer = new XmlSerializer(typeof(List<Order>), new XmlRootAttribute("Orders"));
+        using (var stream = new FileStream(xmlPath, FileMode.Create, FileAccess.Write))
+        {
+            serializer.Serialize(stream, orders);
+        }
+
+        // Create LINQ Reporting template
         string templatePath = Path.Combine(outputDir, "template.docx");
-        string xmlDataPath = Path.Combine(outputDir, "data.xml");
-        string reportWithoutOptPath = Path.Combine(outputDir, "report_without_opt.docx");
-        string reportWithOptPath = Path.Combine(outputDir, "report_with_opt.docx");
-
-        // -----------------------------------------------------------------
-        // 1. Create a simple LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Template uses a foreach loop over the "persons" collection.
-        builder.Writeln("<<foreach [p in persons]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report of Orders");
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Order: <<[order.CustomerName]>>");
         builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Generate a large XML data source (e.g., 10,000 person records).
-        // -----------------------------------------------------------------
-        const int recordCount = 10000;
-        XDocument xmlDoc = new XDocument(
-            new XElement("persons",
-                GeneratePersonElements(recordCount)
-            )
-        );
-        xmlDoc.Save(xmlDataPath, SaveOptions.DisableFormatting);
-
-        // -----------------------------------------------------------------
-        // 3. Benchmark without reflection optimization.
-        // -----------------------------------------------------------------
+        // Benchmark without reflection optimization
         ReportingEngine.UseReflectionOptimization = false;
-        Document docWithoutOpt = new Document(templatePath);
-        XmlDataSource dataSourceWithoutOpt = new XmlDataSource(xmlDataPath);
-        ReportingEngine engineWithoutOpt = new ReportingEngine();
+        var docWithoutOpt = new Document(templatePath);
+        var engineWithout = new ReportingEngine();
+        var swWithout = Stopwatch.StartNew();
+        bool successWithout = engineWithout.BuildReport(docWithoutOpt, new ReportModel { Orders = orders }, "model");
+        swWithout.Stop();
+        string reportWithoutPath = Path.Combine(outputDir, "report_without_optimization.docx");
+        docWithoutOpt.Save(reportWithoutPath);
 
-        Stopwatch sw = Stopwatch.StartNew();
-        engineWithoutOpt.BuildReport(docWithoutOpt, dataSourceWithoutOpt, "persons");
-        sw.Stop();
-        long timeWithoutOpt = sw.ElapsedMilliseconds;
-
-        docWithoutOpt.Save(reportWithoutOptPath);
-
-        // -----------------------------------------------------------------
-        // 4. Benchmark with reflection optimization enabled.
-        // -----------------------------------------------------------------
+        // Benchmark with reflection optimization
         ReportingEngine.UseReflectionOptimization = true;
-        Document docWithOpt = new Document(templatePath);
-        XmlDataSource dataSourceWithOpt = new XmlDataSource(xmlDataPath);
-        ReportingEngine engineWithOpt = new ReportingEngine();
+        var docWithOpt = new Document(templatePath);
+        var engineWith = new ReportingEngine();
+        var swWith = Stopwatch.StartNew();
+        bool successWith = engineWith.BuildReport(docWithOpt, new ReportModel { Orders = orders }, "model");
+        swWith.Stop();
+        string reportWithPath = Path.Combine(outputDir, "report_with_optimization.docx");
+        docWithOpt.Save(reportWithPath);
 
-        sw.Restart();
-        engineWithOpt.BuildReport(docWithOpt, dataSourceWithOpt, "persons");
-        sw.Stop();
-        long timeWithOpt = sw.ElapsedMilliseconds;
-
-        docWithOpt.Save(reportWithOptPath);
-
-        // -----------------------------------------------------------------
-        // 5. Output the benchmark results.
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Processing time without reflection optimization: {timeWithoutOpt} ms");
-        Console.WriteLine($"Processing time with reflection optimization:    {timeWithOpt} ms");
+        // Output results
+        Console.WriteLine($"Report without optimization: {(successWithout ? "Success" : "Failed")} in {swWithout.ElapsedMilliseconds} ms");
+        Console.WriteLine($"Report with optimization:    {(successWith ? "Success" : "Failed")} in {swWith.ElapsedMilliseconds} ms");
+        Console.WriteLine($"Outputs saved to: {outputDir}");
     }
+}
 
-    // Helper method to generate a sequence of <person> elements.
-    private static IEnumerable<XElement> GeneratePersonElements(int count)
-    {
-        for (int i = 1; i <= count; i++)
-        {
-            yield return new XElement("person",
-                new XElement("Name", $"Person {i}"),
-                new XElement("Age", (20 + (i % 50)).ToString())
-            );
-        }
-    }
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
+
+public class Order
+{
+    public string CustomerName { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = "";
+    public int Quantity { get; set; }
 }

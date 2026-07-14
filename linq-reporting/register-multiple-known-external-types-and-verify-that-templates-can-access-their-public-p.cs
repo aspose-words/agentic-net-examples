@@ -1,72 +1,102 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReportingDemo
 {
-    // External type 1 with a public static property.
-    public static class ExternalTypeA
+    // Sample data model classes.
+    public class Person
     {
-        public static string Message => "Hello from ExternalTypeA";
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+        public Address Address { get; set; } = new();
     }
 
-    // External type 2 with a public static property.
-    public static class ExternalTypeB
+    public class Address
     {
-        public static int Value => 12345;
+        public string City { get; set; } = "";
+        public string Country { get; set; } = "";
     }
 
-    public class Program
+    // Wrapper class used as the root data source for the report.
+    public class ReportModel
     {
-        public static void Main()
+        public List<Person> Persons { get; set; } = new();
+    }
+
+    class Program
+    {
+        static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Create a template document that contains tags referencing the
-            //    static properties of the external types.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // Ensure the output folder exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-            builder.Writeln("Message: <<[ExternalTypeA.Message]>>");
-            builder.Writeln("Value:   <<[ExternalTypeB.Value]>>");
+            // 1. Create a template document with LINQ Reporting tags.
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            CreateTemplate(templatePath);
 
-            // Save the template to disk.
-            const string templatePath = "template.docx";
-            templateDoc.Save(templatePath);
+            // 2. Prepare sample data.
+            ReportModel model = new ReportModel
+            {
+                Persons = new List<Person>
+                {
+                    new Person
+                    {
+                        Name = "Alice",
+                        Age = 30,
+                        Address = new Address { City = "New York", Country = "USA" }
+                    },
+                    new Person
+                    {
+                        Name = "Bob",
+                        Age = 45,
+                        Address = new Address { City = "London", Country = "UK" }
+                    }
+                }
+            };
 
-            // -----------------------------------------------------------------
-            // 2. Load the template back (simulating a real‑world scenario where the
-            //    template is stored separately).
-            // -----------------------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
+            // 3. Load the template.
+            Document templateDoc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Configure the ReportingEngine.
-            //    Register the external types so that their static members can be
-            //    accessed from the template without using reflection.
-            // -----------------------------------------------------------------
+            // 4. Register external types so the template can access their public members without reflection.
             ReportingEngine engine = new ReportingEngine();
-            engine.KnownTypes.Add(typeof(ExternalTypeA));
-            engine.KnownTypes.Add(typeof(ExternalTypeB));
+            engine.KnownTypes.Add(typeof(Person));
+            engine.KnownTypes.Add(typeof(Address));
 
-            // The data source is not used in this example because the template only
-            // accesses static members. An empty object is sufficient.
-            object dummyDataSource = new object();
+            // 5. Build the report.
+            engine.BuildReport(templateDoc, model, "model");
 
-            // Build the report.
-            engine.BuildReport(loadedTemplate, dummyDataSource, "data");
+            // 6. Save the generated report.
+            string reportPath = Path.Combine(outputDir, "Report.docx");
+            templateDoc.Save(reportPath);
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            const string resultPath = "result.docx";
-            loadedTemplate.Save(resultPath);
+            // Indicate completion.
+            Console.WriteLine($"Report generated at: {reportPath}");
+        }
 
-            // -----------------------------------------------------------------
-            // 5. Verify the output by printing the document text to the console.
-            // -----------------------------------------------------------------
-            Console.WriteLine("Generated report content:");
-            Console.WriteLine(loadedTemplate.GetText());
+        // Helper method to create the template document.
+        private static void CreateTemplate(string filePath)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert a heading.
+            builder.Writeln("Person Report");
+            builder.Writeln();
+
+            // Begin a foreach loop over the Persons collection.
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>");
+            builder.Writeln("Age: <<[p.Age]>>");
+            builder.Writeln("City: <<[p.Address.City]>>");
+            builder.Writeln("Country: <<[p.Address.Country]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template.
+            doc.Save(filePath);
         }
     }
 }

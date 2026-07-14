@@ -1,79 +1,75 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model with public properties.
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
+        // Register code page provider for any required encodings.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Private member that should not be accessible from the template.
-        private string Secret { get; set; } = "TopSecret";
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-        // Public method to retrieve the secret (not used in the template).
-        public string GetSecret() => Secret;
-    }
+        // -------------------------------------------------
+        // Create a simple template document with LINQ tags.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Secret: <<[person.Secret]>>");
+        templateDoc.Save(templatePath);
 
-    // Wrapper class required because ReportingEngine does not accept anonymous types.
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+        // Load the template back for reporting.
+        Document reportDoc = new Document(templatePath);
 
-    public class Program
-    {
-        public static void Main()
+        // -------------------------------------------------
+        // Prepare the data model.
+        // -------------------------------------------------
+        Person sourcePerson = new Person
         {
-            // Prepare sample data.
-            var persons = new List<Person>
-            {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 45 },
-                new Person { Name = "Charlie", Age = 28 }
-            };
+            Name = "John Doe",
+            Secret = "TopSecret"
+        };
 
-            // Create the template document programmatically.
-            var templatePath = "template.docx";
-            CreateTemplate(templatePath);
-
-            // Load the template.
-            var doc = new Document(templatePath);
-
-            // Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-
-            // Wrap the data source in a public class so that BuildReport accepts it.
-            var model = new ReportModel { Persons = persons };
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            var outputPath = "report.docx";
-            doc.Save(outputPath);
-
-            Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
-        }
-
-        // Creates a simple Word template with LINQ Reporting tags.
-        private static void CreateTemplate(string filePath)
+        // Wrap the source object in a model that exposes only the allowed members.
+        PersonReport person = new PersonReport
         {
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            Name = sourcePerson.Name,
+            // Secret is intentionally omitted.
+        };
 
-            // Begin a foreach loop over the collection "Persons".
-            builder.Writeln("<<foreach [p in Persons]>>");
-            // Insert public property values.
-            builder.Writeln("Name: <<[p.Name]>>");
-            builder.Writeln("Age: <<[p.Age]>>");
-            // End the foreach loop.
-            builder.Writeln("<</foreach>>");
+        // -------------------------------------------------
+        // Configure the ReportingEngine.
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        // Allow missing members so that restricted members are rendered as empty strings.
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
 
-            // Save the template.
-            doc.Save(filePath);
-        }
+        // Build the report using the root object name "person".
+        engine.BuildReport(reportDoc, person, "person");
+
+        // Save the generated report.
+        reportDoc.Save(reportPath);
     }
+}
+
+// -----------------------------------------------------
+// Data model with public properties.
+// -----------------------------------------------------
+public class Person
+{
+    public string Name { get; set; }
+    public string Secret { get; set; }
+}
+
+// -----------------------------------------------------
+// Wrapper model exposing only the allowed public properties.
+// -----------------------------------------------------
+public class PersonReport
+{
+    public string Name { get; set; }
 }

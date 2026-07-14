@@ -2,68 +2,36 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class SensitiveInfo
-{
-    public string Secret { get; set; } = string.Empty;
-}
-
-public class ReportModel
-{
-    public SensitiveInfo Sensitive { get; set; } = new SensitiveInfo();
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary template file.
-        const string templatePath = "template.docx";
+        // Create a simple template document programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // 1. Create a template document with a tag that accesses a member of the restricted type.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        // The tag tries to read Sensitive.Secret – Sensitive is of type SensitiveInfo.
-        builder.Writeln("<<[model.Sensitive.Secret]>>");
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // The template defines a variable that obtains a System.Type instance.
+        // Accessing members of a restricted type should cause the engine to throw.
+        builder.Writeln("<<var [typeVar = \"\".GetType().BaseType]>>");
+        builder.Writeln("<<[typeVar]>>");
 
-        // 2. Load the template back (simulating a real-world scenario).
-        Document loadedDoc = new Document(templatePath);
+        // Restrict the System.Type type before building the report.
+        ReportingEngine.SetRestrictedTypes(typeof(System.Type));
 
-        // 3. Define the restricted type before any report generation.
-        ReportingEngine.SetRestrictedTypes(typeof(SensitiveInfo));
-
-        // 4. Prepare the data model.
-        ReportModel model = new ReportModel
-        {
-            Sensitive = new SensitiveInfo { Secret = "TopSecret" }
-        };
-
-        // 5. Build the report and verify that an exception is thrown because the template
-        //    attempts to access a member of a restricted type.
         ReportingEngine engine = new ReportingEngine();
 
-        bool exceptionThrown = false;
         try
         {
-            // The root name used in the template is "model".
-            engine.BuildReport(loadedDoc, model, "model");
+            // BuildReport will attempt to evaluate the template.
+            // Because System.Type is restricted, an exception is expected.
+            engine.BuildReport(doc, new object());
+            Console.WriteLine("Test failed: no exception was thrown.");
         }
         catch (Exception ex)
         {
             // Expected path – the engine should reject access to the restricted type.
-            exceptionThrown = true;
-            Console.WriteLine($"Expected exception caught: {ex.GetType().Name} - {ex.Message}");
-        }
-
-        // 6. Report the test outcome.
-        if (exceptionThrown)
-        {
-            Console.WriteLine("Test passed: Restricted type enforcement threw an exception as expected.");
-        }
-        else
-        {
-            Console.WriteLine("Test failed: No exception was thrown when accessing a restricted type.");
+            Console.WriteLine($"Expected exception caught: {ex.GetType().Name}");
+            Console.WriteLine($"Message: {ex.Message}");
         }
     }
 }

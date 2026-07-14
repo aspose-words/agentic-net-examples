@@ -2,57 +2,68 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class ReportModel
 {
-    // Simple data model used as the root object for the report.
-    public class ReportModel
-    {
-        // Role of the current user (e.g., "Admin" or "User").
-        public string Role { get; set; } = "Admin";
-    }
+    public string Role { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Paths for the template and generated reports.
+        const string templatePath = "template.docx";
+        const string adminReportPath = "report_admin.docx";
+        const string userReportPath = "report_user.docx";
+
+        // -------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Always visible content.
+        builder.Writeln("User: <<[model.UserName]>>");
+        builder.Writeln("Role: <<[model.Role]>>");
+
+        // Conditional section visible only for Admin role.
+        builder.Writeln("<<if [model.Role == \"Admin\"]>>");
+        builder.Writeln("=== Admin Section ===");
+        builder.Writeln("Confidential information displayed only to administrators.");
+        builder.Writeln("<</if>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // 2. Load the template and generate a report for an Admin.
+        // -------------------------------------------------
+        var adminDoc = new Document(templatePath);
+        var adminModel = new ReportModel
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            UserName = "Alice",
+            Role = "Admin"
+        };
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.RemoveEmptyParagraphs
+        };
+        engine.BuildReport(adminDoc, adminModel, "model");
+        adminDoc.Save(adminReportPath);
 
-            // Paragraph visible only to administrators.
-            builder.Writeln("<<if [model.Role == \"Admin\"]>>This section is visible to Admins.<</if>>");
+        // -------------------------------------------------
+        // 3. Load the template and generate a report for a non‑Admin user.
+        // -------------------------------------------------
+        var userDoc = new Document(templatePath);
+        var userModel = new ReportModel
+        {
+            UserName = "Bob",
+            Role = "User"
+        };
 
-            // Paragraph visible only to non‑administrators.
-            builder.Writeln("<<if [model.Role != \"Admin\"]>>This section is visible to regular users.<</if>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
-
-            // Prepare the data source.
-            var model = new ReportModel
-            {
-                // Change this value to "User" to see the non‑admin content.
-                Role = "Admin"
-            };
-
-            // Configure and execute the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // Default options.
-            engine.BuildReport(doc, model, "model");
-
-            // Save the generated report.
-            doc.Save(reportPath);
-        }
+        engine.BuildReport(userDoc, userModel, "model");
+        userDoc.Save(userReportPath);
     }
 }

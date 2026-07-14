@@ -1,93 +1,71 @@
 using System;
-using System.IO;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    // Initialize properties to avoid nullable warnings.
+    public string Name { get; set; } = "John Doe";
+    public int Age { get; set; } = 30;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for template and result documents.
-        const string templatePath = "template.docx";
-        const string resultPath = "output.docx";
+        // Create a temporary folder for the example files.
+        string outputDir = "Output";
+        System.IO.Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a template document with LINQ Reporting tags.
+        // Step 1: Create the template document programmatically.
         // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Insert LINQ Reporting tags.
+        builder.Writeln("Name: <<[model.Name]>>");
+        builder.Writeln("Age: <<[model.Age]>>");
+        // This tag references a non‑existent member and will cause an evaluation error.
+        builder.Writeln("Missing: <<[model.Unknown]>>");
+
+        // Save the template to disk.
+        string templatePath = System.IO.Path.Combine(outputDir, "Template.docx");
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
+        // Step 2: Load the template document.
         // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
+        Document loadedTemplate = new Document(templatePath);
 
         // -----------------------------------------------------------------
-        // 3. Prepare the data model.
+        // Step 3: Prepare the data source.
         // -----------------------------------------------------------------
-        var model = new ReportModel
+        ReportModel model = new ReportModel();
+
+        // -----------------------------------------------------------------
+        // Step 4: Configure the ReportingEngine with inline error handling.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine
         {
-            person = new Person()
+            // InlineErrorMessages makes the engine insert error messages instead of throwing.
+            Options = ReportBuildOptions.InlineErrorMessages,
+            // This text will replace any expression that cannot be evaluated.
+            MissingMemberMessage = "N/A"
         };
 
-        // -----------------------------------------------------------------
-        // 4. Configure the ReportingEngine to inline error messages.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
-
-        // Build the report; any expression errors will be inlined.
-        bool success;
-        try
-        {
-            success = engine.BuildReport(doc, model, "model");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("Unexpected error during report generation: " + ex.Message);
-            success = false;
-        }
+        // Build the report. The boolean indicates whether parsing succeeded.
+        bool success = engine.BuildReport(loadedTemplate, model, "model");
 
         // -----------------------------------------------------------------
-        // 5. Replace inline error messages with a placeholder text.
+        // Step 5: Save the generated report.
         // -----------------------------------------------------------------
-        if (success)
-        {
-            // The engine inserts messages like "Error evaluating expression".
-            // Replace them with "[Invalid]".
-            doc.Range.Replace(new Regex(@"Error evaluating expression.*"), "[Invalid]");
-        }
+        string reportPath = System.IO.Path.Combine(outputDir, "Report.docx");
+        loadedTemplate.Save(reportPath);
 
-        // -----------------------------------------------------------------
-        // 6. Save the final document.
-        // -----------------------------------------------------------------
-        doc.Save(resultPath);
+        // Output the result status.
+        Console.WriteLine($"Report generation successful: {success}");
+        Console.WriteLine($"Template saved to: {templatePath}");
+        Console.WriteLine($"Report saved to: {reportPath}");
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    // Initialized to avoid nullable warnings.
-    public Person person { get; set; } = new Person();
-}
-
-public class Person
-{
-    // This property throws to simulate a faulty expression.
-    public string Name
-    {
-        get => throw new InvalidOperationException("Simulated evaluation failure.");
-    }
-
-    // Normal property that will be rendered correctly.
-    public int Age => 30;
 }

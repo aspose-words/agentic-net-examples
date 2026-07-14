@@ -1,69 +1,89 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace LinqReportingWhereExample
 {
-    // Data model for the report.
-    public class Person
+    // Data model classes
+    public class Product
     {
         public string Name { get; set; } = string.Empty;
-        public int Age { get; set; }
+        public double Price { get; set; }
     }
 
     public class ReportModel
     {
-        public List<Person> Persons { get; set; } = new();
-        public int MinAge { get; set; }
+        // Full collection of products
+        public List<Product> Products { get; set; } = new();
+
+        // Runtime criteria – minimum price to include
+        public double MinPrice { get; set; }
+
+        // Filtered collection using LINQ Where
+        public IEnumerable<Product> FilteredProducts => Products.Where(p => p.Price > MinPrice);
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the final report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            // Paths for the template and the generated report
+            string templatePath = "Template.docx";
+            string reportPath = "Report.docx";
 
-            // ---------- Create the template document ----------
+            // -------------------------------------------------
+            // 1. Create the template document programmatically
+            // -------------------------------------------------
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Header showing the runtime filter value.
-            builder.Writeln("Filtered Persons (Age >= <<[model.MinAge]>>):");
-
-            // Loop over the collection and apply a runtime filter using an IF tag.
-            builder.Writeln("<<foreach [p in Persons]>>");
-            builder.Writeln("<<if [p.Age >= model.MinAge]>>");
-            builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
-            builder.Writeln("<</if>>");
+            // LINQ Reporting tags:
+            // Loop over the filtered collection defined in the model
+            builder.Writeln("<<foreach [p in model.FilteredProducts]>>");
+            builder.Writeln("Product: <<[p.Name]>> - Price: $<<[p.Price]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
+            // Save the template to disk
             templateDoc.Save(templatePath);
 
-            // ---------- Load the template and build the report ----------
-            Document reportDoc = new Document(templatePath);
+            // -------------------------------------------------
+            // 2. Load the template back (required before BuildReport)
+            // -------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
 
-            // Sample data with a dynamic filter criterion.
+            // -------------------------------------------------
+            // 3. Prepare sample data and runtime filter criteria
+            // -------------------------------------------------
             ReportModel model = new ReportModel
             {
-                MinAge = 30,
-                Persons = new List<Person>
+                // Sample products
+                Products = new List<Product>
                 {
-                    new Person { Name = "Alice", Age = 25 },
-                    new Person { Name = "Bob", Age = 35 },
-                    new Person { Name = "Charlie", Age = 40 }
-                }
+                    new Product { Name = "Apple",  Price = 5.0 },
+                    new Product { Name = "Banana", Price = 12.0 },
+                    new Product { Name = "Cherry", Price = 20.0 },
+                    new Product { Name = "Date",   Price = 25.0 }
+                },
+                // Dynamic filter: include only products priced above 15
+                MinPrice = 15.0
             };
 
-            // Build the report using the LINQ Reporting engine.
+            // -------------------------------------------------
+            // 4. Build the report using Aspose.Words ReportingEngine
+            // -------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
+            engine.Options = ReportBuildOptions.None; // No special options needed
 
-            // Save the generated report.
-            reportDoc.Save(reportPath);
+            // The root object name in the template is "model"
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // -------------------------------------------------
+            // 5. Save the generated report
+            // -------------------------------------------------
+            loadedTemplate.Save(reportPath);
         }
     }
 }

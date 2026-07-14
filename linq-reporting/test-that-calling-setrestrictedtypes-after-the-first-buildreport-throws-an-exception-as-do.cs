@@ -3,67 +3,55 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
-{
-    // Initialize to avoid nullable warnings.
-    public string Name { get; set; } = string.Empty;
-}
-
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputFolder);
+        // Prepare folders.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string reportPath = Path.Combine(workDir, "Report.docx");
 
-        // Paths for the template and the generated report.
-        string templatePath = Path.Combine(outputFolder, "template.docx");
-        string resultPath = Path.Combine(outputFolder, "result.docx");
+        // Create a simple data model.
+        var model = new Model { Name = "Aspose" };
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple template document with a LINQ Reporting tag.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Hello <<[model.Name]>>!");
-        templateDoc.Save(templatePath);
+        // Build a template document with a LINQ Reporting tag.
+        var builder = new DocumentBuilder();
+        builder.Writeln("<<[model.Name]>>");
+        builder.Document.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template back from disk (required by the workflow).
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare a data model that matches the tag in the template.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel { Name = "World" };
+        // First build the report – this must succeed.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 4. Build the report for the first time – this must succeed.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
-        loadedTemplate.Save(resultPath);
+        // Save the generated report.
+        doc.Save(reportPath);
 
-        // -----------------------------------------------------------------
-        // 5. Attempt to modify restricted types after the first BuildReport.
-        //    According to the documentation this should throw an exception.
-        // -----------------------------------------------------------------
-        bool exceptionThrown = false;
+        // Attempt to modify restricted types after a report has been built.
         try
         {
-            // The engine should reject changes to restricted types after a report has been built.
+            // This call must fail because restricted types cannot be changed after BuildReport.
             ReportingEngine.SetRestrictedTypes(typeof(string));
+            Console.WriteLine("SetRestrictedTypes succeeded unexpectedly.");
         }
-        catch (Exception) // Catch any exception type thrown for this invalid operation.
+        catch (InvalidOperationException ex)
         {
-            exceptionThrown = true;
+            // Expected path – the engine should throw an InvalidOperationException.
+            Console.WriteLine($"Expected exception caught: {ex.Message}");
         }
-
-        // -----------------------------------------------------------------
-        // 6. Output the verification result.
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Exception thrown as expected: {exceptionThrown}");
+        catch (ArgumentException ex)
+        {
+            // In some versions ArgumentException may be thrown; handle it as well.
+            Console.WriteLine($"Expected exception caught (ArgumentException): {ex.Message}");
+        }
     }
+}
+
+// Simple public data model used by the template.
+public class Model
+{
+    public string Name { get; set; } = string.Empty;
 }

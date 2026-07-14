@@ -5,66 +5,47 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Product
 {
-    // Simple data model.
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+    public string Name { get; set; } = "";
+    public double Price { get; set; }
+}
 
-    // Wrapper object that contains the collection.
-    public class Model
+public class Program
+{
+    public static void Main()
     {
-        public List<Person> Persons { get; set; } = new();
-    }
+        // Register code page provider for possible legacy encodings.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        List<Product> products = new()
         {
-            // Register code page provider (required for some Aspose.Words features).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            new Product { Name = "Apple", Price = 0.99 },
+            new Product { Name = "Banana", Price = 0.59 },
+            new Product { Name = "Cherry", Price = 2.49 }
+        };
 
-            // Prepare sample data.
-            var model = new Model();
-            model.Persons.Add(new Person { Name = "Alice", Age = 30 });
-            model.Persons.Add(new Person { Name = "Bob", Age = 45 });
-            model.Persons.Add(new Person { Name = "Charlie", Age = 28 });
+        // Create a template document programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+        // Add a heading.
+        builder.Writeln("Product List");
+        builder.Writeln();
 
-            // Add a heading.
-            builder.Writeln("Person Report");
-            builder.Writeln();
+        // Begin a foreach loop over the collection named "products".
+        builder.Writeln("<<foreach [p in products]>>");
+        builder.Writeln("- <<[p.Name]>> : $<<[p.Price]>>");
+        builder.Writeln("<</foreach>>");
 
-            // foreach tag iterating over the collection exposed by the wrapper object.
-            builder.Writeln("<<foreach [p in model.Persons]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
+        // Build the report using the overload that specifies the data source name.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, products, "products");
 
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and build the report using the overload that
-            //    specifies the data source name ("model").
-            // -----------------------------------------------------------------
-            var loadedTemplate = new Document(templatePath);
-            var engine = new ReportingEngine();
-
-            // The third argument ("model") allows the template to reference the wrapper object.
-            engine.BuildReport(loadedTemplate, model, "model");
-
-            // Save the generated report.
-            const string reportPath = "Report.docx";
-            loadedTemplate.Save(reportPath);
-        }
+        // Save the generated report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ProductReport.docx");
+        doc.Save(outputPath);
+        Console.WriteLine($"Report generated: {outputPath}");
     }
 }

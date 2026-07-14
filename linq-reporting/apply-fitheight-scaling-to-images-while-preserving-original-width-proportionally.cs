@@ -4,63 +4,72 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 
-public class ReportModel
-{
-    // Path to the image file that will be inserted into the report.
-    public string ImagePath { get; set; } = string.Empty;
-}
-
 public class Program
 {
+    // Simple data model used by the LINQ Reporting template.
+    public class ReportModel
+    {
+        // Path to the image that will be inserted into the report.
+        public string ImagePath { get; set; } = string.Empty;
+    }
+
     public static void Main()
     {
         // -----------------------------------------------------------------
-        // 1. Prepare a sample image file (1x1 pixel PNG) in the working folder.
+        // 1. Prepare a folder for all generated files.
         // -----------------------------------------------------------------
-        const string imageFileName = "sample.png";
-        byte[] imageBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK0cAAAAASUVORK5CYII=");
-        File.WriteAllBytes(imageFileName, imageBytes);
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
         // -----------------------------------------------------------------
-        // 2. Create the data model that the LINQ Reporting engine will use.
+        // 2. Create a small PNG image from a Base64 string.
         // -----------------------------------------------------------------
-        var model = new ReportModel
-        {
-            ImagePath = Path.GetFullPath(imageFileName)
-        };
+        // This is a 1x1 pixel red PNG.
+        const string base64Png =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
+            "b9XcAAAAASUVORK5CYII=";
+        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        string imagePath = Path.Combine(workDir, "sample.png");
+        File.WriteAllBytes(imagePath, imageBytes);
 
         // -----------------------------------------------------------------
-        // 3. Build the template document programmatically.
-        //    The image tag is placed inside a textbox so that -fitHeight can work.
+        // 3. Build the LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        string templatePath = Path.Combine(workDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Insert a textbox with a fixed height (e.g., 150 points).
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 150);
-        // Move the cursor into the textbox's first paragraph.
+        // Insert a textbox that will host the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
         builder.MoveTo(textBox.FirstParagraph);
-        // Write the image tag that scales the image to fit the textbox height,
-        // preserving the original width proportionally.
+
+        // The -fitHeight switch scales the image to the height of the container
+        // while preserving the original width proportionally.
         builder.Write("<<image [model.ImagePath] -fitHeight>>");
 
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
         // -----------------------------------------------------------------
-        // 4. Run the LINQ Reporting engine.
+        // 4. Load the template and run the reporting engine.
         // -----------------------------------------------------------------
-        var engine = new ReportingEngine
+        Document loadedTemplate = new Document(templatePath);
+
+        ReportModel model = new ReportModel
         {
-            Options = ReportBuildOptions.None
+            ImagePath = imagePath // absolute path to the sample image.
         };
-        engine.BuildReport(doc, model, "model");
+
+        ReportingEngine engine = new ReportingEngine();
+        // The root object name must match the tag prefix used in the template.
+        engine.BuildReport(loadedTemplate, model, "model");
 
         // -----------------------------------------------------------------
         // 5. Save the generated report.
         // -----------------------------------------------------------------
-        const string outputFileName = "output.docx";
-        doc.Save(outputFileName);
+        string resultPath = Path.Combine(workDir, "result.docx");
+        loadedTemplate.Save(resultPath);
 
-        // Inform the user (no interactive input required).
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputFileName)}");
+        // The example finishes without waiting for user input.
     }
 }

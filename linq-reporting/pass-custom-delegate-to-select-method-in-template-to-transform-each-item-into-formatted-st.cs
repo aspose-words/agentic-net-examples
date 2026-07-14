@@ -1,57 +1,76 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Person> People { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
 
-        builder.Writeln("People Report");
-        // Use a foreach tag that iterates over the collection directly.
-        builder.Writeln("<<foreach [p in model.People]>>");
-        // Format each item inside the loop.
-        builder.Writeln("- <<[p.Name]>> (<<[p.Age]>>)");
+        // -----------------------------------------------------------------
+        // 1. Create the template document with a LINQ Reporting foreach tag.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // The template iterates over the pre‑transformed collection.
+        builder.Writeln("<<foreach [s in Transformed]>>");
+        builder.Writeln("<<[s]>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // 2. Load the template for reporting.
-        var reportDoc = new Document(templatePath);
+        // ---------------------------------------------------------------
+        // 2. Load the template and prepare the data model for the report.
+        // ---------------------------------------------------------------
+        var doc = new Document(templatePath);
 
-        // 3. Prepare sample data.
         var model = new ReportModel
         {
-            People = new List<Person>
+            Items = new List<Item>
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = "Charlie", Age = 35 }
+                new Item { Id = 1, Name = "Apple" },
+                new Item { Id = 2, Name = "Banana" },
+                new Item { Id = 3, Name = "Cherry" }
             }
         };
 
-        // 4. Build the report using the LINQ Reporting engine.
+        // -------------------------------------------------
+        // 3. Build the report using the ReportingEngine.
+        // -------------------------------------------------
         var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // 5. Save the generated report.
-        var outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        doc.Save(outputPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model exposed to the template.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    // Collection of source items.
+    public List<Item> Items { get; set; } = new();
+
+    // Custom delegate used for formatting each item.
+    public Func<Item, string> Transform => item => $"Id:{item.Id} Name:{item.Name}";
+
+    // Helper property that applies the delegate to each item.
+    // The template iterates over this property.
+    public IEnumerable<string> Transformed => Items.Select(Transform);
+}
+
+// Simple data item class.
+public class Item
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

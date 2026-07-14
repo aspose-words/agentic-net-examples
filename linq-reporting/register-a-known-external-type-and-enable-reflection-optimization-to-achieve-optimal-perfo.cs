@@ -1,86 +1,141 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    // Data model that matches the XML structure.
+    public class Order
     {
-        // Register code page provider required for XML handling.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public int Id { get; set; }
+        public string CustomerName { get; set; } = "";
+        public DateTime Date { get; set; }
+        public decimal Amount { get; set; }
 
-        // Create sample XML data.
-        const string xmlPath = "orders.xml";
-        File.WriteAllText(xmlPath,
-            @"<?xml version=""1.0"" encoding=""UTF-8""?>
-<Orders>
-    <Order>
-        <Id>1</Id>
-        <CustomerName>John Doe</CustomerName>
-        <OrderDate>2023-01-15</OrderDate>
-    </Order>
-    <Order>
-        <Id>2</Id>
-        <CustomerName>Jane Smith</CustomerName>
-        <OrderDate>2023-02-20</OrderDate>
-    </Order>
-</Orders>");
-
-        // Build a template document with LINQ Reporting tags.
-        const string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        // Call the static helper method to format the date.
-        builder.Writeln("Date: <<[Utils.FormatDate(order.OrderDate)]>>");
-        builder.Writeln("<</foreach>>");
-
-        templateDoc.Save(templatePath);
-
-        // Load the template.
-        var doc = new Document(templatePath);
-
-        // Create XML data source.
-        var xmlDataSource = new XmlDataSource(xmlPath);
-
-        // Enable reflection optimization.
-        ReportingEngine.UseReflectionOptimization = true;
-
-        // Register the external type that will be used inside the template.
-        var engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(Utils));
-
-        // Build the report. The data source name must match the root element used in the template.
-        engine.BuildReport(doc, xmlDataSource, "Orders");
-
-        // Save the generated report.
-        doc.Save("report.docx");
+        // Helper property that returns the amount formatted as currency.
+        public string FormattedAmount => $"${Amount:N2}";
     }
-}
 
-// External helper class with a static method that can be called from the template.
-public static class Utils
-{
-    // Accepts either a string or a DateTime and formats it as yyyy-MM-dd.
-    public static string FormatDate(object dateValue)
+    // Wrapper class that exposes the collection to the template.
+    public class ReportModel
     {
-        if (dateValue == null)
-            return string.Empty;
+        public List<Order> Orders { get; set; } = new();
+    }
 
-        // If the value is already a DateTime, format it directly.
-        if (dateValue is DateTime dt)
-            return dt.ToString("yyyy-MM-dd");
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a sample XML data file (kept for demonstration purposes).
+            const string xmlFileName = "Orders.xml";
+            GenerateLargeXmlData(xmlFileName, 1000);
 
-        // Otherwise try to parse the string representation.
-        if (DateTime.TryParse(dateValue.ToString(), out var parsed))
-            return parsed.ToString("yyyy-MM-dd");
+            // Build the in‑memory data model that will be used by the reporting engine.
+            ReportModel model = new();
+            PopulateModelFromXml(xmlFileName, model);
 
-        // Fallback – return the original value as a string.
-        return dateValue.ToString();
+            // Create the template document programmatically.
+            const string templateFileName = "Template.docx";
+            CreateTemplate(templateFileName);
+
+            // Load the template.
+            Document template = new Document(templateFileName);
+
+            // Enable reflection optimization for better performance.
+            ReportingEngine.UseReflectionOptimization = true;
+
+            // Configure the reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+
+            // Register the external type so its members can be accessed in the template.
+            engine.KnownTypes.Add(typeof(Order));
+
+            // Build the report using the model. No data source name is required because the template
+            // references the collection directly (<<foreach [order in Orders]>>).
+            engine.BuildReport(template, model);
+
+            // Save the generated report.
+            const string outputFileName = "Report.docx";
+            template.Save(outputFileName);
+        }
+
+        // Generates an XML file with a specified number of Order elements.
+        private static void GenerateLargeXmlData(string filePath, int count)
+        {
+            XElement root = new("Orders");
+            Random rnd = new();
+
+            for (int i = 1; i <= count; i++)
+            {
+                Order order = new()
+                {
+                    Id = i,
+                    CustomerName = $"Customer {i}",
+                    Date = DateTime.Today.AddDays(-i),
+                    Amount = (decimal)(rnd.NextDouble() * 1000 + 100)
+                };
+
+                XElement orderElement = new("Order",
+                    new XElement("Id", order.Id),
+                    new XElement("CustomerName", order.CustomerName),
+                    new XElement("Date", order.Date.ToString("yyyy-MM-dd")),
+                    new XElement("Amount", order.Amount));
+
+                root.Add(orderElement);
+            }
+
+            XDocument doc = new(root);
+            doc.Save(filePath);
+        }
+
+        // Populates the ReportModel from the generated XML file.
+        private static void PopulateModelFromXml(string xmlPath, ReportModel model)
+        {
+            XDocument doc = XDocument.Load(xmlPath);
+            foreach (XElement elem in doc.Root!.Elements("Order"))
+            {
+                Order order = new()
+                {
+                    Id = (int)elem.Element("Id")!,
+                    CustomerName = (string)elem.Element("CustomerName")!,
+                    Date = DateTime.Parse((string)elem.Element("Date")!),
+                    Amount = (decimal)elem.Element("Amount")!
+                };
+                model.Orders.Add(order);
+            }
+        }
+
+        // Creates a simple Word template containing LINQ Reporting tags.
+        private static void CreateTemplate(string filePath)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Header
+            builder.Writeln("Order Report");
+            builder.Writeln("------------------------------");
+
+            // Begin foreach loop over orders.
+            builder.Writeln("<<foreach [order in Orders]>>");
+
+            // Table header
+            builder.Writeln("Id\tCustomer\tDate\tAmount");
+            builder.Writeln("------------------------------");
+
+            // Table row with data fields.
+            builder.Writeln(
+                "<<[order.Id]>>\t" +
+                "<<[order.CustomerName]>>\t" +
+                "<<[order.Date]>>\t" +
+                "<<[order.FormattedAmount]>>");
+
+            // End foreach loop.
+            builder.Writeln("<</foreach>>");
+
+            doc.Save(filePath);
+        }
     }
 }

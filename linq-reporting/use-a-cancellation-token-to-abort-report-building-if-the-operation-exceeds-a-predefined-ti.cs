@@ -2,129 +2,125 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Needed for Table type
 
-namespace LinqReportingCancellationDemo
+public class Program
 {
-    // Root data model for the report.
-    public class Order
+    public static void Main()
     {
-        public string CustomerName { get; set; } = "John Doe";
+        // Paths for template and output documents.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
 
-        public List<Item> Items { get; set; } = new()
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Simple tag for the customer name.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+
+        // Loop over order items.
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Prepare data model with a cancellation token.
+        // -----------------------------------------------------------------
+        using var cts = new CancellationTokenSource();
+        // Cancel after 1 second.
+        cts.CancelAfter(TimeSpan.FromSeconds(1));
+        CancellationToken token = cts.Token;
+
+        // Build a sample order with several items.
+        Order order = new Order
         {
-            new Item { Name = "Apple", Quantity = 3 },
-            new Item { Name = "Banana", Quantity = 5 },
-            new Item { Name = "Cherry", Quantity = 7 }
+            CustomerName = "John Doe",
+            Items = new List<Item>
+            {
+                new Item("Apple", token),
+                new Item("Banana", token),
+                new Item("Cherry", token),
+                new Item("Date", token),
+                new Item("Elderberry", token)
+            }
         };
-    }
 
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public int Quantity { get; set; }
-    }
+        // -----------------------------------------------------------------
+        // 3. Load the template and build the report with cancellation support.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
 
-    public class Program
-    {
-        public static void Main()
+        bool reportBuilt = false;
+
+        try
         {
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // 1. Create a simple template document with LINQ Reporting tags.
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            CreateTemplate(templatePath);
-
-            // 2. Load the template.
-            Document doc = new Document(templatePath);
-
-            // 3. Prepare the data source.
-            Order order = new Order();
-
-            // 4. Configure the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-
-            // 5. Set up a cancellation token that aborts after 2 seconds.
-            using CancellationTokenSource cts = new CancellationTokenSource();
-            cts.CancelAfter(TimeSpan.FromSeconds(2));
-            CancellationToken token = cts.Token;
-
-            // 6. Run the report building in a separate task.
-            Task<bool> buildTask = Task.Run(() => engine.BuildReport(doc, order, "order"), token);
-
-            try
-            {
-                // Wait for either the task to finish or the timeout.
-                bool completed = Task.WhenAny(buildTask, Task.Delay(TimeSpan.FromSeconds(2), token)).Result == buildTask;
-
-                if (!completed)
-                {
-                    Console.WriteLine("Report building timed out and was aborted.");
-                    return;
-                }
-
-                // If the task completed, save the result.
-                string resultPath = Path.Combine(outputDir, "Report.docx");
-                doc.Save(resultPath);
-                Console.WriteLine($"Report generated successfully: {resultPath}");
-            }
-            catch (OperationCanceledException)
-            {
-                Console.WriteLine("Report building was cancelled via the cancellation token.");
-            }
-            catch (AggregateException ae)
-            {
-                // Unwrap any exceptions thrown inside the task.
-                foreach (var ex in ae.InnerExceptions)
-                {
-                    Console.WriteLine($"Error: {ex.Message}");
-                }
-            }
+            // BuildReport evaluates the data source lazily.
+            // The Item.Name getter checks the cancellation token and throws if cancelled.
+            reportBuilt = engine.BuildReport(doc, order, "order");
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("Report generation was canceled due to timeout.");
+        }
+        catch (AggregateException ae) when (ae.InnerException is OperationCanceledException)
+        {
+            // Handles the case where the engine wraps the cancellation exception.
+            Console.WriteLine("Report generation was canceled due to timeout.");
+        }
+        catch (InvalidOperationException ex) when (ex.InnerException is OperationCanceledException)
+        {
+            // Handles the case where the engine wraps the cancellation exception.
+            Console.WriteLine("Report generation was canceled due to timeout.");
         }
 
-        // Creates a Word document containing LINQ Reporting tags.
-        private static void CreateTemplate(string filePath)
+        if (reportBuilt)
         {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            doc.Save(reportPath);
+            Console.WriteLine($"Report generated successfully: {reportPath}");
+        }
+    }
+}
 
-            // Header with customer name.
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln();
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
+public class Order
+{
+    // Non‑nullable properties are initialized to avoid warnings.
+    public string CustomerName { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
 
-            // Begin foreach loop for items.
-            builder.Writeln("<<foreach [item in Items]>>");
+public class Item
+{
+    private readonly string _name;
+    private readonly CancellationToken _cancellationToken;
 
-            // Table with header and data rows.
-            Table table = builder.StartTable();
+    public Item(string name, CancellationToken cancellationToken)
+    {
+        _name = name;
+        _cancellationToken = cancellationToken;
+    }
 
-            // Header row.
-            builder.InsertCell();
-            builder.Writeln("Product");
-            builder.InsertCell();
-            builder.Writeln("Quantity");
-            builder.EndRow();
-
-            // Data row (repeated for each item).
-            builder.InsertCell();
-            builder.Writeln("<<[item.Name]>>");
-            builder.InsertCell();
-            builder.Writeln("<<[item.Quantity]>>");
-            builder.EndRow();
-
-            // End of table.
-            builder.EndTable();
-
-            // Close foreach loop.
-            builder.Writeln("<</foreach>>");
-
-            // Save the template.
-            doc.Save(filePath);
+    // The getter simulates work and checks the cancellation token.
+    public string Name
+    {
+        get
+        {
+            // Simulate a time‑consuming operation.
+            Thread.Sleep(300);
+            // Abort if cancellation was requested.
+            _cancellationToken.ThrowIfCancellationRequested();
+            return _name;
         }
     }
 }

@@ -1,56 +1,85 @@
 using System;
-using System.IO;
+using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+namespace AsposeWordsLinqReportingExample
 {
-    public string Title { get; set; } = string.Empty;
-    public string Author { get; set; } = string.Empty;
-}
-
-public class Program
-{
-    public static void Main()
+    // Wrapper model that provides additional values for the template.
+    public class ReportModel
     {
-        // Prepare sample data.
-        ReportModel model = new ReportModel
+        // The date/time when the report is generated.
+        public DateTime GeneratedOn { get; set; } = DateTime.Now;
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Title = "Quarterly Report",
-            Author = "John Doe"
-        };
+            // ---------- 1. Prepare sample data in a DataSet ----------
+            DataSet dataSet = new DataSet("ReportData");
+            DataTable employeesTable = new DataTable("Employees");
+            employeesTable.Columns.Add("Name", typeof(string));
+            employeesTable.Columns.Add("Title", typeof(string));
+            employeesTable.Columns.Add("Department", typeof(string));
 
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Report: <<[model.Title]>>");
-        builder.Writeln("Prepared by: <<[model.Author]>>");
+            employeesTable.Rows.Add("Alice Johnson", "Senior Engineer", "R&D");
+            employeesTable.Rows.Add("Bob Smith", "Project Manager", "Operations");
+            employeesTable.Rows.Add("Carol White", "Analyst", "Finance");
 
-        // Save the template to disk.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        template.Save(templatePath);
+            dataSet.Tables.Add(employeesTable);
 
-        // Load the template for reporting.
-        Document report = new Document(templatePath);
+            // ---------- 2. Create a template document with LINQ Reporting tags ----------
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(report, model, "model");
+            builder.Writeln("Employee Report");
+            // Use the wrapper model to output the generation date.
+            builder.Writeln("Generated on: <<[model.GeneratedOn]>>");
+            builder.Writeln(); // empty line
 
-        // Set custom document properties based on the model values.
-        if (report.CustomDocumentProperties["ReportTitle"] != null)
-            report.CustomDocumentProperties["ReportTitle"].Value = model.Title;
-        else
-            report.CustomDocumentProperties.Add("ReportTitle", model.Title);
+            // Iterate over the Employees table from the DataSet.
+            // Because the DataSet will be passed with the name "data",
+            // the tag must reference the table via that name.
+            builder.Writeln("<<foreach [emp in data.Employees]>>");
+            builder.Writeln("Name: <<[emp.Name]>>");
+            builder.Writeln("Title: <<[emp.Title]>>");
+            builder.Writeln("Department: <<[emp.Department]>>");
+            builder.Writeln("<</foreach>>");
 
-        if (report.CustomDocumentProperties["ReportAuthor"] != null)
-            report.CustomDocumentProperties["ReportAuthor"].Value = model.Author;
-        else
-            report.CustomDocumentProperties.Add("ReportAuthor", model.Author);
+            // Save the template to disk (required by the lifecycle rule).
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-        // Save the final report.
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        report.Save(reportPath);
+            // ---------- 3. Load the template and build the report ----------
+            Document report = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.None
+            };
+
+            // Prepare the wrapper model instance.
+            ReportModel model = new ReportModel();
+
+            // Build the report using both the model and the DataSet.
+            // The first data source is named "model", the second is named "data".
+            engine.BuildReport(report,
+                new object[] { model, dataSet },
+                new string[] { "model", "data" });
+
+            // ---------- 4. Set custom document properties based on the DataSet ----------
+            int employeeCount = employeesTable.Rows.Count;
+            report.CustomDocumentProperties.Add("EmployeeCount", employeeCount);
+
+            if (employeeCount > 0)
+            {
+                string firstEmployeeName = employeesTable.Rows[0]["Name"]?.ToString() ?? string.Empty;
+                report.CustomDocumentProperties.Add("FirstEmployeeName", firstEmployeeName);
+            }
+
+            // ---------- 5. Save the final report ----------
+            const string reportPath = "Report.docx";
+            report.Save(reportPath);
+        }
     }
 }
