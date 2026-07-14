@@ -11,42 +11,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a sample 3x4 table.
+        // Build a simple 2x3 table.
         Table table = builder.StartTable();
 
         // First row.
-        for (int col = 0; col < 4; col++)
-        {
-            builder.InsertCell();
-            builder.Write($"R1C{col + 1}");
-        }
+        builder.InsertCell();
+        builder.Write("R1C1");
+        builder.InsertCell();
+        builder.Write("R1C2");
+        builder.InsertCell();
+        builder.Write("R1C3");
         builder.EndRow();
 
         // Second row.
-        for (int col = 0; col < 4; col++)
-        {
-            builder.InsertCell();
-            builder.Write($"R2C{col + 1}");
-        }
-        builder.EndRow();
-
-        // Third row.
-        for (int col = 0; col < 4; col++)
-        {
-            builder.InsertCell();
-            builder.Write($"R3C{col + 1}");
-        }
+        builder.InsertCell();
+        builder.Write("R2C1");
+        builder.InsertCell();
+        builder.Write("R2C2");
+        builder.InsertCell();
+        builder.Write("R2C3");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Retrieve the first table in the document.
-        Table firstTable = doc.FirstSection.Body.Tables[0];
-
-        // Get row and column counts.
-        int rowCount = firstTable.Rows.Count;
-        int columnCount = firstTable.Rows[0].Cells.Count;
+        // Retrieve the number of rows and columns.
+        int rowCount = table.Rows.Count;
+        int columnCount = table.Rows[0].Cells.Count;
 
         // Output the counts.
         Console.WriteLine($"Table has {rowCount} rows and {columnCount} columns.");

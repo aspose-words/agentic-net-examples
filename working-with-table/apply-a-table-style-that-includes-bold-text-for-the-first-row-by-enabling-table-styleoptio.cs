@@ -1,9 +1,8 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableStyleExample
+namespace AsposeWordsTableStyleExample
 {
     public class Program
     {
@@ -13,12 +12,12 @@ namespace TableStyleExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table and add a few rows.
+            // Build a simple 3x2 table.
             Table table = builder.StartTable();
 
             // First row (header).
             builder.InsertCell();
-            builder.Write("Item");
+            builder.Write("Product");
             builder.InsertCell();
             builder.Write("Quantity");
             builder.EndRow();
@@ -40,28 +39,20 @@ namespace TableStyleExample
             // Finish the table.
             builder.EndTable();
 
-            // Apply a built‑in table style.
-            table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+            // Create a custom table style.
+            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyBoldFirstRowStyle");
 
-            // Enable the first‑row conditional formatting.
+            // Make the first row bold via the conditional style.
+            customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
+
+            // Apply the custom style to the table.
+            table.Style = customStyle;
+
+            // Enable the FirstRow style option so that the conditional formatting is applied.
             table.StyleOptions = TableStyleOptions.FirstRow;
 
-            // Make the text in the first row bold via the conditional style.
-            TableStyle tableStyle = (TableStyle)doc.Styles[StyleIdentifier.MediumShading1Accent1];
-            tableStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
-
-            // Adjust column widths to fit the content.
-            table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithBoldFirstRow.docx");
-            doc.Save(outputPath);
-
-            // Simple verification that the file was created.
-            if (File.Exists(outputPath))
-                Console.WriteLine($"Document saved successfully to: {outputPath}");
-            else
-                throw new InvalidOperationException("Failed to save the document.");
+            // Save the document.
+            doc.Save("TableStyleFirstRowBold.docx");
         }
     }
 }

@@ -2,69 +2,58 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableMergeExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a new table.
-            Table table = builder.StartTable();
+        // Start building the table.
+        Table table = builder.StartTable();
 
-            // -------------------------------------------------
-            // First row – the cell that will span 2 rows and 3 columns.
-            // -------------------------------------------------
-            // Insert the top‑left cell and mark it as the first cell in both
-            // a horizontal and a vertical merge range.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.First;
-            builder.CellFormat.VerticalMerge   = CellMerge.First;
-            builder.Write("Spanned cell");
+        // ---------- First Row ----------
+        // Cell (0,0) – first cell of the merged block (starts both horizontal and vertical merge).
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.First; // Start horizontal merge.
+        builder.CellFormat.VerticalMerge = CellMerge.First;   // Start vertical merge.
+        builder.Write("Merged cell spanning 2 rows and 3 columns.");
 
-            // Insert the next two cells in the first row.
-            // They are merged horizontally with the previous cell.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-            builder.CellFormat.VerticalMerge   = CellMerge.None; // No vertical merge for these cells.
+        // Cell (0,1) – continues horizontal merge, starts its own vertical merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue horizontal merge.
+        builder.CellFormat.VerticalMerge = CellMerge.First;      // Start vertical merge for this column.
 
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-            builder.CellFormat.VerticalMerge   = CellMerge.None;
+        // Cell (0,2) – continues horizontal merge, starts its own vertical merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue horizontal merge.
+        builder.CellFormat.VerticalMerge = CellMerge.First;      // Start vertical merge for this column.
 
-            // End the first row.
-            builder.EndRow();
+        // End the first row.
+        builder.EndRow();
 
-            // -------------------------------------------------
-            // Second row – continuation of the merged cell.
-            // -------------------------------------------------
-            // Insert the first cell of the second row.
-            // It continues both the horizontal and vertical merge.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-            builder.CellFormat.VerticalMerge   = CellMerge.Previous;
+        // ---------- Second Row ----------
+        // Cell (1,0) – continuation of both horizontal and vertical merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous; // Continue horizontal merge.
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;   // Continue vertical merge.
 
-            // Insert the remaining two cells of the second row.
-            // They continue the horizontal merge but have no vertical merge.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-            builder.CellFormat.VerticalMerge   = CellMerge.None;
+        // Cell (1,1) – continuation of both merges for the second column.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;
 
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-            builder.CellFormat.VerticalMerge   = CellMerge.None;
+        // Cell (1,2) – continuation of both merges for the third column.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;
 
-            // End the second row.
-            builder.EndRow();
+        // End the second row and the table.
+        builder.EndRow();
+        builder.EndTable();
 
-            // Finish the table.
-            builder.EndTable();
-
-            // Save the document to a file.
-            doc.Save("MergedTable.docx");
-        }
+        // Save the document to a file.
+        doc.Save("MergedTable.docx");
     }
 }

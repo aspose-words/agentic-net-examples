@@ -1,8 +1,6 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -18,20 +16,16 @@ public class Program
         // Start a table inside the header.
         Table table = builder.StartTable();
 
-        // First row, first cell.
+        // First row with two cells.
         builder.InsertCell();
         builder.Write("Header Cell 1");
-
-        // First row, second cell.
         builder.InsertCell();
         builder.Write("Header Cell 2");
         builder.EndRow();
 
-        // Second row, first cell.
+        // Second row with two cells.
         builder.InsertCell();
         builder.Write("Header Cell 3");
-
-        // Second row, second cell.
         builder.InsertCell();
         builder.Write("Header Cell 4");
         builder.EndRow();
@@ -39,23 +33,12 @@ public class Program
         // Finish the table.
         builder.EndTable();
 
-        // Return the cursor to the main document body.
+        // Return to the main document body and add some regular content.
         builder.MoveToSection(0);
+        builder.Writeln("This is the main document body.");
 
-        // Add a simple paragraph to the body so the document has visible content.
-        builder.Writeln("Document body content.");
-
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderTable.docx");
-
-        // Save the document.
+        // Save the document to a file.
+        const string outputPath = "HeaderTable.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
-
-        // Optionally, inform that the process completed (no interactive prompts required).
-        Console.WriteLine("Document saved to: " + outputPath);
     }
 }

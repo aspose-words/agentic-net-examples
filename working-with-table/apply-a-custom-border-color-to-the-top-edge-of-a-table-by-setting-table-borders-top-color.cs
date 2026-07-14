@@ -1,6 +1,6 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -12,35 +12,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 2x2 table.
+        // Build a simple 2‑cell table.
         Table table = builder.StartTable();
-
         builder.InsertCell();
         builder.Write("Cell 1");
         builder.InsertCell();
         builder.Write("Cell 2");
         builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
-
         builder.EndTable();
 
-        // Apply a custom top border to the table.
-        table.SetBorder(BorderType.Top, LineStyle.Single, 2.0, Color.Crimson, true);
+        // Apply a custom top border: blue color, single line, 2 pt width.
+        // Use the Table.SetBorder method because Table.Borders is not available.
+        table.SetBorder(BorderType.Top, LineStyle.Single, 2.0, Color.Blue, true);
 
-        // Define output path and save the document.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "TableTopBorderColor.docx");
+        // Define output path (relative to the executable folder).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomTopBorderTable.docx");
 
+        // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation – ensure the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
+            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

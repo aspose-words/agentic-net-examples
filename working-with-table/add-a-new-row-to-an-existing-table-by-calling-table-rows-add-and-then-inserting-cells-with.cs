@@ -2,50 +2,50 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new document and build an initial 2x2 table.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.StartTable();
-        builder.InsertCell();
-        builder.Write("R1C1");
-        builder.InsertCell();
-        builder.Write("R1C2");
-        builder.EndRow();
+            // Build an initial 2‑column table with one row using the builder.
+            builder.StartTable();
+            builder.InsertCell();
+            builder.Write("Original Row, Cell 1");
+            builder.InsertCell();
+            builder.Write("Original Row, Cell 2");
+            builder.EndRow();
+            builder.EndTable();
 
-        builder.InsertCell();
-        builder.Write("R2C1");
-        builder.InsertCell();
-        builder.Write("R2C2");
-        builder.EndRow();
-        builder.EndTable();
+            // Retrieve the created table.
+            Table table = doc.FirstSection.Body.Tables[0];
 
-        // Retrieve the created table.
-        Table table = doc.FirstSection.Body.Tables[0];
+            // Create a new row that will be added to the existing table.
+            Row newRow = new Row(doc);
+            // Add the new row to the table's Rows collection.
+            table.Rows.Add(newRow);
 
-        // Create a new row to be added.
-        Row newRow = new Row(doc);
+            // Create the first cell for the new row.
+            Cell newCell1 = new Cell(doc);
+            // Ensure the cell contains a paragraph (required for text).
+            newCell1.AppendChild(new Paragraph(doc));
+            // Add text to the paragraph.
+            newCell1.FirstParagraph.AppendChild(new Run(doc, "New Row, Cell 1"));
+            // Add the cell to the row's Cells collection.
+            newRow.Cells.Add(newCell1);
 
-        // First cell of the new row.
-        Cell cell1 = new Cell(doc);
-        cell1.AppendChild(new Paragraph(doc));
-        cell1.FirstParagraph.AppendChild(new Run(doc, "R3C1"));
-        newRow.Cells.Add(cell1);
+            // Create the second cell for the new row.
+            Cell newCell2 = new Cell(doc);
+            newCell2.AppendChild(new Paragraph(doc));
+            newCell2.FirstParagraph.AppendChild(new Run(doc, "New Row, Cell 2"));
+            newRow.Cells.Add(newCell2);
 
-        // Second cell of the new row.
-        Cell cell2 = new Cell(doc);
-        cell2.AppendChild(new Paragraph(doc));
-        cell2.FirstParagraph.AppendChild(new Run(doc, "R3C2"));
-        newRow.Cells.Add(cell2);
-
-        // Add the new row to the table.
-        table.Rows.Add(newRow);
-
-        // Save the document with the added row.
-        doc.Save("AddedRowTable.docx");
+            // Save the document to verify the new row has been added.
+            doc.Save("AddedRowTable.docx");
+        }
     }
 }

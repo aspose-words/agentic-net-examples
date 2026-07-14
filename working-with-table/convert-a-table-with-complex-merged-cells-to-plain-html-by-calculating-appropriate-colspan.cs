@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Saving;
@@ -12,78 +11,70 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with complex merged cells.
-        // -------------------------------------------------
-        // Row 1: Cell A spans two columns (horizontal merge).
-        // Row 2: Cell B spans two rows (vertical merge) and also spans two columns.
-        // Row 3: Regular cells.
-        // -------------------------------------------------
+        // Start building the table.
         Table table = builder.StartTable();
 
-        // ----- Row 1 -----
-        // First cell – start horizontal merge (colspan = 2).
+        // ---------- Row 1 ----------
+        // Cell 1 – first cell of a horizontal merge (colspan = 2).
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Header spanning two columns");
+        builder.Write("Header A (colspan=2)");
 
-        // Second cell – merged with the previous cell.
+        // Cell 2 – part of the previous horizontal merge.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text needed for merged cell.
+
+        // Cell 3 – normal cell.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.Write("Header B");
+
         builder.EndRow();
 
-        // Reset merge flags for subsequent cells.
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-
-        // ----- Row 2 -----
-        // First cell – start vertical merge (rowspan = 2) and also horizontal merge (colspan = 2).
+        // ---------- Row 2 ----------
+        // Cell 1 – first cell of a vertical merge (rowspan = 2).
         builder.InsertCell();
         builder.CellFormat.VerticalMerge = CellMerge.First;
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Cell spanning two rows and two columns");
+        builder.Write("RowSpan Cell");
 
-        // Second cell – merged horizontally with the previous cell.
+        // Cell 2 – normal cell.
+        builder.InsertCell();
+        builder.CellFormat.VerticalMerge = CellMerge.None;
+        builder.Write("Cell 2,2");
+
+        // Cell 3 – first cell of a horizontal merge (colspan = 2).
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.Write("Merged C (colspan=2)");
+
+        // Cell 4 – part of the previous horizontal merge.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-        // No text needed.
+
         builder.EndRow();
 
-        // Reset merge flags again.
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.CellFormat.VerticalMerge = CellMerge.None;
+        // ---------- Row 3 ----------
+        // Cell 1 – continuation of the vertical merge.
+        builder.InsertCell();
+        builder.CellFormat.VerticalMerge = CellMerge.Previous;
 
-        // ----- Row 3 -----
-        // Regular cells (no merging).
+        // Cell 2 – normal cell.
         builder.InsertCell();
-        builder.Write("Row 3, Cell 1");
+        builder.CellFormat.VerticalMerge = CellMerge.None;
+        builder.Write("Cell 3,2");
+
+        // Cell 3 – normal cell (the second part of the previous horizontal merge is omitted because it is merged).
         builder.InsertCell();
-        builder.Write("Row 3, Cell 2");
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.Write("Cell 3,3");
+
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Ensure the table's merged cells are represented by merge flags.
-        // This is required for correct HTML export.
-        table.ConvertToHorizontallyMergedCells();
-
-        // Save the document as a DOCX (optional, demonstrates lifecycle compliance).
-        string docxPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedTable.docx");
-        doc.Save(docxPath);
-
-        // Export the document (containing the table) to plain HTML.
-        // Aspose.Words automatically adds appropriate colspan and rowspan attributes.
-        string html = doc.ToString(SaveFormat.Html);
-
-        // Write the HTML to a file.
-        string htmlPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedTable.html");
-        File.WriteAllText(htmlPath, html);
-
-        // Simple validation – ensure the HTML file was created.
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("HTML export failed.");
-
-        // The program finishes without waiting for user input.
+        // Save the document as HTML. Aspose.Words will generate proper colspan and rowspan attributes.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
+        doc.Save("Table.html", saveOptions);
     }
 }

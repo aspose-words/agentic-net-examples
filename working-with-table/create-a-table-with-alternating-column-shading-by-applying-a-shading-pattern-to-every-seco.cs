@@ -1,61 +1,60 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableShading
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Define table dimensions.
+        int rows = 5;
+        int columns = 4;
+
+        // Start the table.
+        Table table = builder.StartTable();
+
+        // Build the table row by row.
+        for (int row = 0; row < rows; row++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table.
-            builder.StartTable();
-
-            int rowCount = 5;
-            int columnCount = 4;
-
-            // Build the table with sample text.
-            for (int row = 0; row < rowCount; row++)
+            for (int col = 0; col < columns; col++)
             {
-                for (int col = 0; col < columnCount; col++)
+                // Insert a new cell.
+                builder.InsertCell();
+
+                // Apply shading to every second column (1‑based index: columns 2,4,...).
+                if ((col + 1) % 2 == 0)
                 {
-                    builder.InsertCell();
-                    builder.Write($"Row {row + 1}, Col {col + 1}");
+                    builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
                 }
-                builder.EndRow();
+                else
+                {
+                    // Ensure no shading on other columns.
+                    builder.CellFormat.Shading.ClearFormatting();
+                }
+
+                // Write some sample text.
+                builder.Write($"R{row + 1}C{col + 1}");
             }
 
-            // Finish the table.
-            Table table = builder.EndTable();
-
-            // Apply shading to every second column (index 1, 3, ...).
-            Color shadingColor = Color.LightGray;
-            foreach (Row tableRow in table.Rows)
-            {
-                for (int colIndex = 0; colIndex < tableRow.Cells.Count; colIndex++)
-                {
-                    if (colIndex % 2 == 1) // second, fourth, etc.
-                    {
-                        tableRow.Cells[colIndex].CellFormat.Shading.BackgroundPatternColor = shadingColor;
-                    }
-                }
-            }
-
-            // Define output path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingColumnShading.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved successfully.");
+            // End the current row.
+            builder.EndRow();
         }
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingColumnShading.docx");
+        doc.Save(outputPath);
+
+        // Simple validation to ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

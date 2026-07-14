@@ -1,45 +1,46 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Drawing; // For TextureIndex
+using System.Drawing; // For Color
 
 public class Program
 {
     public static void Main()
     {
-        // Output file path
-        string outputPath = "ShadedCell.docx";
-
-        // Create a new document and a builder for it
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table
+        // Build a simple 1x2 table.
         Table table = builder.StartTable();
 
-        // First cell - apply shading
+        // First cell.
         builder.InsertCell();
-        // Access the first cell that was just created
-        Cell firstCell = table.Rows[0].Cells[0];
-        // Set a solid texture and a light gray background color
-        firstCell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
-        firstCell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-        builder.Write("Shaded cell");
+        builder.Write("Cell 1");
 
-        // Second cell - normal formatting
+        // Second cell.
         builder.InsertCell();
-        builder.Write("Normal cell");
+        builder.Write("Cell 2");
 
-        // End the row and the table
+        // Finish the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document
+        // Apply light gray shading to the first cell.
+        Cell firstCell = table.FirstRow.FirstCell;
+        firstCell.CellFormat.Shading.Texture = TextureIndex.TextureSolid;
+        firstCell.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CellShading.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception($"Failed to create the output file: {outputPath}");
+        {
+            throw new InvalidOperationException("The output file was not created.");
+        }
     }
 }

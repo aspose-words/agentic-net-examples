@@ -1,9 +1,8 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableRowHeightAuto
+namespace AsposeWordsTableExample
 {
     public class Program
     {
@@ -13,35 +12,33 @@ namespace AsposeWordsTableRowHeightAuto
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table.
+            // Start building a table.
             Table table = builder.StartTable();
 
-            // First row.
+            // ----- First row -----
             builder.InsertCell();
-            builder.Write("Row 1, Cell 1");
+            builder.Write("First row, first cell.");
             builder.InsertCell();
-            builder.Write("Row 1, Cell 2");
-            // End the first row.
+            builder.Write("First row, second cell.");
+
+            // End the first row and obtain the Row object.
             Row firstRow = builder.EndRow();
 
-            // Set the height rule of the first row to Auto (no explicit height).
+            // Set the height rule of this row to Auto (no explicit height is set).
             firstRow.RowFormat.HeightRule = HeightRule.Auto;
 
-            // Second row (for comparison, set a fixed height).
+            // ----- Second row (optional) -----
             builder.InsertCell();
-            builder.RowFormat.Height = 50;               // Explicit height.
-            builder.RowFormat.HeightRule = HeightRule.Exactly;
-            builder.Write("Row 2, Cell 1");
+            builder.Write("Second row, first cell.");
             builder.InsertCell();
-            builder.Write("Row 2, Cell 2");
+            builder.Write("Second row, second cell.");
             builder.EndRow();
 
             // Finish the table.
             builder.EndTable();
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableRowHeightAuto.docx");
-            doc.Save(outputPath);
+            // Save the document to a file.
+            doc.Save("RowHeightAuto.docx");
         }
     }
 }

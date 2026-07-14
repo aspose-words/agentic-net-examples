@@ -1,63 +1,70 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableOfContentsForTables
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a TOC field that will list only entries from the "Table" sequence (table captions).
-        FieldToc toc = (FieldToc)builder.InsertField(FieldType.FieldTOC, true);
-        toc.TableOfFiguresLabel = "Table"; // Use the "Table" sequence identifier.
-        toc.InsertHyperlinks = true;       // Make entries clickable.
-        builder.Writeln(); // Move cursor after the TOC field.
-
-        // Helper to insert a table with a caption.
-        void InsertTableWithCaption(string captionText)
+        public static void Main()
         {
-            // Insert the caption using a SEQ field with identifier "Table".
-            FieldSeq seq = (FieldSeq)builder.InsertField(FieldType.FieldSequence, true);
-            seq.SequenceIdentifier = "Table";
-            builder.Write(" "); // Space between the number and the caption text.
-            builder.Writeln(captionText);
-            builder.Writeln(); // Add a blank line before the table.
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x2 table.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Cell 1,1");
-            builder.InsertCell();
-            builder.Write("Cell 1,2");
-            builder.EndRow();
-            builder.InsertCell();
-            builder.Write("Cell 2,1");
-            builder.InsertCell();
-            builder.Write("Cell 2,2");
-            builder.EndTable();
+            // Insert a TOC field that will list only entries with the "Table" label (table captions).
+            // \c "Table" – use the caption label "Table".
+            // \h – make entries hyperlinked.
+            // \z – hide page numbers in web layout.
+            // \u – build the TOC using outline levels.
+            builder.InsertTableOfContents("\\c \"Table\" \\h \\z \\u");
+            builder.InsertBreak(BreakType.PageBreak);
 
-            builder.Writeln(); // Add spacing after the table.
+            // Helper to insert a table with a caption.
+            void InsertTableWithCaption(string captionText, int rows, int cols)
+            {
+                // Insert the caption paragraph using the built‑in Caption style.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Caption;
+                builder.Writeln(captionText);
+
+                // Return to the normal style for the table content.
+                builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+
+                // Build the table.
+                Table table = builder.StartTable();
+
+                for (int r = 0; r < rows; r++)
+                {
+                    for (int c = 0; c < cols; c++)
+                    {
+                        builder.InsertCell();
+                        builder.Write($"R{r + 1}C{c + 1}");
+                    }
+                    builder.EndRow();
+                }
+
+                builder.EndTable();
+
+                // Add a page break after each table for readability.
+                builder.InsertBreak(BreakType.PageBreak);
+            }
+
+            // Insert several tables with captions.
+            InsertTableWithCaption("Table 1: Sample data set A", 2, 2);
+            InsertTableWithCaption("Table 2: Sample data set B", 3, 3);
+            InsertTableWithCaption("Table 3: Sample data set C", 2, 4);
+
+            // Update all fields (including the TOC) so the entries are populated.
+            doc.UpdateFields();
+
+            // Save the document.
+            string outputPath = "TableOfContentsForTables.docx";
+            doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
-
-        // Insert several tables with captions.
-        InsertTableWithCaption("First sample table.");
-        InsertTableWithCaption("Second sample table.");
-        InsertTableWithCaption("Third sample table.");
-
-        // Update all fields so the TOC reflects the inserted captions.
-        doc.UpdateFields();
-
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TablesTOC.docx");
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

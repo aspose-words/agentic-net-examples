@@ -10,30 +10,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set paragraph indentation (in points).
-        builder.ParagraphFormat.LeftIndent = 30;   // Left indent for the paragraph.
-        builder.ParagraphFormat.RightIndent = 20;  // Right indent for the paragraph.
+        // Set paragraph left and right indents (in points).
+        builder.ParagraphFormat.LeftIndent = 30;
+        builder.ParagraphFormat.RightIndent = 30;
 
-        // Add a paragraph to visualize the indentation.
-        builder.Writeln("This paragraph demonstrates left and right indents.");
+        // Add a paragraph to demonstrate the indents.
+        builder.Writeln("This paragraph has left and right indents.");
 
         // Start a table.
         Table table = builder.StartTable();
 
-        // Insert the first cell to create the initial row (required before setting table formatting).
+        // First row, first cell.
         builder.InsertCell();
+        builder.Write("Cell 1");
+
+        // First row, second cell.
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+
+        // End the table.
+        builder.EndTable();
 
         // Align the table's left indent with the paragraph's left indent.
         table.LeftIndent = builder.ParagraphFormat.LeftIndent;
 
-        // Insert text into the first cell.
-        builder.Writeln("Table cell aligned with paragraph left indent.");
+        // Note: Aspose.Words does not provide a Table.RightIndent property,
+        // so only the left indent can be aligned directly.
 
-        // Finish the row and the table.
-        builder.EndRow();
-        builder.EndTable();
-
-        // Save the document to the local file system.
+        // Save the document to a file.
         doc.Save("TableIndentExample.docx");
     }
 }

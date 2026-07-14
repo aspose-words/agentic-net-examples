@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -19,16 +18,18 @@ public class Program
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
         builder.CellFormat.Width = 100;                       // Width for header cells.
 
+        // First header cell.
         builder.InsertCell();
         builder.Write("Header Column 1");
+        // Second header cell.
         builder.InsertCell();
         builder.Write("Header Column 2");
-        builder.EndRow();                                     // End of header row.
+        builder.EndRow();                                     // End header row.
 
-        // ----- Data rows (regular rows) -----
-        builder.RowFormat.HeadingFormat = false;              // Subsequent rows are not headings.
+        // ----- Data rows (no longer heading) -----
         builder.CellFormat.Width = 50;                        // Width for data cells.
-        builder.ParagraphFormat.ClearFormatting();
+        builder.ParagraphFormat.ClearFormatting();           // Reset paragraph formatting.
+        builder.RowFormat.HeadingFormat = false;             // Ensure following rows are not headings.
 
         // Add enough rows to make the table span multiple pages.
         for (int i = 0; i < 50; i++)
@@ -43,12 +44,7 @@ public class Program
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithRepeatingHeader.docx");
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+        // Save the document to the current directory.
+        doc.Save("TableWithRepeatingHeader.docx");
     }
 }

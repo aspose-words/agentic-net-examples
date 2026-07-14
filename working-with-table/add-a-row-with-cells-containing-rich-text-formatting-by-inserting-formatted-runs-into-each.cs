@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using System.Drawing;               // Needed for Color
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -14,60 +14,53 @@ namespace AsposeWordsTableExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table with two columns.
-            Table table = builder.StartTable();
+            // Start the table.
+            builder.StartTable();
 
-            // ----- Header row (plain text) -----
+            // First row – simple header cells.
             builder.InsertCell();
             builder.Write("Header 1");
             builder.InsertCell();
             builder.Write("Header 2");
             builder.EndRow();
 
-            // ----- New row with rich formatted text in each cell -----
-            // First cell
+            // Second row – cells with rich formatted runs.
+
+            // First cell.
             Cell cell1 = builder.InsertCell();
-            // The first paragraph already exists in the cell.
             Paragraph para1 = cell1.FirstParagraph;
 
-            // Run 1: bold text
             Run runBold = new Run(doc, "Bold");
             runBold.Font.Bold = true;
             para1.AppendChild(runBold);
 
-            // Run 2: normal text
-            Run runNormal = new Run(doc, " and normal");
+            Run runNormal = new Run(doc, " Normal");
             para1.AppendChild(runNormal);
 
-            // Second cell
+            // Second cell.
             Cell cell2 = builder.InsertCell();
             Paragraph para2 = cell2.FirstParagraph;
 
-            // Run 1: italic, red text
-            Run runItalicRed = new Run(doc, "Italic Red");
-            runItalicRed.Font.Italic = true;
-            // Use Font.Color instead of the non‑existent FontColor property.
-            runItalicRed.Font.Color = Color.Red;
-            para2.AppendChild(runItalicRed);
+            Run runItalic = new Run(doc, "Italic");
+            runItalic.Font.Italic = true;
+            para2.AppendChild(runItalic);
 
-            // Run 2: normal text
-            Run runPlain = new Run(doc, " text");
-            para2.AppendChild(runPlain);
+            Run runRed = new Run(doc, " Red");
+            // Correct property to set font color.
+            runRed.Font.Color = Color.Red;
+            para2.AppendChild(runRed);
 
             // Finish the row and the table.
             builder.EndRow();
             builder.EndTable();
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
+            // Save the document.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "FormattedTable.docx");
             doc.Save(outputPath);
 
             // Verify that the file was created.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
-
-            // Inform that the process completed.
-            Console.WriteLine($"Document saved to: {outputPath}");
+                throw new Exception("The output document was not saved correctly.");
         }
     }
 }

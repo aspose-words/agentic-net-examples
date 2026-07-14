@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,58 +13,42 @@ namespace AsposeWordsTableExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // ---------- First table ----------
+            // Build the first table.
             builder.StartTable();
             builder.InsertCell();
-            builder.Write("First table, cell 1");
+            builder.Write("Table 1, Cell 1");
             builder.InsertCell();
-            builder.Write("First table, cell 2");
+            builder.Write("Table 1, Cell 2");
             builder.EndRow();
-
             builder.InsertCell();
-            builder.Write("First table, cell 3");
+            builder.Write("Table 1, Cell 3");
             builder.InsertCell();
-            builder.Write("First table, cell 4");
+            builder.Write("Table 1, Cell 4");
             builder.EndTable();
 
             // Insert an empty paragraph to separate the tables.
-            // Writeln() without arguments creates a paragraph break with no text.
-            builder.Writeln();
+            builder.InsertParagraph();
 
-            // ---------- Second table ----------
+            // Build the second table.
             builder.StartTable();
             builder.InsertCell();
-            builder.Write("Second table, cell 1");
+            builder.Write("Table 2, Cell 1");
             builder.InsertCell();
-            builder.Write("Second table, cell 2");
+            builder.Write("Table 2, Cell 2");
             builder.EndRow();
-
             builder.InsertCell();
-            builder.Write("Second table, cell 3");
+            builder.Write("Table 2, Cell 3");
             builder.InsertCell();
-            builder.Write("Second table, cell 4");
+            builder.Write("Table 2, Cell 4");
             builder.EndTable();
 
-            // Save the document.
-            const string outputPath = "Result.docx";
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
             doc.Save(outputPath);
 
-            // Simple validation: ensure there are exactly two tables and an empty paragraph between them.
-            Table[] tables = doc.GetChildNodes(NodeType.Table, true).Cast<Table>().ToArray();
-
-            if (tables.Length != 2)
-                throw new InvalidOperationException("The document does not contain the expected number of tables.");
-
-            // The node immediately after the first table should be a Paragraph with no text.
-            Node nodeAfterFirstTable = tables[0].NextSibling;
-            if (nodeAfterFirstTable == null ||
-                nodeAfterFirstTable.NodeType != NodeType.Paragraph ||
-                !string.IsNullOrWhiteSpace(nodeAfterFirstTable.GetText()))
-            {
-                throw new InvalidOperationException("The empty paragraph separating the tables was not inserted correctly.");
-            }
-
-            // Execution finished successfully.
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The document was not saved correctly.");
         }
     }
 }

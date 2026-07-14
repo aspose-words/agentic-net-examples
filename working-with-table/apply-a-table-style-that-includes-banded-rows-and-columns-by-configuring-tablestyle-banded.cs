@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -12,7 +11,7 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a simple 2‑column table.
+        // Start building a table.
         Table table = builder.StartTable();
 
         // Header row.
@@ -35,19 +34,24 @@ public class Program
         // Finish the table.
         builder.EndTable();
 
-        // Apply a built‑in style that supports banding.
-        table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
+        // Apply a built‑in table style.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Enable both row banding and column banding.
+        // Enable banded rows and columns.
         table.StyleOptions = TableStyleOptions.RowBands | TableStyleOptions.ColumnBands;
 
-        // Resize the table to fit its contents.
+        // Auto‑fit the table to its contents.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Ensure the output directory exists and save the document.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "TableWithBandedRowsColumns.docx");
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithBanding.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not created.");
+
+        // Indicate success.
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

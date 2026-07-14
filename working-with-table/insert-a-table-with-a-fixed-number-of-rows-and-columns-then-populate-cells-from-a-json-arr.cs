@@ -5,65 +5,57 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-namespace AsposeTableFromJson
+namespace AsposeWordsTableFromJson
 {
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Sample JSON representing a rectangular table (rows of columns).
+            // JSON array representing rows and columns of the table.
             // Each inner array is a row; each string is a cell value.
             string json = @"
             [
-                [""Header 1"", ""Header 2"", ""Header 3""],
-                [""Row1 Col1"", ""Row1 Col2"", ""Row1 Col3""],
-                [""Row2 Col1"", ""Row2 Col2"", ""Row2 Col3""]
+                [""Row 1, Col 1"", ""Row 1, Col 2"", ""Row 1, Col 3""],
+                [""Row 2, Col 1"", ""Row 2, Col 2"", ""Row 2, Col 3""],
+                [""Row 3, Col 1"", ""Row 3, Col 2"", ""Row 3, Col 3""]
             ]";
 
             // Deserialize JSON into a list of rows, each row being a list of cell strings.
             List<List<string>> tableData = JsonConvert.DeserializeObject<List<List<string>>>(json);
 
-            if (tableData == null || tableData.Count == 0)
-                throw new InvalidOperationException("JSON does not contain any table data.");
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Determine the maximum column count to ensure a uniform table.
-            int columnCount = 0;
-            foreach (var row in tableData)
-                if (row != null && row.Count > columnCount)
-                    columnCount = row.Count;
+            // Start building the table.
+            Table table = builder.StartTable();
 
-            // Begin building the table.
-            builder.StartTable();
-
-            foreach (var row in tableData)
+            // Populate the table using the data from the JSON array.
+            foreach (List<string> row in tableData)
             {
-                // Ensure each row has the same number of cells.
-                for (int col = 0; col < columnCount; col++)
+                foreach (string cellText in row)
                 {
                     builder.InsertCell();
-
-                    string cellText = (row != null && col < row.Count) ? row[col] : string.Empty;
                     builder.Write(cellText);
                 }
-
-                // End the current row.
+                // End the current row and start a new one.
                 builder.EndRow();
             }
 
             // Finish the table.
             builder.EndTable();
 
-            // Save the document to a file in the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputTable.docx");
+            // Define output path (in the same folder as the executable).
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableFromJson.docx");
+
+            // Save the document.
             doc.Save(outputPath);
 
-            // Simple validation that the file was created.
+            // Simple validation to ensure the file was created.
             if (!File.Exists(outputPath))
-                throw new FileNotFoundException("The output document was not created.", outputPath);
+                throw new InvalidOperationException("Failed to create the output document.");
+
+            // The program ends here without waiting for user input.
         }
     }
 }

@@ -1,5 +1,5 @@
 using System;
-using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,49 +13,42 @@ namespace AsposeWordsTableExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start the table.
-            builder.StartTable();
+            // Start a table.
+            Table table = builder.StartTable();
 
-            // Define number of rows and columns.
-            int rowCount = 6;
-            int columnCount = 3;
+            int rows = 6;    // Number of rows to create.
+            int columns = 3; // Number of columns per row.
 
-            // Loop through rows and apply alternating shading.
-            for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
+            // Build the table rows and cells.
+            for (int r = 0; r < rows; r++)
             {
-                // Choose background color based on row parity.
-                // Even rows: LightGray, Odd rows: White.
-                System.Drawing.Color backgroundColor = (rowIndex % 2 == 0)
-                    ? System.Drawing.Color.LightGray
-                    : System.Drawing.Color.White;
-
-                // Apply shading to the cells that will be created in this row.
-                builder.CellFormat.Shading.BackgroundPatternColor = backgroundColor;
-
-                // Insert cells for the current row.
-                for (int colIndex = 0; colIndex < columnCount; colIndex++)
+                for (int c = 0; c < columns; c++)
                 {
                     builder.InsertCell();
-                    builder.Write($"Row {rowIndex + 1}, Col {colIndex + 1}");
+                    builder.Write($"Row {r + 1}, Cell {c + 1}");
                 }
-
-                // End the current row.
                 builder.EndRow();
             }
 
             // Finish the table.
             builder.EndTable();
 
-            // Reset cell formatting to avoid affecting subsequent content.
-            builder.CellFormat.Shading.ClearFormatting();
+            // Apply alternating shading based on row index parity.
+            for (int i = 0; i < table.Rows.Count; i++)
+            {
+                Row row = table.Rows[i];
+                // Choose a background color: LightGray for even rows, White for odd rows.
+                Color bgColor = (i % 2 == 0) ? Color.LightGray : Color.White;
+
+                foreach (Cell cell in row.Cells)
+                {
+                    cell.CellFormat.Shading.BackgroundPatternColor = bgColor;
+                }
+            }
 
             // Save the document to the local file system.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingRows.docx");
+            string outputPath = "AlternatingRows.docx";
             doc.Save(outputPath);
-
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
         }
     }
 }

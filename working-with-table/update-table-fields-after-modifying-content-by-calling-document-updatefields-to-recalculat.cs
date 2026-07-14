@@ -2,54 +2,62 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Fields;
 
-public class Program
+namespace AsposeWordsTableFieldUpdate
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+            // Build a simple 2‑row table.
+            // Row 1 – contains a numeric value.
+            // Row 2 – contains a formula field that sums the values above it.
+            builder.StartTable();
 
-        // First row: headers.
-        builder.InsertCell();
-        builder.Write("Quantity");
-        builder.InsertCell();
-        builder.Write("10");
-        builder.EndRow();
+            // First row, first cell: write a number.
+            builder.InsertCell();
+            builder.Write("10");
+            builder.EndRow();
 
-        // Second row: total with a formula field that sums the values above.
-        builder.InsertCell();
-        builder.Write("Total");
-        builder.InsertCell();
-        // Insert a formula field. This overload inserts the field and updates it automatically.
-        builder.InsertField("= SUM(ABOVE) \\# #,##0");
-        builder.EndRow();
+            // Second row, first cell: insert a SUM(ABOVE) field.
+            builder.InsertCell();
+            // Use the string overload of InsertField which inserts the field and updates it automatically.
+            builder.InsertField("=SUM(ABOVE)");
+            builder.EndRow();
 
-        builder.EndTable();
+            builder.EndTable();
 
-        // Save the initial document.
-        string initialPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithField.docx");
-        doc.Save(initialPath);
+            // Locate the first cell and change its numeric value.
+            Table table = doc.FirstSection.Body.Tables[0];
+            Cell firstCell = table.Rows[0].Cells[0];
 
-        // Modify the quantity value in the first row, second column.
-        Cell quantityCell = table.Rows[0].Cells[1];
-        // Clear existing runs and insert new text.
-        quantityCell.FirstParagraph.Runs.Clear();
-        quantityCell.FirstParagraph.AppendChild(new Run(doc, "25"));
+            // Replace the existing run text with a new value.
+            // Ensure the cell has at least one paragraph and one run.
+            if (firstCell.FirstParagraph.Runs.Count == 0)
+            {
+                firstCell.FirstParagraph.AppendChild(new Run(doc, "20"));
+            }
+            else
+            {
+                firstCell.FirstParagraph.Runs[0].Text = "20";
+            }
 
-        // Recalculate all fields in the document.
-        doc.UpdateFields();
+            // Recalculate all fields in the document, including the formula field in the table.
+            doc.UpdateFields();
 
-        // Save the updated document.
-        string updatedPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithField_Updated.docx");
-        doc.Save(updatedPath);
+            // Optional: verify the result of the formula field.
+            // The document now contains a single field (the formula), accessible via the Range.Fields collection.
+            Field formulaField = doc.Range.Fields[0];
+            Console.WriteLine("Formula field result after update: " + formulaField?.Result);
 
-        // Verify that the updated file was created.
-        if (!File.Exists(updatedPath))
-            throw new InvalidOperationException("The updated document was not saved correctly.");
+            // Save the document to the current working directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UpdatedTableFields.docx");
+            doc.Save(outputPath);
+        }
     }
 }

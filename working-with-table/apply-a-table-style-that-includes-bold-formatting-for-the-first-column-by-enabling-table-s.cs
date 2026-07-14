@@ -1,59 +1,57 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableStyleExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a few rows with two columns each.
-        Table table = builder.StartTable();
+            // Start a table and add a few rows with two columns each.
+            Table table = builder.StartTable();
 
-        // Header row.
-        builder.InsertCell();
-        builder.Write("Item");
-        builder.InsertCell();
-        builder.Write("Quantity");
-        builder.EndRow();
+            // Header row.
+            builder.InsertCell();
+            builder.Write("Item");
+            builder.InsertCell();
+            builder.Write("Quantity");
+            builder.EndRow();
 
-        // Data rows.
-        builder.InsertCell();
-        builder.Write("Apples");
-        builder.InsertCell();
-        builder.Write("20");
-        builder.EndRow();
+            // Data rows.
+            builder.InsertCell();
+            builder.Write("Apples");
+            builder.InsertCell();
+            builder.Write("10");
+            builder.EndRow();
 
-        builder.InsertCell();
-        builder.Write("Bananas");
-        builder.InsertCell();
-        builder.Write("40");
-        builder.EndRow();
+            builder.InsertCell();
+            builder.Write("Bananas");
+            builder.InsertCell();
+            builder.Write("20");
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            // Finish building the table.
+            builder.EndTable();
 
-        // Apply a built‑in table style.
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+            // Create a custom table style.
+            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyFirstColumnBoldStyle");
 
-        // Enable the first‑column conditional formatting.
-        table.StyleOptions = TableStyleOptions.FirstColumn;
+            // Make the first column bold via the conditional style.
+            customStyle.ConditionalStyles[ConditionalStyleType.FirstColumn].Font.Bold = true;
 
-        // Retrieve the style object to modify its conditional style for the first column.
-        TableStyle tableStyle = (TableStyle)doc.Styles[StyleIdentifier.MediumShading1Accent1];
-        // Make the text in the first column bold.
-        tableStyle.ConditionalStyles[ConditionalStyleType.FirstColumn].Font.Bold = true;
+            // Apply the custom style to the table.
+            table.Style = customStyle;
 
-        // Save the document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TableStyleFirstColumnBold.docx");
-        doc.Save(outputPath);
+            // Enable the FirstColumn option so the conditional style is applied.
+            table.StyleOptions = TableStyleOptions.FirstColumn;
 
-        // Simple verification that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+            // Save the document.
+            doc.Save("TableStyleFirstColumnBold.docx");
+        }
     }
 }

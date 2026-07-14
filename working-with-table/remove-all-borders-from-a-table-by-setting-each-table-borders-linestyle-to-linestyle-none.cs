@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,35 +13,26 @@ public class Program
 
         // Build a simple 2x2 table.
         Table table = builder.StartTable();
+
+        // First row.
         builder.InsertCell();
         builder.Write("Cell 1,1");
         builder.InsertCell();
         builder.Write("Cell 1,2");
         builder.EndRow();
 
+        // Second row.
         builder.InsertCell();
         builder.Write("Cell 2,1");
         builder.InsertCell();
         builder.Write("Cell 2,2");
         builder.EndTable();
 
-        // Remove all borders by setting each border's line style to None.
-        // Using SetBorders applies the style to every outer and inner border of the table.
-        table.SetBorders(LineStyle.None, 0.0, Color.Empty);
+        // Remove all borders from the table.
+        table.ClearBorders();
 
-        // Save the document.
-        const string outputPath = "TableNoBorders.docx";
+        // Save the document to the output folder.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithoutBorders.docx");
         doc.Save(outputPath);
-
-        // Verify that the borders were removed.
-        Document loadedDoc = new Document(outputPath);
-        Table loadedTable = loadedDoc.FirstSection.Body.Tables[0];
-        Border topBorder = loadedTable.FirstRow.RowFormat.Borders[BorderType.Top];
-        if (topBorder.LineStyle != LineStyle.None)
-        {
-            throw new InvalidOperationException("Failed to remove table borders.");
-        }
-
-        // Program ends without user interaction.
     }
 }

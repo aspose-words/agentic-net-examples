@@ -11,35 +11,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Add some initial text so the document is not empty.
+        builder.Writeln("Document before the table.");
+
         // Move the builder cursor to the end of the document.
         builder.MoveToDocumentEnd();
 
-        // Start a new table at the current cursor position.
+        // Start a table at the current cursor position (document end).
         Table table = builder.StartTable();
 
-        // ---- First row ----
-        builder.InsertCell();                     // First cell of the first row.
+        // First row with two cells.
+        builder.InsertCell();
         builder.Write("Cell 1, Row 1");
-        builder.InsertCell();                     // Second cell of the first row.
+        builder.InsertCell();
         builder.Write("Cell 2, Row 1");
-        builder.EndRow();                         // End the first row.
+        builder.EndRow();
 
-        // ---- Second row ----
-        builder.InsertCell();                     // First cell of the second row.
+        // Second row with two cells.
+        builder.InsertCell();
         builder.Write("Cell 1, Row 2");
-        builder.InsertCell();                     // Second cell of the second row.
+        builder.InsertCell();
         builder.Write("Cell 2, Row 2");
-        builder.EndRow();                         // End the second row.
+        builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file.
-        string outputPath = "TableAtEnd.docx";
+        // Save the document to a file in the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputTable.docx");
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException("The document was not saved correctly.");
+
+        // Output the location of the saved file.
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

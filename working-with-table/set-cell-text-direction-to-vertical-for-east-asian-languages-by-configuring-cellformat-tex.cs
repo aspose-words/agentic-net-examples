@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,21 +14,26 @@ public class Program
         // Start a table.
         Table table = builder.StartTable();
 
-        // First cell – set text orientation to vertical for East Asian characters.
+        // First cell – set text direction to vertical for East Asian languages.
         builder.InsertCell();
         builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
-        builder.Write("縦書きテキスト"); // Example Japanese vertical text.
+        builder.Write("縦書きテキスト"); // Sample East Asian vertical text.
 
-        // Second cell – keep the default (horizontal) orientation.
+        // Second cell – normal horizontal text.
         builder.InsertCell();
-        builder.Write("Normal text.");
+        builder.CellFormat.Orientation = TextOrientation.Horizontal;
+        builder.Write("Horizontal text");
 
-        // Finish the row and the table.
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document to the local file system.
-        const string outputPath = "CellTextDirection.docx";
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "CellVerticalText.docx");
         doc.Save(outputPath);
     }
 }

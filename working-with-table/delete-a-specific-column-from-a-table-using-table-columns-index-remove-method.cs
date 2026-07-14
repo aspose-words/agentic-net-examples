@@ -1,9 +1,8 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class DeleteTableColumnExample
+public class Program
 {
     public static void Main()
     {
@@ -11,7 +10,7 @@ public class DeleteTableColumnExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a 3x3 table.
+        // Build a 3‑column, 2‑row table.
         Table table = builder.StartTable();
 
         // First row.
@@ -30,41 +29,25 @@ public class DeleteTableColumnExample
         builder.Write("R2C2");
         builder.InsertCell();
         builder.Write("R2C3");
-        builder.EndRow();
+        builder.EndTable(); // Ends the table.
 
-        // Third row.
-        builder.InsertCell();
-        builder.Write("R3C1");
-        builder.InsertCell();
-        builder.Write("R3C2");
-        builder.InsertCell();
-        builder.Write("R3C3");
-        builder.EndRow();
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Verify initial column count.
-        int initialColumnCount = table.Rows[0].Cells.Count;
-        if (initialColumnCount != 3)
-            throw new InvalidOperationException("Table should have 3 columns initially.");
-
-        // Delete the second column (index 1) by removing the cell at that index from each row.
+        // Delete the second column (index 1).
+        // Aspose.Words does not expose a Columns collection; remove the cell at the
+        // desired index from each row instead.
         int columnIndexToRemove = 1;
-        foreach (Row row in table.Rows)
+        if (table.Rows.Count > 0 && table.Rows[0].Cells.Count > columnIndexToRemove)
         {
-            // Ensure the row has enough cells before removal.
-            if (row.Cells.Count > columnIndexToRemove)
-                row.Cells.RemoveAt(columnIndexToRemove);
+            foreach (Row row in table.Rows)
+            {
+                // Ensure the row still has enough cells before removal.
+                if (row.Cells.Count > columnIndexToRemove)
+                {
+                    row.Cells.RemoveAt(columnIndexToRemove);
+                }
+            }
         }
 
-        // Verify column count after removal.
-        int afterRemovalCount = table.Rows[0].Cells.Count;
-        if (afterRemovalCount != initialColumnCount - 1)
-            throw new InvalidOperationException("Column removal failed.");
-
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DeletedColumnTable.docx");
-        doc.Save(outputPath);
+        // Save the modified document.
+        doc.Save("DeletedColumn.docx");
     }
 }

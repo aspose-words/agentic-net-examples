@@ -1,9 +1,8 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
-using System.Drawing;
 
 public class Program
 {
@@ -16,38 +15,36 @@ public class Program
         // Build a simple 2x2 table.
         Table table = builder.StartTable();
 
-        // First row.
+        // First row (header).
         builder.InsertCell();
         builder.Write("Header 1");
         builder.InsertCell();
         builder.Write("Header 2");
         builder.EndRow();
 
-        // Second row.
+        // Second row (data).
         builder.InsertCell();
         builder.Write("Cell 1");
         builder.InsertCell();
         builder.Write("Cell 2");
-        builder.EndTable(); // Ends the table and returns the Table node.
+        builder.EndRow();
+
+        builder.EndTable();
 
         // Create a custom table style.
         TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
         customStyle.Shading.BackgroundPatternColor = Color.LightGray;
         customStyle.Borders.Color = Color.DarkBlue;
         customStyle.Borders.LineStyle = LineStyle.Single;
-        customStyle.Borders.LineWidth = 1.0;
-        customStyle.Alignment = TableAlignment.Center;
+        customStyle.Borders.LineWidth = 1.5;
+        customStyle.CellSpacing = 2;
+        customStyle.AllowBreakAcrossPages = true;
 
-        // Apply the style to the table by assigning the Style property.
-        // Retrieve the style by name from the document's style collection.
-        table.Style = doc.Styles["MyCustomTableStyle"];
+        // Apply the style to the table via the Style property.
+        table.Style = customStyle;
 
-        // Save the document.
+        // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableStyleExample.docx");
         doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

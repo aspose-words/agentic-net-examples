@@ -1,61 +1,77 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Fields;
 
-public class Program
+namespace TableCaptionUpdater
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Helper to insert a table with a caption.
-        void InsertTableWithCaption(string captionText, int rows, int cols)
+        public static void Main()
         {
-            // Insert caption paragraph with a SEQ field for tables.
-            builder.Writeln();
-            Paragraph captionPara = builder.CurrentParagraph;
-            Field seqField = builder.InsertField("SEQ Table \\* ARABIC", "1");
-            captionPara.AppendChild(new Run(doc, " " + captionText));
-            // Build the table.
-            builder.StartTable();
-            for (int r = 0; r < rows; r++)
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Add three tables, each preceded by a caption that uses a SEQ field.
+            for (int i = 1; i <= 3; i++)
             {
-                for (int c = 0; c < cols; c++)
-                {
-                    builder.InsertCell();
-                    builder.Write($"R{r + 1}C{c + 1}");
-                }
+                // Insert a SEQ field for tables. The field type is FieldSequence.
+                Field field = builder.InsertField(FieldType.FieldSequence, true);
+                // Set the sequence identifier to "Table" so that the field numbers tables.
+                ((FieldSeq)field).SequenceIdentifier = "Table";
+
+                // Write the caption text after the field.
+                builder.Writeln($" - Sample Table {i}");
+
+                // Build a simple 2x2 table.
+                Table table = builder.StartTable();
+
+                builder.InsertCell();
+                builder.Write($"Row 1, Cell 1 (Table {i})");
+                builder.InsertCell();
+                builder.Write($"Row 1, Cell 2 (Table {i})");
                 builder.EndRow();
+
+                builder.InsertCell();
+                builder.Write($"Row 2, Cell 1 (Table {i})");
+                builder.InsertCell();
+                builder.Write($"Row 2, Cell 2 (Table {i})");
+                builder.EndRow();
+
+                builder.EndTable();
+
+                // Add a blank paragraph after each table for readability.
+                builder.Writeln();
             }
-            builder.EndTable();
+
+            // Update all SEQ fields in the document so that caption numbers are correct.
+            // This can be done globally, but we follow the requirement to iterate tables.
+            NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+            foreach (Table table in tables)
+            {
+                // Find the nearest preceding paragraph (the caption).
+                Node node = table.PreviousSibling;
+                while (node != null && !(node is Paragraph))
+                {
+                    node = node.PreviousSibling;
+                }
+
+                if (node is Paragraph captionParagraph)
+                {
+                    // Update each SEQ (FieldSequence) field in the caption paragraph.
+                    foreach (Field f in captionParagraph.Range.Fields)
+                    {
+                        if (f.Type == FieldType.FieldSequence)
+                        {
+                            f.Update();
+                        }
+                    }
+                }
+            }
+
+            // Save the document.
+            doc.Save("TableCaptionsUpdated.docx");
         }
-
-        // Insert initial tables.
-        InsertTableWithCaption("First table caption.", 2, 3);
-        InsertTableWithCaption("Second table caption.", 3, 2);
-
-        // Add a new table later in the document.
-        InsertTableWithCaption("Third table caption added later.", 2, 2);
-
-        // Iterate all tables to demonstrate traversal.
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        Console.WriteLine($"Total tables before updating captions: {tables.Count}");
-
-        // Refresh caption numbers by updating fields.
-        doc.UpdateFields();
-
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UpdatedCaptions.docx");
-        doc.Save(outputPath);
-
-        // Verify the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not saved correctly.");
-
-        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

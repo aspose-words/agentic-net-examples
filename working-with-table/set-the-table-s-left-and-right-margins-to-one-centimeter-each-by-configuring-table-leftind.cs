@@ -11,28 +11,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Build a simple 2‑cell table.
         Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Left cell");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Right cell");
         builder.EndRow();
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
         builder.EndTable();
 
-        // Set the left indent to 1 cm (1 cm = 28.35 points).
+        // Set left indent (margin) to 1 cm (≈28.35 points).
         table.LeftIndent = 28.35;
 
-        // Aspose.Words does not expose a RightIndent property.
-        // To achieve a right‑side margin effect, align the table to the right.
-        table.Alignment = TableAlignment.Right;
+        // Set right distance (margin) to 1 cm.
+        table.DistanceRight = 28.35;
 
-        // Save the document to the current directory.
+        // Save the document to the local file system.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableMargins.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output file was not created.");
+
+        // The program finishes automatically; no user interaction required.
     }
 }

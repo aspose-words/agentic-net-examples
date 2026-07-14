@@ -3,54 +3,43 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace HeaderTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Move the builder's cursor to the primary header of the first section.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-
-        // Start a table in the header.
-        Table table = builder.StartTable();
-
-        // First row, first cell.
-        builder.InsertCell();
-        builder.Write("Header Cell 1");
-
-        // First row, second cell.
-        builder.InsertCell();
-        builder.Write("Header Cell 2");
-        builder.EndRow();
-
-        // Second row, first cell.
-        builder.InsertCell();
-        builder.Write("Header Cell 3");
-
-        // Second row, second cell.
-        builder.InsertCell();
-        builder.Write("Header Cell 4");
-        builder.EndRow();
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Define output path in the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderTable.docx");
-
-        // Save the document.
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        public static void Main()
         {
-            throw new Exception($"Failed to create the output file at '{outputPath}'.");
-        }
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Optionally, inform that the process completed successfully.
-        Console.WriteLine($"Document saved successfully to: {outputPath}");
+            // Initialize a DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Move the builder's cursor to the primary header of the first section.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+
+            // Start a new table in the header.
+            Table table = builder.StartTable();
+
+            // First cell.
+            builder.InsertCell();
+            builder.Write("Header Cell 1");
+
+            // Second cell.
+            builder.InsertCell();
+            builder.Write("Header Cell 2");
+
+            // End the row and the table.
+            builder.EndRow();
+            builder.EndTable();
+
+            // Save the document to disk.
+            string outputPath = "HeaderTable.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The document was not saved correctly.");
+        }
     }
 }

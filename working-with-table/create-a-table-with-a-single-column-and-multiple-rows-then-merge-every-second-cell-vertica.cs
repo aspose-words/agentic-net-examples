@@ -3,50 +3,63 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document and a DocumentBuilder.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start a table that will have a single column.
-        Table table = builder.StartTable();
-
-        // Define the number of rows to create.
-        int totalRows = 7; // Example: 7 rows (will create 3 merged groups and 1 single row)
-
-        for (int i = 0; i < totalRows; i++)
+        public static void Main()
         {
-            // Insert a cell for the current row.
-            builder.InsertCell();
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Merge every second cell vertically.
-            if (i % 2 == 0) // First cell of a pair – start of a vertical merge.
+            // Start a table with a single column.
+            Table table = builder.StartTable();
+
+            int rowCount = 6; // Number of rows to create.
+
+            for (int i = 1; i <= rowCount; i++)
             {
-                builder.CellFormat.VerticalMerge = CellMerge.First;
-                builder.Write($"Group {(i / 2) + 1}");
-            }
-            else // Second cell of a pair – continues the previous merge.
-            {
-                builder.CellFormat.VerticalMerge = CellMerge.Previous;
-                // No text needed for the merged‑into cell.
+                // Insert a cell for the current row.
+                builder.InsertCell();
+
+                // Determine vertical merge settings:
+                // - Even rows start a merged range (First).
+                // - Odd rows (except the first) continue the previous merge (Previous).
+                // - The very first row has no merging.
+                if (i % 2 == 0)
+                {
+                    builder.CellFormat.VerticalMerge = CellMerge.First;
+                }
+                else if (i % 2 == 1 && i > 1)
+                {
+                    builder.CellFormat.VerticalMerge = CellMerge.Previous;
+                }
+                else
+                {
+                    builder.CellFormat.VerticalMerge = CellMerge.None;
+                }
+
+                // Write some text into the cell.
+                builder.Write($"Row {i}");
+
+                // End the current row.
+                builder.EndRow();
             }
 
-            // End the current row.
-            builder.EndRow();
+            // Finish the table.
+            builder.EndTable();
+
+            // Save the document to the local file system.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableVerticalMerge.docx");
+            doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not saved correctly.");
+
+            // Inform the user (no interactive input required).
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document to a file.
-        string outputPath = "MergedTable.docx";
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
     }
 }

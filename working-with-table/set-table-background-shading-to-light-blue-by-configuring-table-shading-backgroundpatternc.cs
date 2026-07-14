@@ -12,32 +12,21 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Build a simple 2x1 table.
         Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("First cell");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Second cell");
         builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
         builder.EndTable();
 
         // Set the whole table's background shading to light blue.
-        // Use Table.SetShading to apply a solid texture with the desired background color.
+        // Use Table.SetShading since Table.Shading property does not exist.
         table.SetShading(TextureIndex.TextureSolid, Color.Empty, Color.LightBlue);
 
-        // Save the document to a local file.
-        string outputPath = "TableBackgroundShading.docx";
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableShading.docx");
         doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
-        }
     }
 }

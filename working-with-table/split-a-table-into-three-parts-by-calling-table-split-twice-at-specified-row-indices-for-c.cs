@@ -4,82 +4,63 @@ using Aspose.Words.Tables;
 
 namespace TableSplitExample
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
             // Create a new blank document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a table with 9 rows and 2 columns.
+            // Build a table with 9 rows, each row containing a single cell with text.
             Table table = builder.StartTable();
             for (int i = 1; i <= 9; i++)
             {
                 builder.InsertCell();
-                builder.Write($"Row {i}, Cell 1");
-
-                builder.InsertCell();
-                builder.Write($"Row {i}, Cell 2");
-
+                builder.Write($"Row {i}");
                 builder.EndRow();
             }
             builder.EndTable();
 
-            // ---- Split the table into three parts ----
-            // First split at row index 3 (rows 0‑2 stay in the original table,
-            // rows 3‑8 move to the new table).
-            Table secondPart = SplitTable(table, 3, table.Rows.Count - 3);
+            // Clone the original table twice – these clones will become the second and third parts.
+            Table secondTable = (Table)table.Clone(true);
+            Table thirdTable = (Table)table.Clone(true);
 
-            // Second split the remaining table at row index 3 (relative to this table).
-            // This yields the middle part (rows 0‑2 of secondPart) and the last part.
-            Table thirdPart = SplitTable(secondPart, 3, secondPart.Rows.Count - 3);
+            // Insert the cloned tables after the original table so the document contains three tables in order.
+            // The ParentNode of a Table is a Body, which derives from CompositeNode and provides InsertAfter<T>.
+            var parent = (CompositeNode)table.ParentNode;
+            parent.InsertAfter(secondTable, table);
+            parent.InsertAfter(thirdTable, secondTable);
 
-            // Save each part into its own document.
-            SaveTablePart(table, "TablePart1.docx");
-            SaveTablePart(secondPart, "TablePart2.docx");
-            SaveTablePart(thirdPart, "TablePart3.docx");
+            // Keep only the required rows in each table.
+            // First part: rows 0‑2
+            KeepRows(table, 0, 2);
+            // Second part: rows 3‑5
+            KeepRows(secondTable, 3, 5);
+            // Third part: rows 6‑8
+            KeepRows(thirdTable, 6, 8);
+
+            // Optional: Verify the row counts of each part.
+            Console.WriteLine($"First part rows: {table.Rows.Count}");
+            Console.WriteLine($"Second part rows: {secondTable.Rows.Count}");
+            Console.WriteLine($"Third part rows: {thirdTable.Rows.Count}");
+
+            // Save the document containing the three split tables.
+            doc.Save("SplitTable.docx");
         }
 
         /// <summary>
-        /// Splits a table by moving a range of rows starting at <paramref name="startIndex"/>
-        /// (zero‑based) into a new table. The original table loses those rows.
+        /// Removes all rows from the table except those whose indices are between startIndex and endIndex (inclusive).
         /// </summary>
-        private static Table SplitTable(Table source, int startIndex, int rowCount)
+        private static void KeepRows(Table tbl, int startIndex, int endIndex)
         {
-            // Create a new empty table in the same document as the source.
-            Table newTable = new Table(source.Document);
+            // Remove rows after the desired range.
+            for (int i = tbl.Rows.Count - 1; i > endIndex; i--)
+                tbl.Rows.RemoveAt(i);
 
-            // Clone the required rows into the new table.
-            for (int i = 0; i < rowCount; i++)
-            {
-                Row clonedRow = (Row)source.Rows[startIndex].Clone(true);
-                newTable.Rows.Add(clonedRow);
-            }
-
-            // Remove the moved rows from the source table (remove from the end to keep indices stable).
-            for (int i = 0; i < rowCount; i++)
-            {
-                source.Rows.RemoveAt(startIndex);
-            }
-
-            return newTable;
-        }
-
-        /// <summary>
-        /// Creates a new document, imports the supplied table, and saves it.
-        /// </summary>
-        private static void SaveTablePart(Table sourceTable, string fileName)
-        {
-            // Create a new document to hold the table.
-            Document partDoc = new Document();
-
-            // Import the table into the new document (required when moving nodes between documents).
-            Table importedTable = (Table)partDoc.ImportNode(sourceTable, true);
-            partDoc.FirstSection.Body.AppendChild(importedTable);
-
-            // Save the document.
-            partDoc.Save(fileName);
+            // Remove rows before the desired range.
+            for (int i = startIndex - 1; i >= 0; i--)
+                tbl.Rows.RemoveAt(i);
         }
     }
 }

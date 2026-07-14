@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -14,29 +13,28 @@ public class Program
         // Start a table.
         Table table = builder.StartTable();
 
-        // First row – default height.
+        // First row (default height).
         builder.InsertCell();
         builder.Write("First row, cell 1.");
         builder.InsertCell();
         builder.Write("First row, cell 2.");
         builder.EndRow();
 
-        // Set the height of the next row to exactly 20 points.
-        builder.RowFormat.Height = 20.0;               // Height in points.
-        builder.RowFormat.HeightRule = HeightRule.Exactly; // Enforce exact height.
+        // Configure the next row to have an exact height of 20 points.
+        builder.RowFormat.Height = 20;
+        builder.RowFormat.HeightRule = HeightRule.Exactly;
 
-        // Second row – will have the height set above.
+        // Second row with the specified height.
         builder.InsertCell();
         builder.Write("Second row, cell 1.");
         builder.InsertCell();
         builder.Write("Second row, cell 2.");
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "RowHeightExample.docx");
-        doc.Save(outputPath);
+        // Save the document.
+        doc.Save("RowHeightExample.docx");
     }
 }

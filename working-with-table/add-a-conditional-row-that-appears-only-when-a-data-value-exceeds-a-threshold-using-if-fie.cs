@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Fields;
 using Aspose.Words.Tables;
 
 public class Program
@@ -11,37 +12,64 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a header row.
+        // Define a document variable that will be used in the IF field.
+        // Change this value to test the conditional row visibility.
+        doc.Variables.Add("Qty", "40"); // Example value exceeding the threshold.
+
+        // Start the table.
         Table table = builder.StartTable();
+
+        // ----- Header row -----
         builder.InsertCell();
         builder.Write("Item");
         builder.InsertCell();
-        builder.Write("Value");
+        builder.Write("Quantity");
         builder.EndRow();
 
-        // Add a regular data row.
+        // ----- Data rows -----
+        // Row 1
         builder.InsertCell();
-        builder.Write("Sample");
+        builder.Write("Apples");
         builder.InsertCell();
-        int dataValue = 75; // Example data value.
-        builder.Write(dataValue.ToString());
+        builder.Write("20");
         builder.EndRow();
 
-        // Add a conditional row that appears only when dataValue exceeds the threshold.
-        int threshold = 50;
+        // Row 2
         builder.InsertCell();
-        // Insert an IF field that displays text only if the condition is true.
-        string ifFieldCode = $" IF {dataValue} > {threshold} \"Conditional Row\" \"\" ";
-        builder.InsertField(ifFieldCode);
+        builder.Write("Bananas");
         builder.InsertCell();
-        builder.Write("Above Threshold");
+        builder.Write("40");
         builder.EndRow();
 
-        // Finish the table.
+        // ----- Conditional row -----
+        // This row will display the text "Exceeds threshold" only if the variable Qty > 30.
+        builder.InsertCell();
+
+        // Insert an IF field using the strongly‑typed API.
+        FieldIf ifField = (FieldIf)builder.InsertField(FieldType.FieldIf, true);
+        ifField.LeftExpression = "Qty";
+        ifField.ComparisonOperator = ">";
+        ifField.RightExpression = "30";
+        ifField.TrueText = "Exceeds threshold";
+        ifField.FalseText = string.Empty;
+        ifField.Update();
+
+        // Second cell (empty) to keep the table structure.
+        builder.InsertCell();
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ConditionalTable.docx");
+        // Update all fields so the IF field evaluates with the current variable value.
+        doc.UpdateFields();
+
+        // Save the document to a local file.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ConditionalRow.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not saved correctly.");
     }
 }

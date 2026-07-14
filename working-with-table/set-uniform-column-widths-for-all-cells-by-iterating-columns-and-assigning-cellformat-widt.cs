@@ -11,38 +11,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a sample 3x3 table using the DocumentBuilder workflow.
+        // Build a sample table (3 rows x 4 columns).
         Table table = builder.StartTable();
 
-        for (int row = 0; row < 3; row++)
+        int rows = 3;
+        int cols = 4;
+        for (int r = 0; r < rows; r++)
         {
-            for (int col = 0; col < 3; col++)
+            for (int c = 0; c < cols; c++)
             {
                 builder.InsertCell();
-                builder.Write($"R{row + 1}C{col + 1}");
+                builder.Write($"R{r + 1}C{c + 1}");
             }
             builder.EndRow();
         }
 
         builder.EndTable();
 
-        // Define the uniform width (in points) to apply to every column.
-        double uniformWidth = 100.0;
+        // Set a uniform width (in points) for every cell in the table.
+        double uniformWidth = 80.0; // points
 
-        // Determine the number of columns from the first row.
-        int columnCount = table.FirstRow.Cells.Count;
-
-        // Iterate through each row and set the CellFormat.Width for each cell in the column.
         foreach (Row row in table.Rows)
         {
-            for (int col = 0; col < columnCount; col++)
+            foreach (Cell cell in row.Cells)
             {
-                row.Cells[col].CellFormat.Width = uniformWidth;
+                cell.CellFormat.Width = uniformWidth;
             }
         }
 
-        // Save the document to the current working directory.
+        // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UniformColumnWidths.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

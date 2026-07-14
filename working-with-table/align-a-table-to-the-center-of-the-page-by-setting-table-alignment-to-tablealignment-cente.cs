@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableAlignment
+namespace TableAlignmentExample
 {
     public class Program
     {
@@ -13,46 +13,39 @@ namespace AsposeWordsTableAlignment
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a new table and keep a reference to it.
+            // Start building the table.
             Table table = builder.StartTable();
 
-            // First row, first cell.
+            // First row.
             builder.InsertCell();
             builder.Write("Cell 1");
-
-            // First row, second cell.
             builder.InsertCell();
             builder.Write("Cell 2");
-
-            // End the first row.
             builder.EndRow();
 
-            // Second row, first cell.
+            // Second row.
             builder.InsertCell();
             builder.Write("Cell 3");
-
-            // Second row, second cell.
             builder.InsertCell();
             builder.Write("Cell 4");
-
-            // End the second row and the table.
             builder.EndRow();
+
+            // Finish the table.
             builder.EndTable();
 
             // Align the table to the center of the page.
             table.Alignment = TableAlignment.Center;
 
-            // Prepare output folder.
-            string artifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-            Directory.CreateDirectory(artifactsDir);
-
             // Save the document.
-            string outputPath = Path.Combine(artifactsDir, "CenteredTable.docx");
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlignedTable.docx");
             doc.Save(outputPath);
 
-            // Simple validation to ensure the file was created.
+            // Verify that the file was created.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
+                throw new InvalidOperationException("Failed to create the output document.");
+
+            // Indicate successful completion.
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

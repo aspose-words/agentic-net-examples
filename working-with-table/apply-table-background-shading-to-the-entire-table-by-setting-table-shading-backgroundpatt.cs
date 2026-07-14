@@ -1,6 +1,6 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -27,13 +27,14 @@ public class Program
         builder.Write("Cell 4");
         builder.EndRow();
 
-        builder.EndTable(); // Finish the table.
+        builder.EndTable();
 
-        // Apply solid background shading to the whole table.
-        // TextureSolid with an empty foreground color and a light yellow background.
-        table.SetShading(TextureIndex.TextureSolid, Color.Empty, Color.LightYellow);
+        // Apply background shading to the entire table.
+        // Use SetShading because Table.Shading property does not exist.
+        // TextureSolid with a light blue foreground color and no background color.
+        table.SetShading(TextureIndex.TextureSolid, Color.LightBlue, Color.Empty);
 
-        // Save the document to a local file.
+        // Save the document to the local file system.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableBackgroundShading.docx");
         doc.Save(outputPath);
 

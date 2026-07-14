@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,47 +14,41 @@ public class Program
         // Start building a table.
         Table table = builder.StartTable();
 
-        // First row – header.
+        // Header row.
         builder.InsertCell();
-        builder.Writeln("Item");
+        builder.Write("Item");
         builder.InsertCell();
-        builder.Writeln("Quantity (kg)");
+        builder.Write("Quantity (kg)");
         builder.EndRow();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Writeln("Apples");
-        builder.InsertCell();
-        builder.Writeln("20");
-        builder.EndRow();
+        // Data rows.
+        AddRow(builder, "Apples", "20");
+        AddRow(builder, "Bananas", "40");
+        AddRow(builder, "Carrots", "50");
 
-        // Third row.
-        builder.InsertCell();
-        builder.Writeln("Bananas");
-        builder.InsertCell();
-        builder.Writeln("40");
-        builder.EndRow();
-
-        // Fourth row.
-        builder.InsertCell();
-        builder.Writeln("Carrots");
-        builder.InsertCell();
-        builder.Writeln("50");
-        builder.EndRow();
-
-        // End the table construction.
+        // Finish the table.
         builder.EndTable();
 
-        // Apply a built‑in table style that supports shading.
+        // Apply a built‑in style that supports row banding.
         table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
 
-        // Enable row banding (alternating row shading).
+        // Enable alternating row shading (row banding).
         table.StyleOptions = TableStyleOptions.RowBands;
 
-        // Adjust the table to fit its contents.
+        // Adjust the table size to fit its contents.
         table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Save the document to the local file system.
-        doc.Save("TableWithRowBanding.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "TableWithRowBanding.docx");
+        doc.Save(outputPath);
+    }
+
+    private static void AddRow(DocumentBuilder builder, string item, string quantity)
+    {
+        builder.InsertCell();
+        builder.Write(item);
+        builder.InsertCell();
+        builder.Write(quantity);
+        builder.EndRow();
     }
 }

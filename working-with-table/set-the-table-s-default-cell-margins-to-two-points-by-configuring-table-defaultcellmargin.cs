@@ -2,43 +2,52 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Start a table.
+        Table table = builder.StartTable();
+
+        // Ensure the table has at least one row before applying table‑level padding.
+        table.EnsureMinimum();
+
+        // Set the default cell margins (padding) for the table – 2 points on each side.
+        table.LeftPadding = 2;
+        table.RightPadding = 2;
+        table.TopPadding = 2;
+        table.BottomPadding = 2;
+
+        // Build a simple 2×2 table to demonstrate the margins.
+        builder.InsertCell();
+        builder.Write("Cell 1,1");
+        builder.InsertCell();
+        builder.Write("Cell 1,2");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("Cell 2,1");
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
+        builder.EndRow();
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Verify that the margins were applied correctly.
+        if (table.LeftPadding != 2 ||
+            table.RightPadding != 2 ||
+            table.TopPadding != 2 ||
+            table.BottomPadding != 2)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a new table.
-            Table table = builder.StartTable();
-
-            // Set the default cell margins (padding) for all cells that will be created
-            // after this point. Use the builder's CellFormat so the table already has a row.
-            builder.CellFormat.SetPaddings(2.0, 2.0, 2.0, 2.0);
-
-            // Add the first row with two cells.
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
-
-            // Add the second row with two cells.
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndRow();
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Save the document.
-            string outputPath = "TableDefaultCellMargin.docx";
-            doc.Save(outputPath);
+            throw new InvalidOperationException("Default cell margins were not set correctly.");
         }
+
+        // Save the document.
+        doc.Save("DefaultCellMargin.docx");
     }
 }

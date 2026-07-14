@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -16,16 +15,28 @@ namespace AsposeWordsTableInsertExample
 
             // Add three paragraphs to the document.
             builder.Writeln("Paragraph 1");
-            builder.Writeln("Paragraph 2");
+            builder.Writeln("Paragraph 2"); // This is the paragraph after which we will insert the table.
             builder.Writeln("Paragraph 3");
 
-            // Locate the paragraph that contains the text "Paragraph 2".
-            Paragraph targetParagraph = doc.GetChildNodes(NodeType.Paragraph, true)
-                .Cast<Paragraph>()
-                .First(p => p.GetText().Trim() == "Paragraph 2");
+            // Locate the paragraph with the exact text "Paragraph 2".
+            Paragraph targetParagraph = null;
+            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+            foreach (Paragraph para in paragraphs)
+            {
+                if (para.GetText().Trim() == "Paragraph 2")
+                {
+                    targetParagraph = para;
+                    break;
+                }
+            }
 
-            // Build a simple 2x2 table using the Table, Row, and Cell classes.
+            if (targetParagraph == null)
+                throw new InvalidOperationException("Target paragraph not found.");
+
+            // Build a simple 2x2 table.
             Table table = new Table(doc);
+            // Ensure the table has at least one row.
+            table.EnsureMinimum();
 
             // First row.
             Row row1 = new Row(doc);
@@ -56,17 +67,18 @@ namespace AsposeWordsTableInsertExample
             row2.AppendChild(cell22);
 
             // Insert the table after the located paragraph.
+            // The paragraph's parent is a Body node; use it to perform InsertAfter.
             targetParagraph.ParentNode.InsertAfter(table, targetParagraph);
 
-            // Define output path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableAfterParagraph.docx");
-
-            // Save the document.
+            // Save the document to a file.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "OutputTableAfterParagraph.docx");
             doc.Save(outputPath);
 
-            // Simple validation to ensure the file was created.
+            // Verify that the file was created.
             if (!File.Exists(outputPath))
-                throw new Exception("The output document was not saved correctly.");
+                throw new IOException("Failed to save the output document.");
+
+            // The program ends here; no user interaction required.
         }
     }
 }

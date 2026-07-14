@@ -11,30 +11,32 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and add a row with two cells.
+        // Start a table.
         Table table = builder.StartTable();
 
-        // First cell contains Arabic text.
+        // Insert a cell containing Arabic text.
         builder.InsertCell();
-        builder.Write("مرحبا بالعالم"); // "Hello World" in Arabic.
+        builder.Write("مرحبا بالعالم"); // Arabic: "Hello World"
 
-        // Second cell contains English text (optional, just for contrast).
-        builder.InsertCell();
-        builder.Write("Hello World");
-
-        // Finish the row and the table.
+        // End the row and the table.
         builder.EndRow();
         builder.EndTable();
 
         // Enable right‑to‑left layout for the table.
         table.Bidi = true;
 
-        // Save the document to the local file system.
-        const string fileName = "TableRightToLeft.docx";
-        doc.Save(fileName);
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableRightToLeft.docx");
+        doc.Save(outputPath);
 
         // Verify that the file was created.
-        if (!File.Exists(fileName))
-            throw new Exception("The document was not saved successfully.");
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
+
+        // Reload the document and confirm the table direction.
+        Document loadedDoc = new Document(outputPath);
+        Table loadedTable = loadedDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
+        if (loadedTable == null || !loadedTable.Bidi)
+            throw new Exception("Table direction was not set to right‑to‑left.");
     }
 }

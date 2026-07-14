@@ -12,37 +12,39 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3x3 table.
+        // Build a simple 2x2 table.
         Table table = builder.StartTable();
 
-        for (int row = 1; row <= 3; row++)
-        {
-            for (int col = 1; col <= 3; col++)
-            {
-                builder.InsertCell();
-                builder.Write($"R{row}C{col}");
-            }
-            builder.EndRow();
-        }
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
 
         builder.EndTable();
 
-        // Remove all existing borders (both outer and inner).
+        // Remove any existing borders (including inner cell borders).
         table.ClearBorders();
 
-        // Apply a custom outer border (single blue line, 2 points thick).
-        // The last parameter 'true' overrides any existing cell borders.
+        // Apply a custom outer border style.
+        // The 'true' flag overrides any explicit cell borders, ensuring inner borders stay hidden.
         table.SetBorder(BorderType.Left,   LineStyle.Single, 2.0, Color.Blue, true);
         table.SetBorder(BorderType.Right,  LineStyle.Single, 2.0, Color.Blue, true);
         table.SetBorder(BorderType.Top,    LineStyle.Single, 2.0, Color.Blue, true);
         table.SetBorder(BorderType.Bottom, LineStyle.Single, 2.0, Color.Blue, true);
 
         // Save the document.
-        string outputPath = "TableOuterBorder.docx";
+        string outputPath = "CustomOuterBorder.docx";
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new Exception("The document was not saved successfully.");
     }
 }

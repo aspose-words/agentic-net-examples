@@ -11,49 +11,56 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a table into the primary header.
+        // Enable different first page header/footer (optional, shows usage of multiple headers/footers).
+        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
+
+        // ----- Insert a table into the primary header -----
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        // Start the table.
         Table headerTable = builder.StartTable();
 
-        // First row of the header table.
+        // First row.
         builder.InsertCell();
         builder.Write("Header Cell 1");
         builder.InsertCell();
         builder.Write("Header Cell 2");
         builder.EndRow();
 
-        // Second row of the header table.
+        // Second row.
         builder.InsertCell();
         builder.Write("Header Cell 3");
         builder.InsertCell();
         builder.Write("Header Cell 4");
         builder.EndRow();
 
+        // Finish the header table.
         builder.EndTable();
 
-        // Return to the main body of the document.
-        builder.MoveToSection(0);
-        builder.Writeln("Body content starts here.");
-
-        // Insert a table into the primary footer.
+        // ----- Insert a table into the primary footer -----
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
         Table footerTable = builder.StartTable();
 
-        // Single row footer table.
+        // Single row with three cells.
         builder.InsertCell();
-        builder.Write("Footer Cell 1");
+        builder.Write("Footer Col 1");
         builder.InsertCell();
-        builder.Write("Footer Cell 2");
+        builder.Write("Footer Col 2");
+        builder.InsertCell();
+        builder.Write("Footer Col 3");
         builder.EndRow();
 
+        // Finish the footer table.
         builder.EndTable();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderFooterTable.docx");
+        // Save the document to a file.
+        string outputPath = "HeaderFooterTable.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Validate that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+            throw new Exception("The output document was not created.");
+
+        // Indicate successful completion.
+        Console.WriteLine("Document saved to: " + Path.GetFullPath(outputPath));
     }
 }

@@ -4,60 +4,67 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Prepare a simple data source – a list of objects.
+        var people = new List<Person>
         {
-            // Prepare a simple data source: each inner list represents a row of values.
-            List<string[]> dataRows = new List<string[]>
-            {
-                new[] { "Alice", "Engineering", "85" },
-                new[] { "Bob", "Marketing", "78" },
-                new[] { "Charlie", "Finance", "92" }
-            };
+            new Person { Name = "Alice", Age = 30, City = "New York" },
+            new Person { Name = "Bob", Age = 25, City = "London" },
+            new Person { Name = "Charlie", Age = 35, City = "Paris" }
+        };
 
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table with a fixed number of columns (3 in this example).
-            Table table = builder.StartTable();
+        // Start a table with a fixed number of columns (3 in this example).
+        Table table = builder.StartTable();
 
-            // Add a header row.
+        // ---- Header row ----
+        builder.InsertCell();
+        builder.Write("Name");
+        builder.InsertCell();
+        builder.Write("Age");
+        builder.InsertCell();
+        builder.Write("City");
+        builder.EndRow();
+
+        // ---- Data rows ----
+        foreach (var person in people)
+        {
             builder.InsertCell();
-            builder.Write("Name");
+            builder.Write(person.Name);
             builder.InsertCell();
-            builder.Write("Department");
+            builder.Write(person.Age.ToString());
             builder.InsertCell();
-            builder.Write("Score");
+            builder.Write(person.City);
             builder.EndRow();
-
-            // Dynamically add rows from the data source.
-            foreach (string[] rowData in dataRows)
-            {
-                // Ensure each row has exactly three cells.
-                for (int i = 0; i < 3; i++)
-                {
-                    builder.InsertCell();
-                    builder.Write(rowData[i]);
-                }
-                builder.EndRow();
-            }
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Define the output file path (saved in the same folder as the executable).
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OutputTable.docx");
-            doc.Save(outputPath);
-
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
-
-            // The program ends here; no user interaction is required.
         }
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Define output path.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "PeopleTable.docx");
+
+        // Save the document.
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
+    }
+
+    // Simple POCO representing a row of data.
+    private class Person
+    {
+        public string Name { get; set; }
+        public int Age { get; set; }
+        public string City { get; set; }
     }
 }
