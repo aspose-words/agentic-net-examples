@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -12,52 +11,48 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a few different types of form fields, each with a unique name.
-        builder.Write("Text input field: ");
-        FormField textField = builder.InsertTextInput("TextField_1", TextFormFieldType.Regular, "", "Enter text here", 0);
-        builder.InsertParagraph();
+        // Insert a text input form field with a unique name.
+        FormField textField = builder.InsertTextInput(
+            name: "TextField1",
+            type: TextFormFieldType.Regular,
+            format: "",
+            fieldValue: "Placeholder",
+            maxLength: 0);
+        // Set an explicit value for the text field.
+        textField.SetTextInputValue("Hello World");
 
-        builder.Write("Check box field: ");
-        FormField checkBox = builder.InsertCheckBox("CheckBox_1", false, 0);
-        builder.InsertParagraph();
+        // Insert a checkbox form field with a unique name.
+        FormField checkBox = builder.InsertCheckBox(
+            name: "CheckBox1",
+            checkedValue: false,
+            size: 0);
 
-        builder.Write("Combo box field: ");
-        FormField comboBox = builder.InsertComboBox("ComboBox_1", new[] { "Option A", "Option B", "Option C" }, 0);
-        builder.InsertParagraph();
+        // Insert a combo box (dropdown) form field with a unique name.
+        FormField comboBox = builder.InsertComboBox(
+            name: "ComboBox1",
+            items: new[] { "Option A", "Option B", "Option C" },
+            selectedIndex: 0);
 
-        // Insert additional text input fields in a loop, ensuring each gets a distinct name.
-        for (int i = 2; i <= 5; i++)
-        {
-            builder.Write($"Additional text field {i}: ");
-            builder.InsertTextInput($"TextField_{i}", TextFormFieldType.Regular, "", $"Placeholder {i}", 0);
-            builder.InsertParagraph();
-        }
-
-        // Validate that all form fields have unique names.
+        // Validate that each form field has a distinct name.
         FormFieldCollection formFields = doc.Range.FormFields;
         HashSet<string> names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (FormField field in formFields)
         {
-            if (field == null)
-                continue; // Safety check.
-
-            string name = field.Name;
-            if (string.IsNullOrEmpty(name))
-                throw new InvalidOperationException("A form field was found without a name.");
-
-            if (!names.Add(name))
-                throw new InvalidOperationException($"Duplicate form field name detected: {name}");
+            if (!names.Add(field.Name))
+            {
+                throw new InvalidOperationException($"Duplicate form field name detected: {field.Name}");
+            }
         }
 
-        // Output the names of all form fields to the console.
-        Console.WriteLine("Form fields and their unique names:");
+        // Output the names of the created form fields.
+        Console.WriteLine("Created form fields with unique names:");
         foreach (FormField field in formFields)
         {
-            Console.WriteLine($"- {field.Type}: {field.Name}");
+            Console.WriteLine($"- {field.Name} (Type: {field.Type})");
         }
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FormFields_UniqueNames.docx");
+        // Save the document to the local file system.
+        string outputPath = "FormFieldsUniqueNames.docx";
         doc.Save(outputPath);
         Console.WriteLine($"Document saved to: {outputPath}");
     }

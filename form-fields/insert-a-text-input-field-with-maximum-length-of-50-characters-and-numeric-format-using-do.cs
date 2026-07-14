@@ -4,38 +4,32 @@ using Aspose.Words.Fields;
 
 namespace FormFieldExample
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            // Create a new blank document.
+            // Create a new empty document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
+            // Add a label before the form field.
+            builder.Write("Enter a number (max 50 characters): ");
+
             // Insert a numeric text input form field.
-            // Parameters: name, type, format, default value, maximum length.
-            // TextFormFieldType.Number restricts input to numbers.
-            // Format "0" will display the number without extra formatting.
-            FormField numericField = builder.InsertTextInput(
-                "NumericInput",
+            // Parameters: name, type, format string, default value, maximum length.
+            FormField numberField = builder.InsertTextInput(
+                "NumberField",
                 TextFormFieldType.Number,
-                "0",
-                "0",
-                50);
+                "",      // No custom format string.
+                "0",     // Default placeholder value.
+                50);     // Maximum length of the field.
 
-            // Verify that the field was added and its properties are correct.
-            FormField? retrievedField = doc.Range.FormFields["NumericInput"];
-            if (retrievedField == null)
-                throw new InvalidOperationException("The form field was not found.");
+            // Optional: set help and status text for the field.
+            numberField.HelpText = "Only numeric input is allowed.";
+            numberField.StatusText = "Enter a numeric value.";
 
-            if (retrievedField.MaxLength != 50)
-                throw new InvalidOperationException("MaxLength is not set correctly.");
-
-            // Set a sample numeric value using the appropriate method.
-            retrievedField.SetTextInputValue(12345);
-
-            // Save the document to disk.
-            doc.Save("NumericInputForm.docx");
+            // Save the document to a file.
+            doc.Save("FormField.docx");
         }
     }
 }

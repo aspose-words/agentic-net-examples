@@ -12,25 +12,23 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a checkbox form field with an initial size.
-        builder.Write("Sample checkbox: ");
+        builder.Write("Original checkbox: ");
         FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 20);
-        // Enable exact size handling so that we can set a custom size later.
+        // Enable explicit size handling.
         checkBox.IsCheckBoxExactSize = true;
+        builder.InsertParagraph();
 
-        // Locate the checkbox by its name in the form fields collection.
-        FormField field = doc.Range.FormFields["MyCheckBox"];
-        if (field == null)
-        {
-            throw new InvalidOperationException("The checkbox form field 'MyCheckBox' was not found.");
-        }
+        // Retrieve the same checkbox from the form fields collection.
+        FormField? retrieved = doc.Range.FormFields["MyCheckBox"];
+        if (retrieved == null)
+            throw new InvalidOperationException("Checkbox form field not found.");
 
-        // Ensure the field is treated as having an exact size.
-        field.IsCheckBoxExactSize = true;
         // Change the size of the checkbox to improve visual consistency.
-        field.CheckBoxSize = 30.0; // size in points
+        retrieved.IsCheckBoxExactSize = true; // Ensure exact size is enabled.
+        retrieved.CheckBoxSize = 40; // New size in points.
 
-        // Save the modified document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ModifiedCheckbox.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CheckboxSizeChanged.docx");
         doc.Save(outputPath);
     }
 }

@@ -9,17 +9,41 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.4.0"
-    }
+      "Aspose.Words": "26.5.0"
+    },
+    "required_namespaces": [
+      "System",
+      "Aspose.Words",
+      "Aspose.Words.Fields",
+      "System.Collections.Generic",
+      "System.IO",
+      "System.Text.Json"
+    ],
+    "key_apis": [
+      "Document",
+      "DocumentBuilder",
+      "Range",
+      "Field",
+      "Bookmark",
+      "Directory",
+      "Path",
+      "FieldType",
+      "Paragraph",
+      "ProtectionType",
+      "File"
+    ]
   },
   "stats": {
     "total_examples": 30,
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
-      "text-form-field": 7,
-      "general-form-field": 17,
       "dropdown-form-field": 4,
-      "inspection-and-reporting": 2
+      "general-form-field": 17,
+      "inspection-and-reporting": 2,
+      "text-form-field": 7
+    },
+    "winner_counts": {
+      "mcp": 30
     }
   },
   "rules_summary": {
@@ -331,7 +355,7 @@
     {
       "id": 25,
       "file_name": "apply-document-protection-levels-ensuring-only-form-fields-remain-editable-while-other-sec.cs",
-      "task": "Apply document protection levels ensuring only form fields remain editable while other sections are read‑only.",
+      "task": "Apply document protection levels ensuring only form fields remain editable while other sections are read-only.",
       "workflow": "general-form-field",
       "outputs": [
         "docx"
@@ -353,7 +377,7 @@
     {
       "id": 27,
       "file_name": "after-inserting-fields-protect-the-document-and-then-verify-that-non-field-content-cannot.cs",
-      "task": "After inserting fields, protect the document and then verify that non‑field content cannot be edited.",
+      "task": "After inserting fields, protect the document and then verify that non-field content cannot be edited.",
       "workflow": "general-form-field",
       "outputs": [
         "docx"

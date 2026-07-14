@@ -2,58 +2,65 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace BatchFormFieldsExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Define the text input form fields to be inserted.
-        var fieldDefinitions = new[]
+        // Definition of a text input form field.
+        private class TextFieldDefinition
         {
-            new { Name = "FirstName", DefaultValue = "John", MaxLength = 20 },
-            new { Name = "LastName",  DefaultValue = "Doe",  MaxLength = 20 },
-            new { Name = "Email",     DefaultValue = "example@example.com", MaxLength = 50 },
-            new { Name = "Phone",     DefaultValue = "",    MaxLength = 15 }
-        };
+            public string Name { get; }
+            public string Placeholder { get; }
+            public int MaxLength { get; }
 
-        // Insert each field into the document.
-        foreach (var def in fieldDefinitions)
-        {
-            // Add a label for the field.
-            builder.Writeln($"Enter {def.Name}:");
-
-            // Insert the text input form field.
-            FormField field = builder.InsertTextInput(
-                def.Name,                     // field name
-                TextFormFieldType.Regular,    // field type
-                "",                           // format (none)
-                def.DefaultValue,             // initial text
-                def.MaxLength);               // maximum length
-
-            // Ensure the field's result matches the default value.
-            field.Result = def.DefaultValue;
+            public TextFieldDefinition(string name, string placeholder, int maxLength)
+            {
+                Name = name;
+                Placeholder = placeholder;
+                MaxLength = maxLength;
+            }
         }
 
-        // Validate that at least one form field exists.
-        FormFieldCollection formFields = doc.Range.FormFields;
-        if (formFields.Count == 0)
-            throw new InvalidOperationException("No form fields were created.");
-
-        // Verify each defined field exists and contains the expected value.
-        foreach (var def in fieldDefinitions)
+        public static void Main()
         {
-            FormField field = formFields[def.Name];
-            if (field == null)
-                throw new InvalidOperationException($"Form field '{def.Name}' not found.");
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            if (field.Result != def.DefaultValue)
-                throw new InvalidOperationException($"Form field '{def.Name}' result mismatch.");
+            // Define the fields to be inserted.
+            TextFieldDefinition[] fields = new[]
+            {
+                new TextFieldDefinition("FirstName", "Enter first name", 50),
+                new TextFieldDefinition("LastName", "Enter last name", 50),
+                new TextFieldDefinition("Email", "Enter email address", 100),
+                new TextFieldDefinition("Phone", "Enter phone number", 20)
+            };
+
+            // Insert each field into the document.
+            foreach (var fieldDef in fields)
+            {
+                // Write a label for the field.
+                builder.Writeln($"{fieldDef.Name}:");
+
+                // Insert the text input form field.
+                FormField formField = builder.InsertTextInput(
+                    fieldDef.Name,                     // field name
+                    TextFormFieldType.Regular,         // field type
+                    "",                                // format (none)
+                    fieldDef.Placeholder,              // default visible text
+                    fieldDef.MaxLength);               // maximum length
+
+                // Optional: set a default value programmatically.
+                formField.SetTextInputValue(string.Empty);
+            }
+
+            // Validate that all fields were added.
+            FormFieldCollection formFields = doc.Range.FormFields;
+            if (formFields.Count != fields.Length)
+                throw new InvalidOperationException("Not all form fields were inserted.");
+
+            // Save the document.
+            doc.Save("BatchFormFields.docx");
         }
-
-        // Save the document to disk.
-        doc.Save("FormFieldsBatch.docx");
     }
 }

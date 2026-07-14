@@ -10,34 +10,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a few different types of legacy form fields.
+        // Insert a text input form field.
         builder.Write("Enter your name: ");
-        FormField textField = builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 50);
-
+        builder.InsertTextInput("TextInput", TextFormFieldType.Regular, "", "John Doe", 50);
         builder.InsertBreak(BreakType.ParagraphBreak);
-        builder.Write("Accept terms? ");
-        FormField checkBox = builder.InsertCheckBox("AcceptTerms", false, 15);
 
+        // Insert a checkbox form field.
+        builder.Write("Accept terms: ");
+        builder.InsertCheckBox("CheckBox", false, 50);
         builder.InsertBreak(BreakType.ParagraphBreak);
+
+        // Insert a combo box (dropdown) form field.
         builder.Write("Select a fruit: ");
-        FormField comboBox = builder.InsertComboBox("FruitChoice", new[] { "Apple", "Banana", "Cherry" }, 0);
+        string[] items = { "Apple", "Banana", "Cherry" };
+        builder.InsertComboBox("DropDown", items, 0);
 
-        // Retrieve the collection of all form fields in the document.
+        // Save the document that now contains form fields.
+        const string outputPath = "FormFields.docx";
+        doc.Save(outputPath);
+
+        // Iterate over all form fields and list each field's name and type.
         FormFieldCollection formFields = doc.Range.FormFields;
-
-        // Validate that the document contains at least one form field.
         if (formFields.Count == 0)
-            throw new InvalidOperationException("The document does not contain any form fields.");
-
-        // Iterate over the collection and output each field's name and type.
-        foreach (FormField field in formFields)
         {
-            // Guard against a possible null entry (should not happen, but safe).
-            if (field != null)
-                Console.WriteLine($"Name: {field.Name}, Type: {field.Type}");
+            throw new InvalidOperationException("The document does not contain any form fields.");
         }
 
-        // Save the document (required by the rules, even though we only read fields).
-        doc.Save("FormFields.docx");
+        foreach (FormField field in formFields)
+        {
+            // Field.Type returns a FieldType enum indicating the kind of form field.
+            Console.WriteLine($"Name: {field.Name}, Type: {field.Type}");
+        }
     }
 }
