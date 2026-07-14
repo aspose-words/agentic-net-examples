@@ -1,49 +1,43 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Layout;
-using Aspose.Words.Saving;
 
-public class Program
+namespace CommentPdfConversion
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare a temporary folder for the example files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        public static void Main()
+        {
+            // Create a sample DOC file with a comment.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Create a sample DOC file with a comment.
-        string docPath = Path.Combine(outputDir, "SampleWithComments.doc");
-        CreateSampleDocumentWithComment(docPath);
+            // Add a paragraph of text.
+            builder.Writeln("This is a sample paragraph that will have a comment.");
 
-        // Load the DOC file.
-        Document doc = new Document(docPath);
+            // Create a comment, set its metadata, and add text to it.
+            Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
+            comment.SetText("This is a comment attached to the paragraph.");
 
-        // Configure the layout to render comments as PDF annotations.
-        doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
+            // Attach the comment to the current paragraph.
+            builder.CurrentParagraph?.AppendChild(comment);
 
-        // Rebuild the layout after changing the option.
-        doc.UpdatePageLayout();
+            // Save the DOC file.
+            const string docPath = "sample.doc";
+            doc.Save(docPath);
 
-        // Save the document as PDF. Comments will appear as visible annotations.
-        string pdfPath = Path.Combine(outputDir, "SampleWithComments.pdf");
-        doc.Save(pdfPath, SaveFormat.Pdf);
-    }
+            // Load the DOC file for conversion.
+            Document loadedDoc = new Document(docPath);
 
-    private static void CreateSampleDocumentWithComment(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Configure the layout to render comments as PDF annotations.
+            loadedDoc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
 
-        // Add some text.
-        builder.Writeln("This is a paragraph that will have a comment.");
+            // Rebuild the layout after changing the option.
+            loadedDoc.UpdatePageLayout();
 
-        // Create a comment and attach it to the current paragraph.
-        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("Review this paragraph for clarity.");
-        builder.CurrentParagraph.AppendChild(comment);
-
-        // Save the DOC file.
-        doc.Save(filePath);
+            // Save the document as PDF; comments will be visible.
+            const string pdfPath = "sample.pdf";
+            loadedDoc.Save(pdfPath);
+        }
     }
 }

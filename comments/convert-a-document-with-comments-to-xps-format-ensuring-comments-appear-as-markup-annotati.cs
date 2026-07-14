@@ -1,42 +1,66 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Layout;
 
-public class Program
+namespace AsposeWordsCommentsToXps
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will contain a comment.
-        builder.Writeln("This is a paragraph that will have a comment attached to it.");
+            // Add a paragraph that will contain a comment.
+            builder.Writeln("Paragraph with a review note.");
 
-        // Create a comment with author metadata.
-        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment.SetText("This is a sample comment displayed as an annotation.");
+            // Create a comment, set its metadata and add some text to it.
+            Comment comment = new Comment(doc)
+            {
+                Author = "Alex",
+                Initial = "AL",
+                DateTime = DateTime.Now
+            };
+            // The comment must contain at least one paragraph and run to be visible.
+            comment.AppendChild(new Paragraph(doc));
+            comment.FirstParagraph?.AppendChild(new Run(doc, "Please review this paragraph."));
 
-        // Anchor the comment to the whole paragraph.
-        // The comment must be linked with a CommentRangeStart and CommentRangeEnd that share the same Id.
-        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
-        paragraph.PrependChild(new CommentRangeStart(doc, comment.Id));
-        paragraph.AppendChild(new CommentRangeEnd(doc, comment.Id));
-        paragraph.AppendChild(comment);
+            // Attach the comment to the first paragraph of the document.
+            Paragraph? targetParagraph = doc.FirstSection?.Body?.FirstParagraph;
+            if (targetParagraph != null)
+                targetParagraph.AppendChild(comment);
 
-        // Ensure comments are rendered as annotations (balloons) in the output.
-        // For XPS the comments are shown as markup annotations by default.
-        doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInBalloons;
+            // Ensure that comments are rendered as markup annotations.
+            doc.LayoutOptions.CommentDisplayMode = CommentDisplayMode.ShowInAnnotations;
+            doc.UpdatePageLayout();
 
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+            // Prepare output folder.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+            string xpsPath = Path.Combine(outputDir, "DocumentWithComments.xps");
 
-        // Save the document to XPS format with comments preserved.
-        string xpsPath = Path.Combine(outputDir, "DocumentWithComments.xps");
-        XpsSaveOptions saveOptions = new XpsSaveOptions();
-        doc.Save(xpsPath, saveOptions);
+            // Save the document to XPS format.
+            XpsSaveOptions saveOptions = new XpsSaveOptions();
+            doc.Save(xpsPath, saveOptions);
+
+            // Optional: enumerate comments and write their details to the console.
+            var comments = doc.GetChildNodes(NodeType.Comment, true)
+                              .OfType<Comment>()
+                              .ToList();
+
+            foreach (Comment c in comments)
+            {
+                Console.WriteLine($"Author: {c.Author}");
+                Console.WriteLine($"Date: {c.DateTime}");
+                Console.WriteLine($"Text: {c.GetText().Trim()}");
+                Console.WriteLine();
+            }
+
+            Console.WriteLine($"Document saved to: {xpsPath}");
+        }
     }
 }

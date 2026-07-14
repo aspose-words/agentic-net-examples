@@ -7,22 +7,22 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names in the current working directory.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        // Paths for the input and output documents.
+        string inputPath = "CommentsInput.docx";
+        string outputPath = "CommentsOutput.docx";
 
-        // Create a sample document that contains a comment.
+        // Create a sample document that contains comments.
         CreateSampleDocument(inputPath);
 
         // Load the document from the file system.
         Document doc = new Document(inputPath);
 
-        // Enumerate all comment nodes safely.
+        // Retrieve all comment nodes in the document.
         var comments = doc.GetChildNodes(NodeType.Comment, true)
-                          .OfType<Comment>()
-                          .ToList();
+            .OfType<Comment>()
+            .ToList();
 
-        // Convert each comment author name to uppercase.
+        // Convert each comment author's name to uppercase.
         foreach (Comment comment in comments)
         {
             if (!string.IsNullOrEmpty(comment.Author))
@@ -33,21 +33,29 @@ public class Program
         doc.Save(outputPath);
     }
 
+    // Helper method to create a document with a couple of comments.
     private static void CreateSampleDocument(string filePath)
     {
-        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph with some text.
-        builder.Writeln("This is a sample paragraph with a comment.");
+        // Add some text.
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Second paragraph.");
 
-        // Create a comment with author metadata.
-        Comment comment = new Comment(doc, "John Doe", "JD", DateTime.Now);
-        comment.SetText("Review this paragraph.");
+        // Create a comment for the first paragraph.
+        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
+        comment1.SetText("Review this paragraph.");
+        // Attach the comment to the first paragraph.
+        Paragraph firstPara = doc.FirstSection.Body.Paragraphs[0];
+        firstPara.AppendChild(comment1);
 
-        // Append the comment to the current paragraph.
-        builder.CurrentParagraph.AppendChild(comment);
+        // Create a comment for the second paragraph.
+        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
+        comment2.SetText("Check the wording.");
+        // Attach the comment to the second paragraph.
+        Paragraph secondPara = doc.FirstSection.Body.Paragraphs[1];
+        secondPara.AppendChild(comment2);
 
         // Save the document to the specified path.
         doc.Save(filePath);

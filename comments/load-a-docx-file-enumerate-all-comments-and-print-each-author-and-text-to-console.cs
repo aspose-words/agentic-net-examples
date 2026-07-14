@@ -7,45 +7,62 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        // Prepare a sample DOCX file with comments.
+        string fileName = Path.Combine(Directory.GetCurrentDirectory(), "sample.docx");
+        CreateSampleDocumentWithComments(fileName);
 
-        // First paragraph with a comment.
-        builder.Writeln("First paragraph.");
-        Comment comment1 = new Comment(sampleDoc, "Alice", "A", DateTime.Now);
-        comment1.SetText("This is Alice's comment.");
-        builder.CurrentParagraph.AppendChild(comment1);
+        // Load the DOCX file.
+        Document doc = new Document(fileName);
 
-        // Second paragraph with a comment.
-        builder.Writeln("Second paragraph.");
-        Comment comment2 = new Comment(sampleDoc, "Bob", "B", DateTime.Now);
-        comment2.SetText("Bob added this comment.");
-        builder.CurrentParagraph.AppendChild(comment2);
+        // Enumerate all comments in the document.
+        var comments = doc.GetChildNodes(NodeType.Comment, true)
+                          .OfType<Comment>()
+                          .ToList();
 
-        // Save the sample document to a temporary file.
-        string tempFile = Path.Combine(Path.GetTempPath(), "sample.docx");
-        sampleDoc.Save(tempFile);
-
-        // Load the document from the file.
-        Document loadedDoc = new Document(tempFile);
-
-        // Enumerate all comments and print author and text.
-        var comments = loadedDoc.GetChildNodes(NodeType.Comment, true)
-                                .OfType<Comment>()
-                                .ToList();
-
-        foreach (Comment c in comments)
+        // Print author and text of each comment.
+        foreach (Comment comment in comments)
         {
-            // Trim the comment text to remove trailing whitespace.
-            string text = c.GetText()?.Trim() ?? string.Empty;
-            Console.WriteLine($"{c.Author}: {text}");
+            string author = comment.Author ?? "Unknown";
+            string text = comment.GetText()?.Trim() ?? string.Empty;
+            Console.WriteLine($"{author}: {text}");
         }
+    }
 
-        // Clean up the temporary file.
-        if (File.Exists(tempFile))
+    private static void CreateSampleDocumentWithComments(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // First paragraph.
+        builder.Writeln("This is the first paragraph.");
+
+        // Add a comment.
+        Comment comment1 = new Comment(doc)
         {
-            File.Delete(tempFile);
-        }
+            Author = "Alice",
+            Initial = "A",
+            DateTime = DateTime.Now
+        };
+        comment1.AppendChild(new Paragraph(doc));
+        comment1.FirstParagraph?.AppendChild(new Run(doc, "First comment text."));
+        // Attach comment to the document body.
+        doc.FirstSection?.Body?.FirstParagraph?.AppendChild(comment1);
+
+        // Second paragraph.
+        builder.Writeln("This is the second paragraph.");
+
+        // Add another comment.
+        Comment comment2 = new Comment(doc)
+        {
+            Author = "Bob",
+            Initial = "B",
+            DateTime = DateTime.Now.AddMinutes(-5)
+        };
+        comment2.AppendChild(new Paragraph(doc));
+        comment2.FirstParagraph?.AppendChild(new Run(doc, "Second comment text."));
+        doc.FirstSection?.Body?.LastParagraph?.AppendChild(comment2);
+
+        // Save the document.
+        doc.Save(path);
     }
 }

@@ -9,17 +9,57 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.4.0"
-    }
+      "Aspose.Words": "26.5.0"
+    },
+    "required_namespaces": [
+      "System",
+      "System.IO",
+      "System.Linq",
+      "Aspose.Words",
+      "Aspose.Words.Drawing",
+      "System.Collections.Generic",
+      "System.Xml",
+      "System.Text.Json",
+      "System.Drawing",
+      "Aspose.Words.Markup",
+      "Aspose.Words.Layout",
+      "Aspose.Words.Saving",
+      "Aspose.Words.Tables",
+      "Aspose.Words.Notes",
+      "Aspose.Words.Comparing"
+    ],
+    "key_apis": [
+      "Document",
+      "DocumentBuilder",
+      "NodeType",
+      "Directory",
+      "Path",
+      "Paragraph",
+      "Run",
+      "Comment",
+      "File",
+      "Node",
+      "Font",
+      "Style",
+      "SaveFormat",
+      "PdfSaveOptions",
+      "MemoryStream",
+      "Footnote",
+      "CompareOptions"
+    ]
   },
   "stats": {
     "total_examples": 30,
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
+      "export-report": 7,
       "native-comment-api": 15,
       "rendered-output": 5,
-      "export-report": 7,
       "stream-batch-io": 3
+    },
+    "winner_counts": {
+      "llm": 2,
+      "mcp": 28
     }
   },
   "rules_summary": {
@@ -73,19 +113,19 @@
   "examples": [
     {
       "id": 1,
-      "file_name": "add-a-comment-containing-a-hyperlink-to-an-external-resource-and-verify-the-link-functions.cs",
-      "task": "Add a comment containing a hyperlink to an external resource and verify the link functions in rendered output.",
-      "workflow": "rendered-output",
+      "file_name": "load-a-docx-file-enumerate-all-comments-and-print-each-author-and-text-to-console.cs",
+      "task": "Load a DOCX file, enumerate all comments, and print each author and text to console.",
+      "workflow": "native-comment-api",
       "outputs": [
-        "pdf"
+        "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 2,
       "file_name": "add-a-new-comment-to-a-specific-paragraph-in-a-word-document-and-save-as-docx.cs",
-      "task": "Add a new comment to a specific paragraph in a word document and save as docx.",
+      "task": "Add a new comment to a specific paragraph in a Word document and save as DOCX.",
       "workflow": "native-comment-api",
       "outputs": [
         "docx"
@@ -95,8 +135,8 @@
     },
     {
       "id": 3,
-      "file_name": "apply-a-custom-style-to-all-comment-text-blocks-within-a-document-to-match-corporate-brand.cs",
-      "task": "Apply a custom style to all comment text blocks within a document to match corporate branding.",
+      "file_name": "update-the-text-of-an-existing-comment-identified-by-its-index-while-preserving-original-f.cs",
+      "task": "Update the text of an existing comment identified by its index while preserving original formatting.",
       "workflow": "native-comment-api",
       "outputs": [
         "docx"
@@ -106,74 +146,6 @@
     },
     {
       "id": 4,
-      "file_name": "compare-two-versions-of-a-document-and-list-comments-that-were-added-modified-or-deleted.cs",
-      "task": "Compare two versions of a document and list comments that were added modified or deleted.",
-      "workflow": "native-comment-api",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 5,
-      "file_name": "convert-a-doc-file-to-pdf-while-retaining-all-comment-annotations-visible-in-the-output.cs",
-      "task": "Convert a doc file to pdf while retaining all comment annotations visible in the output.",
-      "workflow": "rendered-output",
-      "outputs": [
-        "docx",
-        "pdf",
-        "doc"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 6,
-      "file_name": "convert-a-document-with-comments-to-xps-format-ensuring-comments-appear-as-markup-annotati.cs",
-      "task": "Convert a document with comments to XPS format, ensuring comments appear as markup annotations.",
-      "workflow": "rendered-output",
-      "outputs": [
-        "xps"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 7,
-      "file_name": "create-a-batch-process-that-adds-a-standardized-disclaimer-comment-to-every-document-in-a.cs",
-      "task": "Create a batch process that adds a standardized disclaimer comment to every document in a.",
-      "workflow": "stream-batch-io",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 8,
-      "file_name": "create-a-reply-to-an-existing-comment-and-ensure-the-reply-appears-nested-under-the-origin.cs",
-      "task": "Create a reply to an existing comment and ensure the reply appears nested under the original comment.",
-      "workflow": "native-comment-api",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 9,
-      "file_name": "create-a-utility-that-reads-comment-data-from-a-database-and-inserts-corresponding-comment.cs",
-      "task": "Create a utility that reads comment data from a database and inserts corresponding comments into a document.",
-      "workflow": "stream-batch-io",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 10,
       "file_name": "delete-all-comments-authored-by-a-particular-user-from-the-loaded-document-before-exportin.cs",
       "task": "Delete all comments authored by a particular user from the loaded document before exporting.",
       "workflow": "export-report",
@@ -184,33 +156,9 @@
       "winner": "mcp"
     },
     {
-      "id": 11,
-      "file_name": "export-all-comments-from-a-docx-file-to-a-csv-file-with-author-date-and-text-columns.cs",
-      "task": "Export all comments from a docx file to a csv file with author date and text columns.",
-      "workflow": "export-report",
-      "outputs": [
-        "docx",
-        "csv"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 12,
-      "file_name": "extract-comment-metadata-author-date-and-text-and-write-it-to-a-json-file.cs",
-      "task": "Extract comment metadata author date and text and write it to a json file.",
-      "workflow": "export-report",
-      "outputs": [
-        "docx",
-        "json"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 13,
-      "file_name": "extract-comment-text-and-embed-it-as-footnotes-within-the-same-document-for-alternative-pr.cs",
-      "task": "Extract comment text and embed it as footnotes within the same document for alternative presentation.",
+      "id": 5,
+      "file_name": "set-custom-author-name-and-initials-for-programmatically-added-comments-in-a-document.cs",
+      "task": "Set custom author name and initials for programmatically added comments in a document.",
       "workflow": "native-comment-api",
       "outputs": [
         "docx"
@@ -219,7 +167,29 @@
       "winner": "mcp"
     },
     {
-      "id": 14,
+      "id": 6,
+      "file_name": "create-a-reply-to-an-existing-comment-and-ensure-the-reply-appears-nested-under-the-origin.cs",
+      "task": "Create a reply to an existing comment and ensure the reply appears nested under the original.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 7,
+      "file_name": "iterate-through-the-comment-collection-and-remove-comments-older-than-a-specified-date-thr.cs",
+      "task": "Iterate through the comment collection and remove comments older than a specified date threshold.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 8,
       "file_name": "filter-comments-by-author-and-export-only-those-comments-to-a-separate-word-document-for-r.cs",
       "task": "Filter comments by author and export only those comments to a separate Word document for review.",
       "workflow": "export-report",
@@ -230,30 +200,19 @@
       "winner": "mcp"
     },
     {
-      "id": 15,
-      "file_name": "generate-a-printable-report-listing-all-comments-with-page-numbers-and-associated-paragrap.cs",
-      "task": "Generate a printable report listing all comments with page numbers and associated paragraphs.",
+      "id": 9,
+      "file_name": "export-all-comments-from-a-docx-file-to-a-csv-file-with-author-date-and-text-columns.cs",
+      "task": "Export all comments from a DOCX file to a CSV file with author, date, and text columns.",
       "workflow": "export-report",
       "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 16,
-      "file_name": "implement-a-feature-that-hides-all-comments-in-the-document-view-without-removing-them-fro.cs",
-      "task": "Implement a feature that hides all comments in the document view without removing them from the document.",
-      "workflow": "rendered-output",
-      "outputs": [
         "docx",
-        "pdf"
+        "csv"
       ],
       "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
-      "id": 17,
+      "id": 10,
       "file_name": "import-comments-from-an-exported-xml-file-and-attach-them-to-appropriate-locations-in-a-ne.cs",
       "task": "Import comments from an exported XML file and attach them to appropriate locations in a new document.",
       "workflow": "export-report",
@@ -265,20 +224,112 @@
       "winner": "mcp"
     },
     {
-      "id": 18,
-      "file_name": "iterate-through-the-comment-collection-and-remove-comments-older-than-a-specified-date-thr.cs",
-      "task": "Iterate through the comment collection and remove comments older than a specified date threshold.",
+      "id": 11,
+      "file_name": "extract-comment-metadata-author-date-and-text-and-write-it-to-a-json-file.cs",
+      "task": "Extract comment metadata-author, date, and text-and write it to a JSON file.",
+      "workflow": "export-report",
+      "outputs": [
+        "docx",
+        "json"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 12,
+      "file_name": "search-comments-containing-a-specific-keyword-and-highlight-the-corresponding-text-range-i.cs",
+      "task": "Search comments containing a specific keyword and highlight the corresponding text range in the document.",
       "workflow": "native-comment-api",
       "outputs": [
         "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 13,
+      "file_name": "load-multiple-word-documents-from-a-folder-aggregate-their-comments-and-generate-a-summary.cs",
+      "task": "Load multiple Word documents from a folder, aggregate their comments, and generate a summary report.",
+      "workflow": "export-report",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 14,
+      "file_name": "generate-a-printable-report-listing-all-comments-with-page-numbers-and-associated-paragrap.cs",
+      "task": "Generate a printable report listing all comments with page numbers and associated paragraph text.",
+      "workflow": "export-report",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 15,
+      "file_name": "apply-a-custom-style-to-all-comment-text-blocks-within-a-document-to-match-corporate-brand.cs",
+      "task": "Apply a custom style to all comment text blocks within a document to match corporate branding.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 16,
+      "file_name": "preserve-comment-formatting-such-as-bold-and-italic-text-when-converting-a-document-to-htm.cs",
+      "task": "Preserve comment formatting such as bold and italic text when converting a document to HTML format.",
+      "workflow": "rendered-output",
+      "outputs": [
+        "docx",
+        "html"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 17,
+      "file_name": "convert-a-doc-file-to-pdf-while-retaining-all-comment-annotations-visible-in-the-output.cs",
+      "task": "Convert a DOC file to PDF while retaining all comment annotations visible in the output.",
+      "workflow": "rendered-output",
+      "outputs": [
+        "docx",
+        "pdf",
+        "doc"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 18,
+      "file_name": "convert-a-document-with-comments-to-xps-format-ensuring-comments-appear-as-markup-annotati.cs",
+      "task": "Convert a document with comments to XPS format, ensuring comments appear as markup annotations.",
+      "workflow": "rendered-output",
+      "outputs": [
+        "xps"
       ],
       "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
       "id": 19,
-      "file_name": "load-a-document-change-comment-author-names-to-uppercase-and-save-the-updated-file.cs",
-      "task": "Load a document change comment author names to uppercase and save the updated file.",
+      "file_name": "add-a-comment-containing-a-hyperlink-to-an-external-resource-and-verify-the-link-functions.cs",
+      "task": "Add a comment containing a hyperlink to an external resource and verify the link functions in PDF.",
+      "workflow": "rendered-output",
+      "outputs": [
+        "pdf"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 20,
+      "file_name": "validate-that-comment-reference-ids-update-correctly-after-inserting-new-paragraphs-into-t.cs",
+      "task": "Validate that comment reference IDs update correctly after inserting new paragraphs into the document.",
       "workflow": "native-comment-api",
       "outputs": [
         "docx"
@@ -287,7 +338,40 @@
       "winner": "mcp"
     },
     {
-      "id": 20,
+      "id": 21,
+      "file_name": "synchronize-comment-positions-after-document-sections-are-reordered-to-maintain-accurate-c.cs",
+      "task": "Synchronize comment positions after document sections are reordered to maintain accurate comment anchoring.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 22,
+      "file_name": "use-comment-collection-events-to-trigger-custom-logging-whenever-a-comment-is-added-or-rem.cs",
+      "task": "Use comment collection events to trigger custom logging whenever a comment is added or removed.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 23,
+      "file_name": "programmatically-accept-or-reject-comments-based-on-author-name-and-generate-a-revised-doc.cs",
+      "task": "Programmatically accept or reject comments based on author name and generate a revised document version.",
+      "workflow": "native-comment-api",
+      "outputs": [
+        "docx"
+      ],
+      "selected_engine": "mcp",
+      "winner": "mcp"
+    },
+    {
+      "id": 24,
       "file_name": "load-a-document-from-a-stream-add-comments-and-save-the-modified-document-back-to-a-memory.cs",
       "task": "Load a document from a stream, add comments, and save the modified document back to a memory stream.",
       "workflow": "stream-batch-io",
@@ -299,55 +383,10 @@
       "winner": "mcp"
     },
     {
-      "id": 21,
-      "file_name": "load-a-docx-file-enumerate-all-comments-and-print-each-author-and-text-to-console.cs",
-      "task": "Load a docx file enumerate all comments and print each author and text to console.",
-      "workflow": "native-comment-api",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 22,
-      "file_name": "load-multiple-word-documents-from-a-folder-aggregate-their-comments-and-generate-a-summary.cs",
-      "task": "Load multiple Word documents from a folder, aggregate their comments, and generate a summary report.",
-      "workflow": "export-report",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 23,
-      "file_name": "preserve-comment-formatting-such-as-bold-and-italic-text-when-converting-a-document-to-htm.cs",
-      "task": "Preserve comment formatting such as bold and italic text when converting a document to HTML.",
-      "workflow": "rendered-output",
-      "outputs": [
-        "docx",
-        "html"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
-      "id": 24,
-      "file_name": "programmatically-accept-or-reject-comments-based-on-author-name-and-generate-a-revised-doc.cs",
-      "task": "Programmatically accept or reject comments based on author name and generate a revised document version.",
-      "workflow": "native-comment-api",
-      "outputs": [
-        "docx"
-      ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
-    },
-    {
       "id": 25,
-      "file_name": "search-comments-containing-a-specific-keyword-and-highlight-the-corresponding-text-range-i.cs",
-      "task": "Search comments containing a specific keyword and highlight the corresponding text range in the document.",
-      "workflow": "native-comment-api",
+      "file_name": "create-a-batch-process-that-adds-a-standardized-disclaimer-comment-to-every-document-in-a.cs",
+      "task": "Create a batch process that adds a standardized disclaimer comment to every document in a directory.",
+      "workflow": "stream-batch-io",
       "outputs": [
         "docx"
       ],
@@ -356,8 +395,8 @@
     },
     {
       "id": 26,
-      "file_name": "set-custom-author-name-and-initials-for-programmatically-added-comments-in-a-document.cs",
-      "task": "Set custom author name and initials for programmatically added comments in a document.",
+      "file_name": "load-a-document-change-comment-author-names-to-uppercase-and-save-the-updated-file.cs",
+      "task": "Load a document, change comment author names to uppercase, and save the updated file.",
       "workflow": "native-comment-api",
       "outputs": [
         "docx"
@@ -367,30 +406,31 @@
     },
     {
       "id": 27,
-      "file_name": "synchronize-comment-positions-after-document-sections-are-reordered-to-maintain-accurate-c.cs",
-      "task": "Synchronize comment positions after document sections are reordered to maintain accurate comment placement.",
+      "file_name": "extract-comment-text-and-embed-it-as-footnotes-within-the-same-document-for-alternative-pr.cs",
+      "task": "Extract comment text and embed it as footnotes within the same document for alternative presentation.",
       "workflow": "native-comment-api",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 28,
-      "file_name": "update-the-text-of-an-existing-comment-identified-by-its-index-while-preserving-original-f.cs",
-      "task": "Update the text of an existing comment identified by its index while preserving original formatting.",
-      "workflow": "native-comment-api",
+      "file_name": "implement-a-feature-that-hides-all-comments-in-the-document-view-without-removing-them-fro.cs",
+      "task": "Implement a feature that hides all comments in the document view without removing them from the file.",
+      "workflow": "rendered-output",
       "outputs": [
-        "docx"
+        "docx",
+        "pdf"
       ],
       "selected_engine": "mcp",
       "winner": "mcp"
     },
     {
       "id": 29,
-      "file_name": "use-comment-collection-events-to-trigger-custom-logging-whenever-a-comment-is-added-or-rem.cs",
-      "task": "Use comment collection events or equivalent wrapper-based logging to capture add and remove operations.",
+      "file_name": "compare-two-versions-of-a-document-and-list-comments-that-were-added-modified-or-deleted.cs",
+      "task": "Compare two versions of a document and list comments that were added, modified, or deleted.",
       "workflow": "native-comment-api",
       "outputs": [
         "docx"
@@ -400,9 +440,9 @@
     },
     {
       "id": 30,
-      "file_name": "validate-that-comment-reference-ids-update-correctly-after-inserting-new-paragraphs-into-t.cs",
-      "task": "Validate that comment reference IDs update correctly after inserting new paragraphs into the document.",
-      "workflow": "native-comment-api",
+      "file_name": "create-a-utility-that-reads-comment-data-from-a-database-and-inserts-corresponding-comment.cs",
+      "task": "Create a utility that reads comment data from a database and inserts corresponding comments into a template document.",
+      "workflow": "stream-batch-io",
       "outputs": [
         "docx"
       ],

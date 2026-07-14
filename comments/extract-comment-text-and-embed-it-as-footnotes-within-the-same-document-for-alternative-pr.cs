@@ -3,19 +3,17 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Notes;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a source document with some comments.
+        // Create a sample document with comments.
         Document sourceDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
 
         // First paragraph with a comment.
         srcBuilder.Writeln("This is the first paragraph.");
-        Paragraph firstPara = srcBuilder.CurrentParagraph;
         Comment comment1 = new Comment(sourceDoc)
         {
             Author = "John Doe",
@@ -23,31 +21,30 @@ public class Program
             DateTime = DateTime.Now
         };
         comment1.AppendChild(new Paragraph(sourceDoc));
-        comment1.FirstParagraph?.AppendChild(new Run(sourceDoc, "Please review this sentence."));
-        firstPara?.AppendChild(comment1);
+        comment1.FirstParagraph?.AppendChild(new Run(sourceDoc, "Comment on the first paragraph."));
+        srcBuilder.CurrentParagraph?.AppendChild(comment1);
 
-        // Second paragraph with another comment.
+        // Second paragraph with a comment.
         srcBuilder.Writeln("This is the second paragraph.");
-        Paragraph secondPara = srcBuilder.CurrentParagraph;
         Comment comment2 = new Comment(sourceDoc)
         {
             Author = "Jane Smith",
             Initial = "JS",
-            DateTime = DateTime.Now.AddMinutes(-10)
+            DateTime = DateTime.Now.AddMinutes(-5)
         };
         comment2.AppendChild(new Paragraph(sourceDoc));
-        comment2.FirstParagraph?.AppendChild(new Run(sourceDoc, "Consider rephrasing this part."));
-        secondPara?.AppendChild(comment2);
+        comment2.FirstParagraph?.AppendChild(new Run(sourceDoc, "Another comment, on the second paragraph."));
+        srcBuilder.CurrentParagraph?.AppendChild(comment2);
 
-        // Save the source document (optional, for inspection).
-        sourceDoc.Save("source.docx");
+        // Save the source document (optional, for verification).
+        sourceDoc.Save("original.docx");
 
-        // Create a new document that will contain the comments as footnotes.
+        // Create a new document that will contain footnotes derived from comments.
         Document footnoteDoc = new Document();
-        DocumentBuilder footnoteBuilder = new DocumentBuilder(footnoteDoc);
+        DocumentBuilder footBuilder = new DocumentBuilder(footnoteDoc);
 
-        footnoteBuilder.Writeln("Comments converted to footnotes:");
-        footnoteBuilder.Writeln();
+        footBuilder.Writeln("Comments converted to footnotes:");
+        footBuilder.Writeln();
 
         // Enumerate all comments in the source document.
         var comments = sourceDoc.GetChildNodes(NodeType.Comment, true)
@@ -57,11 +54,11 @@ public class Program
         foreach (Comment c in comments)
         {
             string author = c.Author ?? "Unknown";
-            string text = c.GetText()?.Trim() ?? string.Empty;
+            string commentText = c.GetText()?.Trim() ?? string.Empty;
 
-            footnoteBuilder.Write($"Comment by {author}: ");
-            footnoteBuilder.InsertFootnote(FootnoteType.Footnote, text);
-            footnoteBuilder.Writeln();
+            footBuilder.Write($"Comment by {author}: ");
+            footBuilder.InsertFootnote(FootnoteType.Footnote, commentText);
+            footBuilder.Writeln();
         }
 
         // Save the document with footnotes.
