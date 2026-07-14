@@ -1,6 +1,6 @@
-using Aspose.Words;
 using System;
 using System.IO;
+using Aspose.Words;
 
 public class Program
 {
@@ -9,53 +9,39 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Get the first paragraph (created by default).
-        var paragraph = doc.FirstSection.Body.FirstParagraph;
+        // Get the first paragraph (exists by default).
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
-        // Create the first run and add it to the paragraph.
-        Run run1 = new Run(doc, "First run. ");
-        paragraph.AppendChild(run1);
+        // Obtain a Font object from DocumentBuilder for configuration.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        Aspose.Words.Font sharedFont = builder.Font;
+        sharedFont.Size = 24; // Set font size.
 
-        // Obtain the Font object from the first run.
-        Aspose.Words.Font sharedFont = run1.Font;
+        // Create an Aspose.Drawing.Color and convert it to System.Drawing.Color.
+        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.Blue;
+        System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
+        sharedFont.Color = sysColor; // Assign the color to the font.
 
-        // Set the desired font size.
-        sharedFont.Size = 24;
+        // Helper method to create a Run with the shared font settings.
+        Run CreateRun(string text)
+        {
+            Run run = new Run(doc, text);
+            run.Font.Size = sharedFont.Size;
+            run.Font.Color = sharedFont.Color;
+            return run;
+        }
 
-        // Create an Aspose.Drawing.Color (e.g., Blue) and convert it to System.Drawing.Color.
-        Aspose.Drawing.Color asposeColor = Aspose.Drawing.Color.Blue;
-        System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(asposeColor.ToArgb());
+        // Add multiple runs that share the same font formatting.
+        paragraph.AppendChild(CreateRun("Hello "));
+        paragraph.AppendChild(CreateRun("world"));
+        paragraph.AppendChild(CreateRun("!"));
 
-        // Assign the color to the font.
-        sharedFont.Color = sysColor;
-
-        // Create additional runs.
-        Run run2 = new Run(doc, "Second run. ");
-        Run run3 = new Run(doc, "Third run.");
-
-        // Append the runs to the paragraph.
-        paragraph.AppendChild(run2);
-        paragraph.AppendChild(run3);
-
-        // Apply the same formatting to the other runs.
-        run2.Font.Size = sharedFont.Size;
-        run2.Font.Color = sharedFont.Color;
-
-        run3.Font.Size = sharedFont.Size;
-        run3.Font.Color = sharedFont.Color;
-
-        // Validate that all runs share the same size and color.
-        bool consistent = run1.Font.Size == run2.Font.Size &&
-                          run2.Font.Size == run3.Font.Size &&
-                          run1.Font.Color.ToArgb() == run2.Font.Color.ToArgb() &&
-                          run2.Font.Color.ToArgb() == run3.Font.Color.ToArgb();
+        // Ensure the output directory exists.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "FontExample.docx");
 
         // Save the document.
-        string outputPath = "FontRunsExample.docx";
         doc.Save(outputPath);
-
-        // Ensure the file was created and formatting is consistent.
-        if (!File.Exists(outputPath) || !consistent)
-            throw new Exception("Document validation failed.");
     }
 }

@@ -12,27 +12,24 @@ public class Program
         // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the default font name for all subsequently inserted text.
-        string defaultFont = "Arial";
-        builder.Font.Name = defaultFont;
+        // Set the default font name that will be applied to all newly inserted text.
+        builder.Font.Name = "Arial";
 
-        // Validate that the font name was set correctly.
-        if (builder.Font.Name != defaultFont)
-            throw new InvalidOperationException("Failed to set the default font.");
+        // Validate that the font name was correctly assigned.
+        if (builder.Font.Name != "Arial")
+            throw new InvalidOperationException("Failed to set the default font name.");
 
-        // Insert text using the default font.
-        builder.Writeln("This text uses the default font set via DocumentBuilder.Font.Name.");
+        // Insert some text; it will use the default font set above.
+        builder.Writeln("This text is formatted with the default font 'Arial'.");
 
-        // Change the font for a new paragraph to demonstrate that the previous setting was the default.
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("This paragraph uses a different font.");
-
-        // Save the document to a file in the current directory.
+        // Define the output file path.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DefaultFontExample.docx");
+
+        // Save the document.
         doc.Save(outputPath);
 
         // Verify that the file was created successfully.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The document was not saved.", outputPath);
+            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
     }
 }

@@ -7,42 +7,58 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for temporary XML and output PDF.
-        string xmlPath = Path.Combine(Directory.GetCurrentDirectory(), "FontSubstitutionRules.xml");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomFontSubstitution.pdf");
+        // Prepare output directories.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Path for the custom substitution table XML.
+        string substitutionXmlPath = Path.Combine(artifactsDir, "CustomFontSubstitution.xml");
 
         // -----------------------------------------------------------------
-        // Step 1: Create a font substitution table using the built‑in Windows settings
-        // and save it to an XML file.
+        // Step 1: Create a font substitution table and save it to an XML file.
         // -----------------------------------------------------------------
         FontSettings tempSettings = new FontSettings();
         TableSubstitutionRule tempTable = tempSettings.SubstitutionSettings.TableSubstitution;
-        tempTable.LoadWindowsSettings();               // Load default Windows substitution table.
-        tempTable.Save(xmlPath);                       // Persist the table to XML.
+
+        // Define substitutes for a font that does not exist in the system.
+        // When "MissingFont" is requested, Aspose.Words will try "Arial" first,
+        // then "Courier New" if the first substitute is unavailable.
+        tempTable.SetSubstitutes("MissingFont", new[] { "Arial", "Courier New" });
+
+        // Save the substitution table to an XML file.
+        tempTable.Save(substitutionXmlPath);
 
         // -----------------------------------------------------------------
         // Step 2: Load the custom substitution table from the XML file.
         // -----------------------------------------------------------------
         FontSettings fontSettings = new FontSettings();
-        TableSubstitutionRule table = fontSettings.SubstitutionSettings.TableSubstitution;
-        table.Load(xmlPath);                           // Load the previously saved table.
+        TableSubstitutionRule tableRule = fontSettings.SubstitutionSettings.TableSubstitution;
+        tableRule.Load(substitutionXmlPath);
 
         // -----------------------------------------------------------------
-        // Step 3: Create a document that uses a font not present on the system.
-        // The substitution table will provide a fallback font.
+        // Step 3: Create a document that uses the missing font.
         // -----------------------------------------------------------------
         Document doc = new Document();
-        doc.FontSettings = fontSettings;               // Apply the custom font settings to the document.
+        doc.FontSettings = fontSettings;
 
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Amethysta";               // Font likely unavailable on the machine.
-        builder.Writeln("This line is formatted with the missing font \"Amethysta\".");
-        builder.Font.Name = "Arial";
-        builder.Writeln("This line uses a standard font and will render normally.");
+        builder.Font.Name = "MissingFont";
+        builder.Writeln("This line uses a missing font and will be substituted according to the custom table.");
 
         // -----------------------------------------------------------------
-        // Step 4: Save the resulting document.
+        // Step 4: Save the document.
         // -----------------------------------------------------------------
+        string outputPath = Path.Combine(artifactsDir, "CustomFontSubstitution.pdf");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (File.Exists(outputPath))
+        {
+            Console.WriteLine("Document saved successfully to: " + outputPath);
+        }
+        else
+        {
+            Console.WriteLine("Failed to save the document.");
+        }
     }
 }

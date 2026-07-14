@@ -1,73 +1,75 @@
 using System;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary input and final output documents.
-        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "Input.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        // Paths for the sample input and output documents.
+        string inputPath = "SampleInput.docx";
+        string outputPath = "SampleOutput.docx";
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document that contains headings.
+        // Create a sample document with headings if it does not already exist.
         // -----------------------------------------------------------------
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        if (!File.Exists(inputPath))
+        {
+            Document createDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(createDoc);
 
-        // Add a Heading 1.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Sample Heading 1");
+            // Add a few headings of different levels.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+            builder.Writeln("Heading Level 1");
 
-        // Add a Heading 2.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Sample Heading 2");
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+            builder.Writeln("Heading Level 2");
 
-        // Add a normal paragraph (should remain unchanged).
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Normal paragraph text.");
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+            builder.Writeln("Heading Level 3");
 
-        // Save the sample document to disk.
-        sampleDoc.Save(inputPath);
+            // Add a normal paragraph to show that it will not be changed.
+            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+            builder.Writeln("Regular paragraph text.");
 
-        // -----------------------------------------------------------------
-        // 2. Load the existing document.
-        // -----------------------------------------------------------------
+            // Save the sample document.
+            createDoc.Save(inputPath);
+        }
+
+        // --------------------------------------------------------------
+        // Load the existing document, modify all headings, and save it.
+        // --------------------------------------------------------------
         Document doc = new Document(inputPath);
 
-        // -----------------------------------------------------------------
-        // 3. Change all heading styles to use a bold 16‑point font.
-        // -----------------------------------------------------------------
-        // Iterate through all built‑in heading style identifiers (Heading1 … Heading9).
-        for (int id = (int)StyleIdentifier.Heading1; id <= (int)StyleIdentifier.Heading9; id++)
+        // Iterate over all paragraph nodes in the document.
+        foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
         {
-            StyleIdentifier styleId = (StyleIdentifier)id;
-            // Retrieve the style; it may be null if the document does not contain it.
-            Aspose.Words.Style headingStyle = doc.Styles[styleId];
-            if (headingStyle != null)
+            // Check if the paragraph style is any heading style.
+            StyleIdentifier styleId = paragraph.ParagraphFormat.StyleIdentifier;
+            bool isHeading = styleId == StyleIdentifier.Heading1 ||
+                             styleId == StyleIdentifier.Heading2 ||
+                             styleId == StyleIdentifier.Heading3 ||
+                             styleId == StyleIdentifier.Heading4 ||
+                             styleId == StyleIdentifier.Heading5 ||
+                             styleId == StyleIdentifier.Heading6 ||
+                             styleId == StyleIdentifier.Heading7 ||
+                             styleId == StyleIdentifier.Heading8 ||
+                             styleId == StyleIdentifier.Heading9;
+
+            if (isHeading)
             {
-                // Apply the desired formatting to the style's font.
-                headingStyle.Font.Size = 16;          // sixteen‑point size
-                headingStyle.Font.Bold = true;        // bold
+                // Apply bold and 16‑point size to every run within the heading.
+                foreach (Run run in paragraph.Runs)
+                {
+                    Aspose.Words.Font font = run.Font;
+                    font.Bold = true;
+                    font.Size = 16;
+                }
             }
         }
 
-        // -----------------------------------------------------------------
-        // 4. Save the modified document.
-        // -----------------------------------------------------------------
+        // Save the modified document.
         doc.Save(outputPath);
-
-        // -----------------------------------------------------------------
-        // 5. Simple validation that the output file was created.
-        // -----------------------------------------------------------------
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Document saved successfully to: " + outputPath);
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
     }
 }

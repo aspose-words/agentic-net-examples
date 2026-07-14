@@ -1,37 +1,40 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Drawing; // For Aspose.Drawing.Color
+using Aspose.Drawing;
 
-namespace FontResetExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Create a new run with some text and add it to the first paragraph.
-            Run run = new Run(doc, "Hello World!");
-            doc.FirstSection.Body.FirstParagraph.AppendChild(run);
+        // Create a run with some text.
+        Run run = new Run(doc, "Sample text with custom formatting.");
 
-            // Apply custom formatting to the run.
-            Aspose.Words.Font font = run.Font;
-            font.Name = "Courier New";
-            font.Size = 24;
-            font.Bold = true;
+        // Apply custom font formatting.
+        Aspose.Words.Font font = run.Font;
+        font.Name = "Courier New";
+        font.Size = 24;
+        font.Bold = true;
 
-            // Create a color using Aspose.Drawing and convert it to System.Drawing.Color.
-            Aspose.Drawing.Color asposeColor = Aspose.Drawing.Color.FromArgb(255, 0, 0); // Red
-            font.Color = System.Drawing.Color.FromArgb(asposeColor.ToArgb());
+        // Set the font color using Aspose.Drawing.Color and convert to System.Drawing.Color.
+        Aspose.Drawing.Color aspColor = Aspose.Drawing.Color.Red;
+        font.Color = System.Drawing.Color.FromArgb(aspColor.ToArgb());
 
-            // Reset all font attributes to their defaults.
-            font.ClearFormatting();
+        // Append the run to the first paragraph of the document.
+        doc.FirstSection.Body.FirstParagraph.AppendChild(run);
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontResetOutput.docx");
-            doc.Save(outputPath);
-        }
+        // Save the document with custom formatting.
+        string beforePath = Path.Combine(Directory.GetCurrentDirectory(), "BeforeClear.docx");
+        doc.Save(beforePath);
+
+        // Reset all font attributes of the run to defaults.
+        run.Font.ClearFormatting();
+
+        // Save the document after clearing formatting.
+        string afterPath = Path.Combine(Directory.GetCurrentDirectory(), "AfterClear.docx");
+        doc.Save(afterPath);
     }
 }

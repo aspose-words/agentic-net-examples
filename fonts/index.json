@@ -7,24 +7,58 @@
     "preferred_workflow": "Use Aspose.Words font APIs with correct type usage and explicit namespace disambiguation.",
     "required_packages": [
       "Aspose.Words",
-      "Aspose.Drawing.Common",
-      "Newtonsoft.Json"
+      "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.4.0",
-      "Aspose.Drawing.Common": "25.11.0",
-      "Newtonsoft.Json": ""
-    }
+      "Aspose.Words": "26.5.0",
+      "Aspose.Drawing.Common": "25.11.0"
+    },
+    "required_namespaces": [
+      "System",
+      "System.IO",
+      "Aspose.Words",
+      "Aspose.Words.Drawing",
+      "Aspose.Words.Lists",
+      "Aspose.Words.Themes",
+      "Aspose.Words.Fonts",
+      "Aspose.Drawing",
+      "Aspose.Words.Settings",
+      "Aspose.Words.Saving",
+      "System.Globalization",
+      "Aspose.Words.Loading",
+      "System.Collections.Generic",
+      "Aspose.Words.Replacing"
+    ],
+    "key_apis": [
+      "Document",
+      "Directory",
+      "Path",
+      "Paragraph",
+      "Run",
+      "Font",
+      "DocumentBuilder",
+      "File",
+      "Style",
+      "SaveFormat",
+      "NodeType",
+      "LoadOptions",
+      "PdfSaveOptions",
+      "StyleIdentifier"
+    ]
   },
   "stats": {
     "total_examples": 35,
     "publish_ready_successful_examples": 35,
     "workflow_counts": {
       "document-formatting": 27,
-      "font-settings-and-sources": 4,
       "embedding-and-rendering": 2,
-      "reporting-and-inspection": 1,
-      "input-bootstrap": 1
+      "font-settings-and-sources": 4,
+      "input-bootstrap": 1,
+      "reporting-and-inspection": 1
+    },
+    "winner_counts": {
+      "llm": 1,
+      "mcp": 34
     }
   },
   "rules_summary": {
@@ -205,13 +239,13 @@
     {
       "id": 13,
       "file_name": "apply-a-semi-transparent-fill-to-text-by-setting-font-fill-color-and-font-fill-transparenc.cs",
-      "task": "Apply a semi‑transparent fill to text by setting Font.Fill.Color and Font.Fill.Transparency together.",
+      "task": "Apply a semi-transparent fill to text by setting Font.Fill.Color and Font.Fill.Transparency together.",
       "workflow": "document-formatting",
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 14,
@@ -447,7 +481,7 @@
     {
       "id": 35,
       "file_name": "load-a-document-change-all-headings-to-use-a-bold-sixteen-point-font-then-save.cs",
-      "task": "Load a document, change all headings to use a bold sixteen‑point font, then save.",
+      "task": "Load a document, change all headings to use a bold sixteen-point font, then save.",
       "workflow": "document-formatting",
       "outputs": [
         "docx"

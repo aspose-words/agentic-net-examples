@@ -7,24 +7,25 @@ public class Program
     public static void Main()
     {
         // Create a new blank document.
-        Aspose.Words.Document doc = new Aspose.Words.Document();
+        Document doc = new Document();
 
-        // Use DocumentBuilder to add a paragraph with a single run of text.
-        Aspose.Words.DocumentBuilder builder = new Aspose.Words.DocumentBuilder(doc);
-        builder.Writeln("Hello World!");
+        // Create a paragraph and add it to the document's first section body.
+        Paragraph paragraph = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(paragraph);
 
-        // Retrieve the first paragraph in the document.
-        Aspose.Words.Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+        // Create a run with some text and set its font name.
+        Run run = new Run(doc, "Hello Aspose.Words!");
+        run.Font.Name = "Courier New";
+        paragraph.AppendChild(run);
 
-        // Retrieve the Font object from the paragraph's first run.
-        Aspose.Words.Font firstRunFont = paragraph.Runs[0].Font;
+        // Retrieve the Font object from the first run of the paragraph.
+        Font firstRunFont = paragraph.Runs[0].Font;
 
-        // Output some font properties to verify retrieval.
+        // Output a property of the retrieved font.
         Console.WriteLine("First run font name: " + firstRunFont.Name);
-        Console.WriteLine("First run font size: " + firstRunFont.Size);
 
         // Save the document to the local file system.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FirstRunFont.docx");
         doc.Save(outputPath);
     }
 }
