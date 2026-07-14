@@ -7,69 +7,74 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for input Word documents and output PDFs.
+        // Prepare folders
         string baseDir = Directory.GetCurrentDirectory();
-        string inputFolder = Path.Combine(baseDir, "InputDocs");
-        string outputFolder = Path.Combine(baseDir, "OutputPdfs");
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "ExtractedPdfs");
 
-        // Ensure clean environment.
-        if (Directory.Exists(inputFolder))
-            Directory.Delete(inputFolder, true);
-        if (Directory.Exists(outputFolder))
-            Directory.Delete(outputFolder, true);
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        if (Directory.Exists(inputDir))
+            Directory.Delete(inputDir, true);
+        if (Directory.Exists(outputDir))
+            Directory.Delete(outputDir, true);
 
-        // Create sample Word documents with a bookmark that encloses the content to extract.
-        for (int i = 1; i <= 3; i++)
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
+
+        // Create sample documents with bookmarks
+        const int sampleCount = 3;
+        for (int i = 1; i <= sampleCount; i++)
         {
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             builder.Writeln($"Document {i} - Intro paragraph.");
+            builder.StartBookmark("Start");
+            builder.Writeln($"Document {i} - Content paragraph 1.");
+            builder.Writeln($"Document {i} - Content paragraph 2.");
+            builder.EndBookmark("Start");
+            builder.StartBookmark("End");
+            builder.Writeln($"Document {i} - Outro paragraph.");
+            builder.EndBookmark("End");
 
-            // Start bookmark named "Extract".
-            builder.StartBookmark("Extract");
-            builder.Writeln($"This is the first paragraph inside the extract region of document {i}.");
-            builder.Writeln($"This is the second paragraph inside the extract region of document {i}.");
-            // End bookmark.
-            builder.EndBookmark("Extract");
-
-            builder.Writeln($"Document {i} - Closing paragraph.");
-
-            string docPath = Path.Combine(inputFolder, $"SampleDoc{i}.docx");
-            doc.Save(docPath);
+            string filePath = Path.Combine(inputDir, $"Sample{i}.docx");
+            doc.Save(filePath);
         }
 
-        // Process each Word file in the input folder.
-        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
+        // Process each document: extract content between the two bookmarks and save as PDF
+        string[] files = Directory.GetFiles(inputDir, "*.docx");
+        foreach (string file in files)
         {
-            // Load the source document.
-            Document sourceDoc = new Document(filePath);
+            // Load source document
+            Document sourceDoc = new Document(file);
 
-            // Locate the bookmark that defines the extraction range.
-            Bookmark extractBookmark = sourceDoc.Range.Bookmarks["Extract"];
-            if (extractBookmark == null)
-                throw new InvalidOperationException($"Bookmark 'Extract' not found in document '{Path.GetFileName(filePath)}'.");
+            // Locate bookmarks
+            Bookmark startBookmark = sourceDoc.Range.Bookmarks["Start"];
+            Bookmark endBookmark = sourceDoc.Range.Bookmarks["End"];
+            if (startBookmark == null || endBookmark == null)
+                throw new InvalidOperationException($"Bookmarks not found in {Path.GetFileName(file)}.");
 
-            // Retrieve the text inside the bookmark.
-            string extractedText = extractBookmark.Text;
+            // Extract the text that lies between the bookmarks.
+            // The Bookmark.Text property returns the concatenated text of all nodes inside the bookmark.
+            string extractedText = startBookmark.Text?.Trim();
+            if (string.IsNullOrEmpty(extractedText))
+                extractedText = "[No content between bookmarks]";
 
             // Create a new document to hold the extracted content.
-            Document resultDoc = new Document();
-            DocumentBuilder resultBuilder = new DocumentBuilder(resultDoc);
-            resultBuilder.Writeln(extractedText.Trim());
+            Document extractedDoc = new Document();
+            DocumentBuilder ebuilder = new DocumentBuilder(extractedDoc);
+            ebuilder.Writeln(extractedText);
 
-            // Determine output PDF file name.
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(filePath);
-            string pdfPath = Path.Combine(outputFolder, $"{fileNameWithoutExt}_Extracted.pdf");
+            // Save the extracted document as PDF
+            string outputFileName = Path.GetFileNameWithoutExtension(file) + "_Extracted.pdf";
+            string outputPath = Path.Combine(outputDir, outputFileName);
+            extractedDoc.Save(outputPath, SaveFormat.Pdf);
 
-            // Save the extracted content as PDF.
-            resultDoc.Save(pdfPath, SaveFormat.Pdf);
-
-            // Validate that the PDF was created.
-            if (!File.Exists(pdfPath))
-                throw new InvalidOperationException($"Failed to create PDF for document '{fileNameWithoutExt}'.");
+            // Validate that the PDF was created
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create PDF for {Path.GetFileName(file)}.");
         }
+
+        // All done
+        Console.WriteLine("Batch extraction completed successfully.");
     }
 }

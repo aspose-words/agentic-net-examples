@@ -7,80 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a source document with sample content.
-        // -----------------------------------------------------------------
+        // Create a source document with sample content.
         Document sourceDoc = new Document();
         DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-        srcBuilder.Writeln("First paragraph in source.");
-        srcBuilder.Writeln("Second paragraph in source.");
-        srcBuilder.StartTable();
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell 1");
-        srcBuilder.InsertCell();
-        srcBuilder.Write("Cell 2");
-        srcBuilder.EndRow();
-        srcBuilder.EndTable();
-        srcBuilder.Writeln("Third paragraph in source.");
+        srcBuilder.Writeln("First paragraph.");
+        srcBuilder.Writeln("Second paragraph.");
+        srcBuilder.Writeln("Third paragraph.");
+        sourceDoc.Save("source.docx");
 
-        // Save the source document (lifecycle rule: save).
-        const string sourcePath = "source.docx";
-        sourceDoc.Save(sourcePath);
+        // Load the source document.
+        Document loadedSource = new Document("source.docx");
 
-        // -----------------------------------------------------------------
-        // 2. Load the source document (lifecycle rule: load).
-        // -----------------------------------------------------------------
-        Document loadedSource = new Document(sourcePath);
+        // Extract all paragraph nodes from the source document.
+        NodeCollection sourceParagraphs = loadedSource.GetChildNodes(NodeType.Paragraph, true);
 
-        // -----------------------------------------------------------------
-        // 3. Extract all block-level nodes (paragraphs and tables).
-        // -----------------------------------------------------------------
-        NodeCollection sourceBlocks = loadedSource.GetChildNodes(NodeType.Any, true);
-        // Filter only Paragraph and Table nodes that are direct children of the body.
-        var extractedBlocks = new System.Collections.Generic.List<Node>();
-        foreach (Node node in sourceBlocks)
-        {
-            if (node.NodeType == NodeType.Paragraph || node.NodeType == NodeType.Table)
-                extractedBlocks.Add(node);
-        }
-
-        // -----------------------------------------------------------------
-        // 4. Create a new destination document.
-        // -----------------------------------------------------------------
+        // Prepare a new destination document.
         Document destDoc = new Document();
         // Remove the default empty section/paragraph.
         destDoc.RemoveAllChildren();
 
-        // Build a minimal document structure: Section -> Body.
+        // Create a new section and body for the destination document.
         Section destSection = new Section(destDoc);
         destDoc.AppendChild(destSection);
         Body destBody = new Body(destDoc);
         destSection.AppendChild(destBody);
 
-        // -----------------------------------------------------------------
-        // 5. Import extracted nodes into the destination document and prepend them.
-        // -----------------------------------------------------------------
+        // Importer to handle style and list translation.
         NodeImporter importer = new NodeImporter(loadedSource, destDoc, ImportFormatMode.KeepSourceFormatting);
 
-        // Prepend in reverse order so the original order is preserved.
-        for (int i = extractedBlocks.Count - 1; i >= 0; i--)
+        // Prepend the extracted paragraphs to the beginning of the destination body.
+        // Iterate in reverse order to preserve the original sequence when using PrependChild.
+        for (int i = sourceParagraphs.Count - 1; i >= 0; i--)
         {
-            Node importedNode = importer.ImportNode(extractedBlocks[i], true);
+            Node srcNode = sourceParagraphs[i];
+            // Skip the final empty paragraph that Aspose.Words adds automatically.
+            if (srcNode is Paragraph para && para.IsEndOfSection && !para.HasChildNodes)
+                continue;
+
+            Node importedNode = importer.ImportNode(srcNode, true);
             destBody.PrependChild(importedNode);
         }
 
-        // -----------------------------------------------------------------
-        // 6. Save the destination document.
-        // -----------------------------------------------------------------
-        const string resultPath = "result.docx";
-        destDoc.Save(resultPath);
+        // Save the resulting document.
+        destDoc.Save("result.docx");
 
-        // -----------------------------------------------------------------
-        // 7. Validate that the output file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(resultPath))
+        // Validate that the output file was created.
+        if (!File.Exists("result.docx"))
             throw new InvalidOperationException("The result document was not created.");
 
-        // Optional: indicate success (no console interaction required by the task).
+        // Optional: indicate success (no interactive output required).
+        Console.WriteLine("Extraction and prepend operation completed successfully.");
     }
 }

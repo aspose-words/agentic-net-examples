@@ -1,114 +1,99 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample document containing a Run followed by some text
-        //    and then a bookmark.
-        // -----------------------------------------------------------------
+        // Create a sample document with a run and a following bookmark.
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        builder.Writeln("Paragraph before the target run.");
-        builder.Font.Bold = false;
-        builder.Font.Italic = false;
-        builder.Write("StartRun");                     // the run we will locate
-        builder.Write("MiddleText");                   // text that should be extracted
-        builder.StartBookmark("NextBookmark");        // bookmark placed after the text
-        builder.EndBookmark("NextBookmark");
-        builder.Writeln(); // move to next paragraph
-        builder.Writeln("Paragraph after the bookmark.");
+        builder.Writeln("Paragraph before the run.");
+        builder.Write("RunText"); // This creates a Run inside the current paragraph.
+        builder.Writeln(); // End the paragraph.
 
-        const string sourcePath = "sample.docx";
+        // Insert a bookmark after the run.
+        builder.StartBookmark("TargetBookmark");
+        builder.Writeln("Text inside the bookmark.");
+        builder.EndBookmark("TargetBookmark");
+
+        // Save the source document (optional, just to have a file on disk).
+        const string sourcePath = "source.docx";
         sourceDoc.Save(sourcePath);
 
-        // -----------------------------------------------------------------
-        // 2. Locate the Run node with the exact text "StartRun".
-        // -----------------------------------------------------------------
-        Run startRun = sourceDoc.GetChildNodes(NodeType.Run, true)
-            .Cast<Run>()
-            .FirstOrDefault(r => r.Text == "StartRun");
+        // Load the document back.
+        Document loadedDoc = new Document(sourcePath);
 
-        if (startRun == null)
-            throw new InvalidOperationException("The start Run node was not found.");
+        // Locate the first Run node.
+        Run runNode = loadedDoc.GetChildNodes(NodeType.Run, true)[0] as Run;
+        if (runNode == null)
+            throw new InvalidOperationException("Run node not found.");
 
-        // -----------------------------------------------------------------
-        // 3. Find the next BookmarkStart node after the identified Run.
-        // -----------------------------------------------------------------
-        Node nextBookmarkStart = null;
-        for (Node node = startRun.NextSibling; node != null; node = node.NextSibling)
+        // Find the next BookmarkStart node after the run using pre‑order traversal.
+        BookmarkStart nextBookmark = null;
+        Node traversal = runNode;
+        while ((traversal = traversal.NextPreOrder(null)) != null)
         {
-            if (node.NodeType == NodeType.BookmarkStart)
+            if (traversal.NodeType == NodeType.BookmarkStart)
             {
-                nextBookmarkStart = node;
+                nextBookmark = (BookmarkStart)traversal;
                 break;
             }
         }
 
-        if (nextBookmarkStart == null)
-            throw new InvalidOperationException("No subsequent bookmark was found after the start Run.");
+        if (nextBookmark == null)
+            throw new InvalidOperationException("Next bookmark not found.");
 
-        // -----------------------------------------------------------------
-        // 4. Extract the textual content that lies between the Run and the bookmark.
-        // -----------------------------------------------------------------
-        string extractedText = string.Empty;
-        for (Node node = startRun.NextSibling; node != null && node != nextBookmarkStart; node = node.NextSibling)
-        {
-            // For Run nodes we take the raw Text; for other nodes we use GetText().
-            if (node.NodeType == NodeType.Run)
-                extractedText += ((Run)node).Text;
-            else
-                extractedText += node.GetText();
-        }
+        // Build a new document that will contain the extracted content.
+        Document extractedDoc = new Document();
+        extractedDoc.RemoveAllChildren();
 
-        if (string.IsNullOrEmpty(extractedText))
-            throw new InvalidOperationException("No text was extracted between the Run and the bookmark.");
+        Section section = new Section(extractedDoc);
+        extractedDoc.AppendChild(section);
 
-        // -----------------------------------------------------------------
-        // 5. Create a new document that contains the extracted segment.
-        // -----------------------------------------------------------------
-        Document resultDoc = new Document();
-        // Remove the default empty section/body created by the constructor.
-        resultDoc.RemoveAllChildren();
-
-        Section section = new Section(resultDoc);
-        resultDoc.AppendChild(section);
-        Body body = new Body(resultDoc);
+        Body body = new Body(extractedDoc);
         section.AppendChild(body);
 
-        Paragraph para = new Paragraph(resultDoc);
-        para.AppendChild(new Run(resultDoc, extractedText));
-        body.AppendChild(para);
+        // Collect nodes that lie between the run and the bookmark (exclusive).
+        Node current = runNode.NextPreOrder(null);
+        bool anyNodeAdded = false;
 
-        // -----------------------------------------------------------------
-        // 6. Save the extracted segment as HTML.
-        // -----------------------------------------------------------------
-        const string htmlPath = "extracted.html";
-        resultDoc.Save(htmlPath, SaveFormat.Html);
-
-        if (!File.Exists(htmlPath))
-            throw new InvalidOperationException("The HTML output file was not created.");
-
-        // -----------------------------------------------------------------
-        // 7. Write a small JSON report about the operation.
-        // -----------------------------------------------------------------
-        var report = new
+        while (current != null && current != nextBookmark)
         {
-            SourceDocument = sourcePath,
-            ExtractedText = extractedText,
-            HtmlOutput = htmlPath,
-            ExtractionTimestamp = DateTime.UtcNow
-        };
+            // Import the node into the destination document.
+            Node imported = extractedDoc.ImportNode(current, true);
 
-        File.WriteAllText("extraction_report.json",
-            JsonConvert.SerializeObject(report, Formatting.Indented));
+            // Append only nodes that are valid children of Body.
+            if (imported.NodeType == NodeType.Paragraph || imported.NodeType == NodeType.Table)
+            {
+                body.AppendChild(imported);
+                anyNodeAdded = true;
+            }
+            else if (imported.NodeType == NodeType.Run)
+            {
+                // Wrap isolated runs in a paragraph.
+                Paragraph para = new Paragraph(extractedDoc);
+                para.AppendChild(imported);
+                body.AppendChild(para);
+                anyNodeAdded = true;
+            }
+
+            current = current.NextPreOrder(null);
+        }
+
+        if (!anyNodeAdded)
+            throw new InvalidOperationException("No content was extracted between the run and the bookmark.");
+
+        // Convert the extracted segment to HTML.
+        string htmlContent = extractedDoc.ToString(SaveFormat.Html);
+
+        // Save the HTML to a file for verification.
+        const string htmlPath = "extracted.html";
+        File.WriteAllText(htmlPath, htmlContent);
+
+        Console.WriteLine($"Extraction completed. HTML saved to '{htmlPath}'.");
     }
 }

@@ -7,24 +7,69 @@
     "preferred_workflow": "Use native Aspose.Words APIs directly. Create realistic local sample DOC, DOCX, TXT, HTML, XML, image, or stream inputs inside the example whenever the task references an existing file, stream, folder, or batch of documents. Locate and extract content through actual document nodes, ranges, fields, shapes, comments, bookmarks, tables, sections, headers, footers, and metadata objects using documented Aspose.Words APIs only.",
     "required_packages": [
       "Aspose.Words",
-      "Aspose.Drawing.Common",
       "Newtonsoft.Json"
     ],
     "package_versions": {
-      "Aspose.Words": "26.4.0",
-      "Aspose.Drawing.Common": "25.11.0",
-      "Newtonsoft.Json": ""
-    }
+      "Aspose.Words": "26.5.0"
+    },
+    "required_namespaces": [
+      "System",
+      "System.IO",
+      "Aspose.Words",
+      "Aspose.Words.Tables",
+      "Newtonsoft.Json",
+      "System.Collections.Generic",
+      "Aspose.Words.Fields",
+      "Aspose.Words.Drawing",
+      "System.Linq",
+      "Aspose.Words.Saving",
+      "System.IO.Compression",
+      "Aspose.Words.Markup",
+      "Aspose.Words.Notes",
+      "System.Threading.Tasks"
+    ],
+    "key_apis": [
+      "Document",
+      "DocumentBuilder",
+      "Node",
+      "File",
+      "Paragraph",
+      "JsonConvert",
+      "NodeType",
+      "SaveFormat",
+      "FieldType",
+      "Range",
+      "Run",
+      "Table",
+      "Cell",
+      "Bookmark",
+      "Font",
+      "MemoryStream",
+      "Shape",
+      "StyleIdentifier",
+      "CompositeNode",
+      "Directory",
+      "Path",
+      "Field",
+      "ImageData",
+      "Comment",
+      "Footnote"
+    ]
   },
   "stats": {
     "total_examples": 30,
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
-      "text-range-extraction": 11,
-      "targeted-node-extraction": 9,
-      "table-structured-extraction": 6,
+      "image-shape-extraction": 3,
       "input-bootstrap": 1,
-      "image-shape-extraction": 3
+      "table-structured-extraction": 6,
+      "targeted-node-extraction": 9,
+      "text-range-extraction": 11
+    },
+    "winner_counts": {
+      "existing_repo": 4,
+      "llm": 6,
+      "mcp": 20
     }
   },
   "rules_summary": {
@@ -82,8 +127,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 2,
@@ -94,8 +139,8 @@
         "docx",
         "doc"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 3,
@@ -138,8 +183,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 7,
@@ -193,8 +238,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 12,
@@ -303,8 +348,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 22,
@@ -331,13 +376,13 @@
     {
       "id": 24,
       "file_name": "create-a-command-line-tool-that-accepts-start-and-end-node-ids-and-outputs-the-extracted-s.cs",
-      "task": "Create a command‑line tool that accepts start and end node IDs and outputs the extracted segment as PDF.",
+      "task": "Create a command-line tool that accepts start and end node IDs and outputs the extracted segment as PDF.",
       "workflow": "text-range-extraction",
       "outputs": [
         "pdf"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 25,
@@ -347,8 +392,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 26,
@@ -358,8 +403,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 27,
@@ -369,8 +414,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 28,
@@ -380,8 +425,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "existing_repo",
+      "winner": "existing_repo"
     },
     {
       "id": 29,

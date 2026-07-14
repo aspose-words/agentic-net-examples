@@ -6,111 +6,112 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-public class ParallelExtractionExample
+public class Program
 {
     public static void Main()
     {
-        // Prepare input and output folders.
+        // Prepare folders
         string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "Input");
-        string outputDir = Path.Combine(baseDir, "Output");
-
+        string inputDir = Path.Combine(baseDir, "InputDocs");
+        string outputDir = Path.Combine(baseDir, "OutputDocs");
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // Create sample documents.
-        int documentCount = 5;
-        List<string> inputFiles = new List<string>();
-        for (int i = 1; i <= documentCount; i++)
+        // Create sample documents
+        CreateSampleDocuments(inputDir);
+
+        // Get list of input files
+        string[] inputFiles = Directory.GetFiles(inputDir, "*.docx");
+
+        // List to hold report entries
+        List<ExtractionReport> reports = new List<ExtractionReport>();
+
+        // Parallel extraction
+        Parallel.ForEach(inputFiles, inputFile =>
         {
-            string fileName = $"SampleDocument{i}.docx";
-            string filePath = Path.Combine(inputDir, fileName);
-            CreateSampleDocument(filePath, i);
-            inputFiles.Add(filePath);
-        }
+            // Load source document
+            Document sourceDoc = new Document(inputFile);
 
-        // Extract first two paragraphs from each document in parallel.
-        List<string> extractedFiles = new List<string>();
-        Parallel.ForEach(inputFiles, inputPath =>
-        {
-            string outputFileName = Path.GetFileNameWithoutExtension(inputPath) + "_Extracted.docx";
-            string outputPath = Path.Combine(outputDir, outputFileName);
+            // Validate that the document has at least one paragraph
+            Paragraph firstParagraph = sourceDoc.FirstSection?.Body?.Paragraphs?[0];
+            if (firstParagraph == null)
+                throw new InvalidOperationException($"Document '{inputFile}' does not contain a paragraph to extract.");
 
-            ExtractFirstTwoParagraphs(inputPath, outputPath);
+            // Create a new document to hold the extracted range
+            Document extractedDoc = new Document();
+            extractedDoc.RemoveAllChildren();
 
-            lock (extractedFiles)
+            // Build minimal document structure
+            Section section = new Section(extractedDoc);
+            extractedDoc.AppendChild(section);
+            Body body = new Body(extractedDoc);
+            section.AppendChild(body);
+
+            // Import the paragraph from the source document into the new document
+            Node importedParagraph = extractedDoc.ImportNode(firstParagraph, true);
+            body.AppendChild(importedParagraph);
+
+            // Determine output file names
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(inputFile);
+            string extractedDocPath = Path.Combine(outputDir, fileNameWithoutExt + "_Extracted.docx");
+            string extractedTextPath = Path.Combine(outputDir, fileNameWithoutExt + "_Extracted.txt");
+
+            // Save the extracted document
+            extractedDoc.Save(extractedDocPath);
+
+            // Save the extracted text to a plain text file
+            File.WriteAllText(extractedTextPath, firstParagraph.GetText());
+
+            // Add entry to the report
+            lock (reports)
             {
-                extractedFiles.Add(outputPath);
+                reports.Add(new ExtractionReport
+                {
+                    SourceDocument = inputFile,
+                    ExtractedDocument = extractedDocPath,
+                    ExtractedTextFile = extractedTextPath,
+                    ExtractedTextLength = firstParagraph.GetText().Length
+                });
             }
         });
 
-        // Write JSON report.
-        string reportPath = Path.Combine(outputDir, "ExtractionReport.json");
-        var report = new
+        // Validate that all expected output files were created
+        foreach (ExtractionReport report in reports)
         {
-            Timestamp = DateTime.UtcNow,
-            ExtractedFiles = extractedFiles
-        };
-        File.WriteAllText(reportPath, JsonConvert.SerializeObject(report, Formatting.Indented));
+            if (!File.Exists(report.ExtractedDocument))
+                throw new InvalidOperationException($"Expected extracted document was not created: {report.ExtractedDocument}");
+            if (!File.Exists(report.ExtractedTextFile))
+                throw new InvalidOperationException($"Expected extracted text file was not created: {report.ExtractedTextFile}");
+        }
 
-        // Validate report creation.
-        if (!File.Exists(reportPath))
-            throw new InvalidOperationException("Extraction report was not generated.");
+        // Serialize report to JSON
+        string reportJsonPath = Path.Combine(outputDir, "ExtractionReport.json");
+        string json = JsonConvert.SerializeObject(reports, Formatting.Indented);
+        File.WriteAllText(reportJsonPath, json);
+
+        // Final validation
+        if (!File.Exists(reportJsonPath))
+            throw new InvalidOperationException("Extraction report JSON file was not created.");
     }
 
-    // Creates a simple DOCX file with a few paragraphs.
-    private static void CreateSampleDocument(string filePath, int index)
+    private static void CreateSampleDocuments(string folderPath)
     {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln($"Document {index} - Introduction.");
-        builder.Writeln($"Document {index} - Body paragraph one.");
-        builder.Writeln($"Document {index} - Body paragraph two.");
-        builder.Writeln($"Document {index} - Conclusion.");
-
-        doc.Save(filePath);
-
-        if (!File.Exists(filePath))
-            throw new InvalidOperationException($"Failed to create sample document: {filePath}");
+        for (int i = 1; i <= 5; i++)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln($"Document {i} Title");
+            builder.Writeln($"This is the body content of document {i}. It contains sample text for extraction.");
+            string filePath = Path.Combine(folderPath, $"Doc{i}.docx");
+            doc.Save(filePath);
+        }
     }
 
-    // Extracts the first two paragraphs from the source document and saves them as a new document.
-    private static void ExtractFirstTwoParagraphs(string sourcePath, string destinationPath)
+    private class ExtractionReport
     {
-        // Load the source document.
-        Document sourceDoc = new Document(sourcePath);
-
-        // Ensure there are at least two paragraphs.
-        ParagraphCollection paragraphs = sourceDoc.FirstSection.Body.Paragraphs;
-        if (paragraphs.Count < 2)
-            throw new InvalidOperationException("Source document does not contain enough paragraphs for extraction.");
-
-        Paragraph firstParagraph = paragraphs[0];
-        Paragraph secondParagraph = paragraphs[1];
-
-        // Create a new empty document with a proper structure.
-        Document resultDoc = new Document();
-        resultDoc.RemoveAllChildren();
-
-        Section section = new Section(resultDoc);
-        resultDoc.AppendChild(section);
-
-        Body body = new Body(resultDoc);
-        section.AppendChild(body);
-
-        // Import the selected paragraphs into the new document.
-        NodeImporter importer = new NodeImporter(sourceDoc, resultDoc, ImportFormatMode.KeepSourceFormatting);
-        Node importedFirst = importer.ImportNode(firstParagraph, true);
-        Node importedSecond = importer.ImportNode(secondParagraph, true);
-
-        body.AppendChild(importedFirst);
-        body.AppendChild(importedSecond);
-
-        // Save the extracted content.
-        resultDoc.Save(destinationPath);
-
-        if (!File.Exists(destinationPath))
-            throw new InvalidOperationException($"Failed to save extracted document: {destinationPath}");
+        public string SourceDocument { get; set; } = string.Empty;
+        public string ExtractedDocument { get; set; } = string.Empty;
+        public string ExtractedTextFile { get; set; } = string.Empty;
+        public int ExtractedTextLength { get; set; }
     }
 }
