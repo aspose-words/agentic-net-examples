@@ -8,32 +8,30 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Access the builder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Set a custom left margin for the main body (1 inch = 72 points).
-        builder.PageSetup.LeftMargin = ConvertUtil.InchToPoint(1.0);
+        double leftMargin = ConvertUtil.InchToPoint(1.0);
+        builder.PageSetup.LeftMargin = leftMargin;
 
         // Enable a different header for the first page.
         builder.PageSetup.DifferentFirstPageHeaderFooter = true;
 
-        // Move to the first‑page header.
+        // Move the cursor to the first‑page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
 
         // Write header text.
-        builder.Write("First Page Header");
+        builder.Writeln("First Page Header");
 
-        // Align the header's left margin with the main text margin.
-        // The left indent of the paragraph inside the header is set to the section's left margin.
-        builder.ParagraphFormat.LeftIndent = doc.FirstSection.PageSetup.LeftMargin;
+        // Align the header text with the main body left margin by setting the paragraph's left indent.
+        builder.CurrentParagraph.ParagraphFormat.LeftIndent = leftMargin;
 
         // Return to the main document body.
         builder.MoveToSection(0);
-        builder.Writeln("Body text that follows the header.");
+        builder.Writeln("This is the main document body. The first‑page header aligns with the left margin.");
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AdjustedHeaderMargin.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "FirstPageHeaderMargin.docx");
         doc.Save(outputPath);
     }
 }

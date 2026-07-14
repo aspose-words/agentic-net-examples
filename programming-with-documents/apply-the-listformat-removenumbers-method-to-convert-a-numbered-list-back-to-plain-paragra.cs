@@ -7,10 +7,6 @@ public class Program
 {
     public static void Main()
     {
-        // Create an output folder for the generated document.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(artifactsDir);
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
@@ -21,16 +17,19 @@ public class Program
         builder.Writeln("Numbered list item 2");
         builder.Writeln("Numbered list item 3");
 
-        // Convert the numbered list back to plain paragraphs.
-        // Iterate over all paragraphs and remove list formatting where present.
+        // Remove list formatting from all paragraphs in the document.
         foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
         {
             if (para.ListFormat.IsListItem)
                 para.ListFormat.RemoveNumbers();
         }
 
-        // Save the document.
-        string outputPath = Path.Combine(artifactsDir, "ListRemoved.docx");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the resulting document.
+        string outputPath = Path.Combine(outputDir, "ListRemoved.docx");
         doc.Save(outputPath);
     }
 }

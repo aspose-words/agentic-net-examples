@@ -7,42 +7,41 @@ public class Program
 {
     public static void Main()
     {
-        // Define output folder and ensure it exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "SplitMergedCell.docx");
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table with a horizontally merged cell (spanning two columns).
+        // Build a table with one row and two columns.
         builder.StartTable();
 
-        // First cell – start of the merged range.
+        // First cell – start of a horizontally merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged cell");
+        builder.Write("Merged cell content");
 
         // Second cell – merged to the previous cell.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-
-        // End the row and the table.
+        // No text needed for the merged cell.
         builder.EndRow();
+
         builder.EndTable();
 
-        // Retrieve the first cell (the one that started the merge) and the second cell.
+        // Locate the cells in the first row.
         Table table = doc.FirstSection.Body.Tables[0];
         Cell firstCell = table.Rows[0].Cells[0];
         Cell secondCell = table.Rows[0].Cells[1];
 
-        // Split the merged cell back into two separate cells horizontally.
-        // This is achieved by resetting the merge flags on both cells.
+        // Split the merged cells back into two separate cells.
+        // To "split", clear the merge flags on both cells.
         firstCell.CellFormat.HorizontalMerge = CellMerge.None;
         secondCell.CellFormat.HorizontalMerge = CellMerge.None;
 
+        // Ensure the second cell has a paragraph so it can hold content if needed.
+        secondCell.EnsureMinimum();
+
         // Save the resulting document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SplitCellResult.docx");
         doc.Save(outputPath);
     }
 }

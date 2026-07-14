@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -9,25 +10,30 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
+        // Set the document's default language to French (France).
+        // This changes the locale of the default font, which Word uses as the document language.
+        doc.Styles.DefaultFont.LocaleId = new CultureInfo("fr-FR").LCID;
+
         // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the default language for newly added text to French (France).
-        builder.Font.LocaleId = new CultureInfo("fr-FR").LCID;
+        // Add a French paragraph.
+        builder.Writeln("Bonjour le monde!");
 
-        // Write a left‑to‑right paragraph (default direction).
-        builder.Writeln("Bonjour le monde!"); // French text.
-
-        // Add a paragraph that should be displayed right‑to‑left.
-        // Set the paragraph format's Bidi flag to true.
+        // Add a right‑to‑left paragraph (e.g., Hebrew).
+        // Enable the Bidi flag for the paragraph to make the layout right‑to‑left.
         builder.ParagraphFormat.Bidi = true;
-        builder.Writeln("שלום עולם!"); // Hebrew text as an example of RTL.
+        builder.Writeln("שלום עולם!");
 
-        // Reset Bidi for subsequent paragraphs if needed.
+        // Reset Bidi for any following left‑to‑right paragraphs if needed.
         builder.ParagraphFormat.Bidi = false;
 
-        // Save the document to a file in the same folder as the executable.
-        string outputPath = "Output.docx";
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "Document_French_RTL.docx");
         doc.Save(outputPath);
     }
 }

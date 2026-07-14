@@ -7,18 +7,14 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a Table of Contents at the beginning of the document.
-        // The switches "\\o \"1-3\" \\h \\z \\u" are the typical default settings.
+        // Insert a Table of Contents with default switches.
+        // The switches specify which heading levels to include and enable hyperlinks.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
-
-        // Add a page break so that the TOC appears on its own page.
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Add some sample headings so the TOC has entries.
+        // Add headings that will appear in the TOC.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 1");
 
@@ -32,10 +28,10 @@ public class Program
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
         builder.Writeln("Section 2.1");
 
-        // Update fields to populate the TOC with the current headings.
+        // Update fields so the TOC is populated.
         doc.UpdateFields();
 
-        // Save the document to a file in the same folder as the executable.
+        // Save the document.
         doc.Save("TableOfContents.docx");
     }
 }

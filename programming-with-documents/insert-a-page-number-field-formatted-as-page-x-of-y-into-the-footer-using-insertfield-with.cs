@@ -4,39 +4,36 @@ using Aspose.Words.Fields;
 
 namespace AsposeWordsPageNumberFooter
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
             // Create a new blank document.
             Document doc = new Document();
-
-            // Initialize DocumentBuilder for the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Move the builder cursor to the primary footer of the first section.
-            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+            // Add some content to generate multiple pages.
+            builder.Writeln("First page content.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("Second page content.");
 
-            // Optional: center the footer text.
+            // Move the builder cursor to the primary footer.
+            builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+            // Center the footer text.
             builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
-            // Write the static part of the page number text.
+            // Insert the "Page X of Y" field sequence.
             builder.Write("Page ");
-
-            // Insert a PAGE field that shows the current page number.
-            // The second argument 'true' updates the field result immediately.
+            // PAGE field – current page number.
             builder.InsertField(FieldType.FieldPage, true);
-
-            // Write the separator text.
             builder.Write(" of ");
-
-            // Insert a NUMPAGES field that shows the total number of pages.
+            // NUMPAGES field – total number of pages.
             builder.InsertField(FieldType.FieldNumPages, true);
 
-            // Ensure all fields are up‑to‑date (useful if the document is later modified).
+            // Update all fields in the document to reflect the correct values.
             doc.UpdateFields();
 
-            // Save the document to a file in the same folder as the executable.
+            // Save the document to a file.
             doc.Save("PageNumberFooter.docx");
         }
     }

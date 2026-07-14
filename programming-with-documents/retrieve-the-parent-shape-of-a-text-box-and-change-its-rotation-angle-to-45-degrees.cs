@@ -12,18 +12,18 @@ public class Program
 
         // Insert a text box shape into the document.
         Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 200, 100);
-
         // Add some sample text inside the text box.
         builder.MoveTo(textBoxShape.LastParagraph);
         builder.Writeln("Sample text inside the text box.");
 
-        // Retrieve the parent shape of the TextBox.
+        // Retrieve the parent shape of the TextBox (which is the shape itself).
         Shape parentShape = textBoxShape.TextBox.Parent;
 
         // Change the rotation angle of the parent shape to 45 degrees.
         parentShape.Rotation = 45;
 
         // Save the document to a file.
-        doc.Save("ParentShapeRotation.docx");
+        string outputPath = "ParentShapeRotated.docx";
+        doc.Save(outputPath);
     }
 }

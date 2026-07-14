@@ -2,54 +2,61 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AdjustTableColumns
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table.
-            Table table = builder.StartTable();
+        // Start a table and keep a reference to it.
+        Table table = builder.StartTable();
 
-            // Header row.
-            builder.InsertCell();
-            builder.Write("Product");
-            builder.InsertCell();
-            builder.Write("Description");
-            builder.InsertCell();
-            builder.Write("Price");
-            builder.EndRow();
+        // Populate the table with sample data.
+        // Header row.
+        builder.InsertCell();
+        builder.Write("Product");
+        builder.InsertCell();
+        builder.Write("Description");
+        builder.InsertCell();
+        builder.Write("Price");
+        builder.EndRow();
 
-            // Add data rows.
-            AddRow(builder, "Apple", "Fresh red apples from the orchard", "$1.20");
-            AddRow(builder, "Banana", "Ripe bananas, sweet and soft", "$0.80");
-            AddRow(builder, "Cherry", "Organic cherries, packed in a box", "$3.50");
-            AddRow(builder, "Watermelon", "Large watermelon, perfect for summer picnics", "$5.00");
+        // First data row.
+        builder.InsertCell();
+        builder.Write("Apple");
+        builder.InsertCell();
+        builder.Write("Fresh red apples from the orchard");
+        builder.InsertCell();
+        builder.Write("$1.20");
+        builder.EndRow();
 
-            // End the table.
-            builder.EndTable();
+        // Second data row.
+        builder.InsertCell();
+        builder.Write("Banana");
+        builder.InsertCell();
+        builder.Write("Ripe bananas, sweet and soft");
+        builder.InsertCell();
+        builder.Write("$0.80");
+        builder.EndRow();
 
-            // Adjust column widths proportionally to fit the content.
-            table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        // Third data row.
+        builder.InsertCell();
+        builder.Write("Cherry");
+        builder.InsertCell();
+        builder.Write("Organic cherries, packed in a box");
+        builder.InsertCell();
+        builder.Write("$3.50");
+        builder.EndRow();
 
-            // Save the document.
-            doc.Save("AdjustedTable.docx");
-        }
+        // End the table construction.
+        builder.EndTable();
 
-        // Helper method to insert a row with three cells.
-        private static void AddRow(DocumentBuilder builder, string col1, string col2, string col3)
-        {
-            builder.InsertCell();
-            builder.Write(col1);
-            builder.InsertCell();
-            builder.Write(col2);
-            builder.InsertCell();
-            builder.Write(col3);
-            builder.EndRow();
-        }
+        // Adjust column widths proportionally to fit the content.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+        // Save the document to the local file system.
+        doc.Save("AdjustedTable.docx");
     }
 }

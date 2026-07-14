@@ -11,25 +11,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a floating text box shape with a specific size.
+        // Insert a floating text box shape.
         Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        // Ensure the shape is floating so we can control its position.
+        // Make the shape floating so we can set its position.
         textBoxShape.WrapType = WrapType.None;
 
-        // Set the anchor position to be relative to the page margins.
-        textBoxShape.RelativeVerticalPosition = RelativeVerticalPosition.Margin;
+        // Anchor the shape relative to the page margins.
         textBoxShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
+        textBoxShape.RelativeVerticalPosition = RelativeVerticalPosition.Margin;
 
-        // Position the text box 50 points from the top and left margins.
-        textBoxShape.Top = 50;
-        textBoxShape.Left = 50;
+        // Optional: set an offset from the margins.
+        textBoxShape.Left = 50; // 50 points from the left margin.
+        textBoxShape.Top = 50;  // 50 points from the top margin.
 
-        // Add some text inside the text box.
+        // Add text inside the text box.
         builder.MoveTo(textBoxShape.LastParagraph);
-        builder.Write("Hello from a text box!");
+        builder.Write("Hello from a text box anchored to the page margin.");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TextBoxAnchor.docx");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "TextBoxAnchorMargin.docx");
         doc.Save(outputPath);
     }
 }

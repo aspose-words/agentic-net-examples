@@ -1,7 +1,8 @@
 using System;
-using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -9,32 +10,34 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Create a DocumentBuilder to facilitate editing.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Define a custom paragraph style.
-        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "CustomBorderGray");
-        customStyle.Font.Name = "Arial";
-        customStyle.Font.Size = 12;
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
 
         // Configure left border.
-        customStyle.ParagraphFormat.Borders.Left.LineStyle = LineStyle.Single;
-        customStyle.ParagraphFormat.Borders.Left.LineWidth = 1.0;
-        customStyle.ParagraphFormat.Borders.Left.Color = System.Drawing.Color.Black;
+        Border leftBorder = customStyle.ParagraphFormat.Borders.Left;
+        leftBorder.LineStyle = LineStyle.Single;
+        leftBorder.LineWidth = 1.0;
+        leftBorder.Color = Color.Black;
 
         // Configure right border.
-        customStyle.ParagraphFormat.Borders.Right.LineStyle = LineStyle.Single;
-        customStyle.ParagraphFormat.Borders.Right.LineWidth = 1.0;
-        customStyle.ParagraphFormat.Borders.Right.Color = System.Drawing.Color.Black;
+        Border rightBorder = customStyle.ParagraphFormat.Borders.Right;
+        rightBorder.LineStyle = LineStyle.Single;
+        rightBorder.LineWidth = 1.0;
+        rightBorder.Color = Color.Black;
 
         // Set a light gray background shading.
-        customStyle.ParagraphFormat.Shading.BackgroundPatternColor = System.Drawing.Color.LightGray;
+        Shading shading = customStyle.ParagraphFormat.Shading;
+        shading.BackgroundPatternColor = Color.LightGray;
 
-        // Apply the custom style to a new paragraph.
+        // Apply the custom style to the next paragraph.
         builder.ParagraphFormat.StyleName = customStyle.Name;
         builder.Writeln("This paragraph uses a custom style with left/right borders and a light gray background.");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomParagraphStyle.docx");
-        doc.Save(outputPath);
+        // Save the document.
+        doc.Save("CustomParagraphStyle.docx");
     }
 }

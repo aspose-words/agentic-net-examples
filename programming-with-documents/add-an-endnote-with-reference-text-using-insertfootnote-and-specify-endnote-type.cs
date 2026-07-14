@@ -12,21 +12,19 @@ namespace EndnoteExample
             // Create a new blank document.
             Document doc = new Document();
 
-            // Initialize a DocumentBuilder for the document.
+            // Initialize DocumentBuilder for the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Write some text that will be referenced by the endnote.
-            builder.Write("This sentence will have an endnote attached.");
+            // Write some body text that will be referenced by the endnote.
+            builder.Write("This is some sample text that will have an endnote.");
 
-            // Insert an endnote with the desired reference text.
-            builder.InsertFootnote(FootnoteType.Endnote, "This is the endnote text.");
+            // Insert an endnote with the specified reference text.
+            builder.InsertFootnote(FootnoteType.Endnote, "This is the endnote content.");
 
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+            // Define the output file path (in the current working directory).
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EndnoteExample.docx");
 
-            // Save the document to a file.
-            string outputPath = Path.Combine(outputDir, "EndnoteExample.docx");
+            // Save the document to the file system.
             doc.Save(outputPath);
         }
     }

@@ -1,50 +1,59 @@
 using System;
 using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a DataTable with sample data.
-        DataTable data = new DataTable("Products");
-        data.Columns.Add("Item", typeof(string));
-        data.Columns.Add("Price", typeof(decimal));
+        // Prepare a DataTable with sample numeric data.
+        DataTable table = new DataTable("Products");
+        table.Columns.Add("Item", typeof(string));
+        table.Columns.Add("Price", typeof(decimal));
 
-        data.Rows.Add("Apple", 1.25m);
-        data.Rows.Add("Banana", 0.75m);
-        data.Rows.Add("Cherry", 2.50m);
-        data.Rows.Add("Date", 3.10m);
+        table.Rows.Add("Apple", 1.25m);
+        table.Rows.Add("Banana", 0.75m);
+        table.Rows.Add("Cherry", 2.50m);
+        table.Rows.Add("Date", 3.10m);
 
-        // Create a new blank document.
+        // Create a new blank Word document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Start a table.
-        Table table = builder.StartTable();
+        Table wordTable = builder.StartTable();
 
-        // Header row.
+        // Insert header row.
         builder.InsertCell();
+        builder.Font.Bold = true;
         builder.Write("Item");
         builder.InsertCell();
         builder.Write("Price");
         builder.EndRow();
 
-        // Populate the table with DataTable rows.
-        foreach (DataRow row in data.Rows)
+        // Reset bold for data rows.
+        builder.Font.Bold = false;
+
+        // Populate the table with data from the DataTable.
+        foreach (DataRow row in table.Rows)
         {
             // Item cell.
             builder.InsertCell();
             builder.Write(row["Item"].ToString());
 
-            // Price cell – insert a field with currency formatting.
+            // Price cell formatted as currency.
             builder.InsertCell();
-            decimal price = (decimal)row["Price"];
-            // The field calculates the value and formats it as currency.
-            Field field = builder.InsertField($"= {price} \\# \"$#,##0.00\"");
-            field.Update();
+            if (row["Price"] is decimal price)
+            {
+                // Use the current culture's currency format.
+                builder.Write(price.ToString("C"));
+            }
+            else
+            {
+                builder.Write(row["Price"].ToString());
+            }
 
             builder.EndRow();
         }
@@ -52,7 +61,12 @@ public class Program
         // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file.
-        doc.Save("TableFromDataTable.docx");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "DataTableToTable.docx");
+        doc.Save(outputPath, SaveFormat.Docx);
     }
 }

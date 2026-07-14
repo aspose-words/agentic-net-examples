@@ -9,15 +9,14 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Define a custom tab stop at 2 inches (2 * 72 points = 144 points).
-        // Left alignment and no leader line are used.
+        // Add a custom tab stop at 2 inches (144 points) aligned to the left.
         builder.ParagraphFormat.TabStops.Add(144.0, TabAlignment.Left, TabLeader.None);
 
-        // Insert a paragraph where text before the tab is left‑aligned
-        // and text after the tab aligns to the custom tab stop.
-        builder.Writeln("Item" + ControlChar.Tab + "Price");
+        // Insert a paragraph with text before and after the tab character.
+        // The text after the tab will align to the custom tab stop.
+        builder.Writeln("First part" + ControlChar.Tab + "Second part aligned at 2 inches");
 
-        // Save the document to the local file system.
+        // Save the document to the current working directory.
         doc.Save("CustomTabStop.docx");
     }
 }

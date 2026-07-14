@@ -7,76 +7,63 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory and file name.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "WideTableLandscape.docx");
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // Section 1 – normal (portrait) orientation with a regular table.
-        // -----------------------------------------------------------------
-        builder.Writeln("Section 1: Portrait orientation with a normal table.");
-        InsertSimpleTable(builder, columns: 3, rows: 3);
+        // Build a wide table (10 columns, each 100 points wide).
+        builder.StartTable();
+        for (int col = 0; col < 10; col++)
+        {
+            builder.InsertCell();
+            // Set a fixed width for each cell to make the table wide.
+            builder.CellFormat.Width = 100;
+            builder.Write($"Column {col + 1}");
+        }
+        builder.EndRow();
+        builder.EndTable();
 
-        // Start a new section.
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "WideTableLandscape.docx");
 
-        // -----------------------------------------------------------------
-        // Section 2 – will contain a wide table, set orientation to landscape.
-        // -----------------------------------------------------------------
-        builder.PageSetup.Orientation = Orientation.Landscape;
-        builder.Writeln("Section 2: Landscape orientation for a wide table.");
-        InsertWideTable(builder, columns: 10, rows: 3);
+        // Iterate through each section and check for wide tables.
+        foreach (Section section in doc.Sections)
+        {
+            bool hasWideTable = false;
+
+            // Get all tables in the current section.
+            NodeCollection tables = section.GetChildNodes(NodeType.Table, true);
+            foreach (Table table in tables)
+            {
+                // Calculate the total width of the first row (assumes uniform column widths).
+                double totalWidth = 0;
+                if (table.Rows.Count > 0)
+                {
+                    foreach (Cell cell in table.Rows[0].Cells)
+                    {
+                        totalWidth += cell.CellFormat.Width;
+                    }
+                }
+
+                // If the table width exceeds the page width, mark the section.
+                if (totalWidth > section.PageSetup.PageWidth)
+                {
+                    hasWideTable = true;
+                    break;
+                }
+            }
+
+            // Set orientation to landscape for sections that contain a wide table.
+            if (hasWideTable)
+            {
+                section.PageSetup.Orientation = Orientation.Landscape;
+            }
+        }
 
         // Save the document.
         doc.Save(outputPath);
-    }
-
-    // Inserts a simple table with the specified number of columns and rows.
-    private static void InsertSimpleTable(DocumentBuilder builder, int columns, int rows)
-    {
-        Table table = builder.StartTable();
-        for (int r = 0; r < rows; r++)
-        {
-            for (int c = 0; c < columns; c++)
-            {
-                builder.InsertCell();
-                builder.Write($"R{r + 1}C{c + 1}");
-            }
-            builder.EndRow();
-        }
-        builder.EndTable();
-    }
-
-    // Inserts a wide table. Each cell is given a fixed width to ensure the table exceeds the page width.
-    private static void InsertWideTable(DocumentBuilder builder, int columns, int rows)
-    {
-        Table table = builder.StartTable();
-
-        // First row – set a fixed width for each cell.
-        for (int c = 0; c < columns; c++)
-        {
-            builder.InsertCell();
-            builder.CellFormat.Width = 100; // 100 points ≈ 1.39 inches.
-            builder.Write($"Col {c + 1}");
-        }
-        builder.EndRow();
-
-        // Remaining rows.
-        for (int r = 1; r < rows; r++)
-        {
-            for (int c = 0; c < columns; c++)
-            {
-                builder.InsertCell();
-                builder.Write($"R{r + 1}C{c + 1}");
-            }
-            builder.EndRow();
-        }
-
-        builder.EndTable();
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

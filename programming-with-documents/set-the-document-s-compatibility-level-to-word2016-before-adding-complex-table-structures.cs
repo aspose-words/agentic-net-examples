@@ -1,107 +1,56 @@
 using System;
-using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Settings;
 using Aspose.Words.Tables;
+using Aspose.Words.Settings;   // Needed for MsWordVersion enum
 
-namespace AsposeWordsCompatibilityDemo
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+
+        // Set the compatibility level to Word 2016.
+        // This ensures the document behaves like it was created in Microsoft Word 2016.
+        doc.CompatibilityOptions.OptimizeFor(MsWordVersion.Word2016);
+
+        // Use DocumentBuilder to construct the outer table.
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        Table outerTable = builder.StartTable();
+
+        // Build a 3x3 outer table with sample text.
+        for (int row = 1; row <= 3; row++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-
-            // Optimize the document for Microsoft Word 2016.
-            doc.CompatibilityOptions.OptimizeFor(MsWordVersion.Word2016);
-
-            // Use DocumentBuilder to construct complex table structures.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // -------------------------------------------------
-            // First table: a 3x3 table with merged cells.
-            // -------------------------------------------------
-            builder.StartTable();
-
-            // Row 1
-            builder.InsertCell();
-            builder.Write("Header 1");
-            builder.InsertCell();
-            builder.Write("Header 2");
-            builder.InsertCell();
-            builder.Write("Header 3");
+            for (int col = 1; col <= 3; col++)
+            {
+                builder.InsertCell();
+                builder.Write($"Outer R{row}C{col}");
+            }
             builder.EndRow();
-
-            // Row 2 with a merged cell spanning two columns.
-            builder.InsertCell();
-            builder.Write("Row 2, Cell 1");
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.First;
-            builder.Write("Merged Cell (2 cols)");
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-            builder.EndRow();
-
-            // Row 3
-            builder.InsertCell();
-            builder.Write("Row 3, Cell 1");
-            builder.InsertCell();
-            builder.Write("Row 3, Cell 2");
-            builder.InsertCell();
-            builder.Write("Row 3, Cell 3");
-            builder.EndRow();
-
-            builder.EndTable();
-
-            // Add a paragraph break between tables.
-            builder.Writeln();
-
-            // -------------------------------------------------
-            // Second table: a nested table inside a cell.
-            // -------------------------------------------------
-            builder.StartTable(); // Outer table
-
-            // ----- Outer Row 1 -----
-            builder.InsertCell();
-            builder.Write("Outer Cell 1");
-
-            // Cell that will contain the nested table.
-            builder.InsertCell();
-
-            // ----- Nested Table -----
-            builder.StartTable(); // Nested table
-            // Nested Row 1
-            builder.InsertCell();
-            builder.Write("Nested 1,1");
-            builder.InsertCell();
-            builder.Write("Nested 1,2");
-            builder.EndRow();
-
-            // Nested Row 2
-            builder.InsertCell();
-            builder.Write("Nested 2,1");
-            builder.InsertCell();
-            builder.Write("Nested 2,2");
-            builder.EndRow();
-
-            builder.EndTable(); // End of nested table
-
-            // End outer row 1
-            builder.EndRow();
-
-            // ----- Outer Row 2 -----
-            builder.InsertCell();
-            builder.Write("Outer Cell 2");
-            builder.InsertCell();
-            builder.Write("Outer Cell 3");
-            builder.EndRow();
-
-            builder.EndTable(); // End of outer table
-
-            // Save the document.
-            string outputPath = "CompatibilityWord2016.docx";
-            doc.Save(outputPath);
         }
+
+        // Finish the outer table.
+        builder.EndTable();
+
+        // Create a nested table (2x2) and insert it into the first cell of the outer table.
+        Table innerTable = new Table(doc);
+        for (int i = 1; i <= 2; i++)
+        {
+            Row innerRow = new Row(doc);
+            innerTable.AppendChild(innerRow);
+            for (int j = 1; j <= 2; j++)
+            {
+                Cell innerCell = new Cell(doc);
+                innerCell.AppendChild(new Paragraph(doc));
+                innerCell.FirstParagraph.AppendChild(new Run(doc, $"Inner R{i}C{j}"));
+                innerRow.AppendChild(innerCell);
+            }
+        }
+
+        // Append the nested table to the first cell of the outer table.
+        outerTable.FirstRow.FirstCell.AppendChild(innerTable);
+
+        // Save the document to a file in the current directory.
+        doc.Save("ComplexTable.docx");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -9,19 +10,19 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize a DocumentBuilder for inserting content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a new list based on the default numbered template.
+        // Create a list based on the default numbered template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Set the first level (index 0) to use uppercase Roman numerals.
-        list.ListLevels[0].NumberStyle = NumberStyle.UppercaseRoman;
+        // Configure the first level of the list to use uppercase Roman numerals.
+        ListLevel level0 = list.ListLevels[0];
+        level0.NumberStyle = NumberStyle.UppercaseRoman;
+        // Optional: define the format pattern (e.g., "I.", "II.", ...).
+        level0.NumberFormat = "%1.";
 
-        // Apply the list to the builder so that subsequent paragraphs become list items.
+        // Use DocumentBuilder to add paragraphs that belong to the list.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.ListFormat.List = list;
 
-        // Add some list items. The numbering will appear as I., II., III., etc.
         builder.Writeln("First item");
         builder.Writeln("Second item");
         builder.Writeln("Third item");
@@ -29,7 +30,12 @@ public class Program
         // End the list formatting.
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document to a file in the same folder as the executable.
-        doc.Save("RomanList.docx");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "RomanNumberedList.docx");
+        doc.Save(outputPath, SaveFormat.Docx);
     }
 }

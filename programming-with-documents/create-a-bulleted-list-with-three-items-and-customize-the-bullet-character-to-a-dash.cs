@@ -2,39 +2,37 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-namespace AsposeWordsBulletedList
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Initialize DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Initialize a DocumentBuilder for the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a bulleted list based on the default bullet template.
-            List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+        // Create a new list based on the default bullet template.
+        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
 
-            // Customize the first level bullet to use a dash ("-").
-            ListLevel level = bulletList.ListLevels[0];
-            level.NumberStyle = NumberStyle.Bullet;   // Ensure the level is a bullet.
-            level.NumberFormat = "-";                 // Set the bullet character.
+        // Customize the first level of the list to use a dash ("-") as the bullet character.
+        // The NumberStyle must be set to Bullet and the NumberFormat to the desired symbol.
+        bulletList.ListLevels[0].NumberStyle = NumberStyle.Bullet;
+        bulletList.ListLevels[0].NumberFormat = "-";
 
-            // Apply the customized list to the builder.
-            builder.ListFormat.List = bulletList;
+        // Apply the customized list to the builder.
+        builder.ListFormat.List = bulletList;
+        builder.ListFormat.ListLevelNumber = 0; // Ensure we are on the first level.
 
-            // Add three list items.
-            builder.Writeln("First item");
-            builder.Writeln("Second item");
-            builder.Writeln("Third item");
+        // Add three list items.
+        builder.Writeln("First item");
+        builder.Writeln("Second item");
+        builder.Writeln("Third item");
 
-            // End the list formatting.
-            builder.ListFormat.RemoveNumbers();
+        // End the list formatting.
+        builder.ListFormat.RemoveNumbers();
 
-            // Save the document to a file in the current directory.
-            doc.Save("BulletedList.docx");
-        }
+        // Save the document to a file.
+        doc.Save("BulletedList.docx");
     }
 }

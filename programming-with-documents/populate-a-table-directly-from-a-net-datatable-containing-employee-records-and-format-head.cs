@@ -4,74 +4,71 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare a DataTable with employee information.
-        DataTable employees = new DataTable("Employees");
-        employees.Columns.Add("ID", typeof(int));
-        employees.Columns.Add("Name", typeof(string));
-        employees.Columns.Add("Department", typeof(string));
-        employees.Columns.Add("Salary", typeof(decimal));
-
-        employees.Rows.Add(1, "John Doe", "Finance", 60000m);
-        employees.Rows.Add(2, "Jane Smith", "HR", 55000m);
-        employees.Rows.Add(3, "Bob Johnson", "IT", 72000m);
-
-        // Create a blank Word document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start a new table.
-        Table table = builder.StartTable();
-
-        // ---------- Header row ----------
-        // Apply shading and bold font to header cells.
-        builder.RowFormat.Height = 20;
-        builder.RowFormat.HeightRule = HeightRule.AtLeast;
-        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
-        builder.Font.Bold = true;
-
-        InsertHeaderCell(builder, "ID");
-        InsertHeaderCell(builder, "Name");
-        InsertHeaderCell(builder, "Department");
-        InsertHeaderCell(builder, "Salary");
-        builder.EndRow();
-
-        // ---------- Data rows ----------
-        // Reset formatting for regular rows.
-        builder.CellFormat.Shading.ClearFormatting();
-        builder.Font.Bold = false;
-
-        foreach (DataRow row in employees.Rows)
+        public static void Main()
         {
-            builder.InsertCell();
-            builder.Write(row["ID"].ToString());
+            // Create a DataTable with employee data.
+            DataTable employees = new DataTable("Employees");
+            employees.Columns.Add("ID", typeof(int));
+            employees.Columns.Add("Name", typeof(string));
+            employees.Columns.Add("Position", typeof(string));
+            employees.Columns.Add("Salary", typeof(decimal));
 
-            builder.InsertCell();
-            builder.Write(row["Name"].ToString());
+            employees.Rows.Add(1, "John Doe", "Developer", 75000);
+            employees.Rows.Add(2, "Jane Smith", "Designer", 68000);
+            employees.Rows.Add(3, "Bob Johnson", "Manager", 82000);
+            employees.Rows.Add(4, "Alice Brown", "Tester", 59000);
 
-            builder.InsertCell();
-            builder.Write(row["Department"].ToString());
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            builder.InsertCell();
-            builder.Write(string.Format("{0:C}", row["Salary"]));
+            // Start the table.
+            Table table = builder.StartTable();
 
+            // Format the header row.
+            builder.Font.Bold = true;
+            builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+            builder.InsertCell();
+            builder.Write("ID");
+            builder.InsertCell();
+            builder.Write("Name");
+            builder.InsertCell();
+            builder.Write("Position");
+            builder.InsertCell();
+            builder.Write("Salary");
             builder.EndRow();
+
+            // Reset formatting for data rows.
+            builder.Font.Bold = false;
+            builder.CellFormat.Shading.ClearFormatting();
+
+            // Populate the table with data from the DataTable.
+            foreach (DataRow row in employees.Rows)
+            {
+                builder.InsertCell();
+                builder.Write(row["ID"].ToString());
+
+                builder.InsertCell();
+                builder.Write(row["Name"].ToString());
+
+                builder.InsertCell();
+                builder.Write(row["Position"].ToString());
+
+                builder.InsertCell();
+                builder.Write(row["Salary"].ToString());
+
+                builder.EndRow();
+            }
+
+            // End the table.
+            builder.EndTable();
+
+            // Save the document.
+            doc.Save("EmployeeTable.docx");
         }
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document to disk.
-        doc.Save("EmployeeTable.docx");
-    }
-
-    // Helper method to insert a header cell with the given text.
-    private static void InsertHeaderCell(DocumentBuilder builder, string text)
-    {
-        builder.InsertCell();
-        builder.Write(text);
     }
 }

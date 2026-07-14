@@ -1,58 +1,73 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
-public class Program
+namespace AsposeWordsConditionalFormatting
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a table with a header row and some numeric data.
-        builder.StartTable();
-
-        // Header cells.
-        builder.InsertCell();
-        builder.Write("Item");
-        builder.InsertCell();
-        builder.Write("Quantity");
-        builder.EndRow();
-
-        // Sample data.
-        string[] items = { "Apples", "Bananas", "Carrots", "Dates" };
-        double[] quantities = { 20, 45, 10, 60 };
-
-        for (int i = 0; i < items.Length; i++)
+        static void Main()
         {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Define a threshold value.
+            double threshold = 30.0;
+
+            // Build a simple table with a header row and some numeric values.
+            Table table = builder.StartTable();
+
+            // Header row.
             builder.InsertCell();
-            builder.Write(items[i]);
+            builder.Write("Item");
             builder.InsertCell();
-            builder.Write(quantities[i].ToString());
+            builder.Write("Quantity");
             builder.EndRow();
-        }
 
-        builder.EndTable();
+            // Row 1.
+            builder.InsertCell();
+            builder.Write("Apples");
+            builder.InsertCell();
+            builder.Write("20");
+            builder.EndRow();
 
-        // Define the threshold for highlighting.
-        double threshold = 40;
+            // Row 2.
+            builder.InsertCell();
+            builder.Write("Bananas");
+            builder.InsertCell();
+            builder.Write("40");
+            builder.EndRow();
 
-        // Apply conditional shading to cells in the Quantity column that exceed the threshold.
-        Table table = doc.FirstSection.Body.Tables[0];
-        for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++) // Skip header row.
-        {
-            Cell qtyCell = table.Rows[rowIndex].Cells[1]; // Quantity column.
-            string cellText = qtyCell.ToString(SaveFormat.Text).Trim();
+            // Row 3.
+            builder.InsertCell();
+            builder.Write("Carrots");
+            builder.InsertCell();
+            builder.Write("55");
+            builder.EndRow();
 
-            if (double.TryParse(cellText, out double value) && value > threshold)
+            // Finish the table.
+            builder.EndTable();
+
+            // Apply conditional formatting: highlight cells with values above the threshold.
+            // Skip the header row (row index 0).
+            for (int rowIndex = 1; rowIndex < table.Rows.Count; rowIndex++)
             {
-                qtyCell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
-            }
-        }
+                Row row = table.Rows[rowIndex];
+                // The quantity is in the second cell (index 1).
+                Cell quantityCell = row.Cells[1];
+                string cellText = quantityCell.ToString(SaveFormat.Text).Trim();
 
-        // Save the document.
-        doc.Save("ConditionalFormatting.docx");
+                if (double.TryParse(cellText, out double value) && value > threshold)
+                {
+                    // Highlight the cell background with yellow color.
+                    quantityCell.CellFormat.Shading.BackgroundPatternColor = Color.Yellow;
+                }
+            }
+
+            // Save the document to a file.
+            doc.Save("ConditionalFormattingTable.docx");
+        }
     }
 }

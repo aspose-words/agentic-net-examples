@@ -13,13 +13,17 @@ public class Program
         doc.Styles.DefaultFont.Name = "Calibri";
         doc.Styles.DefaultFont.Size = 11;
 
-        // Add paragraphs; they will inherit the default font.
+        // Use DocumentBuilder to add new paragraphs.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First paragraph uses the default Calibri 11 font.");
-        builder.Writeln("Second paragraph also uses the default Calibri 11 font.");
+        builder.Writeln("First paragraph using the default font.");
+        builder.Writeln("Second paragraph also using the default font.");
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DefaultFont.docx");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "DefaultFontExample.docx");
         doc.Save(outputPath);
     }
 }

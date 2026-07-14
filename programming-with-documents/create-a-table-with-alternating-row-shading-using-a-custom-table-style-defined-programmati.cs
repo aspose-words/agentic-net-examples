@@ -1,7 +1,8 @@
 using System;
+using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
 public class Program
 {
@@ -11,37 +12,50 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start building a table.
         Table table = builder.StartTable();
 
-        // Populate the table with sample data (6 rows, 2 columns).
-        for (int i = 0; i < 6; i++)
+        // Header row.
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
+
+        // Add several data rows.
+        for (int i = 1; i <= 5; i++)
         {
             builder.InsertCell();
-            builder.Write($"Row {i + 1}, Cell 1");
+            builder.Write($"Row {i} Col 1");
             builder.InsertCell();
-            builder.Write($"Row {i + 1}, Cell 2");
+            builder.Write($"Row {i} Col 2");
             builder.EndRow();
         }
 
         // Finish the table.
         builder.EndTable();
 
-        // Create a custom table style that uses row banding.
-        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "AlternatingRowStyle");
-        // Alternate shading every row.
-        tableStyle.RowStripe = 1;
-        // Define shading for odd rows.
-        tableStyle.ConditionalStyles[ConditionalStyleType.OddRowBanding].Shading.BackgroundPatternColor = Color.LightBlue;
-        // Define shading for even rows.
-        tableStyle.ConditionalStyles[ConditionalStyleType.EvenRowBanding].Shading.BackgroundPatternColor = Color.LightGray;
+        // Create a custom table style.
+        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyAlternatingStyle");
+
+        // Define the number of rows to include in the banding (1 = every row).
+        customStyle.RowStripe = 1;
+
+        // Set shading colors for odd and even rows.
+        customStyle.ConditionalStyles[ConditionalStyleType.OddRowBanding].Shading.BackgroundPatternColor = Color.LightGray;
+        customStyle.ConditionalStyles[ConditionalStyleType.EvenRowBanding].Shading.BackgroundPatternColor = Color.White;
 
         // Apply the style to the table.
-        table.Style = tableStyle;
+        table.Style = customStyle;
+
         // Enable row banding for the table.
         table.StyleOptions = TableStyleOptions.RowBands;
 
-        // Save the document to disk.
-        doc.Save("AlternatingRows.docx");
+        // Optional: auto‑fit the table to its contents.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingRows.docx");
+        doc.Save(outputPath);
     }
 }

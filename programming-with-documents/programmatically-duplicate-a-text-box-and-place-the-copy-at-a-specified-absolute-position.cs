@@ -2,38 +2,40 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+namespace DuplicateTextBoxExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the original floating text box.
-        // Width = 200 points, Height = 50 points.
-        Shape originalBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
-        originalBox.WrapType = WrapType.None;
-        originalBox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        originalBox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        originalBox.Left = 100;   // 100 points from the left edge of the page.
-        originalBox.Top = 100;    // 100 points from the top edge of the page.
+            // Insert a floating text box shape.
+            Shape originalBox = builder.InsertShape(ShapeType.TextBox, 200, 50);
+            originalBox.WrapType = WrapType.None;
+            originalBox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+            originalBox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+            originalBox.Left = 100;   // X position in points.
+            originalBox.Top = 100;    // Y position in points.
 
-        // Add some text to the original text box.
-        builder.MoveTo(originalBox.FirstParagraph);
-        builder.Write("Original TextBox");
+            // Add some text to the original text box.
+            builder.MoveTo(originalBox.FirstParagraph);
+            builder.Write("Original TextBox");
 
-        // Clone the text box node (deep clone).
-        Shape clonedBox = (Shape)originalBox.Clone(true);
+            // Clone the text box (deep copy of the shape and its contents).
+            Shape clonedBox = (Shape)originalBox.Clone(true);
+            // Position the cloned box at a different absolute location.
+            clonedBox.Left = 300;   // New X position.
+            clonedBox.Top = 200;    // New Y position.
 
-        // Position the cloned box at a different absolute location.
-        clonedBox.Left = 300;   // 300 points from the left edge of the page.
-        clonedBox.Top = 300;    // 300 points from the top edge of the page.
+            // Insert the cloned shape into the document.
+            // Here we add it after the original shape in the body.
+            doc.FirstSection.Body.FirstParagraph.AppendChild(clonedBox);
 
-        // Insert the cloned box into the document.
-        doc.FirstSection.Body.FirstParagraph.AppendChild(clonedBox);
-
-        // Save the document.
-        doc.Save("DuplicatedTextBox.docx");
+            // Save the document to a file.
+            doc.Save("DuplicatedTextBox.docx");
+        }
     }
 }

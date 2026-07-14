@@ -1,9 +1,9 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Tables;
+using Aspose.Words.Tables;   // Needed for the Table class
 
 public class Program
 {
@@ -13,7 +13,7 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and keep a reference to it.
+        // Build a 2x2 table.
         Table table = builder.StartTable();
 
         // First row.
@@ -28,24 +28,29 @@ public class Program
         builder.Write("Cell 3");
         builder.InsertCell();
         builder.Write("Cell 4");
-        builder.EndTable(); // Ends the table and moves the cursor after it.
+        builder.EndTable(); // Ends the table and moves the cursor out.
 
-        // Apply a simple black border to all sides of the table.
+        // Apply a single black border to all sides of the table.
         table.SetBorders(LineStyle.Single, 1.0, Color.Black);
 
-        // Export only the table to an HTML fragment.
-        // The Table.ToString method renders the node using the specified format.
-        string htmlFragment = table.ToString(SaveFormat.Html);
+        // Prepare HTML save options – export only the table, no headers/footers.
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
+        {
+            ExportHeadersFootersMode = ExportHeadersFootersMode.None
+        };
 
-        // Define output path for the HTML fragment.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TableFragment.html");
+        // Export the table to an HTML fragment (preserves borders).
+        string htmlFragment = table.ToString(htmlOptions);
 
-        // Save the fragment to a file.
-        File.WriteAllText(outputPath, htmlFragment);
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Optionally, write the fragment to the console.
-        Console.WriteLine("HTML fragment saved to: " + outputPath);
-        Console.WriteLine("Fragment content:");
-        Console.WriteLine(htmlFragment);
+        // Save the HTML fragment to a file.
+        string htmlPath = Path.Combine(outputDir, "TableFragment.html");
+        File.WriteAllText(htmlPath, htmlFragment);
+
+        // Indicate completion.
+        Console.WriteLine($"HTML fragment saved to: {htmlPath}");
     }
 }

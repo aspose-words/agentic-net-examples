@@ -2,32 +2,39 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
-public class Program
+namespace AsposeWordsExample
 {
-    public static void Main()
+    class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Insert a textbox shape.
-        Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        TextBox textBox = textBoxShape.TextBox;
+            // Initialize a DocumentBuilder attached to the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set internal margins (in points).
-        textBox.InternalMarginTop = 15;
-        textBox.InternalMarginBottom = 15;
-        textBox.InternalMarginLeft = 15;
-        textBox.InternalMarginRight = 15;
+            // Insert a textbox shape with a specific size.
+            Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 200, 100);
 
-        // Move the builder cursor inside the textbox.
-        builder.MoveTo(textBoxShape.LastParagraph);
+            // Set the internal margins of the textbox (values are in points).
+            TextBox textBox = textBoxShape.TextBox;
+            textBox.InternalMarginTop = 15;
+            textBox.InternalMarginBottom = 15;
+            textBox.InternalMarginLeft = 15;
+            textBox.InternalMarginRight = 15;
 
-        // Set bold formatting and add a paragraph with bold text.
-        builder.Font.Bold = true;
-        builder.Writeln("Bold text inside the textbox");
+            // Move the builder's cursor to the inside of the textbox.
+            builder.MoveTo(textBoxShape.LastParagraph);
 
-        // Save the document.
-        doc.Save("TextBoxMargins.docx");
+            // Apply bold formatting to the text that will be inserted.
+            builder.Font.Bold = true;
+
+            // Insert a paragraph with bold text inside the textbox.
+            builder.Writeln("This is bold text inside a textbox.");
+
+            // Save the document to a file.
+            doc.Save("TextBoxMargins.docx");
+        }
     }
 }

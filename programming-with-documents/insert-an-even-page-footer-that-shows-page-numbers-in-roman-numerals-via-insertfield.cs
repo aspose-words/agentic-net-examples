@@ -1,6 +1,6 @@
 using System;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 
 public class Program
 {
@@ -13,30 +13,32 @@ public class Program
         // Enable different footers for odd and even pages.
         builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
 
-        // Move the builder cursor to the even-page footer.
+        // Create the even‑page footer.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
-
-        // Insert a PAGE field that will display the page number.
-        // This overload inserts the field code without an initial result.
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+        builder.Write("Page ");
+        // Insert a PAGE field; the result will be updated when the document is saved or fields are updated.
         builder.InsertField("PAGE", "");
 
         // Return to the main body of the document.
         builder.MoveToSection(0);
 
+        // Set the page numbering style to uppercase Roman numerals.
+        doc.Sections[0].PageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
+
         // Add some content to generate multiple pages.
-        builder.Writeln("Page 1");
+        builder.Writeln("First page (odd).");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2");
+        builder.Writeln("Second page (even).");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3");
+        builder.Writeln("Third page (odd).");
 
-        // Set the page number style to uppercase Roman numerals for the whole section.
-        doc.FirstSection.PageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
+        // Ensure the output directory exists.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Update all fields so the PAGE field shows the correct values.
-        doc.UpdateFields();
-
-        // Save the document to a file.
-        doc.Save("EvenFooterRoman.docx");
+        // Save the document.
+        string outputPath = Path.Combine(artifactsDir, "EvenPageFooterRoman.docx");
+        doc.Save(outputPath);
     }
 }
