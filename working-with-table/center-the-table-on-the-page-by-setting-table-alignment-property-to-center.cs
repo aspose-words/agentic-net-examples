@@ -13,21 +13,19 @@ namespace TableAlignmentExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a new table.
+            // Build a simple 2x2 table.
             Table table = builder.StartTable();
 
-            // First row, first cell.
+            // First row.
             builder.InsertCell();
             builder.Write("Cell 1, Row 1");
-            // First row, second cell.
             builder.InsertCell();
             builder.Write("Cell 2, Row 1");
             builder.EndRow();
 
-            // Second row, first cell.
+            // Second row.
             builder.InsertCell();
             builder.Write("Cell 1, Row 2");
-            // Second row, second cell.
             builder.InsertCell();
             builder.Write("Cell 2, Row 2");
             builder.EndRow();
@@ -38,10 +36,8 @@ namespace TableAlignmentExample
             // Center the table on the page.
             table.Alignment = TableAlignment.Center;
 
-            // Define output path and ensure the directory exists.
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-            Directory.CreateDirectory(outputDir);
-            string outputPath = Path.Combine(outputDir, "TableCentered.docx");
+            // Define output file path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CenteredTable.docx");
 
             // Save the document.
             doc.Save(outputPath);

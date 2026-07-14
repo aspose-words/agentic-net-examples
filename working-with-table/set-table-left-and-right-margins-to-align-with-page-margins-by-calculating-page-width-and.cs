@@ -9,44 +9,41 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        // Access the first (and only) section to configure page setup.
+        Section section = doc.FirstSection;
+        PageSetup pageSetup = section.PageSetup;
+
+        // Set custom page margins (optional, just for demonstration).
+        pageSetup.LeftMargin = 72;   // 1 inch
+        pageSetup.RightMargin = 72;  // 1 inch
+        pageSetup.TopMargin = 72;
+        pageSetup.BottomMargin = 72;
+
+        // Build a simple 2‑column table.
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Optionally set custom page margins (in points).
-        // 1 inch = 72 points.
-        doc.FirstSection.PageSetup.LeftMargin = 72;   // 1 inch
-        doc.FirstSection.PageSetup.RightMargin = 72;  // 1 inch
-
-        // Build a simple 2x2 table.
         Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Column 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Write("Column 2");
         builder.EndRow();
         builder.EndTable();
 
         // Calculate the usable page width (page width minus left and right margins).
-        PageSetup setup = doc.FirstSection.PageSetup;
-        double usablePageWidth = setup.PageWidth - setup.LeftMargin - setup.RightMargin;
+        double usablePageWidth = pageSetup.PageWidth - pageSetup.LeftMargin - pageSetup.RightMargin;
 
-        // Align the table with the page margins:
-        // - Set the left indent of the table to the left margin.
-        // - Set the preferred width of the table to the usable page width.
-        table.LeftIndent = setup.LeftMargin;
+        // Align the table with the page margins.
+        // LeftIndent moves the table away from the left page edge.
+        table.LeftIndent = pageSetup.LeftMargin;
+        // PreferredWidth defines the total width of the table.
         table.PreferredWidth = PreferredWidth.FromPoints(usablePageWidth);
 
-        // Save the document.
-        string outputPath = "TableMarginsAligned.docx";
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableAlignedWithMargins.docx");
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Simple verification that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

@@ -1,65 +1,51 @@
 using System;
-using System.IO;
 using Aspose.Words;
-using Aspose.Words.Fields;
 using Aspose.Words.Tables;
+using Aspose.Words.Fields;
 
-namespace TableTocExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Output file path
-            string outputPath = "TableWithToc.docx";
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a new blank document and a builder for it
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Start a bookmark that will bound the TOC entries.
+        builder.StartBookmark("TableBookmark");
 
-            // Insert a bookmark that will surround the table
-            builder.StartBookmark("TableBookmark");
+        // Insert a heading that will appear in the TOC.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Table 1: Sample Table");
 
-            // Build a simple 2x2 table
-            Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndTable();
 
-            // First row
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        // End the bookmark.
+        builder.EndBookmark("TableBookmark");
 
-            // Second row
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndRow();
+        // Move the cursor to the start of the document to insert the TOC.
+        builder.MoveToDocumentStart();
 
-            // Finish the table
-            builder.EndTable();
+        // Insert a TOC that includes only headings within the bookmark.
+        // \b specifies the bookmark, \o "1-1" limits to heading level 1, \h adds hyperlinks.
+        builder.InsertTableOfContents("\\b TableBookmark \\o \"1-1\" \\h \\z \\u");
 
-            // End the bookmark
-            builder.EndBookmark("TableBookmark");
+        // Update fields so the TOC reflects the current content.
+        doc.UpdateFields();
 
-            // Move cursor to the start of the document to insert the TOC field
-            builder.MoveToDocumentStart();
-
-            // Insert a TOC field and set it to use the bookmark we created
-            FieldToc toc = (FieldToc)builder.InsertField(FieldType.FieldTOC, true);
-            toc.BookmarkName = "TableBookmark";
-            toc.InsertHyperlinks = true; // optional: make entries clickable
-
-            // Update fields so the TOC reflects the current content
-            doc.UpdateFields();
-
-            // Save the document
-            doc.Save(outputPath);
-
-            // Verify that the file was created
-            if (!File.Exists(outputPath))
-                throw new Exception("The document was not saved correctly.");
-        }
+        // Save the resulting document.
+        const string outputPath = "Output.docx";
+        doc.Save(outputPath);
     }
 }

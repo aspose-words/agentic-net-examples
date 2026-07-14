@@ -1,52 +1,55 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableCellShadingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a sample table with 3 rows and 4 columns.
+        Table table = builder.StartTable();
+
+        for (int row = 1; row <= 3; row++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a simple 3‑row, 4‑column table.
-            Table table = builder.StartTable();
-
-            for (int row = 0; row < 3; row++)
+            for (int col = 1; col <= 4; col++)
             {
-                for (int col = 0; col < 4; col++)
-                {
-                    builder.InsertCell();
-                    builder.Write($"R{row + 1}C{col + 1}");
-                }
-                builder.EndRow();
+                builder.InsertCell();
+                builder.Write($"R{row}C{col}");
             }
-
-            builder.EndTable();
-
-            // Iterate through all cells and apply background colors based on column index.
-            for (int rowIndex = 0; rowIndex < table.Rows.Count; rowIndex++)
-            {
-                Row row = table.Rows[rowIndex];
-                for (int colIndex = 0; colIndex < row.Cells.Count; colIndex++)
-                {
-                    Cell cell = row.Cells[colIndex];
-                    // Example rule: even columns get LightBlue, odd columns get LightGreen.
-                    if (colIndex % 2 == 0)
-                        cell.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
-                    else
-                        cell.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
-                }
-            }
-
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableCellShading.docx");
-            doc.Save(outputPath);
+            builder.EndRow();
         }
+
+        builder.EndTable();
+
+        // Apply different background colors to cells based on their column index.
+        // Column indices are zero‑based within each row.
+        Color[] columnColors = new Color[]
+        {
+            Color.LightCoral,   // Column 0
+            Color.LightGreen,   // Column 1
+            Color.LightBlue,    // Column 2
+            Color.LightYellow   // Column 3
+        };
+
+        foreach (Row row in table.Rows)
+        {
+            for (int i = 0; i < row.Cells.Count; i++)
+            {
+                Cell cell = row.Cells[i];
+                // Guard against out‑of‑range if the table has more columns than colors defined.
+                Color bgColor = columnColors[i % columnColors.Length];
+                cell.CellFormat.Shading.BackgroundPatternColor = bgColor;
+            }
+        }
+
+        // Save the document to the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableCellShading.docx");
+        doc.Save(outputPath);
     }
 }

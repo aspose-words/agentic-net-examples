@@ -7,12 +7,14 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define paths for the temporary HTML file and the resulting DOCX file.
+        string tempFolder = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(tempFolder);
 
-        // Create a sample HTML file containing a complex table with merged cells.
-        string htmlPath = Path.Combine(outputDir, "SampleTable.html");
+        string htmlPath = Path.Combine(tempFolder, "sample.html");
+        string docxPath = Path.Combine(tempFolder, "result.docx");
+
+        // Create an HTML string that contains a complex table with merged cells.
         string htmlContent = @"
 <!DOCTYPE html>
 <html>
@@ -23,38 +25,44 @@ public class Program
 <body>
     <table border='1' cellspacing='0' cellpadding='5'>
         <tr>
-            <th colspan='2'>Header Merged Horizontally</th>
-            <th>Header 3</th>
+            <td colspan='2' style='background:#DDEEFF;'>Horizontally Merged Cell (colspan=2)</td>
+            <td style='background:#FFEEDD;'>Cell 3</td>
         </tr>
         <tr>
-            <td rowspan='2'>Cell Merged Vertically</td>
-            <td>Row 1, Cell 2</td>
-            <td>Row 1, Cell 3</td>
+            <td rowspan='2' style='background:#DDFFDD;'>Vertically Merged Cell (rowspan=2)</td>
+            <td style='background:#FFDDDD;'>Cell 2</td>
+            <td style='background:#DDDDFF;'>Cell 3</td>
         </tr>
         <tr>
-            <td colspan='2'>Cell Merged Horizontally</td>
+            <td colspan='2' style='background:#FFFFDD;'>Horizontally Merged Cell (colspan=2) in second row</td>
         </tr>
     </table>
 </body>
 </html>";
+
+        // Write the HTML content to the temporary file.
         File.WriteAllText(htmlPath, htmlContent);
 
         // Load the HTML file into an Aspose.Words Document.
         Document doc = new Document(htmlPath);
 
-        // Convert any cells that were merged by width into proper merge flags.
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        foreach (Table table in tables)
+        // Ensure that merged cells are represented using merge flags.
+        // This converts cells merged by width (as may happen when loading HTML) to proper CellMerge flags.
+        foreach (Table table in doc.GetChildNodes(NodeType.Table, true))
         {
             table.ConvertToHorizontallyMergedCells();
         }
 
-        // Save the document as a Word file.
-        string outputPath = Path.Combine(outputDir, "Converted.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
+        // Save the document as a DOCX file.
+        doc.Save(docxPath, SaveFormat.Docx);
 
         // Verify that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The Word document was not saved successfully.");
+        if (!File.Exists(docxPath))
+        {
+            throw new InvalidOperationException("The DOCX file was not created successfully.");
+        }
+
+        // Optionally, clean up the temporary HTML file.
+        // File.Delete(htmlPath);
     }
 }

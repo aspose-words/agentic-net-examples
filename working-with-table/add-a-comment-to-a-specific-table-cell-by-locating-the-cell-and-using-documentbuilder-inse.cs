@@ -1,72 +1,58 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableCommentExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x2 table.
-            builder.StartTable();
+        // Build a simple 2x2 table.
+        builder.StartTable();
 
-            // First row.
-            builder.InsertCell();
-            builder.Write("Cell 0,0");
-            builder.InsertCell();
-            builder.Write("Cell 0,1");
-            builder.EndRow();
+        // First row.
+        builder.InsertCell();
+        builder.Write("Cell 1,1");
+        builder.InsertCell();
+        builder.Write("Cell 1,2");
+        builder.EndRow();
 
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Cell 1,0");
-            builder.InsertCell();
-            builder.Write("Cell 1,1");
-            builder.EndRow();
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Cell 2,1");
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
+        builder.EndTable();
 
-            // Finish the table.
-            builder.EndTable();
+        // Locate the target cell (first row, second column).
+        Table table = (Table)doc.GetChild(NodeType.Table, 0, true);
+        Cell targetCell = table.Rows[0].Cells[1];
 
-            // Move the cursor to the cell at row 1, column 0 (second row, first column).
-            builder.MoveToCell(0, 1, 0, -1);
+        // Create a comment.
+        Comment comment = new Comment(doc, "John Doe", "JD", DateTime.Now);
+        // Add a paragraph to the comment to hold the comment text.
+        comment.AppendChild(new Paragraph(doc));
 
-            // Create a comment.
-            Comment comment = new Comment(doc, "John Doe", "JD", DateTime.Now);
-            comment.SetText("Comment added to this cell.");
+        // Create comment range start and end.
+        CommentRangeStart rangeStart = new CommentRangeStart(doc, comment.Id);
+        CommentRangeEnd rangeEnd = new CommentRangeEnd(doc, comment.Id);
 
-            // Insert the comment range and the comment into the current paragraph.
-            Paragraph para = builder.CurrentParagraph;
+        // Insert the comment range around the cell's first paragraph.
+        Paragraph firstParagraph = targetCell.FirstParagraph;
+        firstParagraph.PrependChild(rangeStart);
+        firstParagraph.AppendChild(rangeEnd);
+        // Append the comment node after the range end.
+        firstParagraph.AppendChild(comment);
 
-            // Start of comment range.
-            CommentRangeStart rangeStart = new CommentRangeStart(doc, comment.Id);
-            para.AppendChild(rangeStart);
+        // Write the comment text.
+        builder.MoveTo(comment.FirstParagraph);
+        builder.Write("This is a comment on the cell.");
 
-            // Text that the comment refers to.
-            Run commentedRun = new Run(doc, "Cell 1,0");
-            para.AppendChild(commentedRun);
-
-            // End of comment range.
-            CommentRangeEnd rangeEnd = new CommentRangeEnd(doc, comment.Id);
-            para.AppendChild(rangeEnd);
-
-            // The comment itself.
-            para.AppendChild(comment);
-
-            // Define the output path.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "CommentInTableCell.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
-        }
+        // Save the document.
+        string outputPath = "CommentInTableCell.docx";
+        doc.Save(outputPath);
     }
 }

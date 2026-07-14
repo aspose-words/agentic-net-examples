@@ -4,22 +4,20 @@ using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Saving;
 using Newtonsoft.Json;
 
-namespace AsposeWordsTableJson
+namespace TableSerializationExample
 {
-    // Classes that represent the serializable structure of a table.
+    // Classes that represent the table structure for JSON serialization.
     public class TableInfo
     {
-        public string Alignment { get; set; }
         public List<RowInfo> Rows { get; set; } = new List<RowInfo>();
     }
 
     public class RowInfo
     {
         public double Height { get; set; }
-        public string HeightRule { get; set; }
+        public HeightRule HeightRule { get; set; }
         public List<CellInfo> Cells { get; set; } = new List<CellInfo>();
     }
 
@@ -27,8 +25,9 @@ namespace AsposeWordsTableJson
     {
         public string Text { get; set; }
         public double Width { get; set; }
-        public string VerticalAlignment { get; set; }
-        public int ShadingColorArgb { get; set; }
+        public CellVerticalAlignment VerticalAlignment { get; set; }
+        public TextOrientation Orientation { get; set; }
+        public Color? ShadingBackgroundColor { get; set; }
     }
 
     public class Program
@@ -39,67 +38,82 @@ namespace AsposeWordsTableJson
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x2 table with some formatting.
+            // Build a sample table with formatting.
             Table table = builder.StartTable();
 
-            // First row, first cell.
+            // First row.
             builder.InsertCell();
             builder.CellFormat.Width = 100;
             builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
             builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
-            builder.Write("Cell 1,1");
+            builder.Write("Header 1");
 
-            // First row, second cell.
+            builder.InsertCell();
+            builder.CellFormat.Width = 150;
+            builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
+            builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
+            builder.Write("Header 2");
+            builder.EndRow();
+
+            // Second row.
+            builder.RowFormat.Height = 30;
+            builder.RowFormat.HeightRule = HeightRule.Exactly;
+
+            builder.InsertCell();
+            builder.CellFormat.Width = 100;
+            builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Top;
+            builder.CellFormat.Orientation = TextOrientation.Downward;
+            builder.Write("Row1, Col1");
+
             builder.InsertCell();
             builder.CellFormat.Width = 150;
             builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Bottom;
-            builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
-            builder.Write("Cell 1,2");
-
+            builder.CellFormat.Orientation = TextOrientation.Upward;
+            builder.Write("Row1, Col2");
             builder.EndRow();
-
-            // Second row, first cell.
-            builder.InsertCell();
-            // Use default formatting for this cell.
-            builder.Write("Cell 2,1");
-
-            // Second row, second cell.
-            builder.InsertCell();
-            builder.Write("Cell 2,2");
 
             builder.EndTable();
 
-            // Save the sample document.
-            string docPath = Path.Combine(Environment.CurrentDirectory, "SampleTable.docx");
+            // Save the document to a local file.
+            string docPath = "SampleTable.docx";
             doc.Save(docPath);
+
+            // Load the document (optional, demonstrates loading).
+            Document loadedDoc = new Document(docPath);
 
             // Extract table information.
             List<TableInfo> tablesInfo = new List<TableInfo>();
-            NodeCollection tableNodes = doc.GetChildNodes(NodeType.Table, true);
+            NodeCollection tableNodes = loadedDoc.GetChildNodes(NodeType.Table, true);
             foreach (Table tbl in tableNodes)
             {
-                TableInfo tblInfo = new TableInfo
-                {
-                    Alignment = tbl.Alignment.ToString()
-                };
+                TableInfo tblInfo = new TableInfo();
 
                 foreach (Row row in tbl.Rows)
                 {
                     RowInfo rowInfo = new RowInfo
                     {
                         Height = row.RowFormat.Height,
-                        HeightRule = row.RowFormat.HeightRule.ToString()
+                        HeightRule = row.RowFormat.HeightRule
                     };
 
                     foreach (Cell cell in row.Cells)
                     {
+                        // Ensure the cell has at least one paragraph to extract text.
+                        cell.EnsureMinimum();
+
+                        string cellText = cell.GetText().Trim('\a', '\r', '\n');
+
                         CellInfo cellInfo = new CellInfo
                         {
-                            Text = cell.ToString(SaveFormat.Text).Trim(),
+                            Text = cellText,
                             Width = cell.CellFormat.Width,
-                            VerticalAlignment = cell.CellFormat.VerticalAlignment.ToString(),
-                            ShadingColorArgb = cell.CellFormat.Shading.BackgroundPatternColor.ToArgb()
+                            VerticalAlignment = cell.CellFormat.VerticalAlignment,
+                            Orientation = cell.CellFormat.Orientation,
+                            ShadingBackgroundColor = cell.CellFormat.Shading.BackgroundPatternColor.IsEmpty
+                                ? (Color?)null
+                                : cell.CellFormat.Shading.BackgroundPatternColor
                         };
+
                         rowInfo.Cells.Add(cellInfo);
                     }
 
@@ -111,10 +125,13 @@ namespace AsposeWordsTableJson
 
             // Serialize the extracted information to JSON.
             string json = JsonConvert.SerializeObject(tablesInfo, Formatting.Indented);
-            string jsonPath = Path.Combine(Environment.CurrentDirectory, "TableInfo.json");
+
+            // Write JSON to a file.
+            string jsonPath = "TableStructure.json";
             File.WriteAllText(jsonPath, json);
 
-            // The program finishes here. No user interaction is required.
+            // Indicate completion (no interactive input).
+            Console.WriteLine("Table serialization completed.");
         }
     }
 }

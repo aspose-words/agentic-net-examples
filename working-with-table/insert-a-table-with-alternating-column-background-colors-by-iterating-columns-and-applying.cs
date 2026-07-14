@@ -1,55 +1,60 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using System.Drawing;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Define table dimensions.
-        int rows = 4;
-        int columns = 5;
-
-        // Colors for alternating columns.
-        Color evenColumnColor = Color.LightGray;
-        Color oddColumnColor = Color.White;
-
-        // Start building the table.
-        Table table = builder.StartTable();
-
-        for (int row = 0; row < rows; row++)
+        public static void Main()
         {
-            for (int col = 0; col < columns; col++)
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Define table dimensions.
+            int rows = 4;
+            int columns = 5;
+
+            // Start building the table.
+            Table table = builder.StartTable();
+
+            for (int row = 1; row <= rows; row++)
             {
-                // Insert a new cell in the current row.
-                builder.InsertCell();
+                for (int col = 1; col <= columns; col++)
+                {
+                    // Insert a new cell.
+                    builder.InsertCell();
 
-                // Apply background shading based on column index.
-                builder.CellFormat.Shading.BackgroundPatternColor = (col % 2 == 0) ? evenColumnColor : oddColumnColor;
+                    // Apply alternating background colors based on column index.
+                    // Even columns get LightGray, odd columns get White.
+                    if (col % 2 == 0)
+                        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+                    else
+                        builder.CellFormat.Shading.BackgroundPatternColor = Color.White;
 
-                // Add some sample text to the cell.
-                builder.Write($"R{row + 1}C{col + 1}");
+                    // Write some sample text into the cell.
+                    builder.Write($"R{row}C{col}");
+                }
+
+                // End the current row.
+                builder.EndRow();
             }
 
-            // End the current row.
-            builder.EndRow();
+            // Finish the table.
+            builder.EndTable();
+
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AlternatingColumnsTable.docx");
+            doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not created.");
+
+            // The program ends automatically; no user interaction required.
         }
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Ensure the output directory exists.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-
-        // Save the document to a file.
-        string outputPath = Path.Combine(outputDir, "AlternatingColumnsTable.docx");
-        doc.Save(outputPath);
     }
 }

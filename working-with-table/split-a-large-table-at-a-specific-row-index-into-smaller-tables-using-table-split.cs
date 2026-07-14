@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -10,43 +11,59 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a sample table with 6 rows and 3 columns.
-        Table originalTable = builder.StartTable();
-        for (int row = 0; row < 6; row++)
+        // Build a table with 10 rows and 2 columns.
+        builder.StartTable();
+        for (int i = 1; i <= 10; i++)
         {
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Write($"R{row + 1}C{col + 1}");
-            }
+            builder.InsertCell();
+            builder.Writeln($"Row {i} - Cell 1");
+            builder.InsertCell();
+            builder.Writeln($"Row {i} - Cell 2");
             builder.EndRow();
         }
         builder.EndTable();
 
-        // Split the table after the third row (zero‑based index 3).
-        // The original table will keep rows 0‑2, the new table will contain rows 3‑5.
-        int splitRowIndex = 3;
+        // Retrieve the created table.
+        Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+        int originalRowCount = originalTable.Rows.Count;
 
-        // Create a new empty table that will hold the split rows.
-        Table secondTable = new Table(doc);
+        // Split the table at row index 5 (0‑based). Rows 0‑4 stay in the original table,
+        // rows 5‑9 move to the new table.
+        int splitIndex = 5;
+        if (splitIndex < 0 || splitIndex > originalRowCount)
+            throw new ArgumentOutOfRangeException(nameof(splitIndex), "Split index is out of range.");
 
-        // Move rows from the original table to the second table.
-        // Continue moving while there are rows at or beyond the split index.
-        while (originalTable.Rows.Count > splitRowIndex)
+        // Create a new empty table that copies the formatting of the original table.
+        Table newTable = (Table)originalTable.Clone(false);
+
+        // Move rows starting from splitIndex to the new table.
+        // Iterate from the end to avoid index shifting when removing rows.
+        for (int i = originalRowCount - 1; i >= splitIndex; i--)
         {
-            // Remove the row from the original table.
-            Row rowToMove = originalTable.Rows[splitRowIndex];
-            originalTable.Rows.Remove(rowToMove);
-
-            // Add the removed row to the new table.
-            secondTable.Rows.Add(rowToMove);
+            Row row = originalTable.Rows[i];
+            row.Remove();               // Detach from original table.
+            newTable.Rows.Add(row);      // Append to the new table.
         }
 
-        // Insert the new table immediately after the original one in the document body.
-        // The parent of a table is a CompositeNode (e.g., Body), so cast to CompositeNode to use InsertAfter.
-        ((CompositeNode)originalTable.ParentNode).InsertAfter(secondTable, originalTable);
+        // Insert the new table into the document immediately after the original table.
+        originalTable.ParentNode.InsertAfter(newTable, originalTable);
 
-        // Save the document containing both tables.
-        doc.Save("SplitTable.docx");
+        // Validate the split.
+        int firstPartRows = originalTable.Rows.Count;
+        int secondPartRows = newTable.Rows.Count;
+
+        if (firstPartRows != splitIndex)
+            throw new InvalidOperationException($"Expected {splitIndex} rows in the first part, but found {firstPartRows}.");
+
+        if (secondPartRows != originalRowCount - splitIndex)
+            throw new InvalidOperationException($"Expected {originalRowCount - splitIndex} rows in the second part, but found {secondPartRows}.");
+
+        // Save the document.
+        string outputPath = "SplitTable.docx";
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not saved.", outputPath);
     }
 }

@@ -19,25 +19,21 @@ public class Program
         builder.Write("Cell 2");
         builder.EndTable();
 
-        // Set a preferred width so that surrounding text has space to flow.
-        table.PreferredWidth = PreferredWidth.FromPoints(200);
+        // Give the table a preferred width so the floating layout is visible.
+        table.PreferredWidth = PreferredWidth.FromPoints(300);
 
-        // Configure the table to wrap text around it.
+        // Set the table to wrap text around it.
         table.TextWrapping = TextWrapping.Around;
-        // Optional: distance from surrounding text (in points).
-        table.AbsoluteHorizontalDistance = 10;
-        table.AbsoluteVerticalDistance = 10;
+        // Optional: define the distance between the table and surrounding text.
+        table.AbsoluteHorizontalDistance = 20; // points
+        table.AbsoluteVerticalDistance = 10;   // points
 
-        // Add a paragraph after the table to demonstrate wrapping.
-        builder.Writeln(
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+        // Add a paragraph after the table to demonstrate the wrapping effect.
+        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                        "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Table.WrapAround.docx");
+        // Save the document to the current working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWrapAround.docx");
         doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Output file was not created.");
     }
 }

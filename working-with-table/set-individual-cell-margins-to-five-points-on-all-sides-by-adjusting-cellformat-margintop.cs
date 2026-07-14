@@ -11,8 +11,9 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and build a simple 2x2 grid.
+        // Start a table and populate it with 2 rows and 2 columns.
         Table table = builder.StartTable();
+
         for (int row = 0; row < 2; row++)
         {
             for (int col = 0; col < 2; col++)
@@ -22,9 +23,11 @@ public class Program
             }
             builder.EndRow();
         }
+
+        // Finish the table.
         builder.EndTable();
 
-        // Set the padding (acts as cell margins) of every cell to 5 points.
+        // Set the padding (margins) of each cell to 5 points on all sides.
         foreach (Row r in table.Rows)
         {
             foreach (Cell c in r.Cells)

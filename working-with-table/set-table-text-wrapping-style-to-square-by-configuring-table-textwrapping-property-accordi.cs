@@ -3,39 +3,40 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableWrapExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndTable();
+            // Start a table and add a couple of cells with sample text.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndTable();
 
-        // Set the table's text wrapping to "Around" (square style).
-        table.TextWrapping = TextWrapping.Around;
-        // Optional: define distances from surrounding text.
-        table.AbsoluteHorizontalDistance = 20;
-        table.AbsoluteVerticalDistance = 10;
+            // Set the table's text wrapping style to "Around" (square-like wrapping).
+            table.TextWrapping = TextWrapping.Around;
 
-        // Prepare output folder and file path.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "TableWrapSquare.docx");
+            // Optional: set distances so the text appears around the table.
+            table.AbsoluteHorizontalDistance = 20;
+            table.AbsoluteVerticalDistance = 10;
 
-        // Save the document.
-        doc.Save(outputPath);
+            // Define an output path in the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWrapSquare.docx");
+
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not saved correctly.");
+        }
     }
 }

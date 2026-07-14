@@ -1,59 +1,51 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableTextDirectionExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Set the text orientation for all cells that will be created.
+        // This setting is applied globally to the builder's CellFormat.
+        builder.CellFormat.Orientation = TextOrientation.Upward;
+
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
+
+        // First row.
+        builder.InsertCell();
+        builder.Write("Cell 1,1");
+        builder.InsertCell();
+        builder.Write("Cell 1,2");
+        builder.EndRow();
+
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Cell 2,1");
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
+        builder.EndRow();
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Verify that every cell in the table has the expected orientation.
+        foreach (Cell cell in table.GetChildNodes(NodeType.Cell, true))
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table.
-            Table table = builder.StartTable();
-
-            // Set the cell orientation globally before inserting cells.
-            // This will affect all cells created after this point.
-            builder.CellFormat.Orientation = TextOrientation.Upward;
-
-            // Build a simple 2x2 table.
-            builder.InsertCell();
-            builder.Write("Cell 1,1");
-            builder.InsertCell();
-            builder.Write("Cell 1,2");
-            builder.EndRow();
-
-            builder.InsertCell();
-            builder.Write("Cell 2,1");
-            builder.InsertCell();
-            builder.Write("Cell 2,2");
-            builder.EndRow();
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Ensure that every existing cell also has vertical orientation.
-            foreach (Row row in table.Rows)
-            {
-                foreach (Cell cell in row.Cells)
-                {
-                    cell.CellFormat.Orientation = TextOrientation.Upward;
-                }
-            }
-
-            // Define output path.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableVerticalText.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
+            if (cell.CellFormat.Orientation != TextOrientation.Upward)
+                throw new InvalidOperationException("A cell does not have the expected vertical text orientation.");
         }
+
+        // Save the document.
+        const string outputPath = "TableTextDirection.docx";
+        doc.Save(outputPath);
+
+        // Simple confirmation (optional, does not require user input).
+        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

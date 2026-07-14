@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -9,9 +8,9 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Use DocumentBuilder to construct a simple 2x2 table.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         Table table = builder.StartTable();
 
         // First row.
@@ -28,22 +27,15 @@ public class Program
         builder.Write("Data 2");
         builder.EndRow();
 
-        // Finish the table and obtain the Table object.
-        table = builder.EndTable();
+        // Finish the table.
+        builder.EndTable();
 
         // Prevent the first row from breaking across pages.
-        table.FirstRow.RowFormat.AllowBreakAcrossPages = false;
+        Row firstRow = table.FirstRow;
+        firstRow.RowFormat.AllowBreakAcrossPages = false;
 
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Table_NoBreakAcrossPages.docx");
-
-        // Save the document.
+        // Save the document to the local file system.
+        string outputPath = "TableAllowBreakAcrossPages.docx";
         doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new Exception("The document was not saved successfully.");
-        }
     }
 }

@@ -11,36 +11,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Start a table.
         Table table = builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndTable();
-
-        // Set padding of 3 points on all sides for every cell in the table.
-        foreach (Cell cell in table.GetChildNodes(NodeType.Cell, true))
+        // Build a simple 2x2 table.
+        for (int row = 0; row < 2; row++)
         {
-            // Using SetPaddings(left, top, right, bottom) for brevity.
-            cell.CellFormat.SetPaddings(3, 3, 3, 3);
+            for (int col = 0; col < 2; col++)
+            {
+                builder.InsertCell();
+                builder.Write($"R{row + 1}C{col + 1}");
+            }
+            builder.EndRow();
         }
 
-        // Save the document.
-        string outputPath = "CellPadding.docx";
-        doc.Save(outputPath);
+        // Finish the table.
+        builder.EndTable();
 
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+        // Set padding of every cell to 3 points on all sides.
+        foreach (Cell cell in table.GetChildNodes(NodeType.Cell, true))
+        {
+            cell.CellFormat.LeftPadding = 3;
+            cell.CellFormat.RightPadding = 3;
+            cell.CellFormat.TopPadding = 3;
+            cell.CellFormat.BottomPadding = 3;
+        }
+
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CellPadding.docx");
+        doc.Save(outputPath);
     }
 }

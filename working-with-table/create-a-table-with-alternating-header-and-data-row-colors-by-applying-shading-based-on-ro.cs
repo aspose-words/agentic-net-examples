@@ -8,54 +8,52 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to construct its contents.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start a new table.
         Table table = builder.StartTable();
 
         // ----- Header row -----
+        // Apply a distinct shading color for the header.
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGray;
+
         builder.InsertCell();
-        builder.Write("Product");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Write("Header 2");
         builder.InsertCell();
-        builder.Write("Price");
+        builder.Write("Header 3");
         builder.EndRow();
 
         // ----- Data rows -----
-        for (int i = 1; i <= 6; i++)
+        int dataRowCount = 6; // Number of data rows to create.
+
+        for (int i = 0; i < dataRowCount; i++)
         {
+            // Alternate shading based on row index parity.
+            Color rowColor = (i % 2 == 0) ? Color.White : Color.LightBlue;
+            builder.CellFormat.Shading.BackgroundPatternColor = rowColor;
+
             builder.InsertCell();
-            builder.Write($"Item {i}");
+            builder.Write($"Row {i + 1} Col 1");
             builder.InsertCell();
-            builder.Write((i * 10).ToString());
+            builder.Write($"Row {i + 1} Col 2");
             builder.InsertCell();
-            builder.Write($"${i * 2}.00");
+            builder.Write($"Row {i + 1} Col 3");
             builder.EndRow();
         }
 
         // End the table.
         builder.EndTable();
 
-        // Apply shading: header row gets a distinct color,
-        // data rows alternate between two colors based on row index parity.
-        for (int rowIndex = 0; rowIndex < table.Rows.Count; rowIndex++)
-        {
-            Row row = table.Rows[rowIndex];
-            Color shade = rowIndex == 0
-                ? Color.LightGray                                   // Header row
-                : (rowIndex % 2 == 0 ? Color.LightBlue : Color.LightCyan); // Alternating rows
-
-            foreach (Cell cell in row.Cells)
-            {
-                cell.CellFormat.Shading.BackgroundPatternColor = shade;
-            }
-        }
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableAlternatingColors.docx");
+        // Save the document to the local file system.
+        string outputPath = "AlternatingRowColors.docx";
         doc.Save(outputPath);
+
+        // Simple validation to ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The document was not saved correctly.");
     }
 }

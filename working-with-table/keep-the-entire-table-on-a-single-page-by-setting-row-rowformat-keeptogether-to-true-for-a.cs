@@ -3,48 +3,54 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple 3x2 table.
+        Table table = builder.StartTable();
+
+        // Row 1
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 1, Cell 2");
+        builder.EndRow();
+
+        // Row 2
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 2, Cell 2");
+        builder.EndRow();
+
+        // Row 3
+        builder.InsertCell();
+        builder.Write("Row 3, Cell 1");
+        builder.InsertCell();
+        builder.Write("Row 3, Cell 2");
+        builder.EndRow();
+
+        // Finish the table.
+        builder.EndTable();
+
+        // Prevent rows from breaking across pages.
+        // RowFormat does not have a KeepTogether property; the equivalent is AllowBreakAcrossPages.
+        foreach (Row row in table.Rows)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Build a simple 3x3 table.
-            Table table = builder.StartTable();
-
-            for (int row = 0; row < 3; row++)
-            {
-                for (int col = 0; col < 3; col++)
-                {
-                    builder.InsertCell();
-                    builder.Write($"R{row + 1}C{col + 1}");
-                }
-                // End the current row.
-                builder.EndRow();
-            }
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Ensure each row stays together on the same page.
-            // The RowFormat does not have a KeepTogether property; setting AllowBreakAcrossPages to false
-            // prevents the row from being split across pages, achieving the same effect.
-            foreach (Row r in table.Rows)
-            {
-                r.RowFormat.AllowBreakAcrossPages = false;
-            }
-
-            // Define the output path.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
-            string outputPath = Path.Combine(outputDir, "TableKeepTogether.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
+            row.RowFormat.AllowBreakAcrossPages = false;
         }
+
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "KeepTableTogether.docx");
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The document was not saved successfully.");
     }
 }

@@ -11,46 +11,46 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Start a table.
         Table table = builder.StartTable();
 
-        // First row, first cell with a fixed width.
+        // First row – set explicit column widths.
         builder.InsertCell();
         builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-        builder.Write("Fixed width cell 1");
+        builder.Write("Cell 1");
 
-        // First row, second cell with a fixed width.
         builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
-        builder.Write("Fixed width cell 2");
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
+        builder.Write("Cell 2");
 
-        // End the first row.
         builder.EndRow();
 
-        // Second row – cells inherit the column widths.
+        // Second row – reuse the same column widths.
         builder.InsertCell();
-        builder.Write("Row 2, cell 1");
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
+        builder.Write("Cell 3");
+
         builder.InsertCell();
-        builder.Write("Row 2, cell 2");
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
+        builder.Write("Cell 4");
+
         builder.EndRow();
 
-        // Finish the table.
+        // End the table.
         builder.EndTable();
 
-        // Disable automatic column resizing while preserving the existing widths.
-        table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+        // Disable automatic column resizing while preserving the set widths.
+        table.AllowAutoFit = false;
 
-        // Save the document to a local file.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "TableAutoFitDisabled.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableAutoFitDisabled.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was saved successfully.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved correctly.");
+            throw new Exception("The document was not saved successfully.");
 
-        // Indicate successful completion.
+        // Optional confirmation (no user input required).
         Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

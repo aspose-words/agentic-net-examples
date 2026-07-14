@@ -1,56 +1,64 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableSplit
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new document and a builder to construct its content.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a table with a horizontally merged cell in the first row.
-            Table table = builder.StartTable();
+        // Start a table.
+        Table table = builder.StartTable();
 
-            // First cell – start of the merged range.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.First;
-            builder.Write("Merged cell");
+        // ---- First row with a horizontally merged cell spanning two columns ----
+        // Insert the first cell and mark it as the start of a merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.Write("Merged cell");
 
-            // Second cell – merged to the previous cell.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // Insert the second cell and mark it as merged to the previous cell.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // No text is needed for the merged part.
 
-            // End the first row.
-            builder.EndRow();
+        // End the first row.
+        builder.EndRow();
 
-            // Second row – normal unmerged cells.
-            builder.InsertCell();
-            builder.Write("Cell 2,1");
-            builder.InsertCell();
-            builder.Write("Cell 2,2");
-            builder.EndRow();
+        // ---- Second row with normal (unmerged) cells ----
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.Write("Cell 1");
 
-            // Finish the table.
-            builder.EndTable();
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.Write("Cell 2");
 
-            // -------- Split the merged cell --------
-            // Reset merge flags for every cell in the table.
-            foreach (Row row in table.Rows)
-            {
-                foreach (Cell cell in row.Cells)
-                {
-                    cell.CellFormat.HorizontalMerge = CellMerge.None;
-                    cell.CellFormat.VerticalMerge = CellMerge.None;
-                }
-            }
+        // End the second row and the table.
+        builder.EndRow();
+        builder.EndTable();
 
-            // Save the document to verify the result.
-            string outputPath = "SplitMergedCell.docx";
-            doc.Save(outputPath);
-        }
+        // Save the document that contains the merged cell.
+        string mergedPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedCell.docx");
+        doc.Save(mergedPath);
+
+        // -------- Split the merged cell back into individual cells --------
+        // Access the cells of the first row (the merged ones).
+        Row firstRow = table.FirstRow;
+        Cell firstCell = firstRow.FirstCell;
+        Cell secondCell = firstRow.LastCell;
+
+        // Reset both horizontal and vertical merge flags to None.
+        firstCell.CellFormat.HorizontalMerge = CellMerge.None;
+        secondCell.CellFormat.HorizontalMerge = CellMerge.None;
+        firstCell.CellFormat.VerticalMerge = CellMerge.None;
+        secondCell.CellFormat.VerticalMerge = CellMerge.None;
+
+        // Save the document after splitting the cell.
+        string splitPath = Path.Combine(Directory.GetCurrentDirectory(), "SplitCell.docx");
+        doc.Save(splitPath);
     }
 }

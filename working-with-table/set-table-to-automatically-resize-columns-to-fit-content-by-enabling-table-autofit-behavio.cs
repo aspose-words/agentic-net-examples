@@ -1,41 +1,69 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableAutoFitExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Start building a table.
-        Table table = builder.StartTable();
+            // Initialize a DocumentBuilder for the document.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("Short");
-        builder.InsertCell();
-        builder.Write("A much longer piece of text that should cause the column to expand.");
-        builder.EndRow();
+            // Start building a table.
+            Table table = builder.StartTable();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Another");
-        builder.InsertCell();
-        builder.Write("Text");
-        builder.EndRow();
+            // First row.
+            builder.InsertCell();
+            builder.Write("Item");
+            builder.InsertCell();
+            builder.Write("Quantity (kg)");
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            // Second row.
+            builder.InsertCell();
+            builder.Write("Apples");
+            builder.InsertCell();
+            builder.Write("20");
+            builder.EndRow();
 
-        // Enable AutoFit to contents so columns automatically resize to fit their content.
-        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+            // Third row.
+            builder.InsertCell();
+            builder.Write("Bananas");
+            builder.InsertCell();
+            builder.Write("40");
+            builder.EndRow();
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AutoFitTable.docx");
-        doc.Save(outputPath);
+            // Fourth row.
+            builder.InsertCell();
+            builder.Write("Carrots");
+            builder.InsertCell();
+            builder.Write("50");
+            builder.EndRow();
+
+            // Finish the table.
+            builder.EndTable();
+
+            // Enable automatic column resizing to fit the cell contents.
+            table.AutoFit(AutoFitBehavior.AutoFitToContents);
+
+            // Save the document to a file in the current directory.
+            string outputPath = "TableAutoFit.docx";
+            doc.Save(outputPath);
+
+            // Optional: verify that the file was created.
+            if (System.IO.File.Exists(outputPath))
+            {
+                Console.WriteLine($"Document saved successfully to '{outputPath}'.");
+            }
+            else
+            {
+                throw new Exception($"Failed to save the document to '{outputPath}'.");
+            }
+        }
     }
 }

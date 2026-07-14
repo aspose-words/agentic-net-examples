@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -16,38 +15,25 @@ public class Program
 
         // ---------- Header row ----------
         builder.InsertCell();
-        builder.Writeln("Item");
+        builder.Write("Item");
         builder.InsertCell();
-        builder.Writeln("Quantity");
+        builder.Write("Quantity");
+        builder.InsertCell();
+        builder.Write("Price");
         builder.EndRow();
 
         // ---------- Data rows ----------
-        // Row 1
-        builder.InsertCell();
-        builder.Writeln("Apples");
-        builder.InsertCell();
-        builder.Writeln("20");
-        builder.EndRow();
-
-        // Row 2
-        builder.InsertCell();
-        builder.Writeln("Bananas");
-        builder.InsertCell();
-        builder.Writeln("35");
-        builder.EndRow();
-
-        // Row 3
-        builder.InsertCell();
-        builder.Writeln("Carrots");
-        builder.InsertCell();
-        builder.Writeln("15");
-        builder.EndRow();
+        AddDataRow(builder, "Apples", "10", "1.20");
+        AddDataRow(builder, "Bananas", "5", "0.80");
+        AddDataRow(builder, "Carrots", "8", "0.50");
 
         // ---------- Footer row with totals ----------
         builder.InsertCell();
-        builder.Writeln("Total");
+        builder.Write("Total");
 
-        // Insert a field that sums all numbers above in the current column.
+        // Insert a field that sums the values above in the current column.
+        builder.InsertCell();
+        builder.InsertField("=SUM(ABOVE)", null);
         builder.InsertCell();
         builder.InsertField("=SUM(ABOVE)", null);
         builder.EndRow();
@@ -55,15 +41,22 @@ public class Program
         // End the table.
         builder.EndTable();
 
-        // Save the document to a local file.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithFooter.docx");
-        doc.Save(outputPath);
+        // Update all fields so that the SUM fields are calculated.
+        doc.UpdateFields();
 
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
+        // Save the document to the local file system.
+        doc.Save("TableWithFooter.docx");
+    }
 
-        // Optionally, inform that the process completed.
-        Console.WriteLine("Document created successfully at: " + outputPath);
+    // Helper method to add a data row to the table.
+    private static void AddDataRow(DocumentBuilder builder, string item, string quantity, string price)
+    {
+        builder.InsertCell();
+        builder.Write(item);
+        builder.InsertCell();
+        builder.Write(quantity);
+        builder.InsertCell();
+        builder.Write(price);
+        builder.EndRow();
     }
 }

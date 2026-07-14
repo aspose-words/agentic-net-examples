@@ -2,49 +2,55 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build first table.
+        Table table1 = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Table 1 - Cell 1");
+        builder.InsertCell();
+        builder.Write("Table 1 - Cell 2");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Build second table.
+        Table table2 = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Table 2 - Cell 1");
+        builder.InsertCell();
+        builder.Write("Table 2 - Cell 2");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Save the sample document (optional, demonstrates file creation).
+        doc.Save("Sample.docx");
+
+        // Retrieve all tables in the document by iterating nodes of type NodeType.Table.
+        NodeCollection tableNodes = doc.GetChildNodes(NodeType.Table, true);
+
+        // Output information about each table.
+        for (int i = 0; i < tableNodes.Count; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
+            Table tbl = (Table)tableNodes[i];
+            int rowCount = tbl.Rows.Count;
+            int columnCount = tbl.FirstRow?.Cells.Count ?? 0;
+            Console.WriteLine($"Table {i}: {rowCount} rows, {columnCount} columns");
 
-            // Build the first sample table.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            Table table1 = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Table 1, Cell 1");
-            builder.InsertCell();
-            builder.Write("Table 1, Cell 2");
-            builder.EndRow();
-            builder.EndTable();
-
-            // Build the second sample table.
-            Table table2 = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Table 2, Cell 1");
-            builder.InsertCell();
-            builder.Write("Table 2, Cell 2");
-            builder.EndRow();
-            builder.EndTable();
-
-            // Save the document to the local file system.
-            const string outputPath = "Output.docx";
-            doc.Save(outputPath);
-
-            // Load the document back (demonstrates load rule usage).
-            Document loadedDoc = new Document(outputPath);
-
-            // Retrieve all tables by iterating nodes of type NodeType.Table.
-            NodeCollection tableNodes = loadedDoc.GetChildNodes(NodeType.Table, true);
-            Console.WriteLine($"Total tables found: {tableNodes.Count}");
-
-            for (int i = 0; i < tableNodes.Count; i++)
+            // Optionally, print the text of each cell.
+            for (int r = 0; r < rowCount; r++)
             {
-                Table tbl = (Table)tableNodes[i];
-                Console.WriteLine($"Table #{i + 1} has {tbl.Rows.Count} row(s) and {tbl.FirstRow?.Cells.Count ?? 0} column(s).");
+                Row row = tbl.Rows[r];
+                for (int c = 0; c < row.Cells.Count; c++)
+                {
+                    string cellText = row.Cells[c].ToString(SaveFormat.Text).Trim();
+                    Console.WriteLine($"  Cell[{r},{c}] = \"{cellText}\"");
+                }
             }
         }
     }

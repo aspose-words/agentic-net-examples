@@ -1,36 +1,45 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using System.Drawing;
 
-public class Program
+namespace TableShadingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x1 table.
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.EndRow();
-        builder.EndTable();
+            // Start a table and add a couple of cells with sample text.
+            Table table = builder.StartTable();
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
 
-        // Apply a solid light‑blue shading to the whole table.
-        table.SetShading(TextureIndex.TextureSolid, Color.LightBlue, Color.Empty);
+            // Apply a solid light‑blue shading to the whole table.
+            // TextureSolid indicates a solid fill; the foreground color is not used for this texture.
+            table.SetShading(TextureIndex.TextureSolid, Color.Empty, Color.LightBlue);
 
-        // Define output path relative to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableShading.docx");
-        doc.Save(outputPath);
+            // Finish the table.
+            builder.EndTable();
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
+            // Define the output path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableShading.docx");
 
-        // Optionally, inform that the process completed (no interactive input required).
-        Console.WriteLine("Document saved to: " + outputPath);
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Simple verification that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output file was not created.");
+
+            // The program ends automatically; no user interaction required.
+        }
     }
 }

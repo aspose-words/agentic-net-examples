@@ -7,30 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AutoFitTable.docx");
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑column table.
+        // Start a table.
         Table table = builder.StartTable();
+
+        // First row (header).
         builder.InsertCell();
-        builder.Write("First column");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Write("Second column");
+        builder.Write("Header 2");
         builder.EndRow();
+
+        // Second row (data).
+        builder.InsertCell();
+        builder.Write("Data 1");
+        builder.InsertCell();
+        builder.Write("Data 2");
+        builder.EndRow();
+
+        // End the table.
         builder.EndTable();
 
-        // Apply AutoFitToWindow so column widths adjust to page margins.
+        // Apply AutoFit to window so column widths adjust to page margins.
         table.AutoFit(AutoFitBehavior.AutoFitToWindow);
 
-        // Save the document.
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AutoFitToWindow.docx");
         doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved successfully.");
     }
 }

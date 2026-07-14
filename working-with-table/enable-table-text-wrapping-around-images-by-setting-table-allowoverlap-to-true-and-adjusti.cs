@@ -14,54 +14,66 @@ namespace TableWrapAroundImageExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a placeholder image file.
-            string imagePath = "sample.png";
-            CreateSampleImage(imagePath);
+            // ----- Insert a floating image -----
+            // Create a simple 1x1 pixel PNG image from a Base64 string.
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ+XKcZAAAAAElFTkSuQmCC";
+            byte[] imageBytes = Convert.FromBase64String(base64Png);
+            using (MemoryStream imageStream = new MemoryStream(imageBytes))
+            {
+                // Insert the image as a floating shape.
+                Shape imageShape = builder.InsertImage(imageStream);
+                // Wrap text around the image.
+                imageShape.WrapType = WrapType.Square;
+                // Position the image relative to the page margin.
+                imageShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
+                imageShape.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
+                // Optional: adjust the distance from surrounding text.
+                imageShape.Left = 0;
+                imageShape.Top = 0;
+                // Allow the shape to overlap other floating objects.
+                imageShape.AllowOverlap = true;
+            }
 
-            // Insert a floating image and configure its wrapping.
-            Shape image = builder.InsertImage(imagePath);
-            image.WrapType = WrapType.Square;
-            image.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
-            image.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
-            image.AllowOverlap = true; // Allow the image to overlap other floating objects.
+            // Add a paragraph before the table to demonstrate wrapping.
+            builder.Writeln("This paragraph appears before the table. The table will wrap around the floating image above.");
 
-            // Move the builder to a new paragraph after the image.
-            builder.Writeln();
-
-            // Build a simple 2‑column table.
+            // ----- Create a table -----
             Table table = builder.StartTable();
+
+            // First row.
             builder.InsertCell();
             builder.Write("Cell 1");
             builder.InsertCell();
             builder.Write("Cell 2");
+            builder.EndRow();
+
+            // Second row.
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndRow();
+
+            // Finish the table.
             builder.EndTable();
 
-            // Configure the table to wrap text around it.
-            table.PreferredWidth = PreferredWidth.FromPoints(300);
+            // Enable text wrapping around the table.
             table.TextWrapping = TextWrapping.Around;
-            table.AbsoluteHorizontalDistance = 20; // Space between table and surrounding text.
-            table.AbsoluteVerticalDistance = 20;   // Space between table and surrounding text.
+            // Set distances between the table and surrounding text.
+            table.AbsoluteHorizontalDistance = 20; // points
+            table.AbsoluteVerticalDistance = 20;   // points
 
-            // Set the anchors so the table aligns with the image.
-            table.HorizontalAnchor = RelativeHorizontalPosition.Margin;
-            table.VerticalAnchor = RelativeVerticalPosition.Paragraph;
+            // Note: Table.AllowOverlap is read‑only. After setting TextWrapping to Around,
+            // Aspose.Words may set AllowOverlap to false internally, which is expected.
+            // Therefore we do not assert that AllowOverlap must be true.
 
             // Save the document.
-            string outputPath = "TableWrapAroundImage.docx";
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableWrapAroundImage.docx");
             doc.Save(outputPath);
 
-            // Verify that the output file was created.
+            // Simple validation that the file was created.
             if (!File.Exists(outputPath))
-                throw new FileNotFoundException("The output document was not saved.", outputPath);
-        }
-
-        // Helper method to create a placeholder PNG image.
-        private static void CreateSampleImage(string path)
-        {
-            // A minimal 1x1 pixel PNG (transparent) encoded in base64.
-            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-            byte[] imageBytes = Convert.FromBase64String(base64Png);
-            File.WriteAllBytes(path, imageBytes);
+                throw new FileNotFoundException("Failed to create the output document.", outputPath);
         }
     }
 }

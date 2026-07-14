@@ -11,41 +11,42 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start a table. The builder will apply the current CellFormat to each new cell.
         Table table = builder.StartTable();
 
-        // Insert the first cell where we will apply custom borders.
-        builder.InsertCell();
+        // Reset any previous cell formatting.
+        builder.CellFormat.ClearFormatting();
 
-        // Set different line widths, styles, and colors for each side of the cell.
+        // Define custom borders for the upcoming cell.
+        // Left border: 2 points, red.
         builder.CellFormat.Borders.Left.LineStyle = LineStyle.Single;
-        builder.CellFormat.Borders.Left.LineWidth = 1.0; // 1 point
+        builder.CellFormat.Borders.Left.LineWidth = 2.0;
         builder.CellFormat.Borders.Left.Color = Color.Red;
 
+        // Right border: 4 points, green.
         builder.CellFormat.Borders.Right.LineStyle = LineStyle.Single;
-        builder.CellFormat.Borders.Right.LineWidth = 2.0; // 2 points
+        builder.CellFormat.Borders.Right.LineWidth = 4.0;
         builder.CellFormat.Borders.Right.Color = Color.Green;
 
+        // Top border: 6 points, blue.
         builder.CellFormat.Borders.Top.LineStyle = LineStyle.Single;
-        builder.CellFormat.Borders.Top.LineWidth = 3.0; // 3 points
+        builder.CellFormat.Borders.Top.LineWidth = 6.0;
         builder.CellFormat.Borders.Top.Color = Color.Blue;
 
+        // Bottom border: 8 points, purple.
         builder.CellFormat.Borders.Bottom.LineStyle = LineStyle.Single;
-        builder.CellFormat.Borders.Bottom.LineWidth = 4.0; // 4 points
-        builder.CellFormat.Borders.Bottom.Color = Color.Orange;
+        builder.CellFormat.Borders.Bottom.LineWidth = 8.0;
+        builder.CellFormat.Borders.Bottom.Color = Color.Purple;
 
-        // Add some text to the custom‑bordered cell.
-        builder.Writeln("Custom bordered cell");
-
-        // Insert a second cell with default formatting for comparison.
+        // Insert a single cell that will receive the custom borders.
         builder.InsertCell();
-        builder.Writeln("Normal cell");
+        builder.Write("Cell with custom borders");
 
         // Finish the row and the table.
         builder.EndRow();
         builder.EndTable();
 
-        // Save the document to a file.
+        // Save the document to the local file system.
         doc.Save("CustomCellBorders.docx");
     }
 }

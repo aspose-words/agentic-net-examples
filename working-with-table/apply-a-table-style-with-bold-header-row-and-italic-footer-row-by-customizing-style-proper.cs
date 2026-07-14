@@ -1,65 +1,85 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
 
-public class TableStyleExample
+namespace TableStyleExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3‑row table: header, data row, footer.
-        Table table = builder.StartTable();
+            // -----------------------------------------------------------------
+            // Build a simple table with a header row, two data rows and a footer row.
+            // -----------------------------------------------------------------
+            Table table = builder.StartTable();
 
-        // Header row.
-        builder.InsertCell();
-        builder.Write("Header");
-        builder.InsertCell();
-        builder.Write("Column 2");
-        builder.EndRow();
+            // Header row (first row)
+            builder.InsertCell();
+            builder.Write("Header Column 1");
+            builder.InsertCell();
+            builder.Write("Header Column 2");
+            builder.EndRow();
 
-        // Data row.
-        builder.InsertCell();
-        builder.Write("Data 1");
-        builder.InsertCell();
-        builder.Write("Data 2");
-        builder.EndRow();
+            // First data row
+            builder.InsertCell();
+            builder.Write("Data 1-1");
+            builder.InsertCell();
+            builder.Write("Data 1-2");
+            builder.EndRow();
 
-        // Footer row.
-        builder.InsertCell();
-        builder.Write("Footer");
-        builder.InsertCell();
-        builder.Write("Summary");
-        builder.EndRow();
+            // Second data row
+            builder.InsertCell();
+            builder.Write("Data 2-1");
+            builder.InsertCell();
+            builder.Write("Data 2-2");
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            // Footer row (last row)
+            builder.InsertCell();
+            builder.Write("Footer Column 1");
+            builder.InsertCell();
+            builder.Write("Footer Column 2");
+            builder.EndRow();
 
-        // Create a custom table style.
-        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
+            // Finish the table.
+            builder.EndTable();
 
-        // Make the first row (header) bold.
-        tableStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
+            // -----------------------------------------------------------------
+            // Create a custom table style.
+            // The style will make the first row bold and the last row italic.
+            // -----------------------------------------------------------------
+            TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
 
-        // Make the last row (footer) italic.
-        tableStyle.ConditionalStyles[ConditionalStyleType.LastRow].Font.Italic = true;
+            // Apply bold formatting to the first (header) row.
+            customStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Font.Bold = true;
 
-        // Apply the style to the table.
-        table.Style = tableStyle;
+            // Apply italic formatting to the last (footer) row.
+            customStyle.ConditionalStyles[ConditionalStyleType.LastRow].Font.Italic = true;
 
-        // Enable the conditional formatting for first and last rows.
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.LastRow;
+            // Assign the custom style to the table.
+            table.Style = customStyle;
 
-        // Save the document.
-        string outputPath = "TableStyleExample.docx";
-        doc.Save(outputPath);
+            // Enable the conditional formatting for first and last rows.
+            table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.LastRow;
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception($"Failed to create the output file: {outputPath}");
+            // -----------------------------------------------------------------
+            // Save the document.
+            // -----------------------------------------------------------------
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableStyleCustom.docx");
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+
+            // The program finishes automatically; no user interaction required.
+        }
     }
 }

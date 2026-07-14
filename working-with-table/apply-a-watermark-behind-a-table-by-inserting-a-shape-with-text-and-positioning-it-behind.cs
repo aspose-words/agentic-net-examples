@@ -1,50 +1,55 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
-using System.Drawing;
 
-public class Program
+namespace WatermarkBehindTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add a text watermark that will appear behind all content, including tables.
-        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+        public static void Main()
         {
-            FontFamily = "Arial",
-            FontSize = 48,
-            Color = Color.Gray,
-            Layout = WatermarkLayout.Diagonal,
-            IsSemitrasparent = false
-        };
-        doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table after the watermark.
-        Table table = builder.StartTable();
+            // Add a text watermark that will appear behind all document content,
+            // including the table that will be added later.
+            TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
+            {
+                FontFamily = "Arial",
+                FontSize = 36,
+                Color = Color.Gray,
+                Layout = WatermarkLayout.Diagonal,
+                IsSemitrasparent = false
+            };
+            doc.Watermark.SetText("CONFIDENTIAL", watermarkOptions);
 
-        // First row
-        builder.InsertCell();
-        builder.Write("Cell 1, Row 1");
-        builder.InsertCell();
-        builder.Write("Cell 2, Row 1");
-        builder.EndRow();
+            // Build a simple 2x2 table that will appear above the watermark.
+            Table table = builder.StartTable();
 
-        // Second row
-        builder.InsertCell();
-        builder.Write("Cell 1, Row 2");
-        builder.InsertCell();
-        builder.Write("Cell 2, Row 2");
-        builder.EndRow();
+            // First row.
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
 
-        builder.EndTable();
+            // Second row.
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndRow();
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkBehindTable.docx");
-        doc.Save(outputPath);
+            // Finish the table.
+            builder.EndTable();
+
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkTable.docx");
+            doc.Save(outputPath);
+        }
     }
 }

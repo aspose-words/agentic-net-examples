@@ -11,35 +11,34 @@ namespace TableBidiExample
         {
             // Create a new blank document.
             Document doc = new Document();
+
+            // Use DocumentBuilder to construct a simple 2‑cell table.
             DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table and add a couple of cells with sample text.
             Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Cell 1 (LTR text)");
-            builder.InsertCell();
-            builder.Write("Cell 2 (LTR text)");
-            builder.EndRow();
 
             builder.InsertCell();
-            builder.Write("Cell 3 (LTR text)");
-            builder.InsertCell();
-            builder.Write("Cell 4 (LTR text)");
-            builder.EndRow();
+            builder.Write("Cell 1");
 
-            // Finish the table.
+            builder.InsertCell();
+            builder.Write("Cell 2");
+
+            builder.EndRow();
             builder.EndTable();
 
-            // Set the table to be right‑to‑left (bidirectional).
+            // Set the table to right‑to‑left (bidirectional) layout.
             table.Bidi = true;
 
-            // Save the document to the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableBidi.docx");
+            // Define an output path relative to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableBidi.docx");
+
+            // Save the document.
             doc.Save(outputPath);
 
-            // Verify that the file was created.
+            // Simple verification that the file was created.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+                throw new InvalidOperationException("The output file was not created.");
+
+            // The program ends automatically; no user interaction required.
         }
     }
 }

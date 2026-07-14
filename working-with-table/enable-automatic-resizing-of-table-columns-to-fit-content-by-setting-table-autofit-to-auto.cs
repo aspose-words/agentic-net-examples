@@ -1,54 +1,46 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableAutoFitExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Use DocumentBuilder to construct a simple table.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            Table table = builder.StartTable();
+        // Build a simple 3x2 table.
+        Table table = builder.StartTable();
 
-            // First row, first cell.
-            builder.InsertCell();
-            builder.Write("Item");
+        // Header row.
+        builder.InsertCell();
+        builder.Write("Item");
+        builder.InsertCell();
+        builder.Write("Quantity (kg)");
+        builder.EndRow();
 
-            // First row, second cell with longer content.
-            builder.InsertCell();
-            builder.Write("Description with a considerably longer text that should cause the column to expand.");
+        // First data row.
+        builder.InsertCell();
+        builder.Write("Apples");
+        builder.InsertCell();
+        builder.Write("20");
+        builder.EndRow();
 
-            // End the first row.
-            builder.EndRow();
+        // Second data row.
+        builder.InsertCell();
+        builder.Write("Bananas");
+        builder.InsertCell();
+        builder.Write("40");
+        builder.EndRow();
 
-            // Add a second row.
-            builder.InsertCell();
-            builder.Write("Apple");
+        // Finish the table.
+        builder.EndTable();
 
-            builder.InsertCell();
-            builder.Write("A fruit that is typically red, green, or yellow.");
+        // Enable automatic column resizing to fit the cell contents.
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-            builder.EndRow();
-
-            // Finish building the table.
-            builder.EndTable();
-
-            // Enable automatic column resizing to fit the cell contents.
-            table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-            Directory.CreateDirectory(outputDir);
-
-            // Save the document.
-            string outputPath = Path.Combine(outputDir, "TableAutoFitToContents.docx");
-            doc.Save(outputPath);
-        }
+        // Save the document to a file.
+        doc.Save("AutoFitTable.docx");
     }
 }

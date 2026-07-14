@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,28 +14,27 @@ public class Program
         // Start building a table.
         Table table = builder.StartTable();
 
-        // Populate the table with 5 rows and 3 columns.
-        for (int row = 0; row < 5; row++)
+        // Populate the table with a few rows and cells.
+        for (int i = 0; i < 5; i++)
         {
-            for (int col = 0; col < 3; col++)
-            {
-                builder.InsertCell();
-                builder.Write($"Row {row + 1}, Cell {col + 1}");
-            }
+            builder.InsertCell();
+            builder.Write($"Row {i + 1}, Cell 1");
+            builder.InsertCell();
+            builder.Write($"Row {i + 1}, Cell 2");
             builder.EndRow();
         }
 
         // Finish the table.
         builder.EndTable();
 
-        // Configure each row so it will not break across pages.
-        foreach (Row r in table.Rows)
+        // Configure each row so it cannot break across pages.
+        foreach (Row row in table.Rows)
         {
-            r.RowFormat.AllowBreakAcrossPages = false;
+            row.RowFormat.AllowBreakAcrossPages = false;
         }
 
-        // Save the document to the local file system.
-        const string outputFile = "Table_NoBreakAcrossPages.docx";
-        doc.Save(outputFile);
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Table_NoBreakAcrossPages.docx");
+        doc.Save(outputPath);
     }
 }

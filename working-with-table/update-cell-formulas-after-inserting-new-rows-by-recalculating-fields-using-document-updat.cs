@@ -1,83 +1,76 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableFormulaExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start building a table.
-            Table table = builder.StartTable();
+        // Build a simple table with a formula field that sums the values above it.
+        builder.StartTable();
 
-            // Header row.
-            builder.InsertCell();
-            builder.Write("Item");
-            builder.InsertCell();
-            builder.Write("Price");
-            builder.EndRow();
+        // Header row.
+        builder.InsertCell();
+        builder.Write("Item");
+        builder.InsertCell();
+        builder.Write("Value");
+        builder.EndRow();
 
-            // First data row.
-            builder.InsertCell();
-            builder.Write("Apple");
-            builder.InsertCell();
-            builder.Write("2");
-            builder.EndRow();
+        // First data row.
+        builder.InsertCell();
+        builder.Write("Apple");
+        builder.InsertCell();
+        builder.Write("10");
+        builder.EndRow();
 
-            // Second data row.
-            builder.InsertCell();
-            builder.Write("Banana");
-            builder.InsertCell();
-            builder.Write("3");
-            builder.EndRow();
+        // Second data row.
+        builder.InsertCell();
+        builder.Write("Banana");
+        builder.InsertCell();
+        builder.Write("20");
+        builder.EndRow();
 
-            // Total row with a formula field that sums the values above in the Price column.
-            builder.InsertCell();
-            builder.Write("Total");
-            builder.InsertCell();
-            // Insert a formula field. The result will be updated later.
-            builder.InsertField("=SUM(ABOVE)", "");
-            builder.EndRow();
+        // Formula row – the field will calculate the sum of the values above.
+        builder.InsertCell();
+        builder.Write("Total");
+        builder.InsertCell();
+        // Insert a formula field. The field code does not include the surrounding braces.
+        builder.InsertField("=SUM(ABOVE)");
+        builder.EndRow();
 
-            // Finish the table.
-            builder.EndTable();
+        // Finish the table.
+        builder.EndTable();
 
-            // At this point the table has 4 rows (header, two data rows, total row).
-            // Retrieve the total row so we can insert a new data row before it.
-            Row totalRow = table.LastRow;
+        // Retrieve the created table.
+        Table table = doc.FirstSection.Body.Tables[0];
 
-            // Create a new data row to be inserted before the total row.
-            Row newRow = new Row(doc);
-            // First cell: item name.
-            Cell itemCell = new Cell(doc);
-            itemCell.AppendChild(new Paragraph(doc));
-            itemCell.FirstParagraph.AppendChild(new Run(doc, "Cherry"));
-            newRow.AppendChild(itemCell);
-            // Second cell: price value.
-            Cell priceCell = new Cell(doc);
-            priceCell.AppendChild(new Paragraph(doc));
-            priceCell.FirstParagraph.AppendChild(new Run(doc, "5"));
-            newRow.AppendChild(priceCell);
+        // Insert a new data row before the formula row.
+        // The formula row is currently the last row in the table.
+        int formulaRowIndex = table.Rows.Count - 1;
 
-            // Insert the new row before the total row.
-            table.InsertBefore(newRow, totalRow);
+        // Create a new row and insert it at the calculated position.
+        Row newRow = new Row(doc);
+        table.Rows.Insert(formulaRowIndex, newRow);
 
-            // Recalculate all fields in the document (including the formula field).
-            doc.UpdateFields();
+        // Populate the new row with cells.
+        Cell itemCell = new Cell(doc);
+        itemCell.AppendChild(new Paragraph(doc));
+        itemCell.FirstParagraph.AppendChild(new Run(doc, "Orange"));
+        newRow.AppendChild(itemCell);
 
-            // Prepare output directory and file path.
-            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-            Directory.CreateDirectory(artifactsDir);
-            string outputPath = Path.Combine(artifactsDir, "TableWithFormula.docx");
+        Cell valueCell = new Cell(doc);
+        valueCell.AppendChild(new Paragraph(doc));
+        valueCell.FirstParagraph.AppendChild(new Run(doc, "30"));
+        newRow.AppendChild(valueCell);
 
-            // Save the document.
-            doc.Save(outputPath);
-        }
+        // Recalculate all fields in the document, including the formula field.
+        doc.UpdateFields();
+
+        // Save the document to the local file system.
+        doc.Save("UpdatedTableFields.docx");
     }
 }

@@ -3,76 +3,105 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableReport
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Apply a consistent space after each table (12 points).
+        builder.ParagraphFormat.SpaceAfter = 12;
+
+        // ---------- First Table ----------
+        Table table1 = builder.StartTable();
+
+        // Insert a cell to ensure the table has at least one row before applying style.
+        builder.InsertCell();
+        table1.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
+        table1.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+
+        // Header row
+        builder.Writeln("Header 1");
+        builder.InsertCell();
+        builder.Writeln("Header 2");
+        builder.EndRow();
+
+        // Data rows
+        builder.InsertCell();
+        builder.Writeln("Row1 Col1");
+        builder.InsertCell();
+        builder.Writeln("Row1 Col2");
+        builder.EndRow();
+
+        builder.InsertCell();
+        builder.Writeln("Row2 Col1");
+        builder.InsertCell();
+        builder.Writeln("Row2 Col2");
+        builder.EndRow();
+
+        builder.EndTable();
+
+        // Add a blank paragraph to separate tables.
+        builder.Writeln();
+
+        // ---------- Second Table ----------
+        Table table2 = builder.StartTable();
+        builder.InsertCell(); // ensure at least one row before styling
+        table2.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+        table2.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+
+        // Header row
+        builder.Writeln("Product");
+        builder.InsertCell();
+        builder.Writeln("Qty");
+        builder.InsertCell();
+        builder.Writeln("Price");
+        builder.EndRow();
+
+        // Sample data rows
+        for (int i = 1; i <= 2; i++)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Define three different built‑in table styles to use.
-            StyleIdentifier[] styles = new[]
-            {
-                StyleIdentifier.LightShadingAccent1,
-                StyleIdentifier.MediumShading1Accent1,
-                StyleIdentifier.ColorfulShadingAccent1
-            };
-
-            // Build three tables, each with a distinct style.
-            for (int i = 0; i < styles.Length; i++)
-            {
-                // Ensure a consistent space after the previous table.
-                builder.ParagraphFormat.SpaceAfter = 12;
-                builder.Writeln(); // blank paragraph that carries the spacing.
-
-                // Start a new table.
-                Table table = builder.StartTable();
-
-                // Insert the first cell – this creates the first row, which allows us to set style.
-                builder.InsertCell();
-
-                // Apply a distinct style to the current table.
-                table.StyleIdentifier = styles[i];
-                table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
-                table.AutoFit(AutoFitBehavior.AutoFitToContents);
-
-                // Header row.
-                builder.Writeln($"Header {i + 1} - Col 1");
-                builder.InsertCell();
-                builder.Writeln($"Header {i + 1} - Col 2");
-                builder.EndRow();
-
-                // First data row.
-                builder.InsertCell();
-                builder.Writeln($"Row 1, Cell 1 (Table {i + 1})");
-                builder.InsertCell();
-                builder.Writeln($"Row 1, Cell 2 (Table {i + 1})");
-                builder.EndRow();
-
-                // Second data row.
-                builder.InsertCell();
-                builder.Writeln($"Row 2, Cell 1 (Table {i + 1})");
-                builder.InsertCell();
-                builder.Writeln($"Row 2, Cell 2 (Table {i + 1})");
-                builder.EndRow();
-
-                // Finish the current table.
-                builder.EndTable();
-
-                // Add a blank paragraph after the table to keep spacing consistent.
-                builder.Writeln();
-            }
-
-            // Save the document.
-            string outputPath = "ReportWithMultipleTables.docx";
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+            builder.InsertCell();
+            builder.Writeln($"Item {i}");
+            builder.InsertCell();
+            builder.Writeln((i * 10).ToString());
+            builder.InsertCell();
+            builder.Writeln($"${i * 5}.00");
+            builder.EndRow();
         }
+
+        builder.EndTable();
+
+        builder.Writeln();
+
+        // ---------- Third Table ----------
+        Table table3 = builder.StartTable();
+        builder.InsertCell(); // ensure at least one row before styling
+        table3.StyleIdentifier = StyleIdentifier.DarkList;
+        table3.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+
+        // Single row with four cells
+        builder.Writeln("A");
+        builder.InsertCell();
+        builder.Writeln("B");
+        builder.InsertCell();
+        builder.Writeln("C");
+        builder.InsertCell();
+        builder.Writeln("D");
+        builder.EndRow();
+
+        builder.EndTable();
+
+        // Save the document.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ReportWithMultipleTables.docx");
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("The output document was not created.");
+
+        Console.WriteLine($"Document successfully created at: {outputPath}");
     }
 }

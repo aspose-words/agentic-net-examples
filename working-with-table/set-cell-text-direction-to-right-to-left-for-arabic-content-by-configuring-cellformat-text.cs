@@ -29,13 +29,13 @@ namespace AsposeWordsTableExample
             builder.EndRow();
             builder.EndTable();
 
-            // Define output file path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+            // Define output path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CellDirection.docx");
 
             // Save the document.
             doc.Save(outputPath);
 
-            // Simple validation to ensure the file was created.
+            // Verify that the file was created.
             if (!File.Exists(outputPath))
                 throw new InvalidOperationException("The document was not saved correctly.");
         }

@@ -9,42 +9,43 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Set the document to have two columns.
-        doc.FirstSection.PageSetup.TextColumns.SetCount(2);
-
-        // Build a simple 2x2 table.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Set the section to have two columns (multi‑column layout).
+        builder.CurrentSection.PageSetup.TextColumns.SetCount(2);
+
+        // Start a table that would normally flow across the columns.
         Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
+
+        // Populate the table with a few rows and cells.
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                builder.InsertCell();
+                builder.Write($"Row {i + 1}, Cell {j + 1}");
+            }
+            builder.EndRow();
+        }
+
+        // Finish the table.
         builder.EndTable();
 
-        // Prevent the table rows from breaking across columns/pages.
-        // The Table class does not expose an AllowBreakAcrossColumns property.
-        // Instead, set the RowFormat.AllowBreakAcrossPages property for each row.
+        // Prevent the table rows from breaking across pages/columns.
+        // Aspose.Words does not have an AllowBreakAcrossColumns property on Table.
+        // Instead, set the RowFormat.AllowBreakAcrossPages property for each row,
+        // which also controls breaking across columns in a multi‑column layout.
         foreach (Row row in table.Rows)
         {
             row.RowFormat.AllowBreakAcrossPages = false;
         }
 
-        // Define output path.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "Table_NoColumnBreak.docx");
-
         // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Table_NoBreakAcrossColumns.docx");
         doc.Save(outputPath);
 
-        // Simple verification that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

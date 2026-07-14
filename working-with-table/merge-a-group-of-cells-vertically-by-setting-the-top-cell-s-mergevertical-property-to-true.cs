@@ -3,63 +3,56 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableMerge
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table. The table will have two columns and three rows.
-        Table table = builder.StartTable();
+            // Start a table.
+            Table table = builder.StartTable();
 
-        // ---------- First row ----------
-        // First cell – this cell will be the top of a vertically merged range.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.First; // Mark as the first merged cell.
-        builder.Write("Merged vertically");
+            // First row – first cell will be the top cell of a vertically merged range.
+            builder.InsertCell();
+            builder.CellFormat.VerticalMerge = CellMerge.First; // Mark as the first merged cell.
+            builder.Write("Merged vertically");
 
-        // Second cell – a regular, unmerged cell.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Normal cell");
-        builder.EndRow();
+            // First row – second cell (regular, not merged).
+            builder.InsertCell();
+            builder.CellFormat.VerticalMerge = CellMerge.None;
+            builder.Write("Unmerged cell");
+            builder.EndRow();
 
-        // ---------- Second row ----------
-        // First cell – merge with the cell above.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.Previous; // Continue vertical merge.
-        // No text is written to merged cells beyond the first.
+            // Second row – first cell merges with the cell above.
+            builder.InsertCell();
+            builder.CellFormat.VerticalMerge = CellMerge.Previous; // Merge vertically with the cell above.
+            // No text is written to merged cells except the first one.
+            
+            // Second row – second cell (regular).
+            builder.InsertCell();
+            builder.CellFormat.VerticalMerge = CellMerge.None;
+            builder.Write("Unmerged cell");
+            builder.EndRow();
 
-        // Second cell – regular cell.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Normal cell");
-        builder.EndRow();
+            // End the table.
+            builder.EndTable();
 
-        // ---------- Third row ----------
-        // First cell – continue merging vertically.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.Previous;
+            // Define output path.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "MergedTable.docx");
 
-        // Second cell – regular cell.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Normal cell");
-        builder.EndRow();
+            // Save the document.
+            doc.Save(outputPath);
 
-        // End the table construction.
-        builder.EndTable();
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not saved correctly.");
 
-        // Save the document to a known location.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "MergedCells.docx");
-        doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved successfully.");
+            // Optionally, inform that the process completed (no interactive prompts required).
+            Console.WriteLine("Document created successfully at: " + outputPath);
+        }
     }
 }

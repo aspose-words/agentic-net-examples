@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,27 +9,18 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a large table (e.g., 1000 rows × 5 columns).
+        // Use DocumentBuilder to construct a large table.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         Table table = builder.StartTable();
 
-        // Create header row.
-        for (int col = 0; col < 5; col++)
+        // Add 1000 rows with two cells each.
+        for (int i = 0; i < 1000; i++)
         {
             builder.InsertCell();
-            builder.Write($"Header {col + 1}");
-        }
-        builder.EndRow();
-
-        // Populate the table with many rows.
-        for (int row = 0; row < 1000; row++)
-        {
-            for (int col = 0; col < 5; col++)
-            {
-                builder.InsertCell();
-                builder.Write($"R{row + 1}C{col + 1}");
-            }
+            builder.Write($"Row {i + 1}, Cell 1");
+            builder.InsertCell();
+            builder.Write($"Row {i + 1}, Cell 2");
             builder.EndRow();
         }
 
@@ -38,9 +30,15 @@ public class Program
         // Force a layout pass after all modifications.
         doc.UpdatePageLayout();
 
-        // Save the document.
-        string outputPath = "LargeTableOptimized.docx";
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OptimizedTable.docx");
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to {outputPath}");
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
+
+        // Confirmation message.
+        Console.WriteLine($"Document saved successfully to: {outputPath}");
     }
 }

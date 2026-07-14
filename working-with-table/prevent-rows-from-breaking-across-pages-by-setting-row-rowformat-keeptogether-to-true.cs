@@ -11,30 +11,35 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build a table with enough rows to potentially span multiple pages.
         Table table = builder.StartTable();
 
-        // Prevent rows from breaking across pages.
-        builder.RowFormat.AllowBreakAcrossPages = false;
-
-        // Add rows that will likely span multiple pages.
+        // Add 30 rows, each with two cells containing sample text.
         for (int i = 1; i <= 30; i++)
         {
             builder.InsertCell();
-            builder.Writeln($"Row {i}, Column 1");
+            builder.Write($"Row {i}, Column 1 - Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
             builder.InsertCell();
-            builder.Writeln($"Row {i}, Column 2");
+            builder.Write($"Row {i}, Column 2 - Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
             builder.EndRow();
         }
 
-        // End the table.
         builder.EndTable();
 
+        // Prevent each row from breaking across pages.
+        foreach (Row row in table.Rows)
+        {
+            // Setting AllowBreakAcrossPages to false keeps the row together.
+            row.RowFormat.AllowBreakAcrossPages = false;
+        }
+
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Table.RowKeepTogether.docx");
+
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RowsKeepTogether.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple verification that the file was created.
         if (!File.Exists(outputPath))
             throw new Exception("The output document was not created.");
     }

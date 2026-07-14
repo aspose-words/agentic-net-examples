@@ -12,12 +12,11 @@ public class Program
         DataTable dataTable = new DataTable("Sample");
         dataTable.Columns.Add("Product");
         dataTable.Columns.Add("Quantity");
-        dataTable.Columns.Add("Price");
-        dataTable.Rows.Add("Apples", 10, 1.5);
-        dataTable.Rows.Add("Bananas", 5, 0.8);
-        dataTable.Rows.Add("Carrots", 7, 0.6);
+        dataTable.Rows.Add("Apples", 10);
+        dataTable.Rows.Add("Bananas", 20);
+        dataTable.Rows.Add("Carrots", 30);
 
-        // Create a new blank document and a builder attached to it.
+        // Initialize a new blank document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -32,10 +31,10 @@ public class Program
         }
         builder.EndRow();
 
-        // Iterate through each DataRow and add its values to the table.
-        foreach (DataRow row in dataTable.Rows)
+        // Add rows for each DataRow in the DataTable.
+        foreach (DataRow dataRow in dataTable.Rows)
         {
-            foreach (object value in row.ItemArray)
+            foreach (object value in dataRow.ItemArray)
             {
                 builder.InsertCell();
                 builder.Write(value?.ToString() ?? string.Empty);
@@ -50,10 +49,10 @@ public class Program
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableFromDataTable.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
         {
-            throw new InvalidOperationException($"Failed to create the output file at {outputPath}");
+            throw new InvalidOperationException("The output document was not created.");
         }
     }
 }

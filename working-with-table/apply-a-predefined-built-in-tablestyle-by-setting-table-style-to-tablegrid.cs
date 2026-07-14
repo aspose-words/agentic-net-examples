@@ -3,55 +3,48 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableStyleExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new empty document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table and add two rows with two cells each.
-            Table table = builder.StartTable();
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
 
-            // First row (header)
-            builder.InsertCell();
-            builder.Write("Header 1");
-            builder.InsertCell();
-            builder.Write("Header 2");
-            builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
 
-            // Second row (data)
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
 
-            // Finish the table.
-            builder.EndTable();
+        builder.EndTable();
 
-            // Apply the built‑in "TableGrid" style to the table.
-            // Use the StyleIdentifier property because Table.Style expects a Style object.
-            table.StyleIdentifier = StyleIdentifier.TableGrid;
+        // Apply the built‑in TableGrid style using the style identifier.
+        // Using StyleIdentifier avoids a null lookup in the Styles collection.
+        table.StyleIdentifier = StyleIdentifier.TableGrid;
+        // Optional: apply the style to the whole table.
+        table.StyleOptions = TableStyleOptions.None;
 
-            // Define the output file path (in the same folder as the executable).
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableStyleExample.docx");
+        // Save the document to a local file.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "TableWithStyle.docx");
+        doc.Save(outputPath);
 
-            // Save the document.
-            doc.Save(outputPath);
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Document was not saved correctly.");
 
-            // Simple verification that the file was created.
-            if (File.Exists(outputPath))
-            {
-                Console.WriteLine($"Document saved successfully to: {outputPath}");
-            }
-            else
-            {
-                throw new InvalidOperationException("Failed to create the output document.");
-            }
-        }
+        // Indicate successful completion.
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

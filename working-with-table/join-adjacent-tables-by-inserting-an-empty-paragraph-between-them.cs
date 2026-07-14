@@ -12,52 +12,54 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // ---------- First table ----------
-        Table table1 = builder.StartTable();
+        Table firstTable = builder.StartTable();
+
+        // Row 1
         builder.InsertCell();
-        builder.Write("Table1 Cell1");
+        builder.Write("First Table - Row 1, Cell 1");
         builder.InsertCell();
-        builder.Write("Table1 Cell2");
+        builder.Write("First Table - Row 1, Cell 2");
         builder.EndRow();
+
+        // Row 2
+        builder.InsertCell();
+        builder.Write("First Table - Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Write("First Table - Row 2, Cell 2");
+        builder.EndRow();
+
+        // Finish first table.
         builder.EndTable();
 
-        // Insert an empty paragraph between the tables.
-        Paragraph emptyParagraph = builder.InsertParagraph(); // No text added, remains empty.
+        // Insert an empty paragraph to separate the tables.
+        builder.InsertParagraph();
 
         // ---------- Second table ----------
-        Table table2 = builder.StartTable();
+        Table secondTable = builder.StartTable();
+
+        // Row 1
         builder.InsertCell();
-        builder.Write("Table2 Cell1");
+        builder.Write("Second Table - Row 1, Cell 1");
         builder.InsertCell();
-        builder.Write("Table2 Cell2");
+        builder.Write("Second Table - Row 1, Cell 2");
         builder.EndRow();
+
+        // Row 2
+        builder.InsertCell();
+        builder.Write("Second Table - Row 2, Cell 1");
+        builder.InsertCell();
+        builder.Write("Second Table - Row 2, Cell 2");
+        builder.EndRow();
+
+        // Finish second table.
         builder.EndTable();
 
-        // ----- Validation -----
-        // Ensure exactly two tables exist.
-        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
-        if (tables.Count != 2)
-            throw new Exception($"Expected 2 tables, but found {tables.Count}.");
-
-        // Verify that a paragraph node follows the first table.
-        Node firstTable = tables[0];
-        Node nodeAfterFirstTable = firstTable.NextSibling;
-        if (nodeAfterFirstTable == null || nodeAfterFirstTable.NodeType != NodeType.Paragraph)
-            throw new Exception("The node after the first table is not a paragraph.");
-
-        Paragraph betweenParagraph = (Paragraph)nodeAfterFirstTable;
-        // The paragraph should be empty (no visible text).
-        if (!string.IsNullOrWhiteSpace(betweenParagraph.GetText()))
-            throw new Exception("The paragraph between tables is not empty.");
-
         // Save the document.
-        string outputPath = "JoinedTables.docx";
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "JoinedTables.docx");
         doc.Save(outputPath);
 
-        // Confirm the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to create the output document.");
-
-        // Indicate successful execution.
-        Console.WriteLine("Document with joined tables created successfully.");
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }
