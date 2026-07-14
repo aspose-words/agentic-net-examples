@@ -5,40 +5,46 @@ using Aspose.Words.Drawing;
 
 public class Program
 {
+    // URL of the online video to embed in every document.
+    private const string VideoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
+    // Desired size of the video placeholder (in points).
+    private const double VideoWidth = 320;   // 320 points ≈ 4.44 inches
+    private const double VideoHeight = 180;  // 180 points ≈ 2.5 inches
+
+    // Input folder containing the source Word documents.
+    private static readonly string InputFolder = Path.Combine(Environment.CurrentDirectory, "InputDocs");
+
+    // Output folder where the processed documents will be saved.
+    private static readonly string OutputFolder = Path.Combine(Environment.CurrentDirectory, "OutputDocs");
+
     public static void Main()
     {
-        // Folder that contains the source Word documents.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Input");
-        // Folder where the processed documents will be saved.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Ensure the input and output directories exist.
+        Directory.CreateDirectory(InputFolder);
+        Directory.CreateDirectory(OutputFolder);
 
-        // Ensure the output directory exists.
-        Directory.CreateDirectory(outputFolder);
-
-        // URL of the online video to embed in each document.
-        const string videoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
-
-        // Process every .docx file in the input folder.
-        foreach (string inputFile in Directory.GetFiles(inputFolder, "*.docx"))
+        // Process each .docx file in the input folder.
+        foreach (string inputFilePath in Directory.GetFiles(InputFolder, "*.docx"))
         {
             // Load the existing document.
-            Document doc = new Document(inputFile);
+            Document doc = new Document(inputFilePath);
 
-            // Create a DocumentBuilder to modify the document.
+            // Create a DocumentBuilder for editing the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a paragraph describing the video.
+            // Insert a paragraph to separate the video from existing content.
+            builder.InsertParagraph();
             builder.Writeln("Embedded online video:");
 
-            // Insert the online video with a fixed size (width: 320 points, height: 180 points).
-            // This uses the InsertOnlineVideo(string, double, double) overload.
-            builder.InsertOnlineVideo(videoUrl, 320, 180);
+            // Insert the online video using the overload that takes URL, width, and height.
+            builder.InsertOnlineVideo(VideoUrl, VideoWidth, VideoHeight);
 
-            // Determine the output file path (same file name, different folder).
-            string outputFile = Path.Combine(outputFolder, Path.GetFileName(inputFile));
+            // Determine the output file path (preserve original file name).
+            string outputFilePath = Path.Combine(OutputFolder, Path.GetFileName(inputFilePath));
 
             // Save the modified document.
-            doc.Save(outputFile);
+            doc.Save(outputFilePath);
         }
     }
 }

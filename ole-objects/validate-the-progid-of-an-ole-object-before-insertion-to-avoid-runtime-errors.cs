@@ -5,46 +5,59 @@ using Aspose.Words.Drawing;
 
 public class Program
 {
-    // Validates that the provided ProgID is not null, empty, or whitespace.
-    private static bool IsValidProgId(string progId)
-    {
-        return !string.IsNullOrWhiteSpace(progId);
-    }
-
     public static void Main()
     {
         // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Sample data to embed as an OLE package.
-        byte[] sampleData = System.Text.Encoding.UTF8.GetBytes("This is sample OLE package content.");
-        using (MemoryStream dataStream = new MemoryStream(sampleData))
+        // Dummy data to embed as an OLE object.
+        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Dummy OLE content");
+        using (MemoryStream oleStream = new MemoryStream(dummyData))
         {
-            string progId = "Package"; // ProgID for a generic OLE package.
+            // ProgId we intend to use for the OLE object.
+            string progId = "Package";
 
-            // Validate the ProgID before attempting insertion.
+            // Validate the ProgId before insertion.
             if (IsValidProgId(progId))
             {
-                // Insert the OLE object using the validated ProgID.
+                // Insert the OLE object into the document.
                 // Parameters: stream, progId, asIcon (false), presentation (null).
-                Shape oleShape = builder.InsertOleObject(dataStream, progId, false, null);
+                Shape oleShape = builder.InsertOleObject(oleStream, progId, false, null);
 
-                // Optionally, set a display name for the package.
-                if (oleShape?.OleFormat?.OlePackage != null)
-                {
-                    oleShape.OleFormat.OlePackage.FileName = "Sample.txt";
-                    oleShape.OleFormat.OlePackage.DisplayName = "Sample.txt";
-                }
+                // Optionally, set additional properties on the inserted OLE object.
+                oleShape.OleFormat.IsLocked = false;
             }
             else
             {
-                // If the ProgID is invalid, skip insertion (could log or handle as needed).
-                Console.WriteLine("Invalid ProgID provided. OLE object insertion skipped.");
+                // If the ProgId is invalid, skip insertion or handle accordingly.
+                Console.WriteLine($"Invalid ProgId: '{progId}'. OLE object not inserted.");
             }
         }
 
-        // Save the resulting document.
-        doc.Save("ValidatedOle.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ValidatedOleObject.docx");
+        doc.Save(outputPath);
+    }
+
+    // Simple validation method for ProgId strings.
+    private static bool IsValidProgId(string progId)
+    {
+        // ProgId cannot be null, empty, or whitespace.
+        if (string.IsNullOrWhiteSpace(progId))
+            return false;
+
+        // Example whitelist of known safe ProgIds.
+        string[] allowedProgIds = { "Package", "Excel.Sheet", "Word.Document", "PowerPoint.Show" };
+
+        // Return true if the ProgId is in the whitelist.
+        foreach (string allowed in allowedProgIds)
+        {
+            if (string.Equals(progId, allowed, StringComparison.OrdinalIgnoreCase))
+                return true;
+        }
+
+        // If not in whitelist, consider it invalid.
+        return false;
     }
 }

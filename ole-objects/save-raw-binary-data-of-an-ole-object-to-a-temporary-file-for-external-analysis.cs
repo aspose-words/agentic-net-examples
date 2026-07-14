@@ -9,36 +9,30 @@ public class Program
     {
         // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Prepare some dummy data to embed as an OLE Package.
-        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Sample OLE object binary data");
-
-        // Insert the dummy data as an OLE object (Package) into the document.
+        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Sample OLE binary content");
         using (MemoryStream dataStream = new MemoryStream(dummyData))
         {
-            // Insert as an icon (true) – the actual appearance is not important for this example.
-            Shape oleShape = builder.InsertOleObject(dataStream, "Package", true, null);
-
-            // Access the OleFormat of the inserted shape.
-            OleFormat oleFormat = oleShape.OleFormat;
-
-            // Retrieve the raw binary data of the OLE object.
-            byte[] rawOleData = oleFormat.GetRawData();
-
-            // Determine a temporary file path.
-            string tempFilePath = Path.Combine(Path.GetTempPath(), "OleObjectData.bin");
-
-            // Write the raw data to the temporary file.
-            File.WriteAllBytes(tempFilePath, rawOleData);
-
-            // Optionally, save the document itself (demonstrating the use of the save rule).
-            string docPath = Path.Combine(Path.GetTempPath(), "DocumentWithOle.docx");
-            doc.Save(docPath);
+            // Insert the OLE object into the document.
+            // "Package" progId indicates a generic OLE package.
+            // Insert as an icon (asIcon = true) with no custom presentation image.
+            builder.InsertOleObject(dataStream, "Package", true, null);
         }
 
-        // The program finishes without waiting for user input.
+        // Retrieve the first shape that contains the OLE object.
+        Shape oleShape = (Shape)doc.GetChild(NodeType.Shape, 0, true);
+        OleFormat oleFormat = oleShape.OleFormat;
+
+        // Get the raw binary data of the OLE object.
+        byte[] rawData = oleFormat.GetRawData();
+
+        // Save the raw data to a temporary file for external analysis.
+        string tempFilePath = Path.Combine(Path.GetTempPath(), "OleObjectData.bin");
+        File.WriteAllBytes(tempFilePath, rawData);
+
+        // Output the location of the temporary file.
+        Console.WriteLine($"OLE raw data saved to: {tempFilePath}");
     }
 }

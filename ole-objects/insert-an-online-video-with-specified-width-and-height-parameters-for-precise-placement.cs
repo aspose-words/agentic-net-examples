@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -11,22 +12,28 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // URL of the online video to embed.
-        string videoUrl = "https://vimeo.com/52477838";
+        string videoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 
-        // Insert the video as a floating shape with explicit size and position.
-        // The shape will be placed relative to the left and top margins,
-        // with a width of 320 points and a height of 180 points.
+        // Insert the video as a floating shape.
+        // Position: relative to the left and top margins, offset (0,0).
+        // Size: 320 points wide by 180 points high (16:9 aspect ratio).
+        // Wrap type: square text wrapping.
         builder.InsertOnlineVideo(
             videoUrl,
-            RelativeHorizontalPosition.LeftMargin,   // Horizontal reference.
-            0,                                      // Distance from the left margin.
-            RelativeVerticalPosition.TopMargin,     // Vertical reference.
-            0,                                      // Distance from the top margin.
-            320,                                    // Width in points.
-            180,                                    // Height in points.
-            WrapType.Square);                       // Text wrapping style.
+            RelativeHorizontalPosition.LeftMargin,
+            0,
+            RelativeVerticalPosition.TopMargin,
+            0,
+            320,
+            180,
+            WrapType.Square);
 
-        // Save the document to the file system.
-        doc.Save("OnlineVideo.docx");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        string outputPath = Path.Combine(outputDir, "OnlineVideo.docx");
+        doc.Save(outputPath);
     }
 }

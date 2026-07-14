@@ -1,7 +1,7 @@
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -9,31 +9,36 @@ public class Program
     {
         // Create a new empty document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare some dummy data to embed as an OLE object.
-        byte[] dummyData = new byte[] { 0x00, 0x01, 0x02, 0x03 };
+        // Prepare dummy data to embed as an OLE object.
+        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Dummy content");
         using (MemoryStream dataStream = new MemoryStream(dummyData))
         {
             // Attempt to insert an OLE object with a ProgId that is unlikely to be registered.
-            string invalidProgId = "Invalid.ProgId";
-
+            // Wrap the call in a try-catch block to handle the error gracefully.
             try
             {
-                // InsertOleObject may throw an exception if the ProgId is not found.
-                builder.InsertOleObject(dataStream, invalidProgId, asIcon: false, presentation: null);
+                // The ProgId "NonExistent.ProgId" does not correspond to any installed application.
+                builder.InsertOleObject(dataStream, "NonExistent.ProgId", false, null);
                 Console.WriteLine("OLE object inserted successfully.");
+            }
+            catch (COMException comEx)
+            {
+                // COMException is thrown when the ProgId cannot be resolved.
+                Console.WriteLine($"COMException caught: {comEx.Message}");
             }
             catch (Exception ex)
             {
-                // Handle the error gracefully.
-                Console.WriteLine($"Failed to insert OLE object with ProgId '{invalidProgId}'.");
-                Console.WriteLine($"Error: {ex.Message}");
+                // Catch any other unexpected exceptions.
+                Console.WriteLine($"Exception caught: {ex.Message}");
             }
         }
 
-        // Save the document to the output folder.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleObjectExample.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
         doc.Save(outputPath);
         Console.WriteLine($"Document saved to: {outputPath}");
     }
