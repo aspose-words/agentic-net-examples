@@ -1,41 +1,48 @@
 using System;
 using System.Globalization;
-using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define output folder and file.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "JapaneseEmphasis.docx");
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the language of the text to Japanese (LCID 1041).
+        // Define the LCID for Japanese language.
         int japaneseLcid = new CultureInfo("ja-JP", false).LCID;
+
+        // Set the builder's font language to Japanese.
         builder.Font.LocaleId = japaneseLcid;
 
-        // Apply an East Asian emphasis mark only if the language is Japanese.
+        // Write some Japanese text.
+        builder.Writeln("こんにちは世界"); // "Hello World" in Japanese
+
+        // Apply an East Asian emphasis mark only if the current language is Japanese.
         if (builder.Font.LocaleId == japaneseLcid)
         {
             builder.Font.EmphasisMark = Aspose.Words.EmphasisMark.OverSolidCircle;
         }
 
-        // Write sample text.
-        builder.Writeln("これは強調マーク付きのテキストです。");
+        // Write Japanese text that will have the emphasis mark.
+        builder.Writeln("強調されたテキスト"); // "Emphasized text"
 
-        // Save the document.
-        doc.Save(outputPath);
+        // Reset formatting to avoid affecting subsequent text.
+        builder.Font.ClearFormatting();
+
+        // Write English text without emphasis.
+        builder.Writeln("Hello world!");
+
+        // Save the document to a file.
+        string outputPath = "EastAsianEmphasis.docx";
+        doc.Save(outputPath, SaveFormat.Docx);
 
         // Simple validation to ensure the file was created.
-        if (File.Exists(outputPath))
+        if (System.IO.File.Exists(outputPath))
         {
-            Console.WriteLine("Document saved successfully: " + outputPath);
+            Console.WriteLine($"Document saved successfully to '{outputPath}'.");
         }
         else
         {

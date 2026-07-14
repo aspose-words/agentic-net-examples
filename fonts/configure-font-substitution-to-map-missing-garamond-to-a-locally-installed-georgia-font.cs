@@ -11,26 +11,21 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a paragraph using a font that might be missing on the system.
+        // Write some text using a font that is likely missing on the system (Garamond).
         builder.Font.Name = "Garamond";
-        builder.Writeln("This text is formatted with Garamond, which may be unavailable.");
+        builder.Writeln("This text is formatted with Garamond, which will be substituted.");
 
-        // Configure font substitution: map the missing Garamond font to the locally installed Georgia font.
+        // Configure font substitution: map missing "Garamond" to the locally installed "Georgia".
         FontSettings fontSettings = new FontSettings();
+        // Use the table substitution rule to specify the substitute font.
         fontSettings.SubstitutionSettings.TableSubstitution.SetSubstitutes(
             "Garamond", new[] { "Georgia" });
 
-        // Apply the font settings to the document.
+        // Assign the configured FontSettings to the document.
         doc.FontSettings = fontSettings;
 
-        // Save the document to PDF. The text will be rendered using Georgia if Garamond is not found.
-        string outputPath = "FontSubstitutionExample.pdf";
+        // Save the document to PDF. The missing Garamond font will be rendered using Georgia.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FontSubstitutionExample.pdf");
         doc.Save(outputPath);
-
-        // Ensure the file was created (no console output as per requirements).
-        if (File.Exists(outputPath))
-        {
-            // File exists – nothing else to do.
-        }
     }
 }

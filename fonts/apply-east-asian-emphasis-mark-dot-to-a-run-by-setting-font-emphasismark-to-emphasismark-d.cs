@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-public class ApplyEmphasisMark
+public class SetEmphasisMarkExample
 {
     public static void Main()
     {
@@ -12,24 +12,33 @@ public class ApplyEmphasisMark
         // Use DocumentBuilder to add content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply the East Asian emphasis mark "Dot" (represented by OverSolidCircle) to the current font.
-        builder.Font.EmphasisMark = Aspose.Words.EmphasisMark.OverSolidCircle;
+        // Apply an East Asian emphasis mark to the current font.
+        // The EmphasisMark enumeration does not contain a "Dot" value;
+        // the closest supported value is OverSolidCircle.
+        builder.Font.EmphasisMark = EmphasisMark.OverSolidCircle;
 
-        // Validate that the emphasis mark was set correctly.
-        if (builder.Font.EmphasisMark != Aspose.Words.EmphasisMark.OverSolidCircle)
+        // Verify that the emphasis mark was set correctly.
+        if (builder.Font.EmphasisMark != EmphasisMark.OverSolidCircle)
             throw new InvalidOperationException("Failed to set EmphasisMark to OverSolidCircle.");
 
-        // Write some sample text that will display the emphasis mark.
-        builder.Write("East Asian emphasis mark: Dot");
+        // Write text that will display the emphasis mark.
+        builder.Write("Emphasis text");
+        builder.Writeln();
+
+        // Clear formatting to remove the emphasis mark for subsequent text.
+        builder.Font.ClearFormatting();
+
+        // Write normal text without emphasis.
+        builder.Write("Simple text");
 
         // Define the output file path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EmphasisMarkDot.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SetEmphasisMark.docx");
 
         // Save the document.
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Ensure the file was created.
         if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

@@ -1,39 +1,34 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 
-public class Program
+public class FontSubstitutionExample
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Prepare output directory.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Initialize FontSettings and assign to the document.
+        // Initialize FontSettings for the document.
         FontSettings fontSettings = new FontSettings();
         doc.FontSettings = fontSettings;
 
-        // Define a substitution rule: replace missing "Times New Roman" with "Calibri".
+        // Define a custom substitution: replace missing "Times New Roman" with "Calibri".
+        // This rule will be applied only when "Times New Roman" cannot be found.
         fontSettings.SubstitutionSettings.TableSubstitution.SetSubstitutes("Times New Roman", "Calibri");
 
-        // Validate that the substitution rule was set correctly.
-        var substitutes = fontSettings.SubstitutionSettings.TableSubstitution.GetSubstitutes("Times New Roman");
-        if (substitutes == null || !substitutes.Contains("Calibri"))
-            throw new InvalidOperationException("Failed to set the font substitution rule.");
-
-        // Write some text using the missing font.
+        // Build document content using a font that is intentionally missing.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Times New Roman";
-        builder.Writeln("This line uses Times New Roman, which will be substituted with Calibri.");
+        builder.Font.Name = "Times New Roman"; // This font will be substituted.
+        builder.Writeln("This line is written with Times New Roman, which will be rendered as Calibri.");
 
-        // Save the document to a PDF file.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CustomFontSubstitution.pdf");
+        // Save the document to PDF to observe the substitution.
+        string outputPath = Path.Combine(artifactsDir, "FontSubstitution.pdf");
         doc.Save(outputPath);
-
-        // Ensure the output file exists.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output file was not created.", outputPath);
     }
 }

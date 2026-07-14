@@ -1,56 +1,63 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Fonts;
+using Aspose.Drawing; // For Aspose.Drawing.Color
 
-namespace AsposeFontsExample
+public class ApplyStyleExample
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
 
-            // Initialize a DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Initialize a DocumentBuilder for inserting content.
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Create a custom paragraph style named "MyCustomStyle".
-            Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+        // -----------------------------------------------------------------
+        // Define a custom paragraph style with specific font settings.
+        // -----------------------------------------------------------------
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+        customStyle.Font.Name = "Courier New";
+        customStyle.Font.Size = 14;
+        customStyle.Font.Bold = true;
+        // Font.Color expects System.Drawing.Color. Convert from Aspose.Drawing.Color.
+        customStyle.Font.Color = System.Drawing.Color.FromArgb(Color.Blue.ToArgb());
 
-            // Define the font settings for the style.
-            Aspose.Words.Font styleFont = customStyle.Font;
-            styleFont.Name = "Arial";
-            styleFont.Size = 14.0;
-            styleFont.Bold = true;
-            styleFont.Color = System.Drawing.Color.DarkGreen; // Fully qualified System.Drawing.Color
+        // Validate that the style's font properties were set correctly.
+        if (customStyle.Font.Name != "Courier New")
+            throw new InvalidOperationException("Font name was not set correctly on the style.");
+        if (customStyle.Font.Size != 14)
+            throw new InvalidOperationException("Font size was not set correctly on the style.");
+        if (!customStyle.Font.Bold)
+            throw new InvalidOperationException("Font bold flag was not set correctly on the style.");
+        System.Drawing.Color expectedColor = System.Drawing.Color.FromArgb(Color.Blue.ToArgb());
+        if (!customStyle.Font.Color.Equals(expectedColor))
+            throw new InvalidOperationException("Font color was not set correctly on the style.");
 
-            // Apply the custom style to a range of paragraphs.
-            builder.ParagraphFormat.Style = customStyle;
-            builder.Writeln("This paragraph uses the custom style.");
-            builder.Writeln("Another paragraph with the same style.");
-            builder.Writeln("Yet another styled paragraph.");
+        // -----------------------------------------------------------------
+        // Insert paragraphs. Apply the custom style to a specific range.
+        // -----------------------------------------------------------------
+        builder.Writeln("Paragraph without custom style.");
 
-            // Revert to the default style for subsequent paragraphs.
-            builder.ParagraphFormat.Style = doc.Styles["Normal"];
-            builder.Writeln("This paragraph uses the normal style.");
-            builder.Writeln("Back to the default formatting.");
+        // Apply the custom style to the next three paragraphs.
+        builder.ParagraphFormat.Style = customStyle;
+        builder.Writeln("Paragraph with custom style 1.");
+        builder.Writeln("Paragraph with custom style 2.");
+        builder.Writeln("Paragraph with custom style 3.");
 
-            // Define the output file path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "StyledParagraphs.docx");
+        // Reset to the default style for subsequent paragraphs.
+        builder.ParagraphFormat.Style = doc.Styles["Normal"];
+        builder.Writeln("Paragraph after custom style.");
 
-            // Save the document.
-            doc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // Save the document.
+        // -----------------------------------------------------------------
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "StyledParagraphs.docx");
+        doc.Save(outputPath);
 
-            // Validate that the file was created.
-            if (File.Exists(outputPath))
-            {
-                Console.WriteLine($"Document saved successfully to: {outputPath}");
-            }
-            else
-            {
-                Console.WriteLine("Failed to save the document.");
-            }
-        }
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

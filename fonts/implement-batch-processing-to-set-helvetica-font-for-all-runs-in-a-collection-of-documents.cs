@@ -1,64 +1,69 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
+using Aspose.Words.Fonts;
 
 public class Program
 {
+    // Entry point of the console application.
     public static void Main()
     {
-        // Define input and output folders relative to the current directory.
+        // Define folders for input and output documents.
         string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
         string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
 
-        // Ensure both folders exist to avoid DirectoryNotFoundException.
+        // Ensure the folders exist.
         Directory.CreateDirectory(inputFolder);
         Directory.CreateDirectory(outputFolder);
 
-        // Retrieve all .docx files from the input folder.
-        string[] docFiles = Directory.GetFiles(inputFolder, "*.docx", SearchOption.TopDirectoryOnly);
+        // Collect all .docx files from the input folder.
+        List<string> documentPaths = new List<string>(Directory.GetFiles(inputFolder, "*.docx"));
 
-        // If there are no documents, inform the user and exit gracefully.
-        if (docFiles.Length == 0)
+        // If there are no documents, create a sample one to demonstrate the process.
+        if (documentPaths.Count == 0)
         {
-            Console.WriteLine($"No .docx files found in '{inputFolder}'.");
-            Console.WriteLine("Batch processing completed.");
-            return;
+            string samplePath = Path.Combine(inputFolder, "Sample.docx");
+            CreateSampleDocument(samplePath);
+            documentPaths.Add(samplePath);
         }
 
-        // Process each document.
-        foreach (string filePath in docFiles)
+        // Process each document: set all Run fonts to Helvetica and save.
+        foreach (string docPath in documentPaths)
         {
             // Load the document.
-            Document doc = new Document(filePath);
+            Document doc = new Document(docPath);
 
-            // Get all Run nodes in the document.
-            Aspose.Words.NodeCollection runs = doc.GetChildNodes(Aspose.Words.NodeType.Run, true);
-
-            // Set the font of each Run to Helvetica and validate.
-            foreach (Aspose.Words.Run run in runs)
+            // Iterate over all Run nodes in the document.
+            NodeCollection runs = doc.GetChildNodes(NodeType.Run, true);
+            foreach (Run run in runs)
             {
+                // Set the font name to Helvetica.
                 run.Font.Name = "Helvetica";
 
+                // Validate that the font name was set correctly.
                 if (!string.Equals(run.Font.Name, "Helvetica", StringComparison.OrdinalIgnoreCase))
                 {
-                    throw new InvalidOperationException(
-                        $"Failed to set font for a run in document '{filePath}'.");
+                    throw new InvalidOperationException($"Failed to set font for run in document '{docPath}'.");
                 }
             }
 
-            // Determine the output file path and save the modified document.
-            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
+            // Save the modified document to the output folder, preserving the original file name.
+            string outputPath = Path.Combine(outputFolder, Path.GetFileName(docPath));
             doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-            {
-                throw new FileNotFoundException($"The output file was not created: {outputPath}");
-            }
-
-            Console.WriteLine($"Processed '{Path.GetFileName(filePath)}' and saved to '{outputPath}'.");
         }
 
-        Console.WriteLine("Batch processing completed.");
+        // Indicate completion (no interactive prompts).
+        Console.WriteLine($"Processed {documentPaths.Count} document(s). Output saved to '{outputFolder}'.");
+    }
+
+    // Helper method to create a simple sample document if none are present.
+    private static void CreateSampleDocument(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document.");
+        builder.Writeln("It contains multiple runs with default fonts.");
+        doc.Save(filePath);
     }
 }

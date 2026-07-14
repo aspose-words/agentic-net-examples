@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Drawing; // For Aspose.Drawing.Color
+using Aspose.Words.Saving;
 
 public class Program
 {
@@ -10,41 +10,40 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Create a paragraph to hold the runs.
-        Paragraph para = new Paragraph(doc);
-        doc.FirstSection.Body.AppendChild(para);
+        // Ensure the document has at least one paragraph.
+        Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
 
         // Create the source run with specific font formatting.
         Run sourceRun = new Run(doc, "Source text");
-        sourceRun.Font.Name = "Arial";
+        sourceRun.Font.Name = "Courier New";
         sourceRun.Font.Size = 24;
         sourceRun.Font.Bold = true;
-        // Font.Color expects System.Drawing.Color; convert from Aspose.Drawing.Color.
-        sourceRun.Font.Color = System.Drawing.Color.FromArgb(Color.Blue.ToArgb());
-        para.AppendChild(sourceRun);
+        sourceRun.Font.Color = System.Drawing.Color.Blue; // Fully qualified System.Drawing.Color
+        paragraph.AppendChild(sourceRun);
 
-        // Create the target run whose formatting will be copied.
+        // Create the target run and copy the formatting from the source run.
         Run targetRun = new Run(doc, "Target text");
-        para.AppendChild(targetRun);
-
-        // Copy font properties from the source run to the target run.
         targetRun.Font.Name = sourceRun.Font.Name;
         targetRun.Font.Size = sourceRun.Font.Size;
         targetRun.Font.Bold = sourceRun.Font.Bold;
-        targetRun.Font.Color = System.Drawing.Color.FromArgb(sourceRun.Font.Color.ToArgb());
+        targetRun.Font.Color = sourceRun.Font.Color;
+        paragraph.AppendChild(targetRun);
+
+        // Optional validation to ensure the copy succeeded.
+        if (targetRun.Font.Name != sourceRun.Font.Name ||
+            targetRun.Font.Size != sourceRun.Font.Size ||
+            targetRun.Font.Bold != sourceRun.Font.Bold ||
+            targetRun.Font.Color.ToArgb() != sourceRun.Font.Color.ToArgb())
+        {
+            throw new InvalidOperationException("Font properties were not copied correctly.");
+        }
+
+        // Define output path.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "CopyFontFormatting.docx");
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CopyFontFormatting.docx");
-        doc.Save(outputPath);
-
-        // Validate that the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine("Document saved successfully: " + outputPath);
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
+        doc.Save(outputPath, SaveFormat.Docx);
     }
 }

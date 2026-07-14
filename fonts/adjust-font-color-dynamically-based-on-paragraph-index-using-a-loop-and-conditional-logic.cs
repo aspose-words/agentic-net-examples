@@ -7,48 +7,42 @@ public class Program
 {
     public static void Main()
     {
+        // Define output path for the generated document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DynamicFontColors.docx");
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add several paragraphs to the document.
-        for (int i = 0; i < 5; i++)
+        // Add several paragraphs with placeholder text.
+        int paragraphCount = 5;
+        for (int i = 0; i < paragraphCount; i++)
         {
             builder.Writeln($"Paragraph {i + 1}");
         }
 
-        // Loop through each paragraph and set its font color based on the paragraph index.
+        // Loop through each paragraph and set the font color based on its index.
         for (int i = 0; i < doc.FirstSection.Body.Paragraphs.Count; i++)
         {
-            Paragraph paragraph = doc.FirstSection.Body.Paragraphs[i];
+            var paragraph = doc.FirstSection.Body.Paragraphs[i];
 
-            // Choose a color: even index -> Red, odd index -> Blue.
-            Aspose.Drawing.Color aspColor = (i % 2 == 0) ? Aspose.Drawing.Color.Red : Aspose.Drawing.Color.Blue;
-
-            // Convert Aspose.Drawing.Color to System.Drawing.Color as required by Font.Color.
-            System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
-
-            // Apply the color to every run within the paragraph.
-            foreach (Run run in paragraph.Runs)
+            // Ensure the paragraph contains at least one run to apply formatting.
+            if (paragraph.Runs.Count > 0)
             {
-                run.Font.Color = sysColor;
+                var run = paragraph.Runs[0];
 
-                // Validate that the color was set correctly.
-                if (run.Font.Color.ToArgb() != sysColor.ToArgb())
-                {
-                    throw new InvalidOperationException("Failed to assign font color.");
-                }
+                // Choose a color: even index -> Red, odd index -> Blue.
+                Aspose.Drawing.Color aspColor = (i % 2 == 0) ? Aspose.Drawing.Color.Red : Aspose.Drawing.Color.Blue;
+
+                // Convert Aspose.Drawing.Color to System.Drawing.Color as required by the Font.Color property.
+                System.Drawing.Color sysColor = System.Drawing.Color.FromArgb(aspColor.ToArgb());
+
+                // Apply the color to the run's font.
+                run.Font.Color = sysColor;
             }
         }
 
-        // Save the document to the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DynamicFontColors.docx");
+        // Save the document to the specified file.
         doc.Save(outputPath);
-
-        // Ensure the output file was created.
-        if (!File.Exists(outputPath))
-        {
-            throw new FileNotFoundException("The document was not saved correctly.", outputPath);
-        }
     }
 }

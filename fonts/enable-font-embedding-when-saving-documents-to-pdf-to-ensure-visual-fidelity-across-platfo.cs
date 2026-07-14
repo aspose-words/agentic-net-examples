@@ -7,39 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directory and ensure it exists.
+        // Create output directory.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a new document and add some text with different fonts.
+        // Build a simple document with a couple of different fonts.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         builder.Font.Name = "Arial";
-        builder.Writeln("This text uses Arial.");
+        builder.Writeln("This line uses Arial.");
 
         builder.Font.Name = "Courier New";
-        builder.Writeln("This text uses Courier New, a non‑standard font.");
+        builder.Writeln("This line uses Courier New.");
 
         // Configure PDF save options to embed all fonts fully.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
-            EmbedFullFonts = true,
-            FontEmbeddingMode = Aspose.Words.Saving.PdfFontEmbeddingMode.EmbedAll
+            EmbedFullFonts = true,                     // Embed the complete font files (no subsetting).
+            FontEmbeddingMode = PdfFontEmbeddingMode.EmbedAll // Ensure all fonts are embedded.
         };
 
-        // Save the document as PDF with the specified options.
-        string pdfPath = Path.Combine(artifactsDir, "EmbeddedFonts.pdf");
-        doc.Save(pdfPath, pdfOptions);
+        // Save the document as PDF with embedded fonts.
+        string outputPath = Path.Combine(artifactsDir, "EmbeddedFonts.pdf");
+        doc.Save(outputPath, pdfOptions);
 
         // Simple verification that the file was created.
-        if (File.Exists(pdfPath))
+        if (File.Exists(outputPath))
         {
-            Console.WriteLine($"PDF saved successfully to: {pdfPath}");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save PDF.");
+            Console.WriteLine($"PDF saved with embedded fonts at: {outputPath}");
         }
     }
 }
