@@ -16,11 +16,11 @@ public class Program
         Shape chartShape = builder.InsertChart(ChartType.Column, 432, 252);
         Chart chart = chartShape.Chart;
 
-        // Move the legend to the top‑right corner.
+        // Move the legend to the top right corner.
         ChartLegend legend = chart.Legend;
         legend.Position = LegendPosition.TopRight;
 
-        // Set the legend's background fill to light gray.
+        // Set the legend background fill to light gray.
         legend.Format.Fill.Solid(Color.LightGray);
 
         // Save the document.

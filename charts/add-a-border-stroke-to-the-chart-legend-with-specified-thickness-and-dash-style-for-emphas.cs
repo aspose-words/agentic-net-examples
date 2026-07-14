@@ -1,8 +1,7 @@
-using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
-using System.Drawing;
 
 public class Program
 {
@@ -18,16 +17,16 @@ public class Program
 
         // Clear default demo data and add custom series.
         chart.Series.Clear();
-        string[] categories = new[] { "Category 1", "Category 2", "Category 3" };
+        string[] categories = { "Category 1", "Category 2", "Category 3" };
         chart.Series.Add("Series 1", categories, new double[] { 10, 20, 30 });
 
-        // Access the legend and apply a border stroke.
+        // Apply a border stroke to the chart legend.
         ChartLegend legend = chart.Legend;
         legend.Format.Stroke.Weight = 2.0;               // Thickness of the border.
         legend.Format.Stroke.DashStyle = DashStyle.Dash; // Dash style for emphasis.
-        legend.Format.Stroke.Color = Color.DarkBlue;     // Optional: set border color.
+        legend.Format.Stroke.Color = Color.DarkRed;      // Optional: set border color.
 
         // Save the document.
-        doc.Save("ChartLegendBorder.docx");
+        doc.Save("ChartWithLegendBorder.docx");
     }
 }

@@ -1,36 +1,41 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;
-using Aspose.Words.Drawing.Charts;
+using Aspose.Words.Drawing;               // Needed for the Shape class
+using Aspose.Words.Drawing.Charts;        // Chart related types
 
-public class Program
+namespace ScatterChartExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a paragraph that will hold the scatter chart.
-        builder.Writeln("Paragraph with a scatter chart:");
+            // Insert an initial paragraph with some text.
+            builder.Writeln("This paragraph will contain a scatter chart below.");
 
-        // Move the builder back to the first paragraph (the one we just created).
-        Paragraph paragraph = doc.FirstSection.Body.Paragraphs[0];
-        builder.MoveTo(paragraph);
+            // Move the builder to the first paragraph (index 0, node index 0).
+            // This ensures the chart is inserted right after the paragraph.
+            builder.MoveToParagraph(0, 0);
 
-        // Insert a scatter chart into the paragraph using the InsertChart overload that takes ChartType, width and height.
-        Shape chartShape = builder.InsertChart(ChartType.Scatter, 400, 300);
-        Chart chart = chartShape.Chart;
+            // Insert a scatter chart using the overload that specifies chart type, width, and height.
+            // Width and height are specified in points (1 point = 1/72 inch).
+            Shape chartShape = builder.InsertChart(ChartType.Scatter, 500, 300);
+            Chart chart = chartShape.Chart;
 
-        // Remove the demo data that Aspose.Words inserts by default.
-        chart.Series.Clear();
+            // Optional: clear the demo data that comes with the chart.
+            chart.Series.Clear();
 
-        // Add a custom series with X and Y values.
-        double[] xValues = { 1.0, 2.0, 3.0, 4.0 };
-        double[] yValues = { 10.0, 20.0, 15.0, 30.0 };
-        chart.Series.Add("Sample Series", xValues, yValues);
+            // Add a series with X and Y values for the scatter plot.
+            chart.Series.Add(
+                "Sample Series",
+                new double[] { 1.0, 2.5, 3.8, 5.0, 6.2 },
+                new double[] { 2.0, 3.5, 1.8, 4.0, 5.5 });
 
-        // Save the document to the working directory.
-        doc.Save("ScatterChart.docx");
+            // Save the document to the working directory.
+            doc.Save("ScatterChart.docx");
+        }
     }
 }

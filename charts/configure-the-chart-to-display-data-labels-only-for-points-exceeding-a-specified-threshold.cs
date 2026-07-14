@@ -3,11 +3,11 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-public class Program
+public class ChartDataLabelsThreshold
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -20,31 +20,38 @@ public class Program
 
         // Define categories and corresponding values.
         string[] categories = { "A", "B", "C", "D", "E" };
-        double[] values = { 12.5, 7.3, 15.8, 4.2, 9.0 };
+        double[] values = { 30, 70, 45, 90, 20 };
 
-        // Add a single series with the data.
+        // Add a custom series with the data.
         chart.Series.Add("Sample Series", categories, values);
         ChartSeries series = chart.Series[0];
 
         // Enable data labels for the series.
         series.HasDataLabels = true;
 
-        // Threshold above which a data label will be shown.
-        double threshold = 10.0;
+        // Threshold value – only points with a value greater than this will show a label.
+        double threshold = 50.0;
 
-        // Configure each data label: show only if the point's value exceeds the threshold.
+        // Iterate over each data point and hide the label if the value does not exceed the threshold.
         for (int i = 0; i < series.YValues.Count; i++)
         {
             double pointValue = series.YValues[i].DoubleValue;
+            ChartDataLabel dataLabel = series.DataLabels[i];
 
-            // Show the value label only for points exceeding the threshold.
-            series.DataLabels[i].ShowValue = pointValue > threshold;
-
-            // Hide the label completely for points below the threshold.
-            series.DataLabels[i].IsHidden = pointValue <= threshold;
+            if (pointValue <= threshold)
+            {
+                // Hide the data label for points below or equal to the threshold.
+                dataLabel.IsHidden = true;
+            }
+            else
+            {
+                // Ensure the label is visible for points above the threshold.
+                dataLabel.IsHidden = false;
+                dataLabel.ShowValue = true;
+            }
         }
 
-        // Save the document.
-        doc.Save("ChartWithConditionalDataLabels.docx");
+        // Save the document with the configured chart.
+        doc.Save("ChartDataLabelsThreshold.docx");
     }
 }

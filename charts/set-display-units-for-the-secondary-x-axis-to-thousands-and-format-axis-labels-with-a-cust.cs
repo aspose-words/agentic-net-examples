@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -19,30 +18,24 @@ public class Program
         // Remove the default demo series.
         chart.Series.Clear();
 
-        // Add a primary series (optional, just to have data).
-        chart.Series.Add("Primary Series",
-            new[] { "A", "B", "C" },
-            new double[] { 10, 20, 30 });
+        // Add a primary series.
+        string[] categories = { "Category 1", "Category 2", "Category 3" };
+        chart.Series.Add("Primary Series", categories, new double[] { 10, 20, 30 });
 
-        // Create a secondary series group.
-        ChartSeriesGroup secondaryGroup = chart.SeriesGroups.Add(ChartSeriesType.Line);
+        // Create a secondary series group and assign it to the secondary axis.
+        ChartSeriesGroup secondaryGroup = chart.SeriesGroups.Add(ChartSeriesType.Column);
         secondaryGroup.AxisGroup = AxisGroup.Secondary;
 
-        // Configure the secondary X‑axis: set display units to thousands.
-        secondaryGroup.AxisX.DisplayUnit.Unit = AxisBuiltInUnit.Thousands;
-
-        // Apply a custom number format to the secondary X‑axis labels.
-        secondaryGroup.AxisX.NumberFormat.FormatCode = "#,##0";
-        // Ensure the format is not linked to the source data.
-        secondaryGroup.AxisX.NumberFormat.IsLinkedToSource = false;
-
         // Add a series to the secondary group.
-        secondaryGroup.Series.Add("Secondary Series",
-            new[] { "A", "B", "C" },
-            new double[] { 1000, 2000, 3000 });
+        secondaryGroup.Series.Add("Secondary Series", categories, new double[] { 15, 25, 35 });
+
+        // Configure the secondary X‑axis: set display units to thousands and apply a custom number format.
+        ChartAxis secondaryXAxis = secondaryGroup.AxisX;
+        secondaryXAxis.DisplayUnit.Unit = AxisBuiltInUnit.Thousands;
+        secondaryXAxis.NumberFormat.FormatCode = "#,##0";
+        secondaryXAxis.NumberFormat.IsLinkedToSource = false;
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SecondaryAxisChart.docx");
-        doc.Save(outputPath);
+        doc.Save("ChartSecondaryXAxis.docx");
     }
 }

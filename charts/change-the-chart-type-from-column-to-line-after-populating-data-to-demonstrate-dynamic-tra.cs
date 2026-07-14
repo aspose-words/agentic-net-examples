@@ -3,46 +3,46 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
 
-public class DynamicChartTransformation
+public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a column chart.
-        Shape columnChartShape = builder.InsertChart(ChartType.Column, 500, 300);
-        Chart columnChart = columnChartShape.Chart;
+        Shape columnShape = builder.InsertChart(ChartType.Column, 500, 300);
+        Chart columnChart = columnShape.Chart;
 
-        // Remove the demo data.
+        // Clear any demo data.
         columnChart.Series.Clear();
 
-        // Populate the chart with sample data.
-        string[] categories = { "Jan", "Feb", "Mar" };
-        double[] values = { 100, 150, 130 };
-        columnChart.Series.Add("Sales", categories, values);
+        // Define categories and values.
+        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
+        double[] sales = { 120, 150, 170, 130 };
+        double[] profit = { 30, 45, 50, 35 };
 
-        // ----- Dynamic transformation -----
-        // Aspose.Words does not allow changing the ChartType of an existing chart.
-        // To demonstrate a transformation, we create a new line chart and copy the data.
+        // Populate the column chart.
+        columnChart.Series.Add("Sales", categories, sales);
+        columnChart.Series.Add("Profit", categories, profit);
+        columnChart.Title.Text = "Sales and Profit (Column Chart)";
+        columnChart.Title.Show = true;
 
-        // Remove the original column chart shape.
-        columnChartShape.Remove();
+        // Insert a line chart at the same position to demonstrate dynamic transformation.
+        builder.MoveTo(columnShape);
+        Shape lineShape = builder.InsertChart(ChartType.Line, 500, 300);
+        Chart lineChart = lineShape.Chart;
 
-        // Insert a line chart at the same position.
-        Shape lineChartShape = builder.InsertChart(ChartType.Line, 500, 300);
-        Chart lineChart = lineChartShape.Chart;
-
-        // Clear any demo data that comes with the new chart.
+        // Populate the line chart with the same data.
         lineChart.Series.Clear();
-
-        // Copy the previously created series into the line chart.
-        lineChart.Series.Add("Sales", categories, values);
-
-        // Optional: add a title to illustrate the transformation.
-        lineChart.Title.Text = "Sales Over Time";
+        lineChart.Series.Add("Sales", categories, sales);
+        lineChart.Series.Add("Profit", categories, profit);
+        lineChart.Title.Text = "Sales and Profit (Line Chart)";
         lineChart.Title.Show = true;
+
+        // Remove the original column chart.
+        columnShape.Remove();
 
         // Save the document.
         doc.Save("DynamicChartTransformation.docx");

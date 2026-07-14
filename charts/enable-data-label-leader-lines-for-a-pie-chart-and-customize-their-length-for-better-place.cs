@@ -1,6 +1,8 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
+using System.Drawing;
 
 public class Program
 {
@@ -11,37 +13,31 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Insert a pie chart.
-        Chart chart = builder.InsertChart(ChartType.Pie, 500, 300).Chart;
+        Shape chartShape = builder.InsertChart(ChartType.Pie, 500, 300);
+        Chart chart = chartShape.Chart;
 
-        // Remove the demo series and add custom data.
+        // Remove the default demo series.
         chart.Series.Clear();
-        ChartSeries series = chart.Series.Add(
-            "Sample Series",
-            new[] { "Category A", "Category B", "Category C" },
-            new[] { 30.0, 45.0, 25.0 });
 
-        // Enable data labels and leader lines.
+        // Add custom data.
+        string[] categories = { "Apples", "Bananas", "Cherries" };
+        double[] values = { 30, 45, 25 };
+        ChartSeries series = chart.Series.Add("Fruits", categories, values);
+
+        // Enable data labels for the series.
         series.HasDataLabels = true;
         ChartDataLabelCollection dataLabels = series.DataLabels;
-        dataLabels.ShowLeaderLines = true;
-        dataLabels.ShowValue = true;
-        dataLabels.ShowPercentage = true;
+        dataLabels.ShowLeaderLines = true;   // Show leader lines.
+        dataLabels.ShowValue = true;         // Show the numeric value.
+        dataLabels.ShowPercentage = true;    // Show the percentage.
+        dataLabels.Separator = "; ";         // Separator between value and percentage.
 
-        // Adjust each label's position to increase the visual length of its leader line.
-        // This is done by moving the label outward using absolute coordinates.
-        for (int i = 0; i < dataLabels.Count; i++)
-        {
-            ChartDataLabel label = dataLabels[i];
-            label.LeftMode = ChartDataLabelLocationMode.Absolute;
-            label.TopMode = ChartDataLabelLocationMode.Absolute;
-
-            // Simple offset calculation – each label is moved a bit farther from the center.
-            // The values are arbitrary and can be tuned for better appearance.
-            label.Left += 15 * i;   // Move rightward.
-            label.Top += 10 * i;    // Move downward.
-        }
+        // Increase the distance between the data labels and the pie slices.
+        // This is achieved by setting the series' Explosion property, which moves
+        // each slice (and its leader line) outward from the centre.
+        series.Explosion = 20; // Adjust this value as needed for longer leader lines.
 
         // Save the document.
-        doc.Save("PieChartLeaderLines.docx");
+        doc.Save("DataLabelsLeaderLinesPieChart.docx");
     }
 }

@@ -7,36 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a line chart into the document.
+        // Insert a line chart.
         Shape chartShape = builder.InsertChart(ChartType.Line, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the demo data series that Aspose.Words adds by default.
+        // Remove the demo data series.
         chart.Series.Clear();
 
-        // Add a primary series (uses the primary Y‑axis).
-        chart.Series.Add("Primary Series",
-            new[] { "Q1", "Q2", "Q3" },
-            new double[] { 1200, 1500, 1800 });
+        // Add a primary series.
+        string[] categories = new[] { "Q1", "Q2", "Q3", "Q4" };
+        chart.Series.Add("Primary Series", categories, new double[] { 1000, 1500, 1200, 1300 });
 
-        // Create a secondary series group and assign it to the secondary axis group.
+        // Create a secondary series group and assign it to the secondary axis.
         ChartSeriesGroup secondaryGroup = chart.SeriesGroups.Add(ChartSeriesType.Line);
         secondaryGroup.AxisGroup = AxisGroup.Secondary;
 
-        // Add a series to the secondary group (will be plotted against the secondary Y‑axis).
-        secondaryGroup.Series.Add("Secondary Series",
-            new[] { "Q1", "Q2", "Q3" },
-            new double[] { 2000, 2500, 3000 });
-
-        // Set the number format of the secondary Y‑axis to currency with two decimal places.
+        // Set the number format of the secondary Y‑axis to currency with two decimals.
         secondaryGroup.AxisY.NumberFormat.FormatCode = "\"$\"#,##0.00";
-        secondaryGroup.AxisY.NumberFormat.IsLinkedToSource = false;
 
-        // Save the document containing the chart.
-        doc.Save("SecondaryYAxisCurrency.docx");
+        // Optional: give the secondary Y‑axis a title.
+        secondaryGroup.AxisY.Title.Show = true;
+        secondaryGroup.AxisY.Title.Text = "Secondary Y Axis (USD)";
+
+        // Add a series to the secondary group.
+        secondaryGroup.Series.Add("Secondary Series", categories, new double[] { 200, 250, 220, 210 });
+
+        // Save the document.
+        doc.Save("SetSecondaryYAxisNumberFormat.docx");
     }
 }

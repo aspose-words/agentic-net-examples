@@ -1,6 +1,6 @@
 using System;
 using Aspose.Words;
-using Aspose.Words.Drawing;               // Needed for Shape
+using Aspose.Words.Drawing;               // Required for the Shape class
 using Aspose.Words.Drawing.Charts;        // Chart related types
 
 public class Program
@@ -11,21 +11,17 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a column chart into the document.
-        Shape chartShape = builder.InsertChart(ChartType.Column, 500, 300);
+        // Insert a histogram chart. Histogram charts support the Add(name, values) overload.
+        Shape chartShape = builder.InsertChart(ChartType.Histogram, 500, 300);
         Chart chart = chartShape.Chart;
 
-        // Remove the default demo series to start with a clean chart.
+        // Remove the demo data that comes with a new chart.
         chart.Series.Clear();
 
-        // Define categories (X‑axis) and corresponding values (Y‑axis).
-        string[] categories = { "Q1", "Q2", "Q3", "Q4" };
-        double[] values = { 1500, 2300, 1800, 2100 };
+        // Add a new series with a name and a set of values in one step.
+        chart.Series.Add("Sample Series", new double[] { 12.5, 18.3, 9.7, 15.0, 22.1 });
 
-        // Add a labeled series in one step using the overload that accepts a name, categories and values.
-        chart.Series.Add("Revenue", categories, values);
-
-        // Save the document containing the chart.
+        // Save the document to the local file system.
         doc.Save("ChartSeriesAdd.docx");
     }
 }
