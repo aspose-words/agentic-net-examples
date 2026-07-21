@@ -9,26 +9,28 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Define custom XML data.
-        string xml = "<root><CustomerName>Contoso</CustomerName></root>";
+        // Define custom XML data that will be used for mapping.
+        string xml = "<root><Customer><Name>Contoso Ltd.</Name><Address>123 Main St.</Address></Customer></root>";
 
-        // Add the custom XML part to the document.
+        // Add the custom XML part to the document. Use a GUID as the part identifier.
         string partId = Guid.NewGuid().ToString("B");
         CustomXmlPart xmlPart = doc.CustomXmlParts.Add(partId, xml);
 
-        // Create a plain text content control (structured document tag).
-        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        sdt.Title = "CustomerName";
-        sdt.Tag = "customer-name";
+        // Create an inline plain‑text content control (SDT).
+        StructuredDocumentTag sdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
+        {
+            Title = "CustomerName",
+            Tag = "customer-name"
+        };
 
-        // Map the content control to the XML node.
-        sdt.XmlMapping.SetMapping(xmlPart, "/root[1]/CustomerName[1]", string.Empty);
+        // Map the content control to the <Name> element inside the custom XML part.
+        sdt.XmlMapping.SetMapping(xmlPart, "/root[1]/Customer[1]/Name[1]", string.Empty);
 
         // Insert the content control into the first paragraph of the document.
-        Paragraph para = doc.FirstSection.Body.FirstParagraph;
-        para.AppendChild(sdt);
+        Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+        firstParagraph.AppendChild(sdt);
 
         // Save the resulting document.
-        doc.Save("CustomXmlMappedPlainText.docx");
+        doc.Save("XmlMappedPlainTextSdt.docx");
     }
 }

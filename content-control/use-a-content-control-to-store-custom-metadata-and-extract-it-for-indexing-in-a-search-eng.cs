@@ -1,86 +1,95 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
 
-public class Program
+namespace ContentControlMetadataExample
 {
-    public static void Main()
+    public class Program
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Paths for the generated files.
-        string docPath = Path.Combine(outputDir, "metadata.docx");
-        string jsonPath = Path.Combine(outputDir, "metadata.json");
-
-        // -----------------------------------------------------------------
-        // 1. Create a document and embed custom metadata in content controls.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Create a custom XML part that holds the metadata.
-        string xmlContent = "<meta><author>John Doe</author><keywords>example,asp</keywords></meta>";
-        CustomXmlPart customXmlPart = doc.CustomXmlParts.Add(Guid.NewGuid().ToString("B"), xmlContent);
-
-        // Write a heading.
-        builder.Writeln("Document Metadata");
-        builder.Writeln();
-
-        // Insert an inline plain‑text content control for the author.
-        builder.Write("Author: ");
-        StructuredDocumentTag authorSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        authorSdt.Title = "Author";
-        authorSdt.Tag = "author";
-        authorSdt.XmlMapping.SetMapping(customXmlPart, "/meta[1]/author[1]", string.Empty);
-        // Add a placeholder run so the SDT is not empty before mapping.
-        authorSdt.RemoveAllChildren();
-        authorSdt.AppendChild(new Run(doc, "John Doe"));
-        builder.CurrentParagraph.AppendChild(authorSdt);
-        builder.Writeln();
-
-        // Insert an inline plain‑text content control for the keywords.
-        builder.Write("Keywords: ");
-        StructuredDocumentTag keywordsSdt = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline);
-        keywordsSdt.Title = "Keywords";
-        keywordsSdt.Tag = "keywords";
-        keywordsSdt.XmlMapping.SetMapping(customXmlPart, "/meta[1]/keywords[1]", string.Empty);
-        keywordsSdt.RemoveAllChildren();
-        keywordsSdt.AppendChild(new Run(doc, "example,asp"));
-        builder.CurrentParagraph.AppendChild(keywordsSdt);
-        builder.Writeln();
-
-        // Save the document containing the content controls.
-        doc.Save(docPath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the document and extract metadata from the content controls.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(docPath);
-        NodeCollection sdtNodes = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true);
-
-        var metadata = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (StructuredDocumentTag sdt in sdtNodes.OfType<StructuredDocumentTag>())
+        public static void Main()
         {
-            // Use the Tag property as the key if it is set.
-            if (!string.IsNullOrEmpty(sdt.Tag))
+            // Paths for output files.
+            const string docPath = "sample.docx";
+            const string jsonPath = "metadata.json";
+
+            // 1. Create a new blank document.
+            Document doc = new Document();
+
+            // 2. Add a custom XML part that holds product metadata.
+            string xmlContent =
+                "<metadata>" +
+                "  <product>" +
+                "    <name>Product A</name>" +
+                "    <category>Electronics</category>" +
+                "    <price>199.99</price>" +
+                "  </product>" +
+                "</metadata>";
+            CustomXmlPart xmlPart = doc.CustomXmlParts.Add(Guid.NewGuid().ToString("B"), xmlContent);
+
+            // 3. Insert a plain‑text content control that will display the product name.
+            Paragraph paragraph = doc.FirstSection.Body.FirstParagraph;
+            StructuredDocumentTag nameControl = new StructuredDocumentTag(doc, SdtType.PlainText, MarkupLevel.Inline)
             {
-                string value = sdt.GetText().Trim();
-                metadata[sdt.Tag] = value;
-            }
+                Title = "ProductName",
+                Tag = "product-name"
+            };
+            // Map the control to the <name> element of the custom XML part.
+            nameControl.XmlMapping.SetMapping(xmlPart, "/metadata[1]/product[1]/name[1]", string.Empty);
+            paragraph.AppendChild(nameControl);
+
+            // 4. Save the document.
+            doc.Save(docPath);
+
+            // 5. Load the document back for extraction.
+            Document loadedDoc = new Document(docPath);
+
+            // 6. Locate the content control by its Title.
+            StructuredDocumentTag? foundControl = loadedDoc.GetChildNodes(NodeType.StructuredDocumentTag, true)
+                .OfType<StructuredDocumentTag>()
+                .FirstOrDefault(c => c.Title == "ProductName");
+
+            if (foundControl == null)
+                throw new InvalidOperationException("Content control not found.");
+
+            // 7. Extract the displayed product name.
+            string productName = foundControl.GetText().Trim();
+
+            // 8. Retrieve the associated custom XML part.
+            CustomXmlPart? associatedPart = foundControl.XmlMapping.CustomXmlPart;
+            if (associatedPart == null)
+                throw new InvalidOperationException("Custom XML part not found.");
+
+            // 9. Parse the XML data.
+            XDocument xDoc = XDocument.Parse(Encoding.UTF8.GetString(associatedPart.Data));
+
+            // 10. Extract additional metadata (category and price) using LINQ to XML.
+            XElement? productElement = xDoc.Root?.Element("product");
+            if (productElement == null)
+                throw new InvalidOperationException("Product element missing in XML.");
+
+            string category = productElement.Element("category")?.Value ?? string.Empty;
+            string priceText = productElement.Element("price")?.Value ?? "0";
+            decimal price = decimal.TryParse(priceText, out decimal parsedPrice) ? parsedPrice : 0m;
+
+            // 11. Prepare an object for JSON serialization.
+            var metadata = new
+            {
+                Name = productName,
+                Category = category,
+                Price = price
+            };
+
+            // 12. Serialize to JSON and write to a file.
+            string json = JsonConvert.SerializeObject(metadata, Formatting.Indented);
+            File.WriteAllText(jsonPath, json, Encoding.UTF8);
+
+            // Optional: write a short confirmation to the console.
+            Console.WriteLine("Metadata extracted and saved to " + jsonPath);
         }
-
-        // Serialize the extracted metadata to JSON.
-        string json = JsonConvert.SerializeObject(metadata, Formatting.Indented);
-        File.WriteAllText(jsonPath, json);
-
-        // Optional: display the JSON on the console.
-        Console.WriteLine("Extracted metadata:");
-        Console.WriteLine(json);
     }
 }

@@ -8,74 +8,90 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder for inserting content.
+        // Paths for the sample document and the CSV output.
+        const string docPath = "sample.docx";
+        const string csvPath = "checkboxes.csv";
+
+        // -------------------------------------------------
+        // Create a sample DOCX containing several checkbox content controls.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert first checkbox content control.
-        builder.Writeln("Option 1:");
+        // Inline checkbox 1.
         StructuredDocumentTag checkBox1 = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
         {
-            Title = "Option1",
-            Tag = "opt1",
+            Title = "AgreeTerms",
+            Tag = "agree",
             Checked = true
         };
         builder.InsertNode(checkBox1);
         builder.Writeln();
 
-        // Insert second checkbox content control.
-        builder.Writeln("Option 2:");
+        // Inline checkbox 2.
         StructuredDocumentTag checkBox2 = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
         {
-            Title = "Option2",
-            Tag = "opt2",
+            Title = "SubscribeNewsletter",
+            Tag = "subscribe",
             Checked = false
         };
         builder.InsertNode(checkBox2);
         builder.Writeln();
 
-        // Insert third checkbox content control.
-        builder.Writeln("Option 3:");
-        StructuredDocumentTag checkBox3 = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Inline)
+        // Block-level checkbox.
+        StructuredDocumentTag checkBox3 = new StructuredDocumentTag(doc, SdtType.Checkbox, MarkupLevel.Block)
         {
-            Title = "Option3",
-            Tag = "opt3",
+            Title = "AcceptPolicy",
+            Tag = "policy",
             Checked = true
         };
-        builder.InsertNode(checkBox3);
-        builder.Writeln();
+        // Block-level SDTs must contain at least one paragraph.
+        Paragraph placeholderParagraph = new Paragraph(doc);
+        placeholderParagraph.AppendChild(new Run(doc, " "));
+        checkBox3.AppendChild(placeholderParagraph);
+        doc.FirstSection.Body.AppendChild(checkBox3);
 
-        // Save the sample document (optional, demonstrates persistence).
-        const string docPath = "sample.docx";
+        // Save the sample document.
         doc.Save(docPath);
 
-        // Enumerate all checkbox StructuredDocumentTag nodes in the document.
-        var checkboxTags = doc.GetChildNodes(NodeType.StructuredDocumentTag, true)
-                              .OfType<StructuredDocumentTag>()
-                              .Where(sdt => sdt.SdtType == SdtType.Checkbox)
-                              .ToList();
+        // -------------------------------------------------
+        // Load the document and export checkbox data to CSV.
+        // -------------------------------------------------
+        Document loadedDoc = new Document(docPath);
 
-        // Prepare CSV content.
-        var csvLines = new[]
+        var checkboxData = loadedDoc
+            .GetChildNodes(NodeType.StructuredDocumentTag, true)
+            .OfType<StructuredDocumentTag>()
+            .Where(sdt => sdt.SdtType == SdtType.Checkbox)
+            .Select(sdt => new
+            {
+                Title = sdt.Title ?? string.Empty,
+                Tag = sdt.Tag ?? string.Empty,
+                Checked = sdt.Checked
+            })
+            .ToList();
+
+        using (StreamWriter writer = new StreamWriter(csvPath, false))
         {
-            "Title,Tag,Checked"
+            writer.WriteLine("Title,Tag,Checked");
+            foreach (var item in checkboxData)
+            {
+                writer.WriteLine($"{EscapeCsv(item.Title)},{EscapeCsv(item.Tag)},{item.Checked}");
+            }
         }
-        .Concat(checkboxTags.Select(sdt =>
-            $"{EscapeCsv(sdt.Title ?? string.Empty)},{EscapeCsv(sdt.Tag ?? string.Empty)},{sdt.Checked}"));
 
-        // Write CSV to file.
-        const string csvPath = "checkboxes.csv";
-        File.WriteAllLines(csvPath, csvLines);
+        // Inform the user (no interactive input required).
+        Console.WriteLine($"Exported {checkboxData.Count} checkbox(es) to \"{csvPath}\".");
     }
 
-    // Helper to escape CSV fields that may contain commas or quotes.
-    private static string EscapeCsv(string field)
+    // Simple CSV field escaper.
+    private static string EscapeCsv(string value)
     {
-        if (field.Contains(',') || field.Contains('\"') || field.Contains('\n') || field.Contains('\r'))
+        if (value.Contains(',') || value.Contains('\"') || value.Contains('\n') || value.Contains('\r'))
         {
-            string escaped = field.Replace("\"", "\"\"");
+            string escaped = value.Replace("\"", "\"\"");
             return $"\"{escaped}\"";
         }
-        return field;
+        return value;
     }
 }

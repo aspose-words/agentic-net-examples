@@ -1,6 +1,6 @@
 # Content Control Examples for Aspose.Words for .NET
 
-This folder contains the live, publish-ready C# examples for the Content Control category. Each file is a standalone console example selected from the verified 26.5.0 run.
+This folder contains the live, publish-ready C# examples for the Content Control category. Each file is a standalone console example selected from the verified 26.6.0 run.
 
 ## Snapshot
 
@@ -8,10 +8,10 @@ This folder contains the live, publish-ready C# examples for the Content Control
 - Slug: content-control
 - Total examples: 35
 - Publish-ready successful examples: 35 / 35
-- Source run: 20260619_131835_59df5f
+- Source run: 20260711_192617_b9179d
 - Input Bootstrap examples: 3
-- Native Sdt Api examples: 22
-- Xml Json Export examples: 10
+- Native SDT Api examples: 22
+- XML JSON Export examples: 10
 
 ## Category rules that shaped these examples
 
@@ -29,7 +29,7 @@ This folder contains the live, publish-ready C# examples for the Content Control
 ## Prerequisites
 
 - .NET SDK 8.0 or later
-- Aspose.Words 26.5.0
+- Aspose.Words 26.6.0
 - Newtonsoft.Json
 
 ## Running Examples
@@ -39,7 +39,7 @@ Each file in this folder is a single, standalone `.cs` console example. To run o
 ```bash
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.5.0
+dotnet add package Aspose.Words --version 26.6.0
 dotnet add package Newtonsoft.Json
 
 # Copy one example from this folder into the project as Program.cs
@@ -61,7 +61,7 @@ Example:
 # From the repository root
 dotnet new console -n ExampleProject --framework net8.0
 cd ExampleProject
-dotnet add package Aspose.Words --version 26.5.0
+dotnet add package Aspose.Words --version 26.6.0
 dotnet add package Newtonsoft.Json
 
 # PowerShell example
@@ -75,41 +75,41 @@ dotnet run --configuration Release --no-build
 
 | # | File | Original task | Workflow | Outputs | Selected engine |
 |---|---|---|---|---|---|
-| 1 | `insert-a-plain-text-content-control-at-a-specific-bookmark-in-a-docx-document.cs` | Insert a plain text content control at a specific bookmark in a DOCX document. | Input Bootstrap | docx | mcp |
-| 2 | `add-a-picture-content-control-that-references-an-external-image-file-and-embed-it-on-save.cs` | Add a picture content control that references an external image file and embed it on save. | Native Sdt Api | docx | mcp |
-| 3 | `batch-process-a-folder-of-word-files-inserting-a-header-content-control-with-document-meta.cs` | Batch process a folder of Word files, inserting a header content control with document metadata. | Input Bootstrap | docx | llm |
-| 4 | `load-a-doc-file-add-a-date-picker-content-control-and-save-the-result-as-docx.cs` | Load a DOC file, add a date picker content control, and save the result as DOCX. | Native Sdt Api | docx, doc | mcp |
-| 5 | `use-a-content-control-to-embed-an-ole-object-and-ensure-it-renders-correctly-after-convers.cs` | Use a content control to embed an OLE object and ensure it renders correctly after conversion to PDF. | Native Sdt Api | pdf | mcp |
-| 6 | `use-a-content-control-to-embed-a-hyperlink-and-verify-its-target-url-after-document-conver.cs` | Use a content control to embed a hyperlink and verify its target URL after document conversion. | Native Sdt Api | docx | mcp |
-| 7 | `create-a-repeating-section-content-control-that-repeats-a-table-row-for-each-item-in-a-col.cs` | Create a repeating section content control that repeats a table row for each item in a collection. | Native Sdt Api | docx | mcp |
-| 8 | `create-a-content-control-that-repeats-a-paragraph-for-each-entry-in-a-json-array-during-im.cs` | Create a content control that repeats a paragraph for each entry in a JSON array during import. | Xml Json Export | json | mcp |
-| 9 | `bind-a-dropdown-list-content-control-to-an-xml-data-source-and-populate-options-dynamicall.cs` | Bind a dropdown list content control to an XML data source and populate options dynamically. | Xml Json Export | xml | mcp |
-| 10 | `apply-custom-xml-mapping-to-a-plain-text-content-control-to-synchronize-with-external-data.cs` | Apply custom XML mapping to a plain text content control to synchronize with external data fields. | Xml Json Export | xml | mcp |
-| 11 | `apply-a-custom-style-to-the-text-inside-a-rich-text-content-control-programmatically.cs` | Apply a custom style to the text inside a rich text content control programmatically. | Native Sdt Api | docx | llm |
-| 12 | `programmatically-set-the-title-and-tag-properties-of-a-content-control-for-later-identific.cs` | Programmatically set the title and tag properties of a content control for later identification. | Native Sdt Api | docx | mcp |
-| 13 | `update-the-tag-of-all-content-controls-in-a-document-to-follow-a-standardized-naming-conve.cs` | Update the tag of all content controls in a document to follow a standardized naming convention. | Native Sdt Api | docx | llm |
-| 14 | `configure-a-content-control-to-allow-only-numeric-input-and-enforce-validation-during-edit.cs` | Configure a content control to allow only numeric input and enforce validation during editing. | Native Sdt Api | docx | mcp |
-| 15 | `validate-that-required-content-controls-contain-non-empty-text-before-saving-the-document.cs` | Validate that required content controls contain non-empty text before saving the document. | Native Sdt Api | docx | mcp |
-| 16 | `lock-a-content-control-to-prevent-user-editing-and-enforce-read-only-behavior-in-the-final.cs` | Lock a content control to prevent user editing and enforce read-only behavior in the final document. | Native Sdt Api | docx | mcp |
-| 17 | `set-the-placeholder-text-color-inside-a-content-control-to-match-the-document-theme.cs` | Set the placeholder text color inside a content control to match the document theme. | Native Sdt Api | docx | mcp |
-| 18 | `replace-placeholder-text-in-a-content-control-with-values-from-a-dictionary-of-user-inputs.cs` | Replace placeholder text in a content control with values from a dictionary of user inputs. | Native Sdt Api | docx | mcp |
-| 19 | `replace-the-contents-of-a-rich-text-content-control-with-formatted-html-retrieved-from-a-w.cs` | Replace the contents of a rich text content control with formatted HTML retrieved from a web service. | Native Sdt Api | html | mcp |
-| 20 | `programmatically-clear-the-contents-of-a-content-control-without-deleting-the-control-itse.cs` | Programmatically clear the contents of a content control without deleting the control itself. | Native Sdt Api | docx | mcp |
-| 21 | `programmatically-duplicate-a-content-control-and-insert-the-copy-at-a-different-location-i.cs` | Programmatically duplicate a content control and insert the copy at a different location in the document. | Native Sdt Api | docx | llm |
-| 22 | `remove-all-picture-content-controls-from-a-document-and-replace-them-with-inline-images.cs` | Remove all picture content controls from a document and replace them with inline images. | Native Sdt Api | docx | mcp |
-| 23 | `detect-and-list-any-nested-content-controls-within-a-repeating-section-for-structural-insp.cs` | Detect and list any nested content controls within a repeating section for structural inspection. | Native Sdt Api | docx | llm |
-| 24 | `iterate-through-all-content-controls-in-a-document-and-generate-a-summary-report-of-their.cs` | Iterate through all content controls in a document and generate a summary report of their types. | Xml Json Export | docx | mcp |
-| 25 | `retrieve-the-inner-xml-of-a-content-control-and-transform-it-using-an-xslt-stylesheet.cs` | Retrieve the inner XML of a content control and transform it using an XSLT stylesheet. | Xml Json Export | xml | mcp |
-| 26 | `serialize-the-xml-mapping-of-all-content-controls-to-an-external-xsd-schema-file.cs` | Serialize the XML mapping of all content controls to an external XSD schema file. | Xml Json Export | xml | mcp |
-| 27 | `export-the-contents-of-all-checkbox-content-controls-to-a-csv-file-for-data-analysis.cs` | Export the contents of all checkbox content controls to a CSV file for data analysis. | Xml Json Export | csv | mcp |
-| 28 | `convert-a-docx-document-containing-content-controls-to-pdf-while-preserving-control-placeh.cs` | Convert a DOCX document containing content controls to PDF while preserving control placeholders. | Input Bootstrap | pdf, docx | mcp |
-| 29 | `generate-a-pdf-a-compliant-document-from-a-word-file-while-keeping-content-control-tags-in.cs` | Generate a PDF/A compliant document from a Word file while keeping content control tags intact. | Native Sdt Api | pdf | mcp |
-| 30 | `export-a-document-containing-content-controls-to-xps-format-while-preserving-control-bound.cs` | Export a document containing content controls to XPS format while preserving control boundaries. | Xml Json Export | xps | mcp |
-| 31 | `convert-a-document-with-content-controls-to-html-while-maintaining-control-attributes-as-d.cs` | Convert a document with content controls to HTML while maintaining control attributes as data-attributes. | Native Sdt Api | html | mcp |
-| 32 | `merge-multiple-word-documents-preserving-existing-content-controls-and-updating-their-ids.cs` | Merge multiple Word documents, preserving existing content controls and updating their IDs. | Native Sdt Api | docx | mcp |
-| 33 | `extract-all-repeating-section-content-controls-from-a-word-file-and-serialize-each-instanc.cs` | Extract all repeating section content controls from a Word file and serialize each instance to JSON. | Xml Json Export | json | mcp |
-| 34 | `implement-error-handling-for-missing-xml-nodes-when-binding-data-to-a-content-control.cs` | Implement error handling for missing XML nodes when binding data to a content control. | Xml Json Export | xml | mcp |
-| 35 | `use-a-content-control-to-store-custom-metadata-and-extract-it-for-indexing-in-a-search-eng.cs` | Use a content control to store custom metadata and extract it for indexing in a search engine. | Native Sdt Api | docx | mcp |
+| 1 | `insert-a-plain-text-content-control-at-a-specific-bookmark-in-a-docx-document.cs` | Insert a plain text content control at a specific bookmark in a DOCX document. | input-bootstrap | docx | mcp |
+| 2 | `add-a-picture-content-control-that-references-an-external-image-file-and-embed-it-on-save.cs` | Add a picture content control that references an external image file and embed it on save. | native-sdt-api | docx | mcp |
+| 3 | `batch-process-a-folder-of-word-files-inserting-a-header-content-control-with-document-meta.cs` | Batch process a folder of Word files, inserting a header content control with document metadata. | input-bootstrap | docx | llm |
+| 4 | `load-a-doc-file-add-a-date-picker-content-control-and-save-the-result-as-docx.cs` | Load a DOC file, add a date picker content control, and save the result as DOCX. | native-sdt-api | docx, doc | mcp |
+| 5 | `use-a-content-control-to-embed-an-ole-object-and-ensure-it-renders-correctly-after-convers.cs` | Use a content control to embed an OLE object and ensure it renders correctly after conversion to PDF. | native-sdt-api | pdf | mcp |
+| 6 | `use-a-content-control-to-embed-a-hyperlink-and-verify-its-target-url-after-document-conver.cs` | Use a content control to embed a hyperlink and verify its target URL after document conversion. | native-sdt-api | docx | llm |
+| 7 | `create-a-repeating-section-content-control-that-repeats-a-table-row-for-each-item-in-a-col.cs` | Create a repeating section content control that repeats a table row for each item in a collection. | native-sdt-api | docx | llm |
+| 8 | `create-a-content-control-that-repeats-a-paragraph-for-each-entry-in-a-json-array-during-im.cs` | Create a content control that repeats a paragraph for each entry in a JSON array during import. | xml-json-export | json | mcp |
+| 9 | `bind-a-dropdown-list-content-control-to-an-xml-data-source-and-populate-options-dynamicall.cs` | Bind a dropdown list content control to an XML data source and populate options dynamically. | xml-json-export | xml | mcp |
+| 10 | `apply-custom-xml-mapping-to-a-plain-text-content-control-to-synchronize-with-external-data.cs` | Apply custom XML mapping to a plain text content control to synchronize with external data fields. | xml-json-export | xml | mcp |
+| 11 | `apply-a-custom-style-to-the-text-inside-a-rich-text-content-control-programmatically.cs` | Apply a custom style to the text inside a rich text content control programmatically. | native-sdt-api | docx | mcp |
+| 12 | `programmatically-set-the-title-and-tag-properties-of-a-content-control-for-later-identific.cs` | Programmatically set the title and tag properties of a content control for later identification. | native-sdt-api | docx | mcp |
+| 13 | `update-the-tag-of-all-content-controls-in-a-document-to-follow-a-standardized-naming-conve.cs` | Update the tag of all content controls in a document to follow a standardized naming convention. | native-sdt-api | docx | mcp |
+| 14 | `configure-a-content-control-to-allow-only-numeric-input-and-enforce-validation-during-edit.cs` | Configure a content control to allow only numeric input and enforce validation during editing. | native-sdt-api | docx | mcp |
+| 15 | `validate-that-required-content-controls-contain-non-empty-text-before-saving-the-document.cs` | Validate that required content controls contain non-empty text before saving the document. | native-sdt-api | docx | mcp |
+| 16 | `lock-a-content-control-to-prevent-user-editing-and-enforce-read-only-behavior-in-the-final.cs` | Lock a content control to prevent user editing and enforce read-only behavior in the final document. | native-sdt-api | docx | mcp |
+| 17 | `set-the-placeholder-text-color-inside-a-content-control-to-match-the-document-theme.cs` | Set the placeholder text color inside a content control to match the document theme. | native-sdt-api | docx | existing_repo |
+| 18 | `replace-placeholder-text-in-a-content-control-with-values-from-a-dictionary-of-user-inputs.cs` | Replace placeholder text in a content control with values from a dictionary of user inputs. | native-sdt-api | docx | mcp |
+| 19 | `replace-the-contents-of-a-rich-text-content-control-with-formatted-html-retrieved-from-a-w.cs` | Replace the contents of a rich text content control with formatted HTML retrieved from a web service. | native-sdt-api | html | mcp |
+| 20 | `programmatically-clear-the-contents-of-a-content-control-without-deleting-the-control-itse.cs` | Programmatically clear the contents of a content control without deleting the control itself. | native-sdt-api | docx | mcp |
+| 21 | `programmatically-duplicate-a-content-control-and-insert-the-copy-at-a-different-location-i.cs` | Programmatically duplicate a content control and insert the copy at a different location in the document. | native-sdt-api | docx | mcp |
+| 22 | `remove-all-picture-content-controls-from-a-document-and-replace-them-with-inline-images.cs` | Remove all picture content controls from a document and replace them with inline images. | native-sdt-api | docx | mcp |
+| 23 | `detect-and-list-any-nested-content-controls-within-a-repeating-section-for-structural-insp.cs` | Detect and list any nested content controls within a repeating section for structural inspection. | native-sdt-api | docx | mcp |
+| 24 | `iterate-through-all-content-controls-in-a-document-and-generate-a-summary-report-of-their.cs` | Iterate through all content controls in a document and generate a summary report of their types. | xml-json-export | docx | mcp |
+| 25 | `retrieve-the-inner-xml-of-a-content-control-and-transform-it-using-an-xslt-stylesheet.cs` | Retrieve the inner XML of a content control and transform it using an XSLT stylesheet. | xml-json-export | xml | mcp |
+| 26 | `serialize-the-xml-mapping-of-all-content-controls-to-an-external-xsd-schema-file.cs` | Serialize the XML mapping of all content controls to an external XSD schema file. | xml-json-export | xml | mcp |
+| 27 | `export-the-contents-of-all-checkbox-content-controls-to-a-csv-file-for-data-analysis.cs` | Export the contents of all checkbox content controls to a CSV file for data analysis. | xml-json-export | csv | mcp |
+| 28 | `convert-a-docx-document-containing-content-controls-to-pdf-while-preserving-control-placeh.cs` | Convert a DOCX document containing content controls to PDF while preserving control placeholders. | input-bootstrap | pdf, docx | mcp |
+| 29 | `generate-a-pdf-a-compliant-document-from-a-word-file-while-keeping-content-control-tags-in.cs` | Generate a PDF/A compliant document from a Word file while keeping content control tags intact. | native-sdt-api | pdf | mcp |
+| 30 | `export-a-document-containing-content-controls-to-xps-format-while-preserving-control-bound.cs` | Export a document containing content controls to XPS format while preserving control boundaries. | xml-json-export | xps | mcp |
+| 31 | `convert-a-document-with-content-controls-to-html-while-maintaining-control-attributes-as-d.cs` | Convert a document with content controls to HTML while maintaining control attributes as data-attributes. | native-sdt-api | html | mcp |
+| 32 | `merge-multiple-word-documents-preserving-existing-content-controls-and-updating-their-ids.cs` | Merge multiple Word documents, preserving existing content controls and updating their IDs. | native-sdt-api | docx | llm |
+| 33 | `extract-all-repeating-section-content-controls-from-a-word-file-and-serialize-each-instanc.cs` | Extract all repeating section content controls from a Word file and serialize each instance to JSON. | xml-json-export | json | mcp |
+| 34 | `implement-error-handling-for-missing-xml-nodes-when-binding-data-to-a-content-control.cs` | Implement error handling for missing XML nodes when binding data to a content control. | xml-json-export | xml | mcp |
+| 35 | `use-a-content-control-to-store-custom-metadata-and-extract-it-for-indexing-in-a-search-eng.cs` | Use a content control to store custom metadata and extract it for indexing in a search engine. | native-sdt-api | docx | mcp |
 
 ## Common failure patterns seen during generation and how they were corrected
 
@@ -149,6 +149,6 @@ dotnet run --configuration Release --no-build
 
 ## Notes for maintainers
 
-- This category is 100% publish-ready for the 26.5.0 run.
+- This category is 100% publish-ready for the 26.6.0 run.
 - Preserve file-to-task traceability when updating this folder.
 - Keep examples standalone and bootstrap local inputs inside the example whenever external sources are mentioned.

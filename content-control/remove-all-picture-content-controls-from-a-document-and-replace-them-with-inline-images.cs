@@ -1,50 +1,83 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Aspose.Words.Drawing;
+using Newtonsoft.Json; // Required by category rules
 
-public class Program
+namespace RemovePictureContentControls
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document that contains a picture content control.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a picture content control at the current cursor position.
-        StructuredDocumentTag pictureSdt = builder.InsertStructuredDocumentTag(SdtType.Picture);
-
-        // Insert a tiny PNG image (1x1 pixel) into the content control.
-        // The image is provided as a Base64‑encoded byte array to avoid external files.
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
-        builder.InsertImage(pngBytes);
-
-        // Save the source document.
-        const string inputPath = "input.docx";
-        doc.Save(inputPath);
-
-        // Load the document that contains picture content controls.
-        Document loadedDoc = new Document(inputPath);
-
-        // Find all picture content controls in the document.
-        var pictureControls = loadedDoc
-            .GetChildNodes(NodeType.StructuredDocumentTag, true)
-            .OfType<StructuredDocumentTag>()
-            .Where(sdt => sdt.SdtType == SdtType.Picture)
-            .ToList();
-
-        // Replace each picture content control with its inner image.
-        foreach (var sdt in pictureControls)
+        public static void Main()
         {
-            // Remove the SDT node but keep its child nodes (the image shape) in the document.
-            sdt.RemoveSelfOnly();
-        }
+            // -----------------------------------------------------------------
+            // 1. Create a sample document that contains a picture content control.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the resulting document where picture content controls have been removed.
-        const string outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
+            builder.Writeln("Document with a picture content control:");
+
+            // Create an inline picture content control.
+            StructuredDocumentTag pictureSdt = new StructuredDocumentTag(doc, SdtType.Picture, MarkupLevel.Inline)
+            {
+                Title = "SamplePicture",
+                Tag = "pic1"
+            };
+
+            // Insert the content control into the first paragraph.
+            Paragraph firstParagraph = doc.FirstSection.Body.FirstParagraph;
+            firstParagraph.AppendChild(pictureSdt);
+
+            // Tiny 1x1 PNG image (Base64 encoded).
+            const string pngBase64 =
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+            byte[] imageBytes = Convert.FromBase64String(pngBase64);
+
+            // Create a Shape that holds the image and add it to the content control.
+            Shape pictureShape = new Shape(doc, ShapeType.Image);
+            // ImageData.SetImage does not accept a byte[] directly; use a MemoryStream.
+            using (MemoryStream ms = new MemoryStream(imageBytes))
+            {
+                pictureShape.ImageData.SetImage(ms);
+            }
+            pictureShape.Width = 50;   // points
+            pictureShape.Height = 50;  // points
+            pictureSdt.AppendChild(pictureShape);
+
+            // Add a blank paragraph after the control.
+            builder.Writeln();
+            builder.Writeln("End of sample document.");
+
+            // Save the original document.
+            const string inputPath = "InputWithPictureContentControl.docx";
+            doc.Save(inputPath);
+
+            // -----------------------------------------------------------------
+            // 2. Remove all picture content controls while keeping their images.
+            // -----------------------------------------------------------------
+            // Find all StructuredDocumentTag nodes of type Picture.
+            NodeCollection sdtNodes = doc.GetChildNodes(NodeType.StructuredDocumentTag, true);
+            List<StructuredDocumentTag> pictureControls = new List<StructuredDocumentTag>();
+
+            foreach (StructuredDocumentTag sdt in sdtNodes.OfType<StructuredDocumentTag>())
+            {
+                if (sdt.SdtType == SdtType.Picture)
+                    pictureControls.Add(sdt);
+            }
+
+            // Remove each picture content control but retain its child (the image).
+            foreach (StructuredDocumentTag pictureControl in pictureControls)
+            {
+                pictureControl.RemoveSelfOnly();
+            }
+
+            // Save the modified document.
+            const string outputPath = "OutputWithoutPictureContentControls.docx";
+            doc.Save(outputPath);
+        }
     }
 }

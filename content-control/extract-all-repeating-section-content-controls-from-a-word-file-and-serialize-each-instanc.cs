@@ -1,7 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Markup;
 using Newtonsoft.Json;
@@ -10,59 +10,54 @@ public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a sample DOCX that contains a repeating section SDT.
-        // -----------------------------------------------------------------
+        // Create a sample document that contains a repeating section content control.
+        const string inputPath = "input.docx";
         Document doc = new Document();
 
-        // Create a repeating section content control (block level).
-        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(
-            doc,
-            SdtType.RepeatingSection,
-            MarkupLevel.Block);
+        // Create a repeating section SDT (block level) and add a paragraph with sample text.
+        StructuredDocumentTag repeatingSection = new StructuredDocumentTag(doc, SdtType.RepeatingSection, MarkupLevel.Block);
+        repeatingSection.Title = "SampleRepeatingSection";
+        repeatingSection.Tag = "sample-repeating";
 
-        // Add some sample text inside the repeating section.
         Paragraph paragraph = new Paragraph(doc);
-        paragraph.AppendChild(new Run(doc, "Sample item text"));
+        paragraph.AppendChild(new Run(doc, "Item 1"));
         repeatingSection.AppendChild(paragraph);
 
-        // Insert the repeating section into the document body.
+        // Append the repeating section to the document body.
         doc.FirstSection.Body.AppendChild(repeatingSection);
 
-        // Save the sample document.
-        const string inputPath = "input.docx";
+        // Save the document so it can be loaded later.
         doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document and extract all repeating section SDTs.
-        // -----------------------------------------------------------------
+        // Load the document that contains the repeating section controls.
         Document loadedDoc = new Document(inputPath);
 
-        // Find all StructuredDocumentTag nodes of type RepeatingSection.
-        List<object> extractedData = loadedDoc
+        // Find all repeating section content controls in the document.
+        List<StructuredDocumentTag> repeatingControls = loadedDoc
             .GetChildNodes(NodeType.StructuredDocumentTag, true)
             .OfType<StructuredDocumentTag>()
             .Where(sdt => sdt.SdtType == SdtType.RepeatingSection)
+            .ToList();
+
+        // Prepare a serializable model for each repeating section instance.
+        var payload = repeatingControls
             .Select(sdt => new
             {
                 Title = sdt.Title,
                 Tag = sdt.Tag,
                 Text = sdt.GetText().Trim()
             })
-            .Cast<object>()
             .ToList();
 
-        // -----------------------------------------------------------------
-        // 3. Serialize the extracted information to JSON.
-        // -----------------------------------------------------------------
-        string json = JsonConvert.SerializeObject(extractedData, Formatting.Indented);
+        // Serialize the collection to JSON with indentation.
+        string json = JsonConvert.SerializeObject(payload, Formatting.Indented);
+
+        // Write the JSON to a file.
         const string jsonPath = "repeating-sections.json";
         File.WriteAllText(jsonPath, json);
 
-        // -----------------------------------------------------------------
-        // 4. (Optional) Save the loaded document again for completeness.
-        // -----------------------------------------------------------------
-        const string outputPath = "repeating-sections.docx";
+        // Optionally, save the loaded document (unchanged) to demonstrate a second output file.
+        const string outputPath = "output.docx";
         loadedDoc.Save(outputPath);
     }
 }
