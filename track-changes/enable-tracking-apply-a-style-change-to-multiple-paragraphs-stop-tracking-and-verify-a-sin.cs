@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -10,37 +9,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add some initial content (these edits are NOT tracked).
-        builder.Writeln("Paragraph 1 - not tracked.");
-        builder.Writeln("Paragraph 2 - not tracked.");
+        // Start tracking revisions with a specific author.
+        doc.StartTrackRevisions("Tester", DateTime.Now);
 
-        // Start tracking revisions.
-        doc.StartTrackRevisions("Test Author", DateTime.Now);
-
-        // Make a change that will be recorded as a revision.
-        // In Aspose.Words only insertions and deletions are tracked.
-        builder.Writeln("Paragraph 3 - tracked insertion.");
+        // Apply a style (Heading1) while tracking is enabled.
+        // Each paragraph insertion will be recorded as a revision.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Paragraph 1.");
+        builder.Writeln("Paragraph 2.");
+        builder.Writeln("Paragraph 3.");
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // Verify that exactly one revision group was created.
-        if (doc.Revisions.Groups.Count != 1)
-            throw new InvalidOperationException($"Expected 1 revision group, but found {doc.Revisions.Groups.Count}.");
+        // Verify that the insertions are grouped into a single revision group.
+        int groupCount = doc.Revisions.Groups.Count;
+        if (groupCount != 1)
+            throw new InvalidOperationException($"Expected 1 revision group, but found {groupCount}.");
 
         RevisionGroup group = doc.Revisions.Groups[0];
-        if (group.RevisionType != RevisionType.Insertion)
-            throw new InvalidOperationException($"Expected revision type Insertion, but found {group.RevisionType}.");
+        // Output basic information about the revision group.
+        Console.WriteLine($"Revision group author: {group.Author}");
+        Console.WriteLine($"Revision group type: {group.RevisionType}");
+        Console.WriteLine($"Revision group text: {group.Text.Trim()}");
 
-        // Output verification result.
-        Console.WriteLine("Revision group verified:");
-        Console.WriteLine($"  Author: {group.Author}");
-        Console.WriteLine($"  Type: {group.RevisionType}");
-        Console.WriteLine($"  Text: {group.Text.Trim()}");
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TrackedInsertion.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Save the document to the local file system.
+        doc.Save("TrackedChanges.docx");
     }
 }

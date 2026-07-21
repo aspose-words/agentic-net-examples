@@ -1,6 +1,6 @@
 ---
 name: track-changes
-description: Verified C# examples for Track Changes scenarios in Aspose.Words for .NET
+description: Verified C# examples for track-changes scenarios in Aspose.Words for .NET
 language: csharp
 framework: net8.0
 product: Aspose.Words
@@ -38,223 +38,223 @@ Use the simplest workflow that satisfies the task.
 
 - `load-a-document-from-a-stream-start-tracking-add-a-header-and-stop-tracking-before-saving.cs`
   - Task: Load a document from a stream, start tracking, add a header, and stop tracking before saving.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `create-a-new-document-start-tracking-revisions-insert-a-paragraph-then-stop-tracking.cs`
   - Task: Create a new document, start tracking revisions, insert a paragraph, then stop tracking.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `enable-revision-tracking-modify-a-table-cell-and-verify-the-revision-appears-in-the-collec.cs`
   - Task: Enable revision tracking, modify a table cell, and verify the revision appears in the collection.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `enable-tracking-apply-a-style-change-to-multiple-paragraphs-stop-tracking-and-verify-a-sin.cs`
   - Task: Enable tracking, apply a style change to multiple paragraphs, stop tracking, and verify a single revision group.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `start-tracking-revisions-insert-an-image-stop-tracking-and-verify-the-image-insertion-appe.cs`
   - Task: Start tracking revisions, insert an image, stop tracking, and verify the image insertion appears as a revision.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `load-a-document-start-tracking-insert-a-table-stop-tracking-then-accept-the-table-insertio.cs`
   - Task: Load a document, start tracking, insert a table, stop tracking, then accept the table insertion revision.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `start-tracking-delete-a-sentence-stop-tracking-then-accept-the-deletion-revision-individua.cs`
   - Task: Start tracking, delete a sentence, stop tracking, then accept the deletion revision individually.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `load-a-document-enable-tracking-perform-a-find-and-replace-operation-and-list-the-generate.cs`
   - Task: Load a document, enable tracking, perform a find-and-replace operation, and list the generated revisions.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `load-a-document-enable-revision-tracking-apply-formatting-changes-and-list-resulting-revis.cs`
   - Task: Load a document, enable revision tracking, apply formatting changes, and list resulting revision types.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `stop-tracking-revisions-then-make-additional-edits-and-confirm-no-new-revisions-are-record.cs`
   - Task: Stop tracking revisions, then make additional edits and confirm no new revisions are recorded.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `determine-if-a-document-contains-any-revisions-before-further-processing-by-checking-the-h.cs`
   - Task: Determine if a document contains any revisions before further processing by checking the HasRevisions property.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `use-the-hasrevisions-property-to-conditionally-apply-a-watermark-indicating-pending-change.cs`
   - Task: Use the HasRevisions property to conditionally apply a watermark indicating pending changes.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `iterate-through-all-revisions-in-the-document-and-log-each-revision-s-author-and-timestamp.cs`
   - Task: Iterate through all revisions in the document and log each revision's author and timestamp.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `iterate-over-revisions-group-them-by-type-and-output-a-summary-of-insertion-and-deletion-c.cs`
   - Task: Iterate over revisions, group them by type, and output a summary of insertion and deletion counts.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `group-sequential-insertions-using-revisiongroup-and-accept-the-entire-group-with-a-single.cs`
   - Task: Group sequential insertions using RevisionGroup and accept the entire group with a single call.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-revisiongroup-to-merge-consecutive-deletions-into-a-single-revision-before-accepting-i.cs`
   - Task: Use RevisionGroup to merge consecutive deletions into a single revision before accepting it.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `accept-revisions-only-for-paragraphs-authored-by-a-specific-user-while-rejecting-others.cs`
   - Task: Accept revisions only for paragraphs authored by a specific user while rejecting others.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `reject-a-specific-revision-based-on-author-name-then-confirm-the-change-is-no-longer-prese.cs`
   - Task: Reject a specific revision based on author name, then confirm the change is no longer present.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `reject-all-formatting-revisions-but-keep-content-insertions-and-deletions-still-intact.cs`
   - Task: Reject all formatting revisions but keep content insertions and deletions still intact.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `programmatically-reject-all-deletions-while-keeping-insertions-and-formatting-changes-stil.cs`
   - Task: Programmatically reject all deletions while keeping insertions and formatting changes still intact.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `reject-revisions-older-than-a-specific-date-while-preserving-newer-changes-in-the-document.cs`
   - Task: Reject revisions older than a specific date while preserving newer changes in the document.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `accept-all-revisions-in-a-loaded-docx-file-and-save-the-cleaned-document-to-a-new-file.cs`
   - Task: Accept all revisions in a loaded DOCX file and save the cleaned document to a new file.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx, doc
   - Selected engine: mcp
 - `accept-all-revisions-in-a-document-then-re-enable-tracking-to-capture-subsequent-changes-s.cs`
   - Task: Accept all revisions in a document, then re-enable tracking to capture subsequent changes separately.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `after-accepting-all-revisions-lock-the-document-to-prevent-further-editing-without-trackin.cs`
   - Task: After accepting all revisions, lock the document to prevent further editing without tracking.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `reject-all-tracked-changes-in-a-document-then-verify-the-hasrevisions-property-returns-fal.cs`
   - Task: Reject all tracked changes in a document, then verify the HasRevisions property returns false.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `compare-two-word-documents-to-generate-revision-differences-specifying-author-name-and-com.cs`
   - Task: Compare two Word documents to generate revision differences, specifying author name and comparison date.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `use-doc-compare-to-create-a-revision-document-that-highlights-differences-between-two-vers.cs`
   - Task: Use doc.Compare to create a revision document that highlights differences between two versions.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `programmatically-compare-a-document-against-its-previous-version-and-generate-a-revision-r.cs`
   - Task: Programmatically compare a document against its previous version and generate a revision report in memory.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `compare-three-versions-of-a-contract-sequentially-generating-cumulative-revision-sets-for.cs`
   - Task: Compare three versions of a contract sequentially, generating cumulative revision sets for each comparison.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-a-report-listing-each-revision-s-type-author-and-the-paragraph-number-where-it-oc.cs`
   - Task: Generate a report listing each revision's type, author, and the paragraph number where it occurs.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `develop-a-utility-to-export-revision-metadata-to-a-csv-file-for-external-analysis.cs`
   - Task: Develop a utility to export revision metadata to a CSV file for external analysis.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `create-a-custom-logger-that-captures-revision-metadata-during-document-editing-for-audit-p.cs`
   - Task: Create a custom logger that captures revision metadata during document editing for audit purposes.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `create-a-function-that-returns-true-if-any-revision-author-matches-a-specified-list-of-nam.cs`
   - Task: Create a function that returns true if any revision author matches a specified list of names.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-utility-that-accepts-revisions-only-when-they-meet-a-minimum-word-count-threshold.cs`
   - Task: Create a utility that accepts revisions only when they meet a minimum word count threshold.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `batch-process-a-folder-of-documents-rejecting-revisions-authored-by-a-given-user-across-al.cs`
   - Task: Batch process a folder of documents, rejecting revisions authored by a given user across all files.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `create-a-batch-process-that-opens-multiple-documents-accepts-all-revisions-and-saves-them.cs`
   - Task: Create a batch process that opens multiple documents, accepts all revisions, and saves them in place.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `accept-revisions-in-a-specific-section-of-the-document-while-leaving-other-sections-unchan.cs`
   - Task: Accept revisions in a specific section of the document while leaving other sections unchanged.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
   - Selected engine: mcp
 - `after-rejecting-all-revisions-verify-that-the-document-s-original-content-matches-a-baseli.cs`
   - Task: After rejecting all revisions, verify that the document's original content matches a baseline file.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: doc
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `implement-error-handling-for-attempts-to-accept-a-revision-that-has-already-been-rejected.cs`
   - Task: Implement error handling for attempts to accept a revision that has already been rejected.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `create-a-script-that-toggles-tracking-on-and-off-based-on-user-input-during-runtime.cs`
   - Task: Create a script that toggles tracking on and off based on user input during runtime.
-  - Workflow: Track Changes Workflow
+  - Workflow: track-changes-workflow
   - Outputs: docx
   - Selected engine: mcp
 
 ## Common failure patterns and preferred agent fixes
 
-- Unsupported API invention
+- **Unsupported API invention**
   - Symptom: Generated code references members that do not exist in the selected package version.
   - Preferred fix: Replace invented members with documented Aspose.Words APIs already proven in this category.
 
-- Missing local bootstrap inputs
+- **Missing local bootstrap inputs**
   - Symptom: The example assumes source files, folders, images, or data already exist.
   - Preferred fix: Create deterministic local inputs before loading, processing, or validating them.
 
-- Over-broad validation
+- **Over-broad validation**
   - Symptom: The example fails at runtime while checking unrelated document internals.
   - Preferred fix: Validate only the requested behavior and the existence of expected outputs.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.5.0`
+- Package: `Aspose.Words` `26.6.0`
 
 ## Command reference
 
@@ -268,7 +268,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.5.0
+dotnet add package Aspose.Words --version 26.6.0
 ```
 
 ### Copy a category example into the temp project

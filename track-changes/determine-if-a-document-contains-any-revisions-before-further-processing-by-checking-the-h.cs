@@ -5,29 +5,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to edit it.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some text without tracking – this will not be a revision.
+        // Write some initial content. This does NOT count as a revision.
         builder.Writeln("Original text.");
 
-        // Enable tracking of revisions.
+        // Verify that the document has no revisions at this point.
+        bool hasRevisionsBefore = doc.HasRevisions;
+        Console.WriteLine($"Has revisions before tracking: {hasRevisionsBefore}");
+
+        // Enable tracking of changes.
         doc.StartTrackRevisions("Author", DateTime.Now);
 
-        // Write text while tracking is enabled – this will be recorded as a revision.
+        // Add new content while tracking is enabled – this will be recorded as a revision.
         builder.Writeln("Added revision text.");
 
-        // Stop tracking further changes.
+        // Stop tracking further changes (optional, but demonstrates lifecycle usage).
         doc.StopTrackRevisions();
 
-        // Determine whether the document contains any revisions.
-        bool hasRevisions = doc.HasRevisions;
+        // Verify that the document now reports having revisions.
+        bool hasRevisionsAfter = doc.HasRevisions;
+        Console.WriteLine($"Has revisions after tracking: {hasRevisionsAfter}");
 
-        // Output the result.
-        Console.WriteLine($"Document has revisions: {hasRevisions}");
-
-        // Save the document (optional, demonstrates lifecycle usage).
-        doc.Save("RevisionsCheck.docx");
+        // Save the document to disk (demonstrates the required save step).
+        doc.Save("RevisionsDemo.docx");
     }
 }

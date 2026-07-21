@@ -1,49 +1,57 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
+        // Target author whose revisions we want to keep.
+        const string targetAuthor = "John Doe";
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial content that is not a revision.
-        builder.Writeln("Original paragraph. ");
+        // Add some initial content that is not a revision.
+        builder.Writeln("Original paragraph.");
 
-        // ---------- Revisions by Alice ----------
-        doc.StartTrackRevisions("Alice", DateTime.Now);
-        builder.Writeln("Alice's inserted paragraph. ");
-        // Delete a run to create a deletion revision for Alice.
-        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
+        // ---------- Revisions by John Doe ----------
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
+        builder.Writeln("Paragraph added by John.");
         doc.StopTrackRevisions();
 
-        // ---------- Revisions by Bob ----------
-        doc.StartTrackRevisions("Bob", DateTime.Now);
-        builder.Writeln("Bob's inserted paragraph. ");
-        // Delete a run to create a deletion revision for Bob.
-        doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
+        // ---------- Revisions by Jane Smith ----------
+        doc.StartTrackRevisions("Jane Smith", DateTime.Now);
+        builder.Writeln("Paragraph added by Jane.");
+
+        // Create a deletion revision (author Jane) by removing the first paragraph.
+        Paragraph paragraphToDelete = doc.FirstSection.Body.Paragraphs[0];
+        paragraphToDelete.Remove();
         doc.StopTrackRevisions();
 
-        // At this point the document contains revisions from both authors.
-        // Accept only revisions authored by Alice and reject all others.
-        string targetAuthor = "Alice";
+        // Accept only revisions authored by the target author.
+        doc.Revisions.Accept(new RevisionCriteria(targetAuthor));
 
-        // Copy revisions to a list because the collection changes during accept/reject.
-        List<Revision> revisions = doc.Revisions.Cast<Revision>().ToList();
-
-        foreach (Revision rev in revisions)
-        {
-            if (rev.Author == targetAuthor)
-                rev.Accept();
-            else
-                rev.Reject();
-        }
+        // Reject all remaining revisions (those not authored by the target author).
+        doc.Revisions.RejectAll();
 
         // Save the resulting document.
         doc.Save("Result.docx");
+    }
+}
+
+// Criteria that matches revisions based on author name.
+public class RevisionCriteria : IRevisionCriteria
+{
+    private readonly string _authorName;
+
+    public RevisionCriteria(string authorName)
+    {
+        _authorName = authorName;
+    }
+
+    public bool IsMatch(Revision revision)
+    {
+        return revision.Author == _authorName;
     }
 }

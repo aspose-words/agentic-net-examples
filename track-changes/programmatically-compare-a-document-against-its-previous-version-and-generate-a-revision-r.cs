@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Replacing;
 
 public class Program
 {
@@ -11,72 +10,45 @@ public class Program
         // Create the original document.
         Document originalDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(originalDoc);
-        builder.Writeln("This is the first paragraph.");
-        builder.Writeln("This is the second paragraph.");
-        builder.Writeln("This is the third paragraph.");
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Second paragraph.");
+        builder.Writeln("Third paragraph.");
 
-        // Clone the original to create an edited version.
+        // Clone the original to create an edited version and modify its content.
         Document editedDoc = (Document)originalDoc.Clone(true);
-        DocumentBuilder editBuilder = new DocumentBuilder(editedDoc);
+        DocumentBuilder editedBuilder = new DocumentBuilder(editedDoc);
 
-        // Perform some edits: modify, insert, and delete content.
-        // Modify text in the first paragraph.
-        Paragraph firstPara = editedDoc.FirstSection.Body.Paragraphs[0];
-        firstPara.Runs[0].Text = "This is the UPDATED first paragraph.";
+        // Modify the second paragraph.
+        Paragraph secondParagraph = editedDoc.FirstSection.Body.Paragraphs[1];
+        editedBuilder.MoveTo(secondParagraph);
+        editedBuilder.Write(" (edited)");
 
-        // Insert a new paragraph.
-        editBuilder.MoveToDocumentEnd();
-        editBuilder.Writeln("This is an inserted fourth paragraph.");
-
-        // Delete the second paragraph.
-        Paragraph secondPara = editedDoc.FirstSection.Body.Paragraphs[1];
-        secondPara.Remove();
-
-        // Ensure both documents have no revisions before comparison.
-        if (originalDoc.HasRevisions || editedDoc.HasRevisions)
-            throw new InvalidOperationException("Documents must not contain revisions before comparison.");
+        // Change the text of the third paragraph.
+        editedDoc.FirstSection.Body.Paragraphs[2].Runs[0].Text = "Third paragraph - updated.";
 
         // Compare the original document with the edited version.
+        // This adds revisions to the original document representing the differences.
         originalDoc.Compare(editedDoc, "Comparer", DateTime.Now);
 
-        // After comparison, the original document now contains revisions.
-        if (!originalDoc.HasRevisions)
-            throw new InvalidOperationException("Comparison did not produce any revisions.");
+        // Build an in‑memory revision report.
+        StringBuilder report = new StringBuilder();
+        report.AppendLine("Revision Report:");
+        report.AppendLine("----------------");
 
-        // Build a revision report in memory.
-        StringBuilder reportBuilder = new StringBuilder();
-        reportBuilder.AppendLine("Revision Report:");
-        reportBuilder.AppendLine("----------------");
-
-        foreach (Revision revision in originalDoc.Revisions)
+        foreach (Revision rev in originalDoc.Revisions)
         {
-            // Gather revision details.
-            string author = revision.Author;
-            DateTime date = revision.DateTime;
-            RevisionType type = revision.RevisionType;
-            string changedText = revision.ParentNode?.GetText().Trim() ?? string.Empty;
+            report.AppendLine($"Type   : {rev.RevisionType}");
+            report.AppendLine($"Author : {rev.Author}");
+            report.AppendLine($"Date   : {rev.DateTime}");
 
-            reportBuilder.AppendLine($"Author: {author}");
-            reportBuilder.AppendLine($"Date: {date}");
-            reportBuilder.AppendLine($"Type: {type}");
-            reportBuilder.AppendLine($"Changed Text: \"{changedText}\"");
-            reportBuilder.AppendLine();
+            // For node‑based revisions, include the affected text.
+            if (rev.RevisionType != RevisionType.StyleDefinitionChange && rev.ParentNode != null)
+                report.AppendLine($"Text   : {rev.ParentNode.GetText().Trim()}");
+
+            report.AppendLine();
         }
 
-        // The report is now stored in the string variable.
-        string revisionReport = reportBuilder.ToString();
-
-        // Output the report to the console (optional, demonstrates the result).
-        Console.WriteLine(revisionReport);
-
-        // Optionally, accept all revisions to transform the original into the edited version.
-        originalDoc.AcceptAllRevisions();
-
-        // Save the final document to a memory stream (demonstrates saving without file I/O).
-        using (MemoryStream stream = new MemoryStream())
-        {
-            originalDoc.Save(stream, SaveFormat.Docx);
-            // The stream now contains the final document bytes.
-        }
+        // Output the report to the console.
+        Console.Write(report.ToString());
     }
 }

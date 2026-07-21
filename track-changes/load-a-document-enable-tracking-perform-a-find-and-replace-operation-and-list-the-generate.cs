@@ -7,60 +7,43 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths in the current directory.
-        string samplePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.docx");
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        // 1. Create a sample document with some initial text.
+        Document initialDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(initialDoc);
+        builder.Writeln("The quick brown fox jumps over the lazy dog.");
 
-        // -----------------------------------------------------------------
-        // Create a simple document and save it – this acts as the source file.
-        // -----------------------------------------------------------------
-        Document createDoc = new Document();
-        DocumentBuilder creator = new DocumentBuilder(createDoc);
-        creator.Writeln("Hello world! This is a sample document for tracking changes.");
-        createDoc.Save(samplePath);
-
-        // -------------------------------------------------
-        // Load the document we just created.
-        // -------------------------------------------------
-        Document doc = new Document(samplePath);
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // -------------------------------------------------
-        // Enable track revisions with a specific author and date.
-        // -------------------------------------------------
-        string author = "AsposeUser";
-        DateTime revisionDate = DateTime.Now;
-        doc.StartTrackRevisions(author, revisionDate);
-
-        // -------------------------------------------------
-        // Perform a find-and-replace operation while tracking is enabled.
-        // This will generate a revision.
-        // -------------------------------------------------
-        FindReplaceOptions options = new FindReplaceOptions();
-        doc.Range.Replace("world", "Aspose", options);
-
-        // -------------------------------------------------
-        // Stop tracking further changes.
-        // -------------------------------------------------
-        doc.StopTrackRevisions();
-
-        // -------------------------------------------------
-        // List all generated revisions.
-        // -------------------------------------------------
-        Console.WriteLine($"Total revisions: {doc.Revisions.Count}");
-        foreach (Revision rev in doc.Revisions)
+        // 2. Save the document to a memory stream.
+        using (MemoryStream stream = new MemoryStream())
         {
-            string revText = rev.ParentNode?.GetText().Trim() ?? string.Empty;
-            Console.WriteLine($"Revision Type: {rev.RevisionType}");
-            Console.WriteLine($"Author: {rev.Author}");
-            Console.WriteLine($"Date: {rev.DateTime}");
-            Console.WriteLine($"Text: \"{revText}\"");
-            Console.WriteLine(new string('-', 40));
-        }
+            initialDoc.Save(stream, SaveFormat.Docx);
+            stream.Position = 0; // Reset stream for reading.
 
-        // -------------------------------------------------
-        // Save the modified document.
-        // -------------------------------------------------
-        doc.Save(outputPath);
+            // 3. Load the document from the stream.
+            Document doc = new Document(stream);
+
+            // 4. Enable track changes.
+            doc.StartTrackRevisions("Sample Author", DateTime.Now);
+
+            // 5. Perform a find-and-replace operation while tracking is enabled.
+            // Replace the word "fox" with "cat".
+            FindReplaceOptions replaceOptions = new FindReplaceOptions();
+            doc.Range.Replace("fox", "cat", replaceOptions);
+
+            // 6. Stop tracking changes.
+            doc.StopTrackRevisions();
+
+            // 7. List all generated revisions.
+            Console.WriteLine("Revisions generated:");
+            foreach (Revision rev in doc.Revisions)
+            {
+                string text = rev.ParentNode != null ? rev.ParentNode.GetText().Trim() : "<no text>";
+                Console.WriteLine($"- Type: {rev.RevisionType}, Author: {rev.Author}, Date: {rev.DateTime}, Text: \"{text}\"");
+            }
+
+            // 8. Save the final document to a file.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TrackedDocument.docx");
+            doc.Save(outputPath);
+            Console.WriteLine($"Document saved to: {outputPath}");
+        }
     }
 }

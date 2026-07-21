@@ -7,26 +7,21 @@ public class Program
     {
         // Create a new empty document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to modify the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable tracking of revisions with an author name and timestamp.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
+        // Normal editing before tracking does not create revisions.
+        builder.Writeln("Initial content. ");
 
-        // Insert a paragraph while tracking is active – this will be recorded as a revision.
+        // Start tracking revisions with an author name and the current date.
+        doc.StartTrackRevisions("Sample Author", DateTime.Now);
+
+        // Insert a paragraph while tracking is enabled – this will be recorded as a revision.
         builder.Writeln("This paragraph is inserted while tracking changes.");
 
-        // Disable further tracking of revisions.
+        // Stop tracking revisions – further edits will not be recorded as revisions.
         doc.StopTrackRevisions();
 
-        // Ensure that at least one revision was captured.
-        if (!doc.HasRevisions || doc.Revisions.Count == 0)
-        {
-            throw new InvalidOperationException("No revisions were recorded.");
-        }
-
-        // Save the resulting document to a file.
-        doc.Save("TrackChanges.docx");
+        // Save the document to a file.
+        doc.Save("TrackChangesExample.docx");
     }
 }

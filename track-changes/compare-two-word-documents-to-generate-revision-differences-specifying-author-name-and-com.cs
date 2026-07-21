@@ -1,48 +1,60 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Replacing;
 
 public class Program
 {
     public static void Main()
     {
+        // Define file paths in the current directory.
+        string originalPath = "Original.docx";
+        string editedPath = "Edited.docx";
+        string resultPath = "Compared.docx";
+
+        // -----------------------------------------------------------------
         // Create the original document.
-        Document original = new Document();
-        DocumentBuilder builder = new DocumentBuilder(original);
-        builder.Writeln("Hello world!");
-        builder.Writeln("This is a sample paragraph.");
-        original.Save("Original.docx");
+        // -----------------------------------------------------------------
+        Document originalDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(originalDoc);
+        builder.Writeln("This is the original document.");
+        builder.Writeln("It contains a few lines of text.");
+        originalDoc.Save(originalPath);
 
+        // -----------------------------------------------------------------
         // Create the edited document with some changes.
-        Document edited = new Document();
-        builder = new DocumentBuilder(edited);
-        builder.Writeln("Hello world!"); // unchanged line
-        builder.Writeln("This is a modified paragraph."); // changed text
-        builder.Writeln("Additional line."); // new line
-        edited.Save("Edited.docx");
+        // -----------------------------------------------------------------
+        Document editedDoc = new Document();
+        builder = new DocumentBuilder(editedDoc);
+        builder.Writeln("This is the edited document."); // changed line
+        builder.Writeln("It contains a few lines of text."); // unchanged line
+        builder.Writeln("An additional line was added."); // new line
+        editedDoc.Save(editedPath);
 
-        // Load the documents for comparison.
-        Document docOriginal = new Document("Original.docx");
-        Document docEdited = new Document("Edited.docx");
+        // -----------------------------------------------------------------
+        // Load the original document (could also reuse the instance).
+        // -----------------------------------------------------------------
+        Document compareDoc = new Document(originalPath);
 
-        // Author name and comparison date for the revisions.
-        string author = "Comparer";
+        // Perform the comparison. The revisions will be added to compareDoc.
+        string authorName = "Comparer";
         DateTime compareDate = DateTime.Now;
+        compareDoc.Compare(editedDoc, authorName, compareDate);
 
-        // Ensure both documents have no existing revisions.
-        if (docOriginal.HasRevisions || docEdited.HasRevisions)
-            throw new InvalidOperationException("Documents must not contain revisions before comparison.");
-
-        // Compare the documents; revisions will be added to docOriginal.
-        docOriginal.Compare(docEdited, author, compareDate);
-
-        // Output revision details.
-        foreach (Revision rev in docOriginal.Revisions)
+        // -----------------------------------------------------------------
+        // Output revision details to the console.
+        // -----------------------------------------------------------------
+        Console.WriteLine("Revisions found after comparison:");
+        foreach (Revision rev in compareDoc.Revisions)
         {
-            Console.WriteLine($"Revision: Type={rev.RevisionType}, Author={rev.Author}, Date={rev.DateTime}");
-            Console.WriteLine($"   Text: \"{rev.ParentNode.GetText().Trim()}\"");
+            Console.WriteLine($"- Type: {rev.RevisionType}");
+            Console.WriteLine($"  Author: {rev.Author}");
+            Console.WriteLine($"  Date: {rev.DateTime}");
+            Console.WriteLine($"  Text: \"{rev.ParentNode.GetText().Trim()}\"");
         }
 
-        // Save the document that now contains the revision differences.
-        docOriginal.Save("Compared.docx");
+        // -----------------------------------------------------------------
+        // Save the document that now contains the revision markup.
+        // -----------------------------------------------------------------
+        compareDoc.Save(resultPath);
     }
 }

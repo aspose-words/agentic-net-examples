@@ -10,40 +10,48 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a 1x1 table and write initial text into the single cell.
+        // Build a simple 1x2 table.
         Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Write("Original cell text.");
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
         builder.EndRow();
         builder.EndTable();
 
-        // Enable revision tracking with a specific author and timestamp.
-        doc.StartTrackRevisions("John Doe", DateTime.Now);
+        // Enable revision tracking.
+        doc.StartTrackRevisions("Alice", DateTime.Now);
 
-        // Modify the text inside the existing table cell.
-        // Retrieve the first cell of the first row.
-        Cell cell = table.FirstRow.FirstCell;
-        // Clear existing contents and write new text – this creates revisions.
-        cell.RemoveAllChildren();
-        builder.MoveTo(cell.FirstParagraph);
-        builder.Write("Modified cell text.");
+        // Modify the text of the first cell – this change will be recorded as a revision.
+        Cell firstCell = table.FirstRow.FirstCell;
+        firstCell.RemoveAllChildren(); // clear existing content
+        Paragraph para = new Paragraph(doc);
+        Run run = new Run(doc, "Updated Cell 1");
+        para.AppendChild(run);
+        firstCell.AppendChild(para);
 
         // Stop tracking further changes.
         doc.StopTrackRevisions();
 
-        // Verify that at least one revision was recorded.
+        // Verify that a revision was created.
         if (!doc.HasRevisions || doc.Revisions.Count == 0)
+            throw new InvalidOperationException("No revisions were generated.");
+
+        // Ensure the revision corresponds to the modified cell text.
+        bool revisionFound = false;
+        foreach (Revision rev in doc.Revisions)
         {
-            throw new InvalidOperationException("No revisions were detected after modifying the table cell.");
+            if (rev.ParentNode != null && rev.ParentNode.GetText().Contains("Updated Cell 1"))
+            {
+                revisionFound = true;
+                break;
+            }
         }
 
-        // Optionally, inspect the first revision (should be a deletion of the original text).
-        Revision firstRevision = doc.Revisions[0];
-        Console.WriteLine($"Revision author: {firstRevision.Author}");
-        Console.WriteLine($"Revision type: {firstRevision.RevisionType}");
-        Console.WriteLine($"Revision text: {firstRevision.ParentNode.GetText().Trim()}");
+        if (!revisionFound)
+            throw new InvalidOperationException("Expected revision for the table cell change was not found.");
 
-        // Save the document to verify the revisions persist.
-        doc.Save("TrackedRevisions.docx");
+        // Save the document.
+        doc.Save("RevisionsTable.docx");
     }
 }

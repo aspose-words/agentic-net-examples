@@ -2,85 +2,77 @@ using System;
 using System.IO;
 using Aspose.Words;
 
-namespace BatchRejectRevisions
+public class Program
 {
-    // Criteria that matches revisions authored by a specific user.
-    public class AuthorRevisionCriteria : IRevisionCriteria
+    // Criteria to match revisions authored by a specific user.
+    private class RevisionAuthorCriteria : IRevisionCriteria
     {
-        private readonly string _authorName;
+        private readonly string _author;
 
-        public AuthorRevisionCriteria(string authorName)
+        public RevisionAuthorCriteria(string author)
         {
-            _authorName = authorName;
+            _author = author;
         }
 
         public bool IsMatch(Revision revision)
         {
-            return revision.Author.Equals(_authorName, StringComparison.OrdinalIgnoreCase);
+            return revision.Author == _author;
         }
     }
 
-    public class Program
+    public static void Main()
     {
-        // Entry point.
-        public static void Main()
+        // Define input and output folders.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
+
+        // Author whose revisions will be rejected.
+        string targetAuthor = "Bob";
+
+        // Create sample documents containing revisions from two authors.
+        CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docx"));
+        CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docx"));
+
+        // Process each document: reject revisions authored by the target author.
+        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
         {
-            // Define input and output folders.
-            string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+            Document doc = new Document(filePath);
 
-            Directory.CreateDirectory(inputDir);
-            Directory.CreateDirectory(outputDir);
+            // Reject matching revisions; the method returns the number of rejected revisions.
+            doc.Revisions.Reject(new RevisionAuthorCriteria(targetAuthor));
 
-            // Create sample documents with revisions from two authors.
-            CreateSampleDocument(Path.Combine(inputDir, "Doc1.docx"));
-            CreateSampleDocument(Path.Combine(inputDir, "Doc2.docx"));
-
-            // Author whose revisions should be rejected.
-            const string targetAuthor = "Bob";
-
-            // Process each document in the input folder.
-            foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
-            {
-                // Load the document.
-                Document doc = new Document(filePath);
-
-                // Reject revisions authored by the target user.
-                doc.Revisions.Reject(new AuthorRevisionCriteria(targetAuthor));
-
-                // Save the processed document to the output folder.
-                string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
-                doc.Save(outputPath);
-            }
-
-            // Indicate completion.
-            Console.WriteLine("Batch processing completed.");
+            // Save the cleaned document.
+            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
+            doc.Save(outputPath);
         }
+    }
 
-        // Generates a sample document containing revisions from two different authors.
-        private static void CreateSampleDocument(string filePath)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+    // Generates a document with revisions from "Alice" and "Bob".
+    private static void CreateSampleDocument(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Initial content without tracking.
-            builder.Writeln("Original paragraph.");
+        // Normal text (no revision).
+        builder.Writeln("Initial content. ");
 
-            // Track revisions by Alice.
-            doc.StartTrackRevisions("Alice", DateTime.Now);
-            builder.Writeln("Alice's inserted paragraph.");
-            doc.StopTrackRevisions();
+        // Revisions by Alice.
+        doc.StartTrackRevisions("Alice", DateTime.Now);
+        builder.Writeln("Added by Alice. ");
+        doc.StopTrackRevisions();
 
-            // Track revisions by Bob.
-            doc.StartTrackRevisions("Bob", DateTime.Now);
-            builder.Writeln("Bob's inserted paragraph.");
-            // Delete a run to create a deletion revision by Bob.
-            if (doc.FirstSection.Body.FirstParagraph.Runs.Count > 0)
-                doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
-            doc.StopTrackRevisions();
+        // Revisions by Bob.
+        doc.StartTrackRevisions("Bob", DateTime.Now);
+        builder.Writeln("Added by Bob. ");
 
-            // Save the sample document.
-            doc.Save(filePath);
-        }
+        // Delete a run to create a deletion revision by Bob.
+        if (doc.FirstSection.Body.FirstParagraph.Runs.Count > 0)
+            doc.FirstSection.Body.FirstParagraph.Runs[0].Remove();
+
+        doc.StopTrackRevisions();
+
+        doc.Save(filePath);
     }
 }

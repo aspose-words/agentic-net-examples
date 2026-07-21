@@ -1,50 +1,50 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary files.
-        string originalPath = "OriginalWithRevisions.docx";
-        string cleanedPath = "Cleaned.docx";
+        // Paths for the sample files.
+        const string originalPath = "OriginalWithRevisions.docx";
+        const string cleanedPath = "Cleaned.docx";
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document and generate some revisions.
+        // 1. Create a sample document that contains tracked changes.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Normal text – not a revision.
-        builder.Writeln("This text will not be a revision.");
+        // Enable tracking so that subsequent edits become revisions.
+        doc.StartTrackRevisions("Sample Author");
 
-        // Start tracking revisions.
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        // Add some text – each write creates an insertion revision.
+        builder.Writeln("First line with revision.");
+        builder.Writeln("Second line with revision.");
 
-        // These writes will be recorded as revisions.
-        builder.Writeln("First revision line.");
-        builder.Writeln("Second revision line.");
-
-        // Stop tracking – further edits are not revisions.
+        // Stop tracking to prevent further edits from being marked.
         doc.StopTrackRevisions();
 
-        // Save the document that contains revisions.
+        // Save the document that now holds revisions.
         doc.Save(originalPath);
 
         // -----------------------------------------------------------------
-        // 2. Load the document with revisions, accept all of them, and save.
+        // 2. Load the document that contains revisions.
         // -----------------------------------------------------------------
         Document loadedDoc = new Document(originalPath);
 
-        // Ensure the document actually has revisions before proceeding.
-        if (!loadedDoc.HasRevisions)
-            throw new InvalidOperationException("The loaded document does not contain any revisions.");
-
-        // Accept every revision in the document.
+        // -----------------------------------------------------------------
+        // 3. Accept all revisions, removing the change markup.
+        // -----------------------------------------------------------------
         loadedDoc.AcceptAllRevisions();
 
-        // Save the cleaned document (no revisions remain).
+        // Optional sanity check – the document should have no revisions left.
+        if (loadedDoc.HasRevisions)
+            throw new InvalidOperationException("Revisions were not fully accepted.");
+
+        // -----------------------------------------------------------------
+        // 4. Save the cleaned document to a new file.
+        // -----------------------------------------------------------------
         loadedDoc.Save(cleanedPath);
     }
 }

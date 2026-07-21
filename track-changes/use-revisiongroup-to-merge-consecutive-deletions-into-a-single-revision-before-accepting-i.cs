@@ -1,5 +1,5 @@
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using Aspose.Words;
 
 public class Program
@@ -8,31 +8,27 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add several paragraphs that we will later delete.
-        builder.Writeln("Paragraph 1.");
-        builder.Writeln("Paragraph 2.");
-        builder.Writeln("Paragraph 3.");
-        builder.Writeln("Paragraph 4.");
+        // Build a paragraph that contains several separate runs (words).
+        Paragraph paragraph = new Paragraph(doc);
+        doc.FirstSection.Body.AppendChild(paragraph);
+        paragraph.AppendChild(new Run(doc, "Alpha "));
+        paragraph.AppendChild(new Run(doc, "Beta "));
+        paragraph.AppendChild(new Run(doc, "Gamma "));
+        paragraph.AppendChild(new Run(doc, "Delta "));
 
-        // Start tracking revisions.
+        // Start tracking revisions – any changes made now will be recorded.
         doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Delete two consecutive paragraphs to generate two separate deletion revisions.
-        // These deletions will be adjacent in the document, so they belong to the same RevisionGroup.
-        Paragraph para2 = doc.FirstSection.Body.Paragraphs[1];
-        Paragraph para3 = doc.FirstSection.Body.Paragraphs[2];
-        para2.Remove(); // first deletion revision
-        para3.Remove(); // second deletion revision
+        // Delete two consecutive runs ("Beta " and "Gamma ").
+        // Remove the later run first to keep indices valid.
+        paragraph.Runs[2].Remove(); // Removes "Gamma "
+        paragraph.Runs[1].Remove(); // Removes "Beta "
 
         // Stop tracking revisions.
         doc.StopTrackRevisions();
 
-        // At this point we have two deletion revisions.
-        Console.WriteLine($"Revisions before merging: {doc.Revisions.Count}");
-
-        // Find the revision group that contains the consecutive deletions.
+        // Find the deletion revision group that contains the two deletions.
         RevisionGroup deletionGroup = null;
         foreach (RevisionGroup group in doc.Revisions.Groups)
         {
@@ -44,22 +40,21 @@ public class Program
         }
 
         if (deletionGroup == null)
-            throw new InvalidOperationException("No deletion revision group found.");
+            throw new InvalidOperationException("No deletion revision group was found.");
 
-        // Collect revisions that belong to the identified group.
-        var revisionsToAccept = doc.Revisions
-                                   .Where(r => r.Group == deletionGroup)
-                                   .ToList();
-
-        // Accept each revision in the group.
-        foreach (Revision rev in revisionsToAccept)
+        // Collect all revisions that belong to the identified group.
+        List<Revision> revisionsToAccept = new List<Revision>();
+        foreach (Revision rev in doc.Revisions)
         {
-            rev.Accept();
+            if (rev.Group == deletionGroup)
+                revisionsToAccept.Add(rev);
         }
 
-        // After accepting the grouped deletions, there should be no remaining revisions.
-        Console.WriteLine($"Revisions after accepting the merged group: {doc.Revisions.Count}");
+        // Accept each revision. Using a separate list avoids modifying the collection while iterating.
+        foreach (Revision rev in revisionsToAccept)
+            rev.Accept();
 
+        // After accepting, the document should contain no revisions.
         // Save the resulting document.
         doc.Save("MergedDeletions.docx");
     }

@@ -9,30 +9,33 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write some initial text that is not a revision.
-        builder.Writeln("Original content.");
+        // Write some initial content that is not a revision.
+        builder.Write("This is the original content. ");
 
         // Start tracking revisions.
-        doc.StartTrackRevisions("Author", DateTime.Now);
+        doc.StartTrackRevisions("John Doe", DateTime.Now);
 
-        // Add text while tracking – this will create a revision.
-        builder.Writeln("This is a tracked change.");
+        // Make changes that will be recorded as revisions.
+        builder.Write("This text is added while tracking. ");
 
-        // Stop tracking revisions.
+        // Stop tracking to finish creating revisions.
         doc.StopTrackRevisions();
 
-        // At this point the document should have revisions.
+        // At this point the document should contain revisions.
         if (!doc.HasRevisions)
-            throw new InvalidOperationException("Expected revisions were not created.");
+            throw new Exception("Expected revisions were not created.");
 
         // Reject all revisions in the document.
         doc.Revisions.RejectAll();
 
-        // Verify that there are no remaining revisions.
+        // Verify that no revisions remain.
         if (doc.HasRevisions)
-            throw new InvalidOperationException("Revisions were not fully rejected.");
+            throw new Exception("Revisions were not fully rejected.");
 
-        // Save the resulting document (optional, demonstrates saving).
-        doc.Save("Result.docx");
+        // Save the resulting document (optional, demonstrates file output).
+        doc.Save("RejectedRevisions.docx");
+
+        // Indicate success.
+        Console.WriteLine("All tracked changes were rejected; HasRevisions = false.");
     }
 }
