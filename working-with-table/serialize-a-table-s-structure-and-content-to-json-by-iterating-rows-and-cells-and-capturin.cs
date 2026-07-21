@@ -1,23 +1,26 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Newtonsoft.Json;
 
-namespace TableSerializationExample
+namespace AsposeWordsTableJson
 {
-    // Classes that represent the table structure for JSON serialization.
+    // DTOs for JSON serialization
     public class TableInfo
     {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Alignment { get; set; }
+        public double LeftIndent { get; set; }
         public List<RowInfo> Rows { get; set; } = new List<RowInfo>();
     }
 
     public class RowInfo
     {
         public double Height { get; set; }
-        public HeightRule HeightRule { get; set; }
+        public string HeightRule { get; set; }
         public List<CellInfo> Cells { get; set; } = new List<CellInfo>();
     }
 
@@ -25,113 +28,112 @@ namespace TableSerializationExample
     {
         public string Text { get; set; }
         public double Width { get; set; }
-        public CellVerticalAlignment VerticalAlignment { get; set; }
-        public TextOrientation Orientation { get; set; }
-        public Color? ShadingBackgroundColor { get; set; }
+        public string VerticalAlignment { get; set; }
+        public string Orientation { get; set; }
+        public int ShadingColorArgb { get; set; }
+        public double LeftPadding { get; set; }
+        public double RightPadding { get; set; }
+        public double TopPadding { get; set; }
+        public double BottomPadding { get; set; }
+        public string ParagraphAlignment { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document.
+            // 1. Create a sample document with a table.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a sample table with formatting.
+            // Build a simple 3x2 table.
             Table table = builder.StartTable();
 
-            // First row.
+            // Header row
             builder.InsertCell();
-            builder.CellFormat.Width = 100;
-            builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-            builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
             builder.Write("Header 1");
-
             builder.InsertCell();
-            builder.CellFormat.Width = 150;
-            builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Center;
-            builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
             builder.Write("Header 2");
             builder.EndRow();
 
-            // Second row.
-            builder.RowFormat.Height = 30;
-            builder.RowFormat.HeightRule = HeightRule.Exactly;
-
+            // First data row
             builder.InsertCell();
-            builder.CellFormat.Width = 100;
-            builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Top;
-            builder.CellFormat.Orientation = TextOrientation.Downward;
-            builder.Write("Row1, Col1");
-
+            builder.Write("Row1 Col1");
             builder.InsertCell();
-            builder.CellFormat.Width = 150;
-            builder.CellFormat.VerticalAlignment = CellVerticalAlignment.Bottom;
-            builder.CellFormat.Orientation = TextOrientation.Upward;
-            builder.Write("Row1, Col2");
+            builder.Write("Row1 Col2");
+            builder.EndRow();
+
+            // Second data row
+            builder.InsertCell();
+            builder.Write("Row2 Col1");
+            builder.InsertCell();
+            builder.Write("Row2 Col2");
             builder.EndRow();
 
             builder.EndTable();
 
-            // Save the document to a local file.
-            string docPath = "SampleTable.docx";
+            // Save the sample document.
+            const string docPath = "SampleTable.docx";
             doc.Save(docPath);
 
-            // Load the document (optional, demonstrates loading).
-            Document loadedDoc = new Document(docPath);
-
-            // Extract table information.
+            // 2. Traverse tables and collect structure + formatting.
             List<TableInfo> tablesInfo = new List<TableInfo>();
-            NodeCollection tableNodes = loadedDoc.GetChildNodes(NodeType.Table, true);
+
+            NodeCollection tableNodes = doc.GetChildNodes(NodeType.Table, true);
             foreach (Table tbl in tableNodes)
             {
-                TableInfo tblInfo = new TableInfo();
+                TableInfo ti = new TableInfo
+                {
+                    Title = tbl.Title,
+                    Description = tbl.Description,
+                    Alignment = tbl.Alignment.ToString(),
+                    LeftIndent = tbl.LeftIndent
+                };
 
                 foreach (Row row in tbl.Rows)
                 {
-                    RowInfo rowInfo = new RowInfo
+                    RowInfo ri = new RowInfo
                     {
                         Height = row.RowFormat.Height,
-                        HeightRule = row.RowFormat.HeightRule
+                        HeightRule = row.RowFormat.HeightRule.ToString()
                     };
 
                     foreach (Cell cell in row.Cells)
                     {
-                        // Ensure the cell has at least one paragraph to extract text.
-                        cell.EnsureMinimum();
+                        // Capture paragraph alignment of the first paragraph in the cell (if any)
+                        string paraAlignment = cell.FirstParagraph?.ParagraphFormat?.Alignment.ToString() ?? "Left";
 
-                        string cellText = cell.GetText().Trim('\a', '\r', '\n');
-
-                        CellInfo cellInfo = new CellInfo
+                        CellInfo ci = new CellInfo
                         {
-                            Text = cellText,
+                            Text = cell.ToString(SaveFormat.Text).Trim(),
                             Width = cell.CellFormat.Width,
-                            VerticalAlignment = cell.CellFormat.VerticalAlignment,
-                            Orientation = cell.CellFormat.Orientation,
-                            ShadingBackgroundColor = cell.CellFormat.Shading.BackgroundPatternColor.IsEmpty
-                                ? (Color?)null
-                                : cell.CellFormat.Shading.BackgroundPatternColor
+                            VerticalAlignment = cell.CellFormat.VerticalAlignment.ToString(),
+                            Orientation = cell.CellFormat.Orientation.ToString(),
+                            ShadingColorArgb = cell.CellFormat.Shading.BackgroundPatternColor.ToArgb(),
+                            LeftPadding = cell.CellFormat.LeftPadding,
+                            RightPadding = cell.CellFormat.RightPadding,
+                            TopPadding = cell.CellFormat.TopPadding,
+                            BottomPadding = cell.CellFormat.BottomPadding,
+                            ParagraphAlignment = paraAlignment
                         };
 
-                        rowInfo.Cells.Add(cellInfo);
+                        ri.Cells.Add(ci);
                     }
 
-                    tblInfo.Rows.Add(rowInfo);
+                    ti.Rows.Add(ri);
                 }
 
-                tablesInfo.Add(tblInfo);
+                tablesInfo.Add(ti);
             }
 
-            // Serialize the extracted information to JSON.
+            // 3. Serialize the collected information to JSON and save it.
             string json = JsonConvert.SerializeObject(tablesInfo, Formatting.Indented);
-
-            // Write JSON to a file.
-            string jsonPath = "TableStructure.json";
+            const string jsonPath = "TablesInfo.json";
             File.WriteAllText(jsonPath, json);
 
-            // Indicate completion (no interactive input).
-            Console.WriteLine("Table serialization completed.");
+            // Optional: output paths for verification.
+            Console.WriteLine($"Document saved to: {Path.GetFullPath(docPath)}");
+            Console.WriteLine($"Table metadata JSON saved to: {Path.GetFullPath(jsonPath)}");
         }
     }
 }

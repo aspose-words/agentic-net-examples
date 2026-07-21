@@ -2,8 +2,10 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Drawing;
+using System.Drawing;
 
-namespace AsposeWordsTableStyleExample
+namespace TableStyleExample
 {
     public class Program
     {
@@ -13,8 +15,8 @@ namespace AsposeWordsTableStyleExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a table with a header row, two data rows, and a footer row.
-            Table table = builder.StartTable();
+            // Build a simple 2‑column table with a header row, two data rows and a footer row.
+            builder.StartTable();
 
             // Header row.
             builder.InsertCell();
@@ -45,7 +47,7 @@ namespace AsposeWordsTableStyleExample
             builder.EndRow();
 
             // Finish the table.
-            builder.EndTable();
+            Table table = builder.EndTable();
 
             // Create a custom table style.
             TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomStyle");
@@ -56,19 +58,15 @@ namespace AsposeWordsTableStyleExample
             // Make the last row (footer) italic.
             customStyle.ConditionalStyles[ConditionalStyleType.LastRow].Font.Italic = true;
 
-            // Apply the custom style to the table.
+            // Apply the style to the table.
             table.Style = customStyle;
 
-            // Enable the conditional formatting for the first and last rows.
+            // Enable the conditional formatting for first and last rows.
             table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.LastRow;
 
-            // Save the document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithCustomStyle.docx");
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableStyleHeaderFooter.docx");
             doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
         }
     }
 }

@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,47 +8,54 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Build a simple 2‑row, 4‑column table.
         Table table = builder.StartTable();
 
-        // Build a simple 2‑row, 4‑column table.
-        for (int row = 0; row < 2; row++)
+        // First row (header).
+        for (int i = 0; i < 4; i++)
         {
-            for (int col = 0; col < 4; col++)
-            {
-                builder.InsertCell();
-                builder.Writeln($"R{row + 1}C{col + 1}");
-            }
-            builder.EndRow();
+            builder.InsertCell();
+            builder.Write($"Header {i + 1}");
         }
+        builder.EndRow();
 
-        // Finish the table.
+        // Second row (data).
+        for (int i = 0; i < 4; i++)
+        {
+            builder.InsertCell();
+            builder.Write($"Data {i + 1}");
+        }
+        builder.EndRow();
+
         builder.EndTable();
 
-        // Create a custom table style that will apply alternating column shading.
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyColumnBandStyle");
-        // Apply banding to every column.
-        customStyle.ColumnStripe = 1;
-        // Define shading for even columns.
-        customStyle.ConditionalStyles[ConditionalStyleType.EvenColumnBanding].Shading.BackgroundPatternColor = Color.LightGray;
-        // Define shading for odd columns.
-        customStyle.ConditionalStyles[ConditionalStyleType.OddColumnBanding].Shading.BackgroundPatternColor = Color.White;
+        // Create a custom table style that defines alternating column shading.
+        TableStyle columnBandStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyColumnBandStyle");
 
-        // Assign the custom style to the table.
-        table.Style = customStyle;
-        // Enable column banding.
+        // Define shading for even columns.
+        columnBandStyle.ConditionalStyles[ConditionalStyleType.EvenColumnBanding]
+            .Shading.BackgroundPatternColor = Color.LightGray;
+
+        // Define shading for odd columns.
+        columnBandStyle.ConditionalStyles[ConditionalStyleType.OddColumnBanding]
+            .Shading.BackgroundPatternColor = Color.White;
+
+        // Apply the style to the table.
+        table.Style = columnBandStyle;
+
+        // Enable column banding for the style.
         table.StyleOptions = TableStyleOptions.ColumnBands;
 
         // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableColumnBanding.docx");
+        string outputPath = "TableColumnBanding.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
+            throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
     }
 }

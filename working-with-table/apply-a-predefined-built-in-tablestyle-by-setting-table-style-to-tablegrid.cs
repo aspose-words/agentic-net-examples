@@ -7,44 +7,41 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
+        // Start building a table.
         Table table = builder.StartTable();
 
+        // First row (header).
         builder.InsertCell();
-        builder.Write("Cell 1");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Write("Cell 2");
+        builder.Write("Header 2");
         builder.EndRow();
 
+        // Second row (data).
         builder.InsertCell();
-        builder.Write("Cell 3");
+        builder.Write("Data 1");
         builder.InsertCell();
-        builder.Write("Cell 4");
+        builder.Write("Data 2");
         builder.EndRow();
 
+        // Finish the table.
         builder.EndTable();
 
-        // Apply the built‑in TableGrid style using the style identifier.
-        // Using StyleIdentifier avoids a null lookup in the Styles collection.
+        // Apply the built‑in "TableGrid" style using its identifier.
         table.StyleIdentifier = StyleIdentifier.TableGrid;
-        // Optional: apply the style to the whole table.
-        table.StyleOptions = TableStyleOptions.None;
 
-        // Save the document to a local file.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "TableWithStyle.docx");
+        // Save the document to a file.
+        string outputPath = "TableStyleExample.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved correctly.");
-
-        // Indicate successful completion.
-        Console.WriteLine($"Document saved to: {outputPath}");
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

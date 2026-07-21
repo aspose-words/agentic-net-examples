@@ -11,29 +11,25 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2‑cell table.
+        // Start a table and add a single cell with some text.
         Table table = builder.StartTable();
         builder.InsertCell();
-        builder.Write("Left cell");
-        builder.InsertCell();
-        builder.Write("Right cell");
-        builder.EndRow();
+        builder.Write("Sample cell content.");
         builder.EndTable();
 
-        // Set left indent (margin) to 1 cm (≈28.35 points).
-        table.LeftIndent = 28.35;
+        // Set the left indent of the table to 1 cm (≈28.35 points).
+        table.LeftIndent = 28.35; // 1 cm in points.
 
-        // Set right distance (margin) to 1 cm.
-        table.DistanceRight = 28.35;
+        // Table.RightIndent does not exist in this API version.
+        // Use DistanceRight to achieve a similar effect: the space between the table and surrounding text.
+        table.DistanceRight = 28.35; // Approximate right margin of 1 cm.
 
-        // Save the document to the local file system.
+        // Save the document to the current directory.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableMargins.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Simple validation to ensure the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output file was not created.");
-
-        // The program finishes automatically; no user interaction required.
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

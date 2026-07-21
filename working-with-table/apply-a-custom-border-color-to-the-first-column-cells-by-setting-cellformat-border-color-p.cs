@@ -12,38 +12,53 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3x3 table.
+        // Build a simple 3x2 table.
         Table table = builder.StartTable();
 
-        for (int row = 1; row <= 3; row++)
-        {
-            for (int col = 1; col <= 3; col++)
-            {
-                builder.InsertCell();
-                builder.Write($"R{row}C{col}");
-            }
-            builder.EndRow();
-        }
+        // Row 1
+        builder.InsertCell();
+        builder.Write("R1C1");
+        builder.InsertCell();
+        builder.Write("R1C2");
+        builder.EndRow();
 
-        builder.EndTable();
+        // Row 2
+        builder.InsertCell();
+        builder.Write("R2C1");
+        builder.InsertCell();
+        builder.Write("R2C2");
+        builder.EndRow();
 
-        // Apply a custom border color (e.g., Blue) to every cell in the first column.
-        foreach (Row tableRow in table.Rows)
+        // Row 3
+        builder.InsertCell();
+        builder.Write("R3C1");
+        builder.InsertCell();
+        builder.Write("R3C2");
+        builder.EndRow();
+
+        // Finish the table and obtain the Table object.
+        table = builder.EndTable();
+
+        // Apply a custom border color (e.g., Blue) to all cells in the first column.
+        foreach (Row row in table.Rows)
         {
-            Cell firstCell = tableRow.FirstCell;
-            // Set all four borders of the cell to the desired color.
+            Cell firstCell = row.FirstCell;
+            // Set the left border color.
             firstCell.CellFormat.Borders[BorderType.Left].Color = Color.Blue;
-            firstCell.CellFormat.Borders[BorderType.Right].Color = Color.Blue;
+            // Optionally set other borders of the first column cells to the same color.
             firstCell.CellFormat.Borders[BorderType.Top].Color = Color.Blue;
             firstCell.CellFormat.Borders[BorderType.Bottom].Color = Color.Blue;
+            firstCell.CellFormat.Borders[BorderType.Right].Color = Color.Blue;
         }
 
-        // Define output path relative to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FirstColumnBorderColor.docx");
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FirstColumnBorder.docx");
+
+        // Save the document.
         doc.Save(outputPath);
 
-        // Simple validation to ensure the file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

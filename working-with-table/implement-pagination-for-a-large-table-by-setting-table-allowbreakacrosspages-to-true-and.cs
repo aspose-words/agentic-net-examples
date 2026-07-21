@@ -3,44 +3,50 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTablePagination
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start a new table.
-        Table table = builder.StartTable();
-
-        // Build a large table (e.g., 100 rows) to demonstrate pagination.
-        for (int i = 1; i <= 100; i++)
+        public static void Main()
         {
-            // First cell of the row.
-            builder.InsertCell();
-            builder.Writeln($"Row {i}, Cell 1");
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Second cell of the row.
-            builder.InsertCell();
-            builder.Writeln($"Row {i}, Cell 2");
+            // Start a new table.
+            Table table = builder.StartTable();
 
-            // Adjust row formatting:
-            // - Allow the row to break across pages.
-            // - Set a minimum height so rows are tall enough to be noticeable.
-            builder.RowFormat.AllowBreakAcrossPages = true;
-            builder.RowFormat.Height = 20;               // Height in points.
-            builder.RowFormat.HeightRule = HeightRule.AtLeast;
+            // Build a large table (e.g., 50 rows, 2 columns).
+            for (int i = 1; i <= 50; i++)
+            {
+                // Set row height to a reasonable value and allow it to grow if needed.
+                builder.RowFormat.Height = 20;               // Height in points.
+                builder.RowFormat.HeightRule = HeightRule.AtLeast;
 
-            // End the current row.
-            builder.EndRow();
+                // First cell.
+                builder.InsertCell();
+                builder.Write($"Row {i}, Cell 1");
+
+                // Second cell.
+                builder.InsertCell();
+                builder.Write($"Row {i}, Cell 2");
+
+                // End the current row.
+                builder.EndRow();
+            }
+
+            // Finish the table.
+            builder.EndTable();
+
+            // Enable breaking rows across pages for pagination.
+            foreach (Row row in table.Rows)
+            {
+                row.RowFormat.AllowBreakAcrossPages = true;
+            }
+
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LargeTablePagination.docx");
+            doc.Save(outputPath);
         }
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LargeTablePagination.docx");
-        doc.Save(outputPath);
     }
 }

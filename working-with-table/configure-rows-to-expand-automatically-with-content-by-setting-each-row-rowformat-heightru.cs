@@ -1,54 +1,50 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Start a new table.
-        Table table = builder.StartTable();
-
-        // First row – short content.
-        builder.RowFormat.HeightRule = HeightRule.Auto; // Ensure auto height.
-        builder.InsertCell();
-        builder.Write("Short text.");
-        builder.InsertCell();
-        builder.Write("More short text.");
-        builder.EndRow();
-
-        // Second row – longer content to demonstrate auto expansion.
-        builder.RowFormat.HeightRule = HeightRule.Auto;
-        builder.InsertCell();
-        builder.Write("This is a longer piece of text that should cause the row to expand automatically based on its content.");
-        builder.InsertCell();
-        builder.Write("Another long text cell that will also cause the row to grow in height automatically.");
-        builder.EndRow();
-
-        // Third row – mixed content.
-        builder.RowFormat.HeightRule = HeightRule.Auto;
-        builder.InsertCell();
-        builder.Write("Short.");
-        builder.InsertCell();
-        builder.Write("A very long text that spans multiple lines and forces the row to increase its height to accommodate all the text without truncation.");
-        builder.EndRow();
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Explicitly set HeightRule to Auto for all rows (in case any were missed).
-        foreach (Row row in table.Rows)
+        public static void Main()
         {
-            row.RowFormat.HeightRule = HeightRule.Auto;
-        }
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AutoFitRows.docx");
-        doc.Save(outputPath);
+            // Start a table.
+            Table table = builder.StartTable();
+
+            // Build three rows with two cells each.
+            for (int i = 1; i <= 3; i++)
+            {
+                // First cell of the row.
+                builder.InsertCell();
+                builder.Write($"Row {i}, Cell 1");
+
+                // Second cell of the row.
+                builder.InsertCell();
+                builder.Write($"Row {i}, Cell 2");
+
+                // Ensure the row will expand automatically to fit its content.
+                builder.RowFormat.HeightRule = HeightRule.Auto;
+
+                // End the current row.
+                builder.EndRow();
+            }
+
+            // Finish the table.
+            builder.EndTable();
+
+            // As an extra safety check, set the HeightRule of every row to Auto.
+            foreach (Row row in table.Rows)
+            {
+                row.RowFormat.HeightRule = HeightRule.Auto;
+            }
+
+            // Save the document to the local file system.
+            string outputPath = "RowsAutoHeight.docx";
+            doc.Save(outputPath);
+        }
     }
 }

@@ -11,36 +11,60 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table and populate it with 2 rows and 2 columns.
+        // Start a table.
         Table table = builder.StartTable();
 
-        for (int row = 0; row < 2; row++)
-        {
-            for (int col = 0; col < 2; col++)
-            {
-                builder.InsertCell();
-                builder.Write($"R{row + 1}C{col + 1}");
-            }
-            builder.EndRow();
-        }
+        // First row - first cell.
+        builder.InsertCell();
+        // Set cell margins (padding) to 5 points on all sides.
+        builder.CellFormat.TopPadding = 5;
+        builder.CellFormat.BottomPadding = 5;
+        builder.CellFormat.LeftPadding = 5;
+        builder.CellFormat.RightPadding = 5;
+        builder.Write("Cell 1, Row 1");
 
-        // Finish the table.
+        // First row - second cell.
+        builder.InsertCell();
+        builder.CellFormat.TopPadding = 5;
+        builder.CellFormat.BottomPadding = 5;
+        builder.CellFormat.LeftPadding = 5;
+        builder.CellFormat.RightPadding = 5;
+        builder.Write("Cell 2, Row 1");
+
+        // End the first row.
+        builder.EndRow();
+
+        // Second row - first cell.
+        builder.InsertCell();
+        builder.CellFormat.TopPadding = 5;
+        builder.CellFormat.BottomPadding = 5;
+        builder.CellFormat.LeftPadding = 5;
+        builder.CellFormat.RightPadding = 5;
+        builder.Write("Cell 1, Row 2");
+
+        // Second row - second cell.
+        builder.InsertCell();
+        builder.CellFormat.TopPadding = 5;
+        builder.CellFormat.BottomPadding = 5;
+        builder.CellFormat.LeftPadding = 5;
+        builder.CellFormat.RightPadding = 5;
+        builder.Write("Cell 2, Row 2");
+
+        // End the second row and the table.
+        builder.EndRow();
         builder.EndTable();
 
-        // Set the padding (margins) of each cell to 5 points on all sides.
-        foreach (Row r in table.Rows)
-        {
-            foreach (Cell c in r.Cells)
-            {
-                c.CellFormat.TopPadding = 5;
-                c.CellFormat.BottomPadding = 5;
-                c.CellFormat.LeftPadding = 5;
-                c.CellFormat.RightPadding = 5;
-            }
-        }
-
-        // Save the document to the current directory.
+        // Define output path.
         string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CellMargins.docx");
+
+        // Save the document.
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output file was not created.");
+
+        // Optionally, inform that the process completed (no interactive input required).
+        Console.WriteLine("Document saved to: " + outputPath);
     }
 }

@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+public class InsertTableAfterHeading
 {
     public static void Main()
     {
@@ -11,21 +11,20 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading paragraph that we will later locate.
+        // Add a heading paragraph (Heading 1 style).
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Sample Heading");
 
-        // Add some regular text after the heading (optional).
-        builder.ParagraphFormat.ClearFormatting();
-        builder.Writeln("Some content before the table.");
+        // Add a normal paragraph after the heading (optional, just to have more content).
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Paragraph following the heading.");
 
-        // Locate the heading paragraph by its style.
+        // Locate the heading paragraph in the document.
         Paragraph headingParagraph = null;
         NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
         foreach (Paragraph para in paragraphs)
         {
-            if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1 &&
-                para.GetText().Trim() == "Sample Heading")
+            if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Heading1)
             {
                 headingParagraph = para;
                 break;
@@ -33,13 +32,15 @@ public class Program
         }
 
         if (headingParagraph == null)
-            throw new Exception("Heading paragraph not found.");
+            throw new InvalidOperationException("Heading paragraph not found.");
 
-        // Create a new table (not yet attached to the document).
+        // Create a new table node (not yet attached to the document).
         Table table = new Table(doc);
-        table.EnsureMinimum(); // Guarantees at least one row and one cell.
 
-        // Populate the first row.
+        // Ensure the table has at least one row, cell, and paragraph.
+        table.EnsureMinimum();
+
+        // Populate the first row with two cells.
         Row firstRow = table.FirstRow;
         Cell firstCell = firstRow.FirstCell;
         firstCell.FirstParagraph.AppendChild(new Run(doc, "Cell 1"));
@@ -48,7 +49,7 @@ public class Program
         secondCell.FirstParagraph.AppendChild(new Run(doc, "Cell 2"));
         firstRow.AppendChild(secondCell);
 
-        // Add a second row.
+        // Add a second row with two cells.
         Row secondRow = new Row(doc);
         Cell thirdCell = new Cell(doc);
         thirdCell.AppendChild(new Paragraph(doc));
@@ -61,14 +62,15 @@ public class Program
         table.AppendChild(secondRow);
 
         // Insert the table after the heading paragraph.
+        // The heading's parent is the Body node; use InsertAfter on that parent.
         headingParagraph.ParentNode.InsertAfter(table, headingParagraph);
 
         // Save the document.
-        string outputPath = "Output.docx";
+        string outputPath = "OutputTableAfterHeading.docx";
         doc.Save(outputPath);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Failed to save the document.");
+            throw new IOException($"Failed to create the output file: {outputPath}");
     }
 }

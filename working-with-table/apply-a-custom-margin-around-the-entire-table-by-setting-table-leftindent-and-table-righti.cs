@@ -1,53 +1,47 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
 namespace TableMarginExample
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
             // Create a new blank document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table and add a few cells with sample text.
+            // Start a table.
             Table table = builder.StartTable();
+
+            // Insert first row with two cells.
             builder.InsertCell();
             builder.Write("Cell 1");
             builder.InsertCell();
             builder.Write("Cell 2");
             builder.EndRow();
 
+            // Insert second row with two cells.
             builder.InsertCell();
             builder.Write("Cell 3");
             builder.InsertCell();
             builder.Write("Cell 4");
-            builder.EndRow();
-
-            // Finish the table.
             builder.EndTable();
 
-            // Apply custom margins around the entire table.
-            // LeftIndent sets the left margin.
-            table.LeftIndent = 30.0; // points
+            // Apply custom left indent (margin) to the table.
+            table.LeftIndent = 30; // points
 
-            // RightIndent property is not available; use DistanceRight to achieve a right margin effect.
-            table.DistanceRight = 30.0; // points
-
-            // Define an output path.
-            string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-            Directory.CreateDirectory(artifactsDir);
-            string outputPath = Path.Combine(artifactsDir, "TableWithMargins.docx");
+            // Apply custom right margin using DistanceRight (RightIndent is not allowed).
+            table.DistanceRight = 30; // points
 
             // Save the document.
+            string outputPath = "TableMargin.docx";
             doc.Save(outputPath);
 
             // Simple verification that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
+            if (!System.IO.File.Exists(outputPath))
+                throw new Exception("Failed to create the output document.");
         }
     }
 }

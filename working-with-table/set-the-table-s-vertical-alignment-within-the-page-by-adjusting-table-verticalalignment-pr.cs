@@ -2,38 +2,33 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing; // Needed for VerticalAlignment enum
+using Aspose.Words.Drawing;   // Required for the VerticalAlignment enum
 
-namespace TableVerticalAlignmentExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 1x1 table.
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Sample cell");
-            builder.EndRow();
-            builder.EndTable();
+        // Build a simple 1x1 table.
+        Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Sample cell");
+        builder.EndRow();
+        builder.EndTable();
 
-            // Set the table's vertical alignment on the page to the middle.
-            // For floating tables use RelativeVerticalAlignment with the drawing.VerticalAlignment enum.
-            table.RelativeVerticalAlignment = VerticalAlignment.Center;
+        // Set the table's vertical alignment on the page to the middle (center).
+        // For floating tables the alignment is controlled by RelativeVerticalAlignment.
+        table.RelativeVerticalAlignment = VerticalAlignment.Center;
 
-            // Define the output path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableVerticalAlignment.docx");
+        // Save the document.
+        string outputPath = "TableVerticalAlignment.docx";
+        doc.Save(outputPath);
 
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
-        }
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

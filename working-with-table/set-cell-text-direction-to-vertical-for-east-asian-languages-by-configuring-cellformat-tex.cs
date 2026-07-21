@@ -3,37 +3,43 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
-        Table table = builder.StartTable();
+            // Start a table.
+            Table table = builder.StartTable();
 
-        // First cell – set text direction to vertical for East Asian languages.
-        builder.InsertCell();
-        builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
-        builder.Write("縦書きテキスト"); // Sample East Asian vertical text.
+            // First cell – set text orientation to vertical for East Asian characters.
+            builder.InsertCell();
+            builder.CellFormat.Orientation = TextOrientation.VerticalFarEast;
+            builder.Write("垂直文本"); // Sample East Asian text.
 
-        // Second cell – normal horizontal text.
-        builder.InsertCell();
-        builder.CellFormat.Orientation = TextOrientation.Horizontal;
-        builder.Write("Horizontal text");
+            // Second cell – normal horizontal orientation.
+            builder.InsertCell();
+            builder.Write("Normal");
 
-        // End the row and the table.
-        builder.EndRow();
-        builder.EndTable();
+            // End the first row and the table.
+            builder.EndRow();
+            builder.EndTable();
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
+            // Define output path and ensure the directory exists.
+            string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+            Directory.CreateDirectory(outputDir);
+            string outputPath = Path.Combine(outputDir, "VerticalTextDirection.docx");
 
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "CellVerticalText.docx");
-        doc.Save(outputPath);
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not saved correctly.");
+        }
     }
 }

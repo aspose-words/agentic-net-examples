@@ -1,41 +1,54 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableAllowBreakExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Use DocumentBuilder to construct a simple 2x2 table.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        Table table = builder.StartTable();
+            // Start a table.
+            Table table = builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
-        builder.EndRow();
+            // First row – this row will not be allowed to break across pages.
+            builder.InsertCell();
+            builder.Write("Header Row - No break across pages");
+            builder.InsertCell();
+            builder.Write("Header Cell 2");
+            // End the first row.
+            Row firstRow = builder.EndRow();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Data 1");
-        builder.InsertCell();
-        builder.Write("Data 2");
-        builder.EndRow();
+            // Disable breaking across pages for the first row.
+            firstRow.RowFormat.AllowBreakAcrossPages = false;
 
-        // Finish the table.
-        builder.EndTable();
+            // Add additional rows to make the table span multiple pages.
+            for (int i = 1; i <= 30; i++)
+            {
+                builder.InsertCell();
+                builder.Write($"Row {i}, Cell 1");
+                builder.InsertCell();
+                builder.Write($"Row {i}, Cell 2");
+                builder.EndRow();
+            }
 
-        // Prevent the first row from breaking across pages.
-        Row firstRow = table.FirstRow;
-        firstRow.RowFormat.AllowBreakAcrossPages = false;
+            // Finish the table.
+            builder.EndTable();
 
-        // Save the document to the local file system.
-        string outputPath = "TableAllowBreakAcrossPages.docx";
-        doc.Save(outputPath);
+            // Define the output file path.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "Table.AllowBreakAcrossPages.docx");
+
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not saved correctly.");
+        }
     }
 }

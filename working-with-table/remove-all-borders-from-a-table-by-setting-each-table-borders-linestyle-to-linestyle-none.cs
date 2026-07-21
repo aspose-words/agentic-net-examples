@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using System.Drawing;
 
 public class Program
 {
@@ -26,13 +27,16 @@ public class Program
         builder.Write("Cell 2,1");
         builder.InsertCell();
         builder.Write("Cell 2,2");
+        builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
         // Remove all borders from the table.
         table.ClearBorders();
 
-        // Save the document to the output folder.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithoutBorders.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Table_NoBorders.docx");
         doc.Save(outputPath);
     }
 }

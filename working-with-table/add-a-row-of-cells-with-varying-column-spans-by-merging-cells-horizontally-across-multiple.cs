@@ -3,73 +3,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableMergeDemo
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a new table.
-            Table table = builder.StartTable();
+        // Start a table.
+        Table table = builder.StartTable();
 
-            // -------------------------------------------------
-            // First row – simple three separate cells (header).
-            // -------------------------------------------------
-            builder.InsertCell();
-            builder.Write("Header 1");
-            builder.InsertCell();
-            builder.Write("Header 2");
-            builder.InsertCell();
-            builder.Write("Header 3");
-            builder.EndRow();
+        // -------------------------------------------------
+        // Row with cells that have different horizontal spans.
+        // -------------------------------------------------
 
-            // -------------------------------------------------
-            // Second row – cells with varying horizontal spans.
-            // -------------------------------------------------
+        // First cell – start a merge that will span 2 columns.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.Write("Merged 2 columns");
 
-            // Cell that spans two columns.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.First; // start of merge range
-            builder.Write("Span 2 columns");
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous; // merged with previous cell
-            // No text needed for merged cell.
+        // Second cell – part of the previous merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+        // No text needed for merged cells.
 
-            // Reset merge setting for the next independent cell.
-            builder.CellFormat.HorizontalMerge = CellMerge.None;
-            builder.InsertCell();
-            builder.Write("Normal cell");
+        // Third cell – normal, not merged.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.Write("Normal cell");
 
-            // Cell that spans three columns.
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.First;
-            builder.Write("Span 3 columns");
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-            builder.InsertCell();
-            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
-            // End of merged range – no text for the merged cells.
+        // Fourth cell – start a merge that will span 3 columns.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.First;
+        builder.Write("Merged 3 columns");
 
-            // Finish the row.
-            builder.EndRow();
+        // Fifth cell – part of the previous merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-            // End the table.
-            builder.EndTable();
+        // Sixth cell – part of the previous merge.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-            // Save the document to a local file.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "MergedCells.docx");
-            doc.Save(outputPath);
+        // End the row.
+        builder.EndRow();
 
-            // Simple validation to ensure the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
+        // End the table.
+        builder.EndTable();
 
-            // Optionally, inform that the process completed (no user input required).
-            Console.WriteLine($"Document saved successfully to: {outputPath}");
-        }
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedTable.docx");
+        doc.Save(outputPath);
+
+        // Simple validation – ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
+
+        // Inform the user (no interactive pause required).
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

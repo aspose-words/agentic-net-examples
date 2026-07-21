@@ -1,48 +1,48 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableStyleShadingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Initialize a DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
 
-            // Start a table and keep a reference to it.
-            Table table = builder.StartTable();
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
 
-            // First row with two cells.
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
 
-            // Second row with two cells.
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndTable();
+        builder.EndTable();
 
-            // Create a custom table style.
-            TableStyle grayStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyGrayStyle");
+        // Create a custom table style.
+        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyGrayStyle");
+        // Set the background shading for all cells of the style to light gray.
+        tableStyle.Shading.BackgroundPatternColor = Color.LightGray;
 
-            // Apply a light gray background to all cells via the style's shading.
-            grayStyle.Shading.BackgroundPatternColor = Color.LightGray;
+        // Apply the custom style to the table.
+        table.Style = tableStyle;
 
-            // Assign the custom style to the table.
-            table.Style = grayStyle;
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableStyleShading.docx");
+        doc.Save(outputPath);
 
-            // Save the document to the local file system.
-            doc.Save("TableStyleShading.docx");
-        }
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

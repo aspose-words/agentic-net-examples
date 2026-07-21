@@ -1,22 +1,25 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
 namespace AsposeWordsTableCaptionExample
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            // Create a new blank document and associate a builder with it.
+            // Create a new blank document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a caption above the table.
-            // The caption consists of a SEQ field that automatically numbers tables.
-            // The field text will be rendered as "Table 1" (or the next number if more tables are added).
-            builder.InsertField("SEQ Table \\* ARABIC", "Table ");
-            builder.Writeln(" My Table"); // Add a description after the number.
+            // Insert a caption paragraph above the table.
+            // The caption consists of the label "Table" followed by an automatically
+            // generated number using the SEQ field.
+            builder.Write("Table ");
+            builder.InsertField("SEQ Table \\* ARABIC", null);
+            builder.Writeln(": Sample Table");
+            builder.Writeln(); // Add an empty line after the caption.
 
             // Build a simple 2x2 table.
             builder.StartTable();
@@ -38,8 +41,13 @@ namespace AsposeWordsTableCaptionExample
             // Finish the table.
             builder.EndTable();
 
-            // Save the document to the local file system.
-            doc.Save("TableWithCaption.docx");
+            // Save the document.
+            string outputPath = "TableWithCaption.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
         }
     }
 }

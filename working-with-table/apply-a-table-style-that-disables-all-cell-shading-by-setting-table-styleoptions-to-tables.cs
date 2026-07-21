@@ -2,43 +2,45 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableStyleNoShadingExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+            // Start a table and add a simple 2x2 grid.
+            Table table = builder.StartTable();
 
-        // First row with two cells.
-        builder.InsertCell();
-        builder.Write("Cell 1");
-        builder.InsertCell();
-        builder.Write("Cell 2");
-        builder.EndRow();
+            // First row.
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
 
-        // Second row with two cells.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-        builder.InsertCell();
-        builder.Write("Cell 4");
-        builder.EndRow();
+            // Second row.
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndTable();
 
-        // Finish the table.
-        builder.EndTable();
+            // Apply a built‑in table style.
+            table.StyleIdentifier = StyleIdentifier.LightShadingAccent1;
 
-        // Apply a built‑in style to the table (optional, demonstrates StyleIdentifier usage).
-        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+            // Disable all conditional style options (no first row, no banding, etc.).
+            table.StyleOptions = TableStyleOptions.None;
 
-        // Disable all cell shading. The TableStyleOptions enum does not contain a NoShading member,
-        // so we clear shading directly on the table.
-        table.ClearShading();
+            // Remove any shading that might be present on the table cells.
+            table.ClearShading();
 
-        // Save the document to the local file system.
-        const string outputPath = "Table_NoShading.docx";
-        doc.Save(outputPath);
+            // Save the document to the local file system.
+            string outputPath = "TableStyleNoShading.docx";
+            doc.Save(outputPath);
+        }
     }
 }

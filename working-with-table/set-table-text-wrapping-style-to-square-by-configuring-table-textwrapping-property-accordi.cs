@@ -13,30 +13,39 @@ namespace TableWrapExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start a table and add a couple of cells with sample text.
+            // Build a simple 2x2 table.
             Table table = builder.StartTable();
             builder.InsertCell();
             builder.Write("Cell 1");
             builder.InsertCell();
             builder.Write("Cell 2");
+            builder.EndRow();
+
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
             builder.EndTable();
 
-            // Set the table's text wrapping style to "Around" (square-like wrapping).
-            table.TextWrapping = TextWrapping.Around;
+            // Set a preferred width so the table does not occupy the whole line.
+            table.PreferredWidth = PreferredWidth.FromPoints(300);
 
-            // Optional: set distances so the text appears around the table.
+            // Configure text wrapping around the table (square style).
+            table.TextWrapping = TextWrapping.Around;
+            // Optional: set distances from surrounding text.
             table.AbsoluteHorizontalDistance = 20;
             table.AbsoluteVerticalDistance = 10;
 
-            // Define an output path in the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWrapSquare.docx");
+            // Add a paragraph after the table to demonstrate wrapping.
+            builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
+                            "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+
+            // Determine an output path and ensure the directory exists.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWrapText.docx");
+            Directory.CreateDirectory(Path.GetDirectoryName(outputPath));
 
             // Save the document.
             doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
         }
     }
 }

@@ -1,79 +1,60 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace DeleteTableByKeyword
+public class DeleteTableByKeyword
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build first table (does NOT contain the keyword).
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("First table, cell 1.");
+        builder.InsertCell();
+        builder.Write("First table, cell 2.");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Build second table (contains the keyword "DeleteMe").
+        builder.StartTable();
+        builder.InsertCell();
+        builder.Write("This table will be deleted. Keyword: DeleteMe");
+        builder.InsertCell();
+        builder.Write("Another cell.");
+        builder.EndRow();
+        builder.EndTable();
+
+        // Save the original document (optional, for inspection).
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Original.docx");
+        doc.Save(outputPath);
+
+        // Keyword to search for.
+        const string keyword = "DeleteMe";
+
+        // Find and delete tables that contain the keyword.
+        NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
+        // Iterate backwards because removing nodes changes the collection indexing.
+        for (int i = tables.Count - 1; i >= 0; i--)
         {
-            // Output file path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "DeletedTable.docx");
-
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // First table – does NOT contain the keyword.
-            Table table1 = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("First table, cell 1.");
-            builder.InsertCell();
-            builder.Write("First table, cell 2.");
-            builder.EndRow();
-            builder.EndTable();
-
-            // Second table – contains the keyword "DeleteMe".
-            Table table2 = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("This table will be deleted. Keyword: DeleteMe");
-            builder.InsertCell();
-            builder.Write("Another cell.");
-            builder.EndRow();
-            builder.EndTable();
-
-            // Third table – does NOT contain the keyword.
-            Table table3 = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Third table, cell 1.");
-            builder.InsertCell();
-            builder.Write("Third table, cell 2.");
-            builder.EndRow();
-            builder.EndTable();
-
-            // Keyword to search for.
-            const string keyword = "DeleteMe";
-
-            // Get all tables in the document. Use LINQ to create a snapshot array
-            // because we will modify the document while iterating.
-            Table[] allTables = doc.GetChildNodes(NodeType.Table, true)
-                                   .OfType<Table>()
-                                   .ToArray();
-
-            foreach (Table tbl in allTables)
+            Table tbl = (Table)tables[i];
+            if (tbl.Range.Text != null && tbl.Range.Text.Contains(keyword))
             {
-                // If the table's text contains the keyword, remove the table.
-                if (tbl.Range.Text.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                {
-                    tbl.Remove();
-                }
-            }
-
-            // Save the resulting document.
-            doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (File.Exists(outputPath))
-            {
-                Console.WriteLine($"Document saved successfully: {outputPath}");
-            }
-            else
-            {
-                throw new InvalidOperationException("Failed to save the document.");
+                // Remove the entire table node from the document.
+                tbl.Remove();
             }
         }
+
+        // Save the modified document.
+        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "DeletedTable.docx");
+        doc.Save(resultPath);
+
+        // Simple verification that the file was created.
+        if (!File.Exists(resultPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

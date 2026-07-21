@@ -1,49 +1,42 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableInfo
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x3 table.
-        Table table = builder.StartTable();
+            // Build a 3x4 table.
+            Table table = builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("R1C1");
-        builder.InsertCell();
-        builder.Write("R1C2");
-        builder.InsertCell();
-        builder.Write("R1C3");
-        builder.EndRow();
+            for (int row = 1; row <= 3; row++)
+            {
+                for (int col = 1; col <= 4; col++)
+                {
+                    builder.InsertCell();
+                    builder.Write($"R{row}C{col}");
+                }
+                builder.EndRow();
+            }
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("R2C1");
-        builder.InsertCell();
-        builder.Write("R2C2");
-        builder.InsertCell();
-        builder.Write("R2C3");
-        builder.EndRow();
+            builder.EndTable();
 
-        // Finish the table.
-        builder.EndTable();
+            // Save the document (required by the workflow rules).
+            const string outputPath = "TableInfo.docx";
+            doc.Save(outputPath);
 
-        // Retrieve the number of rows and columns.
-        int rowCount = table.Rows.Count;
-        int columnCount = table.Rows[0].Cells.Count;
+            // Retrieve the number of rows and columns.
+            int rowCount = table.Rows.Count;
+            int columnCount = table.Rows.Count > 0 ? table.Rows[0].Cells.Count : 0;
 
-        // Output the counts.
-        Console.WriteLine($"Table has {rowCount} rows and {columnCount} columns.");
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableInfo.docx");
-        doc.Save(outputPath);
+            // Output the results.
+            Console.WriteLine($"Table has {rowCount} rows and {columnCount} columns.");
+        }
     }
 }

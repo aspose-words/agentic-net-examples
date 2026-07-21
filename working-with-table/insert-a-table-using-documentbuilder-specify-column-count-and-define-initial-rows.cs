@@ -3,49 +3,53 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeTableExample
+namespace AsposeWordsTableExample
 {
     public class Program
     {
         public static void Main()
         {
+            // Define the output file path.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableExample.docx");
+
             // Create a new blank document.
             Document doc = new Document();
+
+            // Initialize a DocumentBuilder for the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Define the number of columns and rows for the table.
-            int columnCount = 3;
-            int rowCount = 2;
+            // Parameters for the table.
+            int columnCount = 3; // Number of columns.
+            int rowCount = 2;    // Number of initial rows.
 
-            // Start the table.
+            // Start building the table.
             Table table = builder.StartTable();
 
             // Populate the table with the specified rows and columns.
-            for (int row = 0; row < rowCount; row++)
+            for (int row = 1; row <= rowCount; row++)
             {
-                for (int col = 0; col < columnCount; col++)
+                for (int col = 1; col <= columnCount; col++)
                 {
                     builder.InsertCell();
-                    builder.Write($"Row {row + 1}, Cell {col + 1}");
+                    builder.Write($"Row {row}, Cell {col}");
                 }
 
-                // End the current row.
+                // End the current row before starting the next one.
                 builder.EndRow();
             }
 
-            // End the table.
+            // Finish the table.
             builder.EndTable();
 
-            // Save the document to a file in the current directory.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableExample.docx");
+            // Save the document to the specified path.
             doc.Save(outputPath);
 
-            // Verify that the file was created successfully.
+            // Verify that the file was created.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not created.");
+                throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
 
-            // Indicate successful completion.
-            Console.WriteLine($"Document saved to: {outputPath}");
+            // Optionally, inform that the process completed successfully.
+            Console.WriteLine($"Document saved successfully to: {outputPath}");
         }
     }
 }

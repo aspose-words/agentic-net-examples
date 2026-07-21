@@ -13,44 +13,42 @@ namespace AsposeWordsTableCloneExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a paragraph before the table.
-            builder.Writeln("Paragraph before the original table.");
+            // Add a paragraph before the table.
+            builder.Writeln("Paragraph before the table.");
 
             // Build a simple 2x2 table.
             Table table = builder.StartTable();
-            // First row.
             builder.InsertCell();
-            builder.Write("R1C1");
+            builder.Write("Cell 1,1");
             builder.InsertCell();
-            builder.Write("R1C2");
+            builder.Write("Cell 1,2");
             builder.EndRow();
-            // Second row.
+
             builder.InsertCell();
-            builder.Write("R2C1");
+            builder.Write("Cell 2,1");
             builder.InsertCell();
-            builder.Write("R2C2");
+            builder.Write("Cell 2,2");
             builder.EndRow();
-            // Finish the table.
+
             builder.EndTable();
 
-            // Insert another paragraph after the table.
+            // Add a paragraph after the original table.
             builder.Writeln("Paragraph after the original table.");
 
-            // Locate the first paragraph (the one before the table).
-            Paragraph referenceParagraph = doc.FirstSection.Body.FirstParagraph;
-
             // Locate the original table node.
-            Table originalTable = (Table)doc.GetChild(NodeType.Table, 0, true);
+            Table originalTable = (Table)doc.GetChildNodes(NodeType.Table, true)[0];
 
             // Clone the table (deep clone).
             Table clonedTable = (Table)originalTable.Clone(true);
 
-            // Insert the cloned table after the reference paragraph.
-            // The parent of the paragraph is the Body node.
-            Body body = doc.FirstSection.Body;
-            body.InsertAfter(clonedTable, referenceParagraph);
+            // Locate the paragraph after which the cloned table will be inserted.
+            // The body now contains: Paragraph (0), Table (1), Paragraph (2)
+            Paragraph referenceParagraph = doc.FirstSection.Body.Paragraphs[2];
 
-            // Save the document to a local file.
+            // Insert the cloned table after the reference paragraph.
+            referenceParagraph.ParentNode.InsertAfter(clonedTable, referenceParagraph);
+
+            // Save the document.
             string outputPath = Path.Combine(Environment.CurrentDirectory, "TableCloneExample.docx");
             doc.Save(outputPath);
 

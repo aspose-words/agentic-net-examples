@@ -3,69 +3,53 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeTableInHeaderFooter
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // -------------------------------------------------
-        // Insert a table into the primary header.
-        // -------------------------------------------------
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+            // Move the builder cursor to the primary header of the first section.
+            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-        // Start the table.
-        Table headerTable = builder.StartTable();
+            // Start building a table inside the header.
+            Table headerTable = builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("Header Cell 1");
-        builder.InsertCell();
-        builder.Write("Header Cell 2");
-        builder.EndRow();
+            // First row of the table.
+            builder.InsertCell();
+            builder.Write("Header Cell 1");
+            builder.InsertCell();
+            builder.Write("Header Cell 2");
+            builder.EndRow();
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Header Cell 3");
-        builder.InsertCell();
-        builder.Write("Header Cell 4");
-        builder.EndRow();
+            // Second row of the table.
+            builder.InsertCell();
+            builder.Write("Header Cell 3");
+            builder.InsertCell();
+            builder.Write("Header Cell 4");
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            // Finish the table.
+            builder.EndTable();
 
-        // -------------------------------------------------
-        // Insert a table into the primary footer.
-        // -------------------------------------------------
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
+            // Return the cursor to the main body of the document.
+            builder.MoveToSection(0);
+            builder.Writeln("Body content starts here.");
 
-        Table footerTable = builder.StartTable();
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "HeaderFooterTable.docx");
+            doc.Save(outputPath);
 
-        // Single row in the footer.
-        builder.InsertCell();
-        builder.Write("Footer Cell 1");
-        builder.InsertCell();
-        builder.Write("Footer Cell 2");
-        builder.EndRow();
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The document was not saved correctly.");
 
-        builder.EndTable();
-
-        // -------------------------------------------------
-        // Add some regular body content so the document is not empty.
-        // -------------------------------------------------
-        builder.MoveToSection(0);
-        builder.Writeln("This is the main body of the document.");
-
-        // -------------------------------------------------
-        // Save the document.
-        // -------------------------------------------------
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "HeaderFooterTable.docx");
-        doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved correctly.");
+            // Indicate successful completion.
+            Console.WriteLine($"Document saved to: {outputPath}");
+        }
     }
 }

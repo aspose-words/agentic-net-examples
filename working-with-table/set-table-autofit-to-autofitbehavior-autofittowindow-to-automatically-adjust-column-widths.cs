@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -14,28 +13,27 @@ public class Program
         // Start a table.
         Table table = builder.StartTable();
 
-        // First row (header).
+        // First row.
         builder.InsertCell();
         builder.Write("Header 1");
         builder.InsertCell();
         builder.Write("Header 2");
         builder.EndRow();
 
-        // Second row (data).
+        // Second row.
         builder.InsertCell();
-        builder.Write("Data 1");
+        builder.Write("Value 1");
         builder.InsertCell();
-        builder.Write("Data 2");
+        builder.Write("Value 2");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Apply AutoFit to window so column widths adjust to page margins.
+        // Adjust the table so its columns automatically fit the page margins.
         table.AutoFit(AutoFitBehavior.AutoFitToWindow);
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AutoFitToWindow.docx");
-        doc.Save(outputPath);
+        doc.Save("TableAutoFitToWindow.docx");
     }
 }

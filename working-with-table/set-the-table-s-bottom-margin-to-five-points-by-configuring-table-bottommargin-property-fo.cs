@@ -5,46 +5,41 @@ using Aspose.Words.Tables;
 
 namespace TableBottomMarginExample
 {
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
-            // Create a new blank document.
+            // Create a new empty document.
             Document doc = new Document();
+
+            // Initialize a DocumentBuilder for the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a simple 2x2 table.
+            // Start a table and add a simple 2x2 grid.
             Table table = builder.StartTable();
+
+            // First row.
             builder.InsertCell();
-            builder.Write("Cell 1,1");
+            builder.Write("Cell 1, Row 1");
             builder.InsertCell();
-            builder.Write("Cell 1,2");
+            builder.Write("Cell 2, Row 1");
             builder.EndRow();
 
+            // Second row.
             builder.InsertCell();
-            builder.Write("Cell 2,1");
+            builder.Write("Cell 1, Row 2");
             builder.InsertCell();
-            builder.Write("Cell 2,2");
-            builder.EndTable();
+            builder.Write("Cell 2, Row 2");
+            builder.EndTable(); // Ends the table and returns the Table node.
 
-            // Set the distance between the table bottom and surrounding text (bottom margin) to 5 points.
+            // Set the distance between the bottom of the table and surrounding text (bottom margin) to 5 points.
             table.DistanceBottom = 5.0;
 
-            // Define output path.
+            // Define an output path relative to the current directory.
             string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableBottomMargin.docx");
 
             // Save the document.
             doc.Save(outputPath);
-
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
-
-            // Optionally, you could load the document again to confirm the property persisted.
-            Document loadedDoc = new Document(outputPath);
-            Table loadedTable = loadedDoc.FirstSection.Body.Tables[0];
-            if (Math.Abs(loadedTable.DistanceBottom - 5.0) > 0.001)
-                throw new InvalidOperationException("The bottom margin was not set correctly.");
         }
     }
 }

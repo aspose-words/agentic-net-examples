@@ -1,79 +1,58 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
-namespace TableWrapAroundImageExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // ----- Insert a floating image -----
-            // Create a simple 1x1 pixel PNG image from a Base64 string.
-            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ+XKcZAAAAAElFTkSuQmCC";
-            byte[] imageBytes = Convert.FromBase64String(base64Png);
-            using (MemoryStream imageStream = new MemoryStream(imageBytes))
-            {
-                // Insert the image as a floating shape.
-                Shape imageShape = builder.InsertImage(imageStream);
-                // Wrap text around the image.
-                imageShape.WrapType = WrapType.Square;
-                // Position the image relative to the page margin.
-                imageShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
-                imageShape.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
-                // Optional: adjust the distance from surrounding text.
-                imageShape.Left = 0;
-                imageShape.Top = 0;
-                // Allow the shape to overlap other floating objects.
-                imageShape.AllowOverlap = true;
-            }
+        // ---------- Insert a floating image ----------
+        // Tiny 1x1 PNG image encoded as Base64 (avoids System.Drawing dependency).
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=");
+        Shape imageShape = builder.InsertImage(pngBytes);
+        imageShape.WrapType = WrapType.Square;                     // Text wraps around the image.
+        imageShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Margin;
+        imageShape.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
+        imageShape.HorizontalAlignment = HorizontalAlignment.Right; // Position the image to the right.
+        imageShape.VerticalAlignment = VerticalAlignment.Top;
+        imageShape.AllowOverlap = true;                            // Allow overlapping with other floating objects.
 
-            // Add a paragraph before the table to demonstrate wrapping.
-            builder.Writeln("This paragraph appears before the table. The table will wrap around the floating image above.");
+        // Add a paragraph after the image so the builder is positioned correctly.
+        builder.Writeln();
 
-            // ----- Create a table -----
-            Table table = builder.StartTable();
+        // ---------- Create a floating table that wraps text ----------
+        Table table = builder.StartTable();
 
-            // First row.
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
+        // First row.
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
 
-            // Second row.
-            builder.InsertCell();
-            builder.Write("Cell 3");
-            builder.InsertCell();
-            builder.Write("Cell 4");
-            builder.EndRow();
+        // End the table construction.
+        builder.EndTable();
 
-            // Finish the table.
-            builder.EndTable();
+        // Configure the table to float and wrap text around it.
+        table.PreferredWidth = PreferredWidth.FromPoints(300);
+        table.TextWrapping = TextWrapping.Around;          // Enable text wrapping.
+        table.HorizontalAnchor = RelativeHorizontalPosition.Margin;
+        table.VerticalAnchor = RelativeVerticalPosition.Paragraph;
+        table.AbsoluteHorizontalDistance = 10;              // Space on the left/right of the table.
+        table.AbsoluteVerticalDistance = 10;                // Space above/below the table.
 
-            // Enable text wrapping around the table.
-            table.TextWrapping = TextWrapping.Around;
-            // Set distances between the table and surrounding text.
-            table.AbsoluteHorizontalDistance = 20; // points
-            table.AbsoluteVerticalDistance = 20;   // points
+        // Add some surrounding text to demonstrate wrapping.
+        builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
 
-            // Note: Table.AllowOverlap is read‑only. After setting TextWrapping to Around,
-            // Aspose.Words may set AllowOverlap to false internally, which is expected.
-            // Therefore we do not assert that AllowOverlap must be true.
-
-            // Save the document.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "TableWrapAroundImage.docx");
-            doc.Save(outputPath);
-
-            // Simple validation that the file was created.
-            if (!File.Exists(outputPath))
-                throw new FileNotFoundException("Failed to create the output document.", outputPath);
-        }
+        // Save the document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWrapAroundImage.docx");
+        doc.Save(outputPath);
     }
 }

@@ -10,38 +10,38 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a simple 2x2 table.
-        DocumentBuilder builder = new DocumentBuilder(doc);
         Table table = builder.StartTable();
 
-        // First row.
         builder.InsertCell();
-        builder.Write("Cell 1, Row 1");
+        builder.Write("Cell 1");
         builder.InsertCell();
-        builder.Write("Cell 2, Row 1");
+        builder.Write("Cell 2");
         builder.EndRow();
 
-        // Second row.
         builder.InsertCell();
-        builder.Write("Cell 1, Row 2");
+        builder.Write("Cell 3");
         builder.InsertCell();
-        builder.Write("Cell 2, Row 2");
+        builder.Write("Cell 4");
         builder.EndRow();
 
-        // Finish the table and obtain the Table object.
-        table = builder.EndTable();
+        // Finish the table construction.
+        builder.EndTable();
 
-        // Set the vertical alignment of the table on the page to Center.
-        // For floating tables use RelativeVerticalAlignment; Inline tables do not support vertical alignment.
+        // Set the table's vertical alignment on the page to center.
+        // For floating tables the vertical alignment is controlled by RelativeVerticalAlignment.
         table.RelativeVerticalAlignment = VerticalAlignment.Center;
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableVerticalAlignment.docx");
+        // Save the document to the local file system.
+        string outputPath = "TableVerticalAlignment.docx";
         doc.Save(outputPath);
 
-        // Verify that the file was created.
+        // Verify that the file was created successfully.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
+        {
+            throw new InvalidOperationException($"The output file '{outputPath}' was not created.");
+        }
     }
 }

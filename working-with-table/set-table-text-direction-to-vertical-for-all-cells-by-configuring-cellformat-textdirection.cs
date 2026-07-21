@@ -1,51 +1,57 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace TableVerticalTextExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Set the text orientation for all cells that will be created.
-        // This setting is applied globally to the builder's CellFormat.
-        builder.CellFormat.Orientation = TextOrientation.Upward;
-
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
-
-        // First row.
-        builder.InsertCell();
-        builder.Write("Cell 1,1");
-        builder.InsertCell();
-        builder.Write("Cell 1,2");
-        builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Cell 2,1");
-        builder.InsertCell();
-        builder.Write("Cell 2,2");
-        builder.EndRow();
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Verify that every cell in the table has the expected orientation.
-        foreach (Cell cell in table.GetChildNodes(NodeType.Cell, true))
+        public static void Main()
         {
-            if (cell.CellFormat.Orientation != TextOrientation.Upward)
-                throw new InvalidOperationException("A cell does not have the expected vertical text orientation.");
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Configure the builder to apply vertical text orientation to every cell that will be created.
+            builder.CellFormat.Orientation = TextOrientation.Upward; // Upward makes text run vertically.
+
+            // Build a simple 3x2 table.
+            Table table = builder.StartTable();
+
+            // First row
+            builder.InsertCell();
+            builder.Write("Cell 1, Row 1");
+            builder.InsertCell();
+            builder.Write("Cell 2, Row 1");
+            builder.EndRow();
+
+            // Second row
+            builder.InsertCell();
+            builder.Write("Cell 1, Row 2");
+            builder.InsertCell();
+            builder.Write("Cell 2, Row 2");
+            builder.EndRow();
+
+            // Third row
+            builder.InsertCell();
+            builder.Write("Cell 1, Row 3");
+            builder.InsertCell();
+            builder.Write("Cell 2, Row 3");
+            builder.EndRow();
+
+            // Finish the table.
+            builder.EndTable();
+
+            // Save the document to a file in the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableVerticalText.docx");
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create the output file: {outputPath}");
+
+            // The program ends here without waiting for user input.
         }
-
-        // Save the document.
-        const string outputPath = "TableTextDirection.docx";
-        doc.Save(outputPath);
-
-        // Simple confirmation (optional, does not require user input).
-        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

@@ -1,52 +1,69 @@
 using System;
+using System.IO;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableBordersExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table. The builder will apply the current CellFormat to each new cell.
-        Table table = builder.StartTable();
+            // Start a table.
+            Table table = builder.StartTable();
 
-        // Reset any previous cell formatting.
-        builder.CellFormat.ClearFormatting();
+            // Insert the first cell where we will apply custom borders.
+            builder.InsertCell();
 
-        // Define custom borders for the upcoming cell.
-        // Left border: 2 points, red.
-        builder.CellFormat.Borders.Left.LineStyle = LineStyle.Single;
-        builder.CellFormat.Borders.Left.LineWidth = 2.0;
-        builder.CellFormat.Borders.Left.Color = Color.Red;
+            // Clear any previous cell formatting to start from defaults.
+            builder.CellFormat.ClearFormatting();
 
-        // Right border: 4 points, green.
-        builder.CellFormat.Borders.Right.LineStyle = LineStyle.Single;
-        builder.CellFormat.Borders.Right.LineWidth = 4.0;
-        builder.CellFormat.Borders.Right.Color = Color.Green;
+            // Set different line widths, styles, and colors for each side of the cell border.
+            builder.CellFormat.Borders.Left.LineStyle = LineStyle.Single;
+            builder.CellFormat.Borders.Left.LineWidth = 2.0; // points
+            builder.CellFormat.Borders.Left.Color = Color.Red;
 
-        // Top border: 6 points, blue.
-        builder.CellFormat.Borders.Top.LineStyle = LineStyle.Single;
-        builder.CellFormat.Borders.Top.LineWidth = 6.0;
-        builder.CellFormat.Borders.Top.Color = Color.Blue;
+            builder.CellFormat.Borders.Right.LineStyle = LineStyle.Single;
+            builder.CellFormat.Borders.Right.LineWidth = 4.0;
+            builder.CellFormat.Borders.Right.Color = Color.Green;
 
-        // Bottom border: 8 points, purple.
-        builder.CellFormat.Borders.Bottom.LineStyle = LineStyle.Single;
-        builder.CellFormat.Borders.Bottom.LineWidth = 8.0;
-        builder.CellFormat.Borders.Bottom.Color = Color.Purple;
+            builder.CellFormat.Borders.Top.LineStyle = LineStyle.Single;
+            builder.CellFormat.Borders.Top.LineWidth = 6.0;
+            builder.CellFormat.Borders.Top.Color = Color.Blue;
 
-        // Insert a single cell that will receive the custom borders.
-        builder.InsertCell();
-        builder.Write("Cell with custom borders");
+            builder.CellFormat.Borders.Bottom.LineStyle = LineStyle.Single;
+            builder.CellFormat.Borders.Bottom.LineWidth = 8.0;
+            builder.CellFormat.Borders.Bottom.Color = Color.Purple;
 
-        // Finish the row and the table.
-        builder.EndRow();
-        builder.EndTable();
+            // Add some text to the customized cell.
+            builder.Writeln("Cell with custom borders");
 
-        // Save the document to the local file system.
-        doc.Save("CustomCellBorders.docx");
+            // Insert a second cell with default formatting for comparison.
+            builder.InsertCell();
+            builder.Writeln("Normal cell");
+
+            // End the first row.
+            builder.EndRow();
+
+            // End the table.
+            builder.EndTable();
+
+            // Define the output path.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "CustomCellBorders.docx");
+
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The document was not saved correctly.");
+
+            // The program finishes here without waiting for user input.
+        }
     }
 }

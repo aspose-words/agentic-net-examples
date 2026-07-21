@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableSplitExample
+namespace SplitTableExample
 {
     public class Program
     {
@@ -12,46 +12,51 @@ namespace TableSplitExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build a sample table with 5 rows and 2 columns.
+            // Build a table with five rows and two columns.
             Table table = builder.StartTable();
-            for (int i = 1; i <= 5; i++)
+
+            for (int row = 1; row <= 5; row++)
             {
-                // First cell of the row.
+                // First cell.
                 builder.InsertCell();
-                builder.Write($"Row {i}, Cell 1");
+                builder.Write($"Row {row}, Cell 1");
 
-                // Second cell of the row.
+                // Second cell.
                 builder.InsertCell();
-                builder.Write($"Row {i}, Cell 2");
+                builder.Write($"Row {row}, Cell 2");
 
-                // End the current row.
-                builder.EndRow();
+                // End the current row (except after the last row we will end the table later).
+                if (row < 5)
+                    builder.EndRow();
             }
-            // Finish the table construction.
+
+            // Finish the table.
             builder.EndTable();
 
-            // Split the table so that the first three rows stay in the original table
-            // and the remaining rows move to a new table.
-            int splitIndex = 3; // zero‑based index; rows with index >= 3 will be moved.
-            Table newTable = new Table(doc);
+            // Split the table after the third row (zero‑based index 2).
+            int splitIndex = 2; // rows 0,1,2 stay in the original table
+
+            // Create a new table that will hold the rows after the split.
+            Table secondTable = new Table(doc);
+            // Insert the new table right after the original one in the document tree.
+            table.ParentNode.InsertAfter(secondTable, table);
 
             // Move rows from the original table to the new table.
-            while (table.Rows.Count > splitIndex)
+            while (table.Rows.Count > splitIndex + 1)
             {
-                // The row at splitIndex is the first row that should be moved.
-                Row rowToMove = table.Rows[splitIndex];
-                rowToMove.Remove();               // Detach from the original table.
-                newTable.Rows.Add(rowToMove);      // Append to the new table.
+                // The row to move is always the one that follows the split index.
+                Row rowToMove = table.Rows[splitIndex + 1];
+                // Detach the row from the original table.
+                rowToMove.Remove();
+                // Append it to the new table.
+                secondTable.Rows.Add(rowToMove);
             }
 
-            // Insert the new table immediately after the original table in the document.
-            table.ParentNode.InsertAfter(newTable, table);
+            // Validate the split.
+            if (table.Rows.Count != 3 || secondTable.Rows.Count != 2)
+                throw new InvalidOperationException("Table split did not produce the expected row counts.");
 
-            // Optional validation (can be removed if not needed).
-            Console.WriteLine($"Original table rows after split: {table.Rows.Count}"); // Expected: 3
-            Console.WriteLine($"New table rows after split: {newTable.Rows.Count}");   // Expected: 2
-
-            // Save the document containing the two separate tables.
+            // Save the document.
             doc.Save("SplitTable.docx");
         }
     }

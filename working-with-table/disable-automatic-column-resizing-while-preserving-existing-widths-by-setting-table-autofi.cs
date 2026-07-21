@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -11,46 +10,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start building a table.
         Table table = builder.StartTable();
 
-        // First row – set explicit column widths.
+        // First cell with a fixed width.
         builder.InsertCell();
         builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-        builder.Write("Cell 1");
+        builder.Write("Fixed width cell 1");
 
+        // Second cell with a fixed width.
         builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
-        builder.Write("Cell 2");
+        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(150);
+        builder.Write("Fixed width cell 2");
 
+        // End the current row and the table.
         builder.EndRow();
-
-        // Second row – reuse the same column widths.
-        builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(100);
-        builder.Write("Cell 3");
-
-        builder.InsertCell();
-        builder.CellFormat.PreferredWidth = PreferredWidth.FromPoints(200);
-        builder.Write("Cell 4");
-
-        builder.EndRow();
-
-        // End the table.
         builder.EndTable();
 
-        // Disable automatic column resizing while preserving the set widths.
+        // Disable automatic column resizing while preserving the existing widths.
         table.AllowAutoFit = false;
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableAutoFitDisabled.docx");
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved successfully.");
-
-        // Optional confirmation (no user input required).
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Save the document to a file.
+        doc.Save("TableAutoFitDisabled.docx");
     }
 }

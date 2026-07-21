@@ -2,64 +2,54 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Words.Tables;
+using Aspose.Words.Tables;   // Needed for the Table class
 
-public class Program
+namespace FloatingTextboxTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a floating textbox shape.
-        Shape textbox = new Shape(doc, ShapeType.TextBox);
-        textbox.Width = 300;               // Width in points.
-        textbox.Height = 200;              // Height in points.
-        textbox.WrapType = WrapType.None;  // Make the shape floating.
-        textbox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
-        textbox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
-        textbox.HorizontalAlignment = HorizontalAlignment.Right;
-        textbox.VerticalAlignment = VerticalAlignment.Bottom;
-
-        // Insert the shape into the document at the current cursor position.
-        builder.InsertNode(textbox);
-
-        // Ensure the textbox contains at least one paragraph.
-        if (textbox.FirstParagraph == null)
+        public static void Main()
         {
-            textbox.AppendChild(new Paragraph(doc));
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert a floating textbox shape.
+            Shape textbox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+            // Make the textbox floating and position it at the center of the page.
+            textbox.WrapType = WrapType.None;
+            textbox.RelativeHorizontalPosition = RelativeHorizontalPosition.Page;
+            textbox.RelativeVerticalPosition = RelativeVerticalPosition.Page;
+            textbox.HorizontalAlignment = HorizontalAlignment.Center;
+            textbox.VerticalAlignment = VerticalAlignment.Center;
+
+            // Move the builder's cursor to the first paragraph inside the textbox.
+            builder.MoveTo(textbox.FirstParagraph);
+
+            // Build a 2x2 table inside the floating textbox.
+            Table table = builder.StartTable();
+
+            builder.InsertCell();
+            builder.Write("Cell 1");
+            builder.InsertCell();
+            builder.Write("Cell 2");
+            builder.EndRow();
+
+            builder.InsertCell();
+            builder.Write("Cell 3");
+            builder.InsertCell();
+            builder.Write("Cell 4");
+            builder.EndRow();
+
+            builder.EndTable();
+
+            // Save the document.
+            const string outputPath = "FloatingTextboxTable.docx";
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new Exception("The output document was not created.");
         }
-
-        // Move the builder to the first paragraph inside the textbox.
-        builder.MoveTo(textbox.FirstParagraph);
-
-        // Build a 2x2 table inside the floating textbox.
-        Table table = builder.StartTable();
-
-        // First row.
-        builder.InsertCell();
-        builder.Write("Cell 1,1");
-        builder.InsertCell();
-        builder.Write("Cell 1,2");
-        builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Cell 2,1");
-        builder.InsertCell();
-        builder.Write("Cell 2,2");
-        builder.EndRow();
-
-        // Finish the table.
-        builder.EndTable();
-
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "FloatingTextboxTable.docx");
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved correctly.");
     }
 }

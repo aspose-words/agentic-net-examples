@@ -3,48 +3,56 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a sample table (3 rows x 4 columns).
-        Table table = builder.StartTable();
-
-        int rows = 3;
-        int cols = 4;
-        for (int r = 0; r < rows; r++)
+        public static void Main()
         {
-            for (int c = 0; c < cols; c++)
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build a 3x3 table.
+            Table table = builder.StartTable();
+
+            for (int row = 0; row < 3; row++)
             {
-                builder.InsertCell();
-                builder.Write($"R{r + 1}C{c + 1}");
+                for (int col = 0; col < 3; col++)
+                {
+                    builder.InsertCell();
+                    builder.Write($"R{row + 1}C{col + 1}");
+                }
+                builder.EndRow();
             }
-            builder.EndRow();
-        }
 
-        builder.EndTable();
+            builder.EndTable();
 
-        // Set a uniform width (in points) for every cell in the table.
-        double uniformWidth = 80.0; // points
+            // Set a uniform width (in points) for every cell in each column.
+            const double uniformWidth = 100.0; // points
 
-        foreach (Row row in table.Rows)
-        {
-            foreach (Cell cell in row.Cells)
+            // Determine the number of columns from the first row.
+            int columnCount = table.FirstRow.Cells.Count;
+
+            foreach (Row tableRow in table.Rows)
             {
-                cell.CellFormat.Width = uniformWidth;
+                for (int colIndex = 0; colIndex < columnCount; colIndex++)
+                {
+                    Cell cell = tableRow.Cells[colIndex];
+                    cell.CellFormat.Width = uniformWidth;
+                }
             }
+
+            // Optional: disable auto‑fit to keep the fixed widths.
+            table.AutoFit(AutoFitBehavior.FixedColumnWidths);
+
+            // Save the document to the local file system.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "UniformColumnWidths.docx");
+            doc.Save(outputPath);
+
+            // Verify that the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The output document was not saved correctly.");
         }
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UniformColumnWidths.docx");
-        doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

@@ -16,32 +16,32 @@ namespace AsposeWordsTableExample
             // Start a table with a single column.
             Table table = builder.StartTable();
 
-            int rowCount = 6; // Number of rows to create.
+            int totalRows = 6; // Number of rows in the table.
 
-            for (int i = 1; i <= rowCount; i++)
+            for (int rowIndex = 1; rowIndex <= totalRows; rowIndex++)
             {
-                // Insert a cell for the current row.
+                // Insert the only cell for this row.
                 builder.InsertCell();
 
-                // Determine vertical merge settings:
-                // - Even rows start a merged range (First).
-                // - Odd rows (except the first) continue the previous merge (Previous).
-                // - The very first row has no merging.
-                if (i % 2 == 0)
+                // Determine vertical merge settings.
+                if (rowIndex == 1 || rowIndex == 6)
                 {
-                    builder.CellFormat.VerticalMerge = CellMerge.First;
+                    // First and last rows are not merged.
+                    builder.CellFormat.VerticalMerge = CellMerge.None;
+                    builder.Write($"Row {rowIndex}");
                 }
-                else if (i % 2 == 1 && i > 1)
+                else if (rowIndex % 2 == 0)
                 {
-                    builder.CellFormat.VerticalMerge = CellMerge.Previous;
+                    // Even rows start a merged group.
+                    builder.CellFormat.VerticalMerge = CellMerge.First;
+                    builder.Write($"Group {(rowIndex / 2)}");
                 }
                 else
                 {
-                    builder.CellFormat.VerticalMerge = CellMerge.None;
+                    // Odd rows (after an even row) continue the merge.
+                    builder.CellFormat.VerticalMerge = CellMerge.Previous;
+                    // No text is written to merged cells other than the first.
                 }
-
-                // Write some text into the cell.
-                builder.Write($"Row {i}");
 
                 // End the current row.
                 builder.EndRow();
@@ -50,16 +50,13 @@ namespace AsposeWordsTableExample
             // Finish the table.
             builder.EndTable();
 
-            // Save the document to the local file system.
+            // Save the document to the current directory.
             string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableVerticalMerge.docx");
             doc.Save(outputPath);
 
             // Simple validation to ensure the file was created.
             if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output document was not saved correctly.");
-
-            // Inform the user (no interactive input required).
-            Console.WriteLine($"Document saved to: {outputPath}");
+                throw new InvalidOperationException("The document was not saved correctly.");
         }
     }
 }

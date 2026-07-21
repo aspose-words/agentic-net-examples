@@ -11,30 +11,38 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
+        // Build a simple 2x2 table.
         Table table = builder.StartTable();
 
-        // Populate the table with a few rows and cells.
-        for (int i = 0; i < 5; i++)
-        {
-            builder.InsertCell();
-            builder.Write($"Row {i + 1}, Cell 1");
-            builder.InsertCell();
-            builder.Write($"Row {i + 1}, Cell 2");
-            builder.EndRow();
-        }
+        // First row (header).
+        builder.InsertCell();
+        builder.Write("Header 1");
+        builder.InsertCell();
+        builder.Write("Header 2");
+        builder.EndRow();
+
+        // Second row (data).
+        builder.InsertCell();
+        builder.Write("Data 1");
+        builder.InsertCell();
+        builder.Write("Data 2");
+        builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
-        // Configure each row so it cannot break across pages.
+        // Prevent each row from breaking across pages.
         foreach (Row row in table.Rows)
         {
             row.RowFormat.AllowBreakAcrossPages = false;
         }
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Table_NoBreakAcrossPages.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Table_NoBreakAcrossPages.docx");
         doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Document was not saved correctly.");
     }
 }

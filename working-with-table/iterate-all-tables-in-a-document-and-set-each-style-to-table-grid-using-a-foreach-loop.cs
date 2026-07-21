@@ -11,40 +11,34 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build the first sample table.
+        // Build first sample table.
         builder.StartTable();
         builder.InsertCell();
-        builder.Write("First table, Cell 1");
+        builder.Write("Table 1 - Cell 1");
         builder.InsertCell();
-        builder.Write("First table, Cell 2");
+        builder.Write("Table 1 - Cell 2");
         builder.EndRow();
         builder.EndTable();
 
-        // Add a paragraph separator.
-        builder.Writeln();
-
-        // Build the second sample table.
+        // Build second sample table.
         builder.StartTable();
         builder.InsertCell();
-        builder.Write("Second table, Cell 1");
+        builder.Write("Table 2 - Cell 1");
         builder.InsertCell();
-        builder.Write("Second table, Cell 2");
+        builder.Write("Table 2 - Cell 2");
         builder.EndRow();
         builder.EndTable();
 
-        // Iterate over all tables in the document and set their style to "Table Grid".
+        // Iterate over all tables in the document and apply the "Table Grid" style.
         NodeCollection tables = doc.GetChildNodes(NodeType.Table, true);
         foreach (Table table in tables)
         {
+            // Apply built‑in style "Table Grid".
             table.StyleIdentifier = StyleIdentifier.TableGrid;
         }
 
         // Save the modified document.
-        string outputPath = "Output.docx";
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Result.docx");
         doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
     }
 }

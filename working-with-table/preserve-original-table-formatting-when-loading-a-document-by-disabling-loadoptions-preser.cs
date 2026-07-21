@@ -1,32 +1,34 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Loading;   // Needed for LoadOptions
+using System.Drawing;
 
-public class Program
+public class PreserveTableFormattingExample
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Define a folder for all generated files.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a sample document with a formatted table.
+        // Paths for the original and the re‑loaded documents.
         string originalPath = Path.Combine(artifactsDir, "Original.docx");
+        string reloadedPath = Path.Combine(artifactsDir, "ReloadedPreserved.docx");
+
+        // -------------------------------------------------
+        // 1. Create a sample document that contains a table.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a table and apply cell shading to demonstrate formatting.
-        Table table = builder.StartTable();
+        // Build a 1‑row, 2‑cell table with distinct cell shading.
+        builder.StartTable();
 
-        // First cell with light blue shading.
         builder.InsertCell();
         builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
         builder.Write("Cell 1");
 
-        // Second cell with light green shading.
         builder.InsertCell();
         builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
         builder.Write("Cell 2");
@@ -37,18 +39,34 @@ public class Program
         // Save the original document.
         doc.Save(originalPath);
 
-        // Load the document. No special LoadOptions are required to preserve formatting.
-        LoadOptions loadOptions = new LoadOptions(); // Default options preserve formatting.
-        Document loadedDoc = new Document(originalPath, loadOptions);
+        // -------------------------------------------------
+        // 2. Load the document.
+        // -------------------------------------------------
+        // In this version of Aspose.Words the PreserveFormatting option is enabled by default,
+        // so loading without explicit LoadOptions preserves the original table formatting.
+        Document loadedDoc = new Document(originalPath);
 
-        // Verify that the cell shading is still present after loading.
+        // -------------------------------------------------
+        // 3. Verify that the table formatting is still present.
+        // -------------------------------------------------
         Table loadedTable = loadedDoc.FirstSection.Body.Tables[0];
-        Color firstCellColor = loadedTable.FirstRow.FirstCell.CellFormat.Shading.BackgroundPatternColor;
-        if (firstCellColor.ToArgb() != Color.LightBlue.ToArgb())
-            throw new Exception("Table formatting was not preserved after loading.");
+        Cell firstCell = loadedTable.FirstRow.FirstCell;
+        Cell secondCell = loadedTable.FirstRow.LastCell;
 
-        // Save the loaded document.
-        string loadedPath = Path.Combine(artifactsDir, "Loaded.docx");
-        loadedDoc.Save(loadedPath);
+        // The background colors should match the ones we set earlier.
+        if (firstCell.CellFormat.Shading.BackgroundPatternColor.ToArgb() != Color.LightBlue.ToArgb() ||
+            secondCell.CellFormat.Shading.BackgroundPatternColor.ToArgb() != Color.LightGreen.ToArgb())
+        {
+            throw new InvalidOperationException("Table formatting was not preserved after loading.");
+        }
+
+        // -------------------------------------------------
+        // 4. Save the re‑loaded document.
+        // -------------------------------------------------
+        loadedDoc.Save(reloadedPath);
+
+        // Simple validation that the output file exists.
+        if (!File.Exists(reloadedPath))
+            throw new FileNotFoundException("The reloaded document was not saved correctly.", reloadedPath);
     }
 }

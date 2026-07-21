@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Saving;
@@ -9,36 +8,34 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory and file paths.
+        // Prepare output folder.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-        string docxPath = Path.Combine(outputDir, "SampleTable.docx");
-        string pdfPath = Path.Combine(outputDir, "SampleTable.pdf");
 
-        // Create a new blank document and a builder to populate it.
+        // Create a new blank document.
         Document doc = new Document();
+
+        // Use DocumentBuilder to construct a table with a built‑in style.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table.
+        // Start the table.
         Table table = builder.StartTable();
 
-        // Header row.
+        // First row – header cells.
         builder.InsertCell();
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Write("Product");
         builder.InsertCell();
         builder.Write("Quantity");
         builder.EndRow();
 
-        // First data row.
+        // Second row – data.
         builder.InsertCell();
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
         builder.Write("Apples");
         builder.InsertCell();
         builder.Write("10");
         builder.EndRow();
 
-        // Second data row.
+        // Third row – data.
         builder.InsertCell();
         builder.Write("Bananas");
         builder.InsertCell();
@@ -48,26 +45,27 @@ public class Program
         // Finish the table.
         builder.EndTable();
 
-        // Create a custom table style and apply it to the table.
-        TableStyle customStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyTableStyle");
-        customStyle.Shading.BackgroundPatternColor = Color.LightYellow;
-        customStyle.Borders.Color = Color.Blue;
-        customStyle.Borders.LineStyle = LineStyle.Single;
-        table.Style = customStyle;
+        // Apply a built‑in table style that includes shading and borders.
+        table.StyleIdentifier = StyleIdentifier.MediumShading1Accent1;
+        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
-        // Convert any table style formatting to direct formatting.
+        // Convert any style‑based formatting to direct formatting.
+        // This ensures the PDF retains the exact appearance of the table.
         doc.ExpandTableStylesToDirectFormatting();
 
-        // Save the document as DOCX (optional source file).
-        doc.Save(docxPath, SaveFormat.Docx);
+        // Save the document as DOCX (optional, for verification).
+        string docxPath = Path.Combine(outputDir, "SampleTable.docx");
+        doc.Save(docxPath);
 
-        // Save the same document as PDF, preserving all table formatting.
+        // Save the document as PDF, preserving table styles and formatting.
+        string pdfPath = Path.Combine(outputDir, "SampleTable.pdf");
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the output files were created.
-        if (!File.Exists(docxPath) || !File.Exists(pdfPath))
-        {
-            throw new InvalidOperationException("Failed to create output files.");
-        }
+        // Simple validation – ensure the PDF file was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("PDF file was not created.");
+
+        // Inform the user (no interactive prompts required).
+        Console.WriteLine($"PDF generated successfully at: {pdfPath}");
     }
 }

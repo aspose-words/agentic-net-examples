@@ -1,56 +1,58 @@
 using System;
-using System.Drawing;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableStyleExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+            // Build a simple 3x3 table.
+            Table table = builder.StartTable();
 
-        // First row.
-        builder.InsertCell();
-        builder.Write("Cell 1,1");
-        builder.InsertCell();
-        builder.Write("Cell 1,2");
-        builder.EndRow();
+            for (int row = 0; row < 3; row++)
+            {
+                for (int col = 0; col < 3; col++)
+                {
+                    builder.InsertCell();
+                    builder.Write($"R{row + 1}C{col + 1}");
+                }
+                builder.EndRow();
+            }
 
-        // Second row.
-        builder.InsertCell();
-        builder.Write("Cell 2,1");
-        builder.InsertCell();
-        builder.Write("Cell 2,2");
-        builder.EndTable();
+            builder.EndTable();
 
-        // Create a custom table style.
-        TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyTableStyle");
-        // Configure the style's default cell borders (inner borders) to be thin.
-        tableStyle.Borders.LineStyle = LineStyle.Single;
-        tableStyle.Borders.LineWidth = 0.5; // thin inner borders
-        tableStyle.Borders.Color = Color.Black;
+            // Create a custom table style.
+            TableStyle tableStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "MyCustomTableStyle");
 
-        // Apply the style to the table.
-        table.Style = tableStyle;
+            // Configure the style's default cell borders (inner borders) to be thin.
+            tableStyle.Borders.LineStyle = LineStyle.Single;
+            tableStyle.Borders.LineWidth = 0.5; // thin inner border
+            tableStyle.Borders.Color = Color.Black;
 
-        // Set thick outer borders directly on the table.
-        table.SetBorder(BorderType.Left,   LineStyle.Single, 2.0, Color.Black, false);
-        table.SetBorder(BorderType.Right,  LineStyle.Single, 2.0, Color.Black, false);
-        table.SetBorder(BorderType.Top,    LineStyle.Single, 2.0, Color.Black, false);
-        table.SetBorder(BorderType.Bottom, LineStyle.Single, 2.0, Color.Black, false);
+            // Apply the style to the table.
+            table.Style = tableStyle;
 
-        // Save the document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithStyle.docx");
-        doc.Save(outputPath);
+            // Set thick outer borders directly on the table.
+            table.SetBorder(BorderType.Left,   LineStyle.Single, 2.0, Color.Black, true);
+            table.SetBorder(BorderType.Right,  LineStyle.Single, 2.0, Color.Black, true);
+            table.SetBorder(BorderType.Top,    LineStyle.Single, 2.0, Color.Black, true);
+            table.SetBorder(BorderType.Bottom, LineStyle.Single, 2.0, Color.Black, true);
 
-        // Simple verification that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved correctly.");
+            // Define output path and save the document.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithStyle.docx");
+            doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The document was not saved successfully.");
+        }
     }
 }

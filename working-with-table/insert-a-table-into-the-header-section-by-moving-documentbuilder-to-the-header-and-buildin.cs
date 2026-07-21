@@ -3,43 +3,46 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace HeaderTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Initialize a DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Move the builder to the primary header of the first section.
+        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
 
-            // Move the builder's cursor to the primary header of the first section.
-            builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
+        // Start a table inside the header.
+        Table table = builder.StartTable();
 
-            // Start a new table in the header.
-            Table table = builder.StartTable();
+        // First row.
+        builder.InsertCell();
+        builder.Write("Header Cell 1");
+        builder.InsertCell();
+        builder.Write("Header Cell 2");
+        builder.EndRow();
 
-            // First cell.
-            builder.InsertCell();
-            builder.Write("Header Cell 1");
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Header Cell 3");
+        builder.InsertCell();
+        builder.Write("Header Cell 4");
+        builder.EndRow();
 
-            // Second cell.
-            builder.InsertCell();
-            builder.Write("Header Cell 2");
+        // Finish the table.
+        builder.EndTable();
 
-            // End the row and the table.
-            builder.EndRow();
-            builder.EndTable();
+        // Return to the main document body (optional).
+        builder.MoveToSection(0);
 
-            // Save the document to disk.
-            string outputPath = "HeaderTable.docx";
-            doc.Save(outputPath);
+        // Save the document.
+        string outputPath = "HeaderTable.docx";
+        doc.Save(outputPath);
 
-            // Verify that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The document was not saved correctly.");
-        }
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Failed to create the output document.");
     }
 }

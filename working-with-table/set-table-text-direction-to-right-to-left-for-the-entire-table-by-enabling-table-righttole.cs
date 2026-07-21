@@ -9,9 +9,9 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Use DocumentBuilder to construct a simple 2x2 table.
         DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple 2x2 table.
         Table table = builder.StartTable();
 
         // First row.
@@ -35,8 +35,8 @@ public class Program
         string outputPath = "TableRightToLeft.docx";
         doc.Save(outputPath);
 
-        // Simple verification that the file was created.
+        // Simple validation that the file was created.
         if (!File.Exists(outputPath))
-            throw new Exception("Document was not saved correctly.");
+            throw new InvalidOperationException("The output file was not created.");
     }
 }

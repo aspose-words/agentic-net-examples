@@ -1,46 +1,49 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableRowKeepTogether
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build a table with enough rows to potentially span multiple pages.
-        Table table = builder.StartTable();
-
-        // Add 30 rows, each with two cells containing sample text.
-        for (int i = 1; i <= 30; i++)
+        public static void Main()
         {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start a table.
+            Table table = builder.StartTable();
+
+            // Add a header row (optional) and set it to repeat on each page.
+            builder.RowFormat.HeadingFormat = true;
             builder.InsertCell();
-            builder.Write($"Row {i}, Column 1 - Lorem ipsum dolor sit amet, consectetur adipiscing elit.");
+            builder.Write("Header Column 1");
             builder.InsertCell();
-            builder.Write($"Row {i}, Column 2 - Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
+            builder.Write("Header Column 2");
             builder.EndRow();
+
+            // Disable the ability for rows to break across pages.
+            // This will keep each row together on a single page.
+            builder.RowFormat.AllowBreakAcrossPages = false;
+
+            // Add enough rows with long text to force the table to span multiple pages.
+            for (int i = 1; i <= 30; i++)
+            {
+                builder.InsertCell();
+                // Repeat a long string to increase the row height.
+                builder.Write($"Row {i}, Column 1. " + new string('A', 500));
+                builder.InsertCell();
+                builder.Write($"Row {i}, Column 2. " + new string('B', 500));
+                builder.EndRow();
+            }
+
+            // End the table.
+            builder.EndTable();
+
+            // Save the document to the local file system.
+            string outputPath = "TableRowKeepTogether.docx";
+            doc.Save(outputPath);
         }
-
-        builder.EndTable();
-
-        // Prevent each row from breaking across pages.
-        foreach (Row row in table.Rows)
-        {
-            // Setting AllowBreakAcrossPages to false keeps the row together.
-            row.RowFormat.AllowBreakAcrossPages = false;
-        }
-
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Table.RowKeepTogether.docx");
-
-        // Save the document.
-        doc.Save(outputPath);
-
-        // Simple verification that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
     }
 }

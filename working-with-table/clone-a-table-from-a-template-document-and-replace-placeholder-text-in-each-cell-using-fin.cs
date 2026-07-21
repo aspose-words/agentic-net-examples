@@ -8,69 +8,76 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary files.
+        // -----------------------------------------------------------------
+        // 1. Prepare folders and file paths.
+        // -----------------------------------------------------------------
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
         string templatePath = Path.Combine(artifactsDir, "Template.docx");
-        string outputPath = Path.Combine(artifactsDir, "ClonedTable.docx");
+        string outputPath   = Path.Combine(artifactsDir, "Result.docx");
 
         // -----------------------------------------------------------------
-        // 1. Create a template document that contains a table with placeholders.
+        // 2. Create a template document that contains a 2x2 table with
+        //    placeholder text in each cell.
         // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder tmplBuilder = new DocumentBuilder(templateDoc);
 
-        // Build a simple 2‑cell table.
-        tmplBuilder.StartTable();
+        // Build the table.
+        Table tmplTable = tmplBuilder.StartTable();
         tmplBuilder.InsertCell();
-        tmplBuilder.Write("{{Name}}");          // Placeholder for a name.
+        tmplBuilder.Write("{{Name}}");
         tmplBuilder.InsertCell();
-        tmplBuilder.Write("{{Age}}");           // Placeholder for an age.
+        tmplBuilder.Write("{{Age}}");
+        tmplBuilder.EndRow();
+
+        tmplBuilder.InsertCell();
+        tmplBuilder.Write("{{City}}");
+        tmplBuilder.InsertCell();
+        tmplBuilder.Write("{{Country}}");
         tmplBuilder.EndRow();
         tmplBuilder.EndTable();
 
-        // Save the template so it can be loaded later.
+        // Save the template (required by the task description).
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Load the template document and locate the table to clone.
+        // 3. Load the template and clone its table.
         // -----------------------------------------------------------------
         Document srcDoc = new Document(templatePath);
-        Table srcTable = srcDoc.GetChildNodes(NodeType.Table, true)[0] as Table;
+        Table sourceTable = srcDoc.FirstSection.Body.Tables[0];
+        Table clonedTable = (Table)sourceTable.Clone(true); // deep clone, still belongs to srcDoc
 
         // -----------------------------------------------------------------
-        // 3. Clone the table (deep clone) so we can modify it independently.
+        // 4. Create the result document and import the cloned table.
         // -----------------------------------------------------------------
-        Table clonedTable = srcTable.Clone(true) as Table;
+        Document resultDoc = new Document();
+
+        // Import the cloned table so that it belongs to resultDoc.
+        Table importedTable = (Table)resultDoc.ImportNode(clonedTable, true);
+        resultDoc.FirstSection.Body.AppendChild(importedTable);
 
         // -----------------------------------------------------------------
-        // 4. Replace placeholder text inside each cell using FindReplaceOptions.
+        // 5. Replace placeholders inside the imported table.
         // -----------------------------------------------------------------
         FindReplaceOptions replaceOptions = new FindReplaceOptions
         {
-            MatchCase = true,
-            FindWholeWordsOnly = true
+            MatchCase = false,
+            FindWholeWordsOnly = false
         };
 
-        // Replace the placeholders with actual values.
-        clonedTable.Range.Replace("{{Name}}", "John Doe", replaceOptions);
-        clonedTable.Range.Replace("{{Age}}", "30", replaceOptions);
-
-        // -----------------------------------------------------------------
-        // 5. Insert the cloned and modified table into a new document.
-        // -----------------------------------------------------------------
-        Document dstDoc = new Document();
-        DocumentBuilder dstBuilder = new DocumentBuilder(dstDoc);
-        dstBuilder.Writeln("Cloned table with replaced values:");
-
-        // Import the cloned table into the destination document.
-        NodeImporter importer = new NodeImporter(srcDoc, dstDoc, ImportFormatMode.KeepSourceFormatting);
-        Table importedTable = (Table)importer.ImportNode(clonedTable, true);
-        dstDoc.FirstSection.Body.AppendChild(importedTable);
+        importedTable.Range.Replace("{{Name}}",    "John Doe",   replaceOptions);
+        importedTable.Range.Replace("{{Age}}",     "30",         replaceOptions);
+        importedTable.Range.Replace("{{City}}",    "New York",   replaceOptions);
+        importedTable.Range.Replace("{{Country}}", "USA",        replaceOptions);
 
         // -----------------------------------------------------------------
         // 6. Save the resulting document.
         // -----------------------------------------------------------------
-        dstDoc.Save(outputPath);
+        resultDoc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }

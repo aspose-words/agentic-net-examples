@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -13,50 +14,59 @@ public class Program
         // Start the table.
         Table table = builder.StartTable();
 
-        // ---------- Header row ----------
+        // ----- Header row -----
         builder.InsertCell();
-        builder.Write("Item");
+        builder.Writeln("Item");
         builder.InsertCell();
-        builder.Write("Quantity");
-        builder.InsertCell();
-        builder.Write("Price");
+        builder.Writeln("Quantity");
         builder.EndRow();
 
-        // ---------- Data rows ----------
-        AddDataRow(builder, "Apples", "10", "1.20");
-        AddDataRow(builder, "Bananas", "5", "0.80");
-        AddDataRow(builder, "Carrots", "8", "0.50");
+        // ----- Data rows -----
+        // Row 1
+        builder.InsertCell();
+        builder.Writeln("Apples");
+        builder.InsertCell();
+        builder.Writeln("20");
+        builder.EndRow();
 
-        // ---------- Footer row with totals ----------
+        // Row 2
         builder.InsertCell();
-        builder.Write("Total");
+        builder.Writeln("Bananas");
+        builder.InsertCell();
+        builder.Writeln("40");
+        builder.EndRow();
 
-        // Insert a field that sums the values above in the current column.
+        // Row 3
         builder.InsertCell();
-        builder.InsertField("=SUM(ABOVE)", null);
+        builder.Writeln("Carrots");
         builder.InsertCell();
-        builder.InsertField("=SUM(ABOVE)", null);
+        builder.Writeln("50");
+        builder.EndRow();
+
+        // ----- Footer row with totals -----
+        // First cell: label
+        builder.InsertCell();
+        builder.Writeln("Total");
+
+        // Second cell: field that sums the values above in this column.
+        // The field code "=SUM(ABOVE)" calculates the sum of numeric values in the column above.
+        builder.InsertCell();
+        builder.InsertField("=SUM(ABOVE)", "0");
         builder.EndRow();
 
         // End the table.
         builder.EndTable();
 
-        // Update all fields so that the SUM fields are calculated.
-        doc.UpdateFields();
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithFooter.docx");
 
-        // Save the document to the local file system.
-        doc.Save("TableWithFooter.docx");
-    }
+        // Save the document.
+        doc.Save(outputPath);
 
-    // Helper method to add a data row to the table.
-    private static void AddDataRow(DocumentBuilder builder, string item, string quantity, string price)
-    {
-        builder.InsertCell();
-        builder.Write(item);
-        builder.InsertCell();
-        builder.Write(quantity);
-        builder.InsertCell();
-        builder.Write(price);
-        builder.EndRow();
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+        {
+            throw new Exception($"Failed to create the output file at '{outputPath}'.");
+        }
     }
 }

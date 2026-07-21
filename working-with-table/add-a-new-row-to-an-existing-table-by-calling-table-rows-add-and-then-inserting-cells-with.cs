@@ -12,40 +12,45 @@ namespace AsposeWordsTableExample
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Build an initial 2‑column table with one row using the builder.
+            // Build an initial table with one row and two cells using DocumentBuilder.
             builder.StartTable();
             builder.InsertCell();
-            builder.Write("Original Row, Cell 1");
+            builder.Write("Original Cell 1");
             builder.InsertCell();
-            builder.Write("Original Row, Cell 2");
+            builder.Write("Original Cell 2");
             builder.EndRow();
             builder.EndTable();
 
-            // Retrieve the created table.
+            // Retrieve the created table (the first table in the document body).
             Table table = doc.FirstSection.Body.Tables[0];
 
             // Create a new row that will be added to the existing table.
             Row newRow = new Row(doc);
-            // Add the new row to the table's Rows collection.
+
+            // Add two new cells to the row.
+            // Cell 1
+            Cell cell1 = new Cell(doc);
+            // Ensure the cell contains a paragraph before adding text.
+            cell1.AppendChild(new Paragraph(doc));
+            cell1.FirstParagraph.AppendChild(new Run(doc, "New Cell 1"));
+            newRow.Cells.Add(cell1);
+
+            // Cell 2
+            Cell cell2 = new Cell(doc);
+            cell2.AppendChild(new Paragraph(doc));
+            cell2.FirstParagraph.AppendChild(new Run(doc, "New Cell 2"));
+            newRow.Cells.Add(cell2);
+
+            // Append the new row to the table.
             table.Rows.Add(newRow);
 
-            // Create the first cell for the new row.
-            Cell newCell1 = new Cell(doc);
-            // Ensure the cell contains a paragraph (required for text).
-            newCell1.AppendChild(new Paragraph(doc));
-            // Add text to the paragraph.
-            newCell1.FirstParagraph.AppendChild(new Run(doc, "New Row, Cell 1"));
-            // Add the cell to the row's Cells collection.
-            newRow.Cells.Add(newCell1);
+            // Optional validation: ensure the table now has two rows.
+            if (table.Rows.Count != 2)
+                throw new InvalidOperationException("The new row was not added correctly.");
 
-            // Create the second cell for the new row.
-            Cell newCell2 = new Cell(doc);
-            newCell2.AppendChild(new Paragraph(doc));
-            newCell2.FirstParagraph.AppendChild(new Run(doc, "New Row, Cell 2"));
-            newRow.Cells.Add(newCell2);
-
-            // Save the document to verify the new row has been added.
-            doc.Save("AddedRowTable.docx");
+            // Save the document to a file in the current directory.
+            string outputPath = "TableWithAddedRow.docx";
+            doc.Save(outputPath);
         }
     }
 }

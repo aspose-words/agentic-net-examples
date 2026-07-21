@@ -2,43 +2,39 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsTableExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Start building a table.
-            Table table = builder.StartTable();
+        // Start a table.
+        Table table = builder.StartTable();
 
-            // ----- First row -----
-            builder.InsertCell();
-            builder.Write("First row, first cell.");
-            builder.InsertCell();
-            builder.Write("First row, second cell.");
+        // First row – two cells with sample text.
+        builder.InsertCell();
+        builder.Write("Cell 1");
+        builder.InsertCell();
+        builder.Write("Cell 2");
+        builder.EndRow();
 
-            // End the first row and obtain the Row object.
-            Row firstRow = builder.EndRow();
+        // Second row – two cells with sample text.
+        builder.InsertCell();
+        builder.Write("Cell 3");
+        builder.InsertCell();
+        builder.Write("Cell 4");
+        builder.EndRow();
 
-            // Set the height rule of this row to Auto (no explicit height is set).
-            firstRow.RowFormat.HeightRule = HeightRule.Auto;
+        // Finish the table.
+        builder.EndTable();
 
-            // ----- Second row (optional) -----
-            builder.InsertCell();
-            builder.Write("Second row, first cell.");
-            builder.InsertCell();
-            builder.Write("Second row, second cell.");
-            builder.EndRow();
+        // Set the height rule of the second row to Auto (no explicit Height value).
+        Row secondRow = table.Rows[1];
+        secondRow.RowFormat.HeightRule = HeightRule.Auto;
 
-            // Finish the table.
-            builder.EndTable();
-
-            // Save the document to a file.
-            doc.Save("RowHeightAuto.docx");
-        }
+        // Save the document to the local file system.
+        doc.Save("RowHeightAuto.docx");
     }
 }

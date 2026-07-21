@@ -11,46 +11,36 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 3x2 table.
+        // Build a simple table with 5 rows and 2 columns.
         Table table = builder.StartTable();
 
-        // Row 1
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
-        builder.EndRow();
+        for (int rowIndex = 0; rowIndex < 5; rowIndex++)
+        {
+            // First cell of the row.
+            builder.InsertCell();
+            builder.Write($"Row {rowIndex + 1}, Cell 1");
 
-        // Row 2
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
+            // Second cell of the row.
+            builder.InsertCell();
+            builder.Write($"Row {rowIndex + 1}, Cell 2");
 
-        // Row 3
-        builder.InsertCell();
-        builder.Write("Row 3, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 3, Cell 2");
-        builder.EndRow();
+            // End the current row.
+            builder.EndRow();
+        }
 
         // Finish the table.
         builder.EndTable();
 
-        // Prevent rows from breaking across pages.
-        // RowFormat does not have a KeepTogether property; the equivalent is AllowBreakAcrossPages.
+        // Ensure that each row is kept together on the same page.
+        // The RowFormat does not expose a KeepTogether property, but setting
+        // AllowBreakAcrossPages to false prevents the row from splitting across pages.
         foreach (Row row in table.Rows)
         {
             row.RowFormat.AllowBreakAcrossPages = false;
         }
 
         // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "KeepTableTogether.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableKeepTogether.docx");
         doc.Save(outputPath);
-
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The document was not saved successfully.");
     }
 }

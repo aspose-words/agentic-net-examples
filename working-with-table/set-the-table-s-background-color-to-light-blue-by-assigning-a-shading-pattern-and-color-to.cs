@@ -4,42 +4,49 @@ using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace TableShadingExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Build a simple 2x2 table.
+        Table table = builder.StartTable();
+
+        // First row.
+        builder.InsertCell();
+        builder.Write("Cell 1,1");
+        builder.InsertCell();
+        builder.Write("Cell 1,2");
+        builder.EndRow();
+
+        // Second row.
+        builder.InsertCell();
+        builder.Write("Cell 2,1");
+        builder.InsertCell();
+        builder.Write("Cell 2,2");
+        builder.EndTable(); // Ends the table and returns the Table node.
+
+        // Apply a solid light‑blue shading to the whole table.
+        // TextureSolid = solid fill, foreground color not used (set to Empty),
+        // background color set to LightBlue.
+        table.SetShading(TextureIndex.TextureSolid, Color.Empty, Color.LightBlue);
+
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableWithLightBlueShading.docx");
+
+        // Save the document.
+        doc.Save(outputPath);
+
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Start a table and add a couple of cells with sample text.
-            Table table = builder.StartTable();
-            builder.InsertCell();
-            builder.Write("Cell 1");
-            builder.InsertCell();
-            builder.Write("Cell 2");
-            builder.EndRow();
-
-            // Apply a solid light‑blue shading to the whole table.
-            // TextureSolid indicates a solid fill; the foreground color is not used for this texture.
-            table.SetShading(TextureIndex.TextureSolid, Color.Empty, Color.LightBlue);
-
-            // Finish the table.
-            builder.EndTable();
-
-            // Define the output path.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "TableShading.docx");
-
-            // Save the document.
-            doc.Save(outputPath);
-
-            // Simple verification that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException("The output file was not created.");
-
-            // The program ends automatically; no user interaction required.
+            throw new InvalidOperationException($"Failed to create the output file at '{outputPath}'.");
         }
+
+        // Optionally, inform that the process completed (no console input required).
+        Console.WriteLine($"Document saved successfully to '{outputPath}'.");
     }
 }

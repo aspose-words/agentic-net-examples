@@ -1,9 +1,8 @@
 using System;
-using System.IO;
 using System.Drawing;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -16,37 +15,49 @@ public class Program
         // Start a table.
         Table table = builder.StartTable();
 
-        // First row - apply gradient-like shading to each cell.
+        // First row, first cell.
         builder.InsertCell();
+        // Apply a diagonal cross texture with a light blue background.
         builder.CellFormat.Shading.Texture = TextureIndex.TextureDiagonalCross;
         builder.CellFormat.Shading.BackgroundPatternColor = Color.LightBlue;
-        builder.Write("Cell 1");
+        builder.Writeln("Cell 1");
 
+        // First row, second cell.
         builder.InsertCell();
-        builder.CellFormat.Shading.Texture = TextureIndex.TextureDiagonalCross;
+        // Apply a horizontal texture with a light green background.
+        builder.CellFormat.Shading.Texture = TextureIndex.TextureHorizontal;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightGreen;
+        builder.Writeln("Cell 2");
+
+        // End the first row.
+        builder.EndRow();
+
+        // Second row, first cell.
+        builder.InsertCell();
+        // Apply a vertical texture with a light coral background.
+        builder.CellFormat.Shading.Texture = TextureIndex.TextureVertical;
         builder.CellFormat.Shading.BackgroundPatternColor = Color.LightCoral;
-        builder.Write("Cell 2");
+        builder.Writeln("Cell 3");
 
+        // Second row, second cell.
+        builder.InsertCell();
+        // Apply a cross texture with a light yellow background.
+        builder.CellFormat.Shading.Texture = TextureIndex.TextureCross;
+        builder.CellFormat.Shading.BackgroundPatternColor = Color.LightYellow;
+        builder.Writeln("Cell 4");
+
+        // End the second row.
         builder.EndRow();
 
-        // Second row - normal cells without special shading.
-        builder.InsertCell();
-        builder.Write("Cell 3");
-
-        builder.InsertCell();
-        builder.Write("Cell 4");
-
-        builder.EndRow();
-
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Save the document to a file in the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "GradientShadingTable.docx");
-        doc.Save(outputPath);
+        // Ensure the output directory exists.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "GradientShadingTable.docx");
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved successfully.");
+        // Save the document.
+        doc.Save(outputPath);
     }
 }

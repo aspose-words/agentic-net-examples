@@ -3,47 +3,67 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableStyleExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building a table.
-        Table table = builder.StartTable();
+            // Start a new table.
+            Table table = builder.StartTable();
 
-        // First row (header).
-        builder.InsertCell();
-        builder.Write("Header 1");
-        builder.InsertCell();
-        builder.Write("Header 2");
-        builder.EndRow();
+            // ---- First row (header) ----
+            builder.InsertCell();
+            builder.Write("Product");
+            builder.InsertCell();
+            builder.Write("Quantity");
+            builder.EndRow();
 
-        // Second row (data).
-        builder.InsertCell();
-        builder.Write("Data 1");
-        builder.InsertCell();
-        builder.Write("Data 2");
-        builder.EndRow();
+            // ---- Second row ----
+            builder.InsertCell();
+            builder.Write("Apples");
+            builder.InsertCell();
+            builder.Write("20");
+            builder.EndRow();
 
-        // Finish the table.
-        builder.EndTable();
+            // ---- Third row ----
+            builder.InsertCell();
+            builder.Write("Bananas");
+            builder.InsertCell();
+            builder.Write("35");
+            builder.EndRow();
 
-        // Apply the built‑in "Grid Table 5 Dark" style.
-        // The style can be referenced by its name.
-        table.StyleName = "Grid Table 5 Dark";
+            // ---- Fourth row ----
+            builder.InsertCell();
+            builder.Write("Carrots");
+            builder.InsertCell();
+            builder.Write("50");
+            builder.EndRow();
 
-        // Optionally enable conditional formatting (first row as header, row banding, etc.).
-        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
+            // Apply the built‑in "Grid Table 5 Dark" style to the table.
+            table.StyleIdentifier = StyleIdentifier.GridTable5Dark;
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "GridTable5Dark.docx");
-        doc.Save(outputPath);
+            // Optionally, let the table auto‑fit its contents.
+            table.AutoFit(AutoFitBehavior.AutoFitToContents);
 
-        // Simple validation to ensure the file was created.
-        if (!File.Exists(outputPath))
-            throw new Exception("The output document was not created.");
+            // Finish the table.
+            builder.EndTable();
+
+            // Prepare output folder and file path.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+            string outputPath = Path.Combine(outputDir, "GridTable5Dark.docx");
+
+            // Save the document.
+            doc.Save(outputPath);
+
+            // Simple validation to ensure the file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException("The document was not saved correctly.");
+        }
     }
 }

@@ -1,80 +1,98 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Saving;
 
-public class Program
+namespace TableToHtmlExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start building the table.
-        Table table = builder.StartTable();
+            // Build a table that contains both horizontal and vertical merged cells.
+            // ---------------------------------------------------------------
+            // Row 1
+            builder.StartTable();
 
-        // ---------- Row 1 ----------
-        // Cell 1 – first cell of a horizontal merge (colspan = 2).
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Header A (colspan=2)");
+            // Cell 1 – start of a horizontal merge that will span two columns.
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.First;
+            builder.Write("Horizontally merged cell (col 1‑2)");
 
-        // Cell 2 – part of the previous horizontal merge.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+            // Cell 2 – continues the horizontal merge.
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+            // No text needed for the merged part.
 
-        // Cell 3 – normal cell.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.Write("Header B");
+            // Cell 3 – a normal cell.
+            builder.InsertCell();
+            builder.Write("Normal cell (col 3)");
+            builder.EndRow();
 
-        builder.EndRow();
+            // Row 2
+            // Cell 1 – start of a vertical merge that will span three rows.
+            builder.InsertCell();
+            builder.CellFormat.VerticalMerge = CellMerge.First;
+            builder.Write("Vertically merged cell (row 2‑4)");
 
-        // ---------- Row 2 ----------
-        // Cell 1 – first cell of a vertical merge (rowspan = 2).
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.First;
-        builder.Write("RowSpan Cell");
+            // Cell 2 – normal cell.
+            builder.InsertCell();
+            builder.Write("Row 2, Cell 2");
 
-        // Cell 2 – normal cell.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Cell 2,2");
+            // Cell 3 – normal cell.
+            builder.InsertCell();
+            builder.Write("Row 2, Cell 3");
+            builder.EndRow();
 
-        // Cell 3 – first cell of a horizontal merge (colspan = 2).
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged C (colspan=2)");
+            // Row 3
+            // Cell 1 – continues the vertical merge.
+            builder.InsertCell();
+            builder.CellFormat.VerticalMerge = CellMerge.Previous;
+            // No text needed for the merged part.
 
-        // Cell 4 – part of the previous horizontal merge.
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+            // Cell 2 – normal cell.
+            builder.InsertCell();
+            builder.Write("Row 3, Cell 2");
 
-        builder.EndRow();
+            // Cell 3 – normal cell.
+            builder.InsertCell();
+            builder.Write("Row 3, Cell 3");
+            builder.EndRow();
 
-        // ---------- Row 3 ----------
-        // Cell 1 – continuation of the vertical merge.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.Previous;
+            // Row 4
+            // Cell 1 – continues the vertical merge.
+            builder.InsertCell();
+            builder.CellFormat.VerticalMerge = CellMerge.Previous;
+            // No text needed for the merged part.
 
-        // Cell 2 – normal cell.
-        builder.InsertCell();
-        builder.CellFormat.VerticalMerge = CellMerge.None;
-        builder.Write("Cell 3,2");
+            // Cell 2 – normal cell.
+            builder.InsertCell();
+            builder.Write("Row 4, Cell 2");
 
-        // Cell 3 – normal cell (the second part of the previous horizontal merge is omitted because it is merged).
-        builder.InsertCell();
-        builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.Write("Cell 3,3");
+            // Cell 3 – normal cell.
+            builder.InsertCell();
+            builder.Write("Row 4, Cell 3");
+            builder.EndRow();
 
-        builder.EndRow();
+            // Finish the table.
+            builder.EndTable();
 
-        // Finish the table.
-        builder.EndTable();
+            // Save the document as HTML. Aspose.Words automatically generates
+            // appropriate colspan and rowspan attributes for merged cells.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "ComplexTable.html");
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions(SaveFormat.Html);
+            doc.Save(outputPath, saveOptions);
 
-        // Save the document as HTML. Aspose.Words will generate proper colspan and rowspan attributes.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions();
-        doc.Save("Table.html", saveOptions);
+            // Simple verification that the file was created.
+            if (File.Exists(outputPath))
+                Console.WriteLine($"HTML file successfully created at: {outputPath}");
+            else
+                throw new InvalidOperationException("Failed to create the HTML output file.");
+        }
     }
 }

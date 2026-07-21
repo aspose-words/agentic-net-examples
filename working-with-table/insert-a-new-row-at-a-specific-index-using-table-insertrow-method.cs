@@ -3,65 +3,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsTableInsertRowExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Build an initial 2x2 table.
-        Table table = builder.StartTable();
-
-        // First row.
-        builder.InsertCell();
-        builder.Write("R1C1");
-        builder.InsertCell();
-        builder.Write("R1C2");
-        builder.EndRow();
-
-        // Second row.
-        builder.InsertCell();
-        builder.Write("R2C1");
-        builder.InsertCell();
-        builder.Write("R2C2");
-        builder.EndRow();
-
-        // Finish the table construction.
-        builder.EndTable();
-
-        // Create a new row that will be inserted.
-        Row newRow = new Row(doc);
-
-        // First cell of the new row.
-        Cell newCell1 = new Cell(doc);
-        newCell1.AppendChild(new Paragraph(doc));
-        newCell1.FirstParagraph.AppendChild(new Run(doc, "Inserted Row, Cell 1"));
-        newRow.AppendChild(newCell1);
-
-        // Second cell of the new row.
-        Cell newCell2 = new Cell(doc);
-        newCell2.AppendChild(new Paragraph(doc));
-        newCell2.FirstParagraph.AppendChild(new Run(doc, "Inserted Row, Cell 2"));
-        newRow.AppendChild(newCell2);
-
-        // Insert the new row at index 1 (between the original rows).
-        // Use the Rows collection's Insert method.
-        table.Rows.Insert(1, newRow);
-
-        // Save the document to disk.
-        string outputFile = "InsertRowExample.docx";
-        doc.Save(outputFile);
-
-        // Simple verification that the file was created.
-        if (File.Exists(outputFile))
+        public static void Main()
         {
-            Console.WriteLine($"Document successfully saved: {Path.GetFullPath(outputFile)}");
-        }
-        else
-        {
-            throw new InvalidOperationException("Failed to save the document.");
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Build an initial 2x2 table.
+            builder.StartTable();
+
+            // First row.
+            builder.InsertCell();
+            builder.Write("Row 1, Cell 1");
+            builder.InsertCell();
+            builder.Write("Row 1, Cell 2");
+            builder.EndRow();
+
+            // Second row.
+            builder.InsertCell();
+            builder.Write("Row 2, Cell 1");
+            builder.InsertCell();
+            builder.Write("Row 2, Cell 2");
+            builder.EndTable();
+
+            // Retrieve the created table.
+            Table table = doc.FirstSection.Body.Tables[0];
+
+            // Create a new row that will be inserted.
+            Row newRow = new Row(doc);
+
+            // Add two cells to the new row (matching the existing column count).
+            Cell cell1 = new Cell(doc);
+            cell1.AppendChild(new Paragraph(doc));
+            cell1.FirstParagraph.AppendChild(new Run(doc, "Inserted Row, Cell 1"));
+            newRow.AppendChild(cell1);
+
+            Cell cell2 = new Cell(doc);
+            cell2.AppendChild(new Paragraph(doc));
+            cell2.FirstParagraph.AppendChild(new Run(doc, "Inserted Row, Cell 2"));
+            newRow.AppendChild(cell2);
+
+            // Insert the new row at index 1 (between the original rows).
+            // RowCollection.Insert inserts the row at the specified position.
+            table.Rows.Insert(1, newRow);
+
+            // Optional validation: the table should now contain three rows.
+            if (table.Rows.Count != 3)
+                throw new InvalidOperationException("Row insertion failed.");
+
+            // Save the document to the local file system.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "InsertedRow.docx");
+            doc.Save(outputPath);
+
+            // Indicate successful completion.
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }
