@@ -10,56 +10,48 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input form field that will act as the condition trigger.
-        // The field is named "ConditionField".
-        builder.Write("Condition (type 'Disable' to deactivate check boxes): ");
-        FormField conditionField = builder.InsertTextInput(
-            "ConditionField",
-            TextFormFieldType.Regular,
-            "",
-            "Enable", // placeholder text
-            0);
-        // Simulate user input by setting the result directly.
-        conditionField.Result = "Disable";
+        // Add a marker text that will be used as the condition.
+        builder.Writeln("Form example. Condition: ENABLE_CHECKBOXES");
 
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        // Insert the first checkbox form field.
+        builder.Write("Option 1: ");
+        FormField checkBox1 = builder.InsertCheckBox("CheckBox1", false, 20);
+        builder.Writeln();
 
-        // Insert several check box form fields.
-        builder.Write("Option A: ");
-        builder.InsertCheckBox("CheckBoxA", false, 0);
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        // Insert the second checkbox form field.
+        builder.Write("Option 2: ");
+        FormField checkBox2 = builder.InsertCheckBox("CheckBox2", true, 20);
+        builder.Writeln();
 
-        builder.Write("Option B: ");
-        builder.InsertCheckBox("CheckBoxB", true, 0);
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        // Insert a regular text input field (non‑checkbox) for contrast.
+        builder.Write("Enter name: ");
+        FormField textInput = builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 50);
+        builder.Writeln();
 
-        builder.Write("Option C: ");
-        builder.InsertCheckBox("CheckBoxC", false, 0);
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        // Save the initial document (optional, demonstrates creation).
+        const string initialPath = "FormFields.docx";
+        doc.Save(initialPath);
 
-        // Determine whether the condition is met.
-        // The condition is satisfied when the text input field's result equals "Disable".
-        bool shouldDisable = false;
-        FormField fetchedCondition = doc.Range.FormFields["ConditionField"];
-        if (fetchedCondition != null && string.Equals(fetchedCondition.Result, "Disable", StringComparison.OrdinalIgnoreCase))
+        // Determine whether the specific condition is met.
+        // Here the condition is the presence of the marker text "ENABLE_CHECKBOXES".
+        bool conditionMet = doc.GetText().Contains("ENABLE_CHECKBOXES");
+
+        if (conditionMet)
         {
-            shouldDisable = true;
-        }
-
-        // If the condition is met, disable all check box form fields.
-        if (shouldDisable)
-        {
+            // Iterate through all form fields in the document.
             foreach (FormField field in doc.Range.FormFields)
             {
-                // Only process check box fields.
+                // Identify checkbox form fields by their field type.
                 if (field.Type == FieldType.FieldFormCheckBox)
                 {
+                    // Disable the checkbox so it cannot be edited in Word.
                     field.Enabled = false;
                 }
             }
         }
 
-        // Save the modified document.
-        doc.Save("Output.docx");
+        // Save the modified document where all checkboxes are disabled.
+        const string outputPath = "FormFields_Disabled.docx";
+        doc.Save(outputPath);
     }
 }

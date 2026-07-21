@@ -7,58 +7,51 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to insert form fields.
+        // Create a new document and insert several form fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a combo box form field.
-        builder.Write("Choose a fruit: ");
-        FormField comboBox = builder.InsertComboBox("FruitCombo", new[] { "Apple", "Banana", "Cherry" }, 0);
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
-        // Insert a check box form field.
-        builder.Write("Accept terms: ");
-        FormField checkBox = builder.InsertCheckBox("AcceptCheck", false, 50);
-        builder.InsertBreak(BreakType.ParagraphBreak);
-
-        // Insert a text input form field.
+        // Text input form field.
         builder.Write("Enter your name: ");
-        FormField textInput = builder.InsertTextInput("NameInput", TextFormFieldType.Regular, "", "John Doe", 50);
-        builder.InsertBreak(BreakType.ParagraphBreak);
+        builder.InsertTextInput("NameField", TextFormFieldType.Regular, "", "John Doe", 50);
+        builder.Writeln();
 
-        // Save the document (optional, demonstrates lifecycle rule).
-        doc.Save("FormFields.docx");
+        // Checkbox form field.
+        builder.Write("Accept terms: ");
+        builder.InsertCheckBox("AcceptCheck", false, 50);
+        builder.Writeln();
 
-        // Access the collection of form fields.
-        FormFieldCollection formFields = doc.Range.FormFields;
+        // Dropdown (combo box) form field.
+        builder.Write("Select country: ");
+        string[] countries = { "USA", "Canada", "Mexico" };
+        builder.InsertComboBox("CountryCombo", countries, 0);
+        builder.Writeln();
 
-        // Validate that at least one form field exists.
-        if (formFields.Count == 0)
-            throw new InvalidOperationException("No form fields were found in the document.");
+        // Save the document with the created form fields.
+        const string filePath = "FormFields.docx";
+        doc.Save(filePath);
 
-        // Create a lookup dictionary where the key is the automatically generated bookmark name.
+        // Load the document and extract automatically generated bookmark names.
+        Document loadedDoc = new Document(filePath);
+        FormFieldCollection formFields = loadedDoc.Range.FormFields;
+
+        // Dictionary to map bookmark name (same as form field name) to the form field.
         Dictionary<string, FormField> bookmarkLookup = new Dictionary<string, FormField>(StringComparer.OrdinalIgnoreCase);
 
-        // Populate the dictionary.
         foreach (FormField field in formFields)
         {
-            // The name of the form field is also the name of the automatically created bookmark.
-            string bookmarkName = field.Name;
-
-            // Ensure the bookmark actually exists in the document.
-            if (doc.Range.Bookmarks[bookmarkName] == null)
-                throw new InvalidOperationException($"Bookmark '{bookmarkName}' was not found.");
-
-            bookmarkLookup[bookmarkName] = field;
+            // The bookmark name is automatically created with the same name as the form field.
+            if (!string.IsNullOrEmpty(field.Name))
+            {
+                bookmarkLookup[field.Name] = field;
+            }
         }
 
-        // Example usage: print each bookmark name and its form field type.
+        // Output the collected bookmark names and their field types.
+        Console.WriteLine($"Found {bookmarkLookup.Count} form fields with automatically generated bookmarks:");
         foreach (KeyValuePair<string, FormField> entry in bookmarkLookup)
         {
-            Console.WriteLine($"Bookmark: {entry.Key}, FormField Type: {entry.Value.Type}");
+            Console.WriteLine($"Bookmark: \"{entry.Key}\", Field Type: {entry.Value.Type}");
         }
-
-        // Save the document again after processing (demonstrates saving after modifications if any).
-        doc.Save("FormFields_Processed.docx");
     }
 }

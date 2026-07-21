@@ -6,44 +6,37 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and insert a checkbox form field.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Write("Toggle this check box: ");
-        FormField checkBox = builder.InsertCheckBox("MyCheckBox", false, 20);
-        doc.Save("FormWithCheckBox.docx");
 
-        // Read external configuration (environment variable).
-        string env = Environment.GetEnvironmentVariable("CHECKBOX_CHECKED");
-        bool configChecked = false;
-        if (!string.IsNullOrEmpty(env) && bool.TryParse(env, out bool parsed))
+        // Insert a checkbox form field with a known name.
+        const string checkBoxName = "MyCheckBox";
+        builder.Write("Toggle this check box: ");
+        FormField checkBox = builder.InsertCheckBox(checkBoxName, false, 0);
+        builder.InsertParagraph();
+
+        // Read external configuration (environment variable) that determines the desired state.
+        // Expected values: "true" or "false". Default to false if not set or invalid.
+        string configValue = Environment.GetEnvironmentVariable("CHECKBOX_STATE");
+        bool desiredState = false;
+        if (!string.IsNullOrWhiteSpace(configValue) && bool.TryParse(configValue, out bool parsed))
         {
-            configChecked = parsed;
+            desiredState = parsed;
         }
 
-        // Locate the checkbox by name.
-        FormField targetField = doc.Range.FormFields["MyCheckBox"];
+        // Locate the checkbox form field by name and validate its existence.
+        FormField? targetField = doc.Range.FormFields[checkBoxName];
         if (targetField == null)
         {
-            throw new InvalidOperationException("Checkbox form field 'MyCheckBox' not found.");
+            throw new InvalidOperationException($"Form field '{checkBoxName}' was not found in the document.");
         }
 
-        // Ensure the field is a checkbox.
-        if (targetField.Type != FieldType.FieldFormCheckBox)
-        {
-            throw new InvalidOperationException("Form field 'MyCheckBox' is not a checkbox.");
-        }
-
-        // Set the checked state based on the configuration.
-        targetField.Checked = configChecked;
-
-        // Validate the update.
-        if (targetField.Checked != configChecked)
-        {
-            throw new InvalidOperationException("Failed to set the checkbox state.");
-        }
+        // Toggle the checked state according to the external configuration.
+        targetField.Checked = desiredState;
 
         // Save the modified document.
-        doc.Save("FormWithCheckBox_Toggled.docx");
+        const string outputPath = "Output.docx";
+        doc.Save(outputPath);
     }
 }

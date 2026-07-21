@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
@@ -7,51 +6,46 @@ public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        string originalPath = Path.Combine(Directory.GetCurrentDirectory(), "FormFields.docx");
-        string modifiedPath = Path.Combine(Directory.GetCurrentDirectory(), "FormFields_Modified.docx");
-
         // -----------------------------------------------------------------
-        // 1. Create a DOCX file with a combo box form field.
+        // 1. Create a sample DOCX file that contains a combo box form field.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a prompt.
-        builder.Write("Select a fruit: ");
-
-        // Insert a combo box named "FruitCombo" with three items.
+        // Write a prompt and insert a combo box with three items.
+        builder.Writeln("Select a fruit:");
         string[] items = { "Apple", "Banana", "Cherry" };
-        FormField comboBox = builder.InsertComboBox("FruitCombo", items, 0); // 0 = Apple selected by default.
+        // InsertComboBox(name, items, selectedIndex) – default selection is the first item (Apple).
+        FormField comboBox = builder.InsertComboBox("FruitCombo", items, 0);
 
-        // Save the document that now contains the form field.
-        doc.Save(originalPath);
+        // Save the document that will be loaded later.
+        string inputPath = "FormFieldsInput.docx";
+        doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the previously saved DOCX file.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(originalPath);
+        // ---------------------------------------------------------------
+        // 2. Load the DOCX file, modify the combo box selection programmatically.
+        // ---------------------------------------------------------------
+        Document loadedDoc = new Document(inputPath);
 
-        // -----------------------------------------------------------------
-        // 3. Locate the combo box and change its selected item.
-        // -----------------------------------------------------------------
+        // Access the collection of form fields.
         FormFieldCollection formFields = loadedDoc.Range.FormFields;
 
-        // Validate that the expected form field exists.
-        FormField fruitField = formFields["FruitCombo"];
-        if (fruitField == null)
-            throw new InvalidOperationException("The combo box 'FruitCombo' was not found in the document.");
+        // Validate that the expected combo box exists.
+        FormField fruitCombo = formFields["FruitCombo"];
+        if (fruitCombo == null)
+            throw new InvalidOperationException("Combo box 'FruitCombo' was not found in the document.");
 
-        // Change the selected index to 1 (Banana). Index is zero‑based.
-        fruitField.DropDownSelectedIndex = 1;
+        // Change the selected index to 2 (third item – "Cherry").
+        fruitCombo.DropDownSelectedIndex = 2;
 
-        // Optional validation to ensure the change was applied.
-        if (fruitField.DropDownSelectedIndex != 1)
+        // Verify that the selection was updated correctly.
+        if (fruitCombo.DropDownSelectedIndex != 2)
             throw new InvalidOperationException("Failed to update the combo box selection.");
 
-        // -----------------------------------------------------------------
-        // 4. Save the modified document.
-        // -----------------------------------------------------------------
-        loadedDoc.Save(modifiedPath);
+        // ---------------------------------------------------------------
+        // 3. Save the modified document.
+        // ---------------------------------------------------------------
+        string outputPath = "FormFieldsOutput.docx";
+        loadedDoc.Save(outputPath);
     }
 }

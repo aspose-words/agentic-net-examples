@@ -6,41 +6,52 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Attempt to insert a text input form field with an empty name.
-        InsertFormField(builder, "", () =>
-            builder.InsertTextInput("", TextFormFieldType.Regular, "", "Placeholder for empty name", 0));
-
-        // Insert a valid text input form field.
-        InsertFormField(builder, "ValidTextField", () =>
-            builder.InsertTextInput("ValidTextField", TextFormFieldType.Regular, "", "Default text", 50));
-
-        // Attempt to insert a checkbox form field with an empty name.
-        InsertFormField(builder, "", () =>
-            builder.InsertCheckBox("", false, 20));
-
-        // Insert a valid checkbox form field.
-        InsertFormField(builder, "ValidCheckBox", () =>
-            builder.InsertCheckBox("ValidCheckBox", true, 20));
-
-        // Save the document.
-        doc.Save("FormFieldsOutput.docx");
-    }
-
-    // Helper method that validates the form field name before insertion.
-    private static void InsertFormField(DocumentBuilder builder, string name, Action insertAction)
-    {
-        if (string.IsNullOrEmpty(name))
+        string emptyName = string.Empty;
+        if (string.IsNullOrEmpty(emptyName))
         {
-            // Log a warning and skip insertion when the name is empty.
-            Console.WriteLine("Warning: Attempted to insert a form field with an empty name. Skipping insertion.");
-            return;
+            Console.WriteLine("Warning: Cannot insert a form field with an empty name.");
+        }
+        else
+        {
+            // This block will not be executed because the name is empty.
+            builder.InsertTextInput(emptyName, TextFormFieldType.Regular, "", "Placeholder", 50);
         }
 
-        // Name is valid; perform the insertion.
-        insertAction();
+        // Insert a valid text input form field.
+        string textFieldName = "UserName";
+        builder.Write("Enter your name: ");
+        builder.InsertTextInput(textFieldName, TextFormFieldType.Regular, "", "John Doe", 50);
+
+        // Attempt to insert a checkbox form field with an empty name.
+        if (string.IsNullOrEmpty(emptyName))
+        {
+            Console.WriteLine("Warning: Cannot insert a checkbox form field with an empty name.");
+        }
+        else
+        {
+            // This block will not be executed because the name is empty.
+            builder.InsertCheckBox(emptyName, false, 20);
+        }
+
+        // Insert a valid checkbox form field.
+        string checkBoxName = "AgreeTerms";
+        builder.Write(" I agree to the terms.");
+        builder.InsertCheckBox(checkBoxName, false, 20);
+
+        // Insert a dropdown (combo box) with a valid name.
+        string comboBoxName = "Country";
+        builder.Write("Select country: ");
+        string[] items = { "USA", "Canada", "Mexico" };
+        builder.InsertComboBox(comboBoxName, items, 0);
+
+        // Save the document to the file system.
+        string outputPath = "FormFields_Output.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to '{outputPath}'.");
     }
 }

@@ -1,29 +1,37 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
 namespace AsposeWordsFormFieldsExample
 {
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
             // Create a new empty document.
             Document doc = new Document();
+
+            // Initialize DocumentBuilder for the document.
             DocumentBuilder builder = new DocumentBuilder(doc);
 
             // Write a prompt before the combo box.
-            builder.Write("Pick a fruit: ");
+            builder.Write("Select a fruit: ");
 
-            // Define the items that will appear in the combo box.
+            // Define the items for the combo box.
             string[] items = { "Apple", "Banana", "Cherry" };
 
-            // Insert a combo box form field with a name, the items, and set the default selected index.
-            // In this example the second item ("Banana") is selected by default (index 1).
-            FormField comboBox = builder.InsertComboBox("FruitCombo", items, 1);
+            // Insert the combo box form field.
+            // Parameters: name, items array, selected index (0‑based).
+            FormField comboBox = builder.InsertComboBox("FruitComboBox", items, 1); // Default selects "Banana"
 
-            // Save the document to the file system.
-            doc.Save("ComboBoxFormField.docx");
+            // Optionally, you can verify the inserted field.
+            Console.WriteLine($"ComboBox Name: {comboBox.Name}");
+            Console.WriteLine($"Default Selected Item: {comboBox.Result}");
+
+            // Save the document to the current directory.
+            string outputPath = Path.Combine(Environment.CurrentDirectory, "ComboBoxFormField.docx");
+            doc.Save(outputPath);
         }
     }
 }

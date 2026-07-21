@@ -6,66 +6,56 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a builder to insert content.
+        // Path for the temporary document.
+        const string filePath = "FormFieldDoc.docx";
+
+        // 1. Create a new document and a builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Paragraph before the form field.
-        builder.Writeln("Paragraph before the form field.");
+        // 2. Write some surrounding text.
+        builder.Writeln("This is the paragraph before the form field.");
 
-        // Insert a text input form field. A bookmark with the same name is created automatically.
-        string fieldName = "MyTextField";
-        builder.Write("Enter value: ");
-        FormField textField = builder.InsertTextInput(fieldName, TextFormFieldType.Regular, "", "Default text", 0);
-        builder.Writeln(" (end of line).");
+        // 3. Insert a text input form field with a name.
+        //    A bookmark with the same name ("MyField") is created automatically.
+        FormField formField = builder.InsertTextInput(
+            "MyField",                     // name of the form field (bookmark)
+            TextFormFieldType.Regular,    // type of the field
+            "",                           // format (none)
+            "Default value",              // initial displayed text
+            0);                           // no length limit
 
-        // Paragraph after the form field.
-        builder.Writeln("Paragraph after the form field.");
+        // 4. Write more text after the field.
+        builder.Writeln("This is the paragraph after the form field.");
 
-        // Save the document.
-        string filePath = "FormFieldBookmark.docx";
+        // 5. Save the document.
         doc.Save(filePath);
 
-        // Load the document to simulate a separate read operation.
+        // 6. Load the document back (demonstrates the load rule).
         Document loadedDoc = new Document(filePath);
 
-        // Validate that the form field exists.
-        FormField field = loadedDoc.Range.FormFields[fieldName];
-        if (field == null)
-            throw new InvalidOperationException($"Form field '{fieldName}' not found.");
+        // 7. Retrieve the form field via its automatically created bookmark.
+        FormField retrievedField = loadedDoc.Range.FormFields["MyField"];
+        if (retrievedField == null)
+        {
+            throw new InvalidOperationException("Form field 'MyField' was not found.");
+        }
 
-        // Locate the automatically created bookmark.
-        Bookmark bookmark = loadedDoc.Range.Bookmarks[fieldName];
-        if (bookmark == null)
-            throw new InvalidOperationException($"Bookmark for form field '{fieldName}' not found.");
+        // 8. Get the paragraph that contains the form field.
+        Paragraph parentParagraph = retrievedField.ParentParagraph;
+        if (parentParagraph == null)
+        {
+            throw new InvalidOperationException("Parent paragraph of the form field is null.");
+        }
 
-        // The bookmark start node resides inside the paragraph that contains the form field.
-        Paragraph containingParagraph = bookmark.BookmarkStart?.ParentNode as Paragraph;
-        if (containingParagraph == null)
-            throw new InvalidOperationException("Unable to locate the paragraph containing the form field.");
+        // 9. Extract the full text of that paragraph (including the field result).
+        string paragraphText = parentParagraph.GetText();
 
-        // Extract the text of the containing paragraph.
-        string paragraphText = containingParagraph.GetText();
+        // 10. Output the extracted paragraph text.
+        Console.WriteLine("Paragraph containing the form field:");
+        Console.WriteLine(paragraphText);
 
-        // Optionally extract surrounding paragraphs.
-        string previousParagraphText = string.Empty;
-        Paragraph previous = containingParagraph.PreviousSibling as Paragraph;
-        if (previous != null)
-            previousParagraphText = previous.GetText();
-
-        string nextParagraphText = string.Empty;
-        Paragraph next = containingParagraph.NextSibling as Paragraph;
-        if (next != null)
-            nextParagraphText = next.GetText();
-
-        // Output the results.
-        Console.WriteLine("Containing paragraph text:");
-        Console.WriteLine(paragraphText.TrimEnd('\r', '\n'));
-
-        Console.WriteLine("\nPrevious paragraph text:");
-        Console.WriteLine(previousParagraphText.TrimEnd('\r', '\n'));
-
-        Console.WriteLine("\nNext paragraph text:");
-        Console.WriteLine(nextParagraphText.TrimEnd('\r', '\n'));
+        // 11. Save the document again (even if unchanged) to satisfy the save rule.
+        loadedDoc.Save(filePath);
     }
 }

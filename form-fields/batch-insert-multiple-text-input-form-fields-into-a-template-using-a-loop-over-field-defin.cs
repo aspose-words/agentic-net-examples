@@ -2,65 +2,68 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-namespace BatchFormFieldsExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        // Definition of a text input form field.
-        private class TextFieldDefinition
-        {
-            public string Name { get; }
-            public string Placeholder { get; }
-            public int MaxLength { get; }
+        // Output file name.
+        const string outputPath = "BatchFormFields.docx";
 
-            public TextFieldDefinition(string name, string placeholder, int maxLength)
-            {
-                Name = name;
-                Placeholder = placeholder;
-                MaxLength = maxLength;
-            }
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Define the form fields to be inserted.
+        var fieldDefinitions = new[]
+        {
+            new { Name = "FirstName", Placeholder = "Enter first name", MaxLength = 30 },
+            new { Name = "LastName",  Placeholder = "Enter last name",  MaxLength = 30 },
+            new { Name = "Email",     Placeholder = "Enter email address", MaxLength = 50 },
+            new { Name = "Phone",     Placeholder = "Enter phone number", MaxLength = 20 }
+        };
+
+        // Introductory text.
+        builder.Writeln("Please fill out the following form:");
+        builder.Writeln();
+
+        // Insert each text input form field using a loop.
+        foreach (var def in fieldDefinitions)
+        {
+            // Write a label for the field.
+            builder.Write($"{def.Name}: ");
+
+            // Insert the text input form field.
+            FormField field = builder.InsertTextInput(
+                def.Name,                     // field name
+                TextFormFieldType.Regular,    // field type
+                "",                           // format (none)
+                def.Placeholder,              // placeholder text shown to the user
+                def.MaxLength);               // maximum length (0 = unlimited)
+
+            // Ensure the field has an explicit default value (empty string).
+            field.TextInputDefault = string.Empty;
+
+            // Move to the next line after the field.
+            builder.Writeln();
         }
 
-        public static void Main()
+        // Validate that at least one form field exists.
+        FormFieldCollection formFields = doc.Range.FormFields;
+        if (formFields.Count == 0)
+            throw new InvalidOperationException("No form fields were inserted into the document.");
+
+        // Verify each defined field exists and optionally set a sample result.
+        foreach (var def in fieldDefinitions)
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            FormField f = formFields[def.Name];
+            if (f == null)
+                throw new InvalidOperationException($"Form field '{def.Name}' was not found in the document.");
 
-            // Define the fields to be inserted.
-            TextFieldDefinition[] fields = new[]
-            {
-                new TextFieldDefinition("FirstName", "Enter first name", 50),
-                new TextFieldDefinition("LastName", "Enter last name", 50),
-                new TextFieldDefinition("Email", "Enter email address", 100),
-                new TextFieldDefinition("Phone", "Enter phone number", 20)
-            };
-
-            // Insert each field into the document.
-            foreach (var fieldDef in fields)
-            {
-                // Write a label for the field.
-                builder.Writeln($"{fieldDef.Name}:");
-
-                // Insert the text input form field.
-                FormField formField = builder.InsertTextInput(
-                    fieldDef.Name,                     // field name
-                    TextFormFieldType.Regular,         // field type
-                    "",                                // format (none)
-                    fieldDef.Placeholder,              // default visible text
-                    fieldDef.MaxLength);               // maximum length
-
-                // Optional: set a default value programmatically.
-                formField.SetTextInputValue(string.Empty);
-            }
-
-            // Validate that all fields were added.
-            FormFieldCollection formFields = doc.Range.FormFields;
-            if (formFields.Count != fields.Length)
-                throw new InvalidOperationException("Not all form fields were inserted.");
-
-            // Save the document.
-            doc.Save("BatchFormFields.docx");
+            // Example: set a sample value for demonstration purposes.
+            f.Result = $"Sample {def.Name}";
         }
+
+        // Save the document to disk.
+        doc.Save(outputPath);
     }
 }
