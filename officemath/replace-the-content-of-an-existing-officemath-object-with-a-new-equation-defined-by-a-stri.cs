@@ -8,65 +8,74 @@ public class ReplaceOfficeMathExample
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "ReplaceOfficeMath.docx");
+        // Output folder.
+        string outputDir = Directory.GetCurrentDirectory();
 
-        // 1. Create a new document and a builder.
+        // -------------------------------------------------
+        // 1. Create a sample document with an initial equation.
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // 2. Insert an initial equation using the EQ field bootstrap workflow.
-        //    This will create a fraction 1/2 as the first OfficeMath object.
-        FieldEQ initialField = InsertFieldEQ(builder, @"\f(1,2)");
-        // Ensure the field is up‑to‑date before conversion.
-        initialField.Update();
+        builder.Writeln("Original equation:");
 
-        OfficeMath oldOfficeMath = initialField.AsOfficeMath()
-            ?? throw new InvalidOperationException("Failed to convert initial EQ field to OfficeMath.");
+        // Insert an EQ field that will be turned into OfficeMath.
+        FieldEQ originalField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        // Write the EQ argument (a simple fraction 1/2) after the field separator.
+        builder.MoveTo(originalField.Separator);
+        builder.Write(@"\f(1,2)");
+        // Update the field so that Aspose.Words parses the argument.
+        originalField.Update();
 
-        // Replace the field with the real OfficeMath node.
-        initialField.Start.ParentNode.InsertBefore(oldOfficeMath, initialField.Start);
-        initialField.Remove();
+        // Convert the EQ field to a real OfficeMath node.
+        OfficeMath originalMath = originalField.AsOfficeMath();
+        if (originalMath == null)
+            throw new InvalidOperationException("Failed to convert the original EQ field to OfficeMath.");
 
-        // 3. Create a new equation that will replace the existing one.
-        //    Example: a cubic root of x using the radical switch.
-        // Move the builder to the paragraph that contains the old equation.
-        builder.MoveTo(oldOfficeMath.ParentParagraph);
-        // Insert a new EQ field after the old equation.
-        FieldEQ newField = InsertFieldEQ(builder, @"\r(3,x)");
-        newField.Update();
+        // Replace the field with the OfficeMath node.
+        originalField.Start.ParentNode.InsertBefore(originalMath, originalField.Start);
+        originalField.Remove();
 
-        OfficeMath newOfficeMath = newField.AsOfficeMath()
-            ?? throw new InvalidOperationException("Failed to convert new EQ field to OfficeMath.");
+        // Save the intermediate document (optional).
+        string originalPath = Path.Combine(outputDir, "Original.docx");
+        doc.Save(originalPath);
 
-        // Insert the new OfficeMath node after the old one and remove the old node.
-        oldOfficeMath.ParentNode.InsertAfter(newOfficeMath, oldOfficeMath);
-        oldOfficeMath.Remove();
+        // -------------------------------------------------
+        // 2. Replace the content of the existing OfficeMath with a new equation.
+        // -------------------------------------------------
+        // Locate the top‑level OfficeMath node that we just created.
+        OfficeMath targetMath = (OfficeMath)doc.GetChild(NodeType.OfficeMath, 0, true);
+        if (targetMath == null)
+            throw new InvalidOperationException("No OfficeMath node found to replace.");
 
-        // Remove the temporary field.
-        newField.Remove();
+        // Create a new EQ field that defines the replacement equation.
+        builder.MoveToDocumentEnd();
+        FieldEQ replacementField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        builder.MoveTo(replacementField.Separator);
+        // Example replacement: cube root of x.
+        builder.Write(@"\r(3,x)");
+        replacementField.Update();
 
-        // 4. Save the resulting document.
-        doc.Save(outputPath);
-    }
+        // Convert the replacement field to OfficeMath.
+        OfficeMath replacementMath = replacementField.AsOfficeMath();
+        if (replacementMath == null)
+            throw new InvalidOperationException("Failed to convert the replacement EQ field to OfficeMath.");
 
-    // Helper method that inserts an EQ field, writes the argument string,
-    // updates the field, and moves the builder back to the field's parent paragraph.
-    private static FieldEQ InsertFieldEQ(DocumentBuilder builder, string args)
-    {
-        // Insert an empty EQ field.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        // Insert the new OfficeMath before the temporary field and remove the field.
+        replacementField.Start.ParentNode.InsertBefore(replacementMath, replacementField.Start);
+        replacementField.Remove();
 
-        // Write the equation arguments into the field separator.
-        builder.MoveTo(field.Separator);
-        builder.Write(args);
+        // Replace the original OfficeMath with the new one.
+        targetMath.ParentNode.InsertBefore(replacementMath, targetMath);
+        targetMath.Remove();
 
-        // Return the builder to the field's parent paragraph.
-        builder.MoveTo(field.Start.ParentNode);
-        builder.InsertParagraph(); // Ensure the next content starts on a new line.
+        // -------------------------------------------------
+        // 3. Save the final document.
+        // -------------------------------------------------
+        string resultPath = Path.Combine(outputDir, "Result.docx");
+        doc.Save(resultPath);
 
-        return field;
+        Console.WriteLine($"Document created: {resultPath}");
+        Console.WriteLine("The original equation has been replaced with the new one.");
     }
 }

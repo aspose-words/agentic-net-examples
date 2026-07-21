@@ -1,89 +1,63 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 
 public class OfficeMathBatchInsert
 {
-    // Predefined EQ field argument for a simple fraction 1/2.
-    private const string EquationArgs = @"\f(1,2)";
-
     public static void Main()
     {
-        // Prepare input and output folders.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Input");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
-
-        // Create sample source documents.
-        CreateSampleDocument(Path.Combine(inputFolder, "Doc1.docx"));
-        CreateSampleDocument(Path.Combine(inputFolder, "Doc2.docx"));
-
-        // Process each document in the input folder.
-        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
-        {
-            Document doc = new Document(filePath);
-
-            // Insert the predefined equation into every paragraph.
-            NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
-            foreach (Paragraph para in paragraphs)
-            {
-                InsertEquationIntoParagraph(doc, para);
-            }
-
-            // Save the processed document to the output folder.
-            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
-            doc.Save(outputPath);
-
-            // Simple validation that the file was created.
-            if (!File.Exists(outputPath))
-                throw new InvalidOperationException($"Failed to create output file: {outputPath}");
-        }
-    }
-
-    // Creates a simple document with three paragraphs for demonstration.
-    private static void CreateSampleDocument(string filePath)
-    {
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        for (int i = 1; i <= 3; i++)
+        // Add sample paragraphs to the document.
+        builder.Writeln("First paragraph.");
+        builder.Writeln("Second paragraph.");
+        builder.Writeln("Third paragraph.");
+
+        // Prepare a list of all paragraphs to avoid collection modification issues.
+        var paragraphs = doc.GetChildNodes(NodeType.Paragraph, true)
+                            .Cast<Paragraph>()
+                            .ToList();
+
+        // Predefined EQ field argument (simple fraction 1/2).
+        const string equationArgs = @"\f(1,2)";
+
+        foreach (var paragraph in paragraphs)
         {
-            builder.Writeln($"Sample paragraph {i}.");
+            // Move the builder cursor to the start of the current paragraph.
+            builder.MoveTo(paragraph);
+
+            // Insert an EQ field (the field will be updated immediately).
+            Field field = builder.InsertField(FieldType.FieldEquation, true);
+            FieldEQ fieldEQ = field as FieldEQ;
+            if (fieldEQ == null)
+                continue; // Safety check.
+
+            // Write the equation arguments into the field separator.
+            builder.MoveTo(fieldEQ.Separator);
+            builder.Write(equationArgs);
+
+            // Convert the EQ field to a real OfficeMath object.
+            OfficeMath officeMath = fieldEQ.AsOfficeMath();
+            if (officeMath != null)
+            {
+                // Insert the OfficeMath node before the field start.
+                fieldEQ.Start.ParentNode.InsertBefore(officeMath, fieldEQ.Start);
+                // Remove the original EQ field from the document.
+                fieldEQ.Remove();
+            }
         }
 
-        doc.Save(filePath);
-    }
+        // Save the resulting document.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BatchOfficeMath.docx");
+        doc.Save(outputPath);
 
-    // Inserts the predefined OfficeMath equation into the given paragraph.
-    private static void InsertEquationIntoParagraph(Document doc, Paragraph para)
-    {
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Position the builder at the end of the paragraph.
-        builder.MoveTo(para);
-        builder.Write(" "); // Optional space before the equation.
-
-        // Insert an EQ field that will be converted to OfficeMath.
-        Field field = builder.InsertField(FieldType.FieldEquation, true);
-        FieldEQ fieldEQ = (FieldEQ)field;
-
-        // Write the equation arguments into the field separator.
-        builder.MoveTo(fieldEQ.Separator);
-        builder.Write(EquationArgs);
-
-        // Return the builder to the paragraph node.
-        builder.MoveTo(fieldEQ.Start.ParentNode);
-
-        // Convert the EQ field to a real OfficeMath object.
-        OfficeMath officeMath = fieldEQ.AsOfficeMath();
-        if (officeMath != null)
-        {
-            // Insert the OfficeMath node before the field start and remove the field.
-            fieldEQ.Start.ParentNode.InsertBefore(officeMath, fieldEQ.Start);
-            fieldEQ.Remove();
-        }
+        // Simple validation to ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The output document was not saved correctly.");
     }
 }
