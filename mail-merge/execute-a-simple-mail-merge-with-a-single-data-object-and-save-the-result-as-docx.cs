@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.MailMerging;
 
 public class Program
 {
@@ -19,15 +18,17 @@ public class Program
         builder.Writeln(":");
         builder.InsertField("MERGEFIELD Message", "<Message>");
 
-        // Define field names and corresponding values for a single record.
+        // Prepare data for a single record.
         string[] fieldNames = { "FirstName", "LastName", "Message" };
         object[] fieldValues = { "John", "Doe", "Hello! This message was created with Aspose.Words mail merge." };
 
         // Execute the mail merge.
         doc.MailMerge.Execute(fieldNames, fieldValues);
 
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedResult.docx");
+
         // Save the merged document as DOCX.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SimpleMailMerge.docx");
-        doc.Save(outputPath);
+        doc.Save(outputPath, SaveFormat.Docx);
     }
 }

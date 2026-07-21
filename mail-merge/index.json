@@ -9,37 +9,33 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
-      "System.Data",
-      "Aspose.Words.Fields",
       "Aspose.Words.MailMerging",
+      "System.Data",
+      "Aspose.Words.BuildingBlocks",
       "Aspose.Words.Tables",
+      "Aspose.Words.Fields",
       "System.Collections.Generic",
+      "System.Text.RegularExpressions",
       "System.Globalization",
-      "System.Threading",
-      "Aspose.Words.Reporting",
       "Aspose.Words.Saving",
-      "System.Collections",
-      "Aspose.Words.Drawing"
+      "System.Collections"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
+      "Directory",
       "Path",
       "Font",
-      "DataTable",
-      "Directory",
       "File",
-      "Field",
-      "Range",
       "SaveFormat",
-      "NodeType",
-      "FieldType",
+      "Field",
+      "MemoryStream",
       "StyleIdentifier",
       "Table"
     ]
@@ -48,15 +44,11 @@
     "total_examples": 30,
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
+      "simple-mail-merge": 17,
+      "region-mail-merge": 7,
       "image-mail-merge": 4,
       "input-bootstrap": 1,
-      "region-mail-merge": 7,
-      "simple-mail-merge": 17,
       "table-mail-merge": 1
-    },
-    "winner_counts": {
-      "llm": 1,
-      "mcp": 29
     }
   },
   "rules_summary": {

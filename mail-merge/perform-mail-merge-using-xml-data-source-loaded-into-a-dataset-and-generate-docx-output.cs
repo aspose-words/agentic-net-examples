@@ -2,57 +2,57 @@ using System;
 using System.Data;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.MailMerging;
 
-public class MailMergeFromXml
+public class Program
 {
     public static void Main()
     {
-        // Create a simple mail merge template with a repeatable region named "Employee".
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Path for the XML data source and the output document.
+        string xmlPath = "employees.xml";
+        string outputPath = "MergedDocument.docx";
 
-        // Begin the region.
-        builder.InsertField(" MERGEFIELD TableStart:Employee");
-        builder.Writeln("Name: ");
-        builder.InsertField(" MERGEFIELD Name");
-        builder.Writeln();
-        builder.Writeln("Address: ");
-        builder.InsertField(" MERGEFIELD Address");
-        builder.Writeln();
-        // End the region.
-        builder.InsertField(" MERGEFIELD TableEnd:Employee");
-
-        // XML data source containing employee records.
-        string xmlData = @"
-<Employees>
+        // Create a simple XML file that represents a list of employees.
+        // The XML structure will be read into a DataSet, which will create a DataTable named "Employee".
+        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Root>
     <Employee>
-        <Name>John Doe</Name>
-        <Address>123 Main St</Address>
+        <FirstName>John</FirstName>
+        <LastName>Doe</LastName>
+        <Address>123 Main St.</Address>
     </Employee>
     <Employee>
-        <Name>Jane Smith</Name>
-        <Address>456 Oak Ave</Address>
+        <FirstName>Jane</FirstName>
+        <LastName>Smith</LastName>
+        <Address>456 Oak Ave.</Address>
     </Employee>
-</Employees>";
+</Root>";
+        File.WriteAllText(xmlPath, xmlContent);
 
-        // Load the XML into a DataSet.
+        // Load the XML data into a DataSet.
         DataSet dataSet = new DataSet();
-        using (StringReader sr = new StringReader(xmlData))
-        {
-            dataSet.ReadXml(sr);
-        }
+        dataSet.ReadXml(xmlPath);
 
-        // Ensure the table name matches the mail merge region name.
-        if (dataSet.Tables.Count > 0)
-        {
-            dataSet.Tables[0].TableName = "Employee";
-        }
+        // Create a mail‑merge template document programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Perform mail merge using the DataSet with regions.
-        template.MailMerge.ExecuteWithRegions(dataSet);
+        // Insert a mail‑merge region that will repeat for each row in the "Employee" table.
+        // The region name must match the DataTable name ("Employee").
+        builder.InsertField("MERGEFIELD TableStart:Employee");
+        builder.Write("First Name: ");
+        builder.InsertField("MERGEFIELD FirstName");
+        builder.Write("\tLast Name: ");
+        builder.InsertField("MERGEFIELD LastName");
+        builder.Write("\tAddress: ");
+        builder.InsertField("MERGEFIELD Address");
+        builder.InsertParagraph();
+        builder.InsertField("MERGEFIELD TableEnd:Employee");
 
-        // Save the merged document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedOutput.docx");
-        template.Save(outputPath);
+        // Perform the mail merge using the DataSet with regions.
+        doc.MailMerge.ExecuteWithRegions(dataSet);
+
+        // Save the merged document to a DOCX file.
+        doc.Save(outputPath);
     }
 }

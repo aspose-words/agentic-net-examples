@@ -1,24 +1,23 @@
 using System;
 using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
 namespace MailMergeMissingFieldDemo
 {
-    // Custom callback to handle missing merge fields.
+    // Implements custom handling for missing merge fields.
     public class MissingFieldHandler : IFieldMergingCallback
     {
-        // This method is called for each merge field encountered during the mail merge.
+        // Called for each merge field encountered during mail merge.
         void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            // If the data source does not contain a value for this field, FieldValue will be null.
-            if (args.FieldValue == null)
+            // If the data source does not contain a value for this field,
+            // Aspose.Words supplies a null value. Replace it with a clear placeholder.
+            if (args.FieldValue == null || args.FieldValue == DBNull.Value)
             {
-                // Log the missing field name.
-                Console.WriteLine($"Missing merge field detected: {args.DocumentFieldName}");
-
-                // Provide a default value so the merge can continue without errors.
-                args.Text = "N/A";
+                // You could also log the missing field, throw an exception, etc.
+                args.Text = $"[Missing: {args.DocumentFieldName}]";
             }
         }
 
@@ -30,26 +29,36 @@ namespace MailMergeMissingFieldDemo
     {
         public static void Main()
         {
-            // Create a new blank document.
+            // Create a simple document with three merge fields.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a MERGEFIELD that will be missing from the data source.
+            builder.Write("First Name: ");
             builder.InsertField("MERGEFIELD FirstName");
+            builder.Writeln();
 
-            // Prepare a data source that does NOT contain the "FirstName" column.
-            DataTable table = new DataTable("Employees");
-            table.Columns.Add("LastName");
-            table.Rows.Add("Doe");
+            builder.Write("Last Name: ");
+            builder.InsertField("MERGEFIELD LastName");
+            builder.Writeln();
 
-            // Assign the custom callback to handle missing fields.
+            builder.Write("Address: ");
+            builder.InsertField("MERGEFIELD Address");
+            builder.Writeln();
+
+            // Prepare a data source that intentionally lacks "LastName" and "Address".
+            DataTable table = new DataTable("Customers");
+            table.Columns.Add("FirstName");
+            table.Rows.Add("John");
+
+            // Attach the custom missing‑field handler.
             doc.MailMerge.FieldMergingCallback = new MissingFieldHandler();
 
-            // Perform the mail merge. The callback will supply a default value for "FirstName".
+            // Perform the mail merge.
             doc.MailMerge.Execute(table);
 
-            // Save the resulting document.
-            doc.Save("Merged.docx");
+            // Save the result to the current directory.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedResult.docx");
+            doc.Save(outputPath);
         }
     }
 }

@@ -11,44 +11,44 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert MERGEFIELDs for first and last name.
-        builder.InsertField(" MERGEFIELD FirstName ");
-        builder.Write(" ");
-        builder.InsertField(" MERGEFIELD LastName ");
-        builder.Writeln();
+        // Insert a MERGEFIELD that will receive a name.
+        builder.InsertField(" MERGEFIELD FullName ");
 
-        // Prepare a data table with sample names.
-        DataTable table = new DataTable("Names");
-        table.Columns.Add("FirstName");
-        table.Columns.Add("LastName");
-        table.Rows.Add("John", "Doe");
-        table.Rows.Add("Jane", "Smith");
+        // Prepare a data source with a single column "FullName".
+        DataTable table = new DataTable("Employees");
+        table.Columns.Add("FullName");
+        table.Rows.Add("John Doe");
+        table.Rows.Add("Jane Smith");
 
-        // Set a custom callback that writes the field value in bold.
-        doc.MailMerge.FieldMergingCallback = new BoldFieldMergingCallback();
+        // Assign a custom callback that will apply bold formatting to the inserted name.
+        doc.MailMerge.FieldMergingCallback = new BoldNameCallback();
 
         // Execute the mail merge.
         doc.MailMerge.Execute(table);
 
         // Save the resulting document.
-        doc.Save("MergedBoldNames.docx");
+        doc.Save("Result.docx");
     }
 
-    // Custom callback that inserts the merge field value with bold formatting.
-    private class BoldFieldMergingCallback : IFieldMergingCallback
+    // Callback that formats the merged text in bold.
+    private class BoldNameCallback : IFieldMergingCallback
     {
         void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            // Move the builder to the location of the current merge field.
-            DocumentBuilder builder = new DocumentBuilder(args.Document);
-            builder.MoveToMergeField(args.DocumentFieldName);
+            // Apply bold formatting only to the "FullName" field.
+            if (args.DocumentFieldName.Equals("FullName", StringComparison.OrdinalIgnoreCase))
+            {
+                // Move the builder to the position of the current merge field.
+                DocumentBuilder builder = new DocumentBuilder(args.Document);
+                builder.MoveToMergeField(args.DocumentFieldName);
 
-            // Apply bold formatting and write the field value.
-            builder.Font.Bold = true;
-            builder.Write(args.FieldValue?.ToString() ?? string.Empty);
+                // Set bold formatting and write the field value.
+                builder.Font.Bold = true;
+                builder.Write(args.FieldValue?.ToString() ?? string.Empty);
 
-            // Suppress the default insertion of the field value.
-            args.Text = string.Empty;
+                // Prevent the default insertion of the field value.
+                args.Text = string.Empty;
+            }
         }
 
         void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)

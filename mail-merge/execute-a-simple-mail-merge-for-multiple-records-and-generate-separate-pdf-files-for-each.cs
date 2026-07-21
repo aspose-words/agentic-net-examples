@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -7,32 +8,19 @@ public class Program
 {
     public static void Main()
     {
-        // Create a mail‑merge template document in memory.
-        Document template = CreateTemplate();
+        // Prepare the data source – a DataTable with several records.
+        DataTable table = new DataTable("Recipients");
+        table.Columns.Add("FirstName");
+        table.Columns.Add("LastName");
+        table.Columns.Add("Message");
 
-        // Build a data source with several records.
-        DataTable data = BuildDataTable();
+        table.Rows.Add(new object[] { "John", "Doe", "Hello John! This is your personalized message." });
+        table.Rows.Add(new object[] { "Jane", "Smith", "Hi Jane, welcome to our service." });
+        table.Rows.Add(new object[] { "Bob", "Johnson", "Dear Bob, thank you for your purchase." });
 
-        // Perform a separate mail merge for each record and save each result as a PDF.
-        for (int i = 0; i < data.Rows.Count; i++)
-        {
-            // Clone the template so each record starts from the original layout.
-            Document mergedDoc = (Document)template.Clone();
-
-            // Merge the current row into the document.
-            mergedDoc.MailMerge.Execute(data.Rows[i]);
-
-            // Save the merged document as a PDF file.
-            string fileName = $"MergedDocument_{i + 1}.pdf";
-            mergedDoc.Save(fileName, SaveFormat.Pdf);
-        }
-    }
-
-    // Creates a simple document containing three MERGEFIELDs.
-    private static Document CreateTemplate()
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Build the mail‑merge template document.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
         builder.Write("Dear ");
         builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
@@ -41,21 +29,25 @@ public class Program
         builder.Writeln(":");
         builder.InsertField("MERGEFIELD Message", "<Message>");
 
-        return doc;
-    }
+        // Ensure the output folder exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "MailMergeOutputs");
+        Directory.CreateDirectory(outputDir);
 
-    // Constructs a DataTable with sample data for the mail merge.
-    private static DataTable BuildDataTable()
-    {
-        DataTable table = new DataTable("Recipients");
-        table.Columns.Add("FirstName");
-        table.Columns.Add("LastName");
-        table.Columns.Add("Message");
+        // For each record create a separate PDF file.
+        int index = 1;
+        foreach (DataRow row in table.Rows)
+        {
+            // Clone the template so each document starts from the same base.
+            Document doc = (Document)template.Clone();
 
-        table.Rows.Add("John", "Doe", "Hello! This is the first message.");
-        table.Rows.Add("Jane", "Smith", "Greetings from the second record.");
-        table.Rows.Add("Bob", "Johnson", "This is the third example message.");
+            // Perform mail merge for the current row only.
+            doc.MailMerge.Execute(row);
 
-        return table;
+            // Save the result as a PDF file.
+            string outPath = Path.Combine(outputDir, $"MergedDocument_{index}.pdf");
+            doc.Save(outPath, SaveFormat.Pdf);
+
+            index++;
+        }
     }
 }

@@ -1,10 +1,9 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
-using Aspose.Words.Fields;   // Needed for FieldMergeField
+using Aspose.Words.Fields;
 
-public class MailMergeRegionInfoExample
+public class Program
 {
     public static void Main()
     {
@@ -12,44 +11,40 @@ public class MailMergeRegionInfoExample
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a mail merge region named "SampleRegion".
-        // The region is defined by TableStart and TableEnd merge fields.
-        builder.InsertField(" MERGEFIELD TableStart:SampleRegion");
+        // Insert a mail‑merge region named "MyRegion" with two data fields.
+        builder.InsertField(" MERGEFIELD TableStart:MyRegion");
         builder.InsertField(" MERGEFIELD FirstName");
         builder.Write(" ");
         builder.InsertField(" MERGEFIELD LastName");
-        builder.InsertField(" MERGEFIELD TableEnd:SampleRegion");
+        builder.InsertField(" MERGEFIELD TableEnd:MyRegion");
 
-        // Save the document (optional, just to see the result).
-        doc.Save("MailMergeRegionInfoExample.docx");
-
-        // Retrieve the full hierarchy of mail merge regions.
+        // Retrieve the full hierarchy of mail‑merge regions in the document.
         MailMergeRegionInfo hierarchy = doc.MailMerge.GetRegionsHierarchy();
 
-        // The top‑level regions are stored in the Regions collection.
-        IList<MailMergeRegionInfo> topRegions = hierarchy.Regions;
-
-        // Iterate through each region and output its start/end field information.
-        foreach (MailMergeRegionInfo region in topRegions)
+        // Iterate over top‑level regions (there is only one in this example).
+        foreach (MailMergeRegionInfo region in hierarchy.Regions)
         {
-            // The start and end fields of the region.
+            Console.WriteLine($"Region name: {region.Name}");
+            Console.WriteLine($"Nesting level: {region.Level}");
+
+            // The StartField and EndField mark the boundaries of the region.
             FieldMergeField startField = region.StartField;
             FieldMergeField endField = region.EndField;
 
-            // Output the region name.
-            Console.WriteLine($"Region Name: {region.Name}");
+            Console.WriteLine($"Start field name: {startField?.FieldName}");
+            Console.WriteLine($"End field name: {endField?.FieldName}");
 
-            // Output the field names that mark the start and end of the region.
-            Console.WriteLine($"  Start Field: {startField.FieldName}");
-            Console.WriteLine($"  End Field:   {endField.FieldName}");
+            // Simple validation: the field names must contain the region name with the correct prefix.
+            bool startValid = startField?.FieldName == $"TableStart:{region.Name}";
+            bool endValid = endField?.FieldName == $"TableEnd:{region.Name}";
 
-            // For validation we can also output the position of the start and end fields
-            // as the index of their first node within the document's node collection.
-            NodeCollection allNodes = doc.GetChildNodes(NodeType.Any, true);
-            int startIndex = allNodes.IndexOf(startField.Start);
-            int endIndex = allNodes.IndexOf(endField.Start);
-            Console.WriteLine($"  Start Position (node index): {startIndex}");
-            Console.WriteLine($"  End Position   (node index): {endIndex}");
+            Console.WriteLine($"Start tag valid: {startValid}");
+            Console.WriteLine($"End tag valid: {endValid}");
         }
+
+        // Save the document to disk (optional, demonstrates that the document is valid).
+        string outputPath = "MailMergeRegionInfoExample.docx";
+        doc.Save(outputPath);
+        Console.WriteLine($"Document saved to {outputPath}");
     }
 }

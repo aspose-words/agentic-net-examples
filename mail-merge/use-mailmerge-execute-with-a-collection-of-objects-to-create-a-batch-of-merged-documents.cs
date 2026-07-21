@@ -1,12 +1,41 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
 namespace MailMergeBatchExample
 {
-    // Simple data entity representing a customer.
+    public class Program
+    {
+        public static void Main()
+        {
+            // Create a blank document and add merge fields.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.InsertField("MERGEFIELD FullName");
+            builder.InsertParagraph();
+            builder.InsertField("MERGEFIELD Address");
+            builder.InsertParagraph();
+
+            // Prepare a collection of data objects.
+            List<Customer> customers = new List<Customer>
+            {
+                new Customer("Thomas Hardy", "120 Hanover Sq., London"),
+                new Customer("Paolo Accorti", "Via Monte Bianco 34, Torino")
+            };
+
+            // Wrap the collection in a custom mail merge data source.
+            CustomerMailMergeDataSource dataSource = new CustomerMailMergeDataSource(customers);
+
+            // Execute the mail merge for all records in the data source.
+            doc.MailMerge.Execute(dataSource);
+
+            // Save the merged document.
+            doc.Save("MergedDocument.docx");
+        }
+    }
+
+    // Simple data entity class.
     public class Customer
     {
         public Customer(string fullName, string address)
@@ -19,30 +48,21 @@ namespace MailMergeBatchExample
         public string Address { get; set; }
     }
 
-    // Custom mail merge data source that wraps a collection of Customer objects.
+    // Custom mail merge data source that implements IMailMergeDataSource.
     public class CustomerMailMergeDataSource : IMailMergeDataSource
     {
         private readonly List<Customer> _customers;
-        private int _recordIndex = -1; // Position before the first record.
+        private int _recordIndex = -1;
 
         public CustomerMailMergeDataSource(List<Customer> customers)
         {
             _customers = customers;
         }
 
-        // Name of the data source (used only for mail‑merge regions).
+        // Name of the data source (used for mail merge regions).
         public string TableName => "Customer";
 
-        // Moves to the next record. Returns false when the end of the collection is reached.
-        public bool MoveNext()
-        {
-            if (!IsEof)
-                _recordIndex++;
-
-            return !IsEof;
-        }
-
-        // Retrieves the value for a given field name.
+        // Returns the value for a given field name.
         public bool GetValue(string fieldName, out object fieldValue)
         {
             switch (fieldName)
@@ -59,43 +79,18 @@ namespace MailMergeBatchExample
             }
         }
 
-        // No child data sources are used in this simple example.
-        public IMailMergeDataSource GetChildDataSource(string tableName) => null;
-
-        private bool IsEof => _recordIndex >= _customers.Count;
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Moves to the next record in the collection.
+        public bool MoveNext()
         {
-            // 1. Build a mail‑merge source document with the required MERGEFIELDs.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            builder.InsertField("MERGEFIELD FullName");
-            builder.InsertParagraph();
-            builder.InsertField("MERGEFIELD Address");
-            builder.InsertParagraph();
-
-            // 2. Prepare a collection of Customer objects that will be merged.
-            List<Customer> customers = new List<Customer>
+            if (_recordIndex < _customers.Count - 1)
             {
-                new Customer("Thomas Hardy", "120 Hanover Sq., London"),
-                new Customer("Paolo Accorti", "Via Monte Bianco 34, Torino"),
-                new Customer("John Doe", "123 Main St., Anytown")
-            };
-
-            // 3. Wrap the collection in the custom data source.
-            CustomerMailMergeDataSource dataSource = new CustomerMailMergeDataSource(customers);
-
-            // 4. Execute the mail merge. This will generate a single document containing
-            //    the merged content for each Customer in the collection.
-            doc.MailMerge.Execute(dataSource);
-
-            // 5. Save the merged document.
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MergedCustomers.docx");
-            doc.Save(outputPath);
+                _recordIndex++;
+                return true;
+            }
+            return false;
         }
+
+        // No child data sources are used in this example.
+        public IMailMergeDataSource GetChildDataSource(string tableName) => null;
     }
 }

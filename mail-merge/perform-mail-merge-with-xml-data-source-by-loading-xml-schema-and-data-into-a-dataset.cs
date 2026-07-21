@@ -9,19 +9,19 @@ namespace MailMergeXmlExample
     {
         public static void Main()
         {
-            // Paths for temporary files.
-            string xmlPath = "people.xml";
-            string xsdPath = "people.xsd";
-            string outputPath = "Merged.docx";
+            // Define file names for the XML schema and data.
+            const string schemaFile = "people.xsd";
+            const string dataFile = "people.xml";
+            const string outputFile = "MailMergeResult.docx";
 
-            // Create a simple XML schema (XSD) describing a list of persons.
-            File.WriteAllText(xsdPath,
+            // Write a simple XML Schema (XSD) that defines the structure of the XML data.
+            File.WriteAllText(schemaFile,
 @"<?xml version=""1.0"" encoding=""utf-8""?>
 <xs:schema xmlns:xs=""http://www.w3.org/2001/XMLSchema"">
-  <xs:element name=""Persons"">
+  <xs:element name=""persons"">
     <xs:complexType>
       <xs:sequence>
-        <xs:element name=""Person"" maxOccurs=""unbounded"">
+        <xs:element name=""person"" maxOccurs=""unbounded"">
           <xs:complexType>
             <xs:sequence>
               <xs:element name=""Name"" type=""xs:string"" />
@@ -34,40 +34,50 @@ namespace MailMergeXmlExample
   </xs:element>
 </xs:schema>");
 
-            // Create a matching XML data file.
-            File.WriteAllText(xmlPath,
+            // Write sample XML data that conforms to the above schema.
+            File.WriteAllText(dataFile,
 @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Persons>
-  <Person>
+<persons>
+  <person>
     <Name>John Doe</Name>
     <Age>30</Age>
-  </Person>
-  <Person>
+  </person>
+  <person>
     <Name>Jane Smith</Name>
     <Age>25</Age>
-  </Person>
-</Persons>");
+  </person>
+  <person>
+    <Name>Bob Johnson</Name>
+    <Age>40</Age>
+  </person>
+</persons>");
 
             // Load the XML schema and data into a DataSet.
             DataSet dataSet = new DataSet();
-            dataSet.ReadXmlSchema(xsdPath);   // Load schema first.
-            dataSet.ReadXml(xmlPath);         // Then load data.
+            dataSet.ReadXmlSchema(schemaFile);
+            dataSet.ReadXml(dataFile);
 
-            // Build a simple mail‑merge template document.
+            // The DataTable that contains the rows we want to merge.
+            // The table name is taken from the XSD element name ("person").
+            DataTable peopleTable = dataSet.Tables["person"];
+
+            // Create a simple Word document with merge fields that match the column names.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert merge fields that correspond to the column names in the DataSet.
+            // Insert a line that will be repeated for each record.
             builder.InsertField("MERGEFIELD Name", "<Name>");
-            builder.Write(" - ");
+            builder.Write(" is ");
             builder.InsertField("MERGEFIELD Age", "<Age>");
-            builder.Writeln();
+            builder.Writeln(" years old.");
+            // Add a page break after each record for clarity (optional).
+            builder.InsertBreak(BreakType.PageBreak);
 
-            // Perform the mail merge using the first (and only) table from the DataSet.
-            doc.MailMerge.Execute(dataSet.Tables[0]);
+            // Perform the mail merge using the DataTable.
+            doc.MailMerge.Execute(peopleTable);
 
             // Save the merged document.
-            doc.Save(outputPath);
+            doc.Save(outputFile);
         }
     }
 }

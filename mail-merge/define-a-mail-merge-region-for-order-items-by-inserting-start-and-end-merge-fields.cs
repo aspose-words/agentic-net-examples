@@ -3,47 +3,42 @@ using System.Data;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
 
-namespace MailMergeRegionExample
+public class Program
 {
-    class Program
+    public static void Main()
     {
-        static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a mail merge region named "OrderItems".
-            // The region is marked by a TableStart field and a TableEnd field.
-            builder.InsertField(" MERGEFIELD TableStart:OrderItems");
-            builder.Writeln(); // Ensure the start field is on its own line.
+        // Add a title.
+        builder.Writeln("Order Summary:");
 
-            // Inside the region we place the fields that will be filled from the data source.
-            builder.Write("Item: ");
-            builder.InsertField(" MERGEFIELD ItemName");
-            builder.Write("\tQuantity: ");
-            builder.InsertField(" MERGEFIELD Quantity");
-            builder.Writeln(); // End of a row.
+        // Insert the start of the mail merge region named "OrderItems".
+        builder.InsertField(" MERGEFIELD TableStart:OrderItems");
 
-            // Insert the end field for the region.
-            builder.InsertField(" MERGEFIELD TableEnd:OrderItems");
-            builder.Writeln(); // Optional blank line after the region.
+        // Inside the region insert fields for each column.
+        builder.Write("Item: ");
+        builder.InsertField(" MERGEFIELD Item");
+        builder.Write(", Quantity: ");
+        builder.InsertField(" MERGEFIELD Quantity");
+        builder.InsertParagraph();
 
-            // Build a DataTable that matches the region name and contains the data.
-            DataTable orderItems = new DataTable("OrderItems");
-            orderItems.Columns.Add("ItemName", typeof(string));
-            orderItems.Columns.Add("Quantity", typeof(int));
+        // Insert the end of the region.
+        builder.InsertField(" MERGEFIELD TableEnd:OrderItems");
 
-            // Add some sample rows.
-            orderItems.Rows.Add("Rugby Ball", 2);
-            orderItems.Rows.Add("Team Jersey", 5);
-            orderItems.Rows.Add("Water Bottle", 3);
+        // Prepare a DataTable that matches the region name and column names.
+        DataTable orderTable = new DataTable("OrderItems");
+        orderTable.Columns.Add("Item");
+        orderTable.Columns.Add("Quantity");
+        orderTable.Rows.Add(new object[] { "Apple", "10" });
+        orderTable.Rows.Add(new object[] { "Banana", "5" });
+        orderTable.Rows.Add(new object[] { "Orange", "8" });
 
-            // Execute the mail merge with regions using the DataTable.
-            doc.MailMerge.ExecuteWithRegions(orderItems);
+        // Execute the mail merge with regions using the DataTable.
+        doc.MailMerge.ExecuteWithRegions(orderTable);
 
-            // Save the resulting document to disk.
-            doc.Save("OrderItemsMailMerge.docx");
-        }
+        // Save the resulting document.
+        doc.Save("OrderReport.docx");
     }
 }

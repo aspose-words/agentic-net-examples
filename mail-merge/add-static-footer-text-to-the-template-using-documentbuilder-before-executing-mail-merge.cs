@@ -3,9 +3,9 @@ using Aspose.Words;
 
 namespace MailMergeFooterExample
 {
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
             // Create a new blank document.
             Document doc = new Document();
@@ -16,24 +16,20 @@ namespace MailMergeFooterExample
             builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
             builder.Write(" ");
             builder.InsertField("MERGEFIELD LastName", "<LastName>");
-            builder.Writeln(":");
-            builder.InsertField("MERGEFIELD Message", "<Message>");
+            builder.Writeln(".");
 
-            // Add a static footer that will appear on every page.
+            // Add static text to the footer of the first section.
             builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-            builder.Write("Confidential – Company Footer Text");
+            builder.Write("Confidential - Company Footer");
 
-            // Return the builder to the main story.
-            builder.MoveToDocumentEnd();
+            // Data for the mail merge.
+            string[] fieldNames = { "FirstName", "LastName" };
+            object[] fieldValues = { "John", "Doe" };
 
-            // Prepare data for the mail merge.
-            string[] fieldNames = { "FirstName", "LastName", "Message" };
-            object[] fieldValues = { "John", "Doe", "Hello! This is a merged message." };
-
-            // Execute the mail merge.
+            // Perform the mail merge.
             doc.MailMerge.Execute(fieldNames, fieldValues);
 
-            // Save the resulting document.
+            // Save the merged document.
             doc.Save("MergedDocument.docx");
         }
     }

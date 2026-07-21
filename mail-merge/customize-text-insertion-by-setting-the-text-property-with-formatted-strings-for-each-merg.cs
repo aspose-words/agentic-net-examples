@@ -2,27 +2,22 @@ using System;
 using System.Data;
 using Aspose.Words;
 using Aspose.Words.MailMerging;
-using Aspose.Words.Fields;
 
 namespace MailMergeCustomText
 {
     // Custom callback that formats the text inserted for each merge field.
     public class CustomFieldMergingCallback : IFieldMergingCallback
     {
-        // Called for each simple merge field.
+        // This method is called for every MERGEFIELD during the mail merge.
         void IFieldMergingCallback.FieldMerging(FieldMergingArgs args)
         {
-            // Example formatting: field name in brackets followed by the value.
-            // If the field value is null, insert an empty string.
-            string value = args.FieldValue?.ToString() ?? string.Empty;
-            args.Text = $"[{args.FieldName}] {value}";
+            // Example formatting: "Value (Record #X)" where X is zero‑based record index.
+            string formatted = $"{args.FieldValue} (Record #{args.RecordIndex + 1})";
+            args.Text = formatted;
         }
 
-        // Required by the interface, but not used in this example.
-        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args)
-        {
-            // No image handling needed.
-        }
+        // Image merging is not required for this example.
+        void IFieldMergingCallback.ImageFieldMerging(ImageFieldMergingArgs args) { }
     }
 
     public class Program
@@ -33,36 +28,28 @@ namespace MailMergeCustomText
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert merge fields that will be populated from the data source.
-            builder.InsertField(FieldType.FieldMergeField, true).AsFieldMergeField().FieldName = "FirstName";
+            // Insert two merge fields.
+            builder.Write("Dear ");
+            builder.InsertField("MERGEFIELD FirstName", "<FirstName>");
             builder.Write(" ");
-            builder.InsertField(FieldType.FieldMergeField, true).AsFieldMergeField().FieldName = "LastName";
-            builder.Writeln();
+            builder.InsertField("MERGEFIELD LastName", "<LastName>");
+            builder.Writeln(".");
 
-            // Set up the custom field merging callback.
+            // Assign the custom field merging callback.
             doc.MailMerge.FieldMergingCallback = new CustomFieldMergingCallback();
 
-            // Prepare a simple data source.
-            DataTable table = new DataTable("Employees");
+            // Prepare a data source.
+            DataTable table = new DataTable("People");
             table.Columns.Add("FirstName");
             table.Columns.Add("LastName");
             table.Rows.Add("John", "Doe");
             table.Rows.Add("Jane", "Smith");
 
-            // Execute the mail merge using the data table.
+            // Execute the mail merge using the DataTable.
             doc.MailMerge.Execute(table);
 
-            // Save the merged document.
-            doc.Save("MergedDocument.docx");
-        }
-    }
-
-    // Extension method to simplify casting to FieldMergeField.
-    public static class FieldExtensions
-    {
-        public static FieldMergeField AsFieldMergeField(this Field field)
-        {
-            return (FieldMergeField)field;
+            // Save the result to a file in the current directory.
+            doc.Save("MergedResult.docx");
         }
     }
 }
