@@ -3,69 +3,46 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
 using Aspose.Words.Saving;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define a folder for temporary files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Create a simple DOCX document in memory.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document for TIFF rendering.");
+        builder.Writeln("It contains a few lines of text to demonstrate the output.");
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple DOCX document and save it locally.
-        // -----------------------------------------------------------------
-        string sourceDocPath = Path.Combine(artifactsDir, "Sample.docx");
-        Document docToSave = new Document();
-        DocumentBuilder builder = new DocumentBuilder(docToSave);
-        builder.Writeln("This is a sample document used for rendering to a 1‑bpp TIFF image.");
-        docToSave.Save(sourceDocPath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the DOCX document.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourceDocPath);
-
-        // -----------------------------------------------------------------
-        // 3. Configure FontSettings (no OpenType feature toggling needed).
-        // -----------------------------------------------------------------
+        // Configure FontSettings (without using the prohibited EnableOpenTypeFeatures property).
         FontSettings fontSettings = new FontSettings();
-        loadedDoc.FontSettings = fontSettings;
+        doc.FontSettings = fontSettings;
 
-        // -----------------------------------------------------------------
-        // 4. Set up ImageSaveOptions for 1‑bpp TIFF output.
-        // -----------------------------------------------------------------
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Prepare image save options for 1bpp TIFF with CCITT compression.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Use CCITT Group 4 compression, suitable for 1‑bpp images.
-            TiffCompression = TiffCompression.Ccitt4,
-
-            // Force the pixel format to 1‑bpp indexed.
+            // Use CCITT Group 3 compression which works well with 1‑bit images.
+            TiffCompression = TiffCompression.Ccitt3,
+            // Set pixel format to 1‑bit indexed to achieve minimal file size.
             PixelFormat = ImagePixelFormat.Format1bppIndexed,
-
-            // Set a reasonable resolution.
-            Resolution = 300,
-
-            // Disable anti‑aliasing and high‑quality rendering to keep the file size minimal.
-            UseAntiAliasing = false,
-            UseHighQualityRendering = false
+            // Optional: set a reasonable resolution.
+            Resolution = 300
         };
 
-        // -----------------------------------------------------------------
-        // 5. Render the document to a single-page TIFF file.
-        // -----------------------------------------------------------------
-        string outputTiffPath = Path.Combine(artifactsDir, "Rendered.tiff");
-        loadedDoc.Save(outputTiffPath, tiffOptions);
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RenderedOutput.tiff");
 
-        // -----------------------------------------------------------------
-        // 6. Verify that the output file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputTiffPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+        // Save the document as a TIFF image.
+        doc.Save(outputPath, saveOptions);
 
-        // Output the size of the generated file.
-        long fileSize = new FileInfo(outputTiffPath).Length;
-        Console.WriteLine($"TIFF file created at: {outputTiffPath}");
-        Console.WriteLine($"File size: {fileSize} bytes");
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The TIFF file was not created.", outputPath);
+
+        // Output the file size for informational purposes.
+        FileInfo info = new FileInfo(outputPath);
+        Console.WriteLine($"TIFF file created: {outputPath}");
+        Console.WriteLine($"File size: {info.Length} bytes");
     }
 }

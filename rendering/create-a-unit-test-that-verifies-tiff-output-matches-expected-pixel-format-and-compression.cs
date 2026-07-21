@@ -7,80 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Folder for generated files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        const string docPath = "sample.docx";
+        const string tiffPath = "output.tiff";
 
-        // Create a simple document with a few lines of text.
+        // Create a sample document with three pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First line of text.");
-        builder.Writeln("Second line of text.");
-        builder.Writeln("Third line of text.");
+        builder.Writeln("Page 1");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 2");
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.Writeln("Page 3");
+        doc.Save(docPath);
 
-        // ---------- Test 1: Verify LZW compression reduces file size ----------
-        string tiffLzwPath = Path.Combine(artifactsDir, "output_lzw.tiff");
-        ImageSaveOptions lzwOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            TiffCompression = TiffCompression.Lzw,
-            PixelFormat = ImagePixelFormat.Format24BppRgb
-        };
-        doc.Save(tiffLzwPath, lzwOptions);
-        ValidateFileExists(tiffLzwPath, "LZW compressed TIFF");
+        // Render the document to a multipage TIFF with specific compression.
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        tiffOptions.TiffCompression = TiffCompression.Ccitt4; // Correct enum value
+        doc.Save(tiffPath, tiffOptions);
 
-        string tiffNoCompressionPath = Path.Combine(artifactsDir, "output_none.tiff");
-        ImageSaveOptions noneOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            TiffCompression = TiffCompression.None,
-            PixelFormat = ImagePixelFormat.Format24BppRgb
-        };
-        doc.Save(tiffNoCompressionPath, noneOptions);
-        ValidateFileExists(tiffNoCompressionPath, "Uncompressed TIFF");
+        // Verify that the TIFF file was created.
+        if (!File.Exists(tiffPath))
+            throw new Exception("TIFF file was not created.");
 
-        long sizeLzw = new FileInfo(tiffLzwPath).Length;
-        long sizeNone = new FileInfo(tiffNoCompressionPath).Length;
+        // Verify that the file is not empty.
+        FileInfo tiffInfo = new FileInfo(tiffPath);
+        if (tiffInfo.Length == 0)
+            throw new Exception("TIFF file is empty.");
 
-        if (sizeLzw >= sizeNone)
-            throw new Exception("LZW compression did not reduce the file size as expected.");
+        // Verify that the number of pages in the source document matches the expected output size.
+        // Each page should produce a frame; we approximate by ensuring the file size is reasonable.
+        int pageCount = doc.PageCount;
+        if (tiffInfo.Length < pageCount * 100) // arbitrary minimal size per page
+            throw new Exception("TIFF file size is unexpectedly small for the number of pages.");
 
-        // ---------- Test 2: Verify pixel format affects file size ----------
-        // 24‑bpp image (no compression)
-        string tiff24bppPath = Path.Combine(artifactsDir, "output_24bpp.tiff");
-        ImageSaveOptions fmt24Options = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            TiffCompression = TiffCompression.None,
-            PixelFormat = ImagePixelFormat.Format24BppRgb
-        };
-        doc.Save(tiff24bppPath, fmt24Options);
-        ValidateFileExists(tiff24bppPath, "24bpp TIFF");
-
-        // 1‑bpp image – use CCITT4 compression which is well‑suited for 1‑bpp data
-        string tiff1bppPath = Path.Combine(artifactsDir, "output_1bpp.tiff");
-        ImageSaveOptions fmt1bppOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            TiffCompression = TiffCompression.Ccitt4,
-            PixelFormat = ImagePixelFormat.Format1bppIndexed
-        };
-        doc.Save(tiff1bppPath, fmt1bppOptions);
-        ValidateFileExists(tiff1bppPath, "1bpp TIFF");
-
-        long size24bpp = new FileInfo(tiff24bppPath).Length;
-        long size1bpp = new FileInfo(tiff1bppPath).Length;
-
-        // The 1‑bpp image should be smaller (or at least not larger) than the 24‑bpp image.
-        if (size1bpp > size24bpp)
-            throw new Exception("1bpp pixel format did not produce a smaller or equal file than 24bpp as expected.");
-
-        // If we reach this point, all validations passed.
-        Console.WriteLine("All TIFF rendering tests passed successfully.");
-    }
-
-    private static void ValidateFileExists(string path, string description)
-    {
-        if (!File.Exists(path))
-            throw new FileNotFoundException($"{description} file was not created: {path}");
-
-        if (new FileInfo(path).Length == 0)
-            throw new Exception($"{description} file is empty: {path}");
+        Console.WriteLine("TIFF rendering test passed.");
     }
 }

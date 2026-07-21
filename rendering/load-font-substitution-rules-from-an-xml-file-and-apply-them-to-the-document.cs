@@ -7,53 +7,49 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directories.
+        // Prepare output folder.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Paths for the XML substitution file and the rendered PDF.
-        string substitutionXmlPath = Path.Combine(artifactsDir, "fontSubstitution.xml");
-        string outputPdfPath = Path.Combine(artifactsDir, "output.pdf");
+        // -----------------------------------------------------------------
+        // 1. Create a sample font substitution table and save it to XML.
+        // -----------------------------------------------------------------
+        string xmlPath = Path.Combine(artifactsDir, "FontSubstitutionRules.xml");
+        FontSettings tempSettings = new FontSettings();
+        TableSubstitutionRule tempRule = tempSettings.SubstitutionSettings.TableSubstitution;
+        // Define a substitution: when "MissingFont" is not found, use "Arial" then "Times New Roman".
+        tempRule.AddSubstitutes("MissingFont", "Arial", "Times New Roman");
+        // Save the table to an XML file.
+        tempRule.Save(xmlPath);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document that uses a font which is not available.
+        // 2. Build a simple document that uses a font not present on the system.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Name = "MissingFont";
-        builder.Writeln("This text is formatted with a missing font and will be substituted.");
+        builder.Writeln("This line is formatted with a font that does not exist and should be substituted.");
 
         // -----------------------------------------------------------------
-        // 2. Define a font substitution rule and save it to an XML file.
+        // 3. Load the substitution rules from the XML file and apply them.
         // -----------------------------------------------------------------
-        FontSettings fontSettingsForSaving = new FontSettings();
-        var tableRuleForSaving = fontSettingsForSaving.SubstitutionSettings.TableSubstitution;
-        // Substitute the missing font with a common system font (e.g., Arial).
-        tableRuleForSaving.AddSubstitutes("MissingFont", "Arial");
-        // Save the substitution table to XML.
-        tableRuleForSaving.Save(substitutionXmlPath);
+        FontSettings fontSettings = new FontSettings();
+        TableSubstitutionRule substitutionRule = fontSettings.SubstitutionSettings.TableSubstitution;
+        substitutionRule.Load(xmlPath);
+        doc.FontSettings = fontSettings;
 
         // -----------------------------------------------------------------
-        // 3. Load the substitution rules from the XML file.
+        // 4. Render the document to PDF.
         // -----------------------------------------------------------------
-        FontSettings loadedFontSettings = new FontSettings();
-        var tableRuleForLoading = loadedFontSettings.SubstitutionSettings.TableSubstitution;
-        tableRuleForLoading.Load(substitutionXmlPath);
-
-        // Apply the loaded font settings to the document.
-        doc.FontSettings = loadedFontSettings;
-
-        // -----------------------------------------------------------------
-        // 4. Render the document to PDF using the loaded substitution rules.
-        // -----------------------------------------------------------------
-        doc.Save(outputPdfPath, SaveFormat.Pdf);
+        string pdfPath = Path.Combine(artifactsDir, "Result.pdf");
+        doc.Save(pdfPath);
 
         // -----------------------------------------------------------------
         // 5. Verify that the PDF was created.
         // -----------------------------------------------------------------
-        if (!File.Exists(outputPdfPath))
-            throw new InvalidOperationException("The PDF output file was not created.");
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("The PDF file was not created.");
 
-        // The program finishes without requiring any user interaction.
+        Console.WriteLine("PDF generated successfully at: " + pdfPath);
     }
 }

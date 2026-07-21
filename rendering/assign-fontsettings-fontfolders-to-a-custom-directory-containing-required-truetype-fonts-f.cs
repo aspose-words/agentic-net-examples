@@ -3,75 +3,62 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fonts;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define a custom folder that will hold the TrueType fonts.
-        string customFontsDir = Path.Combine(Directory.GetCurrentDirectory(), "CustomFonts");
+        // Prepare directories for output and custom fonts.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string customFontsDir = Path.Combine(artifactsDir, "CustomFonts");
         Directory.CreateDirectory(customFontsDir);
 
-        // Try to locate a TrueType font file from the system font folders.
-        string systemFontPath = null;
-        foreach (string folder in SystemFontSource.GetSystemFontFolders())
+        // Attempt to copy a TrueType font from a system font folder into the custom folder.
+        string[] systemFontFolders = SystemFontSource.GetSystemFontFolders();
+        if (systemFontFolders.Length > 0)
         {
-            if (Directory.Exists(folder))
+            string sysFolder = systemFontFolders[0];
+            string[] ttfFiles = Directory.GetFiles(sysFolder, "*.ttf");
+            if (ttfFiles.Length > 0)
             {
-                string[] ttfFiles = Directory.GetFiles(folder, "*.ttf");
-                if (ttfFiles.Length > 0)
-                {
-                    systemFontPath = ttfFiles[0];
-                    break;
-                }
+                string sourceFontPath = ttfFiles[0];
+                string destFontPath = Path.Combine(customFontsDir, Path.GetFileName(sourceFontPath));
+                File.Copy(sourceFontPath, destFontPath, true);
             }
         }
 
-        // If a system font was found, copy it into the custom folder.
-        if (systemFontPath != null)
-        {
-            string destPath = Path.Combine(customFontsDir, Path.GetFileName(systemFontPath));
-            File.Copy(systemFontPath, destPath, true);
-        }
-        else
-        {
-            // No system font found – the example will still demonstrate assigning the folder.
-            Console.WriteLine("No system TrueType font found; proceeding with an empty custom font folder.");
-        }
+        // Determine a font name that exists in the custom folder (fallback to Arial if none found).
+        string fontFilePath = Directory.GetFiles(customFontsDir, "*.ttf").FirstOrDefault();
+        string fontName = fontFilePath != null
+            ? Path.GetFileNameWithoutExtension(fontFilePath)
+            : "Arial";
 
-        // Determine the name of the font we just placed (if any).
-        string fontName = "Arial"; // Fallback font name.
-        try
-        {
-            var folderSource = new FolderFontSource(customFontsDir, true);
-            var availableFonts = folderSource.GetAvailableFonts();
-            if (availableFonts.Any())
-                fontName = availableFonts.First().FullFontName;
-        }
-        catch
-        {
-            // If any error occurs while reading the custom folder, keep the fallback font.
-        }
-
-        // Create a new document and configure its FontSettings to use the custom folder.
+        // Create a simple document that uses the selected font.
         Document doc = new Document();
-        doc.FontSettings = new FontSettings();
-        doc.FontSettings.SetFontsFolder(customFontsDir, true);
-
-        // Write some text using the font from the custom folder (or fallback).
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Font.Name = fontName;
-        builder.Writeln($"This text is rendered with the font \"{fontName}\" from the custom folder.");
+        builder.Writeln($"This text uses the font \"{fontName}\" loaded from a custom folder.");
 
-        // Render the document to PDF.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RenderedOutput.pdf");
-        doc.Save(outputPath);
+        // Assign FontSettings to point to the custom fonts directory.
+        FontSettings fontSettings = new FontSettings();
+        fontSettings.SetFontsFolder(customFontsDir, false);
+        doc.FontSettings = fontSettings;
 
-        // Verify that the PDF was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The rendered PDF file was not created.");
+        // Render the document to PDF, embedding fonts.
+        string pdfPath = Path.Combine(artifactsDir, "RenderedDocument.pdf");
+        PdfSaveOptions pdfOptions = new PdfSaveOptions
+        {
+            EmbedFullFonts = true
+        };
+        doc.Save(pdfPath, pdfOptions);
 
-        // Clean up (optional): delete the custom font folder and its contents.
-        // Directory.Delete(customFontsDir, true);
+        // Verify that the PDF file was created.
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("Failed to create the PDF output file.");
+
+        // Optional: indicate success.
+        Console.WriteLine($"PDF saved to: {pdfPath}");
     }
 }

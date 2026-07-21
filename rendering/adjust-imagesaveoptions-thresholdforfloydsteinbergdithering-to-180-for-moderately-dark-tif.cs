@@ -7,37 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with some text.
+        // Create output directory.
+        string artifactsDir = "Artifacts";
+        Directory.CreateDirectory(artifactsDir);
+
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Sample Document");
-        builder.Writeln("This document will be saved as a TIFF image with Floyd‑Steinberg dithering.");
 
-        // Prepare the output folder.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "Sample.tiff");
+        // Add some sample text.
+        builder.Writeln("Sample text for TIFF conversion.");
+
+        // Insert a tiny 1x1 black PNG image (base64 encoded).
+        byte[] png = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK7cAAAAASUVORK5CYII=");
+        builder.InsertImage(png);
 
         // Configure ImageSaveOptions for TIFF with Floyd‑Steinberg dithering.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Use CCITT Group 3 compression (common for B&W TIFFs).
             TiffCompression = TiffCompression.Ccitt3,
-            // Apply Floyd‑Steinberg dithering.
             TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
-            // Set the threshold to 180 for moderately dark images.
-            ThresholdForFloydSteinbergDithering = 180
+            ThresholdForFloydSteinbergDithering = 180 // Moderately dark threshold.
         };
 
-        // Save the document as a TIFF image using the configured options.
-        doc.Save(outputPath, options);
+        // Save the document as a TIFF image.
+        string outPath = Path.Combine(artifactsDir, "output.tiff");
+        doc.Save(outPath, options);
 
         // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
-
-        // Optionally, report success.
-        Console.WriteLine($"TIFF image saved successfully to: {outputPath}");
+        if (!File.Exists(outPath))
+            throw new Exception("TIFF file was not created.");
     }
 }

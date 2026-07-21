@@ -7,35 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create an output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Path for the resulting TIFF file.
-        string outputPath = Path.Combine(artifactsDir, "BalancedBw.tiff");
-
-        // Create a simple document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document rendered as a balanced‑quality black‑and‑white TIFF.");
 
-        // Configure image save options for a black‑and‑white TIFF with CCITT4 compression
-        // and a resolution of 250 dpi.
+        // Add sample content.
+        builder.Writeln("Aspose.Words rendering example.");
+        builder.Writeln("This document will be saved as a black‑and‑white TIFF.");
+
+        // Configure image save options for TIFF.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
+            // Use CCITT4 compression for balanced quality and file size.
             TiffCompression = TiffCompression.Ccitt4,
-            ImageColorMode = ImageColorMode.BlackAndWhite,
-            // The Resolution property sets both horizontal and vertical DPI.
-            Resolution = 250f
+            // Set both horizontal and vertical resolution to 250 DPI.
+            Resolution = 250,
+            // Render the output as black‑and‑white.
+            ImageColorMode = ImageColorMode.BlackAndWhite
         };
 
-        // Save the document as a TIFF image using the specified options.
+        // Define the output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "RenderedDocument.tiff");
+
+        // Save the document as a TIFF image using the configured options.
         doc.Save(outputPath, options);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The TIFF file was not created.");
 
-        Console.WriteLine($"TIFF file successfully created at: {outputPath}");
+        // Report success.
+        Console.WriteLine($"TIFF file successfully saved to: {outputPath}");
     }
 }

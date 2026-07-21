@@ -7,61 +7,60 @@ public class Program
 {
     public static void Main()
     {
-        // Define input and output folders relative to the current directory.
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputFolder = Path.Combine(baseDir, "InputDocs");
-        string outputFolder = Path.Combine(baseDir, "OutputTiffs");
+        // Base working directory.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        string inputDir = Path.Combine(baseDir, "Input");
+        string outputDir = Path.Combine(baseDir, "Output");
 
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Ensure input and output folders exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // Bootstrap sample DOCX files if the input folder is empty.
+        // Create a few sample DOCX files if the input folder is empty.
         // -----------------------------------------------------------------
-        if (Directory.GetFiles(inputFolder, "*.docx").Length == 0)
+        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
         {
-            for (int i = 1; i <= 2; i++)
+            for (int i = 1; i <= 3; i++)
             {
                 Document sampleDoc = new Document();
                 DocumentBuilder builder = new DocumentBuilder(sampleDoc);
                 builder.Writeln($"Sample document {i}");
-                builder.InsertParagraph();
-                builder.Writeln("This is a test paragraph to generate some content.");
-                string samplePath = Path.Combine(inputFolder, $"Sample{i}.docx");
+                builder.Writeln("This document will be rendered to a TIFF image.");
+                string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
                 sampleDoc.Save(samplePath);
             }
         }
 
         // -----------------------------------------------------------------
-        // Process each DOCX file: render to a multi‑page TIFF at 200 DPI
-        // using CCITT3 compression.
+        // Process each DOCX file: render to TIFF with 200 DPI and CCITT3 compression.
         // -----------------------------------------------------------------
-        foreach (string docxPath in Directory.GetFiles(inputFolder, "*.docx"))
+        string[] docxFiles = Directory.GetFiles(inputDir, "*.docx");
+        foreach (string docxPath in docxFiles)
         {
             // Load the source document.
             Document doc = new Document(docxPath);
 
             // Configure image save options for TIFF output.
-            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+            ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
                 Resolution = 200,                     // 200 DPI.
                 TiffCompression = TiffCompression.Ccitt3 // CCITT3 compression.
             };
 
-            // Determine the output TIFF file name.
-            string tiffFileName = Path.GetFileNameWithoutExtension(docxPath) + ".tiff";
-            string tiffPath = Path.Combine(outputFolder, tiffFileName);
+            // Determine output file name (same base name, .tiff extension).
+            string outputFileName = Path.GetFileNameWithoutExtension(docxPath) + ".tiff";
+            string outputPath = Path.Combine(outputDir, outputFileName);
 
             // Save the document as a TIFF image.
-            doc.Save(tiffPath, saveOptions);
+            doc.Save(outputPath, tiffOptions);
 
-            // Validate that the TIFF file was created.
-            if (!File.Exists(tiffPath))
-                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
+            // Verify that the TIFF file was created.
+            if (!File.Exists(outputPath))
+                throw new InvalidOperationException($"Failed to create TIFF file: {outputPath}");
         }
 
-        // Indicate successful completion (optional logging).
+        // Optional: indicate completion (no interactive input required).
         Console.WriteLine("Batch processing completed successfully.");
     }
 }

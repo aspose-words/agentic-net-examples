@@ -4,13 +4,13 @@
     "slug": "rendering",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Prefer simple documented Aspose.Words rendering workflows. Use Document, SaveOptions, LayoutCollector, LayoutEnumerator, NodeRendererBase, ShapeRenderer, and OfficeMathRenderer only when they are directly relevant to the task. Prefer Aspose.Drawing over System.Drawing unless a documented API explicitly requires System.Drawing. Keep validation narrow and task-specific.",
+    "preferred_workflow": "Use simple documented Aspose.Words rendering workflows. Prefer Document.Save with the appropriate save options, use layout and renderer APIs only when directly required by the task, prefer Aspose.Drawing over System.Drawing unless an API explicitly requires System.Drawing, and keep validation narrow and task-specific.",
     "required_packages": [
       "Aspose.Words",
       "Aspose.Drawing.Common"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0",
+      "Aspose.Words": "26.6.0",
       "Aspose.Drawing.Common": "25.11.0"
     },
     "required_namespaces": [
@@ -20,26 +20,25 @@
       "Aspose.Words.Saving",
       "System.Linq",
       "Aspose.Words.Fonts",
+      "Aspose.Words.Drawing",
       "System.Collections.Generic",
       "System.Threading.Tasks",
       "System.Text",
       "System.Text.RegularExpressions",
-      "System.Threading",
-      "Aspose.Drawing",
-      "Aspose.Drawing.Imaging"
+      "System.Threading"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "SaveFormat",
       "Directory",
-      "File",
       "Path",
+      "SaveFormat",
+      "File",
       "ImageSaveOptions",
       "StyleIdentifier",
       "Font",
       "PdfSaveOptions",
-      "MemoryStream"
+      "Range"
     ]
   },
   "stats": {
@@ -47,9 +46,6 @@
     "publish_ready_successful_examples": 70,
     "workflow_counts": {
       "rendering-workflow": 70
-    },
-    "winner_counts": {
-      "mcp": 70
     }
   },
   "rules_summary": {
@@ -106,7 +102,7 @@
     {
       "id": 2,
       "file_name": "set-imagesaveoptions-desireddpi-to-300-to-produce-high-resolution-tiff-images-for-printing.cs",
-      "task": "Set ImageSaveOptions.DesiredDpi to 300 to produce high-resolution TIFF images for printing.",
+      "task": "Set ImageSaveOptions.DesiredDpi to 300 to produce high‑resolution TIFF images for printing.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -117,7 +113,7 @@
     {
       "id": 3,
       "file_name": "configure-imagesaveoptions-pixelformat-as-format1bppindexed-for-black-and-white-tiff-outpu.cs",
-      "task": "Configure ImageSaveOptions.PixelFormat as Format1bppIndexed for black-and-white TIFF output in the conversion.",
+      "task": "Configure ImageSaveOptions.PixelFormat as Format1bppIndexed for black‑and‑white TIFF output in the conversion.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -258,8 +254,8 @@
         "doc",
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 16,
@@ -321,7 +317,7 @@
     {
       "id": 21,
       "file_name": "generate-a-single-page-tiff-from-the-first-page-of-a-multipage-docx-using-imagesaveoptions.cs",
-      "task": "Generate a single-page TIFF from the first page of a multipage DOCX using ImageSaveOptions.",
+      "task": "Generate a single‑page TIFF from the first page of a multipage DOCX using ImageSaveOptions.",
       "workflow": "rendering-workflow",
       "outputs": [
         "docx",
@@ -334,7 +330,7 @@
     {
       "id": 22,
       "file_name": "set-desireddpi-to-72-for-low-resolution-tiff-suitable-for-email-attachments.cs",
-      "task": "Set DesiredDpi to 72 for low-resolution TIFF suitable for email attachments.",
+      "task": "Set DesiredDpi to 72 for low‑resolution TIFF suitable for email attachments.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -424,7 +420,7 @@
     {
       "id": 30,
       "file_name": "use-desireddpi-500-to-generate-archival-quality-tiffs-and-assess-the-impact-on-file-size.cs",
-      "task": "Use DesiredDpi 500 to generate archival-quality TIFFs and assess the impact on file size.",
+      "task": "Use DesiredDpi 500 to generate archival‑quality TIFFs and assess the impact on file size.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -483,7 +479,7 @@
     {
       "id": 35,
       "file_name": "use-imagesaveoptions-compression-tiffcompression-ccitt4-and-desireddpi-250-for-balanced-qu.cs",
-      "task": "Use ImageSaveOptions.Compression = TiffCompression.Ccitt4 and DesiredDpi = 250 for balanced quality black-and-white TIFFs.",
+      "task": "Use ImageSaveOptions.Compression = TiffCompression.Ccitt4 and DesiredDpi = 250 for balanced quality black‑and‑white TIFFs.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -586,7 +582,7 @@
     {
       "id": 44,
       "file_name": "set-imagesaveoptions-dpix-and-dpiy-to-600-to-produce-high-resolution-tiff-output.cs",
-      "task": "Set ImageSaveOptions.DpiX and DpiY to 600 to produce high-resolution TIFF output.",
+      "task": "Set ImageSaveOptions.DpiX and DpiY to 600 to produce high‑resolution TIFF output.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -630,7 +626,7 @@
     {
       "id": 48,
       "file_name": "configure-imagesaveoptions-pixelformat-to-format1bppindexed-for-1-bit-black-white-tiff-out.cs",
-      "task": "Configure ImageSaveOptions.PixelFormat to Format1bppIndexed for 1-bit black-white TIFF output generation.",
+      "task": "Configure ImageSaveOptions.PixelFormat to Format1bppIndexed for 1‑bit black‑white TIFF output generation.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -652,7 +648,7 @@
     {
       "id": 50,
       "file_name": "set-imagesaveoptions-tiffcompression-to-ccitt4-for-optimal-black-white-tiff-size-reduction.cs",
-      "task": "Set ImageSaveOptions.TiffCompression to CCITT4 for optimal black-white TIFF size reduction.",
+      "task": "Set ImageSaveOptions.TiffCompression to CCITT4 for optimal black‑white TIFF size reduction.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -663,7 +659,7 @@
     {
       "id": 51,
       "file_name": "set-imagesaveoptions-tiffcompression-to-ccitt3-for-fax-ready-tiff-output-compliant-with-st.cs",
-      "task": "Set ImageSaveOptions.TiffCompression to CCITT3 for fax-ready TIFF output compliant with standards.",
+      "task": "Set ImageSaveOptions.TiffCompression to CCITT3 for fax‑ready TIFF output compliant with standards.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -698,7 +694,7 @@
     {
       "id": 54,
       "file_name": "convert-a-batch-of-doc-files-to-tiff-using-1-bit-pixel-format-and-ccitt4-compression.cs",
-      "task": "Convert a batch of DOC files to TIFF using 1-bit pixel format and CCITT4 compression.",
+      "task": "Convert a batch of DOC files to TIFF using 1‑bit pixel format and CCITT4 compression.",
       "workflow": "rendering-workflow",
       "outputs": [
         "doc",
@@ -835,13 +831,13 @@
       "outputs": [
         "tiff"
       ],
-      "selected_engine": "mcp",
-      "winner": "mcp"
+      "selected_engine": "llm",
+      "winner": "llm"
     },
     {
       "id": 66,
       "file_name": "create-a-unit-test-that-ensures-1-bit-tiff-files-contain-exactly-two-colors.cs",
-      "task": "Create a unit test that ensures 1-bit TIFF files contain exactly two colors.",
+      "task": "Create a unit test that ensures 1‑bit TIFF files contain exactly two colors.",
       "workflow": "rendering-workflow",
       "outputs": [
         "tiff"
@@ -887,7 +883,7 @@
     {
       "id": 70,
       "file_name": "configure-fontsettings-to-prioritize-fonts-from-a-user-specified-directory-over-system-fon.cs",
-      "task": "Configure FontSettings to prioritize fonts from a user-specified directory over system fonts during rendering.",
+      "task": "Configure FontSettings to prioritize fonts from a user‑specified directory over system fonts during rendering.",
       "workflow": "rendering-workflow",
       "outputs": [
         "pdf"

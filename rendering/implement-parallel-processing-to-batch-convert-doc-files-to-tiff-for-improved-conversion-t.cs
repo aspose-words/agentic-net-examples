@@ -5,82 +5,82 @@ using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class ParallelDocToTiffConverter
 {
     public static void Main()
     {
         // Define folders for input DOC files and output TIFF files.
-        string baseDir = Directory.GetCurrentDirectory();
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "ConversionDemo");
         string inputDir = Path.Combine(baseDir, "InputDocs");
         string outputDir = Path.Combine(baseDir, "OutputTiffs");
 
         // Ensure clean directories.
-        if (Directory.Exists(inputDir)) Directory.Delete(inputDir, true);
-        if (Directory.Exists(outputDir)) Directory.Delete(outputDir, true);
+        if (Directory.Exists(baseDir))
+            Directory.Delete(baseDir, true);
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
         // Create a set of sample DOC files.
-        int docCount = 5; // Number of documents to generate.
-        List<string> inputFiles = new List<string>();
+        int docCount = 5;
+        List<string> sourceFiles = new List<string>();
         for (int i = 1; i <= docCount; i++)
         {
-            string docPath = Path.Combine(inputDir, $"Sample{i}.doc");
+            string docPath = Path.Combine(inputDir, $"Sample{i}.docx");
             CreateSampleDocument(docPath, i);
-            inputFiles.Add(docPath);
+            sourceFiles.Add(docPath);
         }
 
-        // Parallel conversion of DOC files to multi‑page TIFF.
-        Parallel.ForEach(inputFiles, inputPath =>
+        // Parallel conversion of each DOC file to a multipage TIFF.
+        Parallel.ForEach(sourceFiles, sourcePath =>
         {
-            // Load the source document.
-            Document doc = new Document(inputPath);
+            // Load the document.
+            Document doc = new Document(sourcePath);
 
             // Configure image save options for TIFF.
             ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
             {
                 // Render all pages into a single multi‑frame TIFF.
                 PageLayout = MultiPageLayout.TiffFrames(),
-                // Example resolution; adjust as needed.
+                // Optional: set resolution for better quality.
                 Resolution = 300
             };
 
             // Determine output file name.
-            string fileName = Path.GetFileNameWithoutExtension(inputPath);
-            string tiffPath = Path.Combine(outputDir, $"{fileName}.tiff");
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(sourcePath);
+            string tiffPath = Path.Combine(outputDir, $"{fileNameWithoutExt}.tiff");
 
             // Save the document as TIFF.
             doc.Save(tiffPath, options);
         });
 
         // Verify that all TIFF files were created.
-        foreach (string inputPath in inputFiles)
+        foreach (string sourcePath in sourceFiles)
         {
-            string fileName = Path.GetFileNameWithoutExtension(inputPath);
-            string tiffPath = Path.Combine(outputDir, $"{fileName}.tiff");
+            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(sourcePath);
+            string tiffPath = Path.Combine(outputDir, $"{fileNameWithoutExt}.tiff");
             if (!File.Exists(tiffPath))
-                throw new FileNotFoundException($"Failed to create TIFF for {inputPath}");
+                throw new FileNotFoundException($"Failed to create TIFF for '{sourcePath}'.");
         }
 
-        // Indicate successful completion.
-        Console.WriteLine("Batch conversion completed successfully.");
+        // Indicate successful completion (no interactive output required).
+        Console.WriteLine("All documents have been converted to TIFF successfully.");
     }
 
-    // Helper method to create a simple DOC file with multiple pages.
-    private static void CreateSampleDocument(string filePath, int documentNumber)
+    // Helper method to create a simple DOCX file with sample content.
+    private static void CreateSampleDocument(string filePath, int index)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add several pages with identifiable content.
-        for (int page = 1; page <= 3; page++)
+        builder.Writeln($"This is sample document #{index}.");
+        builder.Writeln("It contains multiple pages for conversion testing.");
+        // Insert page breaks to generate several pages.
+        for (int p = 1; p <= 3; p++)
         {
-            builder.Writeln($"Document {documentNumber} - Page {page}");
-            if (page < 3)
-                builder.InsertBreak(BreakType.PageBreak);
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln($"Page {p + 1} of document #{index}.");
         }
 
-        // Save the document.
         doc.Save(filePath);
     }
 }

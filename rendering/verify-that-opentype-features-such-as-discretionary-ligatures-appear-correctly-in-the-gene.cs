@@ -7,44 +7,44 @@ public class Program
 {
     public static void Main()
     {
-        // Define output folder and file.
+        // Define output directory.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-        string tiffPath = Path.Combine(outputDir, "Ligatures.tiff");
 
-        // Create a new document and add text that contains discretionary ligatures (e.g., "fi", "fl").
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Use a font that typically supports ligatures.
-        builder.Font.Name = "Calibri";
-        builder.Font.Size = 48;
-        builder.Writeln("Office");
-        builder.Writeln("Affiliation");
-        builder.Writeln("Fluff");
+        // Write a line with normal characters.
+        builder.Writeln("The quick brown fox jumps over the lazy dog.");
+
+        // Write a line that contains a discretionary ligature (ﬁ).
+        // Unicode character U+FB01 is the ligature for "fi".
+        builder.Writeln("Discretionary ligature test: ﬁ");
 
         // Configure image save options for TIFF.
         ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // High‑quality rendering improves the chances that ligatures are rendered correctly.
+            // Use high quality rendering to preserve typographic details.
             UseAntiAliasing = true,
-            UseHighQualityRendering = true,
-            // Optional: increase resolution for clearer output.
-            Resolution = 300
+            UseHighQualityRendering = true
+            // Do not set PageSet – leaving it null renders all pages into a single multi‑page TIFF.
         };
 
-        // Render the document to a TIFF file.
+        // Save the document as a TIFF image.
+        string tiffPath = Path.Combine(outputDir, "DocumentWithLigature.tiff");
         doc.Save(tiffPath, saveOptions);
 
-        // Verify that the TIFF file was created and has a non‑zero size.
+        // Verify that the TIFF file was created and has content.
         if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("TIFF file was not created.");
+            throw new FileNotFoundException("TIFF file was not created.", tiffPath);
 
-        long fileSize = new FileInfo(tiffPath).Length;
-        if (fileSize == 0)
-            throw new InvalidOperationException("TIFF file is empty.");
+        byte[] tiffBytes = File.ReadAllBytes(tiffPath);
+        if (tiffBytes.Length == 0)
+            throw new InvalidDataException("TIFF file is empty.");
 
-        Console.WriteLine($"TIFF file created successfully at: {tiffPath}");
-        Console.WriteLine($"File size: {fileSize} bytes");
+        // Simple confirmation output.
+        Console.WriteLine($"TIFF file generated successfully at: {tiffPath}");
+        Console.WriteLine($"File size: {tiffBytes.Length} bytes");
     }
 }

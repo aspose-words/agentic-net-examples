@@ -7,33 +7,40 @@ public class Program
 {
     public static void Main()
     {
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string pdfPath = Path.Combine(outputDir, "FallbackExample.pdf");
+
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Use a font that is unlikely to be present on the system.
+        // Write some text using a normal font.
+        builder.Font.Name = "Times New Roman";
+        builder.Writeln("This line uses a standard font.");
+
+        // Write text using a font that is unlikely to be available and contains characters
+        // that are not present in the primary font (e.g., Chinese characters).
         builder.Font.Name = "Missing Font";
-        builder.Writeln("This line uses a missing font and will be substituted.");
+        builder.Writeln("Missing Font line with Unicode characters: 漢字");
 
-        // Add some Unicode characters that are not covered by most fonts.
-        builder.Writeln("Unicode test: 漢字, 😊, 𝔘𝔫𝔦𝔠𝔬𝔡𝔢");
-
-        // Configure font settings to fall back to Arial Unicode MS for any missing font.
+        // Configure font settings to use Arial Unicode MS as the default substitution font.
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SubstitutionSettings.DefaultFontSubstitution.DefaultFontName = "Arial Unicode MS";
+        DefaultFontSubstitutionRule defaultSubstitution = fontSettings.SubstitutionSettings.DefaultFontSubstitution;
+        defaultSubstitution.DefaultFontName = "Arial Unicode MS";
+        defaultSubstitution.Enabled = true;
+
+        // Assign the font settings to the document.
         doc.FontSettings = fontSettings;
 
-        // Define output path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "FontFallbackExample.pdf");
-
         // Save the document to PDF.
-        doc.Save(outputPath, SaveFormat.Pdf);
+        doc.Save(pdfPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the PDF output file.");
+        // Verify that the PDF was created.
+        if (!File.Exists(pdfPath))
+            throw new Exception("Failed to create the PDF output.");
 
-        // Optionally, you could inspect the PDF for embedded font markers here.
-        // For this example we simply complete execution.
+        // Optionally, you could add further validation here (e.g., checking file size).
     }
 }

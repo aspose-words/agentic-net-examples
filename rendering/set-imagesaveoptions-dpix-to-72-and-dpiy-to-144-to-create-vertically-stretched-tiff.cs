@@ -7,29 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with some text.
+        // Create a simple document with a few lines of text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document rendered to a vertically stretched TIFF.");
+        builder.Writeln("First line of text.");
+        builder.Writeln("Second line of text.");
+        builder.Writeln("Third line of text.");
 
-        // Configure ImageSaveOptions for TIFF with different horizontal and vertical DPI.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
-        options.HorizontalResolution = 72f; // DpiX
-        options.VerticalResolution = 144f; // DpiY
+        // Configure image save options for TIFF with different horizontal and vertical DPI.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        saveOptions.HorizontalResolution = 72f; // DpiX
+        saveOptions.VerticalResolution = 144f;  // DpiY
 
-        // Ensure the output directory exists.
+        // Define the output file path.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "Stretched.tiff");
+        string outputPath = Path.Combine(outputDir, "VerticallyStretched.tiff");
 
         // Save the document as a TIFF image using the specified DPI settings.
-        doc.Save(outputPath, options);
+        doc.Save(outputPath, saveOptions);
 
-        // Verify that the TIFF file was created.
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+            throw new InvalidOperationException("The TIFF file was not created.");
 
-        // Inform the user where the file was saved.
-        Console.WriteLine($"TIFF saved to: {outputPath}");
+        // Optionally, inform that the process completed successfully.
+        Console.WriteLine("TIFF image saved to: " + outputPath);
     }
 }

@@ -7,7 +7,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a folder for output files.
+        // Create output directory.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
@@ -16,9 +16,10 @@ public class Program
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Sample Document");
-        builder.Writeln("This document will be saved as a binary TIFF image with a high dithering threshold to make it darker.");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This document is rendered to a binary TIFF image with a high dithering threshold to produce a darker output.");
 
-        // Configure TIFF save options to use Floyd‑Steinberg dithering with a high threshold.
+        // Configure TIFF save options with Floyd‑Steinberg dithering and a high threshold.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.Ccitt3,
@@ -27,14 +28,14 @@ public class Program
         };
 
         // Save the document as a TIFF file.
-        string outputPath = Path.Combine(artifactsDir, "DarkenedBinary.tiff");
+        string outputPath = Path.Combine(artifactsDir, "Dithered.tiff");
         doc.Save(outputPath, options);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
+            throw new InvalidOperationException("TIFF file was not created.");
 
-        // Output basic information about the generated file.
+        // Output information about the saved file.
         Console.WriteLine($"TIFF saved to: {outputPath}");
         Console.WriteLine($"File size: {new FileInfo(outputPath).Length} bytes");
     }

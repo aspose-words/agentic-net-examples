@@ -2,64 +2,52 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
+using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a folder to hold sample DOCX files and the resulting TIFFs.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Prepare folders
+        string baseDir = Directory.GetCurrentDirectory();
+        string outputDir = Path.Combine(baseDir, "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Step 1: Bootstrap a few sample documents locally.
-        // -----------------------------------------------------------------
-        for (int i = 1; i <= 2; i++)
+        // Create a sample DOC file if none exist
+        string sampleDocPath = Path.Combine(baseDir, "Sample.doc");
+        if (!File.Exists(sampleDocPath))
         {
             Document sampleDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-
-            builder.Writeln($"Sample document {i} - Page 1.");
+            builder.Writeln("Sample page 1.");
             builder.InsertBreak(BreakType.PageBreak);
-            builder.Writeln($"Sample document {i} - Page 2.");
-
-            string docPath = Path.Combine(workDir, $"Sample{i}.docx");
-            sampleDoc.Save(docPath);
+            builder.Writeln("Sample page 2.");
+            sampleDoc.Save(sampleDocPath);
         }
 
-        // -----------------------------------------------------------------
-        // Step 2: Iterate over all DOC/DOCX files, render each to a TIFF
-        //         with a DPI of 250, and save the TIFF.
-        // -----------------------------------------------------------------
-        string[] docFiles = Directory.GetFiles(workDir, "*.doc*");
-
+        // Iterate over all .doc files in the base directory
+        string[] docFiles = Directory.GetFiles(baseDir, "*.doc");
         foreach (string docFile in docFiles)
         {
-            // Load the source document.
+            // Load the document
             Document doc = new Document(docFile);
 
-            // Configure image save options for TIFF output.
-            ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+            // Configure image save options for TIFF with 250 DPI
+            ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                // Set the desired resolution (DPI).
-                Resolution = 250
+                Resolution = 250 // Sets both horizontal and vertical DPI
             };
 
-            // Determine the output TIFF file name.
-            string tiffPath = Path.Combine(
-                workDir,
+            // Determine output TIFF path
+            string tiffPath = Path.Combine(outputDir,
                 Path.GetFileNameWithoutExtension(docFile) + ".tiff");
 
-            // Save the document as a (multi‑page) TIFF.
-            doc.Save(tiffPath, saveOptions);
+            // Save the document as a multi‑page TIFF
+            doc.Save(tiffPath, options);
 
-            // Verify that the TIFF file was created.
+            // Verify that the TIFF file was created
             if (!File.Exists(tiffPath))
                 throw new InvalidOperationException($"Failed to create TIFF: {tiffPath}");
-
-            Console.WriteLine($"Converted '{Path.GetFileName(docFile)}' to TIFF at {tiffPath}");
         }
-
-        Console.WriteLine("All documents have been processed.");
     }
 }

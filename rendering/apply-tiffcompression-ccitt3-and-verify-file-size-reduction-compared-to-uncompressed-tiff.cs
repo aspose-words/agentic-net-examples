@@ -7,38 +7,37 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
-
-        // Create a sample document with multiple pages of text.
+        // Create a sample document with several pages of text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        for (int i = 0; i < 10; i++)
+
+        for (int i = 1; i <= 5; i++)
         {
-            builder.Writeln($"Page {i + 1}");
+            builder.Writeln($"Page {i}");
             builder.Writeln("Lorem ipsum dolor sit amet, consectetur adipiscing elit. " +
                             "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.");
-            builder.InsertBreak(BreakType.PageBreak);
+            // Add a page break after each page except the last.
+            if (i < 5)
+                builder.InsertBreak(BreakType.PageBreak);
         }
 
-        // Save without compression (TiffCompression.None).
+        // Define output folder (current directory).
+        string outputFolder = Directory.GetCurrentDirectory();
+
+        // Save the document as an uncompressed TIFF.
         ImageSaveOptions uncompressedOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.None
         };
-        string uncompressedPath = Path.Combine(outputDir, "Uncompressed.tiff");
+        string uncompressedPath = Path.Combine(outputFolder, "uncompressed.tiff");
         doc.Save(uncompressedPath, uncompressedOptions);
 
-        // Save with CCITT3 compression.
+        // Save the document as a TIFF using CCITT3 compression.
         ImageSaveOptions compressedOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            TiffCompression = TiffCompression.Ccitt3,
-            // Use a binarization method suitable for CCITT compression.
-            TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
-            ThresholdForFloydSteinbergDithering = 240
+            TiffCompression = TiffCompression.Ccitt3
         };
-        string compressedPath = Path.Combine(outputDir, "Compressed.tiff");
+        string compressedPath = Path.Combine(outputFolder, "compressed.tiff");
         doc.Save(compressedPath, compressedOptions);
 
         // Verify that both files exist.
@@ -54,6 +53,9 @@ public class Program
 
         // Ensure the compressed file is significantly smaller (e.g., less than 50% of the original).
         if (compressedSize >= uncompressedSize * 0.5)
-            throw new InvalidOperationException("CCITT3 compression did not reduce the file size significantly.");
+            throw new InvalidOperationException("Compressed TIFF is not sufficiently smaller than the uncompressed version.");
+
+        // Success message.
+        Console.WriteLine("Compression verification passed.");
     }
 }

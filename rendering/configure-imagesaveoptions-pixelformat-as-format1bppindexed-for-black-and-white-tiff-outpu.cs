@@ -7,31 +7,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple Word document.
+        // Define output file path.
+        string outputPath = "BlackWhite.tiff";
+
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document rendered as a black‑and‑white TIFF image.");
 
-        // Prepare the folder for the output file.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string outputPath = Path.Combine(artifactsDir, "BlackWhite.tiff");
+        // Add some sample content.
+        builder.Writeln("This is a sample document rendered as a black‑and‑white TIFF.");
 
-        // Configure image save options for TIFF with 1‑bit indexed pixel format.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure image save options for TIFF with 1‑bpp indexed pixel format.
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
         {
             PixelFormat = ImagePixelFormat.Format1bppIndexed,
-            // Optional: use a CCITT compression scheme suitable for 1‑bpp images.
+            // Optional: use CCITT compression suitable for 1‑bpp images.
             TiffCompression = TiffCompression.Ccitt4
         };
 
         // Save the document as a TIFF image.
-        doc.Save(outputPath, options);
+        doc.Save(outputPath, saveOptions);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Failed to create the TIFF file at '{outputPath}'.");
+            throw new InvalidOperationException("The TIFF file was not created.");
 
-        // The program finishes automatically.
+        // Optionally, you could output a confirmation (not required for the task).
+        // Console.WriteLine($"TIFF saved to {Path.GetFullPath(outputPath)}");
     }
 }

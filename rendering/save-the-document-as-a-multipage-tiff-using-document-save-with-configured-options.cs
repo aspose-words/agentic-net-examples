@@ -7,39 +7,35 @@ public class Program
 {
     public static void Main()
     {
-        // Define output folder and ensure it exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Define output file path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Multipage.tiff");
 
-        // Create a sample document with several pages.
+        // Create a blank document and add several pages.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("First page.");
+        builder.Writeln("Page 1.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page.");
+        builder.Writeln("Page 2.");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Third page.");
+        builder.Writeln("Page 3.");
 
         // Configure image save options for a multipage TIFF.
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Render each page as a separate frame in the TIFF.
+            // Each page will be saved as a separate frame in the TIFF file.
             PageLayout = MultiPageLayout.TiffFrames(),
-            // Optional: set resolution (dpi) and compression.
-            Resolution = 300,
-            TiffCompression = TiffCompression.Lzw
+            // Optional: set resolution (dpi) for the rendered images.
+            Resolution = 300
         };
 
         // Save the document as a multipage TIFF.
-        string tiffPath = Path.Combine(outputDir, "Document.MultiPage.tiff");
-        doc.Save(tiffPath, saveOptions);
+        doc.Save(outputPath, options);
 
         // Verify that the file was created.
-        if (!File.Exists(tiffPath))
+        if (!File.Exists(outputPath))
             throw new InvalidOperationException("Failed to create the TIFF file.");
 
-        // Indicate successful completion.
-        Console.WriteLine("Multipage TIFF saved to: " + tiffPath);
+        Console.WriteLine($"Multipage TIFF saved successfully to: {outputPath}");
     }
 }

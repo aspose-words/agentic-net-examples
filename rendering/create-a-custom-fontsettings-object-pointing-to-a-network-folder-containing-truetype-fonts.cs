@@ -7,41 +7,49 @@ public class Program
 {
     public static void Main()
     {
-        // Define folders for the example.
-        string baseDir = Directory.GetCurrentDirectory();
-        string outputDir = Path.Combine(baseDir, "Output");
-        string fontDir = Path.Combine(baseDir, "NetworkFonts");
+        // Simulate a network folder that contains TrueType fonts.
+        string networkFontsFolder = Path.Combine(Directory.GetCurrentDirectory(), "NetworkFonts");
+        Directory.CreateDirectory(networkFontsFolder);
 
-        // Ensure the directories exist.
-        Directory.CreateDirectory(outputDir);
-        Directory.CreateDirectory(fontDir);
+        // Copy a known system font (e.g., Arial) into the simulated network folder.
+        // This ensures the folder actually contains a usable TrueType font.
+        string systemFontPath = FindSystemFont("Arial.ttf");
+        if (systemFontPath != null)
+        {
+            string destination = Path.Combine(networkFontsFolder, Path.GetFileName(systemFontPath));
+            File.Copy(systemFontPath, destination, true);
+        }
 
-        // Simulate a network folder using a UNC path.
-        // In a real scenario this would be something like "\\\\Server\\Share\\Fonts".
-        // Here we use a local UNC path that points to the folder we just created.
-        string networkFontPath = @"\\127.0.0.1\" + fontDir.TrimStart(Path.GetPathRoot(fontDir).ToCharArray());
-
-        // Create a simple document.
+        // Create a simple document that uses the copied font.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "CustomFont"; // Use a font that may not be installed.
-        builder.Writeln("This text is rendered using a custom font source.");
+        builder.Font.Name = "Arial";
+        builder.Writeln("This text is rendered with a font loaded from a network folder.");
 
-        // Configure custom FontSettings to point to the network folder.
+        // Configure FontSettings to point to the network font folder.
         FontSettings fontSettings = new FontSettings();
-        // The second argument indicates whether to scan subfolders.
-        fontSettings.SetFontsFolder(networkFontPath, true);
+        // 'true' enables recursive scanning of subfolders.
+        fontSettings.SetFontsFolder(networkFontsFolder, true);
         doc.FontSettings = fontSettings;
 
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "CustomFontSettings.pdf");
-        doc.Save(outputPath);
+        // Save the document to PDF to trigger layout and font resolution.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.pdf");
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Verify that the file was created.
+        // Verify that the PDF was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The document was not saved successfully.");
+            throw new InvalidOperationException("Failed to create the output PDF.");
+    }
 
-        // Indicate completion.
-        Console.WriteLine("Document saved to: " + outputPath);
+    // Helper method that searches system font folders for a specific font file.
+    private static string FindSystemFont(string fontFileName)
+    {
+        foreach (string folder in SystemFontSource.GetSystemFontFolders())
+        {
+            string candidate = Path.Combine(folder, fontFileName);
+            if (File.Exists(candidate))
+                return candidate;
+        }
+        return null;
     }
 }

@@ -7,30 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with some text.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello World!");
-
-        // Prepare an output folder.
+        // Prepare output directory
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "BlackWhiteCcitt4.tiff");
 
-        // Configure ImageSaveOptions for TIFF with CCITT4 compression.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            TiffCompression = TiffCompression.Ccitt4,
-            ImageColorMode = ImageColorMode.BlackAndWhite // Render as black‑white.
-        };
+        // Create a simple document
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Sample text for TIFF rendering.");
 
-        // Save the document as a TIFF image.
-        doc.Save(outputPath, options);
+        // Configure TIFF save options with CCITT4 compression and black‑white color mode
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
+        options.TiffCompression = TiffCompression.Ccitt4;
+        options.ImageColorMode = ImageColorMode.BlackAndWhite;
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
+        // Save the document as a TIFF file
+        string tiffPath = Path.Combine(outputDir, "SampleCcitt4.tiff");
+        doc.Save(tiffPath, options);
+
+        // Verify that the file was created
+        if (!File.Exists(tiffPath))
             throw new InvalidOperationException("TIFF file was not created.");
 
-        Console.WriteLine($"TIFF saved to: {outputPath}");
+        // Output file information
+        long fileSize = new FileInfo(tiffPath).Length;
+        Console.WriteLine($"TIFF saved to: {tiffPath}");
+        Console.WriteLine($"File size: {fileSize} bytes");
     }
 }

@@ -1,71 +1,55 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Fonts;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define a temporary folder that will act as a network share.
-        string networkSharePath = Path.Combine(Path.GetTempPath(), "NetworkShare");
+        // Base temporary directory for the demo
+        string baseDir = Path.Combine(Path.GetTempPath(), "AsposeDemo");
+        Directory.CreateDirectory(baseDir);
+
+        // Simulated network share folder
+        string networkSharePath = Path.Combine(baseDir, "NetworkShare");
         Directory.CreateDirectory(networkSharePath);
 
-        // Define a local folder for the rendered TIFF output.
-        string localOutputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(localOutputPath);
+        // Custom fonts folder
+        string customFontFolder = Path.Combine(baseDir, "CustomFonts");
+        Directory.CreateDirectory(customFontFolder);
 
-        // Define a custom font folder (can be empty; Aspose.Words will fallback to system fonts).
-        string customFontsPath = Path.Combine(Path.GetTempPath(), "CustomFonts");
-        Directory.CreateDirectory(customFontsPath);
-
-        // -----------------------------------------------------------------
-        // 1. Create a sample document locally and save it to the "network share".
-        // -----------------------------------------------------------------
+        // Create a sample DOCX in the simulated network share
+        string sourceDocPath = Path.Combine(networkSharePath, "Sample.docx");
         Document sampleDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("First page - loaded from a network share.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Second page - also from the network share.");
-
-        string sourceDocPath = Path.Combine(networkSharePath, "SampleDocument.docx");
+        builder.Writeln("Hello, Aspose.Words rendering to TIFF!");
         sampleDoc.Save(sourceDocPath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the document from the network share.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourceDocPath);
-
-        // -----------------------------------------------------------------
-        // 3. Configure custom font settings to point to the custom font folder.
-        // -----------------------------------------------------------------
+        // Configure FontSettings to use the custom fonts folder
         FontSettings fontSettings = new FontSettings();
-        fontSettings.SetFontsFolder(customFontsPath, recursive: true);
-        loadedDoc.FontSettings = fontSettings;
+        fontSettings.SetFontsFolder(customFontFolder, false);
 
-        // -----------------------------------------------------------------
-        // 4. Render the loaded document to a multipage TIFF image.
-        // -----------------------------------------------------------------
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            // Render at 300 DPI for reasonable quality.
-            Resolution = 300
-        };
+        // Load the document from the network share
+        Document doc = new Document(sourceDocPath);
+        // Apply the custom FontSettings to the loaded document
+        doc.FontSettings = fontSettings;
 
-        string outputTiffPath = Path.Combine(localOutputPath, "RenderedDocument.tiff");
-        loadedDoc.Save(outputTiffPath, tiffOptions);
+        // Prepare output directory for TIFF files
+        string outputDir = Path.Combine(baseDir, "Output");
+        Directory.CreateDirectory(outputDir);
+        string tiffPath = Path.Combine(outputDir, "Sample.tiff");
 
-        // -----------------------------------------------------------------
-        // 5. Validate that the TIFF file was created.
-        // -----------------------------------------------------------------
-        if (!File.Exists(outputTiffPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+        // Render the document to a multipage TIFF (all pages are rendered by default)
+        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff);
+        doc.Save(tiffPath, saveOptions);
 
-        // Optional: output basic information.
-        Console.WriteLine($"Document loaded from: {sourceDocPath}");
-        Console.WriteLine($"Custom fonts folder: {customFontsPath}");
-        Console.WriteLine($"TIFF rendered to: {outputTiffPath}");
-        Console.WriteLine($"Document page count: {loadedDoc.PageCount}");
+        // Verify that the TIFF file was created
+        if (!File.Exists(tiffPath))
+            throw new Exception("TIFF rendering failed: file not found.");
+
+        // Indicate success (non-interactive)
+        Console.WriteLine($"Document rendered to TIFF successfully: {tiffPath}");
     }
 }
