@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
@@ -8,16 +9,37 @@ public class Program
     public static void Main()
     {
         // Prepare output directory.
-        string baseDir = Directory.GetCurrentDirectory();
-        string artifactsDir = Path.Combine(baseDir, "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample source document with several heading levels.
-        // -----------------------------------------------------------------
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Create a sample source document with headings.
+        string sourcePath = Path.Combine(outputDir, "Source.docx");
+        CreateSampleDocument(sourcePath);
 
+        // Load the source document.
+        Document doc = new Document(sourcePath);
+
+        // Define split criteria: split at heading paragraphs up to level 2.
+        HtmlSaveOptions options = new HtmlSaveOptions
+        {
+            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
+            DocumentSplitHeadingLevel = 2
+        };
+
+        // Execute the split by saving the document.
+        string mainOutput = Path.Combine(outputDir, "Split.html");
+        doc.Save(mainOutput, options);
+
+        // Validate that split parts were created.
+        ValidateSplitOutputs(outputDir, "Split");
+    }
+
+    private static void CreateSampleDocument(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Add headings of various levels.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Heading #1");
 
@@ -36,48 +58,22 @@ public class Program
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
         builder.Writeln("Heading #6");
 
-        // Save the source document (optional, demonstrates loading from file).
-        string sourcePath = Path.Combine(artifactsDir, "Source.docx");
-        sourceDoc.Save(sourcePath);
+        doc.Save(filePath);
+    }
 
-        // -----------------------------------------------------------------
-        // 2. Load the source document.
-        // -----------------------------------------------------------------
-        Document doc = new Document(sourcePath);
-
-        // -----------------------------------------------------------------
-        // 3. Define split criteria – split at heading paragraphs up to level 2.
-        // -----------------------------------------------------------------
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+    private static void ValidateSplitOutputs(string folder, string baseName)
+    {
+        // Expected files: Split.html, Split-01.html, Split-02.html, Split-03.html
+        var files = Directory.GetFiles(folder, $"{baseName}*.html");
+        if (files.Length < 4)
         {
-            DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-            DocumentSplitHeadingLevel = 2
-        };
-
-        // -----------------------------------------------------------------
-        // 4. Execute the split operation by saving with the defined options.
-        // -----------------------------------------------------------------
-        string outputBase = Path.Combine(artifactsDir, "SplitDocument.html");
-        doc.Save(outputBase, saveOptions);
-
-        // -----------------------------------------------------------------
-        // 5. Validate that the expected split files were created.
-        // -----------------------------------------------------------------
-        string[] expectedFiles =
-        {
-            outputBase,
-            Path.Combine(artifactsDir, "SplitDocument-01.html"),
-            Path.Combine(artifactsDir, "SplitDocument-02.html"),
-            Path.Combine(artifactsDir, "SplitDocument-03.html")
-        };
-
-        foreach (string file in expectedFiles)
-        {
-            if (!File.Exists(file))
-                throw new FileNotFoundException($"Expected split file not found: {file}");
+            throw new InvalidOperationException($"Expected at least 4 HTML files after split, but found {files.Length}.");
         }
 
-        // Indicate successful completion.
-        Console.WriteLine("Document split completed successfully.");
+        Console.WriteLine("Split operation produced the following files:");
+        foreach (var file in files.OrderBy(f => f))
+        {
+            Console.WriteLine(file);
+        }
     }
 }

@@ -1,44 +1,89 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+namespace SplitDocumentExample
 {
-    public static void Main()
+    // Callback that saves the main combined file and each split part with deterministic names.
+    class CustomDocumentPartSavingCallback : IDocumentPartSavingCallback
     {
-        // Prepare an output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        private readonly string _outputDir;
+        private readonly string _mainFileName; // file name (with extension) for the combined document
+        private int _partIndex = 0;
 
-        // Create a sample document with three pages.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Page 1");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3");
-
-        // Create a DocumentSplitCriteria instance and set it to split at page breaks.
-        DocumentSplitCriteria splitCriteria = DocumentSplitCriteria.PageBreak;
-
-        // Configure HtmlSaveOptions to use the split criteria.
-        HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        public CustomDocumentPartSavingCallback(string outputDir, string mainFileName)
         {
-            DocumentSplitCriteria = splitCriteria
-        };
+            _outputDir = outputDir;
+            _mainFileName = mainFileName;
+        }
 
-        // Save the document; Aspose.Words will generate separate HTML files for each page.
-        string baseFileName = Path.Combine(outputDir, "SplitDocument.html");
-        doc.Save(baseFileName, saveOptions);
+        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+        {
+            // First part corresponds to the main file passed to Document.Save().
+            if (_partIndex == 0)
+            {
+                // Keep the original main file name.
+                args.DocumentPartFileName = _mainFileName;
+                args.DocumentPartStream = new FileStream(Path.Combine(_outputDir, _mainFileName), FileMode.Create);
+            }
+            else
+            {
+                // Subsequent parts are saved as Page_1.html, Page_2.html, …
+                string partFileName = $"Page_{_partIndex}.html";
+                args.DocumentPartFileName = partFileName;
+                args.DocumentPartStream = new FileStream(Path.Combine(_outputDir, partFileName), FileMode.Create);
+            }
 
-        // Verify that split files were created (the base file plus additional parts).
-        string[] splitFiles = Directory.GetFiles(outputDir, "SplitDocument*.html");
-        if (splitFiles.Length < 2)
-            throw new Exception("Split HTML files were not created as expected.");
+            // Close the stream after Aspose.Words finishes writing.
+            args.KeepDocumentPartStreamOpen = false;
+            _partIndex++;
+        }
+    }
 
-        Console.WriteLine($"Successfully created {splitFiles.Length} split HTML files in '{outputDir}'.");
+    public class Program
+    {
+        // Directory where output files will be written.
+        private static readonly string ArtifactsDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
+
+        public static void Main()
+        {
+            // Ensure a clean output folder.
+            if (Directory.Exists(ArtifactsDir))
+                Directory.Delete(ArtifactsDir, true);
+            Directory.CreateDirectory(ArtifactsDir);
+
+            // Build a sample document with three pages.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.Writeln("Page 1 content.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("Page 2 content.");
+            builder.InsertBreak(BreakType.PageBreak);
+            builder.Writeln("Page 3 content.");
+
+            // Name of the combined (first) HTML file.
+            const string combinedFileName = "Combined.html";
+
+            // Set up HTML save options to split the document at page breaks.
+            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+            {
+                DocumentSplitCriteria = DocumentSplitCriteria.PageBreak,
+                DocumentPartSavingCallback = new CustomDocumentPartSavingCallback(ArtifactsDir, combinedFileName)
+            };
+
+            // Save the document; the callback will create the combined file and the split pages.
+            string combinedFilePath = Path.Combine(ArtifactsDir, combinedFileName);
+            doc.Save(combinedFilePath, saveOptions);
+
+            // Verify that the expected number of split files were created (combined + one per page break).
+            string[] pageFiles = Directory.GetFiles(ArtifactsDir, "Page_*.html");
+            if (pageFiles.Length != doc.PageCount - 1) // page breaks = pages - 1
+                throw new InvalidOperationException($"Expected {doc.PageCount - 1} page files, but found {pageFiles.Length}.");
+
+            // Verify that the main combined file exists.
+            if (!File.Exists(combinedFilePath))
+                throw new FileNotFoundException("The combined HTML file was not created.", combinedFilePath);
+        }
     }
 }

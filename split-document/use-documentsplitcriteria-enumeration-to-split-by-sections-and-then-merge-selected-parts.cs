@@ -1,91 +1,91 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-namespace SplitAndMergeExample
+public class Program
 {
-    // Callback that assigns a custom file name for each split part when saving to HTML.
-    class SectionPartSavingCallback : IDocumentPartSavingCallback
+    public static void Main()
     {
-        private readonly string _outputFolder;
-        private int _partIndex = 0;
+        // Create a sample document with three sections.
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        public SectionPartSavingCallback(string outputFolder)
+        // Section 1
+        builder.Writeln("Section 1 - First paragraph.");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Section 2
+        builder.Writeln("Section 2 - First paragraph.");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        // Section 3
+        builder.Writeln("Section 3 - First paragraph.");
+
+        // Save the original document.
+        string originalPath = "Original.docx";
+        sourceDoc.Save(originalPath);
+
+        // Split the document by sections.
+        List<Document> splitList = new List<Document>();
+        foreach (Section sec in sourceDoc.Sections)
         {
-            _outputFolder = outputFolder;
+            Document part = new Document();
+            part.RemoveAllChildren(); // Remove the default empty section.
+
+            // Import the section from the source document into the new document.
+            NodeImporter importer = new NodeImporter(sourceDoc, part, ImportFormatMode.KeepSourceFormatting);
+            Section importedSection = (Section)importer.ImportNode(sec, true);
+            part.AppendChild(importedSection);
+            splitList.Add(part);
         }
 
-        void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
+        Document[] splitDocs = splitList.ToArray();
+
+        // Save each split part.
+        for (int i = 0; i < splitDocs.Length; i++)
         {
-            _partIndex++;
-            string fileName = $"SectionPart_{_partIndex}.html";
-            args.DocumentPartFileName = fileName;
-
-            // Ensure the output folder exists.
-            Directory.CreateDirectory(_outputFolder);
-            string fullPath = Path.Combine(_outputFolder, fileName);
-
-            // Save each part to its own file stream.
-            args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
+            string partPath = $"Part{i}.docx";
+            splitDocs[i].Save(partPath);
         }
-    }
 
-    class Program
-    {
-        static void Main()
+        // Validate that split parts were saved.
+        for (int i = 0; i < splitDocs.Length; i++)
         {
-            // Folder where all generated files will be placed.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+            string partPath = $"Part{i}.docx";
+            if (!File.Exists(partPath))
+                throw new FileNotFoundException($"Expected split part not found: {partPath}");
+        }
 
-            // 1. Create a sample document with three sections.
-            Document sourceDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Merge selected parts (e.g., first and third sections) into a new document.
+        Document mergedDoc = new Document();
+        mergedDoc.RemoveAllChildren(); // Start with an empty document.
 
-            builder.Writeln("Section 1 - Hello World!");
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-            builder.Writeln("Section 2 - Aspose.Words");
-            builder.InsertBreak(BreakType.SectionBreakNewPage);
-            builder.Writeln("Section 3 - Split and Merge");
+        // Define which parts to merge (indices).
+        int[] partsToMerge = { 0, 2 }; // first and third sections.
 
-            // 2. Save the document to HTML, splitting at each section break.
-            HtmlSaveOptions saveOptions = new HtmlSaveOptions
+        foreach (int index in partsToMerge)
+        {
+            if (index < 0 || index >= splitDocs.Length)
+                throw new ArgumentOutOfRangeException($"Invalid part index: {index}");
+
+            Document part = splitDocs[index];
+            foreach (Section sec in part.Sections)
             {
-                DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-                DocumentPartSavingCallback = new SectionPartSavingCallback(outputDir)
-            };
-
-            string splitBasePath = Path.Combine(outputDir, "SplitDocument.html");
-            sourceDoc.Save(splitBasePath, saveOptions);
-
-            // 3. Load selected split parts (e.g., part 1 and part 3).
-            string part1Path = Path.Combine(outputDir, "SectionPart_1.html");
-            string part3Path = Path.Combine(outputDir, "SectionPart_3.html");
-
-            if (!File.Exists(part1Path) || !File.Exists(part3Path))
-                throw new FileNotFoundException("One of the split parts was not created.");
-
-            Document part1 = new Document(part1Path);
-            Document part3 = new Document(part3Path);
-
-            // 4. Merge the selected parts into a new document.
-            Document mergedDoc = new Document();
-            // Remove the default empty section created by the constructor.
-            mergedDoc.RemoveAllChildren();
-
-            // Append the first part.
-            mergedDoc.AppendDocument(part1, ImportFormatMode.KeepSourceFormatting);
-            // Append the third part.
-            mergedDoc.AppendDocument(part3, ImportFormatMode.KeepSourceFormatting);
-
-            // 5. Save the merged document.
-            string mergedPath = Path.Combine(outputDir, "Merged.docx");
-            mergedDoc.Save(mergedPath);
-
-            // Simple validation to ensure the merged file exists.
-            if (!File.Exists(mergedPath))
-                throw new Exception("Merged document was not saved correctly.");
+                NodeImporter importer = new NodeImporter(part, mergedDoc, ImportFormatMode.KeepSourceFormatting);
+                Section importedSection = (Section)importer.ImportNode(sec, true);
+                mergedDoc.AppendChild(importedSection);
+            }
         }
+
+        // Save the merged document.
+        string mergedPath = "Merged.docx";
+        mergedDoc.Save(mergedPath);
+
+        // Validate merged document exists.
+        if (!File.Exists(mergedPath))
+            throw new FileNotFoundException($"Merged document not found: {mergedPath}");
+
+        // Simple console output to indicate success (no user interaction required).
+        Console.WriteLine("Document splitting and merging completed successfully.");
     }
 }

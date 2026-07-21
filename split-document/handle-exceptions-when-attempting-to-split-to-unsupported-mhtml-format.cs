@@ -10,11 +10,11 @@ public class Program
         // Create a simple document with two sections.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("First section");
+        builder.Writeln("First section content.");
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Second section");
+        builder.Writeln("Second section content.");
 
-        // Prepare an output folder.
+        // Prepare an output directory.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
         string outputPath = Path.Combine(outputDir, "SplitMhtml.mhtml");
@@ -27,14 +27,14 @@ public class Program
 
         try
         {
-            // Attempt to save; this should fail because splitting is not supported for MHTML.
+            // Attempt to save the document with splitting enabled.
+            // This operation is not supported for MHTML and should throw an exception.
             doc.Save(outputPath, saveOptions);
-            // If no exception is thrown, indicate unexpected behavior.
-            Console.WriteLine("Document saved without exception – this is unexpected for MHTML splitting.");
+            Console.WriteLine("Document saved successfully (unexpected).");
         }
         catch (Exception ex)
         {
-            // Expected path: an exception is thrown.
+            // Expected: an exception indicating that splitting is not supported for MHTML.
             Console.WriteLine($"Caught expected exception: {ex.GetType().Name} - {ex.Message}");
         }
     }

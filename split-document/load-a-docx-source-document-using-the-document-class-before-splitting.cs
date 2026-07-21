@@ -1,78 +1,53 @@
 using System;
 using System.IO;
-using Aspose.Words; // Core Aspose.Words namespace (contains Document, DocumentBuilder, NodeImporter, etc.)
+using Aspose.Words;
+using Aspose.Words.Saving;
 
-public class Program
+public class SplitDocumentExample
 {
     public static void Main()
     {
-        // Define an output directory for all generated files.
+        // Define an output directory and ensure it exists.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample source document with three sections.
-        // -----------------------------------------------------------------
-        string sourcePath = Path.Combine(outputDir, "Source.docx");
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Path for the sample source DOCX file.
+        string sourceDocPath = Path.Combine(outputDir, "Sample.docx");
 
-        // Section 1
-        builder.Writeln("Section 1 - First paragraph.");
+        // Create a sample document with three sections.
+        Document sampleDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Section 1 - First part");
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Section 2
-        builder.Writeln("Section 2 - First paragraph.");
+        builder.Writeln("Section 2 - Second part");
         builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("Section 3 - Third part");
+        sampleDoc.Save(sourceDocPath);
 
-        // Section 3
-        builder.Writeln("Section 3 - First paragraph.");
+        // Load the DOCX source document using the Document class.
+        Document doc = new Document(sourceDocPath);
 
-        // Save the source document.
-        sourceDoc.Save(sourcePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the source document using the Document class.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(sourcePath);
-
-        // -----------------------------------------------------------------
-        // 3. Split the loaded document by its sections.
-        //    Each section is saved as an independent DOCX file.
-        // -----------------------------------------------------------------
-        for (int i = 0; i < loadedDoc.Sections.Count; i++)
+        // Configure HtmlSaveOptions to split the document at each section break.
+        HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
-            // Create a new empty document.
-            Document splitDoc = new Document();
+            DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak
+        };
 
-            // Remove the default empty section that a new Document contains.
-            splitDoc.RemoveAllChildren();
+        // Save the document; Aspose.Words will create multiple HTML files.
+        string baseHtmlPath = Path.Combine(outputDir, "SplitDocument.html");
+        doc.Save(baseHtmlPath, saveOptions);
 
-            // Import the current section from the loaded document into the new document.
-            // NodeImporter handles style, list and other metadata translation.
-            NodeImporter importer = new NodeImporter(loadedDoc, splitDoc, ImportFormatMode.KeepSourceFormatting);
-            Node importedSection = importer.ImportNode(loadedDoc.Sections[i], true);
+        // Validate that the split output files were created.
+        bool baseExists = File.Exists(baseHtmlPath);
+        bool part1Exists = File.Exists(Path.Combine(outputDir, "SplitDocument-01.html"));
+        bool part2Exists = File.Exists(Path.Combine(outputDir, "SplitDocument-02.html"));
 
-            // Append the imported section to the split document.
-            splitDoc.AppendChild(importedSection);
-
-            // Save the split document.
-            string splitPath = Path.Combine(outputDir, $"Section_{i + 1}.docx");
-            splitDoc.Save(splitPath);
-
-            // Simple validation that the file was created.
-            if (!File.Exists(splitPath))
-                throw new InvalidOperationException($"Failed to create split file: {splitPath}");
+        if (!baseExists || !part1Exists || !part2Exists)
+        {
+            throw new Exception("One or more split HTML files were not created as expected.");
         }
 
-        // -----------------------------------------------------------------
-        // 4. Report the results.
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Source document created at: {sourcePath}");
-        Console.WriteLine("Split documents:");
-        foreach (string file in Directory.GetFiles(outputDir, "Section_*.docx"))
-        {
-            Console.WriteLine($" - {file}");
-        }
+        // Indicate successful completion.
+        Console.WriteLine("Document split completed successfully. Files are located in: " + outputDir);
     }
 }

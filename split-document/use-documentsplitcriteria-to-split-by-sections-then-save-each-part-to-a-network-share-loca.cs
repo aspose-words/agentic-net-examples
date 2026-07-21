@@ -5,80 +5,85 @@ using Aspose.Words.Saving;
 
 public class Program
 {
+    // Entry point of the console application.
     public static void Main()
     {
+        // Define a folder that represents the network share where split parts will be saved.
+        // In a real scenario this could be a UNC path like @"\\ServerName\ShareFolder".
+        string networkSharePath = Path.Combine(Environment.CurrentDirectory, "NetworkShare");
+        Directory.CreateDirectory(networkSharePath);
+
         // Create a sample document with three sections.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        Document doc = CreateSampleDocument();
 
-        builder.Writeln("Content of Section 1");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Content of Section 2");
-        builder.InsertBreak(BreakType.SectionBreakNewPage);
-        builder.Writeln("Content of Section 3");
-
-        // Simulate a network share location (use a local folder for the demo).
-        string networkShareFolder = Path.Combine(Path.GetTempPath(), "NetworkShare");
-        Directory.CreateDirectory(networkShareFolder);
-
-        // Base file name for the main HTML document.
-        string baseFileName = "SplitDocument.html";
-
-        // Configure HTML save options to split by section.
+        // Configure HTML save options to split the document by section breaks.
         HtmlSaveOptions saveOptions = new HtmlSaveOptions
         {
             DocumentSplitCriteria = DocumentSplitCriteria.SectionBreak,
-            DocumentPartSavingCallback = new NetworkSharePartSavingCallback(networkShareFolder, baseFileName, DocumentSplitCriteria.SectionBreak)
+            // The base file name is required; the callback will override the actual part names.
+            // It can be any valid file name; the parts will be saved via the callback.
+            DocumentPartSavingCallback = new SectionSplitCallback(networkSharePath, "SplitDocument")
         };
 
-        // Save the document; parts will be written to the network share folder.
-        string mainOutputPath = Path.Combine(networkShareFolder, baseFileName);
-        doc.Save(mainOutputPath, saveOptions);
+        // Save the document. The callback will write each section to a separate file in the network share.
+        string dummyOutputPath = Path.Combine(networkSharePath, "SplitDocument.html");
+        doc.Save(dummyOutputPath, saveOptions);
 
-        // Verify that at least one split part was created.
-        string[] partFiles = Directory.GetFiles(networkShareFolder, $"{Path.GetFileNameWithoutExtension(baseFileName)} part*{Path.GetExtension(baseFileName)}");
-        if (partFiles.Length == 0)
-            throw new InvalidOperationException("No document parts were saved.");
+        // Verify that the expected number of split files were created.
+        int expectedParts = doc.Sections.Count;
+        int actualParts = Directory.GetFiles(networkSharePath, "SplitDocument_part*.html").Length;
 
-        // Optional: output the list of created files (not required for the task).
-        foreach (string file in partFiles)
-            Console.WriteLine($"Created part: {file}");
+        if (actualParts != expectedParts)
+        {
+            throw new InvalidOperationException(
+                $"Expected {expectedParts} split parts, but found {actualParts} in the network share.");
+        }
+
+        // Optionally, indicate success (no interactive output required).
     }
 
-    // Callback that redirects each document part to the specified network share folder.
-    private class NetworkSharePartSavingCallback : IDocumentPartSavingCallback
+    // Creates a document containing three sections with simple text.
+    private static Document CreateSampleDocument()
     {
-        private readonly string _folder;
-        private readonly string _baseFileName;
-        private readonly DocumentSplitCriteria _criteria;
-        private int _partIndex;
+        Document document = new Document();
+        DocumentBuilder builder = new DocumentBuilder(document);
 
-        public NetworkSharePartSavingCallback(string folder, string baseFileName, DocumentSplitCriteria criteria)
+        builder.Writeln("Section 1 - First paragraph.");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        builder.Writeln("Section 2 - First paragraph.");
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        builder.Writeln("Section 3 - First paragraph.");
+
+        return document;
+    }
+
+    // Callback that redirects each split part to a file in the specified network share.
+    private class SectionSplitCallback : IDocumentPartSavingCallback
+    {
+        private readonly string _sharePath;
+        private readonly string _baseFileName;
+        private int _partIndex = 0;
+
+        public SectionSplitCallback(string sharePath, string baseFileName)
         {
-            _folder = folder;
+            _sharePath = sharePath;
             _baseFileName = baseFileName;
-            _criteria = criteria;
-            _partIndex = 0;
         }
 
         void IDocumentPartSavingCallback.DocumentPartSaving(DocumentPartSavingArgs args)
         {
-            // Determine a readable part type name (optional, for naming).
-            string partType = _criteria switch
-            {
-                DocumentSplitCriteria.PageBreak => "Page",
-                DocumentSplitCriteria.ColumnBreak => "Column",
-                DocumentSplitCriteria.SectionBreak => "Section",
-                DocumentSplitCriteria.HeadingParagraph => "Heading",
-                _ => "Part"
-            };
+            // Increment part counter.
+            _partIndex++;
 
-            // Build a unique file name for the part.
-            string partFileName = $"{Path.GetFileNameWithoutExtension(_baseFileName)} part {++_partIndex} of {partType}{Path.GetExtension(args.DocumentPartFileName)}";
+            // Build a unique file name for this part.
+            string partFileName = $"{_baseFileName}_part{_partIndex}.html";
 
-            // Set the file name (without path) and provide a stream pointing to the network share folder.
-            args.DocumentPartFileName = partFileName;
-            args.DocumentPartStream = new FileStream(Path.Combine(_folder, partFileName), FileMode.Create);
+            // Set the stream to write the part directly to the network share.
+            string fullPath = Path.Combine(_sharePath, partFileName);
+            args.DocumentPartStream = new FileStream(fullPath, FileMode.Create);
+            // Ensure Aspose.Words closes the stream after writing.
             args.KeepDocumentPartStreamOpen = false;
         }
     }

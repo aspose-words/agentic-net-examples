@@ -4,80 +4,75 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class SplitEpubIntoHtmlChapters
+public class Program
 {
     public static void Main()
     {
         // Define a folder for all generated files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample document with heading paragraphs that will act as chapters.
+        // 1. Create a sample document that will be saved as EPUB.
         // -----------------------------------------------------------------
         Document sampleDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sampleDoc);
 
-        // Chapter 1
+        // First chapter.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 1");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the first chapter. It contains some sample text to demonstrate splitting.");
+        builder.Writeln("Content of the first chapter.");
 
-        // Chapter 2
+        // Second chapter.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Chapter 2");
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is the second chapter. More sample text follows.");
+        builder.Writeln("Content of the second chapter.");
 
-        // Chapter 3
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 3");
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Third chapter content goes here.");
-
-        // Save the document as EPUB – this will be our source file.
-        string epubPath = Path.Combine(outputDir, "Sample.epub");
-        sampleDoc.Save(epubPath, SaveFormat.Epub);
+        // Save the sample as EPUB – this will be our source file.
+        string sourceEpubPath = Path.Combine(artifactsDir, "Source.epub");
+        sampleDoc.Save(sourceEpubPath, SaveFormat.Epub);
 
         // -----------------------------------------------------------------
-        // 2. Load the EPUB and split it into separate HTML files per chapter.
+        // 2. Load the EPUB source document.
         // -----------------------------------------------------------------
-        Document epubDoc = new Document(epubPath);
+        Document epubDoc = new Document(sourceEpubPath);
 
-        // Configure HTML save options to split at heading paragraphs (level 1 = chapters).
+        // -----------------------------------------------------------------
+        // 3. Configure HtmlSaveOptions to split at heading paragraphs.
+        // -----------------------------------------------------------------
         HtmlSaveOptions htmlOptions = new HtmlSaveOptions(SaveFormat.Html)
         {
             DocumentSplitCriteria = DocumentSplitCriteria.HeadingParagraph,
-            DocumentSplitHeadingLevel = 1 // split only at Heading 1 styles.
+            DocumentSplitHeadingLevel = 1 // Split at Heading 1 only.
         };
 
-        // Base name for the first HTML file; additional parts will be created automatically.
-        string baseHtmlPath = Path.Combine(outputDir, "Chapter.html");
-        epubDoc.Save(baseHtmlPath, htmlOptions);
+        // Base name for the output HTML files.
+        string baseHtmlName = Path.Combine(artifactsDir, "Chapter.html");
+
+        // Save the document; Aspose.Words will create multiple HTML files.
+        epubDoc.Save(baseHtmlName, htmlOptions);
 
         // -----------------------------------------------------------------
-        // 3. Validate that the expected split files were created.
+        // 4. Validate that the expected split files were created.
         // -----------------------------------------------------------------
-        // The main file plus one file per chapter (the first chapter is in the main file).
-        string[] htmlFiles = Directory.GetFiles(outputDir, "Chapter*.html")
-                                      .OrderBy(f => f)
-                                      .ToArray();
+        // The first part keeps the original name, subsequent parts get a suffix like "-01.html".
+        string[] splitFiles = Directory.GetFiles(artifactsDir, "Chapter*.html")
+                                       .OrderBy(f => f)
+                                       .ToArray();
 
-        // We expect at least three files: Chapter.html, Chapter-01.html, Chapter-02.html, Chapter-03.html.
-        // The exact naming depends on Aspose.Words version; we check that the count matches the number of chapters.
-        int expectedChapterCount = 3; // we created three chapters.
-        if (htmlFiles.Length < expectedChapterCount)
+        // Expect at least two files (two chapters).
+        if (splitFiles.Length < 2)
         {
-            throw new InvalidOperationException(
-                $"Expected at least {expectedChapterCount} HTML files after splitting, but found {htmlFiles.Length}.");
+            throw new InvalidOperationException($"Expected at least 2 split HTML files, but found {splitFiles.Length}.");
         }
 
-        // Optional: output the list of generated files.
+        // Output the list of generated files (optional, for verification).
         Console.WriteLine("Generated HTML chapter files:");
-        foreach (string file in htmlFiles)
+        foreach (string file in splitFiles)
         {
-            Console.WriteLine(" - " + Path.GetFileName(file));
+            Console.WriteLine($"- {Path.GetFileName(file)}");
         }
     }
 }
