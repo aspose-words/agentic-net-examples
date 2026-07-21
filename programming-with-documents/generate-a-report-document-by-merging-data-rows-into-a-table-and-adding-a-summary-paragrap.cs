@@ -1,78 +1,60 @@
 using System;
 using System.Data;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
-namespace AsposeWordsReport
+public class ReportGenerator
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Prepare sample data
-            DataTable table = new DataTable("ReportData");
-            table.Columns.Add("Product");
-            table.Columns.Add("Quantity", typeof(int));
-            table.Columns.Add("Price", typeof(decimal));
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            table.Rows.Add("Apple", 10, 0.5m);
-            table.Rows.Add("Banana", 5, 0.3m);
-            table.Rows.Add("Carrot", 7, 0.2m);
+        // Insert a mail‑merge region start field.
+        builder.InsertField(" MERGEFIELD TableStart:Data ");
 
-            // Create a new blank document
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Build a simple two‑column table with merge fields for each column.
+        builder.StartTable();
 
-            // Insert a title
-            builder.Writeln("Sales Report");
-            builder.Writeln();
+        // Header row (optional – not part of the merge region).
+        builder.InsertCell();
+        builder.Write("Product");
+        builder.InsertCell();
+        builder.Write("Quantity");
+        builder.EndRow();
 
-            // Start the table
-            Table wordTable = builder.StartTable();
+        // Data row – contains the fields that will be populated by the merge.
+        builder.InsertCell();
+        builder.InsertField(" MERGEFIELD Product ");
+        builder.InsertCell();
+        builder.InsertField(" MERGEFIELD Quantity ");
+        builder.EndRow();
 
-            // Header row
-            builder.InsertCell();
-            builder.Font.Bold = true;
-            builder.Write("Product");
-            builder.InsertCell();
-            builder.Write("Quantity");
-            builder.InsertCell();
-            builder.Write("Price");
-            builder.EndRow();
+        builder.EndTable();
 
-            // Data rows
-            builder.Font.Bold = false;
-            foreach (DataRow row in table.Rows)
-            {
-                builder.InsertCell();
-                builder.Write(row["Product"].ToString());
+        // Insert the mail‑merge region end field.
+        builder.InsertField(" MERGEFIELD TableEnd:Data ");
 
-                builder.InsertCell();
-                builder.Write(row["Quantity"].ToString());
+        // Prepare a DataTable that will serve as the data source for the merge.
+        DataTable data = new DataTable("Data");
+        data.Columns.Add("Product", typeof(string));
+        data.Columns.Add("Quantity", typeof(int));
 
-                builder.InsertCell();
-                builder.Write(string.Format("{0:C}", row["Price"]));
-                builder.EndRow();
-            }
+        data.Rows.Add("Apples", 120);
+        data.Rows.Add("Bananas", 85);
+        data.Rows.Add("Cherries", 60);
 
-            // End the table
-            builder.EndTable();
+        // Execute the mail merge with regions – this will repeat the table row for each DataRow.
+        doc.MailMerge.ExecuteWithRegions(data);
 
-            // Add a summary paragraph
-            builder.Writeln();
-            int totalRows = table.Rows.Count;
-            decimal totalAmount = 0;
-            foreach (DataRow row in table.Rows)
-            {
-                totalAmount += (int)row["Quantity"] * (decimal)row["Price"];
-            }
-            builder.Writeln($"Total items: {totalRows}");
-            builder.Writeln($"Grand total: {totalAmount:C}");
+        // After the merge, add a summary paragraph that shows the total number of rows.
+        DocumentBuilder summaryBuilder = new DocumentBuilder(doc);
+        summaryBuilder.MoveToDocumentEnd();
+        summaryBuilder.Writeln();
+        summaryBuilder.Writeln($"Total products listed: {data.Rows.Count}");
 
-            // Save the document
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-            doc.Save(outputPath);
-        }
+        // Save the final report to the local file system.
+        doc.Save("Report.docx");
     }
 }

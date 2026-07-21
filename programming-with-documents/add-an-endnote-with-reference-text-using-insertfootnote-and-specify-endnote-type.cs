@@ -3,29 +3,26 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Notes;
 
-namespace EndnoteExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
+        // Create output folder and define file name
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputFolder);
+        string outputFile = Path.Combine(outputFolder, "EndnoteExample.docx");
 
-            // Initialize DocumentBuilder for the document.
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Write some body text that will be referenced by the endnote.
-            builder.Write("This is some sample text that will have an endnote.");
+        // Add some text to the document body
+        builder.Write("This text will be referenced by an endnote.");
 
-            // Insert an endnote with the specified reference text.
-            builder.InsertFootnote(FootnoteType.Endnote, "This is the endnote content.");
+        // Insert an endnote with the specified reference text
+        builder.InsertFootnote(FootnoteType.Endnote, "Endnote comment regarding referenced text.");
 
-            // Define the output file path (in the current working directory).
-            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "EndnoteExample.docx");
-
-            // Save the document to the file system.
-            doc.Save(outputPath);
-        }
+        // Save the document to the output path
+        doc.Save(outputFile);
     }
 }

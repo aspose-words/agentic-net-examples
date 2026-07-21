@@ -1,6 +1,7 @@
 using System;
 using Aspose.Words;
 using Aspose.Words.Tables;
+using Aspose.Words.Fields;
 
 public class Program
 {
@@ -10,55 +11,58 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with a header and three data rows.
-        Table table = builder.StartTable();
+        // Build a simple 3‑row table with numeric values in the first column.
+        builder.StartTable();
 
         // Header row.
         builder.InsertCell();
         builder.Write("Item");
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Write("Value");
         builder.EndRow();
 
-        // First data row.
-        builder.InsertCell();
-        builder.Write("Apples");
-        builder.InsertCell();
-        builder.Write("10");
-        builder.EndRow();
+        // Data rows.
+        int[] numbers = { 10, 20, 30 };
+        foreach (int num in numbers)
+        {
+            builder.InsertCell();
+            builder.Write($"Number {num}");
+            builder.InsertCell();
+            builder.Write(num.ToString());
+            builder.EndRow();
+        }
 
-        // Second data row.
+        // Row that will contain the sum formula in the second column.
         builder.InsertCell();
-        builder.Write("Bananas");
+        builder.Write("Sum");
         builder.InsertCell();
-        builder.Write("20");
-        builder.EndRow();
 
-        // Third data row.
-        builder.InsertCell();
-        builder.Write("Carrots");
-        builder.InsertCell();
-        builder.Write("30");
-        builder.EndRow();
+        // Start a bookmark that will surround the formula field.
+        builder.StartBookmark("SumCell");
 
-        // Finish the table.
+        // Insert a formula field that sums the cells above in this column.
+        // Use the overload that accepts a field code string.
+        builder.InsertField("= SUM(ABOVE) ");
+
+        // End the bookmark.
+        builder.EndBookmark("SumCell");
+
+        // End the table.
         builder.EndTable();
 
         // Insert a new paragraph after the table.
         builder.Writeln();
 
-        // Write a label for the total.
-        builder.Write("Total quantity: ");
+        // Write a description and insert a REF field that displays the bookmarked sum.
+        builder.Write("Total sum of the column: ");
+        // Insert a REF field that references the bookmark "SumCell".
+        builder.InsertField("REF SumCell");
 
-        // Insert a formula field that sums the numbers above in the same column.
-        // The field code "=SUM(ABOVE)" tells Word to add all numeric values in the column above this cell.
-        // Use the overload that does not update immediately; we will update all fields later.
-        builder.InsertField("=SUM(ABOVE)", "");
-
-        // Recalculate all fields so the SUM field shows the correct result.
+        // Update all fields in the document so that the formula and REF fields show correct results.
         doc.UpdateFields();
 
-        // Save the document to disk.
-        doc.Save("TableSumField.docx");
+        // Save the document to the local file system.
+        string outputPath = "Output.docx";
+        doc.Save(outputPath);
     }
 }

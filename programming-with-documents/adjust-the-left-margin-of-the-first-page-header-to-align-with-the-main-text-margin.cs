@@ -1,6 +1,6 @@
 using System;
-using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -10,28 +10,26 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set a custom left margin for the main body (1 inch = 72 points).
-        double leftMargin = ConvertUtil.InchToPoint(1.0);
-        builder.PageSetup.LeftMargin = leftMargin;
+        // Set the left margin for the main body (e.g., 1 inch).
+        builder.PageSetup.LeftMargin = ConvertUtil.InchToPoint(1.0);
 
-        // Enable a different header for the first page.
+        // Enable a distinct header for the first page.
         builder.PageSetup.DifferentFirstPageHeaderFooter = true;
 
         // Move the cursor to the first‑page header.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
 
-        // Write header text.
+        // Insert header text.
         builder.Writeln("First Page Header");
 
-        // Align the header text with the main body left margin by setting the paragraph's left indent.
-        builder.CurrentParagraph.ParagraphFormat.LeftIndent = leftMargin;
+        // Align the header's left indent with the body left margin.
+        builder.CurrentParagraph.ParagraphFormat.LeftIndent = builder.PageSetup.LeftMargin;
 
-        // Return to the main document body.
+        // Return to the main section body.
         builder.MoveToSection(0);
-        builder.Writeln("This is the main document body. The first‑page header aligns with the left margin.");
+        builder.Writeln("Body text starts here.");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "FirstPageHeaderMargin.docx");
-        doc.Save(outputPath);
+        // Save the document to a file.
+        doc.Save("FirstPageHeaderAligned.docx");
     }
 }

@@ -1,41 +1,42 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
-public class Program
+namespace AsposeWordsRomanList
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // Create a list based on the default numbered template.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
+            // Create a DocumentBuilder which will be used to insert content.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Configure the first level of the list to use uppercase Roman numerals.
-        ListLevel level0 = list.ListLevels[0];
-        level0.NumberStyle = NumberStyle.UppercaseRoman;
-        // Optional: define the format pattern (e.g., "I.", "II.", ...).
-        level0.NumberFormat = "%1.";
+            // Add a new list based on the built‑in numbered template.
+            List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Use DocumentBuilder to add paragraphs that belong to the list.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ListFormat.List = list;
+            // Configure the first level (level 0) to use upper‑case Roman numerals.
+            ListLevel level0 = list.ListLevels[0];
+            level0.NumberStyle = NumberStyle.UppercaseRoman;   // I, II, III, ...
+            level0.NumberFormat = "%1.";                       // Append a period after the number.
 
-        builder.Writeln("First item");
-        builder.Writeln("Second item");
-        builder.Writeln("Third item");
+            // Apply the list to the builder.
+            builder.ListFormat.List = list;
+            builder.ListFormat.ListLevelNumber = 0; // Ensure we are on the first level.
 
-        // End the list formatting.
-        builder.ListFormat.RemoveNumbers();
+            // Add some list items.
+            builder.Writeln("First item");
+            builder.Writeln("Second item");
+            builder.Writeln("Third item");
+            builder.Writeln("Fourth item");
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
+            // End the list formatting.
+            builder.ListFormat.RemoveNumbers();
 
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "RomanNumberedList.docx");
-        doc.Save(outputPath, SaveFormat.Docx);
+            // Save the document to the local file system.
+            doc.Save("RomanList.docx");
+        }
     }
 }

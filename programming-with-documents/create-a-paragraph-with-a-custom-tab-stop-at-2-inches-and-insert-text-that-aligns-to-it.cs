@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -7,16 +8,21 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
+
+        // Create a DocumentBuilder attached to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a custom tab stop at 2 inches (144 points) aligned to the left.
+        // Add a custom tab stop at 2 inches (144 points) with left alignment.
+        // TabLeader.None means no leader line will be displayed.
         builder.ParagraphFormat.TabStops.Add(144.0, TabAlignment.Left, TabLeader.None);
 
-        // Insert a paragraph with text before and after the tab character.
-        // The text after the tab will align to the custom tab stop.
-        builder.Writeln("First part" + ControlChar.Tab + "Second part aligned at 2 inches");
+        // Insert text that uses the custom tab stop.
+        // The text before the tab will be left-aligned, and the text after the tab
+        // will start at the 2‑inch position.
+        builder.Writeln("Item" + ControlChar.Tab + "Aligned at 2 inches");
 
-        // Save the document to the current working directory.
-        doc.Save("CustomTabStop.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "CustomTabStop.docx");
+        doc.Save(outputPath);
     }
 }

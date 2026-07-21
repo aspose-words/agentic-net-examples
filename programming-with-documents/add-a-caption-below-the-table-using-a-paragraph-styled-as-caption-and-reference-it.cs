@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
-using Aspose.Words.Fields;
 
 public class Program
 {
@@ -12,49 +11,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple 2x2 table.
-        Table table = builder.StartTable();
+        // Insert a simple 2x2 table.
+        builder.StartTable();
         builder.InsertCell();
-        builder.Write("Cell 1,1");
+        builder.Write("R1C1");
         builder.InsertCell();
-        builder.Write("Cell 1,2");
+        builder.Write("R1C2");
         builder.EndRow();
 
         builder.InsertCell();
-        builder.Write("Cell 2,1");
+        builder.Write("R2C1");
         builder.InsertCell();
-        builder.Write("Cell 2,2");
+        builder.Write("R2C2");
         builder.EndRow();
         builder.EndTable();
 
-        // Insert a caption below the table.
-        // The caption will be styled with the built‑in "Caption" style and wrapped in a bookmark.
+        // Add a caption paragraph below the table.
+        // The caption is placed inside a bookmark so it can be referenced later.
         builder.StartBookmark("TableCaption");
-
-        // Move to a new paragraph for the caption.
-        builder.Writeln();
-
-        // Apply the built‑in Caption style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Caption;
-
-        // Insert a SEQ field that generates the table number (e.g., "Table 1").
-        builder.InsertField("SEQ Table \\* ARABIC");
-
-        // Add the caption text after the number.
-        builder.Write(" Sample Table");
-
-        // End the bookmark that surrounds the caption.
+        builder.Writeln("Table 1: Sample table.");
         builder.EndBookmark("TableCaption");
 
-        // Add a paragraph that references the caption using a REF field.
-        builder.Writeln(); // Ensure we are on a new paragraph.
-        builder.Write("See ");
-        // The \\h switch makes the reference a hyperlink.
-        builder.InsertField(" REF TableCaption \\h ");
-        builder.Writeln(" for details.");
+        // Insert some intervening text.
+        builder.Writeln();
+        builder.Writeln("The following reference points to the table above:");
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TableWithCaption.docx");
+        // Insert a cross‑reference (REF) field that points to the caption bookmark.
+        // The \\h switch makes the reference a hyperlink.
+        builder.InsertField("REF TableCaption \\h");
+
+        // Update fields so that the reference shows the correct caption text.
+        doc.UpdateFields();
+
+        // Save the document to the local file system.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
         doc.Save(outputPath);
     }
 }

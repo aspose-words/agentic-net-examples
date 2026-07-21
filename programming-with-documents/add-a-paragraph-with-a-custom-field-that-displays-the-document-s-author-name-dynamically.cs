@@ -1,7 +1,7 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
-using Aspose.Words.Properties;
 
 public class Program
 {
@@ -11,23 +11,27 @@ public class Program
         Document doc = new Document();
 
         // Set the built‑in Author property (this value will be shown by the field).
-        doc.BuiltInDocumentProperties.Author = "Alice Example";
+        doc.BuiltInDocumentProperties.Author = "John Doe";
 
-        // Provide a fallback author name in case the Author property is empty.
-        doc.FieldOptions.DefaultDocumentAuthor = "Default Author";
-
-        // Use DocumentBuilder to add a paragraph and the AUTHOR field.
+        // Initialize a DocumentBuilder for editing the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Document created by:");
 
-        // Insert an AUTHOR field that displays the current Author property.
+        // Write some introductory text.
+        builder.Write("Document author: ");
+
+        // Insert an AUTHOR field and update it so it displays the current author.
         FieldAuthor authorField = (FieldAuthor)builder.InsertField(FieldType.FieldAuthor, true);
-        authorField.Update(); // Ensure the field result is up‑to‑date.
+        authorField.Update();
+
+        // Finish the paragraph.
+        builder.Writeln();
+
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Save the document.
-        string outputDir = "Output";
-        System.IO.Directory.CreateDirectory(outputDir);
-        string outputPath = System.IO.Path.Combine(outputDir, "AuthorField.docx");
+        string outputPath = Path.Combine(outputDir, "AuthorField.docx");
         doc.Save(outputPath);
     }
 }

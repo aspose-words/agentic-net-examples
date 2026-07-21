@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Tables;
 
@@ -8,51 +7,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and a DocumentBuilder.
+        // Create a new blank document and a DocumentBuilder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Build a simple table with a header row and two data rows.
+        // Start a table.
         Table table = builder.StartTable();
 
-        // Header row.
+        // ----- Header row -----
         builder.InsertCell();
-        builder.Write("Product");
+        builder.Write("Header 1");
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Write("Header 2");
         builder.EndRow();
 
-        // First data row.
+        // ----- Data row -----
         builder.InsertCell();
-        builder.Write("Apples");
+        builder.Write("Data 1");
         builder.InsertCell();
-        builder.Write("10");
-        builder.EndRow();
-
-        // Second data row.
-        builder.InsertCell();
-        builder.Write("Bananas");
-        builder.InsertCell();
-        builder.Write("20");
+        builder.Write("Data 2");
         builder.EndRow();
 
         // Finish the table.
         builder.EndTable();
 
         // Create a custom table style.
-        TableStyle headerStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "HeaderRowStyle");
+        TableStyle headerStyle = (TableStyle)doc.Styles.Add(StyleType.Table, "HeaderBackgroundStyle");
 
-        // Set the background color for the first row (header) using conditional style.
-        headerStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightBlue;
+        // Set the background color for the first row (header) using a conditional style.
+        headerStyle.ConditionalStyles[ConditionalStyleType.FirstRow].Shading.BackgroundPatternColor = Color.LightGreen;
 
         // Apply the style to the table.
         table.Style = headerStyle;
 
-        // Ensure the style is applied to the first row.
+        // Enable the FirstRow option so the conditional style is applied.
         table.StyleOptions = TableStyleOptions.FirstRow;
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "HeaderRowStyle.docx");
-        doc.Save(outputPath);
+        // Ensure the output directory exists.
+        string outputDir = "Output";
+        System.IO.Directory.CreateDirectory(outputDir);
+
+        // Save the document.
+        doc.Save(System.IO.Path.Combine(outputDir, "CustomHeaderTable.docx"));
     }
 }

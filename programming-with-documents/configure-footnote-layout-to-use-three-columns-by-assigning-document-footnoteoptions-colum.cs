@@ -10,24 +10,20 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content and footnotes.
+        // Use DocumentBuilder to add some content and a footnote.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Write("This is a sample paragraph with a footnote.");
-        builder.InsertFootnote(FootnoteType.Footnote, "First footnote text.");
+        builder.InsertFootnote(FootnoteType.Footnote, "Footnote text.");
 
-        builder.Writeln();
-        builder.Write("Another paragraph with a second footnote.");
-        builder.InsertFootnote(FootnoteType.Footnote, "Second footnote text.");
-
-        // Configure the footnote area to be displayed in three columns.
+        // Configure the footnote layout to use three columns.
         doc.FootnoteOptions.Columns = 3;
 
         // Ensure the output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
         // Save the document.
-        string outputPath = Path.Combine(outputDir, "FootnotesThreeColumns.docx");
+        string outputPath = Path.Combine(outputDir, "FootnoteColumns.docx");
         doc.Save(outputPath);
     }
 }

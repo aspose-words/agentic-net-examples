@@ -1,56 +1,83 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Settings;
 using Aspose.Words.Tables;
-using Aspose.Words.Settings;   // Needed for MsWordVersion enum
 
-public class Program
+namespace AsposeWordsExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-
-        // Set the compatibility level to Word 2016.
-        // This ensures the document behaves like it was created in Microsoft Word 2016.
-        doc.CompatibilityOptions.OptimizeFor(MsWordVersion.Word2016);
-
-        // Use DocumentBuilder to construct the outer table.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        Table outerTable = builder.StartTable();
-
-        // Build a 3x3 outer table with sample text.
-        for (int row = 1; row <= 3; row++)
+        public static void Main()
         {
-            for (int col = 1; col <= 3; col++)
+            // Create a new blank document.
+            Document doc = new Document();
+
+            // Set the compatibility level to Word 2016.
+            doc.CompatibilityOptions.OptimizeFor(MsWordVersion.Word2016);
+
+            // Build a complex table structure using DocumentBuilder.
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Start the outer table (3 rows x 3 columns).
+            builder.StartTable();
+
+            // ----- First row (simple cells) -----
+            for (int i = 0; i < 3; i++)
             {
                 builder.InsertCell();
-                builder.Write($"Outer R{row}C{col}");
+                builder.Write($"Outer R1C{i + 1}");
             }
             builder.EndRow();
-        }
 
-        // Finish the outer table.
-        builder.EndTable();
+            // ----- Second row (merged cells + nested table) -----
+            // Merge the first two cells.
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.First;
+            builder.Write("Merged cells");
 
-        // Create a nested table (2x2) and insert it into the first cell of the outer table.
-        Table innerTable = new Table(doc);
-        for (int i = 1; i <= 2; i++)
-        {
-            Row innerRow = new Row(doc);
-            innerTable.AppendChild(innerRow);
-            for (int j = 1; j <= 2; j++)
+            builder.InsertCell();
+            builder.CellFormat.HorizontalMerge = CellMerge.Previous;
+
+            // Third cell will contain a nested table.
+            builder.InsertCell();
+            InsertNestedTable(builder);
+            builder.EndRow();
+
+            // ----- Third row (simple cells) -----
+            for (int i = 0; i < 3; i++)
             {
-                Cell innerCell = new Cell(doc);
-                innerCell.AppendChild(new Paragraph(doc));
-                innerCell.FirstParagraph.AppendChild(new Run(doc, $"Inner R{i}C{j}"));
-                innerRow.AppendChild(innerCell);
+                builder.InsertCell();
+                builder.Write($"Outer R3C{i + 1}");
             }
+            builder.EndRow();
+
+            // End the outer table.
+            builder.EndTable();
+
+            // Save the document to a file.
+            doc.Save("ComplexTable.docx");
         }
 
-        // Append the nested table to the first cell of the outer table.
-        outerTable.FirstRow.FirstCell.AppendChild(innerTable);
+        // Inserts a 2x2 nested table into the current cell.
+        private static void InsertNestedTable(DocumentBuilder builder)
+        {
+            builder.StartTable();
 
-        // Save the document to a file in the current directory.
-        doc.Save("ComplexTable.docx");
+            // First row of nested table.
+            builder.InsertCell();
+            builder.Write("Inner R1C1");
+            builder.InsertCell();
+            builder.Write("Inner R1C2");
+            builder.EndRow();
+
+            // Second row of nested table.
+            builder.InsertCell();
+            builder.Write("Inner R2C1");
+            builder.InsertCell();
+            builder.Write("Inner R2C2");
+            builder.EndRow();
+
+            builder.EndTable();
+        }
     }
 }

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -10,22 +9,23 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the drop cap to span 4 lines.
-        builder.ParagraphFormat.LinesToDrop = 4;
+        // Configure the paragraph as a drop cap.
+        // The drop cap will be the height of 3 lines of text.
+        builder.ParagraphFormat.LinesToDrop = 3;
+        // Position the drop cap inside the text margin.
+        builder.ParagraphFormat.DropCapPosition = DropCapPosition.Normal;
+
         // Insert the drop cap character.
-        builder.Writeln("H");
+        builder.Writeln("D");
 
-        // Reset the drop cap setting for normal text.
+        // Return to normal paragraph formatting for the following text.
         builder.ParagraphFormat.LinesToDrop = 0;
-        // Add the remaining paragraph text.
-        builder.Writeln("ello world! This paragraph wraps around the drop cap character.");
+        builder.ParagraphFormat.DropCapPosition = DropCapPosition.None;
 
-        // Prepare an output folder and file name.
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputFolder);
-        string outputFile = Path.Combine(outputFolder, "DropCapExample.docx");
+        // Add regular text that will wrap around the drop cap.
+        builder.Writeln("rop cap example text that wraps around the large letter.");
 
-        // Save the document.
-        doc.Save(outputFile);
+        // Save the document to the current directory.
+        doc.Save("ParagraphDropCap.docx");
     }
 }

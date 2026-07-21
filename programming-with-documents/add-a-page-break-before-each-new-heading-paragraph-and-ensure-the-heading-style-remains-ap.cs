@@ -10,41 +10,40 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a normal paragraph before the first heading.
+        // Add some introductory text.
         builder.Writeln("This is an introductory paragraph.");
 
-        // ----- First heading (Heading 1) -----
-        // Force a page break before the heading.
-        builder.ParagraphFormat.PageBreakBefore = true;
-        // Apply the Heading 1 style.
+        // Insert a page break before the first heading and apply Heading 1 style.
+        builder.InsertBreak(BreakType.PageBreak);
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Heading 1");
 
-        // Reset page‑break flag for following normal paragraphs.
-        builder.ParagraphFormat.PageBreakBefore = false;
-        // Use the Normal style for body text.
+        // Add normal text under the first heading.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Content under Heading 1.");
+        builder.Writeln("Content under heading 1.");
 
-        // ----- Second heading (Heading 2) -----
-        builder.ParagraphFormat.PageBreakBefore = true;
+        // Insert a page break before the second heading and apply Heading 2 style.
+        builder.InsertBreak(BreakType.PageBreak);
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Heading 1.1");
-
-        // Normal paragraph after the second heading.
-        builder.ParagraphFormat.PageBreakBefore = false;
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("More content under Heading 1.1.");
-
-        // ----- Third heading (Heading 1) -----
-        builder.ParagraphFormat.PageBreakBefore = true;
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Writeln("Heading 2");
 
-        // Save the document to a local file.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-        string outputPath = Path.Combine(artifactsDir, "HeadingsWithPageBreaks.docx");
+        // Add normal text under the second heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Content under heading 2.");
+
+        // Insert a page break before the third heading and apply Heading 3 style.
+        builder.InsertBreak(BreakType.PageBreak);
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+        builder.Writeln("Heading 3");
+
+        // Add normal text under the third heading.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Content under heading 3.");
+
+        // Define output path.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "HeadingsWithPageBreaks.docx");
+
+        // Save the document.
         doc.Save(outputPath);
     }
 }

@@ -8,46 +8,38 @@ public class Program
 {
     public static void Main()
     {
-        // Define output file path in the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AdvancedList.docx");
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a numbered list to the document.
+        // Add a simple numbered list.
         doc.Lists.Add(ListTemplate.NumberDefault);
-        List docList = doc.Lists[0];
+        List list = doc.Lists[0];
+        // Enable advanced list setting: restart numbering at each section.
+        list.IsRestartAtEachSection = true;
 
-        // Enable advanced list setting: restart numbering at each new section.
-        docList.IsRestartAtEachSection = true;
-
-        // Build list items before a section break.
-        builder.ListFormat.List = docList;
+        // Populate the list with a few items.
+        builder.ListFormat.List = list;
         builder.Writeln("Item 1");
         builder.Writeln("Item 2");
-
-        // Insert a new section break.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Continue the list in the new section.
         builder.Writeln("Item 3");
         builder.Writeln("Item 4");
         builder.ListFormat.RemoveNumbers();
 
-        // Save the document with strict OOXML compliance to preserve the advanced list setting.
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions
+        // Configure OOXML save options to use strict compliance.
+        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
         {
-            Compliance = OoxmlCompliance.Iso29500_2008_Strict,
-            SaveFormat = SaveFormat.Docx
+            Compliance = OoxmlCompliance.Iso29500_2008_Strict
         };
+
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AdvancedListStrict.docx");
+
+        // Save the document with the specified compliance level.
         doc.Save(outputPath, saveOptions);
 
-        // Reload the saved document to verify the setting persisted.
-        Document loadedDoc = new Document(outputPath);
-        bool isRestartEnabled = loadedDoc.Lists[0].IsRestartAtEachSection;
-
-        // Output verification result.
-        Console.WriteLine($"List restart at each section enabled: {isRestartEnabled}");
+        // Indicate completion.
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }

@@ -4,64 +4,70 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Tables;
 
-public class Program
+namespace AsposeWordsExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public static void Main()
+        {
+            // Create a new blank document.
+            Document doc = new Document();
 
-        // ---------- Insert a table ----------
-        builder.StartTable();
+            // Perform the combined insertion.
+            InsertTableParagraphAndLinkedTextBox(doc);
 
-        // First row, first cell.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 1");
+            // Save the document to the output file.
+            string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
+            doc.Save(outputPath);
+        }
 
-        // First row, second cell.
-        builder.InsertCell();
-        builder.Write("Row 1, Cell 2");
+        /// <summary>
+        /// Inserts a table, a paragraph, and a linked text box into the provided document.
+        /// </summary>
+        /// <param name="doc">The document to modify.</param>
+        private static void InsertTableParagraphAndLinkedTextBox(Document doc)
+        {
+            // Use DocumentBuilder for convenient insertion.
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // End the first row.
-        builder.EndRow();
+            // ---------- Insert a simple 2x2 table ----------
+            builder.StartTable();
 
-        // Second row, first cell.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 1");
+            // First row
+            builder.InsertCell();
+            builder.Write("Cell 1,1");
+            builder.InsertCell();
+            builder.Write("Cell 1,2");
+            builder.EndRow();
 
-        // Second row, second cell.
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
+            // Second row
+            builder.InsertCell();
+            builder.Write("Cell 2,1");
+            builder.InsertCell();
+            builder.Write("Cell 2,2");
+            builder.EndTable();
 
-        // End the second row and the table.
-        builder.EndRow();
-        builder.EndTable();
+            // Add a paragraph after the table.
+            builder.Writeln();
+            builder.Writeln("This paragraph follows the table and demonstrates normal text insertion.");
 
-        // ---------- Insert a paragraph ----------
-        builder.Writeln("This paragraph follows the table.");
+            // ---------- Insert a linked (floating) text box ----------
+            // Create a floating text box shape.
+            Shape textBox = new Shape(doc, ShapeType.TextBox);
+            textBox.WrapType = WrapType.None; // Floating, not inline.
+            textBox.Width = 200;
+            textBox.Height = 100;
+            textBox.HorizontalAlignment = HorizontalAlignment.Center;
+            textBox.VerticalAlignment = VerticalAlignment.Top;
 
-        // ---------- Insert a linked text box ----------
-        // Insert a free‑floating text box shape.
-        Shape textBox = builder.InsertShape(
-            ShapeType.TextBox,
-            RelativeHorizontalPosition.Margin, 0,
-            RelativeVerticalPosition.Margin, 0,
-            200, // width in points
-            100, // height in points
-            WrapType.None);
+            // Add a paragraph and run inside the text box.
+            Paragraph tbParagraph = new Paragraph(doc);
+            Run tbRun = new Run(doc, "Content of the linked text box.");
+            tbParagraph.AppendChild(tbRun);
+            textBox.AppendChild(tbParagraph);
 
-        // Add text to the text box.
-        textBox.FirstParagraph.AppendChild(new Run(doc, "Content of the linked text box."));
-
-        // Set the hyperlink for the shape using the HRef property.
-        textBox.HRef = "https://www.example.com";
-        // Optional: open the link in a new window and set a screen tip.
-        textBox.Target = "New Window";
-        textBox.ScreenTip = "Open example.com";
-
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "MacroLikeOutput.docx");
-        doc.Save(outputPath);
+            // Insert the text box into the document at the current builder position.
+            builder.InsertNode(textBox);
+        }
     }
 }

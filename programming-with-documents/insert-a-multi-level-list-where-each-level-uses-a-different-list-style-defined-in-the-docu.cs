@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -10,65 +11,82 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // ---------- Define three separate list styles ----------
-        // Style for first level.
-        Style level1Style = doc.Styles.Add(StyleType.List, "Level1Style");
-        List level1ListDef = level1Style.List;
-        level1ListDef.ListLevels[0].NumberStyle = NumberStyle.Arabic;          // Fixed: use Arabic instead of non‑existent Decimal
-        level1ListDef.ListLevels[0].NumberFormat = "%1.";
-        level1ListDef.ListLevels[0].Font.Name = "Arial";
-        level1ListDef.ListLevels[0].Font.Color = System.Drawing.Color.DarkBlue;
+        // -------------------------
+        // Define the first list style (bulleted).
+        // -------------------------
+        Style bulletListStyle = doc.Styles.Add(StyleType.List, "BulletListStyle");
+        List bulletList = bulletListStyle.List; // This is the definition of the list style.
 
-        // Style for second level.
-        Style level2Style = doc.Styles.Add(StyleType.List, "Level2Style");
-        List level2ListDef = level2Style.List;
-        level2ListDef.ListLevels[0].NumberStyle = NumberStyle.LowercaseLetter;
-        level2ListDef.ListLevels[0].NumberFormat = "%1)";
-        level2ListDef.ListLevels[0].Font.Name = "Calibri";
-        level2ListDef.ListLevels[0].Font.Color = System.Drawing.Color.DarkGreen;
+        // Configure level 0 of the bullet list.
+        ListLevel bulletLevel = bulletList.ListLevels[0];
+        bulletLevel.NumberStyle = NumberStyle.Bullet;
+        bulletLevel.Font.Name = "Wingdings";
+        bulletLevel.Font.Color = Color.DarkGreen;
+        bulletLevel.NumberFormat = "\u2022"; // Standard bullet.
+        bulletLevel.TrailingCharacter = ListTrailingCharacter.Tab;
+        bulletLevel.NumberPosition = -18;
+        bulletLevel.TextPosition = 18;
+        bulletLevel.TabPosition = 36;
 
-        // Style for third level.
-        Style level3Style = doc.Styles.Add(StyleType.List, "Level3Style");
-        List level3ListDef = level3Style.List;
-        level3ListDef.ListLevels[0].NumberStyle = NumberStyle.Bullet;
-        level3ListDef.ListLevels[0].NumberFormat = "\u2022"; // bullet character
-        level3ListDef.ListLevels[0].Font.Name = "Times New Roman";
-        level3ListDef.ListLevels[0].Font.Color = System.Drawing.Color.Maroon;
+        // -------------------------
+        // Define the second list style (numbered).
+        // -------------------------
+        Style numberListStyle = doc.Styles.Add(StyleType.List, "NumberListStyle");
+        List numberList = numberListStyle.List;
 
-        // ---------- Create list instances that reference the styles ----------
-        List level1List = doc.Lists.Add(level1Style);
-        List level2List = doc.Lists.Add(level2Style);
-        List level3List = doc.Lists.Add(level3Style);
+        // Configure level 0 of the numbered list.
+        ListLevel numberLevel = numberList.ListLevels[0];
+        numberLevel.NumberStyle = NumberStyle.Arabic; // Use Arabic numbering instead of non‑existent Decimal.
+        numberLevel.Font.Name = "Arial";
+        numberLevel.Font.Color = Color.DarkBlue;
+        numberLevel.NumberFormat = "%1.";
+        numberLevel.TrailingCharacter = ListTrailingCharacter.Tab;
+        numberLevel.NumberPosition = -18;
+        numberLevel.TextPosition = 18;
+        numberLevel.TabPosition = 36;
 
-        // Use DocumentBuilder to insert paragraphs with the different list styles.
+        // -------------------------
+        // Create paragraph styles that reference the list styles.
+        // -------------------------
+        Style level1ParagraphStyle = doc.Styles.Add(StyleType.Paragraph, "Level1ParagraphStyle");
+        // Attach the bullet list style to this paragraph style.
+        level1ParagraphStyle.ListFormat.List = doc.Lists.Add(bulletListStyle);
+        level1ParagraphStyle.ListFormat.ListLevelNumber = 0;
+
+        Style level2ParagraphStyle = doc.Styles.Add(StyleType.Paragraph, "Level2ParagraphStyle");
+        // Attach the numbered list style to this paragraph style.
+        level2ParagraphStyle.ListFormat.List = doc.Lists.Add(numberListStyle);
+        level2ParagraphStyle.ListFormat.ListLevelNumber = 0;
+
+        // -------------------------
+        // Build the multi‑level list using the paragraph styles.
+        // -------------------------
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First level items.
-        builder.ListFormat.List = level1List;
-        builder.ListFormat.ListLevelNumber = 0;
-        builder.Writeln("First level item 1");
-        builder.Writeln("First level item 2");
+        // First top‑level item (uses bullet style).
+        builder.ParagraphFormat.Style = level1ParagraphStyle;
+        builder.Writeln("Top level item 1");
 
-        // Second level items.
-        builder.ListFormat.List = level2List;
-        builder.ListFormat.ListLevelNumber = 0;
-        builder.Writeln("Second level item 1");
-        builder.Writeln("Second level item 2");
+        // Sub‑item (uses numbered style).
+        builder.ParagraphFormat.Style = level2ParagraphStyle;
+        builder.Writeln("Sub‑item 1.1");
 
-        // Third level items.
-        builder.ListFormat.List = level3List;
-        builder.ListFormat.ListLevelNumber = 0;
-        builder.Writeln("Third level item 1");
-        builder.Writeln("Third level item 2");
+        // Another sub‑item.
+        builder.Writeln("Sub‑item 1.2");
 
-        // End list formatting.
-        builder.ListFormat.RemoveNumbers();
+        // Back to top‑level item.
+        builder.ParagraphFormat.Style = level1ParagraphStyle;
+        builder.Writeln("Top level item 2");
 
-        // Ensure output directory exists.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(outputDir);
+        // Sub‑item under the second top‑level item.
+        builder.ParagraphFormat.Style = level2ParagraphStyle;
+        builder.Writeln("Sub‑item 2.1");
 
+        // -------------------------
         // Save the document.
+        // -------------------------
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
         string outputPath = Path.Combine(outputDir, "MultiLevelListWithDifferentStyles.docx");
         doc.Save(outputPath);
     }

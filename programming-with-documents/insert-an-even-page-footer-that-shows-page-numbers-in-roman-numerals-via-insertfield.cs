@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -13,32 +12,29 @@ public class Program
         // Enable different footers for odd and even pages.
         builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
 
-        // Create the even‑page footer.
+        // Move the builder to the even-page footer of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
         builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
+
+        // Insert the PAGE field that will display the page number.
         builder.Write("Page ");
-        // Insert a PAGE field; the result will be updated when the document is saved or fields are updated.
         builder.InsertField("PAGE", "");
 
-        // Return to the main body of the document.
+        // Add a few pages of content to see the footer on even pages.
         builder.MoveToSection(0);
-
-        // Set the page numbering style to uppercase Roman numerals.
-        doc.Sections[0].PageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
-
-        // Add some content to generate multiple pages.
         builder.Writeln("First page (odd).");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Second page (even).");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Third page (odd).");
 
-        // Ensure the output directory exists.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Set the page number style to uppercase Roman numerals.
+        doc.FirstSection.PageSetup.PageNumberStyle = NumberStyle.UppercaseRoman;
+
+        // Update fields so the PAGE field shows the correct values.
+        doc.UpdateFields();
 
         // Save the document.
-        string outputPath = Path.Combine(artifactsDir, "EvenPageFooterRoman.docx");
-        doc.Save(outputPath);
+        doc.Save("EvenFooterRoman.docx");
     }
 }

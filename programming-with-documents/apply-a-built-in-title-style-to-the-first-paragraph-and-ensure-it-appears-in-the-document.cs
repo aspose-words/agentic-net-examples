@@ -1,31 +1,37 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing.Charts;
 
-public class Program
+public class ApplyTitleStyle
 {
     public static void Main()
     {
         // Create a new blank document.
         Document doc = new Document();
 
-        // Use DocumentBuilder to add content.
+        // Attach a DocumentBuilder to the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert the first paragraph with some text.
-        builder.Writeln("My Document Title");
-
-        // Apply the built‑in "Title" style to the paragraph.
-        builder.ParagraphFormat.StyleName = "Title";
+        // Apply the built‑in "Title" style to the first paragraph.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Title;
 
         // Ensure the paragraph appears in the document outline by setting an outline level.
         builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level1;
 
-        // Define the output file path (in the current directory).
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "TitleStyleOutline.docx");
+        // Write the title text.
+        builder.Writeln("My Document Title");
+
+        // Add a normal paragraph after the title.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.ParagraphFormat.OutlineLevel = OutlineLevel.BodyText;
+        builder.Writeln("This is the body of the document.");
+
+        // Prepare the output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Save the document.
+        string outputPath = Path.Combine(outputDir, "TitleStyleDocument.docx");
         doc.Save(outputPath);
     }
 }

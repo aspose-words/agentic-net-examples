@@ -10,25 +10,28 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a primary footer.
+        // Add sample footers of each type to the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Writeln("Primary footer text.");
-
-        // Add a first-page footer.
+        builder.Writeln("Primary footer");
         builder.MoveToHeaderFooter(HeaderFooterType.FooterFirst);
-        builder.Writeln("First page footer text.");
-
-        // Add an even-page footer.
+        builder.Writeln("First page footer");
         builder.MoveToHeaderFooter(HeaderFooterType.FooterEven);
-        builder.Writeln("Even page footer text.");
+        builder.Writeln("Even page footer");
 
-        // Remove all footers (and any headers) from the first section.
-        doc.FirstSection.HeadersFooters.Clear();
+        // Remove all footers from the first section.
+        Section section = doc.FirstSection;
+
+        HeaderFooter footer = section.HeadersFooters[HeaderFooterType.FooterFirst];
+        footer?.Remove();
+
+        footer = section.HeadersFooters[HeaderFooterType.FooterPrimary];
+        footer?.Remove();
+
+        footer = section.HeadersFooters[HeaderFooterType.FooterEven];
+        footer?.Remove();
 
         // Save the resulting document.
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Artifacts");
-        Directory.CreateDirectory(outputDir);
-        string outputPath = Path.Combine(outputDir, "DocumentWithoutFooters.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Output.docx");
         doc.Save(outputPath);
     }
 }

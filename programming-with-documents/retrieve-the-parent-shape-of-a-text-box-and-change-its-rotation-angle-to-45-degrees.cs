@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 
@@ -12,18 +13,21 @@ public class Program
 
         // Insert a text box shape into the document.
         Shape textBoxShape = builder.InsertShape(ShapeType.TextBox, 200, 100);
-        // Add some sample text inside the text box.
+        // Add some text inside the text box.
         builder.MoveTo(textBoxShape.LastParagraph);
-        builder.Writeln("Sample text inside the text box.");
+        builder.Write("Sample text inside the text box.");
 
-        // Retrieve the parent shape of the TextBox (which is the shape itself).
+        // Retrieve the parent shape of the TextBox via the TextBox property.
         Shape parentShape = textBoxShape.TextBox.Parent;
-
         // Change the rotation angle of the parent shape to 45 degrees.
         parentShape.Rotation = 45;
 
-        // Save the document to a file.
-        string outputPath = "ParentShapeRotated.docx";
+        // Define an output folder and ensure it exists.
+        string outputDir = "Output";
+        Directory.CreateDirectory(outputDir);
+
+        // Save the modified document.
+        string outputPath = Path.Combine(outputDir, "ParentShapeRotation.docx");
         doc.Save(outputPath);
     }
 }

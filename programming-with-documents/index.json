@@ -4,12 +4,12 @@
     "slug": "programming-with-documents",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Prefer simple documented Aspose.Words document workflows. Keep validation narrow and task-specific. Do not add broad structural assertions unless the task explicitly requires them.",
+    "preferred_workflow": "Use simple documented document-level Aspose.Words workflows. Keep validation narrow and task-specific. Prefer Document and DocumentBuilder APIs and create all input assets locally.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
@@ -17,48 +17,38 @@
       "Aspose.Words",
       "Aspose.Words.Drawing",
       "Aspose.Words.Tables",
+      "Aspose.Words.Saving",
       "Aspose.Words.Notes",
-      "System.Collections.Generic",
       "Aspose.Words.Fields",
       "System.Drawing",
-      "Aspose.Words.Saving",
       "System.Data",
       "Aspose.Words.Lists",
-      "Aspose.Words.Properties",
+      "System.Linq",
+      "System.Collections.Generic",
       "Aspose.Words.Settings",
-      "System.Globalization",
-      "Aspose.Words.Drawing.Charts"
+      "System.Globalization"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "MemoryStream",
-      "File",
-      "Path",
       "Directory",
-      "Font",
+      "Path",
       "Shape",
-      "Footnote",
-      "NodeType",
-      "Paragraph",
-      "Run",
+      "Font",
       "StyleIdentifier",
       "Table",
+      "Paragraph",
       "Style",
       "Range",
       "Field",
       "FieldType",
-      "Bookmark",
+      "NodeType",
+      "File",
       "Cell",
-      "CellFormat",
-      "Node",
       "Row",
-      "DataTable",
-      "SaveFormat",
-      "HtmlSaveOptions",
-      "ShapeType",
-      "PdfSaveOptions",
-      "Comment"
+      "CellFormat",
+      "Run",
+      "SaveFormat"
     ]
   },
   "stats": {
@@ -66,10 +56,6 @@
     "publish_ready_successful_examples": 110,
     "workflow_counts": {
       "document-workflow": 110
-    },
-    "winner_counts": {
-      "llm": 1,
-      "mcp": 109
     }
   },
   "rules_summary": {
@@ -112,18 +98,18 @@
     {
       "id": 1,
       "file_name": "create-a-first-page-header-with-a-centered-logo-image-using-documentbuilder.cs",
-      "task": "Create a first-page header with a centered logo image using DocumentBuilder.",
+      "task": "Create a first‑page header with a centered logo image using DocumentBuilder.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
       ],
-      "selected_engine": "llm",
-      "winner": "llm"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 2,
       "file_name": "add-an-odd-page-header-containing-a-right-aligned-chapter-title-in-a-custom-font.cs",
-      "task": "Add an odd-page header containing a right-aligned chapter title in a custom font.",
+      "task": "Add an odd‑page header containing a right‑aligned chapter title in a custom font.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -134,7 +120,7 @@
     {
       "id": 3,
       "file_name": "insert-an-even-page-footer-that-shows-page-numbers-in-roman-numerals-via-insertfield.cs",
-      "task": "Insert an even-page footer that shows page numbers in Roman numerals via InsertField.",
+      "task": "Insert an even‑page footer that shows page numbers in Roman numerals via InsertField.",
       "workflow": "document-workflow",
       "outputs": [
         "rtf"
@@ -167,7 +153,7 @@
     {
       "id": 6,
       "file_name": "enable-unique-first-page-header-content-by-setting-differentfirstpageheaderfooter-to-true.cs",
-      "task": "Enable unique first-page header content by setting DifferentFirstPageHeaderFooter to true.",
+      "task": "Enable unique first‑page header content by setting DifferentFirstPageHeaderFooter to true.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -233,7 +219,7 @@
     {
       "id": 12,
       "file_name": "change-footnote-numbering-style-to-lower-case-roman-numerals-by-setting-document-footnoteo.cs",
-      "task": "Change footnote numbering style to lower-case Roman numerals by setting Document.FootnoteOptions.NumberStyle.",
+      "task": "Change footnote numbering style to lower‑case Roman numerals by setting Document.FootnoteOptions.NumberStyle.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
@@ -288,7 +274,7 @@
     {
       "id": 17,
       "file_name": "customize-toc-entry-levels-to-include-headings-1-3-by-specifying-the-o-1-3-switch.cs",
-      "task": "Customize TOC entry levels to include headings 1-3 by specifying the \\o \"1-3\" switch.",
+      "task": "Customize TOC entry levels to include headings 1‑3 by specifying the \\o \"1-3\" switch.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -299,7 +285,7 @@
     {
       "id": 18,
       "file_name": "include-only-specific-styles-in-the-toc-by-using-the-t-switch-with-a-comma-separated-list.cs",
-      "task": "Include only specific styles in the TOC by using the \\t switch with a comma-separated list.",
+      "task": "Include only specific styles in the TOC by using the \\t switch with a comma‑separated list.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -354,7 +340,7 @@
     {
       "id": 23,
       "file_name": "apply-a-custom-paragraph-style-to-toc-entries-by-modifying-the-toc-field-s-style-property.cs",
-      "task": "Apply a custom paragraph style to TOC entries by modifying the TOC field's style property.",
+      "task": "Apply a custom paragraph style to TOC entries by modifying the TOC field’s style property.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -409,7 +395,7 @@
     {
       "id": 28,
       "file_name": "create-a-multi-section-document-where-each-section-has-distinct-header-and-footer-configur.cs",
-      "task": "Create a multi-section document where each section has distinct header and footer configurations.",
+      "task": "Create a multi‑section document where each section has distinct header and footer configurations.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
@@ -431,7 +417,7 @@
     {
       "id": 30,
       "file_name": "adjust-the-left-margin-of-the-first-page-header-to-align-with-the-main-text-margin.cs",
-      "task": "Adjust the left margin of the first-page header to align with the main text margin.",
+      "task": "Adjust the left margin of the first‑page header to align with the main text margin.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -464,7 +450,7 @@
     {
       "id": 33,
       "file_name": "create-an-even-page-footer-that-displays-the-document-title-aligned-left-using-documentbui.cs",
-      "task": "Create an even-page footer that displays the document title aligned left using DocumentBuilder.InsertField.",
+      "task": "Create an even‑page footer that displays the document title aligned left using DocumentBuilder.InsertField.",
       "workflow": "document-workflow",
       "outputs": [
         "doc",
@@ -531,7 +517,7 @@
     {
       "id": 39,
       "file_name": "apply-the-built-in-grid-table-5-dark-style-to-the-entire-table-for-consistent-formatting.cs",
-      "task": "Apply the built-in 'Grid Table 5 Dark' style to the entire table for consistent formatting.",
+      "task": "Apply the built‑in 'Grid Table 5 Dark' style to the entire table for consistent formatting.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -686,7 +672,7 @@
     {
       "id": 53,
       "file_name": "define-a-second-list-level-with-alphabetic-lower-case-numbering-and-increased-indentation.cs",
-      "task": "Define a second list level with alphabetic lower-case numbering and increased indentation.",
+      "task": "Define a second list level with alphabetic lower‑case numbering and increased indentation.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -730,7 +716,7 @@
     {
       "id": 57,
       "file_name": "insert-a-multi-level-list-where-each-level-uses-a-different-list-style-defined-in-the-docu.cs",
-      "task": "Insert a multi-level list where each level uses a different list style defined in the document.",
+      "task": "Insert a multi‑level list where each level uses a different list style defined in the document.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
@@ -764,7 +750,7 @@
     {
       "id": 60,
       "file_name": "apply-the-built-in-heading-2-style-to-a-paragraph-and-adjust-its-spacing-before-and-after.cs",
-      "task": "Apply the built-in 'Heading 2' style to a paragraph and adjust its spacing before and after.",
+      "task": "Apply the built‑in 'Heading 2' style to a paragraph and adjust its spacing before and after.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -885,7 +871,7 @@
     {
       "id": 71,
       "file_name": "apply-a-built-in-quote-style-to-a-paragraph-and-increase-its-left-indent-for-emphasis.cs",
-      "task": "Apply a built-in 'Quote' style to a paragraph and increase its left indent for emphasis.",
+      "task": "Apply a built‑in 'Quote' style to a paragraph and increase its left indent for emphasis.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -1051,7 +1037,7 @@
     {
       "id": 86,
       "file_name": "create-a-text-box-set-its-text-direction-to-right-to-left-and-insert-arabic-characters.cs",
-      "task": "Create a text box, set its text direction to right-to-left, and insert Arabic characters.",
+      "task": "Create a text box, set its text direction to right‑to‑left, and insert Arabic characters.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -1106,7 +1092,7 @@
     {
       "id": 91,
       "file_name": "create-a-macro-like-routine-that-inserts-a-table-a-paragraph-and-a-linked-text-box-in-one.cs",
-      "task": "Create a macro-like routine that inserts a table, a paragraph, and a linked text box in one operation.",
+      "task": "Create a macro‑like routine that inserts a table, a paragraph, and a linked text box in one operation.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"
@@ -1195,7 +1181,7 @@
     {
       "id": 99,
       "file_name": "set-the-document-s-language-property-to-french-and-adjust-paragraph-direction-for-right-to.cs",
-      "task": "Set the document's language property to French and adjust paragraph direction for right-to-left scripts.",
+      "task": "Set the document's language property to French and adjust paragraph direction for right‑to‑left scripts.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
@@ -1206,7 +1192,7 @@
     {
       "id": 100,
       "file_name": "apply-a-built-in-title-style-to-the-first-paragraph-and-ensure-it-appears-in-the-document.cs",
-      "task": "Apply a built-in 'Title' style to the first paragraph and ensure it appears in the document outline.",
+      "task": "Apply a built‑in 'Title' style to the first paragraph and ensure it appears in the document outline.",
       "workflow": "document-workflow",
       "outputs": [
         "doc"
@@ -1316,7 +1302,7 @@
     {
       "id": 110,
       "file_name": "create-a-numbered-list-where-each-level-uses-a-different-numbering-scheme-such-as-decimal.cs",
-      "task": "Create a numbered list where each level uses a different numbering scheme, such as decimal and lower-roman.",
+      "task": "Create a numbered list where each level uses a different numbering scheme, such as decimal and lower‑roman.",
       "workflow": "document-workflow",
       "outputs": [
         "docx"

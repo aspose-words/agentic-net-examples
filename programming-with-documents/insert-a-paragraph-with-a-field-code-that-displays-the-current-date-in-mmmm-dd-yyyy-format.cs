@@ -7,18 +7,19 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for the document.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a label for the date field.
-        builder.Writeln("Current date:");
+        // Start a new paragraph.
+        builder.InsertParagraph();
 
         // Insert a DATE field with the desired format: "MMMM dd, yyyy".
         // The field code is inserted without the surrounding braces.
         builder.InsertField("DATE \\@ \"MMMM dd, yyyy\"");
 
+        // End the paragraph.
+        builder.Writeln();
+
         // Save the document to the local file system.
-        doc.Save("CurrentDate.docx");
+        doc.Save("DateField.docx");
     }
 }
