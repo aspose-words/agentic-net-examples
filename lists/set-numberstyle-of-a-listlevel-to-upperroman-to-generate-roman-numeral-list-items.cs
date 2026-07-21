@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Lists;
 
@@ -6,23 +7,22 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a new list based on the default numbered template (contains 9 levels).
+        // Add a list based on the default numbered template.
         List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Configure the first list level (level 0) to use upper‑case Roman numerals.
+        // Set the first list level to use uppercase Roman numerals.
         ListLevel level = list.ListLevels[0];
         level.NumberStyle = NumberStyle.UppercaseRoman;
-        // Define the format string – the placeholder \x0000 will be replaced by the Roman numeral.
-        level.NumberFormat = "\x0000.";
+        level.NumberFormat = "\x0000."; // Inserts the Roman numeral followed by a period.
+        level.Font.Size = 12;
+        level.Font.Color = Color.Black;
 
-        // Use DocumentBuilder to write paragraphs that belong to the list.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.ListFormat.List = list; // Start the list.
-
-        // Add a few list items.
+        // Apply the list to a series of paragraphs.
+        builder.ListFormat.List = list;
         for (int i = 0; i < 5; i++)
         {
             builder.Writeln($"Item {i + 1}");
@@ -32,6 +32,6 @@ public class Program
         builder.ListFormat.RemoveNumbers();
 
         // Save the document to the current directory.
-        doc.Save("ListUpperRoman.docx");
+        doc.Save("ListRoman.docx");
     }
 }

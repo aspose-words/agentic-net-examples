@@ -7,43 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
 
-        // Add a numbered list to the document using a predefined template.
-        List originalList = doc.Lists.Add(ListTemplate.NumberDefault);
+        // Add a default numbered list to the document.
+        List list = doc.Lists.Add(ListTemplate.NumberDefault);
 
-        // Add a few paragraphs and apply the list to them.
+        // Use DocumentBuilder to add a few list items.
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.ListFormat.List = list;
         builder.Writeln("Item 1");
         builder.Writeln("Item 2");
         builder.Writeln("Item 3");
-        // Apply the list to the last three paragraphs.
-        foreach (Paragraph para in doc.GetChildNodes(NodeType.Paragraph, true))
-        {
-            para.ListFormat.List = originalList;
-            para.ListFormat.ListLevelNumber = 0; // first level
-        }
+        builder.ListFormat.RemoveNumbers();
 
-        // Retrieve the ListId of the created list.
-        int listId = originalList.ListId;
+        // Store the ListId of the created list.
+        int listId = list.ListId;
 
-        // Use GetListByListId to obtain the same list from the collection.
+        // Retrieve the same list by its identifier.
         List retrievedList = doc.Lists.GetListByListId(listId);
-        if (retrievedList == null)
-        {
-            Console.WriteLine("List with ID {0} not found.", listId);
-            return;
-        }
 
         // Adjust properties of the first level of the retrieved list.
-        // For example, change the font color, start number, and number style.
-        ListLevel level0 = retrievedList.ListLevels[0];
-        level0.Font.Color = Color.Blue;          // Change bullet/number color.
-        level0.StartAt = 10;                     // Start numbering at 10.
-        level0.NumberStyle = NumberStyle.UppercaseRoman; // Use uppercase Roman numerals.
+        if (retrievedList != null)
+        {
+            ListLevel level0 = retrievedList.ListLevels[0];
+            level0.StartAt = 10;                     // Change the starting number.
+            level0.Font.Color = Color.Blue;          // Set the bullet/number color.
+            level0.NumberStyle = NumberStyle.Bullet; // Switch to a bullet style.
+        }
 
-        // Save the document to verify the changes.
-        doc.Save("Lists_RetrieveAndModify.docx");
+        // Save the modified document.
+        doc.Save("RetrieveAndModifyList.docx");
     }
 }
