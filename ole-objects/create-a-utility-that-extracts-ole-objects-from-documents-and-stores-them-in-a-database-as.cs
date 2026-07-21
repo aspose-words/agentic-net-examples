@@ -7,56 +7,57 @@ public class OleExtractor
 {
     public static void Main()
     {
-        // Prepare a sample file that will be embedded as an OLE object.
-        const string sampleTextPath = "sample.txt";
-        File.WriteAllText(sampleTextPath, "Hello from embedded OLE object!");
+        // Path to the source Word document containing OLE objects.
+        const string sourceDocPath = "SampleDocument.docx";
 
-        // Create a new Word document and embed the sample file as an OLE object.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        // Insert the OLE object (embedded, not linked, displayed as content).
-        builder.InsertOleObject(sampleTextPath, false, false, null);
-        // Save the document to disk – this uses the provided save rule.
-        const string docPath = "sample.docx";
-        doc.Save(docPath);
+        // Verify that the source document exists.
+        if (!File.Exists(sourceDocPath))
+        {
+            Console.WriteLine($"Source document not found: {Path.GetFullPath(sourceDocPath)}");
+            return;
+        }
 
-        // Load the document back – this uses the provided load rule.
-        Document loadedDoc = new Document(docPath);
+        // Directory where extracted OLE objects will be saved.
+        const string outputDirectory = "ExtractedOleObjects";
 
-        // Directory to store extracted OLE objects (simulating a BLOB database).
-        const string storageDir = "OleBlobs";
-        Directory.CreateDirectory(storageDir);
+        // Load the Word document.
+        Document doc = new Document(sourceDocPath);
 
-        // Iterate through all shapes in the document.
+        // Ensure the output directory exists.
+        if (!Directory.Exists(outputDirectory))
+            Directory.CreateDirectory(outputDirectory);
+
+        // Iterate over all shapes in the document.
         int oleIndex = 0;
-        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true))
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
             OleFormat oleFormat = shape.OleFormat;
             if (oleFormat == null)
                 continue; // Not an OLE object.
 
-            // Retrieve raw OLE data.
-            byte[] oleData = oleFormat.GetRawData();
+            // Skip linked OLE objects; only process embedded ones.
+            if (oleFormat.IsLink)
+                continue;
 
-            // Determine a file name for the extracted object.
-            string suggestedName = oleFormat.SuggestedFileName;
-            if (string.IsNullOrEmpty(suggestedName))
+            // Determine a file name for the object.
+            string fileName = oleFormat.SuggestedFileName;
+            if (string.IsNullOrEmpty(fileName))
             {
-                // Fallback to a generated name using suggested extension.
+                // Fallback to a generated name using the suggested extension.
                 string extension = oleFormat.SuggestedExtension ?? ".bin";
-                suggestedName = $"OleObject_{oleIndex}{extension}";
+                fileName = $"OleObject_{oleIndex}{extension}";
             }
 
-            // Save the OLE data to a file in the storage directory.
-            string outputPath = Path.Combine(storageDir, suggestedName);
-            File.WriteAllBytes(outputPath, oleData);
-            Console.WriteLine($"Extracted OLE object saved to: {outputPath}");
+            // Build the full path for the output file.
+            string outputPath = Path.Combine(outputDirectory, fileName);
 
+            // Save the OLE object directly to the file.
+            oleFormat.Save(outputPath);
+
+            Console.WriteLine($"Extracted OLE object saved to: {outputPath}");
             oleIndex++;
         }
 
-        // Clean up temporary files used for the demonstration.
-        File.Delete(sampleTextPath);
-        File.Delete(docPath);
+        Console.WriteLine("OLE extraction completed.");
     }
 }

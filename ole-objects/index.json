@@ -9,49 +9,38 @@
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
       "System.IO",
       "Aspose.Words",
       "Aspose.Words.Drawing",
-      "Aspose.Words.Saving",
-      "Aspose.Words.Drawing.Ole",
-      "System.Text",
-      "System.Collections.Generic",
-      "System.Runtime.InteropServices",
       "System.Linq"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "File",
-      "Path",
-      "SaveFormat",
-      "Directory",
-      "Shape",
       "MemoryStream",
-      "NodeType",
-      "ShapeType"
+      "Directory",
+      "Path",
+      "File",
+      "Shape",
+      "NodeType"
     ]
   },
   "stats": {
     "total_examples": 30,
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
-      "batch-processing": 2,
-      "extraction": 7,
-      "insertion": 3,
       "inspection": 8,
-      "ole-package": 3,
+      "insertion": 3,
       "online-video": 3,
+      "ole-package": 3,
+      "extraction": 7,
       "replacement": 1,
+      "batch-processing": 2,
       "validation": 3
-    },
-    "winner_counts": {
-      "existing_repo": 1,
-      "mcp": 29
     }
   },
   "rules_summary": {
@@ -105,8 +94,8 @@
       "outputs": [
         "docx"
       ],
-      "selected_engine": "existing_repo",
-      "winner": "existing_repo"
+      "selected_engine": "mcp",
+      "winner": "mcp"
     },
     {
       "id": 3,

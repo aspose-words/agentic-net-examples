@@ -9,29 +9,24 @@ public class Program
     {
         // Create a new empty document.
         Document doc = new Document();
-
-        // Initialize a DocumentBuilder for inserting content.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Prepare some dummy data to embed as an OLE object.
-        byte[] dummyData = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+        // Prepare some dummy data to embed as an OLE package.
+        byte[] dummyData = System.Text.Encoding.UTF8.GetBytes("Hello, OLE!");
         using (MemoryStream stream = new MemoryStream(dummyData))
         {
-            // Insert the OLE object using the "Package" ProgID.
-            // Parameters: stream, progId, asIcon, presentation (null for default icon).
+            // Insert the OLE object. Use "Package" as the ProgId and display it as an icon.
             Shape oleShape = builder.InsertOleObject(stream, "Package", true, null);
 
-            // Retrieve the OleFormat from the inserted shape.
-            OleFormat oleFormat = oleShape.OleFormat;
+            // Retrieve the ProgId of the inserted OLE object.
+            string progId = oleShape.OleFormat.ProgId;
 
-            // Get the ProgId of the OLE object.
-            string progId = oleFormat.ProgId;
-
-            // Log the ProgId for diagnostic purposes.
+            // Log the ProgId.
             Console.WriteLine($"Inserted OLE object's ProgId: {progId}");
         }
 
-        // Save the document to verify the OLE object was inserted.
-        doc.Save("InsertedOleObject.docx");
+        // Save the document to the current directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OleProgIdExample.docx");
+        doc.Save(outputPath);
     }
 }
