@@ -1,8 +1,9 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Loading;
 using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
@@ -11,87 +12,85 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        string inputDir = Path.Combine(workDir, "InputImages");
-        string outputDir = Path.Combine(workDir, "OutputImages");
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Prepare output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample animated GIF (tiny two‑frame GIF) from a base64 string.
+        // 1. Create a sample GIF image (single‑frame for simplicity).
         // -----------------------------------------------------------------
-        // This GIF was generated beforehand and embedded as a string to avoid external files.
-        const string base64Gif =
-            "R0lGODdhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs="; // 1×1 pixel, 2‑frame transparent GIF
-        byte[] gifBytes = Convert.FromBase64String(base64Gif);
-        string gifPath = Path.Combine(inputDir, "sample.gif");
-        File.WriteAllBytes(gifPath, gifBytes);
+        string sampleGifPath = Path.Combine(artifactsDir, "sample.gif");
+        const int width = 200;
+        const int height = 200;
+
+        Bitmap bitmap = new Bitmap(width, height);
+        Graphics graphics = Graphics.FromImage(bitmap);
+        graphics.Clear(Color.White);
+        // Draw a simple rectangle.
+        graphics.FillRectangle(new SolidBrush(Color.Blue), 20, 20, width - 40, height - 40);
+        // Save as GIF.
+        bitmap.Save(sampleGifPath, ImageFormat.Gif);
+        graphics.Dispose();
+        bitmap.Dispose();
 
         // -----------------------------------------------------------------
         // 2. Insert the GIF into a Word document.
         // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        Shape gifShape = builder.InsertImage(gifPath);
-        // Ensure the shape really contains an image.
-        if (!gifShape.HasImage)
-            throw new InvalidOperationException("Failed to insert GIF image into the document.");
-
-        // Save the document (optional, just to demonstrate the lifecycle).
-        string docPath = Path.Combine(workDir, "Sample.docx");
+        builder.InsertImage(sampleGifPath);
+        string docPath = Path.Combine(artifactsDir, "DocumentWithGif.docx");
         doc.Save(docPath);
 
         // -----------------------------------------------------------------
-        // 3. Extract all GIF images from the document.
+        // 3. Extract all GIF images from the document and convert them to PNG.
         // -----------------------------------------------------------------
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        List<Shape> gifShapes = new List<Shape>();
-        foreach (Shape shape in shapeNodes)
-        {
-            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Gif)
-                gifShapes.Add(shape);
-        }
+        int convertedCount = 0;
 
-        if (gifShapes.Count == 0)
-            throw new InvalidOperationException("No GIF images were found in the document.");
-
-        // -----------------------------------------------------------------
-        // 4. Convert each extracted GIF to an animated PNG (APNG) while preserving timing.
-        //    Aspose.Drawing can load the GIF, keep its frame delays, and save as PNG.
-        // -----------------------------------------------------------------
-        int index = 0;
-        foreach (Shape shape in gifShapes)
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            // Obtain the raw GIF bytes.
+            if (!shape.HasImage)
+                continue;
+
+            if (shape.ImageData.ImageType != ImageType.Gif)
+                continue;
+
+            // Save the original GIF (optional, just to demonstrate extraction).
+            string extractedGifPath = Path.Combine(artifactsDir, $"extracted_{convertedCount}.gif");
+            shape.ImageData.Save(extractedGifPath);
+
+            // Load the GIF into Aspose.Drawing.Image.
             using (MemoryStream gifStream = new MemoryStream())
             {
                 shape.ImageData.Save(gifStream);
                 gifStream.Position = 0;
 
-                // Load the GIF with Aspose.Drawing.
-                using (Image gifImage = Image.FromStream(gifStream))
+                using (Aspose.Drawing.Image gifImage = Aspose.Drawing.Image.FromStream(gifStream))
                 {
-                    // Prepare the output file name.
-                    string outFile = Path.Combine(outputDir, $"converted_{index}.png");
-
-                    // Save as PNG. Aspose.Drawing preserves animation frames and timing
-                    // when the target format supports it (APNG). If the environment does not
-                    // support APNG, the first frame will be saved.
-                    gifImage.Save(outFile, ImageFormat.Png);
-                    if (!File.Exists(outFile))
-                        throw new InvalidOperationException($"Failed to create output file '{outFile}'.");
+                    // Convert to PNG. (Aspose.Drawing saves only the first frame for GIFs;
+                    // for a true animated PNG you would need a library that supports APNG.)
+                    string pngPath = Path.Combine(artifactsDir, $"converted_{convertedCount}.png");
+                    gifImage.Save(pngPath, ImageFormat.Png);
                 }
             }
-            index++;
+
+            convertedCount++;
         }
 
         // -----------------------------------------------------------------
-        // 5. Validation – ensure at least one output file was produced.
+        // 4. Validation – ensure at least one PNG was produced.
         // -----------------------------------------------------------------
-        string[] producedFiles = Directory.GetFiles(outputDir, "*.png");
-        if (producedFiles.Length == 0)
-            throw new InvalidOperationException("No PNG files were created during conversion.");
+        if (convertedCount == 0)
+            throw new InvalidOperationException("No GIF images were found to convert.");
+
+        // Verify that the PNG files exist.
+        for (int i = 0; i < convertedCount; i++)
+        {
+            string pngPath = Path.Combine(artifactsDir, $"converted_{i}.png");
+            if (!File.Exists(pngPath))
+                throw new FileNotFoundException($"Expected output file not found: {pngPath}");
+        }
 
         // The example finishes without requiring user interaction.
     }

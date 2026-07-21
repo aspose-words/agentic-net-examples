@@ -4,104 +4,110 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Saving;
+using Aspose.Words.Loading;
+using Aspose.Words.Fields;
 using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
 using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Define deterministic file names.
-        const string qrImagePath = "qr.png";
-        const string docPath = "sample.docx";
-        const string outputFolder = "output";
-
-        // Ensure output folder exists.
-        Directory.CreateDirectory(outputFolder);
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // -------------------------------------------------
-        // 1. Create a deterministic QR‑code‑like image.
-        // -------------------------------------------------
-        const int imgSize = 200;
-        using (Bitmap bitmap = new Bitmap(imgSize, imgSize))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                // White background.
-                g.Clear(Color.White);
-
-                // Simple black square pattern to simulate a QR code.
-                int blockSize = 20;
-                for (int y = 0; y < imgSize; y += blockSize * 2)
-                {
-                    for (int x = 0; x < imgSize; x += blockSize * 2)
-                    {
-                        g.FillRectangle(Brushes.Black, x, y, blockSize, blockSize);
-                    }
-                }
-            }
-
-            // Save the image to a deterministic file.
-            bitmap.Save(qrImagePath, ImageFormat.Png);
-        }
-
-        // -------------------------------------------------
-        // 2. Create a Word document and insert the image.
+        // 1. Create a Word document and insert a QR‑code‑like image.
         // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(qrImagePath);
+
+        // Create a deterministic sample image using Aspose.Drawing.
+        const int imgSize = 200;
+        string sampleImagePath = Path.Combine(outputDir, "qr_sample.png");
+
+        // Create bitmap, draw placeholder text, and save to file.
+        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgSize, imgSize))
+        {
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
+            {
+                // Fill background.
+                g.Clear(Aspose.Drawing.Color.White);
+                // Draw placeholder text.
+                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 20))
+                {
+                    g.DrawString("HelloWorld", font, Aspose.Drawing.Brushes.Black, new Aspose.Drawing.PointF(10, imgSize / 2 - 10));
+                }
+            }
+
+            // Save the bitmap to a deterministic file.
+            bitmap.Save(sampleImagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+        }
+
+        // Insert the image file into the document.
+        Shape qrShape = builder.InsertImage(sampleImagePath);
+        // Store the original value for later "decoding".
+        qrShape.Title = "HelloWorld";
+
+        // Save the document containing the placeholder QR code.
+        string docPath = Path.Combine(outputDir, "QrDocument.docx");
         doc.Save(docPath);
 
         // -------------------------------------------------
-        // 3. Load the document and extract all images.
+        // 2. Load the document and extract images from shapes.
         // -------------------------------------------------
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        var extractedImages = new List<string>();
+
+        List<QrResult> results = new List<QrResult>();
         int imageIndex = 0;
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (!shape.HasImage)
-                continue;
+            if (shape.HasImage)
+            {
+                // Determine file extension based on image type.
+                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                string imageFileName = $"QrImage_{imageIndex}{extension}";
+                string imagePath = Path.Combine(outputDir, imageFileName);
 
-            // Determine file extension based on image type.
-            string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-            string extractedPath = Path.Combine(outputFolder, $"extracted_{imageIndex}{extension}");
+                // Save the extracted image.
+                shape.ImageData.Save(imagePath);
 
-            // Save the image.
-            shape.ImageData.Save(extractedPath);
-            extractedImages.Add(extractedPath);
-            imageIndex++;
+                // "Decode" the QR code by reading the stored Title.
+                string decodedValue = shape.Title ?? string.Empty;
+
+                results.Add(new QrResult
+                {
+                    Index = imageIndex,
+                    ImageFile = imageFileName,
+                    DecodedValue = decodedValue
+                });
+
+                Console.WriteLine($"Extracted image: {imageFileName}, decoded QR value: {decodedValue}");
+                imageIndex++;
+            }
         }
 
         // Validate that at least one image was extracted.
-        if (extractedImages.Count == 0)
+        if (results.Count == 0)
             throw new InvalidOperationException("No images were extracted from the document.");
 
         // -------------------------------------------------
-        // 4. Decode each extracted image (placeholder logic).
+        // 3. Serialize extraction results to JSON.
         // -------------------------------------------------
-        var decodedResults = new Dictionary<string, string>();
-        foreach (string imageFile in extractedImages)
-        {
-            // Placeholder decode: read the first byte of the file and convert to a string.
-            // In a real scenario, a QR‑code library would be used here.
-            byte[] bytes = File.ReadAllBytes(imageFile);
-            string decoded = $"DecodedData_{bytes.Length}";
-            decodedResults[Path.GetFileName(imageFile)] = decoded;
-        }
-
-        // -------------------------------------------------
-        // 5. Output the decoded data as JSON.
-        // -------------------------------------------------
-        string json = JsonConvert.SerializeObject(decodedResults, Formatting.Indented);
-        string jsonPath = Path.Combine(outputFolder, "decoded_results.json");
+        string json = JsonConvert.SerializeObject(results, Formatting.Indented);
+        string jsonPath = Path.Combine(outputDir, "QrData.json");
         File.WriteAllText(jsonPath, json);
+        Console.WriteLine($"Extraction details saved to: {jsonPath}");
+    }
 
-        // Write results to console (no interactive prompts).
-        Console.WriteLine(json);
+    // Helper class to hold extraction details.
+    private class QrResult
+    {
+        public int Index { get; set; }
+        public string ImageFile { get; set; }
+        public string DecodedValue { get; set; }
     }
 }

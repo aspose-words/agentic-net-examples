@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,90 +10,83 @@ public class Program
 {
     public static void Main()
     {
-        // Directories for temporary files.
+        // Directories for input and output files.
         string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        string gifDir = Path.Combine(workDir, "Gifs");
-        string mp4Dir = Path.Combine(workDir, "Mp4s");
-        Directory.CreateDirectory(gifDir);
-        Directory.CreateDirectory(mp4Dir);
+        Directory.CreateDirectory(workDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample GIF image (static for simplicity) and insert it
-        //    into a Word document.
+        // 1. Create a deterministic sample GIF image (static for simplicity).
         // -----------------------------------------------------------------
-        string sampleGifPath = Path.Combine(workDir, "sample.gif");
-        CreateSampleGif(sampleGifPath);
+        string gifPath = Path.Combine(workDir, "sample.gif");
+        CreateSampleGif(gifPath);
 
+        // -----------------------------------------------------------------
+        // 2. Create a Word document and insert the GIF image.
+        // -----------------------------------------------------------------
+        string docPath = Path.Combine(workDir, "DocumentWithGif.docx");
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleGifPath);
-        string docPath = Path.Combine(workDir, "DocumentWithGif.docx");
+        builder.InsertImage(gifPath);
         doc.Save(docPath);
 
         // -----------------------------------------------------------------
-        // 2. Load the document and extract all GIF images.
+        // 3. Load the document and extract all GIF images.
         // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
-        var shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true)
-                                  .Cast<Shape>()
-                                  .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Gif)
-                                  .ToList();
-
-        if (!shapeNodes.Any())
-            throw new InvalidOperationException("No GIF images were found in the document.");
-
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int gifIndex = 0;
-        foreach (var shape in shapeNodes)
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            string gifFileName = Path.Combine(gifDir, $"extracted_{gifIndex}.gif");
-            shape.ImageData.Save(gifFileName);
+            if (!shape.HasImage) continue;
+
+            // Process only GIF images.
+            if (shape.ImageData.ImageType != ImageType.Gif) continue;
+
+            // Save the extracted GIF.
+            string extractedGif = Path.Combine(workDir, $"extracted_{gifIndex}.gif");
+            shape.ImageData.Save(extractedGif);
+            if (!File.Exists(extractedGif))
+                throw new InvalidOperationException($"Failed to save extracted GIF: {extractedGif}");
+
+            // -----------------------------------------------------------------
+            // 4. Convert the extracted GIF to an MP4 video clip.
+            //    (Placeholder conversion – copies the GIF to an MP4 file.
+            //     Real conversion would require a video processing library such as FFmpeg.)
+            // -----------------------------------------------------------------
+            string mp4Path = Path.Combine(workDir, $"video_{gifIndex}.mp4");
+            File.Copy(extractedGif, mp4Path, overwrite: true);
+            if (!File.Exists(mp4Path))
+                throw new InvalidOperationException($"Failed to create MP4 placeholder: {mp4Path}");
+
+            Console.WriteLine($"GIF extracted to: {extractedGif}");
+            Console.WriteLine($"MP4 placeholder created at: {mp4Path}");
             gifIndex++;
         }
 
-        // -----------------------------------------------------------------
-        // 3. Batch convert each extracted GIF to an MP4 file.
-        //    (Real video conversion would require a multimedia library; here we
-        //     simply copy the file and change the extension to illustrate the
-        //     batch workflow while preserving order.)
-        // -----------------------------------------------------------------
-        var gifFiles = Directory.GetFiles(gifDir, "*.gif")
-                                .OrderBy(f => f) // Preserve lexical order (which matches extraction order)
-                                .ToArray();
+        // Validate that at least one GIF was processed.
+        if (gifIndex == 0)
+            throw new InvalidOperationException("No GIF images were found in the document.");
 
-        if (!gifFiles.Any())
-            throw new InvalidOperationException("No GIF files were found for conversion.");
-
-        for (int i = 0; i < gifFiles.Length; i++)
-        {
-            string sourceGif = gifFiles[i];
-            string targetMp4 = Path.Combine(mp4Dir, $"video_{i}.mp4");
-
-            // Placeholder conversion: copy the GIF file and rename it.
-            // Replace this block with a real video encoder if needed.
-            File.Copy(sourceGif, targetMp4, overwrite: true);
-        }
-
-        // -----------------------------------------------------------------
-        // 4. Validation – ensure that MP4 files were created.
-        // -----------------------------------------------------------------
-        var mp4Files = Directory.GetFiles(mp4Dir, "*.mp4");
-        if (mp4Files.Length == 0)
-            throw new InvalidOperationException("MP4 conversion failed – no output files were created.");
-
-        Console.WriteLine($"Extraction and conversion completed. {mp4Files.Length} MP4 files are available in '{mp4Dir}'.");
+        // Cleanup (optional): uncomment the following line to delete the working directory after execution.
+        // Directory.Delete(workDir, recursive: true);
     }
 
-    // Creates a simple static GIF image using Aspose.Drawing.
+    // Helper method to create a simple static GIF image using Aspose.Drawing.
     private static void CreateSampleGif(string filePath)
     {
         const int width = 200;
-        const int height = 200;
-
+        const int height = 100;
         using (Bitmap bitmap = new Bitmap(width, height))
         using (Graphics graphics = Graphics.FromImage(bitmap))
         {
             graphics.Clear(Aspose.Drawing.Color.LightBlue);
-            graphics.DrawEllipse(new Pen(Aspose.Drawing.Color.DarkBlue, 5), 20, 20, width - 40, height - 40);
+            graphics.DrawString(
+                "Sample GIF",
+                new Aspose.Drawing.Font("Arial", 20),
+                Aspose.Drawing.Brushes.Black,
+                new Aspose.Drawing.PointF(10, 40));
+
+            // Save as GIF.
             bitmap.Save(filePath, ImageFormat.Gif);
         }
     }

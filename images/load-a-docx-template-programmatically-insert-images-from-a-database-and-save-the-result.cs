@@ -3,96 +3,107 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
+using Aspose.Drawing; // Aspose.Drawing.Common provides Bitmap, Graphics, Color
 
 public class Program
 {
+    // Entry point
     public static void Main()
     {
         // Paths for temporary files
         const string templatePath = "template.docx";
         const string resultPath = "result.docx";
-        const string imagePath1 = "image1.png";
-        const string imagePath2 = "image2.png";
 
-        // -------------------------------------------------
-        // 1. Create sample images that will act as DB BLOBs
-        // -------------------------------------------------
-        CreateSampleImage(imagePath1, 100, 100, Aspose.Drawing.Color.LightBlue);
-        CreateSampleImage(imagePath2, 100, 100, Aspose.Drawing.Color.LightCoral);
+        // Step 1: Create sample images that simulate database BLOBs
+        List<byte[]> imageBlobs = CreateSampleImageBlobs();
 
-        // -------------------------------------------------
-        // 2. Simulate a database that stores image bytes
-        // -------------------------------------------------
-        List<byte[]> imageBlobs = new List<byte[]>
+        // Step 2: Create a simple DOCX template
+        CreateTemplateDocument(templatePath);
+
+        // Step 3: Load the template
+        Document doc = new Document(templatePath);
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Move cursor to the end of the document
+        builder.MoveToDocumentEnd();
+
+        // Step 4: Insert each image from the "database"
+        foreach (byte[] imageBytes in imageBlobs)
         {
-            File.ReadAllBytes(imagePath1),
-            File.ReadAllBytes(imagePath2)
-        };
-
-        // -------------------------------------------------
-        // 3. Create a simple DOCX template file
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
-        templateBuilder.Writeln("Template Document");
-        templateBuilder.Writeln("Images will be inserted below:");
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // 4. Load the template and insert images from the "DB"
-        // -------------------------------------------------
-        Document resultDoc = new Document(templatePath);
-        DocumentBuilder resultBuilder = new DocumentBuilder(resultDoc);
-
-        foreach (byte[] blob in imageBlobs)
-        {
-            using (MemoryStream imageStream = new MemoryStream(blob))
-            {
-                // Ensure the stream is positioned at the beginning
-                imageStream.Position = 0;
-
-                // Insert the image inline
-                resultBuilder.InsertImage(imageStream);
-
-                // Add a line break after each image
-                resultBuilder.Writeln();
-            }
+            // Insert image from byte array (inline)
+            builder.InsertImage(imageBytes);
+            // Add a line break after each image for readability
+            builder.InsertBreak(BreakType.LineBreak);
         }
 
-        // -------------------------------------------------
-        // 5. Save the resulting document
-        // -------------------------------------------------
-        resultDoc.Save(resultPath);
+        // Step 5: Save the resulting document
+        doc.Save(resultPath);
 
-        // -------------------------------------------------
-        // 6. Validate that the output file was created
-        // -------------------------------------------------
+        // Validation: ensure the output file was created
         if (!File.Exists(resultPath))
-            throw new InvalidOperationException("The result document was not created.");
-
-        // Cleanup temporary image files (optional)
-        File.Delete(imagePath1);
-        File.Delete(imagePath2);
-        File.Delete(templatePath);
+            throw new InvalidOperationException($"Failed to create output file: {resultPath}");
     }
 
-    // Helper method to create a deterministic PNG image using Aspose.Drawing
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color fillColor)
+    // Generates deterministic sample images and returns them as byte arrays
+    private static List<byte[]> CreateSampleImageBlobs()
     {
-        // Create a bitmap with the requested dimensions
-        using (Bitmap bitmap = new Bitmap(width, height))
+        var blobs = new List<byte[]>();
+
+        // First image: red square
+        using (Bitmap bitmap = new Bitmap(200, 200))
         {
-            // Obtain a graphics object for drawing
-            using (Graphics graphics = Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                // Fill the background with the specified color
-                graphics.Clear(fillColor);
+                g.Clear(Color.White);
+                g.FillRectangle(new SolidBrush(Color.Red), 20, 20, 160, 160);
             }
 
-            // Save the bitmap as a PNG file
-            bitmap.Save(filePath, ImageFormat.Png);
+            using (MemoryStream ms = new MemoryStream())
+            {
+                bitmap.Save(ms, Aspose.Drawing.Imaging.ImageFormat.Png);
+                ms.Position = 0; // Reset before reading
+                blobs.Add(ms.ToArray());
+            }
         }
+
+        // Second image: green circle
+        using (Bitmap bitmap = new Bitmap(200, 200))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                g.FillEllipse(new SolidBrush(Color.Green), 20, 20, 160, 160);
+            }
+
+            using (MemoryStream ms = new MemoryStream())
+            {
+                bitmap.Save(ms, Aspose.Drawing.Imaging.ImageFormat.Png);
+                ms.Position = 0;
+                blobs.Add(ms.ToArray());
+            }
+        }
+
+        // Ensure at least one image was created
+        if (blobs.Count == 0)
+            throw new InvalidOperationException("No sample images were generated.");
+
+        return blobs;
+    }
+
+    // Creates a minimal DOCX file that will serve as the template
+    private static void CreateTemplateDocument(string path)
+    {
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        builder.Writeln("Template Document");
+        builder.Writeln("Images will be inserted below:");
+        builder.InsertBreak(BreakType.PageBreak);
+
+        template.Save(path);
+
+        // Validate template creation
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Failed to create template file: {path}");
     }
 }

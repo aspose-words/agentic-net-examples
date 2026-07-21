@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 
 public class Program
@@ -13,25 +14,53 @@ public class Program
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a deterministic PNG image to be used in the document.
-        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
-        CreateSamplePng(sampleImagePath, 200, 200);
+        // ---------- Create sample PNG image ----------
+        string pngPath = Path.Combine(artifactsDir, "sample.png");
+        using (Bitmap bitmap = new Bitmap(200, 200))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                // Draw a simple red rectangle.
+                g.FillRectangle(new SolidBrush(Color.Red), 20, 20, 160, 160);
+            }
+            bitmap.Save(pngPath);
+        }
 
-        // Build a document that contains the PNG image twice.
+        // ---------- Create sample JPEG image (optional) ----------
+        string jpgPath = Path.Combine(artifactsDir, "sample.jpg");
+        using (Bitmap bitmap = new Bitmap(200, 200))
+        {
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                g.FillEllipse(new SolidBrush(Color.Blue), 20, 20, 160, 160);
+            }
+            bitmap.Save(jpgPath);
+        }
+
+        // ---------- Build a document containing the images ----------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(sampleImagePath);
-        builder.InsertParagraph();
-        builder.InsertImage(sampleImagePath);
 
-        // (Optional) Save the document for reference.
-        string docPath = Path.Combine(artifactsDir, "DocumentWithImages.docx");
+        // Insert PNG image.
+        builder.InsertImage(pngPath);
+        builder.Writeln(); // separate
+
+        // Insert JPEG image.
+        builder.InsertImage(jpgPath);
+        builder.Writeln();
+
+        // Save the document.
+        string docPath = Path.Combine(artifactsDir, "DocWithImages.docx");
         doc.Save(docPath);
 
-        // Extract PNG images, enhance contrast, and save them.
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        // ---------- Load the document and process PNG images ----------
+        Document loadedDoc = new Document(docPath);
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+
+        int extractedCount = 0;
         int imageIndex = 0;
-        int savedCount = 0;
 
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
@@ -39,45 +68,23 @@ public class Program
                 continue;
 
             // Process only PNG images.
-            if (shape.ImageData.ImageType != ImageType.Png)
-                continue;
-
-            // Apply maximum contrast (range 0.0 to 1.0).
-            shape.ImageData.Contrast = 1.0;
-
-            // Save the enhanced image.
-            string outputImagePath = Path.Combine(artifactsDir, $"extracted_{imageIndex}.png");
-            shape.ImageData.Save(outputImagePath);
-            savedCount++;
-            imageIndex++;
-        }
-
-        // Validate that at least one image was saved.
-        if (savedCount == 0)
-            throw new InvalidOperationException("No PNG images were extracted and saved.");
-    }
-
-    // Creates a deterministic PNG image using Aspose.Drawing.
-    private static void CreateSamplePng(string filePath, int width, int height)
-    {
-        // Create a bitmap.
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(width, height))
-        {
-            // Obtain a graphics object for drawing.
-            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+            if (shape.ImageData.ImageType == ImageType.Png)
             {
-                // Fill background with white.
-                graphics.Clear(Aspose.Drawing.Color.White);
+                // Enhance contrast (range 0.0 – 1.0). 1.0 = maximum contrast.
+                shape.ImageData.Contrast = 1.0;
 
-                // Draw a solid red rectangle.
-                using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Red))
-                {
-                    graphics.FillRectangle(brush, 20, 20, width - 40, height - 40);
-                }
+                // Save the enhanced image.
+                string outFile = Path.Combine(artifactsDir, $"Extracted_{imageIndex}.png");
+                shape.ImageData.Save(outFile);
+                extractedCount++;
+                imageIndex++;
             }
-
-            // Save the bitmap as PNG.
-            bitmap.Save(filePath);
         }
+
+        // Validate that at least one PNG image was extracted and saved.
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No PNG images were extracted from the document.");
+
+        // Program ends automatically.
     }
 }

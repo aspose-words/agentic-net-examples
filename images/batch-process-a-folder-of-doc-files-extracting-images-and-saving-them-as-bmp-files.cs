@@ -4,107 +4,101 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Loading;
-using Aspose.Words.Saving;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
+using Aspose.Drawing; // Aspose.Drawing for bitmap handling
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders
-        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "BatchImageExtraction");
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "ExtractedImages");
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Base directory of the executable.
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-        // -----------------------------------------------------------------
-        // Create a deterministic sample image (sample.png) using Aspose.Drawing
-        // -----------------------------------------------------------------
-        string sampleImagePath = Path.Combine(baseDir, "sample.png");
-        CreateSampleImage(sampleImagePath, 200, 100);
+        // Input folder that will contain sample DOC/DOCX files.
+        string inputFolder = Path.Combine(baseDir, "InputDocs");
+        Directory.CreateDirectory(inputFolder);
 
-        // -----------------------------------------------------------------
-        // Create a sample DOCX file that contains the image
-        // -----------------------------------------------------------------
-        string sampleDocPath = Path.Combine(inputDir, "SampleDocument.docx");
-        CreateSampleDocumentWithImage(sampleDocPath, sampleImagePath);
+        // Output folder where extracted BMP images will be saved.
+        string outputFolder = Path.Combine(baseDir, "ExtractedBmp");
+        Directory.CreateDirectory(outputFolder);
 
-        // -----------------------------------------------------------------
-        // Batch process all DOC/DOCX files in the input folder
-        // -----------------------------------------------------------------
-        var docFiles = Directory.GetFiles(inputDir, "*.*", SearchOption.TopDirectoryOnly)
-                                .Where(f => f.EndsWith(".doc", StringComparison.OrdinalIgnoreCase) ||
-                                            f.EndsWith(".docx", StringComparison.OrdinalIgnoreCase));
+        // Create sample documents with images.
+        CreateSampleDocuments(inputFolder);
 
-        foreach (var docFile in docFiles)
+        // Batch process all DOC/DOCX files in the input folder.
+        ProcessDocuments(inputFolder, outputFolder);
+    }
+
+    // Creates a few DOCX files each containing a simple image.
+    private static void CreateSampleDocuments(string folderPath)
+    {
+        for (int i = 1; i <= 2; i++)
         {
-            // Load the document
-            Document doc = new Document(docFile, new LoadOptions());
+            // Create a deterministic sample image using Aspose.Drawing.
+            string imagePath = Path.Combine(folderPath, $"SampleImage{i}.png");
+            using (Bitmap bitmap = new Bitmap(100, 100))
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                // Fill the bitmap with a solid color.
+                g.Clear(Color.FromArgb(50 * i, 100, 150));
+                // Save the image to a file.
+                bitmap.Save(imagePath);
+            }
 
-            // Get all shape nodes that contain images
-            var shapes = doc.GetChildNodes(NodeType.Shape, true)
-                            .Cast<Shape>()
-                            .Where(s => s.HasImage)
-                            .ToList();
+            // Create a new Word document and insert the image.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+            builder.InsertImage(imagePath);
 
-            if (!shapes.Any())
-                throw new InvalidOperationException($"No images found in document '{Path.GetFileName(docFile)}'.");
+            // Save the document.
+            string docPath = Path.Combine(folderPath, $"Document{i}.docx");
+            doc.Save(docPath);
+        }
+    }
+
+    // Loads each document, extracts all images, and saves them as BMP files.
+    private static void ProcessDocuments(string inputFolder, string outputFolder)
+    {
+        string[] docFiles = Directory.GetFiles(inputFolder, "*.doc*");
+
+        foreach (string docFile in docFiles)
+        {
+            Document doc = new Document(docFile);
+
+            // Get all shape nodes that contain images.
+            var imageShapes = doc.GetChildNodes(NodeType.Shape, true)
+                                 .Cast<Shape>()
+                                 .Where(s => s.HasImage)
+                                 .ToList();
 
             int imageIndex = 0;
-            foreach (var shape in shapes)
+            foreach (Shape shape in imageShapes)
             {
-                // Retrieve raw image bytes
-                byte[] imageBytes = shape.ImageData.ToByteArray();
-
-                // Load the bytes into an Aspose.Drawing.Bitmap
-                using (var ms = new MemoryStream(imageBytes))
-                using (var bitmap = new Bitmap(ms))
+                // Save the image data to a memory stream.
+                using (MemoryStream imageStream = new MemoryStream())
                 {
-                    // Prepare output file name (always BMP)
-                    string outputFileName = $"Img_{Path.GetFileNameWithoutExtension(docFile)}_{imageIndex}.bmp";
-                    string outputPath = Path.Combine(outputDir, outputFileName);
+                    shape.ImageData.Save(imageStream);
+                    imageStream.Position = 0; // Reset before reading.
 
-                    // Save as BMP
-                    bitmap.Save(outputPath, ImageFormat.Bmp);
+                    // Load the image into an Aspose.Drawing bitmap.
+                    using (Bitmap bitmap = new Bitmap(imageStream))
+                    {
+                        // Construct a deterministic BMP file name.
+                        string bmpFileName = $"{Path.GetFileNameWithoutExtension(docFile)}_Image{imageIndex}.bmp";
+                        string bmpPath = Path.Combine(outputFolder, bmpFileName);
+
+                        // Save the bitmap as BMP.
+                        bitmap.Save(bmpPath);
+                    }
                 }
 
                 imageIndex++;
             }
+
+            // Validation: ensure at least one image was extracted.
+            if (imageIndex == 0)
+            {
+                throw new InvalidOperationException($"No images were extracted from '{docFile}'.");
+            }
         }
-
-        // Validate that at least one BMP file was created
-        var bmpFiles = Directory.GetFiles(outputDir, "*.bmp");
-        if (!bmpFiles.Any())
-            throw new InvalidOperationException("No BMP images were extracted.");
-
-        Console.WriteLine("Image extraction completed successfully.");
-    }
-
-    // Creates a simple PNG image with a white background and a black rectangle.
-    private static void CreateSampleImage(string filePath, int width, int height)
-    {
-        using (var bitmap = new Bitmap(width, height))
-        using (var graphics = Graphics.FromImage(bitmap))
-        {
-            graphics.Clear(Color.White);
-            // Draw a simple black rectangle
-            var pen = new Pen(Color.Black, 3);
-            graphics.DrawRectangle(pen, 10, 10, width - 20, height - 20);
-            pen.Dispose();
-
-            bitmap.Save(filePath, ImageFormat.Png);
-        }
-    }
-
-    // Creates a DOCX document and inserts the specified image.
-    private static void CreateSampleDocumentWithImage(string docPath, string imagePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample document containing an image:");
-        builder.InsertImage(imagePath);
-        doc.Save(docPath, SaveFormat.Docx);
     }
 }

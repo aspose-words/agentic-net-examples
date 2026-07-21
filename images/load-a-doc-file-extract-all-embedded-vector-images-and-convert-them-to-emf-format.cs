@@ -2,93 +2,78 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Loading;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Deterministic file names.
-        const string vectorEmfPath = "vector.emf";
-        const string docPath = "sample.doc";
+        // -----------------------------------------------------------------
+        // Setup working directories
+        // -----------------------------------------------------------------
+        const string workDir = "Work";
+        Directory.CreateDirectory(workDir);
+        string docPath = Path.Combine(workDir, "sample.doc");
+        string outputDir = Path.Combine(workDir, "Extracted");
+        Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a simple EMF vector image using Aspose.Words rendering.
+        // 1. Create a temporary document and render its first page to EMF.
         // -----------------------------------------------------------------
-        // Create a temporary document with some content.
         Document tempDoc = new Document();
         DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
-        tempBuilder.Writeln("Sample vector content for EMF image.");
+        tempBuilder.Writeln("Temporary EMF content");
 
-        // Save the first page of the temporary document as an EMF file.
-        ImageSaveOptions emfSaveOptions = new ImageSaveOptions(SaveFormat.Emf);
-        tempDoc.Save(vectorEmfPath, emfSaveOptions);
-
-        // Verify that the EMF file was created.
-        if (!File.Exists(vectorEmfPath))
-            throw new InvalidOperationException("Failed to create the EMF image.");
-
-        // -----------------------------------------------------------------
-        // 2. Create a DOC file and embed the EMF image.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the EMF image into the document.
-        Shape insertedShape = builder.InsertImage(vectorEmfPath);
-
-        // Ensure the shape actually contains an image.
-        if (!insertedShape.HasImage)
-            throw new InvalidOperationException("The inserted shape does not contain an image.");
-
-        // Save the document.
-        doc.Save(docPath);
-
-        // Verify that the DOC file was saved.
-        if (!File.Exists(docPath))
-            throw new InvalidOperationException("Failed to save the DOC file.");
-
-        // -----------------------------------------------------------------
-        // 3. Load the DOC file without converting metafiles to PNG.
-        // -----------------------------------------------------------------
-        LoadOptions loadOptions = new LoadOptions
+        // Save the first page of the temporary document as an EMF image into a memory stream.
+        using (MemoryStream emfStream = new MemoryStream())
         {
-            ConvertMetafilesToPng = false // Preserve vector images.
-        };
+            ImageSaveOptions emfOptions = new ImageSaveOptions(SaveFormat.Emf);
+            // Render only the first page.
+            emfOptions.PageSet = new PageSet(0);
+            tempDoc.Save(emfStream, emfOptions);
+            emfStream.Position = 0; // Reset for reading.
 
-        Document loadedDoc = new Document(docPath, loadOptions);
-
-        // -----------------------------------------------------------------
-        // 4. Extract all embedded vector images (EMF or WMF) and save as EMF.
-        // -----------------------------------------------------------------
-        int extractedCount = 0;
-        foreach (Shape shape in loadedDoc.GetChildNodes(NodeType.Shape, true).OfType<Shape>())
-        {
-            if (!shape.HasImage)
-                continue;
-
-            ImageType imgType = shape.ImageData.ImageType;
-            if (imgType == ImageType.Emf || imgType == ImageType.Wmf)
-            {
-                string outFile = $"extracted_vector_{extractedCount}.emf";
-
-                // Save the image data. Aspose.Words will write EMF when the extension is .emf.
-                shape.ImageData.Save(outFile);
-                if (!File.Exists(outFile))
-                    throw new InvalidOperationException($"Failed to save extracted image '{outFile}'.");
-
-                extractedCount++;
-            }
+            // -----------------------------------------------------------------
+            // 2. Create the main document and embed the EMF image.
+            // -----------------------------------------------------------------
+            Document mainDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(mainDoc);
+            // Insert the EMF image from the stream.
+            builder.InsertImage(emfStream);
+            mainDoc.Save(docPath);
         }
 
         // -----------------------------------------------------------------
-        // 5. Validate that at least one EMF file was created.
+        // 3. Load the document and extract all embedded EMF vector images.
         // -----------------------------------------------------------------
-        if (extractedCount == 0)
-            throw new InvalidOperationException("No vector images were extracted from the document.");
+        Document loadedDoc = new Document(docPath);
 
-        Console.WriteLine($"Successfully extracted {extractedCount} vector image(s).");
+        var emfShapes = loadedDoc.GetChildNodes(NodeType.Shape, true)
+                                 .Cast<Shape>()
+                                 .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Emf)
+                                 .ToList();
+
+        if (!emfShapes.Any())
+            throw new InvalidOperationException("No EMF vector images were found in the document.");
+
+        int index = 0;
+        foreach (var shape in emfShapes)
+        {
+            string extractedPath = Path.Combine(outputDir,
+                $"extracted_{index}{FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType)}");
+            shape.ImageData.Save(extractedPath);
+            Console.WriteLine($"Extracted EMF image saved to: {extractedPath}");
+            index++;
+        }
+
+        // -----------------------------------------------------------------
+        // Validation: ensure at least one EMF file was written.
+        // -----------------------------------------------------------------
+        int emfCount = Directory.GetFiles(outputDir, "*.emf").Length;
+        if (emfCount == 0)
+            throw new InvalidOperationException("Extraction failed – no EMF files were created.");
+
+        Console.WriteLine($"Extraction completed. {emfCount} EMF file(s) saved to '{outputDir}'.");
     }
 }

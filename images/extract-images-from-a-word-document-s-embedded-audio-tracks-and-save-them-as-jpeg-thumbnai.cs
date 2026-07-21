@@ -1,99 +1,94 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
-public class Program
+public class ExtractImageThumbnails
 {
     public static void Main()
     {
-        // Folder for all generated files.
-        string outputDir = "Output";
+        // Folder for all generated files
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a sample preview image that will represent an audio track.
+        // 1. Create a sample image that will be inserted into the document.
         // -----------------------------------------------------------------
-        string previewPath = Path.Combine(outputDir, "audio_preview.png");
-        int previewWidth = 200;
-        int previewHeight = 200;
+        string sampleImagePath = Path.Combine(outputDir, "sample.png");
+        int imgWidth = 200;
+        int imgHeight = 200;
 
-        // Use Aspose.Drawing to create a deterministic bitmap.
-        using (Bitmap previewBitmap = new Bitmap(previewWidth, previewHeight))
+        // Use Aspose.Drawing to create a deterministic sample image.
+        using (Bitmap bmp = new Bitmap(imgWidth, imgHeight))
+        using (Graphics g = Graphics.FromImage(bmp))
         {
-            using (Graphics graphics = Graphics.FromImage(previewBitmap))
+            // Fill background with white and draw a simple rectangle.
+            g.Clear(Color.White);
+            using (Pen pen = new Pen(Color.Blue, 5))
             {
-                graphics.Clear(Color.LightBlue);
-                // Additional drawing (e.g., text) can be added here if desired.
+                g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
             }
-
-            // Save the bitmap as PNG.
-            previewBitmap.Save(previewPath, ImageFormat.Png);
+            // Save the image to disk.
+            bmp.Save(sampleImagePath);
         }
 
-        // -----------------------------------------------------------------
-        // 2. Build a Word document and insert the preview image.
-        // -----------------------------------------------------------------
+        // ---------------------------------------------------------------
+        // 2. Create a Word document and insert the sample image into it.
+        // ---------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(previewPath);
-        string docPath = Path.Combine(outputDir, "AudioDoc.docx");
+        builder.InsertImage(sampleImagePath);
+        string docPath = Path.Combine(outputDir, "DocumentWithImage.docx");
         doc.Save(docPath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the document and extract images from embedded audio tracks.
-        //    (In this example the preview image is treated as the audio track image.)
-        // -----------------------------------------------------------------
+        // ---------------------------------------------------------------
+        // 3. Load the document and extract each image, creating a JPEG thumbnail.
+        // ---------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
 
         int imageIndex = 0;
-        int thumbnailCount = 0;
-
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (shape.HasImage)
+            if (!shape.HasImage)
+                continue;
+
+            // Save the original image to a temporary file.
+            string originalImagePath = Path.Combine(outputDir,
+                $"Image_{imageIndex}{FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType)}");
+            shape.ImageData.Save(originalImagePath);
+
+            // Load the saved image using Aspose.Drawing.
+            using (Bitmap originalBitmap = new Bitmap(originalImagePath))
             {
-                // Determine the appropriate file extension for the image type.
-                string imageExtension = Aspose.Words.FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                string extractedImagePath = Path.Combine(outputDir, $"extracted_{imageIndex}{imageExtension}");
+                // Define thumbnail size.
+                int thumbWidth = 100;
+                int thumbHeight = 100;
 
-                // Save the original image to a temporary file.
-                shape.ImageData.Save(extractedImagePath);
-
-                // -----------------------------------------------------------------
-                // 4. Create a JPEG thumbnail (100x100) from the extracted image.
-                // -----------------------------------------------------------------
-                using (Image originalImage = Image.FromFile(extractedImagePath))
+                using (Bitmap thumbBitmap = new Bitmap(thumbWidth, thumbHeight))
+                using (Graphics g = Graphics.FromImage(thumbBitmap))
                 {
-                    int thumbSize = 100;
-                    using (Bitmap thumbnailBitmap = new Bitmap(thumbSize, thumbSize))
-                    {
-                        using (Graphics graphics = Graphics.FromImage(thumbnailBitmap))
-                        {
-                            graphics.Clear(Color.White);
-                            graphics.DrawImage(originalImage, new Rectangle(0, 0, thumbSize, thumbSize));
-                        }
+                    // Draw the scaled image onto the thumbnail bitmap.
+                    g.Clear(Color.Transparent);
+                    g.DrawImage(originalBitmap, new Rectangle(0, 0, thumbWidth, thumbHeight));
 
-                        string thumbnailPath = Path.Combine(outputDir, $"AudioThumbnail_{imageIndex}.jpg");
-                        thumbnailBitmap.Save(thumbnailPath, ImageFormat.Jpeg);
-                        thumbnailCount++;
-                    }
+                    // Save the thumbnail as JPEG.
+                    string thumbPath = Path.Combine(outputDir,
+                        $"Thumbnail_{imageIndex}.jpg");
+                    thumbBitmap.Save(thumbPath, ImageFormat.Jpeg);
                 }
-
-                imageIndex++;
             }
+
+            imageIndex++;
         }
 
-        // -----------------------------------------------------------------
-        // 5. Validate that at least one thumbnail was created.
-        // -----------------------------------------------------------------
-        if (thumbnailCount == 0)
-            throw new InvalidOperationException("No thumbnails were created from the document.");
+        // Simple validation: ensure at least one thumbnail was created.
+        if (imageIndex == 0)
+            throw new InvalidOperationException("No images were found in the document.");
 
-        Console.WriteLine($"Successfully created {thumbnailCount} thumbnail(s) in the folder: {outputDir}");
+        Console.WriteLine($"Extraction complete. Thumbnails saved to: {outputDir}");
     }
 }

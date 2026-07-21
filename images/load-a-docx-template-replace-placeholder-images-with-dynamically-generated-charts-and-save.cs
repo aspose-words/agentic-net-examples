@@ -3,169 +3,140 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing; // Aspose.Drawing provides Bitmap, Graphics, Color, SolidBrush, Font, Pen
+using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
 
 public class Program
 {
-    // File names used in the example
-    private const string TemplateFileName = "template.docx";
-    private const string PlaceholderImageFile = "placeholder.png";
-    private const string ChartImageFile = "chart.png";
-    private const string ResultFileName = "result.docx";
-
     public static void Main()
     {
-        // Ensure a clean start
-        CleanupFiles();
+        // File names used in the example.
+        const string placeholderImagePath = "placeholder.png";
+        const string chartImagePath = "chart.png";
+        const string templatePath = "template.docx";
+        const string outputPath = "output.docx";
 
-        // 1. Create a placeholder image
-        CreatePlaceholderImage();
-
-        // 2. Build a DOCX template that contains the placeholder image
-        CreateTemplateDocument();
-
-        // 3. Load the template document
-        Document doc = new Document(TemplateFileName);
-
-        // 4. Generate a chart image dynamically
-        CreateChartImage();
-
-        // 5. Find the placeholder shape and replace its image with the chart
-        ReplacePlaceholderWithChart(doc);
-
-        // 6. Save the resulting document
-        doc.Save(ResultFileName);
-
-        // 7. Validate that the output file was created
-        if (!File.Exists(ResultFileName))
-            throw new InvalidOperationException($"Failed to create output file '{ResultFileName}'.");
-
-        Console.WriteLine("Document created: " + Path.GetFullPath(ResultFileName));
-    }
-
-    private static void CleanupFiles()
-    {
-        foreach (var file in new[] { PlaceholderImageFile, TemplateFileName, ChartImageFile, ResultFileName })
+        // -------------------------------------------------
+        // 1. Create a placeholder image (simple white box).
+        // -------------------------------------------------
+        const int placeholderWidth = 200;
+        const int placeholderHeight = 150;
+        using (Aspose.Drawing.Bitmap placeholderBitmap = new Aspose.Drawing.Bitmap(placeholderWidth, placeholderHeight))
         {
-            if (File.Exists(file))
-                File.Delete(file);
-        }
-    }
-
-    private static void CreatePlaceholderImage()
-    {
-        // Create a 100x100 white bitmap with the word "PH" (placeholder) drawn on it
-        int width = 100;
-        int height = 100;
-
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics g = Graphics.FromImage(bitmap))
-        {
-            g.Clear(Color.White);
-            using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 24, FontStyle.Bold))
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(placeholderBitmap))
             {
-                string text = "PH";
-                var textSize = g.MeasureString(text, font);
-                float x = (width - textSize.Width) / 2;
-                float y = (height - textSize.Height) / 2;
-                g.DrawString(text, font, new SolidBrush(Color.Gray), x, y);
-            }
-            bitmap.Save(PlaceholderImageFile);
-        }
-    }
-
-    private static void CreateTemplateDocument()
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert the placeholder image and mark it with AlternativeText so we can locate it later
-        Shape placeholderShape = builder.InsertImage(PlaceholderImageFile);
-        placeholderShape.AlternativeText = "PLACEHOLDER";
-
-        // Add some surrounding text for clarity
-        builder.Writeln();
-        builder.Writeln("The image above will be replaced with a generated chart.");
-
-        doc.Save(TemplateFileName);
-    }
-
-    private static void CreateChartImage()
-    {
-        // Simple bar chart: 3 bars with values 30, 70, 50
-        int width = 400;
-        int height = 300;
-
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics g = Graphics.FromImage(bitmap))
-        {
-            g.Clear(Color.White);
-
-            // Draw axes
-            using (Pen axisPen = new Pen(Color.Black, 2))
-            {
-                g.DrawLine(axisPen, 50, height - 50, width - 30, height - 50); // X axis
-                g.DrawLine(axisPen, 50, height - 50, 50, 30); // Y axis
-            }
-
-            // Bar data
-            int[] values = { 30, 70, 50 };
-            Color[] barColors = { Color.Red, Color.Green, Color.Blue };
-            int barWidth = 60;
-            int spacing = 30;
-            int maxBarHeight = height - 100; // leave margins
-
-            for (int i = 0; i < values.Length; i++)
-            {
-                int barHeight = (int)((values[i] / 100.0) * maxBarHeight);
-                int x = 70 + i * (barWidth + spacing);
-                int y = height - 50 - barHeight;
-
-                using (SolidBrush brush = new SolidBrush(barColors[i]))
+                g.Clear(Aspose.Drawing.Color.White);
+                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Gray, 2))
                 {
-                    g.FillRectangle(brush, x, y, barWidth, barHeight);
-                }
-
-                // Draw value label above each bar
-                using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 12))
-                {
-                    string valText = values[i].ToString();
-                    var textSize = g.MeasureString(valText, font);
-                    float tx = x + (barWidth - textSize.Width) / 2;
-                    float ty = y - textSize.Height - 5;
-                    g.DrawString(valText, font, new SolidBrush(Color.Black), tx, ty);
+                    g.DrawRectangle(pen, 0, 0, placeholderWidth - 1, placeholderHeight - 1);
                 }
             }
+            placeholderBitmap.Save(placeholderImagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
+        }
 
-            // X‑axis labels
-            using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 12))
+        // -------------------------------------------------
+        // 2. Build a DOCX template that contains the placeholder image.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Insert the placeholder image and mark it with AlternativeText for later identification.
+        Shape placeholderShape = builder.InsertImage(placeholderImagePath);
+        placeholderShape.AlternativeText = "ChartPlaceholder";
+        // Save the template.
+        templateDoc.Save(templatePath);
+
+        // -------------------------------------------------
+        // 3. Dynamically generate a chart image (simple bar chart).
+        // -------------------------------------------------
+        const int chartWidth = 400;
+        const int chartHeight = 300;
+        using (Aspose.Drawing.Bitmap chartBitmap = new Aspose.Drawing.Bitmap(chartWidth, chartHeight))
+        {
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(chartBitmap))
             {
-                string[] labels = { "A", "B", "C" };
-                for (int i = 0; i < labels.Length; i++)
+                g.Clear(Aspose.Drawing.Color.White);
+
+                // Sample data.
+                int[] values = { 70, 45, 90, 55 };
+                Aspose.Drawing.Color[] barColors = {
+                    Aspose.Drawing.Color.Blue,
+                    Aspose.Drawing.Color.Green,
+                    Aspose.Drawing.Color.Orange,
+                    Aspose.Drawing.Color.Purple
+                };
+                int barCount = values.Length;
+                int maxValue = values.Max();
+
+                int margin = 40;
+                int availableWidth = chartWidth - 2 * margin;
+                int barWidth = availableWidth / (barCount * 2);
+                int spacing = barWidth; // equal spacing between bars.
+
+                for (int i = 0; i < barCount; i++)
                 {
-                    var textSize = g.MeasureString(labels[i], font);
-                    float tx = 70 + i * (barWidth + spacing) + (barWidth - textSize.Width) / 2;
-                    float ty = height - 45;
-                    g.DrawString(labels[i], font, new SolidBrush(Color.Black), tx, ty);
+                    int barHeight = (int)((values[i] / (float)maxValue) * (chartHeight - 2 * margin));
+                    int x = margin + i * (barWidth + spacing);
+                    int y = chartHeight - margin - barHeight;
+
+                    using (Aspose.Drawing.SolidBrush brush = new Aspose.Drawing.SolidBrush(barColors[i]))
+                    {
+                        g.FillRectangle(brush, x, y, barWidth, barHeight);
+                    }
+
+                    // Draw value label.
+                    using (Aspose.Drawing.Font font = new Aspose.Drawing.Font("Arial", 10))
+                    using (Aspose.Drawing.SolidBrush textBrush = new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black))
+                    {
+                        string valueStr = values[i].ToString();
+                        SizeF textSize = g.MeasureString(valueStr, font);
+                        float textX = x + (barWidth - textSize.Width) / 2;
+                        float textY = y - textSize.Height - 2;
+                        g.DrawString(valueStr, font, textBrush, textX, textY);
+                    }
+                }
+
+                // Draw axes.
+                using (Aspose.Drawing.Pen axisPen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Black, 2))
+                {
+                    g.DrawLine(axisPen, margin, margin, margin, chartHeight - margin); // Y axis
+                    g.DrawLine(axisPen, margin, chartHeight - margin, chartWidth - margin, chartHeight - margin); // X axis
                 }
             }
-
-            bitmap.Save(ChartImageFile);
+            chartBitmap.Save(chartImagePath, Aspose.Drawing.Imaging.ImageFormat.Png);
         }
-    }
 
-    private static void ReplacePlaceholderWithChart(Document doc)
-    {
-        // Locate the shape that has the placeholder AlternativeText
-        var shapes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in shapes.OfType<Shape>())
+        // -------------------------------------------------
+        // 4. Load the template and replace the placeholder with the chart.
+        // -------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // Find all shapes that have the placeholder AlternativeText.
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        bool replacementMade = false;
+
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (shape.HasImage && shape.AlternativeText == "PLACEHOLDER")
+            if (shape.HasImage && shape.AlternativeText == "ChartPlaceholder")
             {
-                // Replace the image data with the generated chart image
-                shape.ImageData.SetImage(ChartImageFile);
-                break;
+                // Replace the image data with the generated chart.
+                shape.ImageData.SetImage(chartImagePath);
+                // Adjust the shape size to match the new image's original dimensions.
+                shape.Width = shape.ImageData.ImageSize.WidthPoints;
+                shape.Height = shape.ImageData.ImageSize.HeightPoints;
+                replacementMade = true;
             }
         }
+
+        if (!replacementMade)
+            throw new InvalidOperationException("Placeholder image not found in the document.");
+
+        // Save the final document.
+        doc.Save(outputPath);
+
+        // -------------------------------------------------
+        // 5. Validate that the output file was created.
+        // -------------------------------------------------
+        if (!File.Exists(outputPath))
+            throw new FileNotFoundException("The output document was not created.", outputPath);
     }
 }

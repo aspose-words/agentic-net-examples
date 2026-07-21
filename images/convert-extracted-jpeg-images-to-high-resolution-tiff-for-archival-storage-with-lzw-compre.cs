@@ -1,8 +1,9 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Saving;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -10,85 +11,97 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
+        // Prepare output folder.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // 1. Create a deterministic JPEG image
+        // -----------------------------------------------------------------
+        // 1. Create a sample JPEG image using Aspose.Drawing.
+        // -----------------------------------------------------------------
         string jpegPath = Path.Combine(artifactsDir, "sample.jpg");
-        CreateSampleJpeg(jpegPath);
+        using (Bitmap bmp = new Bitmap(200, 200))
+        {
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.Clear(Aspose.Drawing.Color.LightBlue);
+                g.DrawEllipse(new Pen(Aspose.Drawing.Color.DarkBlue, 5), 20, 20, 160, 160);
+            }
+            bmp.Save(jpegPath, ImageFormat.Jpeg);
+        }
 
-        // 2. Build a Word document that contains the JPEG image
+        // -----------------------------------------------------------------
+        // 2. Create a Word document and insert the JPEG image.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.InsertImage(jpegPath);
         string docPath = Path.Combine(artifactsDir, "DocumentWithImage.docx");
         doc.Save(docPath);
 
-        // 3. Extract JPEG images and convert each to a high‑resolution TIFF with LZW compression
-        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
+        // -----------------------------------------------------------------
+        // 3. Extract JPEG images from the document.
+        // -----------------------------------------------------------------
+        var shapes = doc.GetChildNodes(NodeType.Shape, true)
+                        .Cast<Shape>()
+                        .Where(s => s.HasImage && s.ImageData.ImageType == ImageType.Jpeg)
+                        .ToList();
+
+        if (!shapes.Any())
+            throw new InvalidOperationException("No JPEG images were found in the document.");
+
         int imageIndex = 0;
-
-        foreach (Shape shape in shapeNodes)
+        foreach (var shape in shapes)
         {
-            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Jpeg)
+            // Save the original JPEG to a memory stream.
+            using (MemoryStream jpegStream = new MemoryStream())
             {
-                // Save the image bytes to a memory stream
-                using (MemoryStream imgStream = new MemoryStream())
+                shape.ImageData.Save(jpegStream);
+                jpegStream.Position = 0;
+
+                // Load the JPEG into a Bitmap.
+                using (Bitmap bitmap = new Bitmap(jpegStream))
                 {
-                    shape.ImageData.Save(imgStream);
-                    imgStream.Position = 0;
+                    // Set a high resolution (e.g., 300 DPI) for archival quality.
+                    bitmap.SetResolution(300f, 300f);
 
-                    // Create a temporary document that contains only this image
-                    Document imgDoc = new Document();
-                    DocumentBuilder imgBuilder = new DocumentBuilder(imgDoc);
-                    imgBuilder.InsertImage(imgStream.ToArray());
+                    // Prepare TIFF encoder with LZW compression.
+                    ImageCodecInfo tiffCodec = GetEncoder(ImageFormat.Tiff);
+                    EncoderParameters encoderParams = new EncoderParameters(1);
+                    EncoderParameter compressionParam = new EncoderParameter(
+                        Encoder.Compression,
+                        (long)EncoderValue.CompressionLZW);
+                    encoderParams.Param[0] = compressionParam;
 
-                    // Configure TIFF save options (LZW compression, 300 dpi)
-                    ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
-                    {
-                        TiffCompression = TiffCompression.Lzw,
-                        Resolution = 300 // 300 dpi
-                    };
-
-                    // Save the TIFF file
+                    // Save as TIFF with LZW compression.
                     string tiffPath = Path.Combine(artifactsDir, $"ExtractedImage_{imageIndex}.tiff");
-                    imgDoc.Save(tiffPath, tiffOptions);
+                    bitmap.Save(tiffPath, tiffCodec, encoderParams);
 
-                    // Verify that the file was created
+                    // Validate that the TIFF file was created.
                     if (!File.Exists(tiffPath))
                         throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
                 }
-
-                imageIndex++;
             }
+            imageIndex++;
         }
 
-        // Ensure at least one image was processed
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No JPEG images were found in the document.");
+        // -----------------------------------------------------------------
+        // 4. Demonstrate saving a whole document page as high‑resolution TIFF
+        //    with LZW compression (optional extra step).
+        // -----------------------------------------------------------------
+        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        {
+            TiffCompression = TiffCompression.Lzw,
+            Resolution = 300 // 300 DPI
+        };
+        string docTiffPath = Path.Combine(artifactsDir, "DocumentPage.tiff");
+        doc.Save(docTiffPath, tiffOptions);
     }
 
-    // Creates a 200×200 JPEG image with a blue rectangle on a white background
-    private static void CreateSampleJpeg(string filePath)
+    // Helper method to obtain the encoder for a specific image format.
+    private static ImageCodecInfo GetEncoder(ImageFormat format)
     {
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        {
-            using (Graphics graphics = Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(Aspose.Drawing.Color.White);
-                using (Pen pen = new Pen(Aspose.Drawing.Color.Blue, 5))
-                {
-                    graphics.DrawRectangle(pen, 20, 20, 160, 160);
-                }
-            }
-
-            // Explicitly save as JPEG to guarantee the correct format
-            bitmap.Save(filePath, ImageFormat.Jpeg);
-        }
-
-        // Validate that the JPEG file was created
-        if (!File.Exists(filePath))
-            throw new InvalidOperationException($"Failed to create JPEG file: {filePath}");
+        return ImageCodecInfo.GetImageEncoders()
+                             .FirstOrDefault(codec => codec.FormatID == format.Guid)
+               ?? throw new InvalidOperationException($"Encoder not found for format {format}.");
     }
 }

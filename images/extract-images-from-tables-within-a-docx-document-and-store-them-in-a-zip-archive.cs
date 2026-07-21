@@ -1,110 +1,119 @@
 using System;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
+using Aspose.Words.Loading;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
+using Aspose.Drawing.Imaging;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file paths
-        string docPath = "sample.docx";
-        string imagePath = "sampleImage.png";
-        string extractedFolder = "extracted";
-        string zipPath = "ExtractedImages.zip";
+        // Prepare folders.
+        string baseDir = Directory.GetCurrentDirectory();
+        string artifactsDir = Path.Combine(baseDir, "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string imagesDir = Path.Combine(artifactsDir, "Extracted");
+        Directory.CreateDirectory(imagesDir);
 
-        // Ensure clean environment
-        if (File.Exists(docPath)) File.Delete(docPath);
-        if (File.Exists(imagePath)) File.Delete(imagePath);
-        if (Directory.Exists(extractedFolder)) Directory.Delete(extractedFolder, true);
-        if (File.Exists(zipPath)) File.Delete(zipPath);
-
-        // 1. Create a sample image
-        const int imgWidth = 100;
-        const int imgHeight = 100;
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
+        // -----------------------------------------------------------------
+        // 1. Create a deterministic sample image (input.png).
+        // -----------------------------------------------------------------
+        string sampleImagePath = Path.Combine(artifactsDir, "input.png");
+        using (Bitmap bitmap = new Bitmap(100, 100))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bitmap))
-            {
-                g.Clear(Aspose.Drawing.Color.White);
-                using (Aspose.Drawing.Pen pen = new Aspose.Drawing.Pen(Aspose.Drawing.Color.Red, 3))
-                {
-                    g.DrawRectangle(pen, 10, 10, imgWidth - 20, imgHeight - 20);
-                }
-            }
-            bitmap.Save(imagePath);
+            graphics.Clear(Color.LightBlue);
+            // Simple deterministic drawing – a filled rectangle.
+            graphics.FillRectangle(new SolidBrush(Color.DarkBlue), 10, 10, 80, 80);
+            bitmap.Save(sampleImagePath, ImageFormat.Png);
         }
 
-        // 2. Create a DOCX with a table containing images
+        // -----------------------------------------------------------------
+        // 2. Build a DOCX document that contains a table with images.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a 2x2 table
+        // Create a 2x2 table and insert the sample image into each cell.
         builder.StartTable();
-
         for (int row = 0; row < 2; row++)
         {
             for (int col = 0; col < 2; col++)
             {
                 builder.InsertCell();
-                builder.InsertImage(imagePath);
+                // Insert the image inline.
+                builder.InsertImage(sampleImagePath);
             }
             builder.EndRow();
         }
-
         builder.EndTable();
 
+        // Save the document.
+        string docPath = Path.Combine(artifactsDir, "Sample.docx");
         doc.Save(docPath);
 
-        // 3. Extract images from tables
+        // -----------------------------------------------------------------
+        // 3. Load the document and extract images that reside inside tables.
+        // -----------------------------------------------------------------
         Document loadedDoc = new Document(docPath);
-        NodeCollection tables = loadedDoc.GetChildNodes(NodeType.Table, true);
+        int imageIndex = 0;
 
-        Directory.CreateDirectory(extractedFolder);
-        int imageIndex = 1;
-
-        foreach (Table tbl in tables)
+        // Prepare the zip archive that will hold the extracted images.
+        string zipPath = Path.Combine(artifactsDir, "ExtractedImages.zip");
+        using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
+        using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Update))
         {
-            foreach (Row row in tbl.Rows)
+            // Iterate over all tables in the document.
+            NodeCollection tables = loadedDoc.GetChildNodes(NodeType.Table, true);
+            foreach (Table table in tables.OfType<Table>())
             {
-                foreach (Cell cell in row.Cells)
+                foreach (Row row in table.Rows)
                 {
-                    NodeCollection shapes = cell.GetChildNodes(NodeType.Shape, true);
-                    foreach (Shape shape in shapes)
+                    foreach (Cell cell in row.Cells)
                     {
-                        if (shape.HasImage)
+                        // Find all Shape nodes inside the cell.
+                        NodeCollection shapes = cell.GetChildNodes(NodeType.Shape, true);
+                        foreach (Shape shape in shapes.OfType<Shape>())
                         {
-                            string outImagePath = Path.Combine(extractedFolder, $"image-{imageIndex}.png");
-                            shape.ImageData.Save(outImagePath);
-                            imageIndex++;
+                            if (shape.HasImage)
+                            {
+                                // Determine file extension based on image type.
+                                string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
+                                string imageFileName = $"image_{imageIndex}{extension}";
+                                string imageFilePath = Path.Combine(imagesDir, imageFileName);
+
+                                // Save the image to a temporary file.
+                                shape.ImageData.Save(imageFilePath);
+
+                                // Add the image file to the zip archive.
+                                ZipArchiveEntry entry = archive.CreateEntry(imageFileName);
+                                using (FileStream imgStream = new FileStream(imageFilePath, FileMode.Open, FileAccess.Read))
+                                using (Stream entryStream = entry.Open())
+                                {
+                                    imgStream.CopyTo(entryStream);
+                                }
+
+                                imageIndex++;
+                            }
                         }
                     }
                 }
             }
+
+            // Validation: ensure at least one image was extracted.
+            if (imageIndex == 0)
+                throw new InvalidOperationException("No images were extracted from tables.");
         }
 
-        // Validate that at least one image was extracted
-        string[] extractedFiles = Directory.GetFiles(extractedFolder);
-        if (extractedFiles.Length == 0)
-            throw new InvalidOperationException("No images were extracted from the tables.");
-
-        // 4. Create a zip archive containing the extracted images
-        using (ZipArchive zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
-        {
-            foreach (string filePath in extractedFiles)
-            {
-                zip.CreateEntryFromFile(filePath, Path.GetFileName(filePath));
-            }
-        }
-
-        // Validate zip creation
-        if (!File.Exists(zipPath) || new FileInfo(zipPath).Length == 0)
-            throw new InvalidOperationException("Failed to create the zip archive.");
-
-        // Program completed successfully
-        Console.WriteLine("Image extraction and zipping completed.");
+        // Optional cleanup of temporary extracted images.
+        if (Directory.Exists(imagesDir))
+            Directory.Delete(imagesDir, true);
     }
 }

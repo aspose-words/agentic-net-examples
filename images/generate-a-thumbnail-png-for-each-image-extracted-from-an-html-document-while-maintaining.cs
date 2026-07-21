@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
+using Aspose.Words.Saving;
 using Aspose.Drawing;
 using Aspose.Drawing.Imaging;
 
@@ -9,124 +10,104 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a deterministic working folder.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Prepare a folder for all artifacts.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        if (Directory.Exists(artifactsDir))
+            Directory.Delete(artifactsDir, true);
+        Directory.CreateDirectory(artifactsDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create sample images that will be referenced from the HTML.
-        // -----------------------------------------------------------------
-        string imgPath1 = Path.Combine(workDir, "sample1.png");
-        string imgPath2 = Path.Combine(workDir, "sample2.jpg");
+        // ---------- Create sample images ----------
+        string[] sampleImagePaths = new string[2];
+        for (int i = 0; i < sampleImagePaths.Length; i++)
+        {
+            int width = 200 + i * 100;   // 200, 300
+            int height = 150 + i * 50;   // 150, 200
+            string imagePath = Path.Combine(artifactsDir, $"input{i + 1}.png");
+            CreateSampleImage(width, height, imagePath);
+            sampleImagePaths[i] = imagePath;
+        }
 
-        CreateSampleImage(imgPath1, 200, 120, Aspose.Drawing.Color.LightBlue);
-        CreateSampleImage(imgPath2, 80, 150, Aspose.Drawing.Color.LightCoral);
+        // ---------- Create a simple HTML file that references the images ----------
+        string htmlPath = Path.Combine(artifactsDir, "sample.html");
+        File.WriteAllText(htmlPath,
+            $"<html><body>" +
+            $"<p>First image:</p><img src=\"{Path.GetFileName(sampleImagePaths[0])}\"/>" +
+            $"<p>Second image:</p><img src=\"{Path.GetFileName(sampleImagePaths[1])}\"/>" +
+            $"</body></html>");
 
-        // -----------------------------------------------------------------
-        // 2. Build a simple HTML document that contains the images.
-        // -----------------------------------------------------------------
-        string htmlPath = Path.Combine(workDir, "sample.html");
-        string htmlContent = $@"
-<html>
-<body>
-    <p>First image:</p>
-    <img src=""{imgPath1}"" />
-    <p>Second image:</p>
-    <img src=""{imgPath2}"" />
-</body>
-</html>";
-        File.WriteAllText(htmlPath, htmlContent);
-
-        // -----------------------------------------------------------------
-        // 3. Load the HTML into an Aspose.Words document.
-        // -----------------------------------------------------------------
+        // ---------- Load the HTML document ----------
         Document doc = new Document(htmlPath);
 
-        // -----------------------------------------------------------------
-        // 4. Extract each image, generate a thumbnail while preserving aspect ratio,
-        //    and save the thumbnail as PNG.
-        // -----------------------------------------------------------------
+        // ---------- Extract each image, generate a thumbnail, and save it ----------
         NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
-        int thumbIndex = 0;
-
+        int imageIndex = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (!shape.HasImage)
                 continue;
 
-            // Obtain the raw image bytes from the shape.
+            // Obtain the original image bytes.
             byte[] imageBytes = shape.ImageData.ToByteArray();
 
-            // Load the original image into an Aspose.Drawing.Bitmap.
+            // Load the image into an Aspose.Drawing.Bitmap.
             using (MemoryStream ms = new MemoryStream(imageBytes))
             {
                 ms.Position = 0;
                 using (Bitmap original = new Bitmap(ms))
                 {
-                    // Determine thumbnail size (max dimension = 100 pixels) while keeping aspect ratio.
-                    const int maxDim = 100;
-                    int thumbWidth, thumbHeight;
+                    // Determine thumbnail size while preserving aspect ratio (max 100x100).
+                    const int maxSize = 100;
+                    double ratio = Math.Min((double)maxSize / original.Width, (double)maxSize / original.Height);
+                    if (ratio > 1) ratio = 1; // Do not upscale.
 
-                    if (original.Width >= original.Height)
-                    {
-                        thumbWidth = maxDim;
-                        thumbHeight = (int)Math.Round((double)original.Height / original.Width * maxDim);
-                    }
-                    else
-                    {
-                        thumbHeight = maxDim;
-                        thumbWidth = (int)Math.Round((double)original.Width / original.Height * maxDim);
-                    }
+                    int thumbWidth = (int)(original.Width * ratio);
+                    int thumbHeight = (int)(original.Height * ratio);
 
                     // Create the thumbnail bitmap.
-                    using (Bitmap thumbnail = new Bitmap(thumbWidth, thumbHeight))
+                    using (Bitmap thumb = new Bitmap(thumbWidth, thumbHeight))
                     {
-                        using (Graphics g = Graphics.FromImage(thumbnail))
+                        using (Graphics g = Graphics.FromImage(thumb))
                         {
-                            // Clear background (optional) and draw the scaled image.
-                            g.Clear(Aspose.Drawing.Color.White);
-                            g.DrawImage(original, new Rectangle(0, 0, thumbWidth, thumbHeight));
+                            g.Clear(Color.White);
+                            g.DrawImage(original, 0, 0, thumbWidth, thumbHeight);
                         }
 
                         // Save the thumbnail as PNG.
-                        string thumbPath = Path.Combine(workDir, $"thumb_{thumbIndex}.png");
-                        thumbnail.Save(thumbPath, ImageFormat.Png);
-                        thumbIndex++;
+                        string thumbPath = Path.Combine(artifactsDir, $"thumb_{imageIndex}.png");
+                        thumb.Save(thumbPath, ImageFormat.Png);
+
+                        // Validate that the thumbnail was created.
+                        if (!File.Exists(thumbPath))
+                            throw new InvalidOperationException($"Thumbnail not created: {thumbPath}");
                     }
                 }
             }
+
+            imageIndex++;
         }
 
-        // -----------------------------------------------------------------
-        // 5. Validate that at least one thumbnail was created.
-        // -----------------------------------------------------------------
-        if (thumbIndex == 0)
+        // Ensure at least one thumbnail was generated.
+        if (imageIndex == 0)
             throw new InvalidOperationException("No images were extracted from the HTML document.");
 
-        // The example finishes without requiring user interaction.
+        // The program finishes automatically.
     }
 
-    // Helper method to create a deterministic sample image.
-    private static void CreateSampleImage(string filePath, int width, int height, Aspose.Drawing.Color backColor)
+    // Helper method to create a deterministic sample PNG image.
+    private static void CreateSampleImage(int width, int height, string filePath)
     {
         using (Bitmap bitmap = new Bitmap(width, height))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(backColor);
-                // Draw a simple diagonal line for visual distinction.
-                using (Pen pen = new Pen(Aspose.Drawing.Color.Black, 2))
+                g.Clear(Color.White);
+                // Draw a simple rectangle with a distinct color.
+                using (Pen pen = new Pen(Color.Blue, 5))
                 {
-                    g.DrawLine(pen, 0, 0, width - 1, height - 1);
+                    g.DrawRectangle(pen, 10, 10, width - 20, height - 20);
                 }
             }
-
-            // Determine appropriate image format based on file extension.
-            ImageFormat format = Path.GetExtension(filePath).Equals(".png", StringComparison.OrdinalIgnoreCase)
-                ? ImageFormat.Png
-                : ImageFormat.Jpeg;
-
-            bitmap.Save(filePath, format);
+            bitmap.Save(filePath, ImageFormat.Png);
         }
     }
 }

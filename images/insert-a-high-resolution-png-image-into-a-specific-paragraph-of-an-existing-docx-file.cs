@@ -4,81 +4,76 @@ using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
 
-public class InsertImageExample
+public class InsertHighResImage
 {
     public static void Main()
     {
-        // Paths for the files used in the example.
-        const string imagePath = "highres.png";
-        const string sourceDocPath = "sample.docx";
+        // Paths for temporary files
+        const string imagePath = "input.png";
+        const string sourceDocPath = "input.docx";
         const string outputDocPath = "output.docx";
 
         // -------------------------------------------------
-        // 1. Create a high‑resolution PNG image.
+        // 1. Create a high‑resolution PNG image (2000x2000)
         // -------------------------------------------------
         const int imgWidth = 2000;
         const int imgHeight = 2000;
 
-        // Create a bitmap and a graphics object to draw on it.
         using (Bitmap bitmap = new Bitmap(imgWidth, imgHeight))
         using (Graphics graphics = Graphics.FromImage(bitmap))
         {
-            // Fill the background with white.
+            // Fill background with white
             graphics.Clear(Color.White);
 
-            // (Optional) Draw a simple rectangle to make the image recognizable.
-            // The rectangle is drawn in a light gray color.
-            graphics.FillRectangle(new SolidBrush(Color.LightGray), 100, 100, imgWidth - 200, imgHeight - 200);
+            // (Optional) draw a simple rectangle to make the image visible
+            // graphics.DrawRectangle(new Pen(Color.Black, 5), 100, 100, imgWidth - 200, imgHeight - 200);
 
-            // Save the bitmap as a PNG file.
+            // Save the bitmap as PNG
             bitmap.Save(imagePath);
         }
 
-        // Verify that the image file was created.
-        if (!File.Exists(imagePath))
-            throw new FileNotFoundException($"Image file '{imagePath}' was not created.");
+        // -------------------------------------------------
+        // 2. Create a sample DOCX file that will act as the existing document
+        // -------------------------------------------------
+        Document tempDoc = new Document();
+        DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
+
+        tempBuilder.Writeln("First paragraph.");
+        tempBuilder.Writeln("Paragraph that will receive the image."); // Target paragraph
+        tempBuilder.Writeln("Last paragraph.");
+
+        tempDoc.Save(sourceDocPath);
 
         // -------------------------------------------------
-        // 2. Create a sample DOCX file with several paragraphs.
-        // -------------------------------------------------
-        Document sampleDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sampleDoc);
-
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Target paragraph where the image will be inserted.");
-        builder.Writeln("Third paragraph.");
-
-        sampleDoc.Save(sourceDocPath);
-
-        // Verify that the source document was created.
-        if (!File.Exists(sourceDocPath))
-            throw new FileNotFoundException($"Source document '{sourceDocPath}' was not created.");
-
-        // -------------------------------------------------
-        // 3. Load the existing document and insert the image into the target paragraph.
+        // 3. Load the existing document
         // -------------------------------------------------
         Document doc = new Document(sourceDocPath);
-        DocumentBuilder docBuilder = new DocumentBuilder(doc);
-
-        // Move the cursor to the second paragraph (index 1, zero‑based).
-        docBuilder.MoveToParagraph(1, 0);
-
-        // Insert the high‑resolution PNG image inline.
-        Shape insertedShape = docBuilder.InsertImage(imagePath);
-
-        // Optional: verify that the shape indeed contains an image.
-        if (!insertedShape.HasImage)
-            throw new InvalidOperationException("The inserted shape does not contain an image.");
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // -------------------------------------------------
-        // 4. Save the modified document.
+        // 4. Locate the specific paragraph (second paragraph)
+        // -------------------------------------------------
+        NodeCollection paragraphs = doc.GetChildNodes(NodeType.Paragraph, true);
+        if (paragraphs.Count < 2)
+            throw new InvalidOperationException("The document does not contain enough paragraphs.");
+
+        Paragraph targetParagraph = (Paragraph)paragraphs[1]; // zero‑based index
+        builder.MoveTo(targetParagraph);
+
+        // -------------------------------------------------
+        // 5. Insert the high‑resolution PNG image into the paragraph
+        // -------------------------------------------------
+        builder.InsertImage(imagePath);
+
+        // -------------------------------------------------
+        // 6. Save the modified document
         // -------------------------------------------------
         doc.Save(outputDocPath);
 
-        // Validate that the output file exists.
+        // -------------------------------------------------
+        // 7. Validate that the output file was created
+        // -------------------------------------------------
         if (!File.Exists(outputDocPath))
-            throw new FileNotFoundException($"Output document '{outputDocPath}' was not saved.");
-
-        // The example finishes without requiring any user interaction.
+            throw new FileNotFoundException("The output document was not created.", outputDocPath);
     }
 }

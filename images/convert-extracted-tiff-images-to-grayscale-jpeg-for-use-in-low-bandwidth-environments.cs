@@ -11,34 +11,45 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare working directory.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Directories for input and output files
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string inputImagePath = Path.Combine(artifactsDir, "sample.tiff");
+        string docPath = Path.Combine(artifactsDir, "document.docx");
 
-        // 1. Create a sample TIFF image using Aspose.Drawing.
-        string tiffPath = Path.Combine(workDir, "sample.tif");
-        using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(200, 100))
+        // -------------------------------------------------
+        // 1. Create a deterministic sample TIFF image
+        // -------------------------------------------------
+        int width = 200;
+        int height = 200;
+        using (Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb))
         {
-            using (Aspose.Drawing.Graphics graphics = Aspose.Drawing.Graphics.FromImage(bitmap))
+            using (Graphics g = Graphics.FromImage(bitmap))
             {
-                graphics.Clear(Aspose.Drawing.Color.White);
-                graphics.DrawString(
-                    "Sample TIFF",
-                    new Aspose.Drawing.Font("Arial", 12),
-                    new Aspose.Drawing.SolidBrush(Aspose.Drawing.Color.Black),
-                    new Aspose.Drawing.PointF(10, 40));
+                // Fill background with white
+                g.Clear(Color.White);
+                // Draw a simple red rectangle
+                using (Pen pen = new Pen(Color.Red, 5))
+                {
+                    g.DrawRectangle(pen, 20, 20, width - 40, height - 40);
+                }
             }
-            bitmap.Save(tiffPath, Aspose.Drawing.Imaging.ImageFormat.Tiff);
+            // Save as TIFF
+            bitmap.Save(inputImagePath, ImageFormat.Tiff);
         }
 
-        // 2. Insert the TIFF image into a Word document.
-        string docPath = Path.Combine(workDir, "docWithTiff.docx");
+        // -------------------------------------------------
+        // 2. Create a Word document and insert the TIFF image
+        // -------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(tiffPath);
+        builder.InsertImage(inputImagePath);
         doc.Save(docPath);
 
-        // 3. Load the document and extract images.
+        // -------------------------------------------------
+        // 3. Load the document and extract images,
+        //    convert each to grayscale JPEG, and save.
+        // -------------------------------------------------
         Document loadedDoc = new Document(docPath);
         NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
@@ -48,26 +59,36 @@ public class Program
             if (!shape.HasImage)
                 continue;
 
-            // Convert the image to grayscale.
+            // Set the shape's image to display in grayscale (affects rendering)
             shape.ImageData.GrayScale = true;
 
-            // Save the grayscale image as JPEG.
-            string jpegPath = Path.Combine(workDir, $"grayscale_{imageIndex}.jpg");
-            shape.ImageData.Save(jpegPath);
+            // Prepare output file name
+            string outputFilePath = Path.Combine(artifactsDir,
+                $"grayscale_image_{imageIndex}.jpg");
 
-            // Verify that the file was created.
-            if (!File.Exists(jpegPath))
-                throw new InvalidOperationException($"Failed to create JPEG file: {jpegPath}");
+            // Configure JPEG save options with grayscale color mode
+            ImageSaveOptions jpegOptions = new ImageSaveOptions(SaveFormat.Jpeg)
+            {
+                JpegQuality = 80,
+                ImageColorMode = ImageColorMode.Grayscale
+            };
+
+            // Save the shape via a temporary document to apply the rendering options
+            Document tempDoc = new Document();
+            DocumentBuilder tempBuilder = new DocumentBuilder(tempDoc);
+            Shape clonedShape = (Shape)tempDoc.ImportNode(shape, true);
+            tempBuilder.InsertNode(clonedShape);
+            tempDoc.Save(outputFilePath, jpegOptions);
+
+            // Validate that the file was created
+            if (!File.Exists(outputFilePath))
+                throw new InvalidOperationException($"Failed to create {outputFilePath}");
 
             imageIndex++;
         }
 
-        // Ensure at least one image was processed.
+        // If no images were processed, raise an error
         if (imageIndex == 0)
             throw new InvalidOperationException("No images were found to convert.");
-
-        // Optional cleanup (commented out).
-        // File.Delete(tiffPath);
-        // File.Delete(docPath);
     }
 }

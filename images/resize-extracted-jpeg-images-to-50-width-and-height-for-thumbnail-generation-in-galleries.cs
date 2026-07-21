@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -9,75 +10,84 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a deterministic folder for all generated files.
-        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        Directory.CreateDirectory(dataDir);
+        // Paths for temporary files
+        const string sampleImagePath = "sample.jpg";
+        const string documentPath = "document.docx";
+        const string thumbnailPrefix = "thumb_";
 
-        // 1. Create a sample JPEG image (200x200) using Aspose.Drawing.
-        string inputImagePath = Path.Combine(dataDir, "input.jpg");
-        using (Bitmap bitmap = new Bitmap(200, 200))
+        // 1. Create a deterministic sample JPEG image (200x200, solid blue)
+        int originalWidth = 200;
+        int originalHeight = 200;
+        using (Bitmap bitmap = new Bitmap(originalWidth, originalHeight))
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.LightBlue);
-                using (Pen pen = new Pen(Color.Red, 5))
-                {
-                    g.DrawRectangle(pen, 20, 20, 160, 160);
-                }
+                g.Clear(Color.Blue);
             }
-            bitmap.Save(inputImagePath, ImageFormat.Jpeg);
+            // Save explicitly as JPEG
+            bitmap.Save(sampleImagePath, ImageFormat.Jpeg);
         }
 
-        // 2. Insert the image into a new Word document.
+        // 2. Create a Word document and insert the sample image
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputImagePath);
-        string docPath = Path.Combine(dataDir, "doc_with_image.docx");
-        doc.Save(docPath);
+        builder.InsertImage(sampleImagePath);
+        doc.Save(documentPath);
 
-        // 3. Load the document and extract JPEG images.
-        Document loadedDoc = new Document(docPath);
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        // 3. Load the document (reuse the same instance is also fine)
+        Document loadedDoc = new Document(documentPath);
+
+        // 4. Extract JPEG images, resize them to 50% and save as thumbnails
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
         int imageIndex = 0;
-
-        foreach (Shape shape in shapes)
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
-            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Jpeg)
+            if (!shape.HasImage)
+                continue;
+
+            // Process only JPEG images
+            if (shape.ImageData.ImageType != ImageType.Jpeg)
+                continue;
+
+            // Obtain the image bytes
+            byte[] imageBytes = shape.ImageData.ToByteArray();
+
+            // Load the image into Aspose.Drawing.Bitmap
+            using (MemoryStream ms = new MemoryStream(imageBytes))
             {
-                // Save the shape's image to a memory stream.
-                using (MemoryStream ms = new MemoryStream())
+                ms.Position = 0;
+                using (Bitmap originalBitmap = new Bitmap(ms))
                 {
-                    shape.ImageData.Save(ms);
-                    ms.Position = 0; // Reset before reading.
+                    // Calculate thumbnail size (50% of original)
+                    int thumbWidth = originalBitmap.Width / 2;
+                    int thumbHeight = originalBitmap.Height / 2;
 
-                    // Load the original image.
-                    using (Bitmap original = new Bitmap(ms))
+                    // Create thumbnail bitmap
+                    using (Bitmap thumbBitmap = new Bitmap(thumbWidth, thumbHeight))
                     {
-                        int newWidth = original.Width / 2;
-                        int newHeight = original.Height / 2;
-
-                        // Create a resized bitmap (50% of original size).
-                        using (Bitmap resized = new Bitmap(newWidth, newHeight))
+                        using (Graphics g = Graphics.FromImage(thumbBitmap))
                         {
-                            using (Graphics g = Graphics.FromImage(resized))
-                            {
-                                g.Clear(Color.White);
-                                g.DrawImage(original, new Rectangle(0, 0, newWidth, newHeight));
-                            }
-
-                            // Save the thumbnail.
-                            string thumbPath = Path.Combine(dataDir, $"thumb_{imageIndex}.jpg");
-                            resized.Save(thumbPath, ImageFormat.Jpeg);
+                            // Draw the scaled image
+                            g.DrawImage(
+                                originalBitmap,
+                                new Rectangle(0, 0, thumbWidth, thumbHeight));
                         }
+
+                        // Save thumbnail explicitly as JPEG
+                        string thumbPath = $"{thumbnailPrefix}{imageIndex}.jpg";
+                        thumbBitmap.Save(thumbPath, ImageFormat.Jpeg);
+                        imageIndex++;
                     }
                 }
-
-                imageIndex++;
             }
         }
 
-        // Validation: ensure at least one thumbnail was created.
+        // 5. Validation: ensure at least one thumbnail was created
         if (imageIndex == 0)
             throw new InvalidOperationException("No JPEG images were extracted and resized.");
+
+        // Optional cleanup (commented out to keep outputs)
+        // File.Delete(sampleImagePath);
+        // File.Delete(documentPath);
     }
 }

@@ -1,131 +1,157 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
-using Aspose.Drawing;
-using Aspose.Drawing.Imaging;
-using Aspose.Drawing.Drawing2D;
+using Aspose.Drawing;               // Aspose.Drawing namespace
+using Aspose.Drawing.Imaging;      // For image formats if needed
 
 public class Program
 {
     public static void Main()
     {
-        // Create a deterministic sample PNG image.
-        string inputImagePath = "input.png";
-        CreateSamplePng(inputImagePath);
+        // Prepare output folder
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create a Word document and insert the sample image.
+        // 1. Create a deterministic PNG image (red square) using Aspose.Drawing
+        string sampleImagePath = Path.Combine(artifactsDir, "sample.png");
+        const int imgWidth = 200;
+        const int imgHeight = 200;
+
+        using (Aspose.Drawing.Bitmap bmp = new Aspose.Drawing.Bitmap(imgWidth, imgHeight))
+        {
+            using (Aspose.Drawing.Graphics g = Aspose.Drawing.Graphics.FromImage(bmp))
+            {
+                g.Clear(Aspose.Drawing.Color.Red);
+            }
+            bmp.Save(sampleImagePath);
+        }
+
+        // 2. Insert the PNG image into a Word document
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(inputImagePath);
-        string docPath = "sample.docx";
+        builder.InsertImage(sampleImagePath);
+        string docPath = Path.Combine(artifactsDir, "sample.docx");
         doc.Save(docPath);
 
-        // Load the document (demonstrates load/save lifecycle).
+        // 3. Load the document (reuse the saved file)
         Document loadedDoc = new Document(docPath);
 
-        // Extract all PNG images and apply a hue rotation of 180 degrees.
-        NodeCollection shapes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-        foreach (Shape shape in shapes)
-        {
-            if (shape.HasImage && shape.ImageData.ImageType == ImageType.Png)
-            {
-                // Save the shape image to a memory stream.
-                using (MemoryStream ms = new MemoryStream())
-                {
-                    shape.ImageData.Save(ms);
-                    ms.Position = 0; // Reset stream before reading.
+        // 4. Extract PNG images, rotate hue by 180°, and save the transformed images
+        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
+        int extractedCount = 0;
 
-                    // Load the image into an Aspose.Drawing.Bitmap.
-                    using (Bitmap originalBitmap = new Bitmap(ms))
-                    // Apply the hue rotation.
-                    using (Bitmap rotatedBitmap = ApplyHueRotation(originalBitmap, 180f))
-                    {
-                        string outputPath = $"output_{imageIndex}.png";
-                        rotatedBitmap.Save(outputPath, ImageFormat.Png);
-                        if (!File.Exists(outputPath))
-                            throw new Exception($"Failed to save {outputPath}");
-                    }
+        foreach (Shape shape in shapeNodes.OfType<Shape>())
+        {
+            if (!shape.HasImage)
+                continue;
+
+            if (shape.ImageData.ImageType != ImageType.Png)
+                continue;
+
+            // Get raw image bytes from the shape
+            byte[] imageBytes = shape.ImageData.ToByteArray();
+
+            // Load bytes into Aspose.Drawing.Bitmap
+            using (MemoryStream ms = new MemoryStream(imageBytes))
+            {
+                ms.Position = 0;
+                using (Aspose.Drawing.Bitmap bitmap = new Aspose.Drawing.Bitmap(ms))
+                {
+                    // Apply hue rotation
+                    RotateHue180(bitmap);
+
+                    // Save the transformed image
+                    string outPath = Path.Combine(artifactsDir, $"extracted_{extractedCount}_rotated.png");
+                    bitmap.Save(outPath);
+                    extractedCount++;
+                }
+            }
+        }
+
+        // 5. Validation – ensure at least one image was processed
+        if (extractedCount == 0)
+            throw new InvalidOperationException("No PNG images were extracted and processed.");
+    }
+
+    // Rotates the hue of the given bitmap by 180 degrees.
+    private static void RotateHue180(Aspose.Drawing.Bitmap bitmap)
+    {
+        int width = bitmap.Width;
+        int height = bitmap.Height;
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                Aspose.Drawing.Color original = bitmap.GetPixel(x, y);
+
+                // Convert RGB to HSV
+                float r = original.R / 255f;
+                float g = original.G / 255f;
+                float b = original.B / 255f;
+
+                float max = Math.Max(r, Math.Max(g, b));
+                float min = Math.Min(r, Math.Min(g, b));
+                float delta = max - min;
+
+                float hue = 0f;
+                if (delta != 0)
+                {
+                    if (max == r)
+                        hue = 60f * (((g - b) / delta) % 6);
+                    else if (max == g)
+                        hue = 60f * (((b - r) / delta) + 2);
+                    else // max == b
+                        hue = 60f * (((r - g) / delta) + 4);
+                }
+                if (hue < 0) hue += 360f;
+
+                float saturation = (max == 0) ? 0f : delta / max;
+                float value = max;
+
+                // Rotate hue by 180 degrees
+                hue = (hue + 180f) % 360f;
+
+                // Convert HSV back to RGB
+                float c = value * saturation;
+                float xComponent = c * (1 - Math.Abs(((hue / 60f) % 2) - 1));
+                float m = value - c;
+
+                float r1, g1, b1;
+                if (hue < 60)
+                {
+                    r1 = c; g1 = xComponent; b1 = 0;
+                }
+                else if (hue < 120)
+                {
+                    r1 = xComponent; g1 = c; b1 = 0;
+                }
+                else if (hue < 180)
+                {
+                    r1 = 0; g1 = c; b1 = xComponent;
+                }
+                else if (hue < 240)
+                {
+                    r1 = 0; g1 = xComponent; b1 = c;
+                }
+                else if (hue < 300)
+                {
+                    r1 = xComponent; g1 = 0; b1 = c;
+                }
+                else
+                {
+                    r1 = c; g1 = 0; b1 = xComponent;
                 }
 
-                imageIndex++;
+                int newR = (int)Math.Round((r1 + m) * 255);
+                int newG = (int)Math.Round((g1 + m) * 255);
+                int newB = (int)Math.Round((b1 + m) * 255);
+
+                Aspose.Drawing.Color transformed = Aspose.Drawing.Color.FromArgb(original.A, newR, newG, newB);
+                bitmap.SetPixel(x, y, transformed);
             }
         }
-
-        // Validation: at least one PNG image must have been processed.
-        if (imageIndex == 0)
-            throw new Exception("No PNG images were found in the document.");
-    }
-
-    // Generates a simple PNG image with distinct colors for testing.
-    private static void CreateSamplePng(string path)
-    {
-        int width = 200;
-        int height = 200;
-        using (Bitmap bitmap = new Bitmap(width, height))
-        using (Graphics graphics = Graphics.FromImage(bitmap))
-        {
-            graphics.Clear(Aspose.Drawing.Color.LightBlue);
-            using (SolidBrush brush = new SolidBrush(Aspose.Drawing.Color.Red))
-            {
-                graphics.FillRectangle(brush, 50, 50, 100, 100);
-            }
-            bitmap.Save(path, ImageFormat.Png);
-        }
-    }
-
-    // Applies a hue rotation (in degrees) to the supplied bitmap and returns a new bitmap.
-    private static Bitmap ApplyHueRotation(Bitmap source, float degrees)
-    {
-        float angle = degrees * (float)Math.PI / 180f;
-        float cos = (float)Math.Cos(angle);
-        float sin = (float)Math.Sin(angle);
-
-        const float lumR = 0.213f;
-        const float lumG = 0.715f;
-        const float lumB = 0.072f;
-
-        // Build the hue rotation matrix.
-        float[][] matrix = new float[5][]
-        {
-            new float[]
-            {
-                lumR + cos * (1 - lumR) + sin * (-lumR),
-                lumG + cos * (-lumG) + sin * (-lumG),
-                lumB + cos * (-lumB) + sin * (1 - lumB),
-                0, 0
-            },
-            new float[]
-            {
-                lumR + cos * (-lumR) + sin * 0.143f,
-                lumG + cos * (1 - lumG) + sin * 0.140f,
-                lumB + cos * (-lumB) + sin * (-0.283f),
-                0, 0
-            },
-            new float[]
-            {
-                lumR + cos * (-lumR) + sin * (-(1 - lumR)),
-                lumG + cos * (-lumG) + sin * lumG,
-                lumB + cos * (1 - lumB) + sin * lumB,
-                0, 0
-            },
-            new float[] { 0, 0, 0, 1, 0 },
-            new float[] { 0, 0, 0, 0, 1 }
-        };
-
-        ColorMatrix colorMatrix = new ColorMatrix(matrix);
-        ImageAttributes attributes = new ImageAttributes();
-        attributes.SetColorMatrix(colorMatrix);
-
-        Bitmap result = new Bitmap(source.Width, source.Height);
-        using (Graphics g = Graphics.FromImage(result))
-        {
-            Rectangle rect = new Rectangle(0, 0, source.Width, source.Height);
-            g.DrawImage(source, rect, 0, 0, source.Width, source.Height, GraphicsUnit.Pixel, attributes);
-        }
-
-        attributes.Dispose();
-        return result;
     }
 }

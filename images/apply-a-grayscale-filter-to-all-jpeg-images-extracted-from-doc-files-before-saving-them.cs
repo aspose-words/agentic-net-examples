@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Drawing;
@@ -10,86 +9,81 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = "Artifacts";
+        // Directories for artifacts
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a deterministic JPEG image using Aspose.Drawing.
-        string jpegPath = Path.Combine(artifactsDir, "sample.jpg");
-        using (Bitmap bitmap = new Bitmap(200, 200))
-        {
-            using (Graphics g = Graphics.FromImage(bitmap))
-            {
-                g.Clear(Color.LightBlue);
-                using (var brush = new SolidBrush(Color.Orange))
-                {
-                    g.FillRectangle(brush, 50, 50, 100, 100);
-                }
-            }
-            // Explicitly specify JPEG format to guarantee the image type.
-            bitmap.Save(jpegPath, ImageFormat.Jpeg);
-        }
+        // 1. Create a sample JPEG image.
+        string sampleJpegPath = Path.Combine(artifactsDir, "sample.jpg");
+        CreateSampleJpeg(sampleJpegPath);
 
-        // Build a DOCX document that contains the JPEG image.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.InsertImage(jpegPath);
-        builder.InsertParagraph(); // Add a second image to demonstrate multiple extraction.
-        builder.InsertImage(jpegPath);
-        string docPath = Path.Combine(artifactsDir, "input.docx");
-        doc.Save(docPath);
+        // 2. Create a DOCX document and insert the JPEG image.
+        string docPath = Path.Combine(artifactsDir, "sample.docx");
+        CreateDocumentWithImage(docPath, sampleJpegPath);
 
-        // Reload the document (optional, demonstrates loading from file).
-        Document loadedDoc = new Document(docPath);
+        // 3. Load the document and process JPEG images.
+        Document doc = new Document(docPath);
+        NodeCollection shapeNodes = doc.GetChildNodes(NodeType.Shape, true);
 
-        // Extract all JPEG images, apply grayscale, and save them.
-        NodeCollection shapeNodes = loadedDoc.GetChildNodes(NodeType.Shape, true);
-        int imageIndex = 0;
-
+        int jpegCount = 0;
         foreach (Shape shape in shapeNodes.OfType<Shape>())
         {
             if (!shape.HasImage)
                 continue;
 
-            // Process only JPEG images.
             if (shape.ImageData.ImageType != ImageType.Jpeg)
                 continue;
 
-            // Save the original image into a memory stream.
-            using (MemoryStream originalStream = new MemoryStream())
+            // Extract image bytes.
+            byte[] imageBytes = shape.ImageData.ToByteArray();
+
+            // Convert to grayscale using Aspose.Drawing.
+            using (MemoryStream ms = new MemoryStream(imageBytes))
+            using (Bitmap original = new Bitmap(ms))
+            using (Bitmap grayBitmap = new Bitmap(original.Width, original.Height))
             {
-                shape.ImageData.Save(originalStream);
-                originalStream.Position = 0;
-
-                // Load the image with Aspose.Drawing.
-                using (Bitmap bitmap = new Bitmap(originalStream))
+                for (int y = 0; y < original.Height; y++)
                 {
-                    // Convert to grayscale pixel by pixel.
-                    for (int y = 0; y < bitmap.Height; y++)
+                    for (int x = 0; x < original.Width; x++)
                     {
-                        for (int x = 0; x < bitmap.Width; x++)
-                        {
-                            Color src = bitmap.GetPixel(x, y);
-                            int gray = (int)(src.R * 0.3 + src.G * 0.59 + src.B * 0.11);
-                            Color grayColor = Color.FromArgb(src.A, gray, gray, gray);
-                            bitmap.SetPixel(x, y, grayColor);
-                        }
+                        Color pixel = original.GetPixel(x, y);
+                        int gray = (pixel.R + pixel.G + pixel.B) / 3;
+                        Color grayColor = Color.FromArgb(pixel.A, gray, gray, gray);
+                        grayBitmap.SetPixel(x, y, grayColor);
                     }
-
-                    // Determine output file name with proper extension.
-                    string extension = FileFormatUtil.ImageTypeToExtension(shape.ImageData.ImageType);
-                    string outFile = Path.Combine(artifactsDir,
-                        $"ExtractedImage_{imageIndex}{extension}");
-
-                    // Save the processed (grayscale) image.
-                    bitmap.Save(outFile, ImageFormat.Jpeg);
-                    imageIndex++;
                 }
+
+                string outputImagePath = Path.Combine(artifactsDir, $"Extracted_Gray_{jpegCount}.jpg");
+                grayBitmap.Save(outputImagePath, ImageFormat.Jpeg);
+                jpegCount++;
             }
         }
 
-        // Validate that at least one image was saved.
-        if (imageIndex == 0)
-            throw new InvalidOperationException("No JPEG images were found and saved.");
+        // Validation: ensure at least one JPEG image was processed.
+        if (jpegCount == 0)
+            throw new InvalidOperationException("No JPEG images were found in the document.");
+
+        // Optional: clean up temporary files (commented out to keep artifacts for inspection).
+        // File.Delete(sampleJpegPath);
+        // File.Delete(docPath);
+    }
+
+    private static void CreateSampleJpeg(string filePath)
+    {
+        // Create a 200x200 bitmap, fill with a solid color, and save as JPEG.
+        using (Bitmap bitmap = new Bitmap(200, 200))
+        using (Graphics graphics = Graphics.FromImage(bitmap))
+        {
+            graphics.Clear(Color.CornflowerBlue);
+            bitmap.Save(filePath, ImageFormat.Jpeg);
+        }
+    }
+
+    private static void CreateDocumentWithImage(string docPath, string imagePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.InsertImage(imagePath);
+        doc.Save(docPath);
     }
 }
