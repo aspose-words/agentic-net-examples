@@ -3,7 +3,7 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class ExportDocumentWithHeadersFooters
+public class Program
 {
     public static void Main()
     {
@@ -35,14 +35,16 @@ public class ExportDocumentWithHeadersFooters
         };
 
         // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Save the document as plain text.
+        // Save the document as plain text with headers and footers included.
         string outputPath = Path.Combine(outputDir, "DocumentWithHeadersFooters.txt");
         doc.Save(outputPath, saveOptions);
 
-        // Indicate completion (optional).
-        Console.WriteLine($"Document saved to: {outputPath}");
+        // Optionally, display the saved text content.
+        string savedText = File.ReadAllText(outputPath);
+        Console.WriteLine("Saved TXT content:");
+        Console.WriteLine(savedText);
     }
 }

@@ -12,32 +12,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add left‑to‑right text.
+        // Add a left‑to‑right paragraph.
         builder.Writeln("Hello world!");
 
-        // Mark the next paragraph as right‑to‑left.
+        // Add right‑to‑left paragraphs.
         builder.ParagraphFormat.Bidi = true;
         builder.Writeln("שלום עולם!"); // Hebrew
         builder.Writeln("مرحبا بالعالم!"); // Arabic
 
-        // Prepare save options for plain‑text output.
+        // Configure TxtSaveOptions to add BiDi marks.
         TxtSaveOptions saveOptions = new TxtSaveOptions
         {
             Encoding = Encoding.Unicode,
-            AddBidiMarks = true // Enable bi‑directional marks.
+            AddBidiMarks = true
         };
 
-        // Ensure the output folder exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Save the document as plain text with BiDi marks.
+        string outputFile = Path.Combine(Environment.CurrentDirectory, "BidiMarks.txt");
+        doc.Save(outputFile, saveOptions);
 
-        // Save the document as a .txt file with the specified options.
-        string txtPath = Path.Combine(outputDir, "BidiMarks.txt");
-        doc.Save(txtPath, saveOptions);
-
-        // Read the saved file and display its contents (for demonstration purposes).
-        string savedText = File.ReadAllText(txtPath, Encoding.Unicode);
-        Console.WriteLine("Saved text content:");
-        Console.WriteLine(savedText);
+        // Demonstrate that the file was saved (no user interaction required).
+        string content = File.ReadAllText(outputFile, Encoding.Unicode);
+        Console.WriteLine($"Saved file length: {content.Length} characters");
     }
 }

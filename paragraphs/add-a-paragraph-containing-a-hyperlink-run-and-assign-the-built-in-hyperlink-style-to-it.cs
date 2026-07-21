@@ -1,6 +1,6 @@
 using System;
+using System.Drawing;
 using Aspose.Words;
-using Aspose.Words.Fonts;
 
 public class Program
 {
@@ -10,17 +10,23 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Apply the built‑in Hyperlink character style to the text that will be inserted.
-        // Hyperlink is a character style, so we set it on the Font, not on the Paragraph.
+        // Set typical hyperlink character formatting.
+        builder.Font.Color = Color.Blue;
+        builder.Font.Underline = Underline.Single;
+        // Apply the built‑in Hyperlink character style.
         builder.Font.StyleIdentifier = StyleIdentifier.Hyperlink;
 
-        // Insert a hyperlink field into the current paragraph.
+        // Insert the hyperlink run.
         builder.InsertHyperlink("Visit Aspose", "https://www.aspose.com", false);
 
-        // Reset font formatting for any subsequent text.
+        // Reset font formatting for subsequent text.
         builder.Font.ClearFormatting();
 
+        // End the paragraph.
+        builder.Writeln();
+
         // Save the document.
-        doc.Save("HyperlinkParagraph.docx");
+        string outputPath = System.IO.Path.Combine(Environment.CurrentDirectory, "HyperlinkParagraph.docx");
+        doc.Save(outputPath);
     }
 }

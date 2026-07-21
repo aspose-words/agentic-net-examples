@@ -5,7 +5,7 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new document and a builder to add content.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -20,18 +20,30 @@ public class Program
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
         builder.Write("This text is in a Quote style.");
 
-        // Save the document to the local file system.
-        const string outputPath = "StyleSeparatorExample.docx";
-        doc.Save(outputPath);
+        // Save the document to the local folder.
+        string docPath = "StyleSeparatorDemo.docx";
+        doc.Save(docPath);
 
-        // Iterate through all paragraphs and find those whose break is a style separator.
+        // Search for paragraphs that represent a style separator.
+        int separatorCount = 0;
         foreach (Paragraph paragraph in doc.GetChildNodes(NodeType.Paragraph, true))
         {
             if (paragraph.BreakIsStyleSeparator)
             {
-                // Output the paragraph text (trimmed) to the console for demonstration.
-                Console.WriteLine("Found style separator paragraph: " + paragraph.GetText().Trim());
+                separatorCount++;
+
+                // Example processing: change the font color of the text that follows the separator.
+                // The paragraph still contains the runs after the separator, so we can modify them.
+                foreach (Run run in paragraph.Runs)
+                {
+                    // Skip runs that belong to the part before the separator.
+                    // In this simple example we just change all runs after the separator.
+                    run.Font.Color = System.Drawing.Color.Blue;
+                }
             }
         }
+
+        // Output the number of style separators found.
+        Console.WriteLine($"Found {separatorCount} style separator(s) in the document.");
     }
 }

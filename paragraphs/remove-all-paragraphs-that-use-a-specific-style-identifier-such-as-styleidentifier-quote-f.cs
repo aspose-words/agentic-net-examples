@@ -9,20 +9,20 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a normal paragraph.
+        // Add paragraphs with various built‑in styles.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("This is a normal paragraph.");
+        builder.Writeln("This is a Normal paragraph.");
 
-        // Add a paragraph with the built‑in Quote style.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
-        builder.Writeln("This paragraph uses the Quote style and will be removed.");
+        builder.Writeln("This is a Quote paragraph that should be removed.");
 
-        // Add another normal paragraph.
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-        builder.Writeln("Another normal paragraph.");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Quote;
+        builder.Writeln("Another Quote paragraph to be removed.");
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("This is a Heading 1 paragraph.");
 
         // Remove all paragraphs that use the Quote style.
-        // Use ToArray() to avoid modifying the collection while iterating.
         foreach (Paragraph para in doc.FirstSection.Body.Paragraphs.ToArray())
         {
             if (para.ParagraphFormat.StyleIdentifier == StyleIdentifier.Quote)
@@ -30,6 +30,6 @@ public class Program
         }
 
         // Save the resulting document.
-        doc.Save("Result.docx");
+        doc.Save("RemovedQuoteParagraphs.docx");
     }
 }

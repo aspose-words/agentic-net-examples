@@ -1,5 +1,6 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 
 public class Program
 {
@@ -13,20 +14,21 @@ public class Program
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
         builder.Write("This text is in a Heading style. ");
 
-        // Insert a style separator so the next text can have a different paragraph style.
+        // Insert a style separator so that the next text can have a different paragraph style
+        // while staying on the same line.
         builder.InsertStyleSeparator();
 
-        // Define a custom paragraph style.
-        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyParaStyle");
+        // Create a custom paragraph style.
+        Style customStyle = builder.Document.Styles.Add(StyleType.Paragraph, "MyParaStyle");
         customStyle.Font.Bold = false;
         customStyle.Font.Size = 8;
         customStyle.Font.Name = "Arial";
 
-        // Apply the custom style to the second part of the same paragraph.
+        // Apply the custom style to the second part of the paragraph.
         builder.ParagraphFormat.StyleName = customStyle.Name;
         builder.Write("This text is in a custom style.");
 
-        // Save the resulting document.
-        doc.Save("StyleSeparator.docx");
+        // Save the document to a file.
+        doc.Save("StyleSeparatorExample.docx");
     }
 }

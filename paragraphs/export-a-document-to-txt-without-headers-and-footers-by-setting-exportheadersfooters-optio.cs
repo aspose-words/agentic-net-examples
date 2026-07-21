@@ -7,50 +7,38 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Add even header and footer.
-        HeaderFooter headerEven = new HeaderFooter(doc, HeaderFooterType.HeaderEven);
-        doc.FirstSection.HeadersFooters.Add(headerEven);
-        headerEven.AppendParagraph("Even header");
+        // Add a primary header.
+        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+        doc.FirstSection.HeadersFooters.Add(header);
+        header.AppendParagraph("Primary header");
 
-        HeaderFooter footerEven = new HeaderFooter(doc, HeaderFooterType.FooterEven);
-        doc.FirstSection.HeadersFooters.Add(footerEven);
-        footerEven.AppendParagraph("Even footer");
+        // Add a primary footer.
+        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
+        doc.FirstSection.HeadersFooters.Add(footer);
+        footer.AppendParagraph("Primary footer");
 
-        // Add primary header and footer.
-        HeaderFooter headerPrimary = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
-        doc.FirstSection.HeadersFooters.Add(headerPrimary);
-        headerPrimary.AppendParagraph("Primary header");
-
-        HeaderFooter footerPrimary = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
-        doc.FirstSection.HeadersFooters.Add(footerPrimary);
-        footerPrimary.AppendParagraph("Primary footer");
-
-        // Add body content.
+        // Build the body of the document with three pages.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Page 1");
         builder.InsertBreak(BreakType.PageBreak);
         builder.Writeln("Page 2");
         builder.InsertBreak(BreakType.PageBreak);
-        builder.Write("Page 3");
+        builder.Writeln("Page 3");
 
-        // Configure save options to exclude headers and footers.
+        // Configure TXT save options to exclude headers and footers.
         TxtSaveOptions saveOptions = new TxtSaveOptions
         {
             ExportHeadersFootersMode = TxtExportHeadersFootersMode.None
         };
 
-        // Ensure output directory exists and save the document as plain text.
-        string outDir = "Output";
-        Directory.CreateDirectory(outDir);
-        string outPath = Path.Combine(outDir, "DocumentWithoutHeadersFooters.txt");
-        doc.Save(outPath, saveOptions);
+        // Save the document as plain text.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.txt");
+        doc.Save(outputPath, saveOptions);
 
-        // Output the saved text to the console.
-        string result = File.ReadAllText(outPath);
-        Console.WriteLine("Saved text content:");
-        Console.WriteLine(result);
+        // Optional: display the saved text to verify the result.
+        Console.WriteLine(File.ReadAllText(outputPath));
     }
 }

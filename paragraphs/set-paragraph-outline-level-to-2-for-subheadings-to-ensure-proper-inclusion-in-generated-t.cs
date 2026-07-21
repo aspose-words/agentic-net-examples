@@ -1,42 +1,38 @@
 using System;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-namespace ParagraphOutlineLevelExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Insert a Table of Contents that will pick up headings and outline levels.
-            // The switches configure the TOC to include levels 1‑3, add hyperlinks, hide page numbers for hidden entries, etc.
-            builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+        // Insert a Table of Contents that will capture headings of levels 1‑3.
+        builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
+        builder.InsertBreak(BreakType.PageBreak);
 
-            // Add a page break so the TOC appears on its own page.
-            builder.InsertBreak(BreakType.PageBreak);
+        // Add a main heading using the built‑in Heading 1 style.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
+        builder.Writeln("Main Heading");
 
-            // Insert a main heading using the built‑in Heading 1 style (outline level 1).
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-            builder.Writeln("Main Heading");
+        // Add a subheading. Use a normal style and explicitly set its outline level to Level2.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2;
+        builder.Writeln("Subheading (Outline Level 2)");
 
-            // Insert a subheading. Instead of using a Heading style, set the outline level directly to Level2.
-            // Reset the style to Normal to avoid the built‑in heading style.
-            builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
-            builder.ParagraphFormat.OutlineLevel = OutlineLevel.Level2;
-            builder.Writeln("Subheading with Outline Level 2");
+        // Add regular body text.
+        builder.Writeln("This is some body text under the subheading.");
 
-            // Add a regular paragraph after the subheading.
-            builder.ParagraphFormat.ClearFormatting(); // Reset formatting for normal text.
-            builder.Writeln("This is a regular paragraph following the subheading.");
+        // Update fields so the TOC reflects the inserted headings.
+        doc.UpdateFields();
 
-            // Update all fields (including the TOC) so that the table of contents reflects the inserted headings.
-            doc.UpdateFields();
-
-            // Save the document to the local file system.
-            doc.Save("ParagraphOutlineLevel.docx");
-        }
+        // Save the document.
+        string outputDir = "Output";
+        System.IO.Directory.CreateDirectory(outputDir);
+        string outputPath = System.IO.Path.Combine(outputDir, "OutlineLevelExample.docx");
+        doc.Save(outputPath);
     }
 }
