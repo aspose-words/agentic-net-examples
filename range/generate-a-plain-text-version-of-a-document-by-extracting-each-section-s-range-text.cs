@@ -2,46 +2,49 @@ using System;
 using System.IO;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Prepare a folder for temporary files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Build three sections with distinct text.
-        builder.Writeln("This is the first section.");
+        // Create a sample source document with multiple sections.
+        string sourcePath = Path.Combine(artifactsDir, "Source.docx");
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+
+        // First section.
+        builder.Writeln("Section 1 - First paragraph.");
+        builder.Writeln("Section 1 - Second paragraph.");
         builder.InsertBreak(BreakType.SectionBreakContinuous);
-        builder.Writeln("This is the second section.");
-        builder.InsertBreak(BreakType.SectionBreakContinuous);
-        builder.Writeln("This is the third section.");
 
-        // Save the sample document (required by the lifecycle rule).
-        string docPath = Path.Combine(Environment.CurrentDirectory, "Sample.docx");
-        doc.Save(docPath);
+        // Second section.
+        builder.Writeln("Section 2 - Only paragraph.");
 
-        // Extract plain‑text from each section's Range.
-        StringBuilder plainTextBuilder = new StringBuilder();
+        // Save the source document.
+        sourceDoc.Save(sourcePath);
 
+        // Load the document from the saved file.
+        Document doc = new Document(sourcePath);
+
+        // Extract plain text from each section's range.
+        StringBuilder plainText = new StringBuilder();
         for (int i = 0; i < doc.Sections.Count; i++)
         {
-            // Get the text of the current section.
             string sectionText = doc.Sections[i].Range.Text.Trim();
-
-            // Append the section text to the result, separating sections with a line break.
-            plainTextBuilder.AppendLine($"--- Section {i + 1} ---");
-            plainTextBuilder.AppendLine(sectionText);
-            plainTextBuilder.AppendLine();
+            plainText.AppendLine($"--- Section {i + 1} ---");
+            plainText.AppendLine(sectionText);
+            plainText.AppendLine();
         }
 
-        // Write the combined plain‑text to a .txt file.
-        string txtPath = Path.Combine(Environment.CurrentDirectory, "PlainTextOutput.txt");
-        File.WriteAllText(txtPath, plainTextBuilder.ToString());
+        // Save the extracted plain‑text version.
+        string outputPath = Path.Combine(artifactsDir, "PlainText.txt");
+        File.WriteAllText(outputPath, plainText.ToString());
 
         // Optional: display the output path.
-        Console.WriteLine($"Plain‑text version saved to: {txtPath}");
+        Console.WriteLine($"Plain‑text document saved to: {outputPath}");
     }
 }

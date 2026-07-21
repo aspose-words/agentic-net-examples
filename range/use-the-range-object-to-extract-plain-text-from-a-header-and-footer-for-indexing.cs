@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -10,30 +9,30 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a primary header.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Write("Sample Header Text");
+        // Add some body text.
+        builder.Writeln("Body content.");
 
-        // Add a primary footer.
-        builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
-        builder.Write("Sample Footer Text");
+        // Create a primary header and add text.
+        HeaderFooter header = new HeaderFooter(doc, HeaderFooterType.HeaderPrimary);
+        doc.FirstSection.HeadersFooters.Add(header);
+        header.AppendParagraph("Header for indexing.");
 
-        // Save the document (optional, demonstrates persistence).
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string docPath = Path.Combine(outputDir, "HeaderFooterSample.docx");
-        doc.Save(docPath);
+        // Create a primary footer and add text.
+        HeaderFooter footer = new HeaderFooter(doc, HeaderFooterType.FooterPrimary);
+        doc.FirstSection.HeadersFooters.Add(footer);
+        footer.AppendParagraph("Footer for indexing.");
 
-        // Access the header and footer objects.
-        HeaderFooter header = doc.FirstSection.HeadersFooters[HeaderFooterType.HeaderPrimary];
-        HeaderFooter footer = doc.FirstSection.HeadersFooters[HeaderFooterType.FooterPrimary];
+        // Save the document.
+        doc.Save("HeaderFooterSample.docx");
 
-        // Extract plain text from their ranges.
-        string headerText = header?.Range?.Text?.Trim() ?? string.Empty;
-        string footerText = footer?.Range?.Text?.Trim() ?? string.Empty;
+        // Extract plain text from header and footer using their Range objects.
+        string headerText = header.Range.Text.Trim();
+        string footerText = footer.Range.Text.Trim();
 
-        // Output the extracted texts.
-        Console.WriteLine("Header text: " + headerText);
-        Console.WriteLine("Footer text: " + footerText);
+        // Combine the extracted texts for indexing purposes.
+        string indexableText = $"{headerText} {footerText}";
+
+        // Output the combined text.
+        Console.WriteLine(indexableText);
     }
 }

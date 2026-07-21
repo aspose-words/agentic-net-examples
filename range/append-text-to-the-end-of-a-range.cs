@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
@@ -9,14 +8,15 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Original content.");
 
-        // Move the cursor to the end of the document's range and append new text.
+        // Write some initial text.
+        builder.Writeln("Hello world!");
+
+        // Move the cursor to the end of the document and append additional text.
         builder.MoveToDocumentEnd();
-        builder.Writeln("Appended text.");
+        builder.Write(" Appended text.");
 
-        // Save the modified document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "AppendedDocument.docx");
-        doc.Save(outputPath);
+        // Save the resulting document.
+        doc.Save("Output.docx");
     }
 }

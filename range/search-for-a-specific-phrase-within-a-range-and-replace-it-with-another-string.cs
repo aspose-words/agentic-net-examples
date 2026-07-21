@@ -10,23 +10,24 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample text that contains the phrase we want to replace.
+        // Add some paragraphs that contain the phrase we will replace.
         builder.Writeln("This is a sample document. The quick brown fox jumps over the lazy dog.");
-        builder.Writeln("Find and replace the phrase \"lazy dog\" with \"energetic cat\".");
+        builder.Writeln("Another line with the phrase: TARGET_PHRASE appears here.");
+        builder.Writeln("TARGET_PHRASE should be replaced everywhere.");
 
-        // Define the phrase to search for and its replacement.
-        string searchPhrase = "lazy dog";
-        string replacement = "energetic cat";
+        // Phrase to search for and its replacement.
+        string searchPhrase = "TARGET_PHRASE";
+        string replacement = "REPLACED_TEXT";
 
-        // Perform the replacement on the whole-document range.
+        // Perform a simple case‑insensitive replace on the whole document range.
         int replacementsMade = doc.Range.Replace(searchPhrase, replacement);
 
-        // Output the result of the operation.
-        Console.WriteLine($"Replacements made: {replacementsMade}");
-        Console.WriteLine("Updated document text:");
-        Console.WriteLine(doc.GetText().Trim());
-
         // Save the modified document.
-        doc.Save("Output.docx");
+        string outputFile = "ModifiedDocument.docx";
+        doc.Save(outputFile);
+
+        // Report the operation result.
+        Console.WriteLine($"Replacements made: {replacementsMade}");
+        Console.WriteLine($"Document saved to: {outputFile}");
     }
 }

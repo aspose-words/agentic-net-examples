@@ -2,7 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+public class RemoveBookmarksAndFormFields
 {
     public static void Main()
     {
@@ -10,23 +10,22 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert sample text with bookmarks.
-        for (int i = 1; i <= 3; i++)
-        {
-            string bmName = $"Bookmark_{i}";
-            builder.StartBookmark(bmName);
-            builder.Write($"Text inside {bmName}. ");
-            builder.EndBookmark(bmName);
-        }
+        // Add some content with bookmarks.
+        builder.StartBookmark("Bookmark1");
+        builder.Write("This is the first bookmark.");
+        builder.EndBookmark("Bookmark1");
+        builder.Writeln();
 
-        // Insert a few form fields.
+        builder.StartBookmark("Bookmark2");
+        builder.Write("This is the second bookmark.");
+        builder.EndBookmark("Bookmark2");
         builder.Writeln();
-        FormField combo = builder.InsertComboBox("ComboBox", new[] { "One", "Two", "Three" }, 0);
-        combo.CalculateOnExit = true;
+
+        // Insert a couple of form fields.
+        builder.InsertCheckBox("CheckBox1", false, 50);
         builder.Writeln();
-        FormField check = builder.InsertCheckBox("CheckBox", false, 50);
+        builder.InsertComboBox("ComboBox1", new[] { "OptionA", "OptionB", "OptionC" }, 0);
         builder.Writeln();
-        FormField text = builder.InsertTextInput("TextInput", TextFormFieldType.Regular, "", "Placeholder", 50);
 
         // At this point the document contains bookmarks and form fields.
         // Remove all bookmarks from the whole document range.
@@ -36,6 +35,6 @@ public class Program
         doc.Range.FormFields.Clear();
 
         // Save the cleaned document.
-        doc.Save("Output.docx");
+        doc.Save("CleanedDocument.docx");
     }
 }
