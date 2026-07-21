@@ -4,36 +4,35 @@
     "slug": "range",
     "product": "Aspose.Words",
     "language": "csharp",
-    "preferred_workflow": "Prefer documented Range-based workflows using Document.Range and node-specific Range properties. Keep validation narrow and task-specific. Use Aspose.Words find/replace, bookmarks, fields, and text extraction APIs only when they directly match the task intent.",
+    "preferred_workflow": "Use Document.Range and node-scoped Range APIs for search, replace, extraction, bookmarks, and fields. Keep validation narrow and task-specific. Bootstrap all inputs locally.",
     "required_packages": [
       "Aspose.Words"
     ],
     "package_versions": {
-      "Aspose.Words": "26.5.0"
+      "Aspose.Words": "26.6.0"
     },
     "required_namespaces": [
       "System",
-      "Aspose.Words",
       "System.IO",
+      "Aspose.Words",
       "System.Text",
-      "Aspose.Words.Drawing",
       "Aspose.Words.Fields",
       "Aspose.Words.Replacing",
       "System.Collections.Generic",
-      "Aspose.Words.BuildingBlocks",
       "System.Data",
       "Aspose.Words.Saving"
     ],
     "key_apis": [
       "Document",
       "DocumentBuilder",
-      "Range",
       "Directory",
       "Path",
+      "Range",
       "File",
-      "Bookmark",
+      "Node",
+      "NodeType",
       "Paragraph",
-      "DataTable"
+      "FindReplaceOptions"
     ]
   },
   "stats": {
@@ -41,9 +40,6 @@
     "publish_ready_successful_examples": 30,
     "workflow_counts": {
       "range-workflow": 30
-    },
-    "winner_counts": {
-      "mcp": 30
     }
   },
   "rules_summary": {
@@ -119,7 +115,7 @@
     {
       "id": 4,
       "file_name": "generate-a-plain-text-version-of-a-document-by-extracting-each-section-s-range-text.cs",
-      "task": "Generate a plain-text version of a document by extracting each section's Range.Text.",
+      "task": "Generate a plain‑text version of a document by extracting each section's Range.Text.",
       "workflow": "range-workflow",
       "outputs": [
         "doc"
@@ -229,7 +225,7 @@
     {
       "id": 14,
       "file_name": "perform-a-case-insensitive-search-within-a-range-and-collect-matching-paragraph-indices.cs",
-      "task": "Perform a case-insensitive search within a range and collect matching paragraph indices.",
+      "task": "Perform a case‑insensitive search within a range and collect matching paragraph indices.",
       "workflow": "range-workflow",
       "outputs": [
         "docx"

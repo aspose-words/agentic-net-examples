@@ -1,10 +1,9 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
-public class Program
+public class ExportRangeToText
 {
     public static void Main()
     {
@@ -12,34 +11,29 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample content with paragraph and page breaks.
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Third paragraph after a page break.");
+        // Add sample content with line breaks.
+        builder.Writeln("First line.");
+        builder.Writeln("Second line.");
+        builder.Writeln("Third line.");
 
-        // Extract the plain text from the whole document range.
-        // The returned string contains control characters such as '\r' for paragraph breaks
-        // and '\f' for page breaks, which preserve the original layout.
+        // Extract the plain text of the whole document range.
+        // The returned string contains control characters (CR) that represent line breaks.
         string extractedText = doc.Range.Text;
 
         // Define the output .txt file path.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "ExtractedText.txt");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ExtractedText.txt");
 
-        // Write the extracted text to the file, preserving line breaks.
-        // Use UTF8 encoding to support a wide range of characters.
-        File.WriteAllText(outputPath, extractedText, Encoding.UTF8);
+        // Write the extracted text to the file, preserving the original line breaks.
+        File.WriteAllText(outputPath, extractedText);
 
-        // Optionally, demonstrate saving the document directly as plain text using TxtSaveOptions.
-        // This also respects line breaks and can be used instead of manual file writing.
+        // Optionally, also demonstrate saving the document directly as plain text using TxtSaveOptions.
+        // This shows an alternative way to obtain the same result.
         TxtSaveOptions txtOptions = new TxtSaveOptions
         {
-            // Ensure paragraph breaks are written as CRLF.
-            ParagraphBreak = Environment.NewLine,
-            // Preserve page breaks as form feed characters.
-            ForcePageBreaks = true
+            // Ensure paragraph breaks are written as CRLF (default) to keep line breaks.
+            ParagraphBreak = Environment.NewLine
         };
-        string txtSavePath = Path.Combine(Environment.CurrentDirectory, "DocumentSavedAsTxt.txt");
-        doc.Save(txtSavePath, txtOptions);
+        string directSavePath = Path.Combine(Directory.GetCurrentDirectory(), "DirectSave.txt");
+        doc.Save(directSavePath, txtOptions);
     }
 }

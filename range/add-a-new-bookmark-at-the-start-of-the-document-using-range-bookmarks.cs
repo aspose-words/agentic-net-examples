@@ -7,31 +7,31 @@ public class Program
     {
         // Create a new blank document.
         Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Move the builder cursor to the very beginning of the document.
+        // Use DocumentBuilder to position the cursor at the very beginning of the document.
+        DocumentBuilder builder = new DocumentBuilder(doc);
         builder.MoveToDocumentStart();
 
-        // Insert a bookmark that starts and ends at the document start.
+        // Insert an empty bookmark at the start of the document.
         const string bookmarkName = "StartBookmark";
         builder.StartBookmark(bookmarkName);
         builder.EndBookmark(bookmarkName);
 
-        // Add some sample text after the bookmark so the document is not empty.
-        builder.Writeln("This is a sample document with a bookmark at the start.");
+        // Optionally add some text after the bookmark to make the document visible.
+        builder.Writeln("Document content after the start bookmark.");
 
-        // Verify that the bookmark was added using the Range.Bookmarks collection.
+        // Access the bookmarks collection via the document's Range.
         BookmarkCollection bookmarks = doc.Range.Bookmarks;
-        Console.WriteLine($"Total bookmarks: {bookmarks.Count}");
+
+        // Output basic information about the added bookmark.
+        Console.WriteLine($"Bookmarks count: {bookmarks.Count}");
         if (bookmarks.Count > 0)
         {
             Console.WriteLine($"First bookmark name: {bookmarks[0].Name}");
-            Console.WriteLine($"First bookmark text: \"{bookmarks[0].Text.Trim()}\"");
         }
 
         // Save the document to the local file system.
-        const string outputPath = "Output.docx";
+        const string outputPath = "BookmarkAdded.docx";
         doc.Save(outputPath);
-        Console.WriteLine($"Document saved to \"{outputPath}\".");
     }
 }

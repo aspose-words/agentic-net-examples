@@ -1,24 +1,47 @@
 using System;
+using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
+        // Define file paths for the sample source and the final output.
+        string sourcePath = Path.Combine(Environment.CurrentDirectory, "Source.docx");
+        string resultPath = Path.Combine(Environment.CurrentDirectory, "Result.docx");
 
-        // Use DocumentBuilder to add initial content.
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Original text.");
+        // -----------------------------------------------------------------
+        // 1. Create a sample document with some initial content.
+        // -----------------------------------------------------------------
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("Original content of the document.");
 
-        // Move the cursor to the very start of the document.
-        builder.MoveToDocumentStart();
+        // Save the source document locally (bootstrap step).
+        sourceDoc.Save(sourcePath);
 
-        // Insert new text at the beginning of the document's range.
-        builder.Write("Inserted text ");
+        // -----------------------------------------------------------------
+        // 2. Load the previously saved document.
+        // -----------------------------------------------------------------
+        Document doc = new Document(sourcePath);
 
-        // Save the modified document.
-        doc.Save("Output.docx");
+        // -----------------------------------------------------------------
+        // 3. Insert new text at the beginning of the document's range.
+        //    Moving the builder's cursor to the start of the document places it
+        //    before the first character of the document range.
+        // -----------------------------------------------------------------
+        DocumentBuilder insertBuilder = new DocumentBuilder(doc);
+        insertBuilder.MoveToDocumentStart();
+        insertBuilder.Write("Inserted at start. ");
+
+        // -----------------------------------------------------------------
+        // 4. Save the modified document.
+        // -----------------------------------------------------------------
+        doc.Save(resultPath);
+
+        // Optional verification (not required for the task, but harmless).
+        // The following line demonstrates that the text was inserted.
+        string finalText = doc.Range.Text.Trim();
+        Console.WriteLine("Final document text: " + finalText);
     }
 }

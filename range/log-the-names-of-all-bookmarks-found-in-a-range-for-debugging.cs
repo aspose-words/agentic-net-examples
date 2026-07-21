@@ -9,23 +9,27 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add sample bookmarks to the document.
+        // Add a few bookmarks with some text inside each.
         for (int i = 1; i <= 3; i++)
         {
             string bookmarkName = $"MyBookmark_{i}";
             builder.StartBookmark(bookmarkName);
             builder.Write($"Text inside {bookmarkName}.");
             builder.EndBookmark(bookmarkName);
-            builder.Writeln(); // Move to a new line after each bookmark.
+            builder.Writeln(); // Add a line break after each bookmark.
         }
 
-        // Retrieve the collection of bookmarks from the whole‑document range.
-        BookmarkCollection bookmarks = doc.Range.Bookmarks;
+        // Obtain the range that covers the whole document.
+        Aspose.Words.Range range = doc.Range; // Fully qualified to avoid conflict with System.Range
 
-        // Log each bookmark's name to the console for debugging.
-        foreach (Bookmark bm in bookmarks)
+        // Log the names of all bookmarks found in this range.
+        Console.WriteLine("Bookmarks found in the document range:");
+        foreach (Bookmark bookmark in range.Bookmarks)
         {
-            Console.WriteLine($"Bookmark name: {bm.Name}");
+            Console.WriteLine($"- {bookmark.Name}");
         }
+
+        // Optionally save the document to verify the bookmarks exist.
+        doc.Save("Bookmarks.docx");
     }
 }

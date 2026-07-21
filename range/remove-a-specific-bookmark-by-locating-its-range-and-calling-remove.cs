@@ -1,43 +1,43 @@
 using System;
 using Aspose.Words;
 
-namespace RemoveBookmarkExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
+        // Create a new document and a builder.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert three bookmarks with some text.
+        for (int i = 1; i <= 3; i++)
         {
-            // Create a new document and a builder.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            string bookmarkName = $"Bookmark_{i}";
+            builder.StartBookmark(bookmarkName);
+            builder.Write($"Text inside {bookmarkName}.");
+            builder.EndBookmark(bookmarkName);
+            builder.Writeln(); // Add a line break.
+        }
 
-            // Insert three bookmarks with text.
-            for (int i = 1; i <= 3; i++)
-            {
-                string name = $"Bookmark{i}";
-                builder.StartBookmark(name);
-                builder.Write($"Text inside {name}.");
-                builder.EndBookmark(name);
-                builder.Writeln(); // Add a line break.
-            }
+        // Save the original document (optional, shows the state before removal).
+        doc.Save("Original.docx");
 
-            // Locate the bookmark named "Bookmark2" and remove it.
-            Bookmark bookmarkToRemove = doc.Range.Bookmarks["Bookmark2"];
-            if (bookmarkToRemove != null)
-            {
-                // The Remove method deletes the bookmark but keeps its text.
-                bookmarkToRemove.Remove();
-            }
+        // Locate the specific bookmark to remove.
+        Bookmark bookmarkToRemove = doc.Range.Bookmarks["Bookmark_2"];
+        if (bookmarkToRemove != null)
+        {
+            // Remove the bookmark. The text inside the bookmark remains in the document.
+            bookmarkToRemove.Remove();
+        }
 
-            // Save the document after removal.
-            doc.Save("RemovedBookmark.docx");
+        // Save the modified document.
+        doc.Save("Modified.docx");
 
-            // List remaining bookmarks.
-            Console.WriteLine("Remaining bookmarks:");
-            foreach (Bookmark bm in doc.Range.Bookmarks)
-            {
-                Console.WriteLine(bm.Name);
-            }
+        // Output the names of the remaining bookmarks to verify removal.
+        Console.WriteLine("Remaining bookmarks:");
+        foreach (Bookmark bm in doc.Range.Bookmarks)
+        {
+            Console.WriteLine(bm.Name);
         }
     }
 }

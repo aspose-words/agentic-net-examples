@@ -16,16 +16,16 @@ public class Program
             builder.StartBookmark(bookmarkName);
             builder.Write($"Text inside {bookmarkName}.");
             builder.EndBookmark(bookmarkName);
-            builder.Writeln(); // start a new paragraph after each bookmark.
+            builder.Writeln(); // Add a line break after each bookmark.
         }
 
-        // Retrieve the number of bookmarks that exist in the document's whole range.
+        // Retrieve the number of bookmarks that exist in the document's range.
         int bookmarkCount = doc.Range.Bookmarks.Count;
 
         // Output the count to the console.
-        Console.WriteLine($"Number of bookmarks in the document: {bookmarkCount}");
+        Console.WriteLine($"Bookmark count in the document range: {bookmarkCount}");
 
-        // Save the document (optional, demonstrates the full lifecycle).
+        // Save the document (optional, demonstrates lifecycle handling).
         doc.Save("BookmarksCount.docx");
     }
 }
