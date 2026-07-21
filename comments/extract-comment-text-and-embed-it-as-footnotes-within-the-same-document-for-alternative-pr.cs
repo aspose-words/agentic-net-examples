@@ -4,64 +4,57 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Notes;
 
-public class Program
+namespace CommentToFootnoteExample
 {
-    public static void Main()
+    public class Program
     {
-        // Create a sample document with comments.
-        Document sourceDoc = new Document();
-        DocumentBuilder srcBuilder = new DocumentBuilder(sourceDoc);
-
-        // First paragraph with a comment.
-        srcBuilder.Writeln("This is the first paragraph.");
-        Comment comment1 = new Comment(sourceDoc)
+        public static void Main()
         {
-            Author = "John Doe",
-            Initial = "JD",
-            DateTime = DateTime.Now
-        };
-        comment1.AppendChild(new Paragraph(sourceDoc));
-        comment1.FirstParagraph?.AppendChild(new Run(sourceDoc, "Comment on the first paragraph."));
-        srcBuilder.CurrentParagraph?.AppendChild(comment1);
+            // Create a new blank document.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Second paragraph with a comment.
-        srcBuilder.Writeln("This is the second paragraph.");
-        Comment comment2 = new Comment(sourceDoc)
-        {
-            Author = "Jane Smith",
-            Initial = "JS",
-            DateTime = DateTime.Now.AddMinutes(-5)
-        };
-        comment2.AppendChild(new Paragraph(sourceDoc));
-        comment2.FirstParagraph?.AppendChild(new Run(sourceDoc, "Another comment, on the second paragraph."));
-        srcBuilder.CurrentParagraph?.AppendChild(comment2);
+            // Add first paragraph and attach a comment.
+            builder.Writeln("First paragraph of the document.");
+            Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
+            comment1.SetText("Review the wording of this paragraph.");
+            builder.CurrentParagraph?.AppendChild(comment1);
 
-        // Save the source document (optional, for verification).
-        sourceDoc.Save("original.docx");
+            // Add second paragraph and attach another comment.
+            builder.Writeln("Second paragraph with additional content.");
+            Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
+            comment2.SetText("Consider adding a reference here.");
+            builder.CurrentParagraph?.AppendChild(comment2);
 
-        // Create a new document that will contain footnotes derived from comments.
-        Document footnoteDoc = new Document();
-        DocumentBuilder footBuilder = new DocumentBuilder(footnoteDoc);
+            // Save the original document (optional, for inspection).
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+            Directory.CreateDirectory(outputDir);
+            string originalPath = Path.Combine(outputDir, "original.docx");
+            doc.Save(originalPath);
 
-        footBuilder.Writeln("Comments converted to footnotes:");
-        footBuilder.Writeln();
+            // Insert a summary section that converts each comment into a footnote.
+            builder.Writeln(); // Add a blank line before the summary.
+            builder.Writeln("Comments Summary (converted to footnotes):");
 
-        // Enumerate all comments in the source document.
-        var comments = sourceDoc.GetChildNodes(NodeType.Comment, true)
-                                .OfType<Comment>()
-                                .ToList();
+            // Enumerate all comments safely.
+            var comments = doc.GetChildNodes(NodeType.Comment, true)
+                              .OfType<Comment>()
+                              .ToList();
 
-        foreach (Comment c in comments)
-        {
-            string author = c.Author ?? "Unknown";
-            string commentText = c.GetText()?.Trim() ?? string.Empty;
+            foreach (Comment c in comments)
+            {
+                // Extract plain comment text.
+                string commentText = c.GetText().Trim();
 
-            footBuilder.Write($"Comment by {author}: ");
-            footBuilder.InsertFootnote(FootnoteType.Footnote, commentText);
-            footBuilder.Writeln();
+                // Write a label and insert the footnote containing the comment text.
+                builder.Write($"Comment by {c.Author}: ");
+                builder.InsertFootnote(FootnoteType.Footnote, commentText);
+                builder.Writeln(); // Move to the next line.
+            }
+
+            // Save the document with footnotes.
+            string resultPath = Path.Combine(outputDir, "comments-footnotes.docx");
+            doc.Save(resultPath);
         }
-
-        // Save the document with footnotes.
-        footnoteDoc.Save("comments-footnotes.docx");
     }
 }

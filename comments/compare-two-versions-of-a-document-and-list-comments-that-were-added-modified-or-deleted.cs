@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
@@ -9,122 +8,140 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
         Directory.CreateDirectory(outputDir);
 
-        // ---------- Create the original document ----------
-        Document original = new Document();
-        DocumentBuilder builder = new DocumentBuilder(original);
+        // -------------------- Create original document with comments --------------------
+        Document docOriginal = new Document();
+        DocumentBuilder builder = new DocumentBuilder(docOriginal);
 
         // First paragraph with a comment.
-        builder.Writeln("Paragraph 1.");
-        Comment comment1 = new Comment(original, "Alice", "A", DateTime.Now);
-        comment1.AppendChild(new Paragraph(original));
-        comment1.FirstParagraph.AppendChild(new Run(original, "Original comment 1."));
+        builder.Writeln("This is the first paragraph.");
+        Comment comment1 = new Comment(docOriginal, "Alice", "A", DateTime.Now);
+        comment1.SetText("Original comment 1.");
         builder.CurrentParagraph.AppendChild(comment1);
 
-        // Second paragraph with another comment.
-        builder.Writeln("Paragraph 2.");
-        Comment comment2 = new Comment(original, "Charlie", "C", DateTime.Now);
-        comment2.AppendChild(new Paragraph(original));
-        comment2.FirstParagraph.AppendChild(new Run(original, "Original comment 2."));
+        // Second paragraph with a comment.
+        builder.Writeln("This is the second paragraph.");
+        Comment comment2 = new Comment(docOriginal, "Bob", "B", DateTime.Now);
+        comment2.SetText("Original comment 2.");
         builder.CurrentParagraph.AppendChild(comment2);
 
-        original.Save(Path.Combine(outputDir, "Original.docx"));
+        string originalPath = Path.Combine(outputDir, "original.docx");
+        docOriginal.Save(originalPath);
 
-        // ---------- Clone and modify to create the edited document ----------
-        Document edited = (Document)original.Clone(true);
-        DocumentBuilder editedBuilder = new DocumentBuilder(edited);
+        // -------------------- Create edited document (clone and modify) --------------------
+        Document docEdited = (Document)docOriginal.Clone(true);
+        DocumentBuilder editedBuilder = new DocumentBuilder(docEdited);
 
-        // Capture comment IDs for later reference.
-        int comment1Id = comment1.Id;
-        int comment2Id = comment2.Id;
+        // Remove the first comment (Alice's comment).
+        var originalCommentsInEdited = docEdited.GetChildNodes(NodeType.Comment, true)
+                                                .OfType<Comment>()
+                                                .ToList();
+        Comment? commentToRemove = originalCommentsInEdited.FirstOrDefault(c => c.Author == "Alice");
+        commentToRemove?.Remove();
 
-        // Modify the text of the first comment.
-        Comment? editedComment1 = edited.GetChildNodes(NodeType.Comment, true)
-                                         .OfType<Comment>()
-                                         .FirstOrDefault(c => c.Id == comment1Id);
-        if (editedComment1 != null)
+        // Modify Bob's comment text.
+        Comment? commentToModify = docEdited.GetChildNodes(NodeType.Comment, true)
+                                            .OfType<Comment>()
+                                            .FirstOrDefault(c => c.Author == "Bob");
+        if (commentToModify != null)
         {
-            // Ensure the comment has a paragraph and run before changing text.
-            if (editedComment1.FirstParagraph == null)
-                editedComment1.AppendChild(new Paragraph(edited));
-            if (!editedComment1.FirstParagraph.Runs.Any())
-                editedComment1.FirstParagraph.AppendChild(new Run(edited, string.Empty));
-
-            editedComment1.FirstParagraph.Runs[0].Text = "Modified comment 1.";
+            commentToModify.SetText("Edited comment 2.");
         }
 
-        // Delete the second comment.
-        Comment? editedComment2 = edited.GetChildNodes(NodeType.Comment, true)
-                                         .OfType<Comment>()
-                                         .FirstOrDefault(c => c.Id == comment2Id);
-        editedComment2?.Remove();
+        // Add a new comment on a new paragraph.
+        editedBuilder.Writeln("This is the third paragraph.");
+        Comment newComment = new Comment(docEdited, "Charlie", "C", DateTime.Now);
+        newComment.SetText("Newly added comment.");
+        editedBuilder.CurrentParagraph.AppendChild(newComment);
 
-        // Add a new comment.
-        editedBuilder.Writeln("Paragraph 3.");
-        Comment comment3 = new Comment(edited, "Bob", "B", DateTime.Now);
-        comment3.AppendChild(new Paragraph(edited));
-        comment3.FirstParagraph.AppendChild(new Run(edited, "New comment added in edited version."));
-        editedBuilder.CurrentParagraph.AppendChild(comment3);
+        string editedPath = Path.Combine(outputDir, "edited.docx");
+        docEdited.Save(editedPath);
 
-        edited.Save(Path.Combine(outputDir, "Edited.docx"));
-
-        // ---------- Capture comment collections before comparison ----------
-        List<Comment> originalComments = original.GetChildNodes(NodeType.Comment, true)
-                                                 .OfType<Comment>()
-                                                 .ToList();
-
-        List<Comment> editedComments = edited.GetChildNodes(NodeType.Comment, true)
-                                             .OfType<Comment>()
-                                             .ToList();
-
-        // ---------- Compare documents ----------
+        // -------------------- Compare documents (optional, to generate revisions) --------------------
+        Document docForComparison = (Document)docOriginal.Clone(true);
         CompareOptions compareOptions = new CompareOptions
         {
-            IgnoreComments = false, // Track comment changes.
-            Target = ComparisonTargetType.New
+            IgnoreComments = false // Ensure comments are taken into account.
         };
+        docForComparison.Compare(docEdited, "Comparer", DateTime.Now, compareOptions);
+        // Revisions are generated in docForComparison, but we will report differences manually.
 
-        // Perform comparison (original will contain revisions after this call).
-        original.Compare(edited, "Comparer", DateTime.Now, compareOptions);
-        original.Save(Path.Combine(outputDir, "Compared.docx"));
+        // -------------------- Analyze comment differences --------------------
+        var originalComments = docOriginal.GetChildNodes(NodeType.Comment, true)
+                                          .OfType<Comment>()
+                                          .ToList();
+        var editedComments = docEdited.GetChildNodes(NodeType.Comment, true)
+                                      .OfType<Comment>()
+                                      .ToList();
 
-        // ---------- Determine added, deleted, and modified comments ----------
-        var originalDict = originalComments.ToDictionary(c => c.Id);
-        var editedDict = editedComments.ToDictionary(c => c.Id);
+        var originalById = originalComments.ToDictionary(c => c.Id);
+        var editedById = editedComments.ToDictionary(c => c.Id);
 
-        // Added comments: present only in edited.
-        List<Comment> added = editedDict.Values
-                                         .Where(c => !originalDict.ContainsKey(c.Id))
-                                         .ToList();
+        // Added comments: present in edited but not in original.
+        var added = editedById.Keys.Except(originalById.Keys)
+                                   .Select(id => editedById[id])
+                                   .ToList();
 
-        // Deleted comments: present only in original.
-        List<Comment> deleted = originalDict.Values
-                                            .Where(c => !editedDict.ContainsKey(c.Id))
-                                            .ToList();
+        // Deleted comments: present in original but not in edited.
+        var deleted = originalById.Keys.Except(editedById.Keys)
+                                      .Select(id => originalById[id])
+                                      .ToList();
 
-        // Modified comments: same Id exists in both but text differs.
-        List<(Comment Original, Comment Edited)> modified = originalDict.Values
-            .Where(c => editedDict.ContainsKey(c.Id))
-            .Select(c => (Original: c, Edited: editedDict[c.Id]))
-            .Where(pair => !string.Equals(pair.Original.GetText().Trim(),
-                                          pair.Edited.GetText().Trim(),
-                                          StringComparison.Ordinal))
-            .ToList();
+        // Modified comments: same Id in both, but text differs.
+        var modified = originalById.Keys.Intersect(editedById.Keys)
+                                        .Where(id => !string.Equals(
+                                            originalById[id].GetText().Trim(),
+                                            editedById[id].GetText().Trim(),
+                                            StringComparison.Ordinal))
+                                        .Select(id => new
+                                        {
+                                            Original = originalById[id],
+                                            Edited = editedById[id]
+                                        })
+                                        .ToList();
 
-        // ---------- Output results ----------
-        Console.WriteLine("Added comments:");
-        foreach (Comment c in added)
-            Console.WriteLine($"- Id:{c.Id} Author:{c.Author} Text:{c.GetText().Trim()}");
+        // -------------------- Output results --------------------
+        Console.WriteLine("=== Comment Comparison Report ===");
+        Console.WriteLine();
 
-        Console.WriteLine("\nDeleted comments:");
-        foreach (Comment c in deleted)
-            Console.WriteLine($"- Id:{c.Id} Author:{c.Author} Text:{c.GetText().Trim()}");
+        Console.WriteLine("Added Comments:");
+        if (added.Count == 0)
+            Console.WriteLine("  (none)");
+        else
+        {
+            foreach (var c in added)
+            {
+                Console.WriteLine($"  Author: {c.Author}, Text: {c.GetText().Trim()}");
+            }
+        }
 
-        Console.WriteLine("\nModified comments:");
-        foreach (var pair in modified)
-            Console.WriteLine($"- Id:{pair.Original.Id} Author:{pair.Original.Author}\n  Original: {pair.Original.GetText().Trim()}\n  Edited:   {pair.Edited.GetText().Trim()}");
+        Console.WriteLine();
+        Console.WriteLine("Deleted Comments:");
+        if (deleted.Count == 0)
+            Console.WriteLine("  (none)");
+        else
+        {
+            foreach (var c in deleted)
+            {
+                Console.WriteLine($"  Author: {c.Author}, Text: {c.GetText().Trim()}");
+            }
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("Modified Comments:");
+        if (modified.Count == 0)
+            Console.WriteLine("  (none)");
+        else
+        {
+            foreach (var pair in modified)
+            {
+                Console.WriteLine($"  Original - Author: {pair.Original.Author}, Text: {pair.Original.GetText().Trim()}");
+                Console.WriteLine($"  Edited   - Author: {pair.Edited.Author}, Text: {pair.Edited.GetText().Trim()}");
+                Console.WriteLine();
+            }
+        }
     }
 }

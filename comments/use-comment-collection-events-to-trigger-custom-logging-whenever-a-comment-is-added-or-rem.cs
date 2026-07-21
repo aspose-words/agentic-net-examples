@@ -2,92 +2,65 @@ using System;
 using System.IO;
 using System.Linq;
 using Aspose.Words;
-
-public class CommentLogger
-{
-    // Adds a comment to the current paragraph of the builder and logs the action.
-    public static Comment AddComment(Document doc, DocumentBuilder builder, string author, string initials, string text)
-    {
-        // Create the comment node.
-        Comment comment = new Comment(doc, author, initials, DateTime.Now);
-        comment.SetText(text);
-
-        // Append the comment to the current paragraph.
-        builder.CurrentParagraph?.AppendChild(comment);
-
-        // Log the addition.
-        Console.WriteLine($"[Log] Added comment Id={comment.Id}, Author={author}, Text=\"{text}\"");
-        return comment;
-    }
-
-    // Removes the specified comment from the document and logs the action.
-    public static void RemoveComment(Comment comment)
-    {
-        if (comment == null)
-        {
-            Console.WriteLine("[Log] Attempted to remove a null comment – operation skipped.");
-            return;
-        }
-
-        int id = comment.Id;
-        string author = comment.Author ?? "<null>";
-        string text = comment.GetText().Trim();
-
-        // Remove the comment node.
-        comment.Remove();
-
-        // Log the removal.
-        Console.WriteLine($"[Log] Removed comment Id={id}, Author={author}, Text=\"{text}\"");
-    }
-}
+using Aspose.Words.Drawing;
+using Aspose.Words.Tables;
 
 public class Program
 {
+    // Simple logger that writes messages to the console.
+    private static void Log(string message)
+    {
+        Console.WriteLine($"[Log] {message}");
+    }
+
     public static void Main()
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a new document and a builder.
+        // Ensure the Aspose.Words license is not required for this example.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a paragraph that will host comments.
-        builder.Writeln("This is a sample paragraph for comment events demonstration.");
+        // Write a paragraph that will contain a comment.
+        builder.Writeln("This is a sample paragraph for comment demonstration.");
 
-        // Add two comments using the logger.
-        Comment firstComment = CommentLogger.AddComment(doc, builder, "Alice", "A", "First comment.");
-        Comment secondComment = CommentLogger.AddComment(doc, builder, "Bob", "B", "Second comment.");
+        // Create a comment and attach it to the paragraph.
+        Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
+        comment.SetText("Please review this paragraph.");
+        // Append the comment to the paragraph.
+        builder.CurrentParagraph.AppendChild(comment);
 
-        // Enumerate current comments and display their details.
-        Console.WriteLine("\n[Info] Current comments in the document:");
-        var currentComments = doc.GetChildNodes(NodeType.Comment, true)
-                                 .OfType<Comment>()
-                                 .ToList();
+        // Log the addition of the comment.
+        Log($"Comment added by '{comment.Author}' with text: \"{comment.GetText().Trim()}\"");
 
-        foreach (Comment c in currentComments)
+        // Save the document before removal to demonstrate both states.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
+        string beforePath = Path.Combine(outputDir, "DocumentWithComment.docx");
+        doc.Save(beforePath);
+        Log($"Document saved with comment: {beforePath}");
+
+        // Retrieve all comment nodes safely.
+        var comments = doc.GetChildNodes(NodeType.Comment, true)
+                          .OfType<Comment>()
+                          .ToList();
+
+        // Remove each comment while logging the removal.
+        foreach (Comment c in comments)
         {
-            Console.WriteLine($"- Id={c.Id}, Author={c.Author}, Text=\"{c.GetText().Trim()}\"");
+            // Capture author before removal.
+            string author = c.Author;
+            string text = c.GetText().Trim();
+
+            // Remove the comment from the document.
+            c.Remove();
+
+            // Log the removal.
+            Log($"Comment removed by '{author}' with text: \"{text}\"");
         }
 
-        // Remove the first comment using the logger.
-        CommentLogger.RemoveComment(firstComment);
-
-        // Enumerate comments after removal.
-        Console.WriteLine("\n[Info] Comments after removal:");
-        var remainingComments = doc.GetChildNodes(NodeType.Comment, true)
-                                   .OfType<Comment>()
-                                   .ToList();
-
-        foreach (Comment c in remainingComments)
-        {
-            Console.WriteLine($"- Id={c.Id}, Author={c.Author}, Text=\"{c.GetText().Trim()}\"");
-        }
-
-        // Save the document.
-        string outputPath = Path.Combine(outputDir, "CommentEventsDemo.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"\nDocument saved to: {outputPath}");
+        // Save the document after removal.
+        string afterPath = Path.Combine(outputDir, "DocumentWithoutComment.docx");
+        doc.Save(afterPath);
+        Log($"Document saved after comment removal: {afterPath}");
     }
 }

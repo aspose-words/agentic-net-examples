@@ -11,46 +11,41 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a paragraph that will contain a comment.
-        builder.Writeln("This paragraph will have a comment with formatted text.");
+        // Add a sample paragraph that will host the comment.
+        builder.Writeln("This is a sample paragraph.");
 
-        // Create a comment anchored to the current paragraph.
+        // Create a comment with author metadata.
         Comment comment = new Comment(doc, "Alice", "A", DateTime.Now);
 
-        // Build the comment body with bold and italic runs.
+        // Ensure the comment contains a paragraph.
         Paragraph commentParagraph = new Paragraph(doc);
-
-        Run boldRun = new Run(doc, "Bold text");
-        boldRun.Font.Bold = true;
-
-        Run italicRun = new Run(doc, " and italic text");
-        italicRun.Font.Italic = true;
-
-        commentParagraph.AppendChild(boldRun);
-        commentParagraph.AppendChild(italicRun);
         comment.AppendChild(commentParagraph);
 
-        // Attach the comment to the paragraph.
-        builder.CurrentParagraph.AppendChild(comment);
+        // Add a bold run inside the comment.
+        Run boldRun = new Run(doc, "Bold text");
+        boldRun.Font.Bold = true;
+        commentParagraph.AppendChild(boldRun);
 
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Add a space between runs.
+        commentParagraph.AppendChild(new Run(doc, " "));
 
-        // Save the document in DOCX format (optional, for inspection).
-        string docxPath = Path.Combine(outputDir, "CommentFormatting.docx");
-        doc.Save(docxPath, SaveFormat.Docx);
+        // Add an italic run inside the comment.
+        Run italicRun = new Run(doc, "Italic text");
+        italicRun.Font.Italic = true;
+        commentParagraph.AppendChild(italicRun);
 
-        // Save the document as HTML. The comment's formatted text will be preserved in the HTML output.
-        string htmlPath = Path.Combine(outputDir, "CommentFormatting.html");
-        doc.Save(htmlPath, SaveFormat.Html);
-
-        // Enumerate comments and write their plain text to the console (verification).
-        var comments = doc.GetChildNodes(NodeType.Comment, true).OfType<Comment>();
-        foreach (Comment c in comments)
+        // Anchor the comment to the previously created paragraph.
+        Paragraph? anchorParagraph = doc.FirstSection?.Body?.FirstParagraph;
+        if (anchorParagraph != null)
         {
-            Console.WriteLine($"Author: {c.Author}");
-            Console.WriteLine($"Text: {c.GetText().Trim()}");
+            anchorParagraph.AppendChild(comment);
         }
+
+        // Export the comment's content to HTML while preserving formatting.
+        string commentHtml = comment.ToString(SaveFormat.Html);
+        File.WriteAllText("Comment.html", commentHtml);
+
+        // Optionally, save the whole document for reference.
+        doc.Save("DocumentWithComment.docx");
     }
 }

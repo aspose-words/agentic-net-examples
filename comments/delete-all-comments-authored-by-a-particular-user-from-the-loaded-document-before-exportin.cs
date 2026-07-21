@@ -3,19 +3,17 @@ using System.IO;
 using System.Linq;
 using Aspose.Words;
 
-public class DeleteCommentsByAuthor
+public class Program
 {
     public static void Main()
     {
-        // Define output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Define file names for the sample and the result.
+        string originalPath = "original.docx";
+        string resultPath = "result.docx";
 
-        // Paths for the sample and result documents.
-        string samplePath = Path.Combine(outputDir, "sample.docx");
-        string resultPath = Path.Combine(outputDir, "result.docx");
-
-        // Create a sample document with two comments from different authors.
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample document with comments from different authors.
+        // -----------------------------------------------------------------
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
@@ -23,6 +21,7 @@ public class DeleteCommentsByAuthor
         builder.Writeln("First paragraph.");
         Comment aliceComment = new Comment(doc, "Alice", "A", DateTime.Now);
         aliceComment.SetText("Comment authored by Alice.");
+        // Append the comment to the current paragraph.
         builder.CurrentParagraph.AppendChild(aliceComment);
 
         // Second paragraph with a comment from Bob.
@@ -32,28 +31,31 @@ public class DeleteCommentsByAuthor
         builder.CurrentParagraph.AppendChild(bobComment);
 
         // Save the sample document.
-        doc.Save(samplePath);
+        doc.Save(originalPath);
 
-        // Load the document we just created.
-        Document loadedDoc = new Document(samplePath);
+        // -----------------------------------------------------------------
+        // Step 2: Load the document and delete all comments authored by Alice.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(originalPath);
+        string targetAuthor = "Alice";
 
-        // Author whose comments should be removed.
-        const string targetAuthor = "Alice";
-
-        // Find all comments authored by the target author (case‑insensitive).
-        var commentsToRemove = loadedDoc
+        // Enumerate all comment nodes, filter by author, and collect to a list to avoid
+        // modifying the collection while iterating.
+        var commentsToDelete = loadedDoc
             .GetChildNodes(NodeType.Comment, true)
             .OfType<Comment>()
             .Where(c => string.Equals(c.Author, targetAuthor, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
-        // Remove each matching comment safely.
-        foreach (Comment comment in commentsToRemove)
+        // Remove each matching comment from the document.
+        foreach (Comment comment in commentsToDelete)
         {
             comment.Remove();
         }
 
-        // Save the document after removal.
+        // -----------------------------------------------------------------
+        // Step 3: Save the modified document.
+        // -----------------------------------------------------------------
         loadedDoc.Save(resultPath);
     }
 }

@@ -8,77 +8,82 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with a few paragraphs and comments.
+        // -----------------------------------------------------------------
+        // Create a sample source document with paragraphs and comments.
+        // -----------------------------------------------------------------
         Document sourceDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(sourceDoc);
 
-        // First paragraph with a comment.
-        builder.Writeln("This is the first paragraph of the document.");
-        Paragraph firstPara = sourceDoc.FirstSection.Body.LastParagraph;
-        AddCommentToParagraph(sourceDoc, firstPara, "Alice", "A", "First comment on the first paragraph.");
-
-        // Second paragraph with a comment.
-        builder.Writeln("This is the second paragraph, containing important information.");
-        Paragraph secondPara = sourceDoc.FirstSection.Body.LastParagraph;
-        AddCommentToParagraph(sourceDoc, secondPara, "Bob", "B", "Second comment on the second paragraph.");
-
-        // Ensure the layout is up‑to‑date so page numbers are correct.
-        sourceDoc.UpdatePageLayout();
-
-        // Collect layout information (page numbers) for nodes.
-        LayoutCollector layoutCollector = new LayoutCollector(sourceDoc);
-
-        // Create a new document that will hold the printable report.
-        Document reportDoc = new Document();
-        DocumentBuilder reportBuilder = new DocumentBuilder(reportDoc);
-        reportBuilder.Writeln("Comments Report");
-        reportBuilder.Writeln(new string('=', 30));
-        reportBuilder.Writeln();
-
-        // Enumerate all comments in the source document.
-        var comments = sourceDoc.GetChildNodes(NodeType.Comment, true)
-                                .OfType<Comment>()
-                                .ToList();
-
-        foreach (Comment comment in comments)
+        // Add several paragraphs. Every second paragraph gets a comment.
+        for (int i = 1; i <= 5; i++)
         {
-            // Get the page number where the comment starts.
-            int pageNumber = layoutCollector.GetStartPageIndex(comment);
+            builder.Writeln($"This is paragraph {i}.");
 
-            // Retrieve the paragraph that contains the comment (if any).
-            string paragraphText = comment.ParentParagraph?.GetText().Trim() ?? "(No paragraph)";
+            if (i % 2 == 0)
+            {
+                // Create a comment with author metadata.
+                Comment comment = new Comment(sourceDoc, $"Author{i}", $"A{i}", DateTime.Now);
+                comment.SetText($"Comment for paragraph {i}.");
 
-            // Get the comment text.
-            string commentText = comment.GetText().Trim();
-
-            // Write the information to the report.
-            reportBuilder.Writeln($"Page {pageNumber}: \"{paragraphText}\"");
-            reportBuilder.Writeln($"    Author : {comment.Author}");
-            reportBuilder.Writeln($"    Comment: {commentText}");
-            reportBuilder.Writeln();
+                // Append the comment to the current paragraph.
+                builder.CurrentParagraph.AppendChild(comment);
+            }
         }
 
-        // Save the source document and the report.
-        sourceDoc.Save("SourceDocument.docx");
-        reportDoc.Save("CommentsReport.docx");
-    }
+        // Ensure the layout is up‑to‑date so that page numbers are correct.
+        sourceDoc.UpdatePageLayout();
 
-    // Helper method to add a comment anchored to a paragraph.
-    private static void AddCommentToParagraph(Document doc, Paragraph paragraph, string author, string initial, string commentText)
-    {
-        // Create a new comment.
-        Comment comment = new Comment(doc, author, initial, DateTime.Now);
-        comment.SetText(commentText);
+        // Map nodes to page numbers.
+        LayoutCollector collector = new LayoutCollector(sourceDoc);
 
-        // Create a comment range that surrounds a dummy run of text.
-        CommentRangeStart rangeStart = new CommentRangeStart(doc, comment.Id);
-        CommentRangeEnd rangeEnd = new CommentRangeEnd(doc, comment.Id);
-        Run dummyRun = new Run(doc, "Commented text.");
+        // Gather all top‑level comments (comments that are not replies).
+        var comments = sourceDoc.GetChildNodes(NodeType.Comment, true)
+                                .OfType<Comment>()
+                                .Where(c => c.Ancestor == null)
+                                .ToList();
 
-        // Insert the range and the comment into the paragraph.
-        paragraph.AppendChild(rangeStart);
-        paragraph.AppendChild(dummyRun);
-        paragraph.AppendChild(rangeEnd);
-        paragraph.AppendChild(comment);
+        // -----------------------------------------------------------------
+        // Create a new document that will hold the printable comments report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document();
+        DocumentBuilder reportBuilder = new DocumentBuilder(reportDoc);
+
+        // Report title.
+        reportBuilder.Font.Size = 16;
+        reportBuilder.Font.Bold = true;
+        reportBuilder.Writeln("Comments Report");
+        reportBuilder.Font.Size = 12;
+        reportBuilder.Font.Bold = false;
+        reportBuilder.Writeln();
+
+        // List each comment with its details.
+        for (int idx = 0; idx < comments.Count; idx++)
+        {
+            Comment comment = comments[idx];
+
+            // Page number where the comment starts.
+            int pageNumber = collector.GetStartPageIndex(comment);
+
+            // Text of the comment.
+            string commentText = comment.GetText().Trim();
+
+            // The paragraph that the comment is attached to.
+            Paragraph? para = comment.ParentParagraph;
+            string paragraphText = para != null ? para.GetText().Trim() : "<No paragraph>";
+
+            // Write the information to the report.
+            reportBuilder.Writeln($"Comment {idx + 1}:");
+            reportBuilder.Writeln($"  Author   : {comment.Author}");
+            reportBuilder.Writeln($"  Date     : {comment.DateTime}");
+            reportBuilder.Writeln($"  Page     : {pageNumber}");
+            reportBuilder.Writeln($"  Text     : {commentText}");
+            reportBuilder.Writeln($"  Paragraph: {paragraphText}");
+            reportBuilder.Writeln(); // Blank line between entries.
+        }
+
+        // Save the report to the working directory.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "CommentsReport.docx");
+        reportDoc.Save(outputPath);
+        Console.WriteLine($"Report saved to: {outputPath}");
     }
 }

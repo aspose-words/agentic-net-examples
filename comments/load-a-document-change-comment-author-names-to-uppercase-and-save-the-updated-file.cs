@@ -7,57 +7,52 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the input and output documents.
-        string inputPath = "CommentsInput.docx";
-        string outputPath = "CommentsOutput.docx";
+        // Prepare file names.
+        string inputPath = "input.docx";
+        string outputPath = "output.docx";
 
-        // Create a sample document that contains comments.
-        CreateSampleDocument(inputPath);
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample document with comments and save it.
+        // -----------------------------------------------------------------
+        Document createDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(createDoc);
 
-        // Load the document from the file system.
-        Document doc = new Document(inputPath);
+        // Add a paragraph that will contain comments.
+        builder.Writeln("This is a sample paragraph with comments.");
 
-        // Retrieve all comment nodes in the document.
-        var comments = doc.GetChildNodes(NodeType.Comment, true)
-            .OfType<Comment>()
-            .ToList();
+        // First comment.
+        Comment comment1 = new Comment(createDoc, "John Doe", "JD", DateTime.Now);
+        comment1.SetText("First comment.");
+        builder.CurrentParagraph.AppendChild(comment1);
 
-        // Convert each comment author's name to uppercase.
-        foreach (Comment comment in comments)
+        // Second comment.
+        Comment comment2 = new Comment(createDoc, "Jane Smith", "JS", DateTime.Now);
+        comment2.SetText("Second comment.");
+        builder.CurrentParagraph.AppendChild(comment2);
+
+        // Save the document that will be loaded later.
+        createDoc.Save(inputPath);
+
+        // -----------------------------------------------------------------
+        // Step 2: Load the document, convert comment authors to uppercase.
+        // -----------------------------------------------------------------
+        Document loadDoc = new Document(inputPath);
+
+        // Enumerate all comment nodes safely.
+        var comments = loadDoc.GetChildNodes(NodeType.Comment, true)
+                              .OfType<Comment>()
+                              .ToList();
+
+        foreach (Comment c in comments)
         {
-            if (!string.IsNullOrEmpty(comment.Author))
-                comment.Author = comment.Author.ToUpperInvariant();
+            // Transform the author name to uppercase.
+            if (!string.IsNullOrEmpty(c.Author))
+                c.Author = c.Author.ToUpperInvariant();
         }
 
-        // Save the modified document.
-        doc.Save(outputPath);
-    }
-
-    // Helper method to create a document with a couple of comments.
-    private static void CreateSampleDocument(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Add some text.
-        builder.Writeln("First paragraph.");
-        builder.Writeln("Second paragraph.");
-
-        // Create a comment for the first paragraph.
-        Comment comment1 = new Comment(doc, "Alice", "A", DateTime.Now);
-        comment1.SetText("Review this paragraph.");
-        // Attach the comment to the first paragraph.
-        Paragraph firstPara = doc.FirstSection.Body.Paragraphs[0];
-        firstPara.AppendChild(comment1);
-
-        // Create a comment for the second paragraph.
-        Comment comment2 = new Comment(doc, "Bob", "B", DateTime.Now);
-        comment2.SetText("Check the wording.");
-        // Attach the comment to the second paragraph.
-        Paragraph secondPara = doc.FirstSection.Body.Paragraphs[1];
-        secondPara.AppendChild(comment2);
-
-        // Save the document to the specified path.
-        doc.Save(filePath);
+        // -----------------------------------------------------------------
+        // Step 3: Save the updated document.
+        // -----------------------------------------------------------------
+        loadDoc.Save(outputPath);
     }
 }
