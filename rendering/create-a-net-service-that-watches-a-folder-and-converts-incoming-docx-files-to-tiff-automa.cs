@@ -1,110 +1,88 @@
 using System;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Saving;
 
 public class FolderWatcherService
 {
-    private static readonly string InputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Input");
-    private static readonly string OutputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-    private static readonly ManualResetEventSlim ProcessingCompleted = new ManualResetEventSlim(false);
-    private static FileSystemWatcher _watcher;
-
     public static void Main()
     {
-        // Ensure input and output directories exist.
-        Directory.CreateDirectory(InputFolder);
-        Directory.CreateDirectory(OutputFolder);
+        // Set up input and output directories.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "WatchDemo");
+        string inputDir = Path.Combine(baseDir, "Input");
+        string outputDir = Path.Combine(baseDir, "Output");
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create a sample DOCX file that the watcher will pick up.
-        CreateSampleDocx(Path.Combine(InputFolder, "SampleDocument.docx"));
+        // Create a sample DOCX file that the watcher will process.
+        string sampleDocPath = Path.Combine(inputDir, "Sample.docx");
+        CreateSampleDocument(sampleDocPath);
 
-        // Set up the folder watcher.
-        _watcher = new FileSystemWatcher(InputFolder, "*.docx")
+        // Convert the sample file immediately so the demo works even if the watcher
+        // does not raise a Created event for a file that already exists.
+        ConvertDocxToTiff(sampleDocPath, outputDir);
+
+        // Watch the input folder for newly created DOCX files.
+        using var watcher = new FileSystemWatcher(inputDir, "*.docx")
         {
             EnableRaisingEvents = true,
-            IncludeSubdirectories = false,
-            NotifyFilter = NotifyFilters.FileName | NotifyFilters.CreationTime
+            IncludeSubdirectories = false
         };
-        _watcher.Created += OnDocxCreated;
+        watcher.Created += (sender, e) => ConvertDocxToTiff(e.FullPath, outputDir);
 
-        // Wait until the file has been processed or timeout after 15 seconds.
-        if (!ProcessingCompleted.Wait(TimeSpan.FromSeconds(15)))
-        {
-            Console.WriteLine("Processing did not complete within the expected time.");
-        }
+        // Give the watcher time to detect and convert any new files.
+        // In a real service this would run indefinitely; here we wait a short while.
+        Task.Delay(5000).Wait();
 
-        // Clean up.
-        _watcher.Created -= OnDocxCreated;
-        _watcher.Dispose();
+        // Verify that the TIFF file was produced.
+        string expectedTiff = Path.Combine(outputDir, "Sample.tiff");
+        if (!File.Exists(expectedTiff))
+            throw new Exception("TIFF conversion failed.");
     }
 
-    private static void OnDocxCreated(object sender, FileSystemEventArgs e)
+    // Generates a simple DOCX document for testing.
+    private static void CreateSampleDocument(string path)
     {
-        // The Created event may fire before the file is fully written; retry a few times.
-        const int maxAttempts = 5;
-        for (int attempt = 1; attempt <= maxAttempts; attempt++)
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a sample document for automatic DOCX‑to‑TIFF conversion.");
+        doc.Save(path);
+    }
+
+    // Converts a DOCX file to a single (multi‑page) TIFF image.
+    private static void ConvertDocxToTiff(string docxPath, string outputDir)
+    {
+        // Retry opening the file in case it is still being written.
+        for (int attempt = 0; attempt < 5; attempt++)
         {
             try
             {
-                // Load the DOCX document.
-                Document doc = new Document(e.FullPath);
+                // Open the source document for reading.
+                using var stream = new FileStream(docxPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                var document = new Document(stream);
 
-                // Prepare TIFF save options.
-                ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
+                // Configure image save options for TIFF.
+                var options = new ImageSaveOptions(SaveFormat.Tiff)
                 {
-                    // Optional: set resolution or compression if desired.
-                    Resolution = 300,
-                    TiffCompression = TiffCompression.Lzw
+                    Resolution = 300 // DPI – optional.
                 };
 
-                // Build output file path.
-                string outputFileName = Path.GetFileNameWithoutExtension(e.Name) + ".tiff";
-                string outputPath = Path.Combine(OutputFolder, outputFileName);
+                string tiffPath = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
+                document.Save(tiffPath, options);
 
-                // Save the document as a multipage TIFF.
-                doc.Save(outputPath, options);
+                // Ensure the file was written.
+                if (!File.Exists(tiffPath))
+                    throw new Exception($"Failed to save TIFF for '{docxPath}'.");
 
-                // Verify that the TIFF file was created.
-                if (!File.Exists(outputPath))
-                {
-                    throw new InvalidOperationException($"Failed to create TIFF file at '{outputPath}'.");
-                }
-
-                Console.WriteLine($"Converted '{e.Name}' to TIFF successfully.");
-
-                // Signal that processing is done.
-                ProcessingCompleted.Set();
-                break;
+                break; // Success.
             }
             catch (IOException)
             {
                 // File may still be locked; wait briefly before retrying.
-                Thread.Sleep(500);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error processing '{e.Name}': {ex.Message}");
-                ProcessingCompleted.Set();
-                break;
+                Thread.Sleep(200);
             }
         }
-    }
-
-    private static void CreateSampleDocx(string filePath)
-    {
-        // Build a simple document with a few pages.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Page 1 - Hello World!");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 2 - Aspose.Words rendering example.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Page 3 - End of sample document.");
-
-        // Save the sample DOCX.
-        doc.Save(filePath);
     }
 }

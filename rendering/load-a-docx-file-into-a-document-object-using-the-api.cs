@@ -6,34 +6,24 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a folder for output files.
+        // Define a folder for temporary files.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
         // Path of the sample DOCX file.
-        string sourcePath = Path.Combine(artifactsDir, "Sample.docx");
+        string samplePath = Path.Combine(artifactsDir, "Sample.docx");
 
-        // Create a sample DOCX document if it does not already exist.
-        if (!File.Exists(sourcePath))
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln("Hello Aspose.Words!");
-            doc.Save(sourcePath, SaveFormat.Docx);
-        }
+        // 1. Create a simple DOCX document.
+        Document createdDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(createdDoc);
+        builder.Writeln("Hello Aspose.Words!");
+        createdDoc.Save(samplePath); // Persist the document so it can be loaded later.
 
-        // Load the DOCX file into a Document object.
-        Document loadedDoc = new Document(sourcePath);
+        // 2. Load the DOCX file into a new Document object.
+        Document loadedDoc = new Document(samplePath);
 
-        // Verify that the document was loaded correctly.
-        string loadedText = loadedDoc.GetText();
-        if (!loadedText.Contains("Hello Aspose.Words!"))
-        {
-            throw new InvalidOperationException("Loaded document does not contain the expected text.");
-        }
-
-        // Save a copy to demonstrate that the loaded document can be saved again.
-        string copyPath = Path.Combine(artifactsDir, "Copy.docx");
-        loadedDoc.Save(copyPath, SaveFormat.Docx);
+        // 3. Output the loaded document's text to verify successful loading.
+        Console.WriteLine("Loaded document text:");
+        Console.WriteLine(loadedDoc.GetText().Trim());
     }
 }

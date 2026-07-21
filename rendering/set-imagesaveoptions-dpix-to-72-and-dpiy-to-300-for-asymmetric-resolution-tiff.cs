@@ -7,31 +7,22 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Create a simple document.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document for asymmetric TIFF resolution.");
+        builder.Writeln("Sample text for asymmetric DPI TIFF.");
 
-        // Configure image save options for TIFF with different horizontal and vertical DPI.
-        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            HorizontalResolution = 72f, // DpiX
-            VerticalResolution = 300f   // DpiY
-        };
+        // Set up ImageSaveOptions for TIFF with asymmetric DPI.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
+        options.HorizontalResolution = 72f; // DpiX
+        options.VerticalResolution = 300f; // DpiY
 
-        // Save the document as a TIFF image.
-        string outputPath = Path.Combine(artifactsDir, "AsymmetricResolution.tiff");
+        // Save the document as a TIFF file.
+        string outputPath = "AsymmetricDpi.tiff";
         doc.Save(outputPath, options);
 
         // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("Failed to create the TIFF file.");
-
-        // Optionally, output the file size for confirmation.
-        Console.WriteLine($"TIFF saved successfully. Size: {new FileInfo(outputPath).Length} bytes");
+            throw new Exception("Failed to create the TIFF file.");
     }
 }

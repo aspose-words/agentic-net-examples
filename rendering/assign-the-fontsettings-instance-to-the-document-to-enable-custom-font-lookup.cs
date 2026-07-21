@@ -2,48 +2,45 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fonts;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Define output paths.
+        // Define folders for output and custom fonts.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        string fontsDir = Path.Combine(Directory.GetCurrentDirectory(), "MyFonts");
+
+        // Ensure the directories exist.
         Directory.CreateDirectory(outputDir);
-        string pdfPath = Path.Combine(outputDir, "CustomFontLookup.pdf");
+        Directory.CreateDirectory(fontsDir);
 
         // Create a new blank document.
         Document doc = new Document();
+
+        // Add some text using a font that may not be installed on the system.
         DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Write some text using a font that is unlikely to be installed.
-        // This will force Aspose.Words to use the custom FontSettings for lookup.
         builder.Font.Name = "NonExistentFont";
-        builder.Writeln("This text should be rendered with a fallback font using custom FontSettings.");
+        builder.Writeln("This text uses a custom font lookup via FontSettings.");
 
-        // Create a FontSettings instance.
+        // Create a FontSettings instance and point it to the custom fonts folder.
         FontSettings fontSettings = new FontSettings();
-
-        // (Optional) Specify a folder that contains custom fonts.
-        // Here we create a subfolder "CustomFonts". It may be empty; Aspose.Words will still use it as a source.
-        string customFontsFolder = Path.Combine(Directory.GetCurrentDirectory(), "CustomFonts");
-        Directory.CreateDirectory(customFontsFolder);
-        // Example of adding a folder as a font source (recursive = true).
-        fontSettings.SetFontsFolder(customFontsFolder, recursive: true);
+        // The folder may be empty; Aspose.Words will also fall back to system fonts.
+        fontSettings.SetFontsFolder(fontsDir, recursive: false);
 
         // Assign the FontSettings instance to the document.
         doc.FontSettings = fontSettings;
 
         // Save the document to PDF to trigger layout and font resolution.
+        string pdfPath = Path.Combine(outputDir, "CustomFontLookup.pdf");
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that the PDF file was created.
+        // Verify that the file was created.
         if (!File.Exists(pdfPath))
-        {
-            throw new InvalidOperationException($"Failed to create the PDF file at '{pdfPath}'.");
-        }
+            throw new InvalidOperationException("Failed to create the PDF output file.");
 
-        // Clean up (optional): delete the temporary custom fonts folder.
-        // Directory.Delete(customFontsFolder, recursive: true);
+        // Optionally, indicate success (no interactive prompts required).
+        Console.WriteLine("Document saved successfully to: " + pdfPath);
     }
 }

@@ -1,70 +1,46 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fonts;
-using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directories.
+        // Folder where the rendered PDF will be saved.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Simulated USB drive folder that contains TrueType fonts.
+        string usbFontsDir = Path.Combine(Directory.GetCurrentDirectory(), "UsbFonts");
 
-        // Simulate a USB drive by creating a folder that will contain font files.
-        string usbFontsDir = Path.Combine(artifactsDir, "USBFonts");
+        // Ensure the directories exist.
+        Directory.CreateDirectory(artifactsDir);
         Directory.CreateDirectory(usbFontsDir);
 
-        // Try to copy a TrueType font from the system font folders into the USB folder.
-        // This ensures that the folder actually contains a font that Aspose.Words can use.
-        bool fontCopied = false;
-        foreach (string systemFolder in SystemFontSource.GetSystemFontFolders())
-        {
-            if (!Directory.Exists(systemFolder))
-                continue;
-
-            string ttfFile = Directory.EnumerateFiles(systemFolder, "*.ttf", SearchOption.TopDirectoryOnly).FirstOrDefault();
-            if (ttfFile != null)
-            {
-                string destFile = Path.Combine(usbFontsDir, Path.GetFileName(ttfFile));
-                File.Copy(ttfFile, destFile, overwrite: true);
-                fontCopied = true;
-                break;
-            }
-        }
-
-        // Create a simple document that contains special Unicode symbols.
+        // Create a sample document that contains special Unicode symbols.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Arial"; // Use a common font name; actual glyphs will be resolved via the USB font folder.
+        builder.Font.Name = "Arial Unicode MS"; // Font with broad Unicode coverage (system font).
         builder.Writeln("Document with special symbols:");
-        builder.Writeln("Greek Omega: Ω");
-        builder.Writeln("Chinese characters: 漢字");
-        builder.Writeln("Emoji: 😊");
+        builder.Writeln("Greek: α β γ δ ε");
+        builder.Writeln("Cyrillic: А Б В Г Д");
+        builder.Writeln("Emoji: 😀 😃 😄");
 
-        // Configure FontSettings to load fonts from the simulated USB drive.
+        // Configure FontSettings to load fonts from the USB folder.
         FontSettings fontSettings = new FontSettings();
-        // The second parameter 'recursive' is set to true to include subfolders if any.
-        fontSettings.SetFontsFolder(usbFontsDir, recursive: true);
+        // The second argument (true) enables recursive scanning of subfolders.
+        fontSettings.SetFontsFolder(usbFontsDir, true);
+        // Apply the FontSettings to the document.
         doc.FontSettings = fontSettings;
 
-        // Save the document to PDF.
-        string pdfPath = Path.Combine(artifactsDir, "DocumentWithSpecialSymbols.pdf");
+        // Render the document to PDF.
+        string pdfPath = Path.Combine(artifactsDir, "SpecialSymbols.pdf");
         doc.Save(pdfPath, SaveFormat.Pdf);
 
         // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the PDF output.");
+            throw new Exception("PDF file was not created.");
 
-        // Optional: simple check that the PDF contains a font embedding marker.
-        // This is a compile‑safe way to verify that fonts were considered during rendering.
-        string pdfContent = File.ReadAllText(pdfPath);
-        bool containsFontMarker = pdfContent.Contains("/FontFile") || pdfContent.Contains("/FontFile2") || pdfContent.Contains("/FontFile3");
-        if (!containsFontMarker)
-            Console.WriteLine("Warning: No embedded font markers were found in the PDF.");
-
+        // Informative output (no user interaction required).
         Console.WriteLine($"PDF successfully saved to: {pdfPath}");
     }
 }

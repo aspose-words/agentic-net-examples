@@ -7,25 +7,31 @@ public class Program
 {
     public static void Main()
     {
-        // Define input and output folders relative to the current directory.
-        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Input");
-        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        // Define input and output directories.
+        string inputDir = "InputDocs";
+        string outputDir = "OutputTiffs";
 
-        // Ensure the folders exist.
-        Directory.CreateDirectory(inputFolder);
-        Directory.CreateDirectory(outputFolder);
+        // Ensure the directories exist.
+        Directory.CreateDirectory(inputDir);
+        Directory.CreateDirectory(outputDir);
 
-        // Create sample DOCX files if the input folder is empty.
-        if (Directory.GetFiles(inputFolder, "*.docx").Length == 0)
+        // If there are no DOCX files, create a few sample documents.
+        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
         {
-            CreateSampleDocument(Path.Combine(inputFolder, "Sample1.docx"), "Hello Aspose.Words!");
-            CreateSampleDocument(Path.Combine(inputFolder, "Sample2.docx"), "Batch conversion to TIFF.");
+            for (int i = 1; i <= 3; i++)
+            {
+                Document sampleDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+                builder.Writeln($"Sample document {i} - Page 1.");
+                builder.InsertBreak(BreakType.PageBreak);
+                builder.Writeln($"Sample document {i} - Page 2.");
+                string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
+                sampleDoc.Save(samplePath);
+            }
         }
 
-        // Get all DOCX files in the input folder.
-        string[] docxFiles = Directory.GetFiles(inputFolder, "*.docx");
-
-        foreach (string docxPath in docxFiles)
+        // Process each DOCX file in the input folder.
+        foreach (string docxPath in Directory.GetFiles(inputDir, "*.docx"))
         {
             // Load the DOCX document.
             Document doc = new Document(docxPath);
@@ -33,28 +39,21 @@ public class Program
             // Configure TIFF save options with predefined compression.
             ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
             {
-                TiffCompression = TiffCompression.Lzw
+                TiffCompression = TiffCompression.Lzw // Use LZW compression.
             };
 
             // Determine the output TIFF file path.
-            string fileNameWithoutExt = Path.GetFileNameWithoutExtension(docxPath);
-            string tiffPath = Path.Combine(outputFolder, fileNameWithoutExt + ".tiff");
+            string tiffPath = Path.Combine(outputDir,
+                Path.GetFileNameWithoutExtension(docxPath) + ".tiff");
 
-            // Save the document as a TIFF image.
+            // Save the document as a multipage TIFF.
             doc.Save(tiffPath, tiffOptions);
 
             // Verify that the TIFF file was created.
             if (!File.Exists(tiffPath))
-                throw new InvalidOperationException($"Failed to create TIFF file: {tiffPath}");
+                throw new InvalidOperationException($"Failed to create TIFF for '{docxPath}'.");
         }
-    }
 
-    // Helper method to create a simple DOCX document with specified text.
-    private static void CreateSampleDocument(string filePath, string text)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln(text);
-        doc.Save(filePath);
+        Console.WriteLine("All DOCX files have been converted to TIFF.");
     }
 }

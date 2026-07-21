@@ -7,35 +7,32 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a simple document with some text.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("This is a low‑resolution TIFF image generated for email attachments.");
 
-        // Add some sample content spanning a few pages.
-        builder.Writeln("This is page 1.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 2.");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("This is page 3.");
+        // Configure image save options for TIFF.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff);
 
-        // Configure image save options for TIFF with low resolution (72 DPI).
-        ImageSaveOptions saveOptions = new ImageSaveOptions(SaveFormat.Tiff)
-        {
-            // Set both horizontal and vertical resolution to 72 DPI.
-            Resolution = 72f
-        };
+        // Set the resolution (DPI) to 72. This property sets both horizontal and vertical DPI.
+        options.Resolution = 72f;
 
-        // Define the output file path in the current working directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "LowResolution.tiff");
+        // Optionally, set the explicit horizontal and vertical resolution properties as well.
+        options.HorizontalResolution = 72f;
+        options.VerticalResolution = 72f;
 
-        // Save the document as a multipage TIFF using the configured options.
-        doc.Save(outputPath, saveOptions);
+        // Define the output file path.
+        string outputPath = "LowResolution.tiff";
 
-        // Verify that the file was created successfully.
+        // Save the document as a TIFF image using the configured options.
+        doc.Save(outputPath, options);
+
+        // Verify that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The TIFF file was not created.");
+            throw new InvalidOperationException("Failed to create the TIFF file.");
 
-        // Optional: output a confirmation message.
-        Console.WriteLine($"TIFF saved successfully at: {outputPath}");
+        // Inform the user where the file was saved.
+        Console.WriteLine($"TIFF saved successfully to: {Path.GetFullPath(outputPath)}");
     }
 }

@@ -7,37 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Create a folder for output files.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
 
-        // Create a simple document.
+        // Build a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Sample text for grayscale TIFF conversion.");
-        // Insert a placeholder image (a small generated bitmap is not required; the document can be saved without it).
+        builder.Writeln("Sample text for lighter grayscale TIFF conversion.");
 
-        // Configure TIFF save options:
-        // - Grayscale color mode.
-        // - CCITT3 compression (binary image compression).
-        // - Use Floyd‑Steinberg dithering with a threshold of 100 to obtain a lighter grayscale result.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure TIFF save options with a threshold of 100.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
+            // Use CCITT4 compression (suitable for 1‑bpp images).
+            TiffCompression = TiffCompression.Ccitt4,
+            // Render the page in grayscale.
             ImageColorMode = ImageColorMode.Grayscale,
-            TiffCompression = TiffCompression.Ccitt3,
+            // Apply Floyd‑Steinberg dithering with a custom threshold.
             TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
             ThresholdForFloydSteinbergDithering = 100
         };
 
-        // Save the document as a TIFF file.
-        string tiffPath = Path.Combine(outputDir, "GrayscaleThreshold.tiff");
-        doc.Save(tiffPath, tiffOptions);
+        // Save the document as a TIFF image.
+        string outPath = Path.Combine(artifactsDir, "GrayscaleThreshold.tiff");
+        doc.Save(outPath, options);
 
         // Verify that the file was created.
-        if (!File.Exists(tiffPath))
-            throw new InvalidOperationException("TIFF file was not created.");
+        if (!File.Exists(outPath))
+            throw new Exception("Failed to create the TIFF file.");
 
-        // Optionally, inform that the process completed.
-        Console.WriteLine($"TIFF saved to: {tiffPath}");
+        // Indicate successful completion.
+        Console.WriteLine($"TIFF saved to: {outPath}");
     }
 }

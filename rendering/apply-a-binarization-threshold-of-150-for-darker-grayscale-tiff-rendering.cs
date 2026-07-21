@@ -7,39 +7,41 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
+        // Prepare output folder.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "Binarized.tiff");
 
         // Create a simple document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document for TIFF rendering.");
-        builder.Writeln("The following line will be rendered in darker grayscale.");
-        builder.Font.Size = 24;
-        builder.Writeln("Dark grayscale text.");
+        builder.Writeln("This is a sample text for TIFF rendering with a binarization threshold.");
 
-        // Configure TIFF save options with binarization threshold 150.
-        ImageSaveOptions tiffOptions = new ImageSaveOptions(SaveFormat.Tiff)
+        // Configure TIFF save options.
+        ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
-            // Use CCITT Group 3 compression (suitable for B&W images).
-            TiffCompression = TiffCompression.Ccitt3,
-            // Apply Floyd‑Steinberg dithering with a custom threshold.
+            // Use CCITT4 compression (suitable for black‑and‑white images).
+            TiffCompression = TiffCompression.Ccitt4,
+
+            // Render the document as grayscale before binarization.
+            ImageColorMode = ImageColorMode.Grayscale,
+
+            // Apply Floyd‑Steinberg dithering with a custom threshold of 150.
             TiffBinarizationMethod = ImageBinarizationMethod.FloydSteinbergDithering,
             ThresholdForFloydSteinbergDithering = 150,
-            // Render as black‑and‑white (1 bpp) image.
-            ImageColorMode = ImageColorMode.BlackAndWhite
+
+            // Optional: set resolution for better quality.
+            Resolution = 300
         };
 
-        // Save the document as a TIFF image.
-        string tiffPath = Path.Combine(outputDir, "Rendered.tiff");
-        doc.Save(tiffPath, tiffOptions);
+        // Save the document as a TIFF image using the configured options.
+        doc.Save(outputPath, options);
 
         // Verify that the file was created.
-        if (!File.Exists(tiffPath))
-            throw new FileNotFoundException("TIFF file was not created.", tiffPath);
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("Failed to create the TIFF file.");
 
-        // Optionally, report success.
-        Console.WriteLine($"TIFF image saved to: {tiffPath}");
+        // Indicate success.
+        Console.WriteLine($"TIFF file saved successfully to: {outputPath}");
     }
 }

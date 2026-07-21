@@ -7,39 +7,40 @@ public class Program
 {
     public static void Main()
     {
-        // Define output folder.
+        // Prepare output folder.
         string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
         Directory.CreateDirectory(artifactsDir);
 
-        // Create a simple document.
+        // Create a simple XML file that defines custom font fallback rules.
+        string fallbackXmlPath = Path.Combine(artifactsDir, "CustomFallback.xml");
+        string fallbackXmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<FallbackSettings>
+    <Range UnicodeRange=""0000-00FF"" Font=""Arial"" />
+    <Range UnicodeRange=""0100-024F"" Font=""Times New Roman"" />
+</FallbackSettings>";
+        File.WriteAllText(fallbackXmlPath, fallbackXmlContent);
+
+        // Create a new document with text that uses a font not present in the system.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Font.Name = "Missing Font"; // Font that does not exist in the system.
+        builder.Font.Name = "MissingFont";
         builder.Writeln("This text uses a missing font and will trigger fallback.");
 
-        // Configure FontSettings with custom fallback settings.
+        // Configure FontSettings and load the custom fallback definition.
         FontSettings fontSettings = new FontSettings();
         doc.FontSettings = fontSettings;
-        FontFallbackSettings fallback = fontSettings.FallbackSettings;
+        fontSettings.FallbackSettings.Load(fallbackXmlPath);
 
-        // Build an automatic fallback scheme and save it to a custom XML file.
-        fallback.BuildAutomatic();
-        string fallbackXmlPath = Path.Combine(artifactsDir, "CustomFallback.xml");
-        fallback.Save(fallbackXmlPath);
-
-        // Load the custom fallback settings from the XML file.
-        fallback.Load(fallbackXmlPath);
-
-        // Render the document to PDF.
-        string pdfPath = Path.Combine(artifactsDir, "Output.pdf");
+        // Save the document to PDF – the fallback settings will be applied during rendering.
+        string pdfPath = Path.Combine(artifactsDir, "Result.pdf");
         doc.Save(pdfPath);
 
-        // Verify that the PDF was created.
+        // Simple validation that the PDF was created.
         if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the PDF output.");
+            throw new InvalidOperationException("The PDF output was not created.");
 
-        // Optionally, save the currently used fallback settings for inspection.
+        // Optionally, save the effective fallback settings back to another file.
         string savedFallbackPath = Path.Combine(artifactsDir, "SavedFallback.xml");
-        fallback.Save(savedFallbackPath);
+        doc.FontSettings.FallbackSettings.Save(savedFallbackPath);
     }
 }

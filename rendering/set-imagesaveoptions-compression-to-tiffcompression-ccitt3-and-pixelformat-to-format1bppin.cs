@@ -7,36 +7,33 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple document with some text.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document to be saved as a compressed TIFF image.");
+        builder.Writeln("Sample text for TIFF compression test.");
 
-        // Prepare the output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
-
-        // Define the output file path.
-        string outputPath = Path.Combine(artifactsDir, "Compressed.tiff");
-
-        // Configure image save options for smallest file size:
+        // Configure image save options:
+        // - Save as TIFF.
         // - Use CCITT3 compression (good for black‑and‑white images).
-        // - Use 1‑bit per pixel indexed format.
+        // - Use 1‑bit per pixel indexed format to minimise file size.
         ImageSaveOptions options = new ImageSaveOptions(SaveFormat.Tiff)
         {
             TiffCompression = TiffCompression.Ccitt3,
             PixelFormat = ImagePixelFormat.Format1bppIndexed
         };
 
-        // Save the document as a TIFF image using the configured options.
+        // Define output path.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.tiff");
+
+        // Save the document using the configured options.
         doc.Save(outputPath, options);
 
-        // Verify that the file was created.
+        // Verify that the file was created and is not empty.
         if (!File.Exists(outputPath))
             throw new InvalidOperationException("The TIFF file was not created.");
 
-        // Optionally, output the file size (in bytes) to the console.
         long fileSize = new FileInfo(outputPath).Length;
-        Console.WriteLine($"TIFF file saved successfully. Size: {fileSize} bytes.");
+        if (fileSize == 0)
+            throw new InvalidOperationException("The TIFF file is empty.");
     }
 }
