@@ -4,74 +4,85 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
+using Aspose.Words.Saving;
 
-public class OfficeMathPdfExport
+public class Program
 {
     public static void Main()
     {
-        // Prepare output folder
-        string outputFolder = Path.Combine(Path.GetTempPath(), "OfficeMathExample");
-        Directory.CreateDirectory(outputFolder);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        string docxPath = Path.Combine(outputFolder, "EquationDocument.docx");
-        string pdfPath = Path.Combine(outputFolder, "EquationDocument.pdf");
+        string docPath = Path.Combine(outputDir, "OfficeMath.docx");
+        string pdfPath = Path.Combine(outputDir, "OfficeMath.pdf");
 
-        // Create a new document
+        // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add introductory text
-        builder.Writeln("Below is an OfficeMath equation:");
+        // Insert a paragraph before equations.
+        builder.Writeln("Sample document with OfficeMath equations:");
 
-        // Insert a field that will be converted to OfficeMath
-        builder.InsertField(FieldType.FieldEquation, true);
-        // Retrieve the inserted field (the last field in the document)
-        FieldEQ eqField = doc.Range.Fields[doc.Range.Fields.Count - 1] as FieldEQ;
-        if (eqField == null)
-            throw new InvalidOperationException("Failed to create FieldEQ.");
+        // Insert first EQ field (fraction 1/2).
+        InsertFieldEQ(builder, @"\f(1,2)");
 
-        // Write a simple EQ argument into the field separator
-        builder.MoveTo(eqField.Separator);
-        builder.Write(@"\f(1,2)"); // Simple fraction 1/2
+        // Insert second EQ field (square root of x).
+        InsertFieldEQ(builder, @"\r(2,x)");
 
-        // Convert the field to a real OfficeMath node
-        OfficeMath officeMath = eqField.AsOfficeMath();
-        if (officeMath == null)
-            throw new InvalidOperationException("EQ field could not be converted to OfficeMath.");
+        // Convert all EQ fields to real OfficeMath objects.
+        var eqFields = doc.Range.Fields.OfType<FieldEQ>().ToList();
+        foreach (FieldEQ field in eqFields)
+        {
+            OfficeMath officeMath = field.AsOfficeMath();
+            if (officeMath != null)
+            {
+                // Insert the OfficeMath node before the field start.
+                field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+                // Remove the original field.
+                field.Remove();
+            }
+        }
 
-        // Insert the OfficeMath node before the field start and remove the original field
-        Node fieldStart = eqField.Start;
-        Paragraph parentParagraph = fieldStart.ParentNode as Paragraph;
-        if (parentParagraph == null)
-            throw new InvalidOperationException("Field start does not have a paragraph parent.");
+        // Adjust display type and justification for top‑level equations.
+        var officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        foreach (OfficeMath om in officeMathNodes)
+        {
+            if (om.MathObjectType == MathObjectType.OMathPara)
+            {
+                om.DisplayType = OfficeMathDisplayType.Display;
+                om.Justification = OfficeMathJustification.Left;
+            }
+        }
 
-        parentParagraph.InsertBefore(officeMath, fieldStart);
-        eqField.Remove();
+        // Verify that the expected number of top‑level equations exists.
+        int expectedEquations = 2;
+        int actualEquations = officeMathNodes
+            .Cast<OfficeMath>()
+            .Count(om => om.MathObjectType == MathObjectType.OMathPara);
 
-        // Validate that the document now contains exactly one top‑level OfficeMath paragraph
-        var topLevelMath = doc.GetChildNodes(NodeType.OfficeMath, true)
-                              .Cast<OfficeMath>()
-                              .Where(om => om.MathObjectType == MathObjectType.OMathPara)
-                              .ToList();
+        if (actualEquations != expectedEquations)
+            throw new InvalidOperationException($"Expected {expectedEquations} equations, but found {actualEquations}.");
 
-        if (topLevelMath.Count != 1)
-            throw new InvalidOperationException($"Expected 1 top‑level OfficeMath node, found {topLevelMath.Count}.");
-
-        // Save the document as DOCX
-        doc.Save(docxPath, SaveFormat.Docx);
-
-        // Export the document to PDF
+        // Save the document as PDF.
         doc.Save(pdfPath, SaveFormat.Pdf);
 
-        // Verify that both output files exist
-        if (!File.Exists(docxPath))
-            throw new FileNotFoundException("DOCX output file was not created.", docxPath);
+        // Verify that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new FileNotFoundException("PDF output file was not created.", pdfPath);
+            throw new FileNotFoundException("PDF file was not created.", pdfPath);
+    }
 
-        // Example completed successfully
-        Console.WriteLine("Document and PDF have been created successfully:");
-        Console.WriteLine($"DOCX: {docxPath}");
-        Console.WriteLine($"PDF: {pdfPath}");
+    // Helper method to insert an EQ field with the specified argument string.
+    private static FieldEQ InsertFieldEQ(DocumentBuilder builder, string args)
+    {
+        // Insert an empty EQ field.
+        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        // Move to the field separator and write the EQ arguments.
+        builder.MoveTo(field.Separator);
+        builder.Write(args);
+        // Return to the field start's parent node and start a new paragraph.
+        builder.MoveTo(field.Start.ParentNode);
+        builder.InsertParagraph();
+        return field;
     }
 }

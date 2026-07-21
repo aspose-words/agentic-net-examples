@@ -1,11 +1,12 @@
 using System;
 using System.IO;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
 using Aspose.Words.Rendering;
 
-public class OfficeMathJustificationValidator
+public class Program
 {
     public static void Main()
     {
@@ -13,77 +14,92 @@ public class OfficeMathJustificationValidator
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert several sample equations using the deterministic EQ‑field bootstrap workflow.
-        InsertEquation(builder, @"\f(1,2)");                     // Simple fraction 1/2
-        InsertEquation(builder, @"\r(3,x)");                     // Cube root of x
-        InsertEquation(builder, @"\i \su(n=1,5,n)");            // Integral with summation
-        InsertEquation(builder, @"\a \co2 \vs3 \hs3(4x,-4y,-4x,+y)"); // Array example
-
-        // Apply bulk formatting to top‑level OfficeMath paragraphs.
-        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath officeMath in mathNodes)
+        // Insert several simple equations using the deterministic EQ‑field bootstrap workflow.
+        string[] eqArguments = new[]
         {
-            if (officeMath.MathObjectType == MathObjectType.OMathPara)
+            @"\f(1,2)",          // fraction 1/2
+            @"\r(3,x)",          // cube root of x
+            @"\i \su(n=1,5,n)", // integral with summation
+            @"\a \co2 \vs1 \hs1(1,2,3,4)", // simple array
+            @"\f(3,4)"           // fraction 3/4
+        };
+
+        foreach (string args in eqArguments)
+        {
+            // Insert an EQ field.
+            FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+            // Write the arguments into the field separator.
+            builder.MoveTo(field.Separator);
+            builder.Write(args);
+            // Return the builder to the field start position.
+            builder.MoveTo(field.Start.ParentNode);
+
+            // Convert the field to a real OfficeMath object.
+            OfficeMath officeMath = field.AsOfficeMath();
+            if (officeMath != null)
             {
-                officeMath.DisplayType = OfficeMathDisplayType.Display;
-                // Justification must be set after DisplayType.
-                officeMath.Justification = OfficeMathJustification.CenterGroup;
+                // Insert the OfficeMath node before the field start.
+                field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+                // Remove the original field.
+                field.Remove();
+            }
+
+            // Add a paragraph break after each equation.
+            builder.Writeln();
+        }
+
+        // Ensure the document has at least one section (it does by default) and set explicit margins.
+        Section section = doc.FirstSection;
+        section.PageSetup.LeftMargin = ConvertUtil.InchToPoint(1.0);
+        section.PageSetup.RightMargin = ConvertUtil.InchToPoint(1.0);
+        section.PageSetup.TopMargin = ConvertUtil.InchToPoint(1.0);
+        section.PageSetup.BottomMargin = ConvertUtil.InchToPoint(1.0);
+
+        // Bulk justification change: set each top‑level OfficeMath node to Display mode and CenterGroup justification.
+        var officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true)
+                                 .Cast<OfficeMath>()
+                                 .Where(om => om.MathObjectType == MathObjectType.OMathPara);
+
+        foreach (OfficeMath om in officeMathNodes)
+        {
+            // Display type must be set before justification.
+            om.DisplayType = OfficeMathDisplayType.Display;
+            om.Justification = OfficeMathJustification.CenterGroup;
+        }
+
+        // Validation: ensure no equation exceeds the printable width (page width minus margins).
+        double pageWidth = section.PageSetup.PageWidth;
+        double leftMargin = section.PageSetup.LeftMargin;
+        double rightMargin = section.PageSetup.RightMargin;
+        double maxContentWidth = pageWidth - leftMargin - rightMargin;
+        const double tolerance = 0.5; // points tolerance for rounding differences.
+
+        foreach (OfficeMath om in officeMathNodes)
+        {
+            OfficeMathRenderer renderer = om.GetMathRenderer();
+            double equationWidth = renderer.SizeInPoints.Width;
+
+            if (equationWidth > maxContentWidth + tolerance)
+            {
+                throw new InvalidOperationException(
+                    $"Equation exceeds page margins. Width: {equationWidth} pts, Max allowed: {maxContentWidth} pts.");
             }
         }
 
-        // Validate that no top‑level equation exceeds the printable width of the page.
-        double pageWidth = doc.FirstSection.PageSetup.PageWidth;
-        double leftMargin = doc.FirstSection.PageSetup.LeftMargin;
-        double rightMargin = doc.FirstSection.PageSetup.RightMargin;
-        double usableWidth = pageWidth - leftMargin - rightMargin;
-
-        foreach (OfficeMath officeMath in mathNodes)
-        {
-            if (officeMath.MathObjectType != MathObjectType.OMathPara)
-                continue; // Skip nested math objects.
-
-            // Measure the rendered width of the equation.
-            OfficeMathRenderer renderer = new OfficeMathRenderer(officeMath);
-            double equationWidth = renderer.SizeInPoints.Width;
-
-            if (equationWidth > usableWidth)
-                throw new InvalidOperationException(
-                    $"Equation exceeds page margins. Width: {equationWidth} pts, Usable: {usableWidth} pts.");
-        }
-
         // Save the resulting document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "OfficeMathJustificationResult.docx");
+        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
+        Directory.CreateDirectory(outputDir);
+        string outputPath = Path.Combine(outputDir, "JustifiedEquations.docx");
         doc.Save(outputPath);
 
-        // Verify that the file was created.
-        if (!File.Exists(outputPath))
-            throw new FileNotFoundException("The output document was not saved correctly.", outputPath);
+        // Indicate successful completion.
+        Console.WriteLine("Document saved successfully. All equations fit within page margins.");
     }
 
-    // Helper method that inserts an EQ field, converts it to a real OfficeMath node, and removes the original field.
-    private static void InsertEquation(DocumentBuilder builder, string eqArguments)
+    // Helper class for unit conversions.
+    private static class ConvertUtil
     {
-        // Insert an EQ field. The field code initially contains only the "EQ" switch.
-        FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-
-        // Write the EQ arguments after the field code (at the separator).
-        builder.MoveTo(field.Separator);
-        builder.Write(eqArguments);
-
-        // Ensure the field is up‑to‑date before conversion.
-        field.Update();
-
-        // Return the builder to the paragraph that contains the field start.
-        builder.MoveTo(field.Start.ParentNode);
-        builder.InsertParagraph(); // Start a new paragraph for the next equation.
-
-        // Convert the field to a real OfficeMath object.
-        OfficeMath officeMath = field.AsOfficeMath();
-        if (officeMath == null)
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
-
-        // Insert the OfficeMath node before the field start and remove the original field.
-        field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-        field.Remove();
+        private const double PointsPerInch = 72.0;
+        public static double InchToPoint(double inches) => inches * PointsPerInch;
     }
 }

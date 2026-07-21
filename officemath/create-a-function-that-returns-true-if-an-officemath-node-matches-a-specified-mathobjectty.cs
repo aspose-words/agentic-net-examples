@@ -6,7 +6,7 @@ using Aspose.Words.Math;
 public class Program
 {
     // Returns true if the given OfficeMath node has the specified MathObjectType.
-    public static bool IsMatchingMathObjectType(OfficeMath officeMath, MathObjectType targetType)
+    public static bool IsMathObjectType(OfficeMath officeMath, MathObjectType targetType)
     {
         if (officeMath == null)
             return false;
@@ -14,55 +14,53 @@ public class Program
         return officeMath.MathObjectType == targetType;
     }
 
+    // Helper that creates a real OfficeMath node using the deterministic EQ‑field bootstrap workflow.
+    private static OfficeMath InsertFractionEquation(DocumentBuilder builder, string fractionArgs)
+    {
+        // Insert an empty EQ field.
+        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+
+        // Write the EQ switch arguments (e.g. "\f(1,2)").
+        builder.MoveTo(eqField.Separator);
+        builder.Write(fractionArgs);
+
+        // Update the field so that its internal state is consistent.
+        eqField.Update();
+
+        // Return the builder to the paragraph that contains the field.
+        builder.MoveTo(eqField.Start.ParentNode);
+        builder.InsertParagraph(); // Optional separation.
+
+        // Convert the field to an OfficeMath object.
+        OfficeMath officeMath = eqField.AsOfficeMath();
+
+        if (officeMath == null)
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+
+        // Replace the field with the real OfficeMath node.
+        eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
+        eqField.Remove();
+
+        return officeMath;
+    }
+
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a new empty document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert an EQ field that will be converted to a real OfficeMath object.
-        // The equation "\f(1,2)" creates a simple fraction 1/2.
-        FieldEQ eqField = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        // Insert a simple fraction equation: \f(1,2)
+        OfficeMath firstMath = InsertFractionEquation(builder, @"\f(1,2)");
 
-        // Write the EQ switch and its arguments at the field separator.
-        builder.MoveTo(eqField.Separator);
-        builder.Write(@"\f(1,2)");
+        // Verify the type of the created OfficeMath node.
+        bool isPara = IsMathObjectType(firstMath, MathObjectType.OMathPara);
+        Console.WriteLine($"OfficeMath node is OMathPara: {isPara}");
 
-        // Return the builder to the paragraph that contains the field and add a new paragraph.
-        builder.MoveTo(eqField.Start.ParentNode);
-        builder.InsertParagraph();
+        bool isFraction = IsMathObjectType(firstMath, MathObjectType.Fraction);
+        Console.WriteLine($"OfficeMath node is Fraction: {isFraction}");
 
-        // Update the field so that its internal code is recognized.
-        eqField.Update();
-
-        // Convert the EQ field to OfficeMath.
-        OfficeMath officeMath = eqField.AsOfficeMath();
-
-        // Ensure conversion succeeded before proceeding.
-        if (officeMath != null)
-        {
-            // Insert the OfficeMath node before the original field and remove the field.
-            eqField.Start.ParentNode.InsertBefore(officeMath, eqField.Start);
-            eqField.Remove();
-        }
-        else
-        {
-            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
-        }
-
-        // Save the document (optional, demonstrates that the output exists).
-        const string outputPath = "OfficeMathSample.docx";
-        doc.Save(outputPath);
-
-        // Retrieve the first OfficeMath node from the document.
-        OfficeMath firstOfficeMath = (OfficeMath)doc.GetChild(NodeType.OfficeMath, 0, true);
-
-        // Check if the node is a top‑level equation (MathObjectType.OMathPara).
-        bool isTopLevel = IsMatchingMathObjectType(firstOfficeMath, MathObjectType.OMathPara);
-        Console.WriteLine($"OfficeMath node is top‑level equation: {isTopLevel}");
-
-        // Example of checking for a different type (e.g., Fraction).
-        bool isFraction = IsMatchingMathObjectType(firstOfficeMath, MathObjectType.Fraction);
-        Console.WriteLine($"OfficeMath node is a fraction: {isFraction}");
+        // Save the document to demonstrate persistence.
+        doc.Save("OfficeMathExample.docx");
     }
 }

@@ -8,60 +8,68 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new empty document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a paragraph with some introductory text.
-        builder.Writeln("Below are several equations that will be displayed inline.");
+        // Insert a paragraph with introductory text.
+        builder.Writeln("Sample document with inline equations:");
 
-        // Helper to insert an EQ field, convert it to OfficeMath, and clean up the field.
-        void InsertEquation(string eqArguments)
+        // ---------- Bootstrap first equation ----------
+        // Insert an EQ field.
+        FieldEQ field1 = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        // Move to the field separator and write a simple fraction equation.
+        builder.MoveTo(field1.Separator);
+        builder.Write(@"\f(1,2)"); // 1/2
+        // Return the builder to the paragraph after the field.
+        builder.MoveTo(field1.Start.ParentNode);
+        builder.InsertParagraph();
+
+        // Convert the EQ field to a real OfficeMath object.
+        OfficeMath officeMath1 = field1.AsOfficeMath();
+        if (officeMath1 != null)
         {
-            // Insert an EQ field.
-            Field field = builder.InsertField(FieldType.FieldEquation, true);
-            FieldEQ fieldEq = field as FieldEQ;
-            if (fieldEq == null)
-                throw new InvalidOperationException("Failed to create FieldEQ.");
-
-            // Write the EQ arguments (e.g., "\f(1,2)").
-            builder.MoveTo(fieldEq.Separator);
-            builder.Write(eqArguments);
-
-            // Return the builder to the paragraph after the field.
-            builder.MoveTo(fieldEq.Start.ParentNode);
-            builder.InsertParagraph();
-
-            // Convert the field to a real OfficeMath object.
-            OfficeMath officeMath = fieldEq.AsOfficeMath();
-            if (officeMath != null)
-            {
-                // Insert the OfficeMath node before the field start.
-                fieldEq.Start.ParentNode.InsertBefore(officeMath, fieldEq.Start);
-                // Remove the original field.
-                fieldEq.Remove();
-            }
+            // Insert the OfficeMath node before the field start.
+            field1.Start.ParentNode.InsertBefore(officeMath1, field1.Start);
+            // Remove the original field.
+            field1.Remove();
         }
 
-        // Insert a few sample equations using safe EQ switches.
-        InsertEquation(@"\f(1,2)");          // Fraction 1/2
-        InsertEquation(@"\r(3,x)");          // Cube root of x
-        InsertEquation(@"\i \su(n=1,5,n)"); // Integral with summation
+        // ---------- Bootstrap second equation ----------
+        FieldEQ field2 = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
+        builder.MoveTo(field2.Separator);
+        builder.Write(@"\r(3,x)"); // Cube root of x
+        builder.MoveTo(field2.Start.ParentNode);
+        builder.InsertParagraph();
 
-        // Iterate over all OfficeMath nodes and set their display type to Inline
-        // (only for top‑level equations, i.e., MathObjectType.OMathPara).
-        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
-        foreach (OfficeMath om in officeMathNodes)
+        OfficeMath officeMath2 = field2.AsOfficeMath();
+        if (officeMath2 != null)
         {
+            field2.Start.ParentNode.InsertBefore(officeMath2, field2.Start);
+            field2.Remove();
+        }
+
+        // ---------- Set display mode to Inline for all top‑level equations ----------
+        NodeCollection mathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        foreach (OfficeMath om in mathNodes)
+        {
+            // Only modify top‑level OfficeMath (MathObjectType.OMathPara).
             if (om.MathObjectType == MathObjectType.OMathPara)
             {
                 om.DisplayType = OfficeMathDisplayType.Inline;
-                // Justification cannot be set when DisplayType is Inline, so we leave it unchanged.
+                // Justification must be Inline when DisplayType is Inline.
+                om.Justification = OfficeMathJustification.Inline;
             }
         }
 
-        // Save the document to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "InlineEquations.docx");
+        // Save the document.
+        string outputPath = "InlineEquations.docx";
         doc.Save(outputPath);
+
+        // Simple validation to ensure the file was created.
+        if (!File.Exists(outputPath))
+            throw new Exception("Failed to create the output document.");
+
+        // The program finishes automatically.
     }
 }

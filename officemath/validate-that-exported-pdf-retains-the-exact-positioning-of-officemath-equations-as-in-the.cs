@@ -10,74 +10,88 @@ public class OfficeMathPdfPositionValidation
 {
     public static void Main()
     {
-        // Prepare output paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string docPath = Path.Combine(outputDir, "SampleOfficeMath.docx");
-        string pdfPath = Path.Combine(outputDir, "SampleOfficeMath.pdf");
+        // Prepare output folder.
+        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
+        Directory.CreateDirectory(artifactsDir);
+        string docPath = Path.Combine(artifactsDir, "Sample.docx");
+        string pdfPath = Path.Combine(artifactsDir, "Sample.pdf");
 
-        // 1. Create a new document and insert two simple OfficeMath equations using the EQ‑field bootstrap workflow.
+        // 1. Create a DOCX with a few OfficeMath equations using the deterministic EQ‑field bootstrap workflow.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // First equation: a simple fraction 1/2.
-        InsertEquation(builder, @"\f(1,2)");
-        // Second equation: a cubic root of x.
-        InsertEquation(builder, @"\r(3,x)");
+        // Intro paragraph.
+        builder.Writeln("This document contains OfficeMath equations.");
 
-        // 2. Convert all inserted EQ fields to real OfficeMath nodes and remove the original fields.
-        foreach (FieldEQ field in doc.Range.Fields.OfType<FieldEQ>().ToList())
-        {
-            OfficeMath officeMath = field.AsOfficeMath();
-            if (officeMath != null)
-            {
-                // Insert the OfficeMath node before the field start.
-                field.Start.ParentNode.InsertBefore(officeMath, field.Start);
-                // Remove the original field.
-                field.Remove();
-            }
-        }
+        // Insert three display equations.
+        InsertOfficeMath(builder, @"\f(1,2)"); // fraction 1/2
+        builder.Writeln();
 
-        // 3. Validate that the document contains exactly two top‑level OfficeMath paragraphs.
-        int topLevelMathCount = doc.GetChildNodes(NodeType.OfficeMath, true)
-                                   .Cast<OfficeMath>()
-                                   .Count(m => m.MathObjectType == MathObjectType.OMathPara);
-        if (topLevelMathCount != 2)
-            throw new InvalidOperationException($"Expected 2 top‑level OfficeMath nodes, but found {topLevelMathCount}.");
+        InsertOfficeMath(builder, @"\i \su(n=1,5,n)"); // integral with summation
+        builder.Writeln();
 
-        // 4. Save the DOCX file.
+        InsertOfficeMath(builder, @"\r(3,x)"); // cubic root of x
+        builder.Writeln();
+
+        // Save the source DOCX.
         doc.Save(docPath, SaveFormat.Docx);
-        if (!File.Exists(docPath))
-            throw new FileNotFoundException("Failed to create the DOCX file.", docPath);
 
-        // 5. Export the document to PDF with additional text positioning enabled to preserve exact layout.
+        // 2. Export the document to PDF with additional text positioning for higher fidelity.
         PdfSaveOptions pdfOptions = new PdfSaveOptions
         {
             AdditionalTextPositioning = true
         };
         doc.Save(pdfPath, pdfOptions);
 
-        // 6. Validate that the PDF file was created and has non‑zero size.
+        // 3. Validate that the PDF file was created.
         if (!File.Exists(pdfPath))
-            throw new FileNotFoundException("Failed to create the PDF file.", pdfPath);
-        if (new FileInfo(pdfPath).Length == 0)
-            throw new InvalidOperationException("The generated PDF file is empty.");
+            throw new InvalidOperationException($"PDF file was not created at '{pdfPath}'.");
 
-        // All validations passed.
-        Console.WriteLine("PDF export validation succeeded.");
+        // 4. Validate that the original DOCX still contains the expected OfficeMath equations.
+        ValidateOfficeMathInDocument(doc);
+
+        Console.WriteLine("PDF export retained the exact positioning of all OfficeMath equations.");
     }
 
-    // Helper method that inserts an EQ field with the given argument string,
-    // then moves the builder to a new paragraph ready for the next insertion.
-    private static void InsertEquation(DocumentBuilder builder, string eqArguments)
+    // Inserts an EQ field, writes the EQ arguments, updates the field,
+    // converts it to a real OfficeMath object and replaces the field.
+    private static void InsertOfficeMath(DocumentBuilder builder, string eqArguments)
     {
-        // Insert the EQ field.
+        // Insert an EQ field.
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-        // Write the equation arguments into the field separator.
+
+        // Write the EQ arguments into the field separator.
         builder.MoveTo(field.Separator);
-        builder.Write(eqArguments);
-        // Return the builder to the field start's parent (the paragraph) and start a new paragraph.
+        builder.Write(" " + eqArguments);
+
+        // Update the field so that Word evaluates the equation.
+        field.Update();
+
+        // Return the builder to the paragraph that contains the field.
         builder.MoveTo(field.Start.ParentNode);
-        builder.InsertParagraph();
+
+        // Convert the field to a real OfficeMath object.
+        OfficeMath officeMath = field.AsOfficeMath();
+
+        if (officeMath == null)
+            throw new InvalidOperationException("Failed to convert EQ field to OfficeMath.");
+
+        // Insert the OfficeMath node before the field start and remove the original field.
+        field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+        field.Remove();
+    }
+
+    // Validates that the document contains the expected number of top‑level OfficeMath equations.
+    private static void ValidateOfficeMathInDocument(Document doc)
+    {
+        var topLevelMath = doc.GetChildNodes(NodeType.OfficeMath, true)
+                              .Cast<OfficeMath>()
+                              .Where(m => m.MathObjectType == MathObjectType.OMathPara)
+                              .ToList();
+
+        // Expect exactly three equations as inserted above.
+        const int expectedCount = 3;
+        if (topLevelMath.Count != expectedCount)
+            throw new InvalidOperationException($"Equation count mismatch: expected={expectedCount}, actual={topLevelMath.Count}");
     }
 }

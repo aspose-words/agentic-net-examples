@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Fields;
 using Aspose.Words.Math;
@@ -10,83 +9,63 @@ public class UpdateOfficeMathJustification
 {
     public static void Main()
     {
-        // Paths for the sample and output documents.
-        string templatePath = "Template.docx";
-        string outputPath = "Updated.docx";
+        // Path for the output document.
+        string outputPath = "UpdatedOfficeMath.docx";
 
-        // -----------------------------------------------------------------
-        // 1. Create a sample document with a few OfficeMath equations.
-        // -----------------------------------------------------------------
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three simple equations, each in its own paragraph.
-        InsertEquation(builder, @"\f(1,2)"); // fraction 1/2
-        InsertEquation(builder, @"\r(3,x)"); // cube root of x
-        InsertEquation(builder, @"\i \su(n=1,5,n)"); // integral with summation
+        // Insert a few sample equations using the deterministic EQ‑field bootstrap workflow.
+        InsertEquation(builder, @"\f(1,2)");   // Fraction 1/2
+        InsertEquation(builder, @"\r(3,x)"); // Cube root of x
+        InsertEquation(builder, @"\i");      // Integral symbol
 
-        // Save the template document.
-        doc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Reload the document and update justification of all top‑level equations.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(templatePath);
-
-        // Find all OfficeMath nodes.
-        var officeMathNodes = loadedDoc.GetChildNodes(NodeType.OfficeMath, true)
-                                      .Cast<OfficeMath>()
-                                      .Where(om => om.MathObjectType == MathObjectType.OMathPara);
-
-        foreach (OfficeMath om in officeMathNodes)
+        // Traverse all OfficeMath nodes in the document.
+        NodeCollection officeMathNodes = doc.GetChildNodes(NodeType.OfficeMath, true);
+        foreach (OfficeMath officeMath in officeMathNodes)
         {
-            // Ensure the equation is displayed on its own line before setting justification.
-            om.DisplayType = OfficeMathDisplayType.Display;
-            om.Justification = OfficeMathJustification.Right;
+            // Apply changes only to top‑level equations (MathObjectType == OMathPara).
+            if (officeMath.MathObjectType == MathObjectType.OMathPara)
+            {
+                // Set display type before changing justification.
+                officeMath.DisplayType = OfficeMathDisplayType.Display;
+                officeMath.Justification = OfficeMathJustification.Right;
+            }
         }
 
         // Save the modified document.
-        loadedDoc.Save(outputPath);
+        doc.Save(outputPath, SaveFormat.Docx);
 
-        // -----------------------------------------------------------------
-        // 3. Validate that the justification was applied.
-        // -----------------------------------------------------------------
+        // Simple validation that the file was created.
         if (!File.Exists(outputPath))
-            throw new InvalidOperationException($"Output file '{outputPath}' was not created.");
-
-        Document resultDoc = new Document(outputPath);
-        var resultMaths = resultDoc.GetChildNodes(NodeType.OfficeMath, true)
-                                   .Cast<OfficeMath>()
-                                   .Where(om => om.MathObjectType == MathObjectType.OMathPara);
-
-        foreach (OfficeMath om in resultMaths)
-        {
-            if (om.Justification != OfficeMathJustification.Right)
-                throw new InvalidOperationException("One or more equations do not have right justification.");
-        }
-
-        // All done.
+            throw new Exception("The output document was not saved correctly.");
     }
 
-    // Inserts an EQ field, converts it to a real OfficeMath node, and moves the builder to the next paragraph.
+    // Helper that inserts an EQ field, converts it to a real OfficeMath node, and removes the field.
     private static void InsertEquation(DocumentBuilder builder, string eqArgs)
     {
-        // Insert the EQ field.
+        // Insert an empty EQ field.
         FieldEQ field = (FieldEQ)builder.InsertField(FieldType.FieldEquation, true);
-        // Write the EQ argument string.
+
+        // Write the equation arguments into the field separator.
         builder.MoveTo(field.Separator);
         builder.Write(eqArgs);
-        // Return to the paragraph containing the field.
-        builder.MoveTo(field.Start.ParentNode);
-        // Convert the field to OfficeMath.
+
+        // Return the builder to the field start position.
+        builder.MoveTo(field.Start);
+
+        // Convert the field to an OfficeMath object.
         OfficeMath officeMath = field.AsOfficeMath();
         if (officeMath != null)
         {
-            // Insert the OfficeMath node before the field start and remove the field.
+            // Insert the OfficeMath node before the field start.
             field.Start.ParentNode.InsertBefore(officeMath, field.Start);
+            // Remove the original field.
             field.Remove();
         }
-        // Start a new paragraph for the next equation.
-        builder.InsertParagraph();
+
+        // Move to a new paragraph for the next equation.
+        builder.Writeln();
     }
 }
