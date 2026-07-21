@@ -8,57 +8,29 @@ public class Program
 {
     public static void Main()
     {
-        // Create output folder.
-        string outputDir = "Output";
-        Directory.CreateDirectory(outputDir);
+        // Define paths for the temporary image and the output document.
+        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "SampleImage.png");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkedDocument.docx");
 
-        // Paths for the sample image and the resulting document.
-        string imagePath = Path.Combine(outputDir, "watermark.png");
-        string docPath = Path.Combine(outputDir, "DocumentWithImageWatermark.docx");
-
-        // Write a minimal 1x1 transparent PNG to disk.
-        byte[] pngBytes = new byte[]
-        {
-            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
-            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
-            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
-            0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
-            0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
-            0x54,0x78,0x9C,0x63,0x60,0x00,0x00,0x00,
-            0x02,0x00,0x01,0xE2,0x21,0xBC,0x33,0x00,
-            0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
-            0x42,0x60,0x82
-        };
+        // Create a minimal 1x1 PNG image from a Base64 string and write it to disk.
+        // This avoids any System.Drawing or SkiaSharp usage.
+        const string pngBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BFwAE/wJ/6VZcAAAAAElFTkSuQmCC";
+        byte[] pngBytes = Convert.FromBase64String(pngBase64);
         File.WriteAllBytes(imagePath, pngBytes);
 
-        // Create a new blank document.
+        // Create a new blank document and add a simple paragraph.
         Document doc = new Document();
-
-        // Add some text so the watermark can be seen.
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("This document contains an image watermark.");
 
-        // Optimize the document for Word 2010.
+        // Optimize the document for Word 2010 compatibility.
         doc.CompatibilityOptions.OptimizeFor(MsWordVersion.Word2010);
 
-        // Configure image watermark options (optional).
-        ImageWatermarkOptions imgOptions = new ImageWatermarkOptions
-        {
-            // Example: make the watermark opaque.
-            IsWashout = false,
-            // Example: scale the image (0 = auto).
-            Scale = 0
-        };
+        // Insert the image watermark using the file path.
+        // Use the overload that accepts a path and ImageWatermarkOptions (options can be default).
+        doc.Watermark.SetImage(imagePath, new ImageWatermarkOptions());
 
-        // Insert the image watermark using the file path and options.
-        doc.Watermark.SetImage(imagePath, imgOptions);
-
-        // Save the document.
-        doc.Save(docPath);
-
-        // Validate that the file was created.
-        Console.WriteLine(File.Exists(docPath)
-            ? $"Document saved successfully: {docPath}"
-            : "Failed to save the document.");
+        // Save the resulting document.
+        doc.Save(outputPath);
     }
 }

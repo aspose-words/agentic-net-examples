@@ -8,49 +8,52 @@ public class Program
 {
     public static void Main()
     {
-        // Define input and output directories.
-        string inputDir = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
+        // Define folders for input and output documents.
+        string inputFolder = Path.Combine(Directory.GetCurrentDirectory(), "InputDocs");
+        string outputFolder = Path.Combine(Directory.GetCurrentDirectory(), "OutputDocs");
 
-        Directory.CreateDirectory(inputDir);
-        Directory.CreateDirectory(outputDir);
+        // Ensure the folders exist.
+        Directory.CreateDirectory(inputFolder);
+        Directory.CreateDirectory(outputFolder);
 
-        // Create a few sample Word documents if they do not already exist.
-        for (int i = 1; i <= 3; i++)
+        // Create sample source documents if the input folder is empty.
+        if (Directory.GetFiles(inputFolder, "*.docx").Length == 0)
         {
-            string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
-            if (!File.Exists(samplePath))
+            for (int i = 1; i <= 3; i++)
             {
                 Document sampleDoc = new Document();
                 DocumentBuilder builder = new DocumentBuilder(sampleDoc);
                 builder.Writeln($"This is sample document {i}.");
+                string samplePath = Path.Combine(inputFolder, $"Sample{i}.docx");
                 sampleDoc.Save(samplePath);
             }
         }
 
-        // Iterate over each .docx file in the input directory and add a text watermark.
-        foreach (string filePath in Directory.GetFiles(inputDir, "*.docx"))
+        // Prepare watermark options (optional, can be omitted for default settings).
+        TextWatermarkOptions watermarkOptions = new TextWatermarkOptions
         {
+            FontFamily = "Arial",
+            FontSize = 36,
+            Color = Color.Gray,
+            Layout = WatermarkLayout.Diagonal,
+            IsSemitrasparent = true
+        };
+
+        // Process each .docx file in the input folder.
+        foreach (string filePath in Directory.GetFiles(inputFolder, "*.docx"))
+        {
+            // Load the document.
             Document doc = new Document(filePath);
 
-            // Configure watermark appearance.
-            TextWatermarkOptions options = new TextWatermarkOptions
-            {
-                FontFamily = "Arial",
-                FontSize = 36,
-                Color = Color.Red,
-                Layout = WatermarkLayout.Diagonal,
-                IsSemitrasparent = false
-            };
+            // Add a text watermark.
+            doc.Watermark.SetText("Confidential", watermarkOptions);
 
-            // Apply the watermark.
-            doc.Watermark.SetText("CONFIDENTIAL", options);
-
-            // Save the watermarked document to the output directory.
-            string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
+            // Save the watermarked document to the output folder, preserving the original file name.
+            string outputPath = Path.Combine(outputFolder, Path.GetFileName(filePath));
             doc.Save(outputPath);
         }
 
-        Console.WriteLine("Watermark applied to all documents.");
+        // Optional: indicate completion (no interactive input required).
+        Console.WriteLine("Batch watermarking completed.");
     }
 }

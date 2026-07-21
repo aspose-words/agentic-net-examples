@@ -1,87 +1,71 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Base directories for input documents, output documents and the watermark image.
-        string baseDir = Directory.GetCurrentDirectory();
-        string inputDir = Path.Combine(baseDir, "InputDocs");
-        string outputDir = Path.Combine(baseDir, "OutputDocs");
+        // Base directory for all sample data.
+        string baseDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        string inputDir = Path.Combine(baseDir, "Input");
+        string outputDir = Path.Combine(baseDir, "Output");
         string imagePath = Path.Combine(baseDir, "watermark.png");
 
-        // Ensure directories exist.
+        // Ensure base directory exists before creating subfolders.
+        Directory.CreateDirectory(baseDir);
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple PNG image to be used as the watermark.
-        // -----------------------------------------------------------------
-        // This is a 1x1 pixel transparent PNG.
-        byte[] pngBytes = new byte[]
+        // Create a simple PNG image for the watermark if it does not exist.
+        if (!File.Exists(imagePath))
         {
-            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
-            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
-            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
-            0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
-            0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
-            0x54,0x78,0x9C,0x63,0x60,0x00,0x00,0x00,
-            0x02,0x00,0x01,0xE2,0x21,0xBC,0x33,0x00,
-            0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
-            0x42,0x60,0x82
-        };
-        File.WriteAllBytes(imagePath, pngBytes);
-
-        // -----------------------------------------------------------------
-        // 2. Create a few sample DOCX files to demonstrate batch processing.
-        // -----------------------------------------------------------------
-        for (int i = 1; i <= 3; i++)
-        {
-            string docPath = Path.Combine(inputDir, $"Sample{i}.docx");
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-            builder.Writeln($"This is sample document #{i}.");
-            doc.Save(docPath);
+            // 1x1 pixel transparent PNG (base64 encoded).
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9W6vZc8AAAAASUVORK5CYII=";
+            byte[] imageBytes = Convert.FromBase64String(base64Png);
+            File.WriteAllBytes(imagePath, imageBytes);
         }
 
-        // -----------------------------------------------------------------
-        // 3. Prepare watermark options (optional: scale and washout).
-        // -----------------------------------------------------------------
-        ImageWatermarkOptions watermarkOptions = new ImageWatermarkOptions
+        // Create sample DOCX files if the input folder is empty.
+        if (Directory.GetFiles(inputDir, "*.doc*").Length == 0)
         {
-            Scale = 5,          // Scale factor (example value).
-            IsWashout = false   // Do not apply washout effect.
-        };
+            for (int i = 1; i <= 2; i++)
+            {
+                Document sampleDoc = new Document();
+                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
+                builder.Writeln($"Sample document {i}");
+                builder.Writeln("This document will receive an image watermark.");
+                string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
+                sampleDoc.Save(samplePath);
+            }
+        }
 
-        // -----------------------------------------------------------------
-        // 4. Process each DOC/DOCX file in the input folder.
-        // -----------------------------------------------------------------
-        string[] docFiles = Directory.GetFiles(inputDir, "*.docx");
-        foreach (string inputFile in docFiles)
+        // Process each DOC/DOCX file in the input folder.
+        foreach (string filePath in Directory.GetFiles(inputDir, "*.doc*"))
         {
             // Load the document.
-            Document document = new Document(inputFile);
+            Document doc = new Document(filePath);
 
-            // Apply the image watermark using the file path and options.
-            document.Watermark.SetImage(imagePath, watermarkOptions);
+            // Configure watermark options.
+            ImageWatermarkOptions options = new ImageWatermarkOptions
+            {
+                Scale = 5,          // Example scale factor.
+                IsWashout = false   // Keep original colors.
+            };
 
-            // Determine output file name.
-            string fileName = Path.GetFileNameWithoutExtension(inputFile);
-            string outputFile = Path.Combine(outputDir, $"{fileName}_Watermarked.docx");
+            // Apply the image watermark.
+            doc.Watermark.SetImage(imagePath, options);
 
-            // Save the watermarked document.
-            document.Save(outputFile);
+            // Save the watermarked document to the output folder.
+            string outputPath = Path.Combine(outputDir, Path.GetFileName(filePath));
+            doc.Save(outputPath);
         }
 
-        // -----------------------------------------------------------------
-        // 5. Simple validation: ensure that output files were created.
-        // -----------------------------------------------------------------
-        foreach (string outFile in Directory.GetFiles(outputDir, "*_Watermarked.docx"))
+        // Validate that output files were created.
+        foreach (string outFile in Directory.GetFiles(outputDir, "*.doc*"))
         {
-            Console.WriteLine($"Created watermarked file: {outFile}");
+            if (!File.Exists(outFile))
+                throw new FileNotFoundException("Failed to create output file.", outFile);
         }
     }
 }

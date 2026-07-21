@@ -1,46 +1,39 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document.
+        // Create a new blank document.
         Document doc = new Document();
 
         // Add a text watermark.
-        string watermarkText = "Test Watermark";
+        const string watermarkText = "Sample Watermark";
         doc.Watermark.SetText(watermarkText);
 
         // Verify that the watermark was added.
-        bool added = doc.Watermark.Type == WatermarkType.Text;
-        if (!added)
+        if (doc.Watermark.Type != WatermarkType.Text)
         {
-            Console.WriteLine("Failed to add watermark.");
+            Console.WriteLine("Error: Text watermark was not added.");
             return;
         }
-
-        // Save the document with the watermark (optional, just to demonstrate saving).
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Watermarked.docx");
-        doc.Save(outputPath);
 
         // Remove the watermark.
         doc.Watermark.Remove();
 
         // Verify that the watermark was removed.
-        bool removed = doc.Watermark.Type == WatermarkType.None;
-        if (removed)
+        if (doc.Watermark.Type != WatermarkType.None)
         {
-            Console.WriteLine("Watermark removal test passed.");
+            Console.WriteLine("Error: Watermark was not removed.");
         }
         else
         {
-            Console.WriteLine("Watermark removal test failed.");
+            Console.WriteLine("Success: Watermark was removed.");
         }
 
-        // Save the document after removal (optional).
-        string cleanedPath = Path.Combine(Directory.GetCurrentDirectory(), "Cleaned.docx");
-        doc.Save(cleanedPath);
+        // Save the resulting document (optional, demonstrates that the file is still valid).
+        const string outputPath = "WatermarkRemovalResult.docx";
+        doc.Save(outputPath);
     }
 }

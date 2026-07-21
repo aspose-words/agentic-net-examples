@@ -10,33 +10,30 @@ public class Program
         // Create a new blank document.
         Document doc = new Document();
 
-        // A minimal 1x1 pixel PNG image (transparent) encoded in Base64.
-        // This serves as a placeholder for a dynamically generated barcode image.
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
-        byte[] imageBytes = Convert.FromBase64String(base64Png);
+        // A minimal PNG image (1x1 pixel, transparent) represented as a byte array.
+        // This stands in for a dynamically generated barcode image.
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+X9WQAAAAASUVORK5CYII=");
 
         // Load the image bytes into a memory stream.
-        using (MemoryStream imageStream = new MemoryStream(imageBytes))
+        using (MemoryStream imageStream = new MemoryStream(pngBytes))
         {
-            // Ensure the stream is positioned at the beginning.
+            // Ensure the stream position is at the beginning.
             imageStream.Position = 0;
 
-            // Configure optional image watermark settings.
-            ImageWatermarkOptions options = new ImageWatermarkOptions
+            // Configure optional image watermark appearance.
+            ImageWatermarkOptions imgOptions = new ImageWatermarkOptions
             {
-                // Example: make the watermark more visible and larger.
-                IsWashout = false,
-                Scale = 5
+                IsWashout = false, // No washout effect.
+                Scale = 5           // Scale factor (optional).
             };
 
-            // Apply the image watermark using the stream overload.
-            doc.Watermark.SetImage(imageStream, options);
+            // Apply the image as a watermark using the stream overload.
+            doc.Watermark.SetImage(imageStream, imgOptions);
         }
 
-        // Define the output path relative to the current directory.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "BarcodeWatermark.docx");
-
-        // Save the document with the watermark applied.
-        doc.Save(outputPath);
+        // Save the resulting document.
+        const string outputFile = "WatermarkedBarcode.docx";
+        doc.Save(outputFile);
     }
 }

@@ -4,69 +4,72 @@ using Aspose.Words;
 using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
 
-public class TableCellWatermarkExample
+public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Prepare output directories.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string imagePath = Path.Combine(outputDir, "watermark.png");
+        string docPath = Path.Combine(outputDir, "TableWithCellWatermark.docx");
 
-        // Create a simple 1x1 transparent PNG to act as the watermark.
-        string imagePath = Path.Combine(artifactsDir, "watermark.png");
-        byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
-        File.WriteAllBytes(imagePath, pngBytes);
+        // Create a simple 1x1 pixel PNG image (red) from a Base64 string.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9W6XcVYAAAAASUVORK5CYII=";
+        File.WriteAllBytes(imagePath, Convert.FromBase64String(base64Png));
 
-        // Create a new blank document.
+        // Create a blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Build a table with a horizontally merged cell in the first row.
-        Table table = builder.StartTable();
+        builder.StartTable();
 
-        // First cell – start of the merged range.
+        // First cell – start of merged range.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.First;
-        builder.Write("Merged cell content");
+        builder.Write("Merged Cell Content");
 
-        // Second cell – continues the merge.
+        // Second cell – merged with the first.
         builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.Previous;
 
-        // End the first row.
         builder.EndRow();
 
-        // Second row – normal unmerged cells.
+        // Add a normal second row to keep the table layout intact.
+        builder.InsertCell();
         builder.CellFormat.HorizontalMerge = CellMerge.None;
-        builder.InsertCell();
         builder.Write("Row 2, Cell 1");
-        builder.InsertCell();
-        builder.Write("Row 2, Cell 2");
-        builder.EndRow();
 
-        // Finish the table.
+        builder.InsertCell();
+        builder.CellFormat.HorizontalMerge = CellMerge.None;
+        builder.Write("Row 2, Cell 2");
+
+        builder.EndRow();
         builder.EndTable();
 
-        // Retrieve the merged cell (first cell of the first row).
-        Cell mergedCell = table.FirstRow.FirstCell;
-
-        // Move the builder cursor into the merged cell.
+        // Move the cursor to the first cell (the merged cell) to insert the watermark.
+        Table table = doc.FirstSection.Body.Tables[0];
+        Cell mergedCell = table.Rows[0].FirstCell;
         builder.MoveTo(mergedCell.FirstParagraph);
 
-        // Insert the image as a floating shape inside the cell.
+        // Insert the image as a floating shape so it can act as a watermark.
         Shape watermarkShape = builder.InsertImage(imagePath);
         watermarkShape.WrapType = WrapType.None;          // No text wrapping.
-        watermarkShape.BehindText = true;                // Place behind cell text.
-        watermarkShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Column; // Position relative to the column.
+        watermarkShape.BehindText = true;                // Place behind the cell text.
+        watermarkShape.RelativeHorizontalPosition = RelativeHorizontalPosition.Column;
+        watermarkShape.RelativeVerticalPosition = RelativeVerticalPosition.Paragraph;
 
-        // Adjust size to fill the cell.
-        // Width is taken from the cell's format; height from the parent row's format.
+        // Scale the watermark to fit the cell width. Height is left to auto‑scale to preserve aspect ratio.
         watermarkShape.Width = mergedCell.CellFormat.Width;
-        watermarkShape.Height = mergedCell.ParentRow.RowFormat.Height;
 
         // Save the document.
-        string outputPath = Path.Combine(artifactsDir, "TableCellWatermark.docx");
-        doc.Save(outputPath);
+        doc.Save(docPath);
+
+        // Simple validation that the output file exists.
+        if (File.Exists(docPath))
+        {
+            Console.WriteLine("Document created successfully: " + docPath);
+        }
     }
 }

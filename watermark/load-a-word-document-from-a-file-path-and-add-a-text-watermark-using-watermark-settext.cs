@@ -1,31 +1,31 @@
 using System;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define a folder for temporary files.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Paths for the input and output documents.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "SampleInput.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "SampleOutput.docx");
 
-        // Create a sample source document.
-        string inputPath = Path.Combine(artifactsDir, "input.docx");
-        Document sampleDoc = new Document();
-        var builder = new DocumentBuilder(sampleDoc);
-        builder.Writeln("This is a sample document.");
-        sampleDoc.Save(inputPath);
+        // Create a simple source document if it does not already exist.
+        if (!File.Exists(inputPath))
+        {
+            Document sourceDoc = new Document();
+            var builder = new DocumentBuilder(sourceDoc);
+            builder.Writeln("This is a sample document.");
+            sourceDoc.Save(inputPath);
+        }
 
-        // Load the document from the file system.
+        // Load the existing document from the file system.
         Document doc = new Document(inputPath);
 
-        // Add a text watermark.
+        // Add a text watermark to the loaded document.
         doc.Watermark.SetText("Confidential");
 
-        // Save the watermarked document.
-        string outputPath = Path.Combine(artifactsDir, "output.docx");
+        // Save the document with the watermark applied.
         doc.Save(outputPath);
     }
 }

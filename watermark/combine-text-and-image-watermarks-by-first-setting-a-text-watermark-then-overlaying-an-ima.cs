@@ -7,49 +7,47 @@ public class Program
 {
     public static void Main()
     {
-        // Define output directories.
-        string artifactsDir = Path.Combine(Directory.GetCurrentDirectory(), "Artifacts");
-        Directory.CreateDirectory(artifactsDir);
+        // Paths for the output document and temporary image file.
+        const string outputDocPath = "CombinedWatermark.docx";
+        const string imagePath = "watermark.png";
 
-        // Create a simple PNG image (1x1 pixel, red) as a byte array.
-        // PNG data taken from a minimal red pixel image.
+        // Create a minimal PNG image (1x1 pixel, transparent) from a Base64 string.
+        // This avoids using System.Drawing APIs.
         byte[] pngBytes = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==");
-        string imagePath = Path.Combine(artifactsDir, "RedPixel.png");
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XcZcAAAAASUVORK5CYII=");
         File.WriteAllBytes(imagePath, pngBytes);
 
-        // Create a blank Word document.
+        // Create a new blank document.
         Document doc = new Document();
 
-        // Add some sample text so the watermarks are visible.
+        // Add some sample content so the watermarks are visible.
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This document contains both a text watermark and an image watermark.");
+        builder.Writeln("This document demonstrates combined text and image watermarks.");
+        builder.Writeln("The text watermark appears behind the page content,");
+        builder.Writeln("and the image watermark is overlaid on top.");
 
         // Apply a text watermark.
-        doc.Watermark.SetText("Confidential");
+        doc.Watermark.SetText("CONFIDENTIAL");
 
-        // Apply an image watermark on top of the text watermark.
+        // Apply an image watermark using the previously created PNG file.
         ImageWatermarkOptions imgOptions = new ImageWatermarkOptions
         {
-            // Scale the image to 30% of its original size.
-            Scale = 0.3,
-            // Disable washout to keep the image colors vivid.
-            IsWashout = false
+            Scale = 5,          // Increase the size of the image watermark.
+            IsWashout = false   // Keep the image colors (no washout effect).
         };
         doc.Watermark.SetImage(imagePath, imgOptions);
 
-        // Save the resulting document.
-        string outputPath = Path.Combine(artifactsDir, "CombinedWatermark.docx");
-        doc.Save(outputPath);
+        // Save the document with both watermarks applied.
+        doc.Save(outputDocPath);
 
-        // Simple validation: ensure the file was created.
-        if (File.Exists(outputPath))
+        // Clean up the temporary image file.
+        if (File.Exists(imagePath))
         {
-            Console.WriteLine("Document saved successfully: " + outputPath);
+            File.Delete(imagePath);
         }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
+
+        // Optional verification (no console output required by the task).
+        // The file existence check ensures the document was saved.
+        bool saved = File.Exists(outputDocPath);
     }
 }

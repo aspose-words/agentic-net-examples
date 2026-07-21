@@ -2,74 +2,73 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Saving;
-using Aspose.Words.Drawing;
 
 public class Program
 {
     public static void Main()
     {
-        // Define folders for input DOCX files, output PDFs and the logo image.
-        string baseDir = Directory.GetCurrentDirectory();
+        // Base directory of the application.
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+
+        // Directories for input DOCX files and output PDF files.
         string inputDir = Path.Combine(baseDir, "InputDocs");
         string outputDir = Path.Combine(baseDir, "OutputPdfs");
+
+        // Path for the corporate logo image that will be used as a watermark.
         string logoPath = Path.Combine(baseDir, "logo.png");
 
         // Ensure the directories exist.
         Directory.CreateDirectory(inputDir);
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // Create a simple logo image (a red 1x1 PNG) if it does not exist.
-        // The image is stored as a Base64 string to avoid System.Drawing usage.
-        // -----------------------------------------------------------------
+        // Create a deterministic small PNG image (1x1 pixel, transparent) if it does not exist.
         if (!File.Exists(logoPath))
         {
-            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR42mP8z8BQDwAF/AL+XcXK5wAAAABJRU5ErkJggg==";
+            // Base64 representation of a 1x1 transparent PNG.
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
             byte[] pngBytes = Convert.FromBase64String(base64Png);
             File.WriteAllBytes(logoPath, pngBytes);
         }
 
-        // -----------------------------------------------------------------
-        // Create a few sample DOCX files if the input folder is empty.
-        // -----------------------------------------------------------------
-        if (Directory.GetFiles(inputDir, "*.docx").Length == 0)
+        // Create sample DOCX files if the input folder is empty.
+        string[] existingDocs = Directory.GetFiles(inputDir, "*.docx");
+        if (existingDocs.Length == 0)
         {
             for (int i = 1; i <= 3; i++)
             {
-                string samplePath = Path.Combine(inputDir, $"Sample{i}.docx");
                 Document sampleDoc = new Document();
-                var builder = new DocumentBuilder(sampleDoc);
+                DocumentBuilder builder = new DocumentBuilder(sampleDoc);
                 builder.Writeln($"This is sample document #{i}.");
-                sampleDoc.Save(samplePath);
+                string docPath = Path.Combine(inputDir, $"Sample{i}.docx");
+                sampleDoc.Save(docPath);
             }
         }
 
-        // -----------------------------------------------------------------
-        // Process each DOCX: add image watermark and convert to PDF.
-        // -----------------------------------------------------------------
-        foreach (string docxFile in Directory.GetFiles(inputDir, "*.docx"))
+        // Process each DOCX file: add image watermark and convert to PDF.
+        foreach (string docFilePath in Directory.GetFiles(inputDir, "*.docx"))
         {
-            // Load the source document.
-            Document doc = new Document(docxFile);
+            // Load the DOCX document.
+            Document doc = new Document(docFilePath);
 
-            // Configure image watermark options (optional).
-            ImageWatermarkOptions imgOptions = new ImageWatermarkOptions
+            // Configure image watermark options.
+            ImageWatermarkOptions watermarkOptions = new ImageWatermarkOptions
             {
-                Scale = 0.5,          // 50% of the page width.
-                IsWashout = false    // Keep original colors.
+                Scale = 5,          // Scale factor for the watermark image.
+                IsWashout = false   // Disable washout effect to keep the logo vivid.
             };
 
             // Apply the image watermark using the logo file.
-            doc.Watermark.SetImage(logoPath, imgOptions);
+            doc.Watermark.SetImage(logoPath, watermarkOptions);
 
-            // Determine output PDF path.
-            string pdfFileName = Path.GetFileNameWithoutExtension(docxFile) + ".pdf";
-            string pdfPath = Path.Combine(outputDir, pdfFileName);
+            // Determine the output PDF file path.
+            string pdfFileName = Path.GetFileNameWithoutExtension(docFilePath) + ".pdf";
+            string pdfFilePath = Path.Combine(outputDir, pdfFileName);
 
-            // Save as PDF.
-            doc.Save(pdfPath, SaveFormat.Pdf);
+            // Save the document as PDF.
+            doc.Save(pdfFilePath, SaveFormat.Pdf);
         }
 
-        Console.WriteLine("Batch conversion completed. PDFs are located in: " + outputDir);
+        // Optional: verify that PDFs were created (no console output required).
+        // The program ends here.
     }
 }

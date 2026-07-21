@@ -7,54 +7,51 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a blank document.
         Document doc = new Document();
 
-        // Add a text watermark that will appear behind the document content,
-        // thus it will be visible in every cell of the table.
+        // Add a text watermark that will appear behind the document content.
         doc.Watermark.SetText("Cell Watermark");
 
         // Use DocumentBuilder to construct a table.
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Start a table with three columns.
+        // Start the table.
         builder.StartTable();
 
-        // Populate the first row with three cells.
-        for (int i = 0; i < 3; i++)
+        // Define the number of cells in the first row.
+        int firstRowCellCount = 3;
+
+        // Populate the first row with cells.
+        for (int i = 0; i < firstRowCellCount; i++)
         {
+            // Insert a new cell.
             builder.InsertCell();
-            builder.Write($"Row 1, Cell {i + 1}");
+
+            // Write some sample text inside the cell.
+            builder.Write($"Cell {i + 1}");
         }
 
         // End the first row.
         builder.EndRow();
 
-        // Populate a second row to demonstrate normal table layout.
-        for (int i = 0; i < 3; i++)
+        // Add a second row to demonstrate normal table layout.
+        for (int i = 0; i < firstRowCellCount; i++)
         {
             builder.InsertCell();
-            builder.Write($"Row 2, Cell {i + 1}");
+            builder.Write($"Row2 Cell {i + 1}");
         }
-
-        // End the second row and the table.
         builder.EndRow();
+
+        // Finish the table.
         builder.EndTable();
 
-        // Define output path.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "WatermarkedTable.docx");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
         // Save the document.
+        string outputPath = Path.Combine(outputDir, "TableWithCellWatermark.docx");
         doc.Save(outputPath);
-
-        // Simple validation to ensure the file was created.
-        if (File.Exists(outputPath))
-        {
-            Console.WriteLine($"Document saved successfully to: {outputPath}");
-        }
-        else
-        {
-            Console.WriteLine("Failed to save the document.");
-        }
     }
 }

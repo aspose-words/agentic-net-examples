@@ -1,36 +1,37 @@
 using System;
-using System.IO;
 using Aspose.Words;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string dataDir = Path.Combine(Environment.CurrentDirectory, "Data");
-        string outputDir = Path.Combine(Environment.CurrentDirectory, "Output");
-        Directory.CreateDirectory(dataDir);
-        Directory.CreateDirectory(outputDir);
+        // Paths for the sample input and output documents.
+        const string inputPath = "SampleWithWatermark.docx";
+        const string outputPath = "SampleWithoutWatermark.docx";
 
-        // Path for the sample document that will contain a watermark.
-        string samplePath = Path.Combine(dataDir, "Sample.docx");
+        // -----------------------------------------------------------------
+        // Step 1: Create a sample document and add a text watermark.
+        // -----------------------------------------------------------------
+        Document docWithWatermark = new Document();
+        docWithWatermark.Watermark.SetText("Sample Watermark");
+        docWithWatermark.Save(inputPath);
 
-        // Create a blank document and add a text watermark.
-        Document doc = new Document();
-        doc.Watermark.SetText("Sample Watermark");
-        doc.Save(samplePath);
+        // -----------------------------------------------------------------
+        // Step 2: Load the document that contains the watermark.
+        // -----------------------------------------------------------------
+        Document loadedDoc = new Document(inputPath);
 
-        // Load the document that has the watermark.
-        Document loadedDoc = new Document(samplePath);
-
-        // Remove the watermark if it exists.
+        // -----------------------------------------------------------------
+        // Step 3: Remove the watermark if it exists.
+        // -----------------------------------------------------------------
         if (loadedDoc.Watermark.Type != WatermarkType.None)
         {
             loadedDoc.Watermark.Remove();
         }
 
-        // Save the document without the watermark.
-        string resultPath = Path.Combine(outputDir, "NoWatermark.docx");
-        loadedDoc.Save(resultPath);
+        // -----------------------------------------------------------------
+        // Step 4: Save the document without the watermark.
+        // -----------------------------------------------------------------
+        loadedDoc.Save(outputPath);
     }
 }
