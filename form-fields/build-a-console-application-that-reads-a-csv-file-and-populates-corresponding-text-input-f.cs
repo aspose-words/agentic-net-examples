@@ -8,10 +8,10 @@ public class Program
 {
     public static void Main()
     {
-        // Define file paths.
+        // Paths for the template, CSV data and the resulting document.
         const string templatePath = "Template.docx";
-        const string csvPath = "Data.csv";
-        const string outputPath = "Result.docx";
+        const string csvPath = "data.csv";
+        const string outputPath = "Output.docx";
 
         // -----------------------------------------------------------------
         // 1. Create a simple template with text input form fields if it does not exist.
@@ -21,28 +21,29 @@ public class Program
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("Please fill the form below:");
-            // Insert a text input field for Name.
-            builder.InsertTextInput("Name", TextFormFieldType.Regular, "", "", 50);
-            builder.Writeln(); // Move to next line.
-            // Insert a text input field for Email.
-            builder.InsertTextInput("Email", TextFormFieldType.Regular, "", "", 50);
+            builder.Writeln("User Information");
+            builder.Write("First Name: ");
+            builder.InsertTextInput("FirstName", TextFormFieldType.Regular, "", "", 50);
             builder.Writeln();
-            // Insert a text input field for Age.
-            builder.InsertTextInput("Age", TextFormFieldType.Regular, "", "", 3);
 
-            // Save the template.
+            builder.Write("Last Name: ");
+            builder.InsertTextInput("LastName", TextFormFieldType.Regular, "", "", 50);
+            builder.Writeln();
+
+            builder.Write("Email: ");
+            builder.InsertTextInput("Email", TextFormFieldType.Regular, "", "", 100);
+            builder.Writeln();
+
             templateDoc.Save(templatePath);
         }
 
         // -----------------------------------------------------------------
-        // 2. Create a CSV file with sample data if it does not exist.
+        // 2. Create a CSV file with header matching the form field names if it does not exist.
         // -----------------------------------------------------------------
         if (!File.Exists(csvPath))
         {
-            // Header: Name,Email,Age
-            // One data row.
-            string csvContent = "Name,Email,Age\r\nJohn Doe,john@example.com,30";
+            // Header row followed by a single data row.
+            string csvContent = "FirstName,LastName,Email\nJohn,Doe,john.doe@example.com";
             File.WriteAllText(csvPath, csvContent);
         }
 
@@ -52,43 +53,43 @@ public class Program
         Document doc = new Document(templatePath);
 
         // -----------------------------------------------------------------
-        // 4. Read CSV data.
+        // 4. Read and parse the CSV file.
         // -----------------------------------------------------------------
         string[] csvLines = File.ReadAllLines(csvPath);
         if (csvLines.Length < 2)
-            throw new InvalidOperationException("CSV file does not contain data rows.");
+            throw new InvalidOperationException("CSV file must contain a header line and at least one data line.");
 
-        // Parse header.
+        // Header columns.
         string[] headers = csvLines[0].Split(',');
-        // Parse first data row (for simplicity we use only the first row).
+        // First data row (for simplicity we use only the first row).
         string[] values = csvLines[1].Split(',');
 
         if (headers.Length != values.Length)
-            throw new InvalidOperationException("CSV header and data column counts do not match.");
+            throw new InvalidOperationException("CSV header count does not match value count.");
 
-        // Build a dictionary of field name -> value.
+        // Map each header to its corresponding value.
         var fieldValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         for (int i = 0; i < headers.Length; i++)
         {
-            string key = headers[i].Trim();
-            string val = values[i].Trim();
-            if (!string.IsNullOrEmpty(key))
-                fieldValues[key] = val;
+            string header = headers[i].Trim();
+            string value = values[i].Trim();
+            if (!string.IsNullOrEmpty(header))
+                fieldValues[header] = value;
         }
 
         // -----------------------------------------------------------------
-        // 5. Populate form fields in the document.
+        // 5. Populate the form fields in the document.
         // -----------------------------------------------------------------
-        foreach (KeyValuePair<string, string> entry in fieldValues)
+        foreach (KeyValuePair<string, string> kvp in fieldValues)
         {
-            // Access the form field by its bookmark/name.
-            FormField formField = doc.Range.FormFields[entry.Key];
+            // Retrieve the form field by its bookmark/name.
+            FormField formField = doc.Range.FormFields[kvp.Key];
             if (formField == null)
-                throw new InvalidOperationException($"Form field '{entry.Key}' not found in the template.");
+                throw new InvalidOperationException($"Form field '{kvp.Key}' was not found in the template.");
 
-            // For text input fields, set the result.
+            // Update the field's result with the CSV value.
             // Using SetTextInputValue applies any format; Result works as well for plain text.
-            formField.SetTextInputValue(entry.Value);
+            formField.SetTextInputValue(kvp.Value);
         }
 
         // -----------------------------------------------------------------

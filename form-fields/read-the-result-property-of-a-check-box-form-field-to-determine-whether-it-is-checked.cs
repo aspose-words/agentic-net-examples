@@ -10,31 +10,22 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a checkbox form field with a default checked state.
+        // Insert a checkbox form field named "MyCheckBox" and set it to checked.
         builder.Write("Check this box: ");
         FormField checkBox = builder.InsertCheckBox("MyCheckBox", true, 0);
 
-        // Save the document that now contains the form field.
-        const string outputPath = "CheckBoxResult.docx";
-        doc.Save(outputPath);
+        // Save the document (required by the rules).
+        doc.Save("FormFields.docx");
 
-        // Access the collection of form fields in the document.
-        FormFieldCollection formFields = doc.Range.FormFields;
+        // Retrieve the checkbox form field from the collection by its name.
+        FormField formField = doc.Range.FormFields["MyCheckBox"];
+        if (formField == null)
+            throw new InvalidOperationException("The expected form field was not found.");
 
-        // Validate that at least one form field exists.
-        if (formFields.Count == 0)
-            throw new InvalidOperationException("The document does not contain any form fields.");
+        // For a checkbox, use the Checked property to determine its state.
+        bool isChecked = formField.Checked;
 
-        // Retrieve the checkbox by its name.
-        FormField field = formFields["MyCheckBox"];
-        if (field == null)
-            throw new InvalidOperationException("The expected checkbox form field was not found.");
-
-        // Read the Result property. For a checkbox it is "1" when checked, otherwise "0".
-        string result = field.Result ?? string.Empty;
-        bool isChecked = result == "1";
-
-        // Output the determination.
-        Console.WriteLine($"Checkbox is {(isChecked ? "checked" : "unchecked")} (Result = \"{result}\")");
+        // Output the result.
+        Console.WriteLine($"Checkbox '{formField.Name}' is {(isChecked ? "checked" : "unchecked")}.");
     }
 }

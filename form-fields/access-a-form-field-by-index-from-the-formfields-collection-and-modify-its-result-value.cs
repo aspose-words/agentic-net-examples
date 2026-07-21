@@ -10,34 +10,31 @@ public class Program
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input form field with a placeholder.
-        builder.Write("Enter name: ");
+        // Insert a text input form field with a default placeholder.
+        builder.Write("Enter your name: ");
         FormField textField = builder.InsertTextInput(
-            "NameField",                 // field name
-            TextFormFieldType.Regular,  // field type
-            "",                          // default text (none)
-            "",                          // format (none)
-            50);                         // maximum length
+            "MyTextInput",                     // field name
+            TextFormFieldType.Regular,         // field type
+            "",                                // default text (empty)
+            "John Doe",                        // placeholder text
+            50);                               // maximum length
 
-        // Ensure that the document contains at least one form field.
-        FormFieldCollection fields = doc.Range.FormFields;
-        if (fields == null || fields.Count == 0)
-            throw new InvalidOperationException("The document does not contain any form fields.");
+        // Access the form field by index from the FormFields collection.
+        FormFieldCollection formFields = doc.Range.FormFields;
 
-        // Access the first form field by its zero‑based index.
-        FormField fieldByIndex = fields[0];
+        // Validate that at least one form field exists.
+        if (formFields.Count == 0)
+            throw new InvalidOperationException("No form fields were found in the document.");
+
+        // Retrieve the first form field (index 0) and ensure it is not null.
+        FormField fieldByIndex = formFields[0];
         if (fieldByIndex == null)
             throw new InvalidOperationException("Form field at index 0 could not be retrieved.");
 
-        // Modify the Result property of the form field.
-        const string newValue = "Jane Smith";
-        fieldByIndex.Result = newValue;
-
-        // Verify that the value was updated correctly.
-        if (fieldByIndex.Result != newValue)
-            throw new InvalidOperationException("Failed to update the form field result.");
+        // Modify the Result property of the text input field.
+        fieldByIndex.Result = "Jane Smith";
 
         // Save the modified document.
-        doc.Save("FormFieldModified.docx");
+        doc.Save("FormFieldResultUpdated.docx");
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 using Aspose.Words;
 using Aspose.Words.Fields;
@@ -8,64 +9,50 @@ public class Program
 {
     public static void Main()
     {
-        // JSON configuration that maps form field names to their desired checked state.
-        string jsonConfig = @"{ ""CheckBox1"": true, ""CheckBox2"": false, ""CheckBox3"": true }";
-
-        // Deserialize the JSON into a dictionary for easy lookup.
-        Dictionary<string, bool> config = JsonSerializer.Deserialize<Dictionary<string, bool>>(jsonConfig);
-
-        // Create a new document and a builder to insert form fields.
+        // Create a new document and insert several checkbox form fields.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert three check box form fields with distinct names.
-        builder.Write("Option 1: ");
+        builder.Write("Option A: ");
         builder.InsertCheckBox("CheckBox1", false, 0);
-        builder.Writeln();
+        builder.InsertParagraph();
 
-        builder.Write("Option 2: ");
+        builder.Write("Option B: ");
         builder.InsertCheckBox("CheckBox2", false, 0);
-        builder.Writeln();
+        builder.InsertParagraph();
 
-        builder.Write("Option 3: ");
+        builder.Write("Option C: ");
         builder.InsertCheckBox("CheckBox3", false, 0);
-        builder.Writeln();
+        builder.InsertParagraph();
 
-        // Access the collection of form fields in the document.
-        FormFieldCollection formFields = doc.Range.FormFields;
+        // JSON configuration that maps field names to the desired checked state.
+        string jsonConfig = @"{
+            ""CheckBox1"": true,
+            ""CheckBox2"": false,
+            ""CheckBox3"": true
+        }";
 
-        // Ensure that the document contains at least one form field.
-        if (formFields.Count == 0)
-            throw new InvalidOperationException("The document does not contain any form fields.");
+        // Parse the JSON into a dictionary.
+        Dictionary<string, bool> config = JsonSerializer.Deserialize<Dictionary<string, bool>>(jsonConfig);
 
-        // Update each check box based on the external JSON configuration.
-        foreach (FormField field in formFields)
+        // Update each checkbox according to the configuration.
+        foreach (KeyValuePair<string, bool> entry in config)
         {
-            // Process only check box fields.
-            if (field.Type == FieldType.FieldFormCheckBox)
-            {
-                // Verify that the field has a name.
-                if (string.IsNullOrEmpty(field.Name))
-                    continue;
+            // Retrieve the form field by its name.
+            FormField field = doc.Range.FormFields[entry.Key];
+            if (field == null)
+                throw new InvalidOperationException($"Form field '{entry.Key}' not found.");
 
-                // Retrieve the desired value from the configuration.
-                if (!config.TryGetValue(field.Name, out bool desiredValue))
-                    throw new KeyNotFoundException($"No configuration entry found for form field '{field.Name}'.");
+            // Ensure the field is a checkbox before setting the Checked property.
+            if (field.Type != FieldType.FieldFormCheckBox)
+                throw new InvalidOperationException($"Form field '{entry.Key}' is not a checkbox.");
 
-                // Set the checked state.
-                field.Checked = desiredValue;
-
-                // Validate that the assignment succeeded.
-                if (field.Checked != desiredValue)
-                    throw new InvalidOperationException($"Failed to set the checked state for field '{field.Name}'.");
-            }
+            field.Checked = entry.Value;
         }
 
-        // Update fields in the document (good practice before saving).
+        // Update fields (not strictly required for checkboxes but follows best practice) and save the document.
         doc.UpdateFields();
-
-        // Save the updated document.
-        const string outputPath = "UpdatedFormFields.docx";
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "UpdatedFormFields.docx");
         doc.Save(outputPath);
     }
 }

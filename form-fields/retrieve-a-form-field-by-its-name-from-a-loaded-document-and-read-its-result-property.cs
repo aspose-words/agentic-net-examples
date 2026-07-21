@@ -1,50 +1,63 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Fields;
 
-public class Program
+namespace FormFieldReader
 {
-    public static void Main()
+    class Program
     {
-        // Path for the temporary document.
-        const string filePath = "FormFieldResult.docx";
+        static void Main()
+        {
+            // Define file name for the temporary document.
+            string fileName = "FormFieldExample.docx";
 
-        // -------------------------------------------------
-        // Create a new document and add a text input field.
-        // -------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // -----------------------------------------------------------------
+            // 1. Create a new document and insert a text input form field.
+            // -----------------------------------------------------------------
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert a text input form field with a name.
-        FormField textField = builder.InsertTextInput(
-            "MyTextField",                     // field name
-            TextFormFieldType.Regular,         // field type
-            "",                                // default text (empty)
-            "Placeholder",                     // text shown when empty
-            0);                                // maximum length (0 = unlimited)
+            // Write some introductory text.
+            builder.Writeln("Please enter your name:");
 
-        // Set the field's result so we have a value to read later.
-        textField.Result = "Hello Aspose";
+            // Insert a text input form field named "MyTextField" with a placeholder.
+            FormField textField = builder.InsertTextInput(
+                "MyTextField",                     // field name
+                TextFormFieldType.Regular,         // field type
+                "",                                // default text (empty)
+                "John Doe",                        // placeholder text
+                50);                               // maximum length
 
-        // Save the document to disk.
-        doc.Save(filePath);
+            // Optionally set a value to demonstrate the Result property.
+            textField.Result = "Alice";
 
-        // -------------------------------------------------
-        // Load the document and retrieve the form field.
-        // -------------------------------------------------
-        Document loadedDoc = new Document(filePath);
+            // Save the document so it can be loaded later.
+            doc.Save(fileName);
 
-        // Access the form field collection by name.
-        FormField retrievedField = loadedDoc.Range.FormFields["MyTextField"];
+            // -----------------------------------------------------------------
+            // 2. Load the document from disk.
+            // -----------------------------------------------------------------
+            Document loadedDoc = new Document(fileName);
 
-        // Validate that the field exists.
-        if (retrievedField == null)
-            throw new InvalidOperationException("Form field 'MyTextField' was not found.");
+            // -----------------------------------------------------------------
+            // 3. Retrieve the form field by its name.
+            // -----------------------------------------------------------------
+            FormField retrievedField = loadedDoc.Range.FormFields["MyTextField"];
 
-        // Read the Result property of the text input field.
-        string fieldResult = retrievedField.Result ?? string.Empty;
+            // Validate that the field exists.
+            if (retrievedField == null)
+                throw new InvalidOperationException("Form field 'MyTextField' was not found.");
 
-        // Output the result to the console.
-        Console.WriteLine($"Form field '{retrievedField.Name}' result: {fieldResult}");
+            // -----------------------------------------------------------------
+            // 4. Read and display the Result property of the field.
+            // -----------------------------------------------------------------
+            string fieldResult = retrievedField.Result;
+            Console.WriteLine($"The result of the form field '{retrievedField.Name}' is: \"{fieldResult}\"");
+
+            // Clean up the temporary file (optional).
+            if (File.Exists(fileName))
+                File.Delete(fileName);
+        }
     }
 }

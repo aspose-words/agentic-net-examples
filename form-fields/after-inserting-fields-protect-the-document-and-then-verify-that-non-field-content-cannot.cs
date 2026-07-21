@@ -6,63 +6,70 @@ public class Program
 {
     public static void Main()
     {
-        // Path for the output documents.
-        const string protectedPath = "ProtectedFormFields.docx";
-        const string editedPath = "EditedAfterProtection.docx";
-
-        // Create a new blank document.
+        // Create a new document and builder.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Insert normal text before the form field.
-        builder.Writeln("This is normal text before the form field.");
+        // Insert non‑field content.
+        builder.Writeln("This is a regular paragraph that should not be editable after protection.");
 
-        // Insert a single text input form field.
-        FormField textField = builder.InsertTextInput(
-            "MyTextField",                     // field name
-            TextFormFieldType.Regular,         // field type
-            "",                                // format (none)
-            "Enter value",                     // placeholder text
-            0);                                // no length limit
+        // Insert a text input form field.
+        builder.InsertTextInput("TextField", TextFormFieldType.Regular, "", "Default value", 0);
+        builder.Writeln(); // Move to next line.
 
-        // Insert normal text after the form field.
-        builder.Writeln("This is normal text after the form field.");
+        // Insert a checkbox form field.
+        builder.InsertCheckBox("CheckBox", false, 0);
+        builder.Writeln(); // Move to next line.
 
-        // Protect the document so that only form fields can be edited.
-        doc.Protect(ProtectionType.AllowOnlyFormFields);
+        // Save the initial document.
+        string initialPath = "FormFields.docx";
+        doc.Save(initialPath);
 
-        // ---------- Verification ----------
-        // 1. Verify that the document protection type is set correctly.
-        if (doc.ProtectionType != ProtectionType.AllowOnlyFormFields)
-            throw new InvalidOperationException("Document protection was not applied.");
-
-        // 2. Verify that exactly one form field exists.
-        FormFieldCollection fields = doc.Range.FormFields;
-        if (fields.Count != 1)
-            throw new InvalidOperationException($"Expected 1 form field, found {fields.Count}.");
-
-        // 3. Verify that the existing field is the one we inserted.
-        if (fields[0] != textField || fields[0].Name != "MyTextField")
-            throw new InvalidOperationException("Form field verification failed.");
+        // Protect the document to allow only form field editing.
+        doc.Protect(ProtectionType.AllowOnlyFormFields, "password");
 
         // Save the protected document.
+        string protectedPath = "FormFields_Protected.docx";
         doc.Save(protectedPath);
-        Console.WriteLine($"Protected document saved to '{protectedPath}'.");
 
-        // Reload the document to ensure the protection persists.
-        Document loadedDoc = new Document(protectedPath);
-        if (loadedDoc.ProtectionType != ProtectionType.AllowOnlyFormFields)
-            throw new InvalidOperationException("Protection did not persist after reload.");
+        // Attempt to edit non‑field content (should fail).
+        bool nonFieldEditSucceeded = false;
+        try
+        {
+            Paragraph firstParagraph = doc.FirstSection.Body.Paragraphs[0];
+            if (firstParagraph != null)
+            {
+                firstParagraph.Runs.Clear();
+                firstParagraph.AppendChild(new Run(doc, "Attempted edit of non‑field content."));
+                // Force a save to trigger protection enforcement.
+                doc.Save("Temp.docx");
+                nonFieldEditSucceeded = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Non‑field edit blocked as expected: " + ex.Message);
+        }
 
-        // Attempt to edit non‑form‑field content programmatically.
-        // (In the UI this would be blocked, but programmatic changes are allowed.)
-        DocumentBuilder editBuilder = new DocumentBuilder(loadedDoc);
-        editBuilder.MoveToDocumentStart();
-        editBuilder.Write("Edited: ");
+        if (nonFieldEditSucceeded)
+        {
+            Console.WriteLine("Error: Non‑field content was edited despite protection.");
+        }
 
-        // Save the edited version.
-        loadedDoc.Save(editedPath);
-        Console.WriteLine($"Document edited programmatically and saved to '{editedPath}'.");
-        Console.WriteLine("Verification completed: document is protected for forms, and non‑field content remains separate from form fields.");
+        // Attempt to edit a form field (should succeed).
+        FormField textField = doc.Range.FormFields["TextField"];
+        if (textField != null)
+        {
+            textField.Result = "New value";
+            Console.WriteLine("Form field 'TextField' updated successfully.");
+        }
+        else
+        {
+            Console.WriteLine("Form field 'TextField' not found.");
+        }
+
+        // Save the final document after attempted edits.
+        string finalPath = "FormFields_Final.docx";
+        doc.Save(finalPath);
     }
 }
