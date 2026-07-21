@@ -2,61 +2,54 @@ using System;
 using System.Globalization;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Settings;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names.
-        const string dictionaryFile = "hyph_ar_SA.dic";
-        const string outputFile = "HyphenatedArabic.pdf";
-
-        // Create a minimal Arabic hyphenation dictionary.
-        // Format: first line is the encoding, subsequent lines are word=hyphenated-parts.
-        // The example word "البرمجة" (programming) is split as "ال-برم-جة".
-        File.WriteAllText(dictionaryFile,
-            "UTF-8\n" +
-            "البرمجة=ال-برم-جة\n" +
-            "المعلومات=الم-علو-مات\n");
-
-        // Register the Arabic dictionary with the appropriate language code.
-        Aspose.Words.Hyphenation.RegisterDictionary("ar-SA", dictionaryFile);
-
-        // Verify that the dictionary was registered.
-        if (!Aspose.Words.Hyphenation.IsDictionaryRegistered("ar-SA"))
-            throw new InvalidOperationException("Failed to register the Arabic hyphenation dictionary.");
-
         // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Set the document locale to Arabic (Saudi Arabia) and enable right‑to‑left layout.
+        // Write Arabic text that is long enough to require hyphenation when the line width is narrow.
+        // The word "مثال" (example) will be hyphenated according to the dictionary we provide.
+        builder.Font.Size = 24;
         builder.Font.LocaleId = new CultureInfo("ar-SA").LCID;
-        builder.ParagraphFormat.Bidi = true; // Right‑to‑left paragraph.
+        builder.Writeln("هذا نص تجريبي يحتوي على كلمة مثال لتوضيح كيفية تطبيق الفواصل في النص العربي عند الحاجة إلى كسر السطر.");
 
-        // Write a long Arabic sentence that will require line wrapping.
-        // The sentence repeats words that are present in the dictionary to trigger hyphenation.
-        string arabicText = "البرمجة هي عملية كتابة التعليمات البرمجية. " +
-                            "المعلومات هي أساس أي نظام. " +
-                            "البرمجة والبرمجة والبرمجة والبرمجة والالبرمجة والالبرمجة والالبرمجة.";
-        builder.Writeln(arabicText);
-
-        // Enable automatic hyphenation for the document.
+        // Configure the document to use automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
+        // Optional: limit consecutive hyphens and set hyphenation zone.
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
 
-        // Reduce the page width to force line breaks and make hyphenation visible.
-        doc.FirstSection.PageSetup.PageWidth = 300; // Points (approx 4.2 cm)
+        // Make the paragraph right‑to‑left.
+        doc.FirstSection.Body.FirstParagraph.ParagraphFormat.Bidi = true;
+
+        // Narrow the page width to force line wrapping and thus hyphenation.
+        doc.FirstSection.PageSetup.PageWidth = 300; // points
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // Save the document to PDF.
+        // Create a minimal Arabic hyphenation dictionary.
+        // The format follows the OpenOffice hyphenation dictionary specification.
+        const string dictFileName = "hyph_ar_SA.dic";
+        string dictContent = "UTF-8\nمثال=مث-ال\n";
+        File.WriteAllText(dictFileName, dictContent);
+
+        // Register the dictionary for the Arabic (Saudi Arabia) locale.
+        Hyphenation.RegisterDictionary("ar-SA", dictFileName);
+
+        // Save the document to PDF so that hyphenation can be visually inspected.
+        const string outputFile = "HyphenatedArabic.pdf";
         doc.Save(outputFile, SaveFormat.Pdf);
 
         // Validate that the output file was created.
         if (!File.Exists(outputFile))
-            throw new InvalidOperationException("The expected PDF output was not created.");
+            throw new InvalidOperationException($"The expected output file '{outputFile}' was not created.");
 
-        // Optional cleanup of the temporary dictionary file.
-        // File.Delete(dictionaryFile);
+        // Clean up the temporary dictionary file.
+        File.Delete(dictFileName);
     }
 }

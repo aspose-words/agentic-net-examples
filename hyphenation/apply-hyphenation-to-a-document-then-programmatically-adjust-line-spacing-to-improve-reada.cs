@@ -2,58 +2,59 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Settings;
+using Aspose.Words.Tables;
 
-public class HyphenationAndLineSpacingExample
+public class HyphenationExample
 {
     public static void Main()
     {
-        // Path for the temporary hyphenation dictionary.
-        const string dictFileName = "hyph_en_US.dic";
+        // Create a new blank document.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Narrow the page width so that words will need to wrap.
+        doc.FirstSection.PageSetup.PageWidth = 300; // points
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
+
+        // Prepare a sample text containing long words that can be hyphenated.
+        string sampleText = "extraordinarycharacteristically internationalization communication";
+
+        // Configure paragraph formatting: larger font and increased line spacing for readability.
+        builder.Font.Size = 24;
+        builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
+        builder.ParagraphFormat.LineSpacing = 18; // 1.5 lines (default line height is 12 points)
+
+        // Write the sample text.
+        builder.Writeln(sampleText);
 
         // Create a minimal hyphenation dictionary for English (US).
-        // The first line must be the encoding, followed by word=hyphenation-pattern lines.
-        File.WriteAllText(dictFileName,
+        string dictPath = Path.Combine(Directory.GetCurrentDirectory(), "hyph_en_US.dic");
+        File.WriteAllText(dictPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary so that Aspose.Words can hyphenate the words above.
-        Hyphenation.RegisterDictionary("en-US", dictFileName);
+        // Register the dictionary with Aspose.Words.
+        Hyphenation.RegisterDictionary("en-US", dictPath);
 
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Narrow the page width to force line wrapping where hyphenation can occur.
-        doc.FirstSection.PageSetup.PageWidth = 300; // points
-        doc.FirstSection.PageSetup.LeftMargin = 20;
-        doc.FirstSection.PageSetup.RightMargin = 20;
-
-        // Write a paragraph containing long words that match the dictionary entries.
-        builder.Font.Size = 12;
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-
-        // Enable automatic hyphenation and configure its options.
+        // Enable automatic hyphenation for the document.
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
         doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+        doc.HyphenationOptions.HyphenationZone = 720; // 0.5 inch
         doc.HyphenationOptions.HyphenateCaps = true;
 
-        // Adjust line spacing to improve readability.
-        builder.ParagraphFormat.LineSpacingRule = LineSpacingRule.Multiple;
-        builder.ParagraphFormat.LineSpacing = 18; // 1.5 lines (default line height is 12 points)
+        // Save the result to PDF.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Hyphenated.pdf");
+        doc.Save(outputPath, SaveFormat.Pdf);
 
-        // Save the document to PDF so that hyphenation and spacing are visible.
-        const string outputFile = "HyphenatedAndSpaced.pdf";
-        doc.Save(outputFile, SaveFormat.Pdf);
+        // Verify that the file was created.
+        if (!File.Exists(outputPath))
+            throw new InvalidOperationException("The expected output PDF was not created.");
 
-        // Verify that the output file was created.
-        if (!File.Exists(outputFile))
-            throw new InvalidOperationException("The output PDF was not created.");
-
-        // Clean up the temporary dictionary file.
-        if (File.Exists(dictFileName))
-            File.Delete(dictFileName);
+        // Clean up the temporary dictionary file (optional).
+        if (File.Exists(dictPath))
+            File.Delete(dictPath);
     }
 }

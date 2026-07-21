@@ -2,81 +2,78 @@ using System;
 using System.Globalization;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Settings;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for artifacts
-        const string dictPath = "hyph_en_US.dic";
-        const string pdfBeforePath = "hyphenated_before.pdf";
-        const string pdfAfterPath = "hyphenated_after.pdf";
-
-        // Ensure a clean environment
-        if (File.Exists(dictPath)) File.Delete(dictPath);
-        if (File.Exists(pdfBeforePath)) File.Delete(pdfBeforePath);
-        if (File.Exists(pdfAfterPath)) File.Delete(pdfAfterPath);
+        // Paths for the dictionary and output files.
+        const string dictionaryPath = "hyph_en_US.dic";
+        const string outputV1 = "hyphenated_v1.pdf";
+        const string outputV2 = "hyphenated_v2.pdf";
 
         // -----------------------------------------------------------------
-        // Step 1: Create an initial hyphenation dictionary file.
-        // The dictionary follows the OpenOffice format: first line is the encoding,
-        // subsequent lines contain word=hyphenation-points.
+        // Step 1: Create an initial hyphenation dictionary.
         // -----------------------------------------------------------------
-        File.WriteAllText(dictPath,
+        File.WriteAllText(dictionaryPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
-            "internationalization=in-ter-na-tion-al-i-za-tion\n");
+            "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary for the "en-US" locale.
-        Hyphenation.RegisterDictionary("en-US", dictPath);
+        // Register the dictionary for the en-US locale.
+        Aspose.Words.Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
         // -----------------------------------------------------------------
-        // Step 2: Build a sample document that will trigger hyphenation.
+        // Step 2: Build a sample document that will be hyphenated.
         // -----------------------------------------------------------------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Use a narrow page width to force line wrapping.
-        doc.FirstSection.PageSetup.PageWidth = 200; // points
+        doc.FirstSection.PageSetup.PageWidth = 200;
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
+        // Set the language of the text.
+        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
+        builder.Font.Size = 24;
+
+        // Write text containing words defined in the dictionary.
+        builder.Writeln(
+            "extraordinarycharacteristically communication extraordinarycharacteristically communication");
+
         // Enable automatic hyphenation.
         doc.HyphenationOptions.AutoHyphenation = true;
-        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
-        doc.HyphenationOptions.HyphenationZone = 360; // 0.25 inch
-        doc.HyphenationOptions.HyphenateCaps = true;
 
-        // Set the paragraph locale to match the dictionary language.
-        builder.Font.LocaleId = new CultureInfo("en-US").LCID;
-        builder.Font.Size = 12;
-        builder.Writeln("extraordinarycharacteristically internationalization communication");
-
-        // Save the first PDF using the initial dictionary.
-        doc.Save(pdfBeforePath, SaveFormat.Pdf);
-        if (!File.Exists(pdfBeforePath))
-            throw new InvalidOperationException($"Failed to create '{pdfBeforePath}'.");
+        // Save the first version of the document.
+        doc.Save(outputV1);
+        ValidateFileExists(outputV1, "First PDF output");
 
         // -----------------------------------------------------------------
         // Step 3: Simulate a CI pipeline update – modify the dictionary.
         // -----------------------------------------------------------------
-        // Append a new hyphenation pattern for the word "communication".
-        File.AppendAllText(dictPath,
-            "communication=com-mu-ni-ca-tion\n");
+        // Append a new pattern to the dictionary (e.g., for "internationalization").
+        File.AppendAllText(dictionaryPath,
+            "internationalization=inter-na-tion-al-i-za-tion\n");
 
-        // Re‑register the updated dictionary.
-        Hyphenation.UnregisterDictionary("en-US");
-        Hyphenation.RegisterDictionary("en-US", dictPath);
+        // Unregister the old dictionary and register the updated one.
+        Aspose.Words.Hyphenation.UnregisterDictionary("en-US");
+        Aspose.Words.Hyphenation.RegisterDictionary("en-US", dictionaryPath);
 
-        // Re‑save the document to a new PDF to reflect the updated patterns.
-        doc.Save(pdfAfterPath, SaveFormat.Pdf);
-        if (!File.Exists(pdfAfterPath))
-            throw new InvalidOperationException($"Failed to create '{pdfAfterPath}'.");
+        // Rebuild the layout to apply the updated hyphenation rules.
+        doc.UpdatePageLayout();
 
-        // -----------------------------------------------------------------
-        // Step 4: Validation – both PDFs should exist.
-        // -----------------------------------------------------------------
-        Console.WriteLine($"Generated PDFs:\n  {pdfBeforePath}\n  {pdfAfterPath}");
+        // Save the document again with the updated dictionary.
+        doc.Save(outputV2);
+        ValidateFileExists(outputV2, "Second PDF output");
+
+        // Indicate successful completion.
+        Console.WriteLine("Hyphenation dictionary update simulation completed successfully.");
+    }
+
+    private static void ValidateFileExists(string path, string description)
+    {
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"{description} was not created at '{path}'.");
     }
 }

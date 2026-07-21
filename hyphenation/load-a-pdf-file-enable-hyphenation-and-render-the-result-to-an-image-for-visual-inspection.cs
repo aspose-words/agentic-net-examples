@@ -4,73 +4,59 @@ using Aspose.Words;
 using Aspose.Words.Saving;
 using Aspose.Words.Settings;
 
-public class HyphenationDemo
+public class Program
 {
     public static void Main()
     {
-        // Paths for temporary files.
-        const string dictionaryPath = "hyph_en_US.dic";
-        const string pdfPath = "sample.pdf";
-        const string imagePath = "rendered.jpg";
+        // Create a sample document with long words that can be hyphenated.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Font.Size = 24;
+        builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // 1. Create a minimal hyphenation dictionary for English (US).
-        // The dictionary format is OpenOffice style: first line is encoding, then word=hyphenation points.
-        File.WriteAllText(dictionaryPath,
+        // Narrow the page width to force line wrapping and hyphenation.
+        doc.FirstSection.PageSetup.PageWidth = 200;
+        doc.FirstSection.PageSetup.LeftMargin = 20;
+        doc.FirstSection.PageSetup.RightMargin = 20;
+
+        // Save the document as a PDF – this will be the source PDF we later load.
+        const string pdfPath = "sample.pdf";
+        doc.Save(pdfPath);
+        if (!File.Exists(pdfPath))
+            throw new InvalidOperationException("Failed to create the source PDF.");
+
+        // Create a minimal hyphenation dictionary for English (US).
+        const string dictPath = "hyph_en_US.dic";
+        File.WriteAllText(dictPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Register the dictionary so that hyphenation can be applied.
-        Hyphenation.RegisterDictionary("en-US", dictionaryPath);
+        // Register the dictionary so Aspose.Words can hyphenate words in the document.
+        Hyphenation.RegisterDictionary("en-US", dictPath);
+        if (!Hyphenation.IsDictionaryRegistered("en-US"))
+            throw new InvalidOperationException("Hyphenation dictionary registration failed.");
 
-        // 2. Build a source document with long words that require hyphenation.
-        Document sourceDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        // Load the previously saved PDF.
+        var pdfDoc = new Document(pdfPath);
 
-        // Use a narrow page width to force line wrapping.
-        sourceDoc.FirstSection.PageSetup.PageWidth = 200; // points
-        sourceDoc.FirstSection.PageSetup.LeftMargin = 20;
-        sourceDoc.FirstSection.PageSetup.RightMargin = 20;
-
-        // Write a paragraph containing words that match the dictionary.
-        builder.Font.Size = 12;
-        builder.Writeln(
-            "extraordinarycharacteristically internationalization communication " +
-            "extraordinarycharacteristically internationalization communication");
-
-        // 3. Save the source document as PDF – this will be the file we later load.
-        sourceDoc.Save(pdfPath, SaveFormat.Pdf);
-
-        // Verify that the PDF was created.
-        if (!File.Exists(pdfPath))
-            throw new InvalidOperationException("Failed to create the PDF file.");
-
-        // 4. Load the PDF file.
-        Document pdfDoc = new Document(pdfPath);
-
-        // 5. Enable automatic hyphenation for the loaded document.
+        // Enable automatic hyphenation for the loaded document.
         pdfDoc.HyphenationOptions.AutoHyphenation = true;
-        // Use the default hyphenation zone (360 = 0.25 inch) – 0 is invalid.
+        // Use a valid hyphenation zone (default is 360 = 0.25 inch).
         pdfDoc.HyphenationOptions.HyphenationZone = 360;
         pdfDoc.HyphenationOptions.HyphenateCaps = true;
-        pdfDoc.HyphenationOptions.ConsecutiveHyphenLimit = 0; // unlimited
+        pdfDoc.HyphenationOptions.ConsecutiveHyphenLimit = 0; // 0 = unlimited
 
-        // 6. Render the first page of the PDF to an image.
-        ImageSaveOptions imageOptions = new ImageSaveOptions(SaveFormat.Jpeg)
+        // Render the first page of the PDF to an image for visual inspection.
+        var imageOptions = new ImageSaveOptions(SaveFormat.Jpeg)
         {
-            PageSet = new PageSet(0), // first page (zero‑based)
+            PageSet = new PageSet(0), // Render only the first page (zero‑based index).
             Resolution = 300
         };
+        const string imagePath = "rendered.jpg";
         pdfDoc.Save(imagePath, imageOptions);
-
-        // Verify that the image was created.
         if (!File.Exists(imagePath))
             throw new InvalidOperationException("Failed to render the PDF to an image.");
-
-        // Optional cleanup (commented out to keep output files for inspection).
-        // File.Delete(dictionaryPath);
-        // File.Delete(pdfPath);
-        // File.Delete(imagePath);
     }
 }

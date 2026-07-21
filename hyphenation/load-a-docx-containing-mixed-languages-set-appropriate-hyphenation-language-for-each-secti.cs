@@ -2,62 +2,70 @@ using System;
 using System.Globalization;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Saving;
 
-public class HyphenationExample
+public class Program
 {
     public static void Main()
     {
-        // Paths for temporary dictionary files.
-        const string enDictPath = "hyph_en_US.dic";
-        const string deDictPath = "hyph_de_CH.dic";
+        // Paths for output and temporary dictionary files.
+        const string outputPdf = "HyphenatedOutput.pdf";
+        const string dictEnPath = "hyph_en_US.dic";
+        const string dictDePath = "hyph_de_CH.dic";
 
-        // Create minimal English hyphenation dictionary.
-        File.WriteAllText(enDictPath,
+        // Create minimal hyphenation dictionaries required for the example.
+        // The first line must be the encoding identifier.
+        File.WriteAllText(dictEnPath,
             "UTF-8\n" +
             "extraordinarycharacteristically=extra-or-di-nary-char-ac-ter-is-ti-cal-ly\n" +
             "internationalization=in-ter-na-tion-al-i-za-tion\n" +
             "communication=com-mu-ni-ca-tion\n");
 
-        // Create minimal German hyphenation dictionary.
-        File.WriteAllText(deDictPath,
+        File.WriteAllText(dictDePath,
             "UTF-8\n" +
-            "Beispielwortzusammensetzung=Beis-piel-wort-zu-sam-men-set-zung\n");
+            "ausgezeichnete=aus-ge-zeich-net-te\n" +
+            "kommunikation=ko-mmu-ni-ka-tion\n" +
+            "internationalisierung=in-ter-na-tio-na-li-sie-rung\n");
 
-        // Register both dictionaries.
-        Hyphenation.RegisterDictionary("en-US", enDictPath);
-        Hyphenation.RegisterDictionary("de-CH", deDictPath);
+        // Register the dictionaries for the corresponding language codes.
+        Hyphenation.RegisterDictionary("en-US", dictEnPath);
+        Hyphenation.RegisterDictionary("de-CH", dictDePath);
 
-        // Create a new document.
+        // Create a new blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
         // Narrow page width to force line wrapping and hyphenation.
-        doc.FirstSection.PageSetup.PageWidth = 200;
+        doc.FirstSection.PageSetup.PageWidth = 200; // points
         doc.FirstSection.PageSetup.LeftMargin = 20;
         doc.FirstSection.PageSetup.RightMargin = 20;
 
-        // English paragraph.
+        // ---------- Section 1 – English ----------
         builder.Font.LocaleId = new CultureInfo("en-US").LCID;
         builder.Writeln("extraordinarycharacteristically internationalization communication");
 
-        // New section for German text.
+        // Insert a section break to start a new section with a different language.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
+
+        // ---------- Section 2 – German ----------
         builder.Font.LocaleId = new CultureInfo("de-CH").LCID;
-        builder.Writeln("Beispielwortzusammensetzung");
+        builder.Writeln("ausgezeichnete kommunikation und internationalisierung");
 
         // Enable automatic hyphenation for the whole document.
         doc.HyphenationOptions.AutoHyphenation = true;
+        doc.HyphenationOptions.ConsecutiveHyphenLimit = 2;
+        doc.HyphenationOptions.HyphenationZone = 360; // default
+        doc.HyphenationOptions.HyphenateCaps = true;
 
-        // Save the result.
-        const string outputPath = "HyphenatedOutput.pdf";
-        doc.Save(outputPath, SaveFormat.Pdf);
+        // Save the document to PDF.
+        doc.Save(outputPdf, SaveFormat.Pdf);
 
-        // Verify that the output file was created.
-        if (!File.Exists(outputPath))
-            throw new InvalidOperationException("The expected output file was not created.");
+        // Verify that the PDF was created.
+        if (!File.Exists(outputPdf))
+            throw new InvalidOperationException("The expected PDF output was not created.");
 
-        // Clean up temporary dictionary files.
-        File.Delete(enDictPath);
-        File.Delete(deDictPath);
+        // Clean up temporary dictionary files (optional).
+        File.Delete(dictEnPath);
+        File.Delete(dictDePath);
     }
 }
