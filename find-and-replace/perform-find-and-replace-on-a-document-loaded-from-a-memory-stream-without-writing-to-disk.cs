@@ -2,39 +2,41 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Aspose.Words.Saving;
 
 public class Program
 {
     public static void Main()
     {
         // Create a sample document in memory.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document containing the word old.");
+        Document sourceDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(sourceDoc);
+        builder.Writeln("This is the old value.");
+        builder.Writeln("Another line with old value inside.");
 
-        // Save the document to a memory stream (no disk I/O).
-        using MemoryStream inputStream = new MemoryStream();
-        doc.Save(inputStream, SaveFormat.Docx);
-        inputStream.Position = 0; // Reset for reading.
+        // Save the document to a memory stream.
+        using MemoryStream sourceStream = new MemoryStream();
+        sourceDoc.Save(sourceStream, SaveFormat.Docx);
+        sourceStream.Position = 0; // Reset for reading.
 
         // Load the document from the memory stream.
-        Document loadedDoc = new Document(inputStream);
+        Document loadedDoc = new Document(sourceStream);
 
-        // Perform a find-and-replace operation.
+        // Perform find-and-replace.
         FindReplaceOptions options = new FindReplaceOptions();
-        int replaceCount = loadedDoc.Range.Replace("old", "new", options);
+        int replacedCount = loadedDoc.Range.Replace("old", "new", options);
 
-        // Validate that a replacement occurred.
-        if (replaceCount == 0)
+        if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
-        // Optionally, output the resulting text to the console.
-        Console.WriteLine("Modified document text:");
-        Console.WriteLine(loadedDoc.GetText());
+        // Save the modified document to another memory stream (no disk I/O).
+        using MemoryStream resultStream = new MemoryStream();
+        loadedDoc.Save(resultStream, SaveFormat.Docx);
+        resultStream.Position = 0; // Reset if further processing is needed.
 
-        // Save the modified document to another memory stream (still no disk I/O).
-        using MemoryStream outputStream = new MemoryStream();
-        loadedDoc.Save(outputStream, SaveFormat.Docx);
-        // The outputStream now contains the updated DOCX file.
+        // Output a simple verification to the console.
+        Console.WriteLine($"Replacements performed: {replacedCount}");
+        Console.WriteLine("Modified document text:");
+        Console.WriteLine(loadedDoc.GetText().Trim());
     }
 }

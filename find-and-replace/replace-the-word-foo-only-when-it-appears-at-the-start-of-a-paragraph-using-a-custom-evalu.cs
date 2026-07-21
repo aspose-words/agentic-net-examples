@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -13,48 +12,50 @@ public class Program
 
         // Add sample paragraphs.
         builder.Writeln("foo is at the start of this paragraph.");
-        builder.Writeln("This line contains foo but not at the start.");
-        builder.Writeln("   foo with leading spaces should also be considered at start.");
-        builder.Writeln("No occurrence here.");
+        builder.Writeln("This foo is not at the start.");
+        builder.Writeln("foo");
+        builder.Writeln("Another line with foo at the start.");
 
         // Set up find‑replace options with a custom callback.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new StartOfParagraphReplacer()
+            ReplacingCallback = new StartOfParagraphCallback()
         };
 
-        // Replace the word "foo" with "bar" only when it appears at the start of a paragraph.
+        // Perform the replace operation.
         int replacedCount = doc.Range.Replace("foo", "bar", options);
 
-        // Validate that at least one replacement was performed.
+        // Validate that at least one replacement occurred.
         if (replacedCount == 0)
             throw new InvalidOperationException("Expected at least one replacement, but none were made.");
 
         // Save the modified document.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
-        doc.Save(outputPath);
+        doc.Save("output.docx");
     }
 
-    // Callback that allows replacement only when the match is at the start of its paragraph.
-    private class StartOfParagraphReplacer : IReplacingCallback
+    // Callback that replaces only matches that appear at the start of a paragraph.
+    private class StartOfParagraphCallback : IReplacingCallback
     {
         public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // The match offset is the zero‑based position within the node that contains the match.
-            // If the offset is zero, the match starts at the beginning of that node.
-            // Additionally, ensure the node is the first text node of the paragraph.
-            if (args.MatchOffset == 0)
+            // The node that contains the beginning of the match.
+            Node matchNode = args.MatchNode;
+
+            // Its parent should be a paragraph.
+            if (matchNode?.ParentNode is not Paragraph paragraph)
+                return ReplaceAction.Skip;
+
+            // Determine if the match is at the very beginning of the paragraph.
+            bool isAtParagraphStart = args.MatchOffset == 0 && matchNode == paragraph.FirstChild;
+
+            if (isAtParagraphStart)
             {
-                // Verify that the node containing the match is the first child of its paragraph.
-                var paragraph = (Paragraph)args.MatchNode.GetAncestor(NodeType.Paragraph);
-                if (paragraph != null && paragraph.FirstChild == args.MatchNode)
-                {
-                    // Allow the replacement.
-                    return ReplaceAction.Replace;
-                }
+                // Replace the word.
+                args.Replacement = "bar";
+                return ReplaceAction.Replace;
             }
 
-            // Skip replacement for all other occurrences.
+            // Otherwise, skip this match.
             return ReplaceAction.Skip;
         }
     }

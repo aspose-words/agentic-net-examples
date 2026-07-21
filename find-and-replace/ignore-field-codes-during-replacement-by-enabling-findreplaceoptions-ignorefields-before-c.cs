@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -6,38 +7,39 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
+        // Create a sample document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add normal text that will be replaced.
+        // Normal text that will be replaced.
         builder.Writeln("Hello world!");
 
-        // Insert a field whose field code contains the same text.
-        // The field code will be ignored during replacement when IgnoreFields is true.
-        builder.InsertField("QUOTE", "Hello again!");
+        // Insert a field whose field code contains the word "Hello".
+        // This field will be ignored during replacement when IgnoreFields is true.
+        builder.InsertField("MERGEFIELD", "Hello");
 
-        // Save the original document (optional, for inspection).
-        doc.Save("original.docx");
+        // Save the source document.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        doc.Save(inputPath);
 
-        // Configure find/replace options to ignore whole fields.
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
+
+        // Configure find/replace to ignore whole fields.
         FindReplaceOptions options = new FindReplaceOptions
         {
             IgnoreFields = true
         };
 
-        // Perform the replacement. Only the normal text should be changed.
-        int replacedCount = doc.Range.Replace("Hello", "Greetings", options);
+        // Replace "Hello" with "Hi". Only the normal text should be replaced.
+        int replacedCount = loaded.Range.Replace("Hello", "Hi", options);
 
-        // Validate that exactly one replacement occurred (the normal paragraph).
+        // Verify that exactly one replacement occurred (the field was ignored).
         if (replacedCount != 1)
             throw new InvalidOperationException($"Expected 1 replacement, but got {replacedCount}.");
 
         // Save the modified document.
-        doc.Save("output.docx");
-
-        // Output a simple confirmation.
-        Console.WriteLine($"Replacements performed: {replacedCount}");
-        Console.WriteLine("Modified document saved as 'output.docx'.");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        loaded.Save(outputPath);
     }
 }

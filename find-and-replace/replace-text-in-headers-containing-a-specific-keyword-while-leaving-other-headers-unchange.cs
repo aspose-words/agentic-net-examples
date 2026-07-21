@@ -2,73 +2,50 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
-public class Program
+public class HeaderReplaceExample
 {
     public static void Main()
     {
-        // File names (created in the current working directory).
-        const string inputPath = "input.docx";
-        const string outputPath = "output.docx";
-
-        // -----------------------------------------------------------------
-        // Create a sample document with several headers.
-        // -----------------------------------------------------------------
+        // Create a blank document.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Enable distinct first‑page and odd/even headers.
-        builder.PageSetup.DifferentFirstPageHeaderFooter = true;
-        builder.PageSetup.OddAndEvenPagesHeaderFooter = true;
-
-        // Primary header (odd pages) – contains the keyword.
+        // First section with a primary header that contains the keyword "Special".
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Company Report – ReplaceMe");
-
-        // First‑page header – does NOT contain the keyword.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-        builder.Writeln("Company Report – First Page");
-
-        // Even‑page header – contains the keyword.
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
-        builder.Writeln("Company Report – ReplaceMe");
-
-        // Return to the main story before inserting a section break.
+        builder.Writeln("Special Header - _Company_");
         builder.MoveToDocumentEnd();
+
+        // Add a second section with a primary header that does NOT contain the keyword.
+        // Insert a section break to start a new section.
         builder.InsertBreak(BreakType.SectionBreakNewPage);
-
-        // Second section – same header layout.
+        // After the break the builder is positioned in the new section's body.
         builder.MoveToHeaderFooter(HeaderFooterType.HeaderPrimary);
-        builder.Writeln("Summary – ReplaceMe");
+        builder.Writeln("Regular Header - _Company_");
+        builder.MoveToDocumentEnd();
 
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderFirst);
-        builder.Writeln("Summary – First Page");
-
-        builder.MoveToHeaderFooter(HeaderFooterType.HeaderEven);
-        builder.Writeln("Summary – ReplaceMe");
-
-        // Save the sample document.
+        // Save the original document (optional, for inspection).
+        const string inputPath = "HeaderReplaceInput.docx";
         doc.Save(inputPath);
 
-        // -----------------------------------------------------------------
-        // Load the document and replace the keyword only in headers.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(inputPath);
+        // Load the document for processing.
+        Document loaded = new Document(inputPath);
 
-        const string keyword = "ReplaceMe";
-        const string replacement = "Replaced";
+        const string keyword = "Special";
+        const string placeholder = "_Company_";
+        const string replacement = "Acme Corp";
 
         int totalReplacements = 0;
-        FindReplaceOptions options = new FindReplaceOptions();
 
-        foreach (Section section in loadedDoc.Sections)
+        // Iterate through all headers in all sections.
+        foreach (Section section in loaded.Sections)
         {
-            HeaderFooterCollection headers = section.HeadersFooters;
-            foreach (HeaderFooter header in headers)
+            foreach (HeaderFooter header in section.HeadersFooters)
             {
-                // Process only headers that actually contain the keyword.
-                if (header.Range.Text.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                // Process only primary headers that contain the keyword.
+                if (header.HeaderFooterType == HeaderFooterType.HeaderPrimary &&
+                    header.GetText().Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 {
-                    int replaced = header.Range.Replace(keyword, replacement, options);
+                    int replaced = header.Range.Replace(placeholder, replacement, new FindReplaceOptions());
                     totalReplacements += replaced;
                 }
             }
@@ -76,9 +53,10 @@ public class Program
 
         // Validate that at least one replacement occurred.
         if (totalReplacements == 0)
-            throw new InvalidOperationException("No header replacements were performed.");
+            throw new InvalidOperationException("No replacements were made in the targeted headers.");
 
         // Save the modified document.
-        loadedDoc.Save(outputPath);
+        const string outputPath = "HeaderReplaceOutput.docx";
+        loaded.Save(outputPath);
     }
 }

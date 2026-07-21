@@ -1,28 +1,38 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Replacing;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a sample document.
+        // Create a sample document containing the text "(c)".
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Example text with a copyright symbol: (c) 2023 Aspose.");
+        builder.Writeln("This is a sample document. (c) 2023 Example Corp.");
 
-        // Define a regular expression that matches the copyright symbol written as "(c)".
+        // Save the sample document to a local file.
+        string inputPath = Path.Combine(Directory.GetCurrentDirectory(), "input.docx");
+        doc.Save(inputPath);
+
+        // Load the document we just created.
+        Document loadedDoc = new Document(inputPath);
+
+        // Define a regular expression that matches the copyright symbol written as "(c)" (case‑insensitive).
         Regex copyrightRegex = new Regex(@"\(c\)", RegexOptions.IgnoreCase);
 
-        // Perform the replacement with the Unicode © character.
-        int replacedCount = doc.Range.Replace(copyrightRegex, "©", new FindReplaceOptions());
+        // Replace all matches with the Unicode © character.
+        int replacementCount = loadedDoc.Range.Replace(copyrightRegex, "©", new FindReplaceOptions());
 
-        // Ensure that at least one replacement was made.
-        if (replacedCount == 0)
+        // Ensure that at least one replacement was performed.
+        if (replacementCount == 0)
             throw new InvalidOperationException("Expected at least one copyright symbol replacement.");
 
         // Save the modified document.
-        doc.Save("output.docx");
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        loadedDoc.Save(outputPath);
     }
 }

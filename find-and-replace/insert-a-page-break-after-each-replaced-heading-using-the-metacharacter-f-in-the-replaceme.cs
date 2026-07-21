@@ -1,6 +1,5 @@
 using System;
-using System.IO;
-using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -8,39 +7,55 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with several headings.
+        // Create a sample document with headings.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
+        // Heading 1
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 1");
-        builder.Writeln("Content under heading 1.");
+        builder.Writeln("Chapter One");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 2");
-        builder.Writeln("Content under heading 2.");
+        // Body text.
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("This is the first chapter.");
 
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Heading 3");
-        builder.Writeln("Content under heading 3.");
+        // Heading 2
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section A");
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Details of section A.");
+
+        // Heading 2 again
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
+        builder.Writeln("Section B");
+
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Normal;
+        builder.Writeln("Details of section B.");
 
         // Save the original document (optional, for inspection).
-        string inputPath = Path.Combine(Environment.CurrentDirectory, "Input.docx");
-        doc.Save(inputPath);
+        doc.Save("input.docx");
 
-        // Replace each heading with the same text followed by a page break using the \f metacharacter.
-        Regex headingRegex = new Regex(@"Heading \d+");
-        FindReplaceOptions options = new FindReplaceOptions
+        // Headings that need a page break after them.
+        string[] headings = { "Chapter One", "Section A", "Section B" };
+        int totalReplacements = 0;
+
+        // Replace each heading with itself followed by a page break meta‑character (&m).
+        foreach (string heading in headings)
         {
-            UseSubstitutions = true // Enable $0 substitution.
-        };
-        int replacedCount = doc.Range.Replace(headingRegex, "$0\f", options);
+            // Use FindReplaceOptions with default settings.
+            FindReplaceOptions options = new FindReplaceOptions();
 
-        if (replacedCount == 0)
+            // Perform the replacement.
+            int replaced = doc.Range.Replace(heading, heading + "&m", options);
+            totalReplacements += replaced;
+        }
+
+        // Validate that at least one replacement occurred.
+        if (totalReplacements == 0)
             throw new InvalidOperationException("No headings were replaced.");
 
         // Save the modified document.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "Output.docx");
-        doc.Save(outputPath);
+        doc.Save("output.docx");
     }
 }

@@ -1,5 +1,6 @@
 using System;
-using System.Text.RegularExpressions;
+using System.Drawing;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Replacing;
 
@@ -7,58 +8,53 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new document and add some paragraphs.
+        // Create a blank document and add sample paragraphs.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("This paragraph will stay unchanged.");
-        builder.Writeln("Please replace this text.");
-        builder.Writeln("Another line that needs to be replace.");
+        builder.Writeln("This is the first paragraph with a PLACEHOLDER.");
+        builder.Writeln("Second paragraph also contains PLACEHOLDER text.");
+        builder.Writeln("No placeholder here.");
+        builder.Writeln("Another PLACEHOLDER appears in this line.");
 
-        // Define a custom paragraph style that will be applied to replaced paragraphs.
-        const string styleName = "ReplacedParagraphStyle";
-        Style customStyle = doc.Styles.Add(StyleType.Paragraph, styleName);
-        customStyle.Font.Name = "Arial";
+        // Define a custom style that will be applied to replaced paragraphs.
+        Style customStyle = doc.Styles.Add(StyleType.Paragraph, "MyCustomStyle");
+        customStyle.Font.Color = Color.Blue;
         customStyle.Font.Size = 14;
-        customStyle.Font.Color = System.Drawing.Color.Blue;
-        customStyle.Font.Bold = true;
 
-        // Set up the find‑replace options with a callback that applies the style.
+        // Set up find‑replace options with a callback that applies the style.
         FindReplaceOptions options = new FindReplaceOptions
         {
-            ReplacingCallback = new ReplaceAndStyleCallback(doc, styleName)
+            ReplacingCallback = new ReplaceAndStyleCallback(customStyle.Name)
         };
 
         // Perform the replacement.
-        int replacedCount = doc.Range.Replace("replace", "replaced", options);
+        int replacedCount = doc.Range.Replace("PLACEHOLDER", "Replaced", options);
         if (replacedCount == 0)
-            throw new InvalidOperationException("No occurrences were replaced.");
+            throw new InvalidOperationException("Expected at least one replacement.");
 
         // Save the modified document.
         doc.Save("output.docx");
-        Console.WriteLine($"Replacements performed: {replacedCount}");
     }
 
-    // Callback that applies the custom style to the paragraph containing each match.
+    // Callback that replaces the matched text and applies the custom style to the containing paragraph.
     private class ReplaceAndStyleCallback : IReplacingCallback
     {
-        private readonly Document _document;
         private readonly string _styleName;
 
-        public ReplaceAndStyleCallback(Document document, string styleName)
+        public ReplaceAndStyleCallback(string styleName)
         {
-            _document = document ?? throw new ArgumentNullException(nameof(document));
             _styleName = styleName ?? throw new ArgumentNullException(nameof(styleName));
         }
 
-        public ReplaceAction Replacing(ReplacingArgs args)
+        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
         {
-            // The match is inside a Run; its parent is the Paragraph we want to style.
-            if (args.MatchNode?.ParentNode is Paragraph paragraph)
-            {
-                paragraph.ParagraphFormat.Style = _document.Styles[_styleName];
-            }
+            // Set the replacement text.
+            args.Replacement = "Replaced";
 
-            // Continue with the normal replacement.
+            // Find the paragraph that contains the match and apply the style.
+            if (args.MatchNode?.ParentNode is Paragraph paragraph)
+                paragraph.ParagraphFormat.StyleName = _styleName;
+
             return ReplaceAction.Replace;
         }
     }

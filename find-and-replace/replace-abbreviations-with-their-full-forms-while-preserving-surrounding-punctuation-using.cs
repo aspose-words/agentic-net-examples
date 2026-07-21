@@ -11,20 +11,20 @@ public class Program
         // Create a blank document and add sample text containing abbreviations.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("The meeting will start at 10 a.m., e.g., after the briefing. Please bring your ID, i.e., a passport.");
-        builder.Writeln("Remember to bring snacks, etc., for the break.");
+        builder.Writeln("This is an example, e.g., of abbreviations i.e., used in text etc.");
+        builder.Writeln("Another line with e.g; and i.e: and etc!");
 
-        // Regex that matches the abbreviations and captures any following punctuation.
-        // The trailing word‑boundary is removed so that a comma or other punctuation
-        // immediately after the abbreviation is still part of the match.
-        Regex abbreviationRegex = new Regex(@"\b(e\.g\.|i\.e\.|etc\.)(?<punctuation>[\.,;:]?)",
+        // Define a regex that matches the abbreviations and captures any following punctuation.
+        Regex abbreviationRegex = new Regex(@"\b(e\.g|i\.e|etc)\b(?<punct>[\.,;:]?)",
                                             RegexOptions.IgnoreCase);
 
-        // Set up find‑and‑replace options with a custom callback.
-        FindReplaceOptions options = new FindReplaceOptions();
-        options.ReplacingCallback = new AbbreviationReplacer();
+        // Set up find‑replace options with a custom callback to map each abbreviation to its full form.
+        FindReplaceOptions options = new FindReplaceOptions
+        {
+            ReplacingCallback = new AbbreviationReplacer()
+        };
 
-        // Perform the replace operation. The replacement string is ignored because the callback supplies the value.
+        // Perform the replacement. The replacement string is ignored because the callback supplies it.
         int replacedCount = doc.Range.Replace(abbreviationRegex, string.Empty, options);
 
         // Validate that at least one replacement occurred.
@@ -41,28 +41,33 @@ public class Program
         Console.WriteLine(doc.GetText().Trim());
     }
 
-    // Callback that replaces each abbreviation with its full form while preserving captured punctuation.
+    // Callback that replaces each matched abbreviation with its full form,
+    // preserving any trailing punctuation captured by the regex.
     private class AbbreviationReplacer : IReplacingCallback
     {
-        private static readonly Dictionary<string, string> FullForms = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<string, string> FullFormMap = new(StringComparer.OrdinalIgnoreCase)
         {
-            { "e.g.", "for example" },
-            { "i.e.", "that is" },
-            { "etc.", "and so on" }
+            { "e.g", "for example" },
+            { "i.e", "that is" },
+            { "etc", "and so on" }
         };
 
-        ReplaceAction IReplacingCallback.Replacing(ReplacingArgs args)
+        public ReplaceAction Replacing(ReplacingArgs args)
         {
-            // Determine the full form based on the matched abbreviation.
-            string abbreviation = args.Match.Value;
-            if (!FullForms.TryGetValue(abbreviation, out string fullForm))
-                fullForm = abbreviation; // Fallback: keep original if not found.
+            // Group 1 contains the abbreviation without punctuation.
+            string abbreviation = args.Match.Groups[1].Value;
+            // Named group "punct" contains any trailing punctuation.
+            string punctuation = args.Match.Groups["punct"].Value;
 
-            // Retrieve any trailing punctuation captured by the regex.
-            string punctuation = args.Match.Groups["punctuation"].Value;
-
-            // Set the replacement text.
-            args.Replacement = fullForm + punctuation;
+            if (FullFormMap.TryGetValue(abbreviation, out string fullForm))
+            {
+                args.Replacement = fullForm + punctuation;
+            }
+            else
+            {
+                // Fallback: keep the original text unchanged.
+                args.Replacement = args.Match.Value;
+            }
 
             return ReplaceAction.Replace;
         }

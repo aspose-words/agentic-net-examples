@@ -1,36 +1,33 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Replacing;
-using Newtonsoft.Json; // Required package, not used directly
+using Aspose.Drawing;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Define file names in the current directory.
-        string inputPath = Path.Combine(Environment.CurrentDirectory, "input.docx");
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "output.docx");
+        // Create a sample DOCX file with text that contains the target string.
+        var sampleDoc = new Document();
+        var builder = new DocumentBuilder(sampleDoc);
+        builder.Writeln("Hello old value.");
+        builder.Writeln("Another old line.");
+        const string inputFile = "input.docx";
+        sampleDoc.Save(inputFile);
 
-        // -----------------------------------------------------------------
-        // Create a sample DOCX file containing the text to be replaced.
-        // -----------------------------------------------------------------
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("This is a sample document.");
-        builder.Writeln("Replace the word old with new.");
-        builder.Writeln("Another old occurrence here.");
-        doc.Save(inputPath);
+        // Load the document from the file system.
+        var doc = new Document(inputFile);
 
-        // -----------------------------------------------------------------
-        // Load the document, perform a literal string replacement, and save.
-        // -----------------------------------------------------------------
-        var loadedDoc = new Document(inputPath);
-        int replacedCount = loadedDoc.Range.Replace("old", "new", new FindReplaceOptions());
+        // Replace all occurrences of the literal string "old" with "new".
+        int replacementCount = doc.Range.Replace("old", "new", new FindReplaceOptions());
 
-        if (replacedCount == 0)
-            throw new InvalidOperationException("Expected at least one replacement, but none were made.");
+        // Verify that at least one replacement was made.
+        if (replacementCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement.");
 
-        loadedDoc.Save(outputPath);
+        // Save the modified document.
+        const string outputFile = "output.docx";
+        doc.Save(outputFile);
     }
 }

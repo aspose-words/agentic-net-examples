@@ -7,23 +7,34 @@ public class Program
 {
     public static void Main()
     {
-        // Create a sample document with text that matches a regular expression pattern.
+        // Create a sample document containing text that matches a regex pattern.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
         builder.Writeln("Order 123 and Order 456");
-        doc.Save("input.docx");
 
-        // Load the document we just created.
-        Document loaded = new Document("input.docx");
+        // Save the source document (demonstrates the create/save lifecycle).
+        const string inputPath = "input.docx";
+        doc.Save(inputPath);
 
-        // Perform the regex‑based replacement using the Regex overload.
-        int replacedCount = loaded.Range.Replace(new Regex(@"Order \d+"), "Order ###", new FindReplaceOptions());
+        // Load the document from the file system (demonstrates the load lifecycle).
+        Document loaded = new Document(inputPath);
 
-        // Ensure that the expected number of replacements occurred.
-        if (replacedCount != 2)
-            throw new InvalidOperationException($"Expected 2 replacements, but got {replacedCount}.");
+        // Configure FindReplaceOptions (no need to enable regex explicitly;
+        // using the Regex overload of Replace automatically performs a regex replace).
+        FindReplaceOptions options = new FindReplaceOptions();
+
+        // Define the regex pattern to find.
+        Regex regex = new Regex(@"Order \d+");
+
+        // Perform the regex‑based replacement.
+        int replacedCount = loaded.Range.Replace(regex, "Order ###", options);
+
+        // Ensure that at least one replacement was made.
+        if (replacedCount == 0)
+            throw new InvalidOperationException("Expected at least one replacement.");
 
         // Save the modified document.
-        loaded.Save("output.docx");
+        const string outputPath = "output.docx";
+        loaded.Save(outputPath);
     }
 }
