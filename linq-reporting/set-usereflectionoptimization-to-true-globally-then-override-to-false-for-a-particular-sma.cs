@@ -1,84 +1,93 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
-    // Simple data model used by the template.
+    // Simple data model with a collection of items.
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
     public class Item
     {
-        public string Name { get; set; } = "";
-    }
-
-    // Wrapper for a collection of items – used for the large data source.
-    public class LargeData
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    // Wrapper for a collection of items – used for the small data source.
-    public class SmallData
-    {
-        public List<Item> Items { get; set; } = new();
+        public string Name { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Set the reflection optimization globally.
-            ReportingEngine.UseReflectionOptimization = true;
+            // Paths for the template and generated reports.
+            string templatePath = "Template.docx";
+            string largeReportPath = "LargeReport.docx";
+            string smallReportPath = "SmallReport.docx";
 
             // -----------------------------------------------------------------
-            // 1. Create a template document with a simple foreach tag.
+            // 1. Create the LINQ Reporting template programmatically.
             // -----------------------------------------------------------------
-            const string templatePath = "Template.docx";
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Write a heading.
-            builder.Writeln("Report of Items:");
-            // Insert the LINQ Reporting foreach tag.
+            // Template uses a foreach loop to iterate over Items and write each Name.
             builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("- <<[item.Name]>>");
+            builder.Writeln("Item: <<[item.Name]>>");
             builder.Writeln("<</foreach>>");
 
             // Save the template to disk.
             templateDoc.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Build a report using a large data source (global optimization stays true).
+            // 2. Prepare a large data source.
             // -----------------------------------------------------------------
-            LargeData largeData = new LargeData();
-            for (int i = 1; i <= 100; i++)
+            ReportModel largeModel = new ReportModel();
+            for (int i = 1; i <= 1000; i++)
             {
-                largeData.Items.Add(new Item { Name = $"Item {i}" });
+                largeModel.Items.Add(new Item { Name = $"LargeItem{i}" });
             }
 
-            // Load the template and build the report.
-            Document largeReport = new Document(templatePath);
-            ReportingEngine engineLarge = new ReportingEngine();
-            engineLarge.BuildReport(largeReport, largeData, "data");
-            largeReport.Save("LargeReport.docx");
+            // -----------------------------------------------------------------
+            // 3. Set reflection optimization globally to true.
+            // -----------------------------------------------------------------
+            ReportingEngine.UseReflectionOptimization = true;
+
+            // Load the template for the large report.
+            Document largeDoc = new Document(templatePath);
+            ReportingEngine largeEngine = new ReportingEngine();
+
+            // Build the report using the large data source.
+            largeEngine.BuildReport(largeDoc, largeModel, "model");
+            largeDoc.Save(largeReportPath);
 
             // -----------------------------------------------------------------
-            // 3. Override the reflection optimization for a small data source.
+            // 4. Prepare a small data source.
             // -----------------------------------------------------------------
-            ReportingEngine.UseReflectionOptimization = false; // Override for this specific report.
+            ReportModel smallModel = new ReportModel
+            {
+                Items = new List<Item>
+                {
+                    new Item { Name = "SmallItemA" },
+                    new Item { Name = "SmallItemB" }
+                }
+            };
 
-            SmallData smallData = new SmallData();
-            smallData.Items.Add(new Item { Name = "Alpha" });
-            smallData.Items.Add(new Item { Name = "Beta" });
-            smallData.Items.Add(new Item { Name = "Gamma" });
+            // Override reflection optimization to false for this small data source.
+            ReportingEngine.UseReflectionOptimization = false;
 
-            // Load the same template again and build the report.
-            Document smallReport = new Document(templatePath);
-            ReportingEngine engineSmall = new ReportingEngine();
-            engineSmall.BuildReport(smallReport, smallData, "data");
-            smallReport.Save("SmallReport.docx");
+            // Load the template for the small report.
+            Document smallDoc = new Document(templatePath);
+            ReportingEngine smallEngine = new ReportingEngine();
 
-            // (Optional) Restore the global setting if further processing is required.
+            // Build the report using the small data source.
+            smallEngine.BuildReport(smallDoc, smallModel, "model");
+            smallDoc.Save(smallReportPath);
+
+            // -----------------------------------------------------------------
+            // 5. Reset the global setting (optional cleanup).
+            // -----------------------------------------------------------------
             ReportingEngine.UseReflectionOptimization = true;
         }
     }

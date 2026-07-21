@@ -1,68 +1,57 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
-using Aspose.Words.Markup;
 using Aspose.Words.Reporting;
 
-public class Program
+public class Employee
 {
-    public static void Main()
-    {
-        // Sample data model.
-        var model = new ReportModel
-        {
-            Employees = new List<Employee>
-            {
-                new Employee { Id = 1, Name = "Alice Johnson", Position = "Developer" },
-                new Employee { Id = 2, Name = "Bob Smith", Position = "Designer" },
-                new Employee { Id = 3, Name = "Carol White", Position = "Manager" }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-
-        // Insert LINQ Reporting tags directly into the document.
-        builder.Writeln("<<foreach [emp in Employees]>>");
-        builder.Writeln("Id: <<[emp.Id]>>");
-        builder.Writeln("Name: <<[emp.Name]>>");
-        builder.Writeln("Position: <<[emp.Position]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        const string reportPath = "Report.docx";
-        reportDoc.Save(reportPath);
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
 public class ReportModel
 {
     public List<Employee> Employees { get; set; } = new();
 }
 
-public class Employee
+public class Program
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Position { get; set; } = string.Empty;
+    public static void Main()
+    {
+        // Prepare sample data.
+        var model = new ReportModel
+        {
+            Employees = new List<Employee>
+            {
+                new Employee { Name = "Alice Johnson", Age = 30 },
+                new Employee { Name = "Bob Smith", Age = 45 },
+                new Employee { Name = "Carol Davis", Age = 28 }
+            }
+        };
+
+        // Create a template document programmatically.
+        var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Insert LINQ Reporting tags.
+        builder.Writeln("<<foreach [emp in Employees]>>");
+        builder.Writeln("Employee: <<[emp.Name]>> (Age: <<[emp.Age]>>)");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        var outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        reportDoc.Save(outputPath);
+    }
 }

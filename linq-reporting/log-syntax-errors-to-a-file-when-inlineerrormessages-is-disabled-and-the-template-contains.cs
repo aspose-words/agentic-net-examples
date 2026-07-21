@@ -1,57 +1,68 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    public string Name { get; set; } = "John Doe";
+    public string Name { get; set; } = "Sample Name";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare output folder.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Prepare folders.
-        string workDir = Directory.GetCurrentDirectory();
-        string templatePath = Path.Combine(workDir, "template.docx");
-        string outputPath = Path.Combine(workDir, "output.docx");
-        string logPath = Path.Combine(workDir, "error.log");
+        // Paths for the template, generated report and error log.
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        string errorLogPath = Path.Combine(outputDir, "error.log");
 
-        // Create a template document with a valid and an invalid LINQ Reporting tag.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Hello <<[model.Name]>>!");               // Valid expression.
-        builder.Writeln("This will cause an error: <<[model.Missing]>>"); // Invalid expression.
-        doc.Save(templatePath);
+        // -----------------------------------------------------------------
+        // 1. Create a template document with an invalid LINQ Reporting tag.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Load the template for reporting.
-        var template = new Document(templatePath);
+        // Valid text.
+        builder.Writeln("Report Header");
+        // Invalid tag – missing one closing '>' character.
+        builder.Writeln("<<[model.Name]>");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // Prepare the data model.
+        // -----------------------------------------------------------------
+        // 2. Load the template back (as required by the workflow).
+        // -----------------------------------------------------------------
+        var loadedDoc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Prepare the data source.
+        // -----------------------------------------------------------------
         var model = new ReportModel();
 
-        // Configure the reporting engine without InlineErrorMessages.
+        // -----------------------------------------------------------------
+        // 4. Build the report with InlineErrorMessages disabled.
+        //    Capture any syntax errors and write them to a log file.
+        // -----------------------------------------------------------------
         var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // InlineErrorMessages is disabled.
+        engine.Options = ReportBuildOptions.None; // InlineErrorMessages disabled.
 
         try
         {
-            // Attempt to build the report. This will throw on syntax errors.
-            bool success = engine.BuildReport(template, model, "model");
-
-            // If no exception, save the generated document.
-            if (success)
-                template.Save(outputPath);
+            // This will throw an exception because the template contains a syntax error.
+            engine.BuildReport(loadedDoc, model, "model");
         }
         catch (Exception ex)
         {
-            // Log the syntax error details to a file.
-            File.WriteAllText(logPath, $"Report generation failed: {ex.Message}");
+            // Log the exception message (and optionally the stack trace) to a file.
+            File.WriteAllText(errorLogPath, $"Error building report:{Environment.NewLine}{ex.Message}");
         }
+
+        // Save the (unmodified) document so we have an output file.
+        loadedDoc.Save(reportPath);
     }
 }

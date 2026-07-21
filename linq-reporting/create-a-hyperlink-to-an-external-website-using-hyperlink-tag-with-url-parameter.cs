@@ -2,48 +2,40 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Data model used by the LINQ Reporting engine.
-    public class ReportModel
+    public static void Main()
     {
-        // URL of the external website.
-        public string Url { get; set; } = string.Empty;
+        // Create a template document with a LINQ Reporting link tag.
+        var templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        // The link tag takes a URI expression and an optional display text expression.
+        builder.Writeln("<<link [model.Url] [model.Text]>>");
+        templateDoc.Save(templatePath);
 
-        // Text displayed for the hyperlink.
-        public string LinkText { get; set; } = string.Empty;
-    }
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare the data model.
+        var model = new ReportModel
         {
-            // 1. Create a template document with a <<link>> tag.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-            // The tag will be replaced with a hyperlink during report generation.
-            builder.Writeln("<<link [model.Url] [model.LinkText]>>");
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            Url = "https://www.example.com",
+            Text = "Visit Example"
+        };
 
-            // 2. Load the template document.
-            Document doc = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // 3. Prepare the data source.
-            ReportModel model = new ReportModel
-            {
-                Url = "https://www.example.com",
-                LinkText = "Visit Example"
-            };
-
-            // 4. Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // 5. Save the generated report.
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
-        }
+        // Save the generated document.
+        doc.Save("Report.docx");
     }
+}
+
+// Simple data model with public properties.
+public class ReportModel
+{
+    public string Url { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
 }

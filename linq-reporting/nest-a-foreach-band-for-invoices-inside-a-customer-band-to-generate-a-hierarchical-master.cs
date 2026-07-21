@@ -3,20 +3,22 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingNestedBands
+namespace LinqReportingNestedForeach
 {
-    // Data model for the master‑detail report.
+    // Root wrapper for the data source.
     public class ReportModel
     {
         public List<Customer> Customers { get; set; } = new();
     }
 
+    // Customer (master) entity.
     public class Customer
     {
         public string Name { get; set; } = string.Empty;
         public List<Invoice> Invoices { get; set; } = new();
     }
 
+    // Invoice (detail) entity.
     public class Invoice
     {
         public int Id { get; set; }
@@ -26,66 +28,65 @@ namespace LinqReportingNestedBands
 
     public class Program
     {
+        private const string TemplatePath = "Template.docx";
+        private const string OutputPath = "Report.docx";
+
         public static void Main()
         {
-            // 1. Prepare sample data.
-            var customers = new List<Customer>
+            // 1. Create the template document with nested foreach tags.
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            // Outer foreach for customers.
+            builder.Writeln("<<foreach [c in Customers]>>");
+            builder.Writeln("Customer: <<[c.Name]>>");
+            builder.Writeln("Invoices:");
+
+            // Inner foreach for invoices of the current customer.
+            builder.Writeln("<<foreach [i in c.Invoices]>>");
+            builder.Writeln("- Id: <<[i.Id]>>, Amount: <<[i.Amount]>>, Date: <<[i.Date]>>");
+            builder.Writeln("<</foreach>>"); // End inner foreach.
+
+            builder.Writeln("<</foreach>>"); // End outer foreach.
+
+            // Save the template.
+            templateDoc.Save(TemplatePath);
+
+            // 2. Load the template for reporting.
+            var doc = new Document(TemplatePath);
+
+            // 3. Prepare sample data.
+            var model = new ReportModel
             {
-                new Customer
+                Customers = new List<Customer>
                 {
-                    Name = "Acme Corp",
-                    Invoices = new List<Invoice>
+                    new Customer
                     {
-                        new Invoice { Id = 1001, Amount = 1234.56m, Date = new DateTime(2023, 1, 15) },
-                        new Invoice { Id = 1002, Amount = 789.00m, Date = new DateTime(2023, 2, 10) }
-                    }
-                },
-                new Customer
-                {
-                    Name = "Globex Ltd",
-                    Invoices = new List<Invoice>
+                        Name = "Acme Corp",
+                        Invoices = new List<Invoice>
+                        {
+                            new Invoice { Id = 1001, Amount = 1234.56m, Date = new DateTime(2023, 1, 15) },
+                            new Invoice { Id = 1002, Amount = 789.00m, Date = new DateTime(2023, 2, 10) }
+                        }
+                    },
+                    new Customer
                     {
-                        new Invoice { Id = 2001, Amount = 2500.00m, Date = new DateTime(2023, 3, 5) }
+                        Name = "Globex Ltd",
+                        Invoices = new List<Invoice>
+                        {
+                            new Invoice { Id = 2001, Amount = 2500.00m, Date = new DateTime(2023, 3, 5) }
+                        }
                     }
                 }
             };
 
-            // 2. Create the LINQ Reporting template programmatically.
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-
-            builder.Writeln("Master‑Detail Report");
-            builder.Writeln();
-
-            // Outer foreach band for customers.
-            builder.Writeln("<<foreach [customer in Customers]>>");
-            builder.Writeln("Customer: <<[customer.Name]>>");
-            builder.Writeln();
-
-            // Inner foreach band for invoices belonging to the current customer.
-            builder.Writeln("  <<foreach [invoice in customer.Invoices]>>");
-            builder.Writeln("  Invoice ID: <<[invoice.Id]>>");
-            builder.Writeln("  Amount: $<<[invoice.Amount]>>");
-            builder.Writeln("  Date: <<[invoice.Date]>>");
-            builder.Writeln("  <</foreach>>");
-            builder.Writeln();
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            doc.Save(templatePath);
-
-            // 3. Load the template and build the report.
-            var templateDoc = new Document(templatePath);
-            var model = new ReportModel { Customers = customers };
+            // 4. Build the report using the LINQ Reporting engine.
             var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // No special options required.
+            bool success = engine.BuildReport(doc, model, "model");
 
-            // Build the report using the model as the root data source.
-            engine.BuildReport(templateDoc, model);
-
-            // 4. Save the generated report.
-            var outputPath = "Report.docx";
-            templateDoc.Save(outputPath);
+            // 5. Save the generated report.
+            doc.Save(OutputPath);
         }
     }
 }

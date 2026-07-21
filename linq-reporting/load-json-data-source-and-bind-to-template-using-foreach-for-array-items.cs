@@ -4,12 +4,18 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReporting
 {
-    // Simple data model for JSON serialization (optional, not used directly by the engine)
+    // Wrapper class to align with the root object name used in the template.
+    public class PersonsWrapper
+    {
+        // Property name matches the root name in the JSON and template.
+        public Person[] persons { get; set; } = Array.Empty<Person>();
+    }
+
     public class Person
     {
-        public string Name { get; set; } = "";
+        public string Name { get; set; } = string.Empty;
         public int Age { get; set; }
     }
 
@@ -17,52 +23,57 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // Register code page provider for .NET Core (required by Aspose.Words)
+            // Register code page provider for Aspose.Words (required in .NET Core).
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // -----------------------------------------------------------------
-            // 1. Create sample JSON data file.
-            // -----------------------------------------------------------------
-            string jsonFilePath = "people.json";
-            string jsonContent = @"[
-                { ""Name"": ""Alice"", ""Age"": 30 },
-                { ""Name"": ""Bob"",   ""Age"": 25 },
-                { ""Name"": ""Charlie"", ""Age"": 28 }
-            ]";
-            File.WriteAllText(jsonFilePath, jsonContent, Encoding.UTF8);
-
-            // -----------------------------------------------------------------
-            // 2. Build a template document containing LINQ Reporting tags.
-            // -----------------------------------------------------------------
+            // File paths for temporary data and documents.
+            string jsonPath = "persons.json";
             string templatePath = "template.docx";
+            string outputPath = "Report.docx";
+
+            // 1. Create sample JSON data.
+            string jsonContent = @"{
+  ""persons"": [
+    { ""Name"": ""Alice"", ""Age"": 30 },
+    { ""Name"": ""Bob"",   ""Age"": 25 },
+    { ""Name"": ""Carol"", ""Age"": 28 }
+  ]
+}";
+            File.WriteAllText(jsonPath, jsonContent);
+
+            // 2. Build the template document programmatically.
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Begin foreach loop over the JSON array named "persons"
+            // Insert a heading.
+            builder.Writeln("Person Report");
+            builder.Writeln();
+
+            // Insert the foreach tag that iterates over the JSON array.
             builder.Writeln("<<foreach [p in persons]>>");
-            // Output each person's name and age
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            // End foreach loop
+            builder.Writeln("Name: <<[p.Name]>>");
+            builder.Writeln("Age:  <<[p.Age]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk
+            // Save the template to disk (required before loading it for the report).
             templateDoc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and bind the JSON data source.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-            JsonDataSource jsonDataSource = new JsonDataSource(jsonFilePath);
+            // 3. Load the template document.
+            Document doc = new Document(templatePath);
 
-            // The root name "persons" must match the name used in the template tags.
+            // 4. Create a JsonDataSource from the JSON file.
+            JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+
+            // 5. Build the report using the ReportingEngine.
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, jsonDataSource, "persons");
+            engine.BuildReport(doc, jsonDataSource, "persons");
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            string outputPath = "report.docx";
-            reportDoc.Save(outputPath);
+            // 6. Save the generated report.
+            doc.Save(outputPath);
+
+            // Optional cleanup of temporary files.
+            // File.Delete(jsonPath);
+            // File.Delete(templatePath);
         }
     }
 }

@@ -8,44 +8,47 @@ public class Program
 {
     public static void Main()
     {
-        // Create sample XML data with attributes.
-        XDocument xDoc = new XDocument(
+        // Prepare directories.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(workDir);
+
+        // 1. Create sample XML data and save it.
+        XDocument xml = new XDocument(
             new XElement("People",
-                new XElement("Person", new XAttribute("Name", "John Doe"), new XAttribute("Age", "30")),
-                new XElement("Person", new XAttribute("Name", "Jane Smith"), new XAttribute("Age", "25"))
+                new XElement("Person", new XAttribute("Name", "John"), new XAttribute("Age", "30")),
+                new XElement("Person", new XAttribute("Name", "Jane"), new XAttribute("Age", "25"))
             )
         );
+        string xmlPath = Path.Combine(workDir, "data.xml");
+        xml.Save(xmlPath);
 
-        // Write the XML to a memory stream.
-        using MemoryStream xmlStream = new MemoryStream();
-        xDoc.Save(xmlStream);
-        xmlStream.Position = 0; // Reset for reading.
+        // 2. Build a template document with LINQ Reporting tags.
+        string templatePath = Path.Combine(workDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Create an XML data source from the stream.
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlStream);
-
-        // Build a simple Word template programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Insert a foreach tag that iterates over the "Person" elements.
+        // Begin a foreach loop over the collection named "persons".
         builder.Writeln("<<foreach [person in persons]>>");
+        // Output attribute values.
         builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+        // End the loop.
         builder.Writeln("<</foreach>>");
 
-        // Save the template (optional, demonstrates load/save lifecycle).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // Load the template back (simulating a separate load step).
-        Document doc = new Document(templatePath);
+        // 3. Load the template document.
+        Document reportDoc = new Document(templatePath);
 
-        // Build the report using the XML data source.
+        // 4. Create an XML data source from the saved XML file.
+        XmlDataSource dataSource = new XmlDataSource(xmlPath);
+
+        // 5. Build the report using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, xmlDataSource, "persons");
+        engine.BuildReport(reportDoc, dataSource, "persons");
 
-        // Save the generated report.
-        const string reportPath = "Report.docx";
-        doc.Save(reportPath);
+        // 6. Save the generated report.
+        string reportPath = Path.Combine(workDir, "report.docx");
+        reportDoc.Save(reportPath);
     }
 }

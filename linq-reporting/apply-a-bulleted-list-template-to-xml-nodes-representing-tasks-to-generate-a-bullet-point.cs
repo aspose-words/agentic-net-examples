@@ -2,70 +2,64 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Lists;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure code page support (required by Aspose.Words for some encodings).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Sample XML representing a list of tasks.
+        const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Tasks>
+    <Task><Name>Buy groceries</Name></Task>
+    <Task><Name>Call the bank</Name></Task>
+    <Task><Name>Finish the report</Name></Task>
+    <Task><Name>Schedule meeting</Name></Task>
+</Tasks>";
 
-        // 1. Create sample XML data representing tasks.
-        const string xmlFileName = "tasks.xml";
-        string xmlContent =
-            @"<?xml version=""1.0"" encoding=""UTF-8""?>
-              <tasks>
-                  <task>
-                      <title>Buy groceries</title>
-                      <description>Milk, Bread, Eggs</description>
-                  </task>
-                  <task>
-                      <title>Call Alice</title>
-                      <description>Discuss project timeline</description>
-                  </task>
-                  <task>
-                      <title>Write report</title>
-                      <description>Annual financial summary</description>
-                  </task>
-              </tasks>";
-        File.WriteAllText(xmlFileName, xmlContent);
+        // Write XML to a memory stream.
+        using var xmlStream = new MemoryStream();
+        using (var writer = new StreamWriter(xmlStream, System.Text.Encoding.UTF8, leaveOpen: true))
+        {
+            writer.Write(xmlContent);
+        }
+        xmlStream.Position = 0; // Reset for reading.
 
-        // 2. Build the template document programmatically.
-        const string templateFileName = "TaskTemplate.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // -----------------------------------------------------------------
+        // Create the template document.
+        // -----------------------------------------------------------------
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Title of the report.
-        builder.Writeln("Task List:");
+        // Apply a bulleted list style to the document.
+        List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
+        builder.ListFormat.List = bulletList; // Subsequent paragraphs become list items.
 
-        // Start a bulleted list.
-        builder.ListFormat.ApplyBulletDefault();
-
-        // LINQ Reporting foreach tag iterating over the XML collection "tasks".
-        builder.Writeln("<<foreach [task in tasks]>>");
-        // Each bullet will contain the task title and description.
-        builder.Writeln("<<[task.title]>>: <<[task.description]>>");
+        // Insert LINQ Reporting tags.
+        // The XML root <Tasks> contains a collection of <Task> elements.
+        builder.Writeln("<<foreach [task in Tasks]>>");
+        builder.Writeln("<<[task.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        // End the list.
-        builder.ListFormat.RemoveNumbers();
+        // Save the template (optional, shown for clarity).
+        const string templatePath = "Template.docx";
+        doc.Save(templatePath);
 
-        // Save the template to disk.
-        templateDoc.Save(templateFileName);
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
 
-        // 3. Load the template for report generation.
-        var reportDoc = new Document(templateFileName);
+        // Reset the XML stream before creating the data source.
+        xmlStream.Position = 0;
+        var xmlDataSource = new XmlDataSource(xmlStream);
 
-        // 4. Create an XmlDataSource from the XML file.
-        var xmlDataSource = new XmlDataSource(xmlFileName);
-
-        // 5. Build the report using the ReportingEngine.
+        // Build the report. Provide a data source name that matches the root element.
         var engine = new ReportingEngine();
-        // The data source name must match the name used in the template ("tasks").
-        engine.BuildReport(reportDoc, xmlDataSource, "tasks");
+        engine.BuildReport(reportDoc, xmlDataSource, "Tasks");
 
-        // 6. Save the generated report.
-        const string outputFileName = "TaskReport.docx";
-        reportDoc.Save(outputFileName);
+        // Save the generated report.
+        const string outputPath = "TaskListReport.docx";
+        reportDoc.Save(outputPath);
     }
 }

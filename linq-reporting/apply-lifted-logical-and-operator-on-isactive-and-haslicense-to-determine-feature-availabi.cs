@@ -4,71 +4,59 @@ using Aspose.Words.Reporting;
 
 namespace LinqReportingLiftedAndExample
 {
-    // Model class used as the data source for the report.
+    // Data model used by the LINQ Reporting template.
     public class FeatureModel
     {
-        // Name of the feature.
-        public string Feature { get; set; } = "Premium Feature";
-
-        // Nullable boolean indicating whether the feature is active.
-        public bool? IsActive { get; set; }
-
-        // Nullable boolean indicating whether the user has a license for the feature.
-        public bool? HasLicense { get; set; }
+        // Nullable booleans to demonstrate lifted logical operators.
+        public bool? IsActive { get; set; } = false;
+        public bool? HasLicense { get; set; } = false;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
-
             // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
+            // 1. Create a template document with LINQ Reporting tags.
             // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Write a title.
-            builder.Writeln("Feature Availability Report");
-            builder.Writeln();
-
-            // Insert the feature name.
-            builder.Writeln("Feature: <<[model.Feature]>>");
-            builder.Writeln();
-
-            // Use a lifted logical AND (&&) on the nullable booleans.
-            // The expression evaluates to true only when both operands are true.
-            // If either operand is null, it is treated as false via the null‑coalescing operator.
-            builder.Writeln("<<if [(model.IsActive ?? false) && (model.HasLicense ?? false)]>>Status: Available<</if>>");
-            builder.Writeln("<<if [!((model.IsActive ?? false) && (model.HasLicense ?? false))]>>Status: Not Available<</if>>");
+            // Use explicit comparisons to avoid applying && directly to nullable booleans.
+            // The condition evaluates to true only when both values are true.
+            builder.Writeln("<<if [model.IsActive == true && model.HasLicense == true]>>Feature is AVAILABLE<</if>>");
+            // Show the alternative message when the condition is not met.
+            builder.Writeln("<<if [!(model.IsActive == true && model.HasLicense == true)]>>Feature is NOT AVAILABLE<</if>>");
 
             // Save the template to disk.
-            templateDoc.Save(templatePath);
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Prepare the data source.
+            // 2. Load the template and prepare the data source.
             // -----------------------------------------------------------------
-            FeatureModel model = new FeatureModel
+            var doc = new Document(templatePath);
+
+            var data = new FeatureModel
             {
-                // Both conditions are true → feature is available.
-                IsActive = true,
+                IsActive = true,   // Both conditions are true → feature should be AVAILABLE.
                 HasLicense = true
             };
 
             // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
+            // 3. Build the report using the ReportingEngine.
             // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine();
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, data, "model");
 
-            // Build the report using the model as the root object named "model".
-            engine.BuildReport(reportDoc, model, "model");
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            const string reportPath = "Report.docx";
+            doc.Save(reportPath);
 
-            // Save the generated report.
-            reportDoc.Save(reportPath);
+            // Indicate completion (no interactive prompts).
+            Console.WriteLine($"Report generated: {reportPath}");
         }
     }
 }

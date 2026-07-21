@@ -4,34 +4,27 @@ using Aspose.Words.Reporting;
 
 public class Person
 {
-    // Initialize properties to avoid nullable warnings.
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
+    public string FirstName { get; set; } = "";
+    public string LastName { get; set; } = "";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document that will serve as the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Sample data
+        var person = new Person { FirstName = "John", LastName = "Doe" };
 
-        // Insert a LINQ Reporting tag that concatenates first and last name with a space.
-        builder.Writeln("Full Name: <<[model.FirstName + \" \" + model.LastName]>>");
+        // Create a template document with an expression tag that concatenates first and last name
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("<<[person.FirstName + \" \" + person.LastName]>>");
 
-        // Prepare sample data.
-        Person model = new Person
-        {
-            FirstName = "John",
-            LastName = "Doe"
-        };
+        // Build the report using the LINQ Reporting engine
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, person, "person");
 
-        // Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
+        // Save the generated report
         doc.Save("Report.docx");
     }
 }

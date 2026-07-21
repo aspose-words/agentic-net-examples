@@ -3,91 +3,92 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Lists;
+using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
+        // Register code page provider for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // ---------- 1. Prepare sample JSON data ----------
-        string jsonPath = "data.json";
-        var jsonContent = @"{
-  ""Categories"": [
-    {
-      ""Name"": ""Fruits"",
-      ""Items"": [ ""Apple"", ""Banana"", ""Orange"" ]
-    },
-    {
-      ""Name"": ""Vegetables"",
-      ""Items"": [ ""Carrot"", ""Broccoli"" ]
-    },
-    {
-      ""Name"": ""Beverages"",
-      ""Items"": [ ""Coffee"", ""Tea"", ""Juice"" ]
-    }
-  ]
-}";
-        File.WriteAllText(jsonPath, jsonContent);
+        // Prepare working folder.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
-        // ---------- 2. Create the data model that matches the JSON ----------
-        var model = new ReportModel
-        {
-            Categories = new List<Category>
-            {
-                new Category { Name = "Fruits", Items = new List<string> { "Apple", "Banana", "Orange" } },
-                new Category { Name = "Vegetables", Items = new List<string> { "Carrot", "Broccoli" } },
-                new Category { Name = "Beverages", Items = new List<string> { "Coffee", "Tea", "Juice" } }
-            }
-        };
+        // -----------------------------------------------------------------
+        // 1. Create sample JSON data and deserialize it to a strongly‑typed model.
+        // -----------------------------------------------------------------
+        string jsonPath = Path.Combine(workDir, "sample.json");
+        File.WriteAllText(jsonPath,
+            @"{
+                ""Categories"": [
+                    { ""Name"": ""Fruits"", ""Items"": [""Apple"", ""Banana"", ""Orange""] },
+                    { ""Name"": ""Vegetables"", ""Items"": [""Carrot"", ""Broccoli""] },
+                    { ""Name"": ""Beverages"", ""Items"": [""Tea"", ""Coffee"", ""Juice""] }
+                ]
+            }");
 
-        // ---------- 3. Build the template document programmatically ----------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Root object that matches the JSON structure.
+        RootModel data = JsonConvert.DeserializeObject<RootModel>(File.ReadAllText(jsonPath))!;
 
-        // Create a bulleted list template and apply it to the builder
-        List bulletList = templateDoc.Lists.Add(ListTemplate.BulletDefault);
+        // -----------------------------------------------------------------
+        // 2. Build the template document programmatically.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Create a bulleted list style that will be used for all levels.
+        List bulletList = template.Lists.Add(ListTemplate.BulletDefault);
         builder.ListFormat.List = bulletList;
 
-        // First level: categories
-        builder.Writeln("<<foreach [cat in Categories]>>");
-        builder.Writeln("<<[cat.Name]>>");
-
-        // Second level: items inside each category
-        builder.ListFormat.ListLevelNumber = 1; // indent for inner bullets
-        builder.Writeln("<<foreach [item in cat.Items]>>");
-        builder.Writeln("<<[item]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Reset to outer level and close outer foreach
+        // Outer foreach – iterates over categories.
+        builder.Writeln("<<foreach [category in Categories]>>");
+        // Level 0 – category name.
         builder.ListFormat.ListLevelNumber = 0;
-        builder.Writeln("<</foreach>>");
+        builder.Writeln("<<[category.Name]>>");
 
-        // Save the template to disk (required before BuildReport)
-        string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
+        // Inner foreach – iterates over items of the current category.
+        builder.Writeln("<<foreach [item in category.Items]>>");
+        // Level 1 – item name.
+        builder.ListFormat.ListLevelNumber = 1;
+        builder.Writeln("<<[item]>>");
+        builder.Writeln("<</foreach>>"); // end inner foreach
 
-        // ---------- 4. Load the template and generate the report ----------
-        var loadedTemplate = new Document(templatePath);
-        var engine = new ReportingEngine();
+        builder.Writeln("<</foreach>>"); // end outer foreach
 
-        // Use the wrapper name "model" in the template tags
-        engine.BuildReport(loadedTemplate, model, "model");
+        // Clean up list formatting.
+        builder.ListFormat.RemoveNumbers();
 
-        // ---------- 5. Save the final report ----------
-        string outputPath = "Report.docx";
-        loadedTemplate.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 3. Generate the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        // No special options are required for this simple scenario.
+        engine.Options = ReportBuildOptions.None;
 
-        // Inform that the process completed (no interactive input required)
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // BuildReport overload without a data source name allows direct access to root members.
+        bool success = engine.BuildReport(template, data);
+        if (!success)
+        {
+            Console.WriteLine("Report generation failed due to template errors.");
+        }
+
+        // -----------------------------------------------------------------
+        // 4. Save the resulting document.
+        // -----------------------------------------------------------------
+        string outputPath = Path.Combine(workDir, "NestedBulletedList.docx");
+        template.Save(outputPath);
+        Console.WriteLine($"Report saved to: {outputPath}");
     }
 }
 
-// ---------- Data model classes ----------
-public class ReportModel
+// ---------------------------------------------------------------------
+// Data model that mirrors the JSON structure.
+// ---------------------------------------------------------------------
+public class RootModel
 {
     public List<Category> Categories { get; set; } = new();
 }

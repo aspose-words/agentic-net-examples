@@ -1,47 +1,58 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+using Aspose.Words.Tables;   // Required for Table type
 
 public class Program
 {
+    // Simple data model used as the root object for the report.
+    public class ReportModel
+    {
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+    }
+
     public static void Main()
     {
         // Paths for the template and the generated report.
         const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        const string outputPath = "Report.docx";
 
         // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
+        // 1. Create the LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Build a table where the first two cells of the first row are merged horizontally.
-        // The <<cellMerge>> tag tells the LINQ Reporting engine to merge cells that have
-        // identical textual content (ignoring surrounding whitespace).
+        // Add a heading.
+        builder.Writeln("Horizontal Cell Merge Example");
+
+        // Begin a foreach loop over the Items collection.
+        builder.Writeln("<<foreach [item in Items]>>");
+
+        // Create a table with a single row that will be repeated for each item.
         Table table = builder.StartTable();
 
-        // First cell – contains the merge tag and the text "Group A".
+        // First cell – contains the merge tag. The same tag and text must appear
+        // in the adjacent cell for the engine to merge them horizontally.
         builder.InsertCell();
-        builder.Write("<<cellMerge>>Group A");
+        builder.Writeln("<<cellMerge>>Group A");
 
-        // Second cell – same merge tag and identical text.
+        // Second cell – also contains the same merge tag and text.
         builder.InsertCell();
-        builder.Write("<<cellMerge>>Group A");
+        builder.Writeln("<<cellMerge>>Group A");
 
-        // End the first row.
+        // End the row and the table.
         builder.EndRow();
-
-        // Add a normal (unmerged) row for demonstration.
-        builder.InsertCell();
-        builder.Write("Item 1");
-        builder.InsertCell();
-        builder.Write("Description 1");
-        builder.EndRow();
-
-        // Finish the table.
         builder.EndTable();
+
+        // End the foreach block.
+        builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
@@ -51,20 +62,22 @@ public class Program
         // -----------------------------------------------------------------
         Document reportDoc = new Document(templatePath);
 
-        // The model can be empty because the template does not reference any data fields.
-        var model = new ReportModel();
+        // Prepare sample data.
+        ReportModel model = new ReportModel
+        {
+            Items = new List<Item>
+            {
+                new Item { Name = "Item 1" },
+                new Item { Name = "Item 2" },
+                new Item { Name = "Item 3" }
+            }
+        };
 
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        // No special options are required for this simple example.
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the final report.
-        reportDoc.Save(reportPath);
-    }
-
-    // Simple wrapper class used as the root data source.
-    public class ReportModel
-    {
-        // Add properties here if the template needs to reference data.
+        // Save the generated report.
+        reportDoc.Save(outputPath);
     }
 }

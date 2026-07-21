@@ -18,32 +18,27 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple data model.
-        var model = new Model
-        {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 25 },
-                new Person { Name = "Charlie", Age = 35 }
-            }
-        };
-
-        // Build a template document with LINQ Reporting tags.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a template document with LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+        builder.Writeln("Report of Persons:");
         builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
         builder.Writeln("<</foreach>>");
+
+        // Prepare sample data.
+        Model model = new Model();
+        model.Persons.Add(new Person { Name = "Alice", Age = 30 });
+        model.Persons.Add(new Person { Name = "Bob", Age = 25 });
 
         // Disable reflection optimization for small data sets.
         ReportingEngine.UseReflectionOptimization = false;
 
         // Build the report.
-        var engine = new ReportingEngine();
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
+        // Save the generated document.
         doc.Save("Report.docx");
     }
 }

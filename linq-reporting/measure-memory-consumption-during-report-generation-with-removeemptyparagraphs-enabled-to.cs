@@ -3,71 +3,102 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
+using Aspose.Words.Tables; // Required for Table type
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int? Age { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+    public string EmptyTag { get; set; } = "";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample data.
+        // Sample data.
         var model = new ReportModel
         {
-            Items = new List<Item>
+            Persons = new List<Person>
             {
-                new Item { Name = "Item 1", Description = "First item description." },
-                new Item { Name = "Item 2", Description = "" },               // Empty description will lead to an empty paragraph.
-                new Item { Name = "Item 3", Description = "Third item description." }
-            }
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = null },   // Age will be empty.
+                new Person { Name = "", Age = 25 }        // Name will be empty.
+            },
+            EmptyTag = "" // Resolves to an empty string.
         };
 
-        // Create a template document programmatically.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create the template document.
+        string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Report generated with Aspose.Words LINQ Reporting");
-        builder.Writeln(); // Blank line.
+        // Paragraph that becomes empty after processing.
+        builder.Writeln("<<[EmptyTag]>>");
 
-        // Begin foreach loop over Items.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Name: <<[item.Name]>>");
-        builder.Writeln("Description: <<[item.Description]>>");
+        // Begin the foreach block.
+        builder.Writeln("<<foreach [p in Persons]>>");
+
+        // Table with header and data rows.
+        Table table = builder.StartTable();
+
+        // Header row.
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Age");
+        builder.EndRow();
+
+        // Data row (repeated for each person).
+        builder.InsertCell();
+        builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[p.Age]>>");
+        builder.EndRow();
+
+        // End of table.
+        builder.EndTable();
+
+        // End the foreach block.
         builder.Writeln("<</foreach>>");
 
-        // Configure the reporting engine to remove empty paragraphs.
+        // Save the template.
+        templateDoc.Save(templatePath);
+
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
+
+        // Configure the reporting engine.
         var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
         // Measure memory before building the report.
-        long memoryBefore = GC.GetTotalMemory(true);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        long memoryBefore = Process.GetCurrentProcess().PrivateMemorySize64;
 
-        // Build the report. The root object name is "model" as referenced in the template.
-        engine.BuildReport(doc, model, "model");
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
 
         // Measure memory after building the report.
-        long memoryAfter = GC.GetTotalMemory(true);
-
-        // Output memory consumption details.
-        Console.WriteLine($"Memory before report generation: {memoryBefore:N0} bytes");
-        Console.WriteLine($"Memory after  report generation: {memoryAfter:N0} bytes");
-        Console.WriteLine($"Memory difference: {memoryAfter - memoryBefore:N0} bytes");
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        long memoryAfter = Process.GetCurrentProcess().PrivateMemorySize64;
 
         // Save the generated report.
-        doc.Save("ReportOutput.docx");
+        string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
+
+        // Output memory consumption.
+        Console.WriteLine($"Memory before report generation: {memoryBefore / 1024} KB");
+        Console.WriteLine($"Memory after  report generation: {memoryAfter / 1024} KB");
+        Console.WriteLine($"Memory increase: {(memoryAfter - memoryBefore) / 1024} KB");
     }
-}
-
-// Wrapper class that matches the root object name used in BuildReport.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Simple data item class.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
 }

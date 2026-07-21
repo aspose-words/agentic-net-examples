@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,93 +7,93 @@ public class CompositeReportExample
 {
     public static void Main()
     {
-        // Register encoding provider for CSV parsing (required for code pages).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // -----------------------------------------------------------------
+        // 1. Prepare sample data files (XML and CSV) in a temporary folder.
+        // -----------------------------------------------------------------
+        string dataFolder = Path.Combine(Directory.GetCurrentDirectory(), "Data");
+        Directory.CreateDirectory(dataFolder);
 
-        // -----------------------------------------------------------------
-        // Create sample XML data file.
-        // -----------------------------------------------------------------
-        string xmlPath = "people.xml";
-        string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<Persons>
-    <Person>
-        <Name>John Doe</Name>
-        <Age>30</Age>
-    </Person>
-    <Person>
-        <Name>Jane Smith</Name>
-        <Age>25</Age>
-    </Person>
-    <Person>
-        <Name>Bob Johnson</Name>
-        <Age>40</Age>
-    </Person>
-</Persons>";
-        File.WriteAllText(xmlPath, xmlContent, Encoding.UTF8);
+        // XML file containing a list of Person elements.
+        string xmlPath = Path.Combine(dataFolder, "people.xml");
+        File.WriteAllText(xmlPath,
+            @"<People>
+                <Person>
+                    <Name>John Doe</Name>
+                    <Age>30</Age>
+                </Person>
+                <Person>
+                    <Name>Jane Smith</Name>
+                    <Age>25</Age>
+                </Person>
+              </People>");
 
-        // -----------------------------------------------------------------
-        // Create sample CSV data file.
-        // -----------------------------------------------------------------
-        string csvPath = "orders.csv";
-        string[] csvLines =
-        {
-            "OrderId,Product,Quantity",   // Header line – required for column names.
-            "1001,Apple,5",
-            "1002,Banana,12",
-            "1003,Orange,7"
-        };
-        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
+        // CSV file containing a list of products (header row + data rows).
+        string csvPath = Path.Combine(dataFolder, "products.csv");
+        File.WriteAllText(csvPath,
+            "Name,Price\n" +
+            "Apple,0.99\n" +
+            "Banana,0.59\n" +
+            "Cherry,2.49");
 
-        // -----------------------------------------------------------------
-        // Build the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // ---------------------------------------------------------------
+        // 2. Create the Word template with LINQ Reporting tags.
+        // ---------------------------------------------------------------
+        string templatePath = Path.Combine(dataFolder, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("=== People Report ===");
-        builder.Writeln("");
-        builder.Writeln("<<foreach [person in xml]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("");
-        builder.Writeln("=== Orders Report ===");
-        builder.Writeln("");
-        builder.Writeln("<<foreach [order in csv]>>");
-        builder.Writeln("Order ID: <<[order.OrderId]>>");
-        builder.Writeln("Product: <<[order.Product]>>");
-        builder.Writeln("Quantity: <<[order.Quantity]>>");
+        // XML Persons section.
+        builder.Writeln("=== XML Persons ===");
+        // When an XmlDataSource represents a collection (the root element contains a list),
+        // the collection itself is referenced directly – no extra property name.
+        builder.Writeln("<<foreach [p in xml]>>");
+        builder.Writeln("- <<[p.Name]>> is <<[p.Age]>> years old");
         builder.Writeln("<</foreach>>");
 
-        // -----------------------------------------------------------------
-        // Load data sources.
-        // -----------------------------------------------------------------
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
+        builder.Writeln(); // empty line between sections
 
-        // CSV data source – specify that the first line contains headers.
-        CsvDataLoadOptions csvLoadOptions = new CsvDataLoadOptions(true);
-        CsvDataSource csvDataSource = new CsvDataSource(csvPath, csvLoadOptions);
+        // CSV Products section.
+        builder.Writeln("=== CSV Products ===");
+        builder.Writeln("<<foreach [prod in csv]>>");
+        builder.Writeln("- <<[prod.Name]>> costs $<<[prod.Price]>>");
+        builder.Writeln("<</foreach>>");
 
-        // -----------------------------------------------------------------
-        // Build the report using both data sources.
-        // -----------------------------------------------------------------
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // ---------------------------------------------------------------
+        // 3. Load the template for report generation.
+        // ---------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // Create data source objects.
+        XmlDataSource xmlSource = new XmlDataSource(xmlPath);
+
+        // CSV options: first line contains headers.
+        CsvDataLoadOptions csvOptions = new CsvDataLoadOptions(true);
+        CsvDataSource csvSource = new CsvDataSource(csvPath, csvOptions);
+
+        // ---------------------------------------------------------------
+        // 4. Build the report using both data sources.
+        // ---------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
+        engine.Options = ReportBuildOptions.None; // default options
 
+        // BuildReport overload that accepts multiple data sources.
         bool success = engine.BuildReport(
-            doc,
-            new object[] { xmlDataSource, csvDataSource },
+            reportDoc,
+            new object[] { xmlSource, csvSource },
             new string[] { "xml", "csv" });
 
-        // Optional: check success flag (useful when InlineErrorMessages option is set).
-        if (!success)
-        {
-            Console.WriteLine("Report generation encountered errors.");
-        }
+        // ---------------------------------------------------------------
+        // 5. Save the generated report.
+        // ---------------------------------------------------------------
+        string outputPath = Path.Combine(dataFolder, "CompositeReport.docx");
+        reportDoc.Save(outputPath);
 
-        // -----------------------------------------------------------------
-        // Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save("CompositeReport.docx");
+        // Indicate completion.
+        Console.WriteLine(success
+            ? $"Report generated successfully: {outputPath}"
+            : "Report generation failed.");
     }
 }

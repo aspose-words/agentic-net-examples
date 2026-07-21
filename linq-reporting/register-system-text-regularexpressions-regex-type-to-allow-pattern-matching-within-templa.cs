@@ -8,42 +8,52 @@ public class Program
 {
     public static void Main()
     {
-        // Sample data model.
-        var person = new Person
+        // Prepare sample data model.
+        var model = new Person
         {
+            Name = "John Doe",
             Email = "john.doe@example.com"
         };
 
-        // Create a blank document and a builder to insert template tags.
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // Load the template.
+        var doc = new Document(templatePath);
+
+        // Configure the reporting engine.
+        var engine = new ReportingEngine();
+        // Register System.Text.RegularExpressions.Regex to allow its static members in template expressions.
+        engine.KnownTypes.Add(typeof(Regex));
+
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        var outputPath = "Output.docx";
+        doc.Save(outputPath);
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Simple field showing the email address.
-        builder.Writeln("Email address: <<[person.Email]>>");
+        // Insert placeholders that will be replaced by the reporting engine.
+        builder.Writeln("Name: <<[model.Name]>>");
+        builder.Writeln("Email: <<[model.Email]>>");
+        // Use Regex.IsMatch to validate the email format directly in the template.
+        builder.Writeln("Is Email Valid? <<[Regex.IsMatch(model.Email, \"^\\\\S+@\\\\S+\\\\.\\\\S+$\")]>>");
 
-        // Validation tag using Regex.IsMatch.
-        // The pattern must contain a double backslash so that the engine receives a literal "\.".
-        builder.Writeln(
-            "Validation result: <<[Regex.IsMatch(person.Email, \"^[^@]+@[^@]+\\\\.[^@]+$\") ? \"Valid\" : \"Invalid\"]>>");
-
-        // Configure the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-
-        // Register the Regex type to allow static member access in template expressions.
-        engine.KnownTypes.Add(typeof(Regex));
-
-        // Build the report using the template and the data source.
-        engine.BuildReport(doc, person, "person");
-
-        // Save the generated document.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // Save the template to disk.
+        doc.Save(filePath);
     }
 }
 
-// Simple data model with a non‑nullable Email property.
+// Simple data model with public properties.
 public class Person
 {
+    public string Name { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
 }

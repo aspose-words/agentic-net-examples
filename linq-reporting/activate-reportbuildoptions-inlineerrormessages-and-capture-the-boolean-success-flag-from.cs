@@ -13,7 +13,7 @@ namespace AsposeWordsLinqReportingExample
 
     public class Person
     {
-        public string Name { get; set; } = "";
+        public string Name { get; set; } = string.Empty;
         public int Age { get; set; }
     }
 
@@ -21,32 +21,48 @@ namespace AsposeWordsLinqReportingExample
     {
         public static void Main()
         {
-            // Create sample data.
-            var model = new ReportModel();
-            model.Persons.Add(new Person { Name = "Alice", Age = 30 });
-            model.Persons.Add(new Person { Name = "Bob", Age = 45 });
+            // 1. Create a template document containing LINQ Reporting tags.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Build a template document programmatically.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-
-            // Insert a foreach loop that iterates over the Persons collection.
+            // Template iterates over the Persons collection and writes each person's data.
             builder.Writeln("<<foreach [p in Persons]>>");
             builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
             builder.Writeln("<</foreach>>");
 
-            // Configure the reporting engine to inline error messages.
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
-            // Build the report and capture the success flag.
+            // 2. Load the template document for reporting.
+            var doc = new Document(templatePath);
+
+            // 3. Prepare sample data.
+            var model = new ReportModel
+            {
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 25 },
+                    new Person { Name = "Charlie", Age = 40 }
+                }
+            };
+
+            // 4. Configure the ReportingEngine to inline error messages.
+            var engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.InlineErrorMessages
+            };
+
+            // 5. Build the report and capture the success flag.
             bool success = engine.BuildReport(doc, model, "model");
 
-            // Output the success flag to the console.
-            Console.WriteLine($"Report build success: {success}");
+            // 6. Save the generated report.
+            const string reportPath = "Report.docx";
+            doc.Save(reportPath);
 
-            // Save the generated report.
-            doc.Save("ReportOutput.docx");
+            // Output the result of the build operation.
+            Console.WriteLine($"Report build successful: {success}");
         }
     }
 }

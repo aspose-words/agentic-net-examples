@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,48 +8,57 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for Aspose.Words on .NET Core)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample data
+        // Prepare sample data.
         ReportModel model = new()
         {
             Items = new()
             {
-                new Item { Name = "Apple", Price = 0.5m, Quantity = 4 },
-                new Item { Name = "Banana", Price = 0.3m, Quantity = 6 },
-                new Item { Name = "Cherry", Price = 1.2m, Quantity = 10 }
+                new Item { Name = "Apple",  Price = 1.20 },
+                new Item { Name = "Banana", Price = 0.80 },
+                new Item { Name = "Cherry", Price = 2.50 }
             }
         };
 
-        // Create template document
-        Document template = new();
-        DocumentBuilder builder = new(template);
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        const string templatePath = "Template.docx";
 
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
+
+        // Iterate over the collection 'Items'.
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Item: <<[item.Name]>>");
-        builder.Writeln("Quantity: <<[item.Quantity]>>");
-        builder.Writeln("Price per unit: <<[item.Price]>>");
-        // Use a calculated property instead of an unsupported let tag
-        builder.Writeln("Line total: <<[item.LineTotal]>>");
+
+        // Output each item's details.
+        builder.Writeln("Item: <<[item.Name]>>  Price: <<[item.Price]>>");
+
+        // End of the foreach block.
         builder.Writeln("<</foreach>>");
 
-        // Save the template (optional, for inspection)
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        template.Save(templatePath);
+        // Display the accumulated total using a LINQ expression.
+        builder.Writeln("Total: <<[Items.Sum(p => p.Price)]>>");
 
-        // Build the report
-        Document report = new(templatePath);
+        // Save the template to disk (required before building the report).
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new(templatePath);
         ReportingEngine engine = new();
-        engine.BuildReport(report, model, "model");
 
-        // Save the generated report
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        report.Save(reportPath);
+        // The root object name must match the name used in the template tags.
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        reportDoc.Save("Report.docx");
     }
 }
 
-// Data model classes
+// ---------------------------------------------------------------------
+// Data model classes (public with public properties, no nullable warnings)
+// ---------------------------------------------------------------------
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
@@ -59,9 +67,5 @@ public class ReportModel
 public class Item
 {
     public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-    public int Quantity { get; set; }
-
-    // Calculated property used in the template
-    public decimal LineTotal => Price * Quantity;
+    public double Price { get; set; }
 }

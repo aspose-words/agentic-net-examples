@@ -1,49 +1,54 @@
 using System;
-using System.IO;
 using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class PhoneReportModel
-{
-    public string PhoneNumber { get; set; } = "";
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new PhoneReportModel
+        // Create a simple data model.
+        var person = new Person
         {
-            PhoneNumber = "123-456-7890" // Change to test different formats.
+            Name = "John Doe",
+            PhoneNumber = "123-456-7890"
         };
 
-        // Create a template document programmatically.
-        string templatePath = "PhoneTemplate.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Build the template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-        // Insert placeholders and conditional tags.
-        builder.Writeln("Phone: <<[model.PhoneNumber]>>");
-        builder.Writeln("<<if [Regex.IsMatch(model.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>>Valid<</if>>");
-        builder.Writeln("<<if [!Regex.IsMatch(model.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>>Invalid<</if>>");
+        // Write static text and LINQ Reporting tags.
+        builder.Writeln("Name: <<[person.Name]>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Conditional block that checks the phone number format using Regex.IsMatch.
+        builder.Writeln("<<if [Regex.IsMatch(person.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>><<[person.PhoneNumber]>> (valid)<</if>>");
+        builder.Writeln("<<if [!Regex.IsMatch(person.PhoneNumber, \"^\\\\d{3}-\\\\d{3}-\\\\d{4}$\")]>><<[person.PhoneNumber]>> (invalid)<</if>>");
+
+        // Save the template to a temporary file.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
         // Load the template for reporting.
         var doc = new Document(templatePath);
 
         // Configure the reporting engine.
         var engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(Regex)); // Allow use of Regex static methods in expressions.
+        engine.KnownTypes.Add(typeof(Regex));
+        engine.Options = ReportBuildOptions.None;
 
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(doc, model, "model");
+        // Build the report using the data model.
+        engine.BuildReport(doc, person, "person");
 
         // Save the generated report.
-        string outputPath = "PhoneReport.docx";
+        const string outputPath = "Report.docx";
         doc.Save(outputPath);
     }
+}
+
+// Public data model class with non‑nullable properties.
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
 }

@@ -4,79 +4,91 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
-
-public class Person
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class DataModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words if needed.
+        // Register code page provider for Aspose.Words
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare directories.
-        string workDir = Directory.GetCurrentDirectory();
-        string dataFile = Path.Combine(workDir, "persons.json");
-        string templateFile = Path.Combine(workDir, "template.docx");
-        string resultFile = Path.Combine(workDir, "result.docx");
-
-        // Generate a large JSON dataset.
-        const int itemCount = 20000; // Adjust for desired size.
-        var model = new DataModel();
-        for (int i = 1; i <= itemCount; i++)
+        // Prepare large JSON data
+        const int itemCount = 20000;
+        var data = new DataWrapper
         {
-            model.Persons.Add(new Person
+            Persons = new List<Person>()
+        };
+        for (int i = 0; i < itemCount; i++)
+        {
+            data.Persons.Add(new Person
             {
-                Id = i,
-                Name = $"Person {i}",
+                Name = $"Person_{i:D5}",
                 Age = 20 + (i % 50)
             });
         }
-        // Serialize to JSON file.
-        File.WriteAllText(dataFile, JsonConvert.SerializeObject(model));
 
-        // Create a template document with LINQ Reporting tags.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("Id: <<[person.Id]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
+        string jsonPath = Path.Combine(Directory.GetCurrentDirectory(), "persons.json");
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(data));
+
+        // Load data back from JSON (simulating real scenario)
+        var jsonContent = File.ReadAllText(jsonPath);
+        var model = JsonConvert.DeserializeObject<DataWrapper>(jsonContent)!;
+
+        // Create template document with LINQ Reporting tags
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        builder.Writeln("<<foreach [p in data.Persons]>>");
+        var table = builder.StartTable();
+
+        // Header row
+        builder.InsertCell();
+        builder.Writeln("Name");
+        builder.InsertCell();
+        builder.Writeln("Age");
+        builder.EndRow();
+
+        // Data row
+        builder.InsertCell();
+        builder.Writeln("<<[p.Name]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[p.Age]>>");
+        builder.EndRow();
+
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
-        doc.Save(templateFile);
 
-        // Load the template.
-        var template = new Document(templateFile);
-
-        // Load JSON data source.
-        var jsonDataSource = new JsonDataSource(dataFile);
-
-        // Enable reflection optimization.
+        // Enable reflection optimization
         ReportingEngine.UseReflectionOptimization = true;
 
         var engine = new ReportingEngine();
 
-        // Benchmark the BuildReport call.
+        // Benchmark the report generation
         var stopwatch = Stopwatch.StartNew();
-        engine.BuildReport(template, jsonDataSource, "Persons");
+        bool success = engine.BuildReport(template, model, "data");
         stopwatch.Stop();
 
-        // Save the generated report.
-        template.Save(resultFile);
+        // Save the generated report
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        template.Save(reportPath);
 
-        // Output the elapsed time.
-        Console.WriteLine($"Report generation time: {stopwatch.ElapsedMilliseconds} ms");
+        // Output benchmark result
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Processing time with reflection optimization: {stopwatch.ElapsedMilliseconds} ms");
+        Console.WriteLine($"Report saved to: {reportPath}");
     }
+}
+
+public class DataWrapper
+{
+    public List<Person> Persons { get; set; } = new();
+}
+
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

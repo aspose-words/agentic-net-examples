@@ -1,19 +1,18 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
-    // Simple data model with a sensitive field.
+    // Simple data model with a sensitive Salary field.
     public class Employee
     {
         public string Name { get; set; } = "John Doe";
-        public decimal Salary { get; set; } = 12345.67m;
+        public decimal Salary { get; set; } = 75000m; // Sensitive information.
+        public string Position { get; set; } = "Software Engineer";
     }
 
-    // Wrapper class used as the root data source for the report.
+    // Wrapper model used as the root object for the report.
     public class ReportModel
     {
         public Employee Employee { get; set; } = new Employee();
@@ -23,59 +22,68 @@ namespace AsposeWordsLinqReporting
     {
         public static void Main()
         {
-            // Ensure the code page provider is registered (required for some data sources).
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-            string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
-
             // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
+            // 1. Create a template document with LINQ Reporting tags.
             // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Insert LINQ Reporting tags.
             builder.Writeln("Employee Report");
             builder.Writeln("Name: <<[model.Employee.Name]>>");
-            builder.Writeln("Salary: <<[model.Employee.Salary]>>"); // Sensitive field.
+            builder.Writeln("Position: <<[model.Employee.Position]>>");
+            // Attempt to access the sensitive Salary field – this will be blocked.
+            builder.Writeln("Salary: <<[model.Employee.Salary]>>");
 
             // Save the template to disk.
-            templateDoc.Save(templatePath);
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Load the template for reporting.
+            // 2. Configure restricted types before building the report.
+            //    Restrict the Decimal type so that any decimal members (e.g., Salary)
+            //    cannot be accessed from the template.
             // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
+            ReportingEngine.SetRestrictedTypes(typeof(decimal));
 
             // -----------------------------------------------------------------
-            // 3. Configure restricted types to block access to sensitive members.
-            //    Here we restrict the entire Employee type; any member (including Salary)
-            //    will be inaccessible in the template.
+            // 3. Prepare the data source.
             // -----------------------------------------------------------------
-            ReportingEngine.SetRestrictedTypes(typeof(Employee));
-
-            // -----------------------------------------------------------------
-            // 4. Prepare the reporting engine.
-            //    AllowMissingMembers prevents exceptions when a restricted member is accessed.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine
+            var data = new ReportModel
             {
-                Options = ReportBuildOptions.AllowMissingMembers,
-                MissingMemberMessage = string.Empty // Hide missing member messages.
+                Employee = new Employee
+                {
+                    Name = "Alice Smith",
+                    Salary = 120000m, // This value should not appear in the output.
+                    Position = "Project Manager"
+                }
             };
 
             // -----------------------------------------------------------------
-            // 5. Build the report.
+            // 4. Build the report.
             // -----------------------------------------------------------------
-            ReportModel model = new ReportModel(); // Populate with real data as needed.
-            engine.BuildReport(reportDoc, model, "model");
+            var engine = new ReportingEngine
+            {
+                // Allow missing members so that blocked members are rendered as empty strings.
+                Options = ReportBuildOptions.AllowMissingMembers,
+                // Optional: customize the message shown for blocked members.
+                MissingMemberMessage = "[Restricted]"
+            };
+
+            // Load the template (could also reuse the in‑memory document, but the rule requires loading).
+            var doc = new Document(templatePath);
+
+            // Build the report using the root object name "model" as referenced in the template.
+            engine.BuildReport(doc, data, "model");
 
             // -----------------------------------------------------------------
-            // 6. Save the generated report.
+            // 5. Save the generated report.
             // -----------------------------------------------------------------
-            reportDoc.Save(reportPath);
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+
+            // Output the plain text of the generated document to the console.
+            Console.WriteLine("Generated report text:");
+            Console.WriteLine(doc.GetText());
         }
     }
 }

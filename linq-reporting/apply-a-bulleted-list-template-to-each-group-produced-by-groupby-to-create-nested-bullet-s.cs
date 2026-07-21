@@ -1,98 +1,92 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Aspose.Words;
-using Aspose.Words.Lists;
+using Aspose.Words.Lists;          // Needed for ListTemplate
 using Aspose.Words.Reporting;
 
-public class Program
-{
-    public static void Main()
-    {
-        // Prepare sample data.
-        List<Item> items = new()
-        {
-            new Item { Category = "Fruits", Name = "Apple" },
-            new Item { Category = "Fruits", Name = "Banana" },
-            new Item { Category = "Fruits", Name = "Cherry" },
-            new Item { Category = "Vegetables", Name = "Carrot" },
-            new Item { Category = "Vegetables", Name = "Lettuce" },
-            new Item { Category = "Grains", Name = "Rice" }
-        };
-
-        // Group items by Category.
-        List<Group> groups = items
-            .GroupBy(i => i.Category)
-            .Select(g => new Group { Category = g.Key, Items = g.ToList() })
-            .ToList();
-
-        // Build the wrapper model for the report.
-        ReportModel model = new() { Groups = groups };
-
-        // -----------------------------------------------------------------
-        // Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Create a bulleted list that will be used for both group headers and items.
-        List bulletList = templateDoc.Lists.Add(ListTemplate.BulletDefault);
-        builder.ListFormat.List = bulletList;
-
-        // Begin outer foreach over groups.
-        builder.Writeln("<<foreach [g in Groups]>>");
-
-        // Group header – level 0 bullet.
-        builder.ListFormat.ListLevelNumber = 0;
-        builder.Writeln("<<[g.Category]>>");
-
-        // Begin inner foreach over items within the current group.
-        builder.Writeln("<<foreach [i in g.Items]>>");
-
-        // Item name – level 1 bullet.
-        builder.ListFormat.ListLevelNumber = 1;
-        builder.Writeln("<<[i.Name]>>");
-
-        // End inner foreach.
-        builder.Writeln("<</foreach>>");
-
-        // End outer foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        reportDoc.Save(outputPath);
-    }
-}
-
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
-public class Item
+public class Product
 {
     public string Category { get; set; } = "";
     public string Name { get; set; } = "";
 }
 
-public class Group
+public class CategoryGroup
 {
     public string Category { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
+    public List<Product> Items { get; set; } = new();
 }
 
 public class ReportModel
 {
-    public List<Group> Groups { get; set; } = new();
+    public List<CategoryGroup> Groups { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        // Sample data.
+        var products = new List<Product>
+        {
+            new() { Category = "Fruits", Name = "Apple" },
+            new() { Category = "Fruits", Name = "Banana" },
+            new() { Category = "Fruits", Name = "Cherry" },
+            new() { Category = "Vegetables", Name = "Carrot" },
+            new() { Category = "Vegetables", Name = "Lettuce" },
+            new() { Category = "Beverages", Name = "Coffee" },
+            new() { Category = "Beverages", Name = "Tea" }
+        };
+
+        // Group by category.
+        var model = new ReportModel
+        {
+            Groups = products
+                .GroupBy(p => p.Category)
+                .Select(g => new CategoryGroup
+                {
+                    Category = g.Key,
+                    Items = g.ToList()
+                })
+                .ToList()
+        };
+
+        // Create template document.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Apply a bulleted list to the outer level.
+        builder.ListFormat.List = doc.Lists.Add(ListTemplate.BulletDefault);
+
+        // Outer foreach – groups.
+        builder.Writeln("<<foreach [g in Groups]>>");
+        builder.Writeln("<<[g.Category]>>");
+
+        // Increase list level for inner items.
+        builder.ListFormat.ListIndent();
+
+        // Inner foreach – products.
+        builder.Writeln("<<foreach [p in g.Items]>>");
+        builder.Writeln("<<[p.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Return to outer list level.
+        builder.ListFormat.ListOutdent();
+
+        // End outer foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Save template (optional).
+        const string templatePath = "Template.docx";
+        doc.Save(templatePath);
+
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        engine.BuildReport(doc, model, "model");
+
+        // Save final document.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
+    }
 }

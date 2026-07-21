@@ -10,86 +10,99 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data.
-        const string xmlPath = "data.xml";
-        File.WriteAllText(xmlPath,
-@"<Categories>
-    <Category Name=""Food"">
-        <Item Name=""Apple"" Amount=""1.20"" />
-        <Item Name=""Bread"" Amount=""2.50"" />
-    </Category>
-    <Category Name=""Beverages"">
-        <Item Name=""Coffee"" Amount=""3.00"" />
-        <Item Name=""Tea"" Amount=""2.25"" />
-    </Category>
-</Categories>");
+        // Ensure code page provider is registered (required for some Aspose.Words features)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Load XML into strongly‑typed model.
-        var model = new ReportModel
+        // 1. Create sample XML data
+        const string xmlFile = "data.xml";
+        File.WriteAllText(xmlFile,
+@"<Report>
+  <Categories>
+    <Category Name='Beverages'>
+      <Item Name='Coffee' Price='3.5' Quantity='10' />
+      <Item Name='Tea' Price='2.0' Quantity='15' />
+    </Category>
+    <Category Name='Snacks'>
+      <Item Name='Cookie' Price='1.2' Quantity='20' />
+      <Item Name='Chips' Price='1.5' Quantity='12' />
+    </Category>
+  </Categories>
+</Report>");
+
+        // 2. Load XML into model objects
+        XDocument doc = XDocument.Load(xmlFile);
+        ReportModel model = new()
         {
-            Categories = XDocument.Load(xmlPath)
-                .Root!
+            Categories = doc.Root!
+                .Element("Categories")!
                 .Elements("Category")
-                .Select(c => new Category
+                .Select(cat => new Category
                 {
-                    Name = (string)c.Attribute("Name")!,
-                    Items = c.Elements("Item")
-                             .Select(i => new Item
-                             {
-                                 Name = (string)i.Attribute("Name")!,
-                                 Amount = decimal.Parse((string)i.Attribute("Amount")!)
-                             })
-                             .ToList()
+                    Name = (string)cat.Attribute("Name")!,
+                    Items = cat.Elements("Item")
+                               .Select(it => new Item
+                               {
+                                   Name = (string)it.Attribute("Name")!,
+                                   Price = decimal.Parse((string)it.Attribute("Price")!),
+                                   Quantity = int.Parse((string)it.Attribute("Quantity")!)
+                               })
+                               .ToList()
                 })
                 .ToList()
         };
 
-        // Create the template document with LINQ Reporting tags.
-        const string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // 3. Create a Word template with LINQ Reporting tags
+        const string templateFile = "template.docx";
+        Document templateDoc = new();
+        DocumentBuilder builder = new(templateDoc);
 
+        builder.Writeln("Categories Report");
+        builder.Writeln("");
+
+        // Iterate over categories
         builder.Writeln("<<foreach [cat in Categories]>>");
         builder.Writeln("Category: <<[cat.Name]>>");
-        builder.Writeln("<<foreach [itm in cat.Items]>>");
-        builder.Writeln("- <<[itm.Name]>>: $<<[itm.Amount]>>");
+        // Inline arithmetic using LINQ Sum to calculate total per category
+        builder.Writeln("Total: <<[cat.Items.Sum(i => i.Price * i.Quantity)]>>");
+        builder.Writeln("");
+
+        // Iterate over items within the current category
+        builder.Writeln("<<foreach [item in cat.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Price]>> x <<[item.Quantity]>> = <<[item.Price * item.Quantity]>>");
         builder.Writeln("<</foreach>>");
-        builder.Writeln("Total: $<<[cat.Total]>>");
         builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
+        // Save the template
+        templateDoc.Save(templateFile);
 
-        // Load the template and build the report.
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // 4. Build the report using Aspose.Words ReportingEngine
+        Document reportDoc = new(templateFile);
+        ReportingEngine engine = new();
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "report.docx";
-        doc.Save(outputPath);
+        // 5. Save the generated report
+        const string outputFile = "report.docx";
+        reportDoc.Save(outputFile);
+
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputFile)}");
     }
 }
 
-// Root data model.
+// Data model classes
 public class ReportModel
 {
     public List<Category> Categories { get; set; } = new();
 }
 
-// Category with a computed total.
 public class Category
 {
     public string Name { get; set; } = string.Empty;
     public List<Item> Items { get; set; } = new();
-
-    // Inline arithmetic can also be done in the template,
-    // but exposing the total here simplifies the example.
-    public decimal Total => Items.Sum(i => i.Amount);
 }
 
-// Simple item model.
 public class Item
 {
     public string Name { get; set; } = string.Empty;
-    public decimal Amount { get; set; }
+    public decimal Price { get; set; }
+    public int Quantity { get; set; }
 }

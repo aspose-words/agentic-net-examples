@@ -1,105 +1,77 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-
-        // Create sample XML data file.
-        const string xmlPath = "Products.xml";
+        // Prepare sample XML data.
+        const string xmlPath = "order.xml";
         File.WriteAllText(xmlPath,
-@"<Products>
-    <Product>
-        <Name>Apple</Name>
-        <Price>1.23</Price>
-    </Product>
-    <Product>
-        <Name>Banana</Name>
-        <Price>0.75</Price>
-    </Product>
-    <Product>
-        <Name>Cherry</Name>
-        <Price>2.50</Price>
-    </Product>
-</Products>");
+            @"<order>
+                <Id>1001</Id>
+                <Amount>1234.56</Amount>
+                <Customer>John Doe</Customer>
+              </order>");
 
-        // Load XML and populate the model.
-        XDocument doc = XDocument.Load(xmlPath);
-        var model = new ReportModel
-        {
-            Products = new List<Product>(),
-            CurrencyProvider = new MyCurrencyFormatProvider()
-        };
-
-        foreach (var elem in doc.Root?.Elements("Product") ?? new List<XElement>())
-        {
-            model.Products.Add(new Product
-            {
-                Name = (string?)elem.Element("Name") ?? string.Empty,
-                Price = decimal.TryParse((string?)elem.Element("Price"), out var p) ? p : 0m
-            });
-        }
-
-        // Create a Word document template programmatically.
+        // Create a template document with LINQ Reporting tags.
+        const string templatePath = "template.docx";
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Product Report");
+        builder.Writeln("Order Report");
         builder.Writeln("==============");
-        builder.Writeln();
+        builder.Writeln("Order ID: <<[order.Id]>>");
+        builder.Writeln("Customer: <<[order.Customer]>>");
+        builder.Writeln("Amount: <<[order.Amount]>>");
+        templateDoc.Save(templatePath);
 
-        // Begin foreach loop over products.
-        builder.Writeln("<<foreach [p in model.Products]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        builder.Writeln("Price: <<[p.Price.ToString(\"C\", model.CurrencyProvider)]>>");
-        builder.Writeln("<</foreach>>");
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
+
+        // Apply a custom number format provider for currency fields.
+        doc.FieldOptions.ResultFormatter = new CurrencyResultFormatter();
+
+        // Load XML data source.
+        var xmlDataSource = new XmlDataSource(xmlPath);
 
         // Build the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
+        engine.BuildReport(doc, xmlDataSource, "order");
 
-        // Save the result.
+        // Save the generated report.
         const string outputPath = "Report.docx";
-        templateDoc.Save(outputPath);
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
-    }
-}
-
-// Model classes.
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-    public IFormatProvider CurrencyProvider { get; set; } = new MyCurrencyFormatProvider();
-}
-
-public class Product
-{
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-}
-
-// Custom currency format provider.
-public class MyCurrencyFormatProvider : IFormatProvider
-{
-    private readonly CultureInfo _culture;
-
-    public MyCurrencyFormatProvider()
-    {
-        _culture = (CultureInfo)CultureInfo.InvariantCulture.Clone();
-        _culture.NumberFormat.CurrencySymbol = "$";
-        _culture.NumberFormat.CurrencyDecimalDigits = 2;
+        doc.Save(outputPath);
     }
 
-    public object GetFormat(Type? formatType)
+    // Custom formatter that formats numeric values as currency.
+    private class CurrencyResultFormatter : IFieldResultFormatter
     {
-        return _culture.GetFormat(formatType!);
+        public string FormatNumeric(double value, string format)
+        {
+            // Apply custom currency format (e.g., $1,234.56).
+            return string.Format(CultureInfo.InvariantCulture, "${0:N2}", value);
+        }
+
+        public string FormatDateTime(DateTime value, string format, CalendarType calendarType)
+        {
+            // No custom date formatting required.
+            return null;
+        }
+
+        public string Format(string value, GeneralFormat format)
+        {
+            // No custom general formatting required.
+            return null;
+        }
+
+        public string Format(double value, GeneralFormat format)
+        {
+            // No custom general formatting required.
+            return null;
+        }
     }
 }

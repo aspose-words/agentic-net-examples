@@ -6,25 +6,31 @@ public class Program
 {
     public static void Main()
     {
-        // Create a blank document that will serve as the template.
+        // Create a template document programmatically.
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Insert a LINQ Reporting tag that uses the static TimeSpan.Parse method.
-        // Use double quotes for the string literal inside the tag.
-        builder.Writeln("Duration: <<[TimeSpan.Parse(\"02:15:30\")]>>");
+        // Insert LINQ Reporting tags that use static parsing of a TimeSpan string.
+        // Use double quotes inside the expression to avoid char literal parsing errors.
+        builder.Writeln("Parsed duration: <<[TimeSpan.Parse(\"02:15:30\")]>>");
+        builder.Writeln("Total minutes: <<[TimeSpan.Parse(\"02:15:30\").TotalMinutes]>>");
 
-        // Initialize the reporting engine.
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for reporting.
+        Document report = new Document(templatePath);
+
+        // Create the reporting engine and register System.TimeSpan for static method access.
         ReportingEngine engine = new ReportingEngine();
-
-        // Register System.TimeSpan so that static members can be accessed from the template.
         engine.KnownTypes.Add(typeof(TimeSpan));
 
-        // Build the report. No data source is required for this example,
-        // so we pass an empty object as the root data source.
-        engine.BuildReport(template, new object());
+        // Build the report. No data source is required because the template uses only static calls.
+        engine.BuildReport(report, new object());
 
-        // Save the generated document.
-        template.Save("Report.docx");
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        report.Save(outputPath);
     }
 }

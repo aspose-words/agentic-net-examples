@@ -1,101 +1,90 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
 public class Program
 {
+    // Data model for an order.
+    public class Order
+    {
+        public string CustomerName { get; set; } = string.Empty;
+        public List<Item> Items { get; set; } = new();
+
+        public Order(string customerName, List<Item> items)
+        {
+            CustomerName = customerName;
+            Items = items;
+        }
+    }
+
+    // Data model for an item in the order.
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+
+        public Item(string name, int quantity)
+        {
+            Name = name;
+            Quantity = quantity;
+        }
+    }
+
     public static void Main()
     {
-        // Register code page provider for Aspose.Words if needed.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Create a reusable template.
+        // Step 1: Create a LINQ Reporting template programmatically.
         const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Simulate two separate user requests with isolated ReportingEngine instances.
-        var user1 = new ReportModel
-        {
-            UserName = "Alice",
-            Items = new()
-            {
-                new Item { Index = 1, Name = "Apple" },
-                new Item { Index = 2, Name = "Banana" }
-            }
-        };
-
-        var user2 = new ReportModel
-        {
-            UserName = "Bob",
-            Items = new()
-            {
-                new Item { Index = 1, Name = "Carrot" },
-                new Item { Index = 2, Name = "Date" },
-                new Item { Index = 3, Name = "Eggplant" }
-            }
-        };
-
-        GenerateReportForUser(templatePath, user1);
-        GenerateReportForUser(templatePath, user2);
-    }
-
-    private static void CreateTemplate(string path)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Header with user name.
-        builder.Writeln("Report for user: <<[model.UserName]>>");
-        builder.Writeln();
-
-        // Items table using foreach.
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in Items]>>");
-
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("<<[item.Index]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.EndRow();
-        builder.EndTable();
-
+        // Insert tags that will be replaced by the reporting engine.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Order Items:");
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(path);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // Step 2: Simulate isolated reporting for multiple user requests.
+        // Each request gets its own ReportingEngine instance and its own data.
+        var userRequests = new[]
+        {
+            new Order(
+                "Alice Johnson",
+                new List<Item>
+                {
+                    new Item("Laptop", 1),
+                    new Item("Mouse", 2)
+                }),
+
+            new Order(
+                "Bob Smith",
+                new List<Item>
+                {
+                    new Item("Desk", 1),
+                    new Item("Chair", 4),
+                    new Item("Lamp", 2)
+                })
+        };
+
+        for (int i = 0; i < userRequests.Length; i++)
+        {
+            // Load a fresh copy of the template for each request.
+            var doc = new Document(templatePath);
+
+            // Create a new ReportingEngine instance – isolated per request.
+            var engine = new ReportingEngine();
+
+            // Build the report using the order object as the root data source.
+            // The template references the root object with the name "order".
+            engine.BuildReport(doc, userRequests[i], "order");
+
+            // Save the generated report.
+            string outputPath = $"Report_User{i + 1}.docx";
+            doc.Save(outputPath);
+        }
     }
-
-    private static void GenerateReportForUser(string templatePath, ReportModel model)
-    {
-        // Load the template for this request.
-        var doc = new Document(templatePath);
-
-        // Create a new ReportingEngine instance for isolation.
-        var engine = new ReportingEngine();
-
-        // Build the report.
-        bool success = engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        string outputPath = $"Report_{model.UserName}.docx";
-        doc.Save(outputPath);
-
-        Console.WriteLine($"Report for {model.UserName} generated: {(success ? "Success" : "Failed")} -> {outputPath}");
-    }
-}
-
-public class ReportModel
-{
-    public string UserName { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public int Index { get; set; }
-    public string Name { get; set; } = "";
 }

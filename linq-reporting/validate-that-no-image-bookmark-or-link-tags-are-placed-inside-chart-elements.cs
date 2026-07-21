@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -6,83 +7,92 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Initialize to avoid nullable warnings.
     public string Title { get; set; } = "Sample Report";
+    public string ImagePath { get; set; } = "";
+    public string Url { get; set; } = "https://example.com";
+    public string LinkText { get; set; } = "Example Link";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the final report.
-        const string templatePath = "ChartTemplate.docx";
-        const string reportPath = "ChartReport.docx";
+        // -----------------------------------------------------------------
+        // Prepare a simple 1x1 PNG image.
+        // -----------------------------------------------------------------
+        const string imageFileName = "sample.png";
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=");
+        File.WriteAllBytes(imageFileName, pngBytes);
 
         // -----------------------------------------------------------------
-        // 1. Create a template document that contains a chart.
+        // Create the data model.
         // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        var model = new ReportModel
+        {
+            ImagePath = Path.GetFullPath(imageFileName)
+        };
 
-        // Insert a LINQ Reporting tag.
-        builder.Writeln("<<[model.Title]>>");
+        // -----------------------------------------------------------------
+        // Create the template document.
+        // -----------------------------------------------------------------
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
 
-        // Insert a simple column chart.
+        // Simple text with a data field.
+        builder.Writeln("Report Title: <<[model.Title]>>");
+
+        // Insert a chart (no tags inside).
+        builder.Writeln("Chart:");
         builder.InsertChart(ChartType.Column, 400, 300);
 
-        // OPTIONAL: Uncomment the lines below to simulate an invalid tag inside the chart.
-        // Shape chartShape = (Shape)templateDoc.GetChildNodes(NodeType.Shape, true)[0];
-        // chartShape.FirstParagraph?.AppendChild(new Run(templateDoc, "<<image [model.ImagePath]>>"));
+        // Valid tags placed outside the chart.
+        builder.Writeln("<<bookmark [model.Title]>>Bookmark Content<</bookmark>>");
+        builder.Writeln("<<link [model.Url] [model.LinkText]>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Image tag must be inside a textbox (image container).
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        builder.MoveTo(textBox.FirstParagraph);
+        builder.Write("<<image [model.ImagePath] -fitSize>>");
 
-        // -----------------------------------------------------------------
-        // 2. Load the template back (simulating a real-world scenario).
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Validate that no image, bookmark, or link tags exist inside chart elements.
-        // -----------------------------------------------------------------
-        ValidateChartTags(loadedTemplate);
+        // Save the template.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 4. Build the report using LINQ Reporting Engine.
+        // Load the template for validation and reporting.
         // -----------------------------------------------------------------
-        var model = new ReportModel(); // Sample data source.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, model, "model");
+        var doc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        loadedTemplate.Save(reportPath);
-    }
-
-    // Scans all chart shapes and ensures they do not contain prohibited tags.
-    private static void ValidateChartTags(Document doc)
-    {
-        // Retrieve all Shape nodes that contain a chart.
-        NodeCollection chartShapes = doc.GetChildNodes(NodeType.Shape, true);
-        foreach (Shape shape in chartShapes)
+        // Validate that no image, bookmark, or link tags exist inside chart elements.
+        bool invalidTagFound = false;
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
         {
-            if (!shape.HasChart) continue;
-
-            // Search all descendant runs within the chart shape.
-            NodeCollection runs = shape.GetChildNodes(NodeType.Run, true);
-            foreach (Run run in runs)
+            if (shape.HasChart)
             {
-                string text = run.Text;
-                if (text.Contains("<<image") ||
-                    text.Contains("<<bookmark") ||
-                    text.Contains("<<link"))
+                string chartText = shape.GetText();
+                if (chartText.Contains("<<image") ||
+                    chartText.Contains("<<bookmark") ||
+                    chartText.Contains("<<link"))
                 {
-                    // Invalid tag detected – raise an exception with details.
-                    string message = $"Prohibited tag found inside a chart at run hash {run.GetHashCode()}.";
-                    throw new InvalidOperationException(message);
+                    invalidTagFound = true;
+                    break;
                 }
             }
         }
+
+        Console.WriteLine(invalidTagFound
+            ? "Invalid tags were found inside a chart."
+            : "No invalid tags inside charts were detected.");
+
+        // -----------------------------------------------------------------
+        // Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the final report.
+        const string reportPath = "Report.docx";
+        doc.Save(reportPath);
     }
 }

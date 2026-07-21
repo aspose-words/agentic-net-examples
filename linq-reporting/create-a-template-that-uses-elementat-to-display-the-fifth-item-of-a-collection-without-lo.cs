@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Item
 {
-    public string Name { get; set; } = string.Empty;
-    public int Id { get; set; }
+    public string Name { get; set; } = "";
 }
 
 public class ReportModel
@@ -22,42 +22,43 @@ public class Program
         // Prepare sample data with at least five items.
         var model = new ReportModel
         {
-            Items =
+            Items = new List<Item>
             {
-                new Item { Id = 1, Name = "Alpha" },
-                new Item { Id = 2, Name = "Bravo" },
-                new Item { Id = 3, Name = "Charlie" },
-                new Item { Id = 4, Name = "Delta" },
-                new Item { Id = 5, Name = "Echo" },   // Fifth item (index 4)
-                new Item { Id = 6, Name = "Foxtrot" }
+                new Item { Name = "Item One" },
+                new Item { Name = "Item Two" },
+                new Item { Name = "Item Three" },
+                new Item { Name = "Item Four" },
+                new Item { Name = "Item Five" },
+                new Item { Name = "Item Six" }
             }
         };
 
-        // -----------------------------------------------------------------
-        // Create a template document programmatically.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Define file names in the current working directory.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        string reportPath   = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
 
-        // Insert a LINQ Reporting tag that uses ElementAt to fetch the 5th item.
-        // ElementAt uses zero‑based indexing, so 4 corresponds to the fifth element.
+        // -----------------------------------------------------------------
+        // Step 1: Create the template document programmatically.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Insert a LINQ Reporting tag that uses ElementAt to fetch the 5th item (index 4).
         builder.Writeln("Fifth item: <<[model.Items.ElementAt(4).Name]>>");
 
-        // Save the template to disk (required before building the report).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Load the template back (ensures the document is fully prepared).
-        var doc = new Document(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // Build the report using the LINQ Reporting engine.
+        // Step 2: Load the template and build the report.
         // -----------------------------------------------------------------
+        var loadedTemplate = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+
+        // Build the report using the model and the root name "model".
+        engine.BuildReport(loadedTemplate, model, "model");
 
         // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        loadedTemplate.Save(reportPath);
     }
 }

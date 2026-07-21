@@ -1,82 +1,48 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingFirstCharStyling
+public class Program
 {
-    // Data model classes
-    public class ReportModel
+    public static void Main()
     {
-        public List<Item> Items { get; set; } = new();
-    }
+        // Register code page provider for legacy encodings (required by Aspose.Words in some environments)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Item
-    {
-        public string Name { get; set; } = string.Empty;
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data
+        var person = new Person
         {
-            // Register code page provider (required for some environments)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Name = "Alice Johnson"
+        };
 
-            // Paths for template and output
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+        // Create a template document programmatically
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // -------------------------------------------------
-            // 1. Create the LINQ Reporting template programmatically
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Write a line that formats the first character of the name in red,
+        // then writes the rest of the name without special formatting.
+        builder.Writeln("Name: <<textColor [\"Red\"]>><<[person.Name.Substring(0,1)]>><</textColor>><<[person.Name.Substring(1)]>>");
 
-            // Write a foreach block that iterates over Items
-            builder.Writeln("<<foreach [item in Items]>>");
+        doc.Save(templatePath);
 
-            // Apply custom font styling to the first character of the Name:
-            // - The first character is colored red using the textColor tag.
-            // - The rest of the string is inserted without additional styling.
-            builder.Writeln(
-                "<<textColor [\"Red\"]>><<[item.Name.Substring(0,1)]>><</textColor>><<[item.Name.Substring(1)]>>");
+        // Load the template for reporting
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
-            // End the foreach block
-            builder.Writeln("<</foreach>>");
+        // Build the report using the person object as the root data source named "person"
+        engine.BuildReport(reportDoc, person, "person");
 
-            // Save the template to disk
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Prepare sample data
-            // -------------------------------------------------
-            ReportModel model = new()
-            {
-                Items = new List<Item>
-                {
-                    new() { Name = "Apple" },
-                    new() { Name = "Banana" },
-                    new() { Name = "Cherry" },
-                    new() { Name = "Date" }
-                }
-            };
-
-            // -------------------------------------------------
-            // 3. Load the template and build the report
-            // -------------------------------------------------
-            Document doc = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine();
-
-            // Build the report using the model; the root object name is "model"
-            engine.BuildReport(doc, model, "model");
-
-            // -------------------------------------------------
-            // 4. Save the generated report
-            // -------------------------------------------------
-            doc.Save(outputPath);
-        }
+        // Save the generated report
+        var outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
+}
+
+// Simple data model used by the LINQ Reporting engine
+public class Person
+{
+    public string Name { get; set; } = string.Empty;
 }

@@ -1,69 +1,51 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting; // JsonDataSource resides in this namespace
-// Note: Azure.Storage.Blobs is omitted because it is not part of the allowed packages.
+using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for any legacy encodings that Aspose.Words might need.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample JSON data.
+        string jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "persons.json");
+        string jsonContent = @"[
+            { ""Name"": ""John Doe"", ""Age"": 30 },
+            { ""Name"": ""Jane Smith"", ""Age"": 25 }
+        ]";
+        File.WriteAllText(jsonFilePath, jsonContent);
 
-        // -----------------------------------------------------------------
-        // 1. Create a simple JSON data file.
-        // -----------------------------------------------------------------
-        const string jsonFileName = "person.json";
-        string jsonContent = @"{
-    ""Name"": ""John Doe"",
-    ""Age"": 30,
-    ""Address"": ""123 Main St, Anytown""
-}";
-        File.WriteAllText(jsonFileName, jsonContent, Encoding.UTF8);
+        // Create a Word template with LINQ Reporting tags.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Persons Report");
+        builder.Writeln("<<foreach [p in persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Build a Word template programmatically.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Load the template back (required before building the report).
+        Document reportDoc = new Document(templatePath);
 
-        // Insert LINQ Reporting tags that reference the JSON root object named "person".
-        builder.Writeln("Customer Report");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
-        builder.Writeln("Address: <<[person.Address]>>");
+        // Load JSON data from a file stream.
+        using (FileStream jsonStream = File.OpenRead(jsonFilePath))
+        {
+            JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
 
-        // Save the template to a temporary file (required before loading it for reporting).
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+            // Build the report.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, jsonDataSource, "persons");
+        }
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and the JSON data source from a file stream.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-        using FileStream jsonStream = File.OpenRead(jsonFileName);
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
+        // Save the generated report.
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "report.docx");
+        reportDoc.Save(reportPath);
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using ReportingEngine.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
-        // The root object name used in the template tags is "person".
-        engine.BuildReport(doc, jsonDataSource, "person");
-
-        // Save the generated report locally.
-        const string reportPath = "Report.docx";
-        doc.Save(reportPath);
-
-        // -----------------------------------------------------------------
-        // 5. (Optional) Upload the report to Azure Blob Storage.
-        // -----------------------------------------------------------------
-        // Azure.Storage.Blobs is not included in the allowed package list.
-        // In a real scenario you would create a BlobContainerClient and upload the file here.
-        // For this self‑contained example we simply inform the user where the report was saved.
-        Console.WriteLine($"Report generated and saved to '{reportPath}'.");
-        Console.WriteLine("Upload to Azure Blob Storage would be performed here using Azure.Storage.Blobs.");
+        // NOTE: Azure Blob Storage upload requires the Azure.Storage.Blobs package,
+        // which is not part of the required package list. To keep the example
+        // self‑contained and compilable, the upload step is represented as a placeholder.
+        Console.WriteLine($"Report generated at: {reportPath}");
+        Console.WriteLine("Upload to Azure Blob Storage would be performed here.");
     }
 }

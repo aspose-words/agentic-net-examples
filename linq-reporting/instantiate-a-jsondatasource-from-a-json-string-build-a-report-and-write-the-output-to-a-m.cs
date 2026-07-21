@@ -8,49 +8,39 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Sample JSON data.
+        const string json = @"{
+  ""Title"": ""Sample Report"",
+  ""Items"": [
+    { ""Name"": ""Apple"",  ""Quantity"": 5 },
+    { ""Name"": ""Banana"", ""Quantity"": 12 },
+    { ""Name"": ""Cherry"", ""Quantity"": 7 }
+  ]
+}";
 
-        // Create a simple JSON string that will serve as the data source
-        string json = @"{
-            ""Title"": ""Sample Report"",
-            ""Items"": [
-                { ""Index"": 1, ""Name"": ""First item"" },
-                { ""Index"": 2, ""Name"": ""Second item"" },
-                { ""Index"": 3, ""Name"": ""Third item"" }
-            ]
-        }";
+        // Convert the JSON string to a memory stream.
+        using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
-        // Build the template document programmatically
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Create a JsonDataSource from the stream.
+        var jsonDataSource = new JsonDataSource(jsonStream);
 
-        // Write the title tag
-        builder.Writeln("<<[json.Title]>>");
-        builder.Writeln(); // empty line
-
-        // Begin a foreach loop over the Items collection
-        builder.Writeln("<<foreach [item in json.Items]>>");
-        // Write each item's fields
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-        // End the foreach loop
+        // Build a simple template document with LINQ Reporting tags.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln("<<foreach [item in model.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
         builder.Writeln("<</foreach>>");
 
-        // Create a JsonDataSource from the JSON string using a memory stream
-        using MemoryStream jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        jsonStream.Position = 0; // Ensure the stream is at the beginning
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
+        // Populate the template using the reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(doc, jsonDataSource, "model");
 
-        // Build the report using the ReportingEngine
-        ReportingEngine engine = new ReportingEngine();
-        // The root name "json" matches the tags used in the template
-        engine.BuildReport(doc, jsonDataSource, "json");
+        // Save the generated report to a memory stream.
+        using var output = new MemoryStream();
+        doc.Save(output, SaveFormat.Docx);
 
-        // Save the generated report to a memory stream (DOCX format)
-        using MemoryStream outputStream = new MemoryStream();
-        doc.Save(outputStream, SaveFormat.Docx);
-
-        // Optionally, display the size of the generated document
-        Console.WriteLine($"Report generated. Output size: {outputStream.Length} bytes.");
+        // Output the size of the generated report.
+        Console.WriteLine($"Report generated. Size: {output.Length} bytes.");
     }
 }

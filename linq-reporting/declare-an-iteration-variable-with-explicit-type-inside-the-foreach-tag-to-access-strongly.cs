@@ -4,50 +4,67 @@ using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+namespace LinqReportingExample
 {
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Data model classes
+    public class Person
     {
-        // Register code page provider (required for some data sources).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
+    }
 
-        // Prepare sample data.
-        List<Person> persons = new()
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            new Person { Name = "Alice", Age = 30 },
-            new Person { Name = "Bob", Age = 25 },
-            new Person { Name = "Charlie", Age = 35 }
-        };
-        ReportModel model = new() { Persons = persons };
+            // Register code page provider (required for Aspose.Words)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a blank document and insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // -----------------------------------------------------------------
+            // 1. Create a template document with a foreach tag that iterates over
+            //    the Persons collection. The iteration variable is declared without
+            //    an explicit type (Aspose.Words LINQ Reporting syntax requires this).
+            // -----------------------------------------------------------------
+            var templatePath = "Template.docx";
+            var builder = new DocumentBuilder();
+            builder.Writeln("<<foreach [p in Persons]>>");
+            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+            builder.Document.Save(templatePath);
 
-        // Correct foreach syntax – the iteration variable type is inferred.
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
-        builder.Writeln("<</foreach>>");
+            // -----------------------------------------------------------------
+            // 2. Load the template document.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
 
-        // Build the report using the model as the data source.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(doc, model, null);
+            // -----------------------------------------------------------------
+            // 3. Prepare sample data.
+            // -----------------------------------------------------------------
+            var model = new ReportModel
+            {
+                Persons = new List<Person>
+                {
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 45 },
+                    new Person { Name = "Charlie", Age = 22 }
+                }
+            };
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+            // -----------------------------------------------------------------
+            // 4. Build the report using the ReportingEngine.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            doc.Save("Report.docx");
+        }
     }
 }

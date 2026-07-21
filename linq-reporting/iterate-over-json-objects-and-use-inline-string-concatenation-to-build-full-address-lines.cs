@@ -2,47 +2,60 @@ using System;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Reporting; // Ensure reporting namespace is available
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
+        // Register code page provider (required for some Aspose.Words features)
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Prepare sample JSON data
+        // Prepare sample JSON data representing a list of addresses
+        string json = @"
+[
+    {
+        ""Street"": ""123 Main St"",
+        ""City"": ""Springfield"",
+        ""State"": ""IL"",
+        ""Zip"": ""62704""
+    },
+    {
+        ""Street"": ""456 Oak Ave"",
+        ""City"": ""Metropolis"",
+        ""State"": ""NY"",
+        ""Zip"": ""10001""
+    },
+    {
+        ""Street"": ""789 Pine Rd"",
+        ""City"": ""Gotham"",
+        ""State"": ""NJ"",
+        ""Zip"": ""07097""
+    }
+]";
+        // Write JSON to a local file
         string jsonPath = "addresses.json";
-        string jsonContent = @"{
-            ""Addresses"": [
-                { ""Street"": ""123 Main St"", ""City"": ""Springfield"", ""State"": ""IL"", ""Zip"": ""62704"" },
-                { ""Street"": ""456 Oak Ave"", ""City"": ""Metropolis"", ""State"": ""NY"", ""Zip"": ""10001"" },
-                { ""Street"": ""789 Pine Rd"", ""City"": ""Gotham"", ""State"": ""NJ"", ""Zip"": ""07097"" }
-            ]
-        }";
-        File.WriteAllText(jsonPath, jsonContent);
+        File.WriteAllText(jsonPath, json);
 
-        // Create a template document programmatically
+        // Create a new blank document that will serve as the template
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Address List:");
-        // Loop over the Addresses collection in the JSON root object named 'data'
-        builder.Writeln("<<foreach [addr in data.Addresses]>>");
-        // Build full address line using inline string concatenation
+        // Title
+        builder.Writeln("Address Report");
+        builder.Writeln();
+
+        // LINQ Reporting tags:
+        // Iterate over the JSON array (named "addresses") and concatenate address parts inline.
+        builder.Writeln("<<foreach [addr in addresses]>>");
         builder.Writeln("<<[addr.Street + \", \" + addr.City + \", \" + addr.State + \" \" + addr.Zip]>>");
         builder.Writeln("<</foreach>>");
 
-        // Configure JSON data source with options to always generate a root object
-        JsonDataLoadOptions loadOptions = new JsonDataLoadOptions
-        {
-            AlwaysGenerateRootObject = true
-        };
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath, loadOptions);
+        // Create a JsonDataSource from the JSON file
+        JsonDataSource dataSource = new JsonDataSource(jsonPath);
 
-        // Build the report
+        // Build the report using the data source. The root name in the template is "addresses".
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, jsonDataSource, "data");
+        engine.BuildReport(doc, dataSource, "addresses");
 
         // Save the generated report
         doc.Save("Report.docx");

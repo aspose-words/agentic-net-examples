@@ -3,83 +3,57 @@ using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Wrapper model that provides additional values for the template.
-    public class ReportModel
+    public static void Main()
     {
-        // The date/time when the report is generated.
-        public DateTime GeneratedOn { get; set; } = DateTime.Now;
-    }
+        // Create a simple template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // ---------- 1. Prepare sample data in a DataSet ----------
-            DataSet dataSet = new DataSet("ReportData");
-            DataTable employeesTable = new DataTable("Employees");
-            employeesTable.Columns.Add("Name", typeof(string));
-            employeesTable.Columns.Add("Title", typeof(string));
-            employeesTable.Columns.Add("Department", typeof(string));
+        // Insert LINQ Reporting tags that reference the DataSet root object named "ds".
+        // The root object will be a DataRow, so the fields can be accessed directly.
+        builder.Writeln("Report Title: <<[ds.Title]>>");
+        builder.Writeln("Report Author: <<[ds.Author]>>");
+        builder.Writeln("Report Date: <<[ds.ReportDate]>>");
 
-            employeesTable.Rows.Add("Alice Johnson", "Senior Engineer", "R&D");
-            employeesTable.Rows.Add("Bob Smith", "Project Manager", "Operations");
-            employeesTable.Rows.Add("Carol White", "Analyst", "Finance");
+        // Save the template to a temporary file.
+        const string templatePath = "ReportTemplate.docx";
+        template.Save(templatePath);
 
-            dataSet.Tables.Add(employeesTable);
+        // Prepare a DataSet with a single DataTable containing the data.
+        DataSet ds = new DataSet();
+        DataTable table = new DataTable("ReportData");
+        table.Columns.Add("Title", typeof(string));
+        table.Columns.Add("Author", typeof(string));
+        table.Columns.Add("ReportDate", typeof(DateTime));
 
-            // ---------- 2. Create a template document with LINQ Reporting tags ----------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+        // Add one row of sample data.
+        table.Rows.Add("Quarterly Sales Summary", "Jane Doe", DateTime.Today);
+        ds.Tables.Add(table);
 
-            builder.Writeln("Employee Report");
-            // Use the wrapper model to output the generation date.
-            builder.Writeln("Generated on: <<[model.GeneratedOn]>>");
-            builder.Writeln(); // empty line
+        // Load the template document (demonstrates load step).
+        Document doc = new Document(templatePath);
 
-            // Iterate over the Employees table from the DataSet.
-            // Because the DataSet will be passed with the name "data",
-            // the tag must reference the table via that name.
-            builder.Writeln("<<foreach [emp in data.Employees]>>");
-            builder.Writeln("Name: <<[emp.Name]>>");
-            builder.Writeln("Title: <<[emp.Title]>>");
-            builder.Writeln("Department: <<[emp.Department]>>");
-            builder.Writeln("<</foreach>>");
+        // Use the first row of the DataTable as the data source for the report.
+        DataRow row = ds.Tables["ReportData"].Rows[0];
 
-            // Save the template to disk (required by the lifecycle rule).
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, row, "ds");
 
-            // ---------- 3. Load the template and build the report ----------
-            Document report = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.None
-            };
+        // After the report is generated, set custom document properties based on the DataSet values.
+        doc.CustomDocumentProperties.Add("ReportTitle", row["Title"].ToString());
+        doc.CustomDocumentProperties.Add("ReportAuthor", row["Author"].ToString());
+        doc.CustomDocumentProperties.Add(
+            "ReportGeneratedOn",
+            ((DateTime)row["ReportDate"]).ToString("yyyy-MM-dd"));
 
-            // Prepare the wrapper model instance.
-            ReportModel model = new ReportModel();
+        // Save the final report.
+        const string outputPath = "GeneratedReport.docx";
+        doc.Save(outputPath);
 
-            // Build the report using both the model and the DataSet.
-            // The first data source is named "model", the second is named "data".
-            engine.BuildReport(report,
-                new object[] { model, dataSet },
-                new string[] { "model", "data" });
-
-            // ---------- 4. Set custom document properties based on the DataSet ----------
-            int employeeCount = employeesTable.Rows.Count;
-            report.CustomDocumentProperties.Add("EmployeeCount", employeeCount);
-
-            if (employeeCount > 0)
-            {
-                string firstEmployeeName = employeesTable.Rows[0]["Name"]?.ToString() ?? string.Empty;
-                report.CustomDocumentProperties.Add("FirstEmployeeName", firstEmployeeName);
-            }
-
-            // ---------- 5. Save the final report ----------
-            const string reportPath = "Report.docx";
-            report.Save(reportPath);
-        }
+        // Inform the user (no interactive input required).
+        Console.WriteLine($"Report generated and saved to '{outputPath}'.");
     }
 }

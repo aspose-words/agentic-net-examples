@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,22 +10,21 @@ namespace AsposeWordsLinqReportingExample
     {
         Pending,
         Shipped,
-        Delivered,
-        Cancelled
+        Delivered
     }
 
-    // Extension method that converts enum values to user‑friendly strings.
-    public static class OrderStatusExtensions
+    // Extension methods for enums.
+    public static class EnumExtensions
     {
+        // Converts an OrderStatus value to a user‑friendly string.
         public static string ToFriendlyString(this OrderStatus status)
         {
             return status switch
             {
-                OrderStatus.Pending   => "Pending Approval",
-                OrderStatus.Shipped   => "Shipped to Customer",
-                OrderStatus.Delivered => "Delivered Successfully",
-                OrderStatus.Cancelled => "Order Cancelled",
-                _                     => status.ToString()
+                OrderStatus.Pending => "Pending Approval",
+                OrderStatus.Shipped => "Shipped Out",
+                OrderStatus.Delivered => "Delivered to Customer",
+                _ => status.ToString()
             };
         }
     }
@@ -32,47 +32,60 @@ namespace AsposeWordsLinqReportingExample
     // Data model used by the LINQ Reporting engine.
     public class Order
     {
-        public int Id { get; set; }
-        public OrderStatus Status { get; set; }
+        public int Id { get; set; } = 0;
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
+        public string CustomerName { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // 1. Create a template document with a LINQ Reporting tag.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
-            builder.Writeln("Order ID: <<[order.Id]>>");
-            builder.Writeln("Order Status: <<[order.Status.ToFriendlyString()]>>");
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // 2. Load the template (simulating a separate load step).
-            var loadedTemplate = new Document(templatePath);
-
-            // 3. Prepare the data source.
+            // Prepare sample data.
             var order = new Order
             {
-                Id = 12345,
+                Id = 123,
+                CustomerName = "John Doe",
                 Status = OrderStatus.Shipped
             };
 
-            // 4. Configure the ReportingEngine.
+            // Create a temporary folder for the template and result.
+            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+            Directory.CreateDirectory(workDir);
+
+            string templatePath = Path.Combine(workDir, "Template.docx");
+            string resultPath = Path.Combine(workDir, "Result.docx");
+
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Order Report");
+            builder.Writeln("--------------------");
+            builder.Writeln($"Order ID: <<[order.Id]>>");
+            builder.Writeln($"Customer: <<[order.CustomerName]>>");
+            // Use a static call to the extension method (supported by the engine).
+            builder.Writeln($"Status: <<[EnumExtensions.ToFriendlyString(order.Status)]>>");
+
+            // Save the template.
+            doc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report.
+            // -----------------------------------------------------------------
+            var loadedDoc = new Document(templatePath);
             var engine = new ReportingEngine();
 
-            // Enable extension method resolution.
-            engine.Options = ReportBuildOptions.AllowMissingMembers;
-
             // Register the static class that contains the extension method.
-            engine.KnownTypes.Add(typeof(OrderStatusExtensions));
+            engine.KnownTypes.Add(typeof(EnumExtensions));
 
-            // 5. Build the report.
-            engine.BuildReport(loadedTemplate, order, "order");
+            // Build the report using the root object name "order".
+            engine.BuildReport(loadedDoc, order, "order");
 
-            // 6. Save the generated report.
-            const string reportPath = "Report.docx";
-            loadedTemplate.Save(reportPath);
+            // Save the generated report.
+            loadedDoc.Save(resultPath);
         }
     }
 }

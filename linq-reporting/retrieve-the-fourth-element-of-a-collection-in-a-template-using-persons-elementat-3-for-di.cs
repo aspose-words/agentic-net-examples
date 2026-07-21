@@ -1,74 +1,64 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Person
+namespace AsposeWordsLinqReportingExample
 {
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model with a collection of Person objects.
+    public class ReportModel
     {
-        // Register code page provider (required for some Aspose.Words features)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        public List<Person> Persons { get; set; } = new();
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create the template document with LINQ Reporting tags.
-        // -----------------------------------------------------------------
-        var templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+    // Person class used in the collection.
+    public class Person
+    {
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
 
-        // The tag uses ElementAt(3) to fetch the fourth element (zero‑based index).
-        builder.Writeln("Fourth person: <<[model.Persons.ElementAt(3).Name]>> Age: <<[model.Persons.ElementAt(3).Age]>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template document.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Prepare the data model with at least four persons.
-        // -----------------------------------------------------------------
-        var model = new ReportModel
+        public Person(string name, int age)
         {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice",   Age = 30 },
-                new Person { Name = "Bob",     Age = 25 },
-                new Person { Name = "Charlie", Age = 28 },
-                new Person { Name = "Diana",   Age = 22 }, // Fourth element (index 3)
-                new Person { Name = "Eve",     Age = 35 }
-            }
-        };
+            Name = name;
+            Age = age;
+        }
+    }
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using the LINQ Reporting engine.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+    public class Program
+    {
+        public static void Main()
+        {
+            // Step 1: Create a template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-        // -----------------------------------------------------------------
-        // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        var outputPath = "Report.docx";
-        doc.Save(outputPath);
+            // Insert a LINQ Reporting tag that retrieves the fourth element (index 3) from the collection.
+            // The root data source will be referenced as "model" in BuildReport.
+            builder.Writeln("Fourth person: <<[model.Persons.ElementAt(3).Name]>> (Age: <<[model.Persons.ElementAt(3).Age]>>)");
 
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+            // Save the template to disk (required before building the report).
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // Step 2: Prepare sample data.
+            ReportModel model = new ReportModel();
+            model.Persons.Add(new Person("Alice", 30));
+            model.Persons.Add(new Person("Bob", 25));
+            model.Persons.Add(new Person("Charlie", 28));
+            model.Persons.Add(new Person("Diana", 32)); // Fourth element (index 3)
+            model.Persons.Add(new Person("Ethan", 27));
+
+            // Step 3: Load the template (could reuse the same Document instance, but following lifecycle rules we load it).
+            Document doc = new Document(templatePath);
+
+            // Step 4: Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
+
+            // Step 5: Save the generated report.
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
     }
 }

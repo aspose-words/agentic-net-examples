@@ -1,49 +1,64 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Newtonsoft.Json;
 
-namespace AsposeWordsLinqReportingInlineErrors
+public class Program
 {
-    // Simple data model used as the root object for the report.
-    public class Person
+    public static void Main()
     {
-        public string Name { get; set; } = string.Empty;
-    }
+        // Register code page provider for Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data model.
+        var model = new ReportModel
         {
-            // Register code page provider (required for some Aspose.Words features).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Name = "John Doe",
+            Age = 30
+        };
 
-            // Create a new blank document and a builder to insert LINQ Reporting tags.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+        // Serialize model to JSON (demonstrates Newtonsoft.Json usage).
+        string json = JsonConvert.SerializeObject(model);
+        Console.WriteLine($"Model JSON: {json}");
 
-            // Insert a valid tag that will be replaced with the person's name.
-            builder.Writeln("Customer: <<[model.Name]>>");
+        // Create a template document programmatically.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // Insert an invalid tag (property does not exist) to trigger an inline error message.
-            builder.Writeln("Invalid field: <<[model.Unknown]>>");
+        // Correct tag.
+        builder.Writeln("Customer Name: <<[model.Name]>>");
+        // Faulty tag – references a non‑existent property to trigger an inline error.
+        builder.Writeln("Faulty Tag: <<[model.NonExisting]>>");
 
-            // Prepare the data source.
-            Person model = new Person { Name = "John Doe" };
+        // Save the template (optional, for inspection).
+        const string templatePath = "Template.docx";
+        doc.Save(templatePath);
 
-            // Configure the reporting engine to inline error messages.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
+        // Load the template for reporting.
+        var templateDoc = new Document(templatePath);
 
-            // Build the report. The returned flag indicates whether parsing succeeded.
-            bool success = engine.BuildReport(doc, model, "model");
+        // Configure the reporting engine to inline error messages.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
 
-            // Output the success flag to the console.
-            Console.WriteLine($"Report build success: {success}");
+        // Build the report.
+        bool success = engine.BuildReport(templateDoc, model, "model");
 
-            // Save the resulting document.
-            doc.Save("ReportWithInlineErrors.docx");
-        }
+        // Save the generated report.
+        const string outputPath = "Report_Output.docx";
+        templateDoc.Save(outputPath);
+
+        // Output result.
+        Console.WriteLine($"Report build success: {success}");
+        Console.WriteLine($"Report saved to: {Path.GetFullPath(outputPath)}");
     }
+}
+
+// Data model used by the template.
+public class ReportModel
+{
+    public string Name { get; set; } = string.Empty;
+    public int Age { get; set; }
 }

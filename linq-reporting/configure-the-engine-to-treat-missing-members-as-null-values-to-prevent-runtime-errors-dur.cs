@@ -1,51 +1,68 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReporting
 {
-    // Simple data model with only a Name property.
-    public class Person
+    // Simple data model with only one property.
+    public class Customer
     {
-        public Person(string name) => Name = name;
-        public string Name { get; set; } = string.Empty; // Initialized to avoid nullable warnings.
-        // Note: Age property is intentionally missing to demonstrate missing member handling.
+        public string Name { get; set; } = string.Empty;
+        // Note: Age property is intentionally omitted to demonstrate missing member handling.
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Paths for the temporary template and the final report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
 
-            // Insert LINQ Reporting tags. The Age tag does not exist in the Person class.
-            builder.Writeln("Name: <<[person.Name]>>");
-            builder.Writeln("Age: <<[person.Age]>>"); // Missing member.
+            // -------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Prepare the data source.
-            Person person = new Person("John Doe");
+            // Insert LINQ Reporting tags. The second tag references a missing member (Age).
+            builder.Writeln("Customer Name: <<[model.Name]>>");
+            builder.Writeln("Customer Age: <<[model.Age]>>"); // Age does not exist in the model.
 
-            // Configure the reporting engine to treat missing members as null.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.AllowMissingMembers;
-            engine.MissingMemberMessage = "N/A"; // Optional custom message for missing members.
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
 
-            // Build the report. The root object name must match the name used in the template tags.
-            engine.BuildReport(doc, person, "person");
+            // -------------------------------------------------
+            // 2. Load the template for report generation.
+            // -------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
 
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+            // -------------------------------------------------
+            // 3. Configure the ReportingEngine.
+            // -------------------------------------------------
+            ReportingEngine engine = new ReportingEngine
+            {
+                // Treat missing members as null (or empty) values.
+                Options = ReportBuildOptions.AllowMissingMembers,
+                // Optional: custom text to display for missing members.
+                MissingMemberMessage = "N/A"
+            };
 
-            // Save the generated report.
-            string outputPath = Path.Combine(outputDir, "Report.docx");
-            doc.Save(outputPath);
+            // -------------------------------------------------
+            // 4. Prepare the data source.
+            // -------------------------------------------------
+            Customer model = new Customer { Name = "John Doe" };
 
-            // Indicate completion (no interactive input).
-            Console.WriteLine($"Report generated: {outputPath}");
+            // -------------------------------------------------
+            // 5. Build the report.
+            // -------------------------------------------------
+            // The root object name used in the template tags is "model".
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // -------------------------------------------------
+            // 6. Save the generated report.
+            // -------------------------------------------------
+            loadedTemplate.Save(reportPath);
         }
     }
 }

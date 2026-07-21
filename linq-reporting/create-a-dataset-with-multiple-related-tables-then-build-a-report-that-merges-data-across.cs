@@ -3,87 +3,63 @@ using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingDatasetExample
+public class Program
 {
-    public class Program
+    public static void Main()
     {
-        public static void Main()
-        {
-            // 1. Create a DataSet with two related tables: Customers and Orders.
-            DataSet dataSet = CreateSampleDataSet();
+        // Create a DataSet with two related tables: Customers and Orders.
+        DataSet dataSet = new DataSet();
 
-            // 2. Build a Word template programmatically and insert LINQ Reporting tags.
-            const string templatePath = "Template.docx";
-            BuildTemplateDocument(templatePath);
+        DataTable customers = new DataTable("Customers");
+        customers.Columns.Add("CustomerID", typeof(int));
+        customers.Columns.Add("CustomerName", typeof(string));
+        customers.Rows.Add(1, "John Doe");
+        customers.Rows.Add(2, "Jane Smith");
+        dataSet.Tables.Add(customers);
 
-            // 3. Load the template and run the LINQ Reporting engine.
-            Document report = new Document(templatePath);
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None;
+        DataTable orders = new DataTable("Orders");
+        orders.Columns.Add("OrderID", typeof(int));
+        orders.Columns.Add("CustomerID", typeof(int));
+        orders.Columns.Add("ProductName", typeof(string));
+        orders.Columns.Add("Quantity", typeof(int));
+        orders.Rows.Add(1001, 1, "Laptop", 1);
+        orders.Rows.Add(1002, 1, "Mouse", 2);
+        orders.Rows.Add(1003, 2, "Keyboard", 1);
+        dataSet.Tables.Add(orders);
 
-            // Build the report using the DataSet. An empty string for the data source name
-            // allows the template to reference tables directly by their names.
-            engine.BuildReport(report, dataSet, "");
+        // Define a relation between Customers and Orders on CustomerID.
+        dataSet.Relations.Add("CustomerOrders",
+            customers.Columns["CustomerID"],
+            orders.Columns["CustomerID"]);
 
-            // 4. Save the generated report.
-            const string outputPath = "Report.docx";
-            report.Save(outputPath);
-        }
+        // Build a template document programmatically.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Creates a DataSet containing Customers and Orders tables with a relation.
-        private static DataSet CreateSampleDataSet()
-        {
-            // Customers table.
-            DataTable customers = new DataTable("Customers");
-            customers.Columns.Add("CustomerID", typeof(int));
-            customers.Columns.Add("CustomerName", typeof(string));
-            customers.Rows.Add(1, "John Doe");
-            customers.Rows.Add(2, "Jane Smith");
+        builder.Writeln("Customers and Orders Report");
+        builder.Writeln();
 
-            // Orders table.
-            DataTable orders = new DataTable("Orders");
-            orders.Columns.Add("OrderID", typeof(int));
-            orders.Columns.Add("CustomerID", typeof(int));
-            orders.Columns.Add("OrderName", typeof(string));
-            orders.Columns.Add("Quantity", typeof(int));
-            orders.Rows.Add(101, 1, "Apples", 5);
-            orders.Rows.Add(102, 1, "Bananas", 3);
-            orders.Rows.Add(103, 2, "Oranges", 7);
+        // Outer loop over customers.
+        builder.Writeln("<<foreach [c in Customers]>>");
+        builder.Writeln("Customer: <<[c.CustomerName]>> (ID: <<[c.CustomerID]>>)");
+        builder.Writeln();
 
-            // Add tables to the DataSet.
-            DataSet ds = new DataSet();
-            ds.Tables.Add(customers);
-            ds.Tables.Add(orders);
+        // Inner loop over related orders using the defined relation.
+        builder.Writeln("Orders:");
+        builder.Writeln("<<foreach [o in c.CustomerOrders]>>");
+        builder.Writeln("- Order <<[o.OrderID]>>: <<[o.ProductName]>> (Qty: <<[o.Quantity]>>)");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln("<</foreach>>");
 
-            // Create a relation named "CustomerOrders" so that each customer can access its orders.
-            DataRelation relation = new DataRelation(
-                "CustomerOrders",
-                customers.Columns["CustomerID"],
-                orders.Columns["CustomerID"]);
+        // Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // No special options required.
+        bool success = engine.BuildReport(doc, dataSet, "");
 
-            ds.Relations.Add(relation);
-            return ds;
-        }
+        // Save the generated report.
+        doc.Save("Report.docx");
 
-        // Generates a simple Word document containing LINQ Reporting tags.
-        private static void BuildTemplateDocument(string filePath)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Begin iterating over customers.
-            builder.Writeln("<<foreach [customer in Customers]>>");
-            builder.Writeln("Customer: <<[customer.CustomerName]>>");
-            builder.Writeln("");
-
-            // Iterate over the related orders for the current customer.
-            builder.Writeln("<<foreach [order in customer.CustomerOrders]>>");
-            builder.Writeln("  Order: <<[order.OrderName]>> (Qty: <<[order.Quantity]>>)");
-            builder.Writeln("<</foreach>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            doc.Save(filePath);
-        }
+        // Indicate success (optional).
+        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
 }

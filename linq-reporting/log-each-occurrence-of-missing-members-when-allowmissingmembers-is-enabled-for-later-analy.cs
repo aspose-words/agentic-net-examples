@@ -8,53 +8,72 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-        // Tags that reference members which do not exist in the data source.
-        builder.Writeln("Customer name: <<[MissingCustomer.Name]>>");
-        builder.Writeln("<<foreach [item in MissingCollection]>>Item: <<[item.Id]>> <</foreach>>");
+        // -----------------------------------------------------------------
+        // 1. Create a template document with LINQ Reporting tags that refer
+        //    to members which do not exist in the data source.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Configure the reporting engine to allow missing members.
-        ReportingEngine engine = new ReportingEngine
+        // Simple tag referencing a missing member.
+        builder.Writeln("Missing single value: <<[missingObject.First().Id]>>");
+
+        // Loop tag that iterates over a missing collection.
+        builder.Writeln("Missing collection:");
+        builder.Writeln("<<foreach [in missingObject]>>");
+        builder.Writeln("  Item Id: <<[Id]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template back for report generation.
+        // -----------------------------------------------------------------
+        var doc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Configure the ReportingEngine to allow missing members.
+        // -----------------------------------------------------------------
+        var engine = new ReportingEngine
         {
             Options = ReportBuildOptions.AllowMissingMembers,
-            MissingMemberMessage = "MISSING"
+            MissingMemberMessage = "[Missing]"
         };
 
         // Build the report using an empty DataSet as the data source.
-        bool success = engine.BuildReport(template, new DataSet(), "");
+        // The empty string for the data source name means we do not reference the
+        // data source object itself in the template.
+        engine.BuildReport(doc, new DataSet(), "");
 
-        // Log each occurrence of the missing member placeholder.
-        LogMissingMembers(template, engine.MissingMemberMessage);
-
-        // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        template.Save(outputPath);
-    }
-
-    private static void LogMissingMembers(Document doc, string placeholder)
-    {
-        // Retrieve the full text of the document.
+        // -----------------------------------------------------------------
+        // 4. Log each occurrence of the missing‑member placeholder.
+        // -----------------------------------------------------------------
+        const string placeholder = "[Missing]";
         string fullText = doc.GetText();
 
-        // Split into lines for easier processing.
-        string[] lines = fullText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
+        int index = 0;
         int occurrence = 0;
-        foreach (string line in lines)
+        while ((index = fullText.IndexOf(placeholder, index, StringComparison.Ordinal)) != -1)
         {
-            if (line.Contains(placeholder))
-            {
-                occurrence++;
-                Console.WriteLine($"Missing member occurrence {occurrence}: \"{line.Trim()}\"");
-            }
+            occurrence++;
+            Console.WriteLine($"Missing member occurrence #{occurrence} at text position {index}.");
+            index += placeholder.Length;
         }
 
+        // If no occurrences were found, indicate that as well.
         if (occurrence == 0)
         {
-            Console.WriteLine("No missing members were found in the generated report.");
+            Console.WriteLine("No missing members were encountered.");
         }
+
+        // -----------------------------------------------------------------
+        // 5. Save the final report.
+        // -----------------------------------------------------------------
+        doc.Save(reportPath);
     }
 }

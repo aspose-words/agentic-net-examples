@@ -1,89 +1,79 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Drawing;
+using Aspose.Words.Drawing;          // Needed for ShapeType
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    // URI or file path to the image. Initialized to avoid nullable warnings.
-    public string ImageUri { get; set; } = string.Empty;
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
+        // Prepare a folder for generated files.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // Create a simple 1x1 pixel PNG image from a Base64 string.
-        const string base64Png =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YVbZc8AAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        string validImagePath = Path.Combine(outputDir, "sample.png");
+        // Create a simple PNG image (a 1x1 red pixel) for the valid case.
+        string validImagePath = Path.Combine(outputDir, "valid.png");
+        byte[] pngBytes = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YV4cVIAAAAASUVORK5CYII=");
         File.WriteAllBytes(validImagePath, pngBytes);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Image Report");
-
-        // Insert a textbox that will host the image.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
-        // Move the cursor inside the textbox.
-        builder.MoveTo(textBox.FirstParagraph);
-        // LINQ Reporting tag that inserts an image from the model.
-        builder.Write("<<image [model.ImageUri] -fitSize>>");
-
-        // Save the template to disk.
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Step 2: Generate a report with a valid image URI.
-        // -----------------------------------------------------------------
-        var reportValid = new Document(templatePath);
-        var modelValid = new ReportModel { ImageUri = validImagePath };
-
-        var engine = new ReportingEngine
+        // Build the data model.
+        var model = new ReportModel
         {
-            // Inline error messages will be inserted if the image cannot be loaded.
-            Options = ReportBuildOptions.InlineErrorMessages
+            Products = new List<Product>
+            {
+                new Product { Name = "Valid Image", ImageUri = validImagePath },
+                new Product { Name = "Invalid Image", ImageUri = "nonexistent_image.jpg" }
+            }
         };
 
-        bool successValid = engine.BuildReport(reportValid, modelValid, "model");
-        string validReportPath = Path.Combine(outputDir, "report_valid.docx");
-        reportValid.Save(validReportPath);
+        // Create the template document programmatically.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // -----------------------------------------------------------------
-        // Step 3: Generate a report with an invalid/unreachable image URI.
-        // -----------------------------------------------------------------
-        var reportInvalid = new Document(templatePath);
-        var modelInvalid = new ReportModel { ImageUri = Path.Combine(outputDir, "nonexistent.png") };
+        builder.Writeln("Product Report");
+        builder.Writeln("<<foreach [p in Products]>>");
 
-        bool successInvalid;
-        try
-        {
-            // BuildReport will return false when an error occurs and InlineErrorMessages is set.
-            successInvalid = engine.BuildReport(reportInvalid, modelInvalid, "model");
-        }
-        catch (Exception ex)
-        {
-            // If an unexpected exception occurs, treat the build as failed.
-            Console.WriteLine($"Unexpected error while building report: {ex.Message}");
-            successInvalid = false;
-        }
+        // Insert a textbox that will hold the image.
+        var textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        builder.MoveTo(textBox.FirstParagraph);
+        // Image tag – the expression returns a string (file path or URL).
+        builder.Write("<<image [p.ImageUri] -fitSize>>");
 
-        string invalidReportPath = Path.Combine(outputDir, "report_invalid.docx");
-        reportInvalid.Save(invalidReportPath);
+        // Return to the main story to write the product name.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("<<[p.Name]>>");
 
-        // Output the results.
-        Console.WriteLine($"Valid image report generated: {successValid} -> {validReportPath}");
-        Console.WriteLine($"Invalid image report generated: {successInvalid} -> {invalidReportPath}");
+        builder.Writeln("<</foreach>>");
+
+        // Configure the reporting engine to inline error messages.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+        // Build the report. The returned flag indicates whether parsing succeeded.
+        bool success = engine.BuildReport(doc, model, "model");
+
+        // Save the resulting document.
+        string resultPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(resultPath);
+
+        // Output the success flag (for demonstration; not required by the task).
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Report saved to: {resultPath}");
     }
+}
+
+// Root data model.
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
+
+// Simple product class.
+public class Product
+{
+    public string Name { get; set; } = string.Empty;
+    public string ImageUri { get; set; } = string.Empty;
 }

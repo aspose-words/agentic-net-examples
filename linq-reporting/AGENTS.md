@@ -1,6 +1,6 @@
 ---
 name: linq-reporting
-description: Verified C# examples for LINQ Reporting scenarios in Aspose.Words for .NET
+description: Verified C# examples for linq-reporting scenarios in Aspose.Words for .NET
 language: csharp
 framework: net8.0
 product: Aspose.Words
@@ -26,7 +26,7 @@ This folder is a live, curated example set for LINQ Reporting scenarios. Treat e
 
 ## Recommended workflow selection
 
-- Linq Reporting Workflow workflow: 403 examples
+- LINQ Reporting Workflow workflow: 403 examples
 
 Use the simplest workflow that satisfies the task.
 
@@ -42,2050 +42,2050 @@ Use the simplest workflow that satisfies the task.
 
 - `create-a-docx-template-with-opening-and-closing-tags-to-bind-a-data-collection.cs`
   - Task: Create a DOCX template with opening and closing tags to bind a data collection.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `bind-a-net-business-object-list-as-the-primary-data-source-for-the-linq-reporting-engine.cs`
   - Task: Bind a .NET business object list as the primary data source for the LINQ reporting engine.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `define-a-data-band-tag-that-iterates-over-items-and-generates-a-table-row-for-each.cs`
   - Task: Define a data band tag that iterates over items and generates a table row for each.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-an-external-word-document-into-the-template-using-the-insert-tag-with-a-runtime-exp.cs`
   - Task: Insert an external Word document into the template using the insert tag with a runtime expression.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `render-html-snippets-dynamically-inside-a-paragraph-by-applying-the-html-tag-with-a-bound.cs`
   - Task: Render HTML snippets dynamically inside a paragraph by applying the html tag with a bound string expression.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: html
   - Selected engine: mcp
 - `display-product-images-dynamically-using-the-image-tag-and-a-path-expression-derived-from.cs`
   - Task: Display product images dynamically using the image tag and a path expression derived from the data source.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-conditional-block-tags-to-show-discount-information-only-when-the-discount-percentag.cs`
   - Task: Apply conditional block tags to show discount information only when the discount percentage exceeds zero.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `set-run-text-color-based-on-status-using-setcolor-tag-with-a-color-expression.cs`
   - Task: Set run text color based on status using setColor tag with a color expression.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `merge-table-cells-horizontally-by-adding-merge-attributes-to-appropriate-table-cell-tags-w.cs`
   - Task: Merge table cells horizontally by adding merge attributes to appropriate table cell tags within the template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `restart-list-numbering-for-a-new-section-by-inserting-the-restartnum-tag-before-the-list-b.cs`
   - Task: Restart list numbering for a new section by inserting the restartNum tag before the list begins.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `store-intermediate-calculation-results-in-a-variable-tag-for-reuse-in-subsequent-expressio.cs`
   - Task: Store intermediate calculation results in a variable tag for reuse in subsequent expression tags.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm_secondary
+  - Selected engine: mcp
 - `call-a-custom-extension-method-within-an-expression-tag-to-format-dates-according-to-local.cs`
   - Task: Call a custom extension method within an expression tag to format dates according to locale settings.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `access-static-members-of-system-math-inside-an-expression-to-compute-rounded-values-for-fi.cs`
   - Task: Access static members of System.Math inside an expression to compute rounded values for financial fields.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `write-a-lambda-function-inside-an-expression-to-filter-orders-where-total-amount-exceeds-a.cs`
   - Task: Write a lambda function inside an expression to filter orders where total amount exceeds a threshold.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `escape-the-reserved-keyword-new-in-an-expression-by-prefixing-it-with-the-symbol.cs`
   - Task: Escape the reserved keyword new in an expression by prefixing it with the @ symbol.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `resolve-member-names-without-specifying-object-reference-inside-a-data-band-using-contextu.cs`
   - Task: Resolve member names without specifying object reference inside a data band using contextual object member access.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `validate-that-each-opening-tag-has-a-matching-closing-tag-before-rendering-the-document.cs`
   - Task: Validate that each opening tag has a matching closing tag before rendering the document.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `ensure-tag-bodies-are-placed-outside-markup-elements-by-scanning-the-document-structure-du.cs`
   - Task: Ensure tag bodies are placed outside markup elements by scanning the document structure during preprocessing.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `avoid-unicode-escape-sequences-in-identifiers-by-writing-literal-characters-directly-in-te.cs`
   - Task: Avoid Unicode escape sequences in identifiers by writing literal characters directly in template expressions.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-batch-script-that-generates-personalized-reports-for-each-customer-listed-in-a-cs.cs`
   - Task: Create a batch script that generates personalized reports for each customer listed in a CSV file.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `load-customer-data-from-a-json-file-and-bind-it-to-the-template-to-produce-word-documents.cs`
   - Task: Load customer data from a JSON file and bind it to the template to produce Word documents.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
-  - Selected engine: llm
+  - Selected engine: mcp
 - `configure-the-reporting-engine-to-use-a-custom-culture-for-number-formatting-during-expres.cs`
   - Task: Configure the reporting engine to use a custom culture for number formatting during expression evaluation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `implement-error-handling-to-catch-expression-evaluation-exceptions-and-replace-faulty-outp.cs`
   - Task: Implement error handling to catch expression evaluation exceptions and replace faulty output with placeholder text.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-a-summary-section-by-aggregating-order-totals-using-linq-methods-inside-a-variabl.cs`
   - Task: Generate a summary section by aggregating order totals using LINQ methods inside a variable tag expression.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-a-hyperlink-dynamically-using-the-hyperlink-tag-with-url-and-display-text-derived-f.cs`
   - Task: Insert a hyperlink dynamically using the hyperlink tag with URL and display text derived from data fields.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-background-color-to-a-table-row-based-on-status-using-the-backcolor-tag-with-a-condi.cs`
   - Task: Apply background color to a table row based on status using the backColor tag with a conditional expression.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp_secondary
+  - Selected engine: mcp
 - `create-nested-data-band-tags-to-represent-master-detail-relationships-between-orders-and-t.cs`
   - Task: Create nested data band tags to represent master-detail relationships between orders and their line items.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `implement-a-custom-extension-method-that-converts-enum-values-to-user-friendly-strings-for.cs`
   - Task: Implement a custom extension method that converts enum values to user-friendly strings for template display.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-reports-in-parallel-by-processing-multiple-data-sources-concurrently-using-asynch.cs`
   - Task: Generate reports in parallel by processing multiple data sources concurrently using asynchronous template rendering methods.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `export-the-rendered-document-to-pdf-format-after-applying-all-linq-reporting-transformatio.cs`
   - Task: Export the rendered document to PDF format after applying all LINQ reporting transformations to the original template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: pdf
   - Selected engine: mcp
 - `create-a-reusable-template-fragment-containing-common-header-information-and-insert-it-usi.cs`
   - Task: Create a reusable template fragment containing common header information and insert it using the include tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `implement-a-logging-mechanism-that-records-each-expression-evaluation-result-for-debugging.cs`
   - Task: Implement a logging mechanism that records each expression evaluation result for debugging during report generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-type-member-access-syntax-to-call-static-methods-of-a-utility-class-within-an-expr.cs`
   - Task: Use the type member access syntax to call static methods of a utility class within an expression tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-conditional-formatting-to-table-rows-by-evaluating-a-boolean-expression-checking-if.cs`
   - Task: Apply conditional formatting to table rows by evaluating a boolean expression checking if row index is even.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-a-bookmark-dynamically-at-a-calculated-position-using-bookmark-tag-with-name-derive.cs`
   - Task: Insert a bookmark dynamically at a calculated position using bookmark tag with name derived from data fields.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-a-table-of-contents-automatically-by-placing-a-toc-tag-at-the-beginning-of-the-do.cs`
   - Task: Generate a table of contents automatically by placing a toc tag at the beginning of the document template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-custom-data-source-implementing-ienumerable-and-bind-it-to-the-engine-to-stream-l.cs`
   - Task: Create a custom data source implementing IEnumerable and bind it to the engine to stream large datasets efficiently.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-image-tag-with-a-base64-string-expression-to-embed-images-directly-without-externa.cs`
   - Task: Use the image tag with a base64 string expression to embed images directly without external file references.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-custom-number-format-to-currency-values-using-the-format-tag-with-a-net-format-str.cs`
   - Task: Apply a custom number format to currency values using the format tag with a .NET format string expression.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: existing_repo
 - `implement-a-fallback-mechanism-that-substitutes-default-text-when-an-expression-evaluates.cs`
   - Task: Implement a fallback mechanism that substitutes default text when an expression evaluates to null during rendering.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-system-math-type-in-the-engine-s-knowntypes-collection-to-expose-its-static-membe.cs`
   - Task: Register System.Math type in the engine's KnownTypes collection to expose its static members.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `add-system-datetime-to-knowntypes-so-templates-can-call-datetime-now-directly.cs`
   - Task: Add System.DateTime to KnownTypes so templates can call DateTime::Now directly.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `enable-missing-member-handling-globally-to-return-null-for-undefined-properties-during-ren.cs`
   - Task: Enable missing-member handling globally to return null for undefined properties during rendering.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-custom-utility-class-myutilities-to-allow-its-static-methods-as-extension-methods.cs`
   - Task: Register custom utility class MyUtilities to allow its static methods as extension methods.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `call-math-sqrt-within-a-template-expression-to-compute-square-roots-of-numeric-fields.cs`
   - Task: Call Math::Sqrt within a template expression to compute square roots of numeric fields.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `reference-datetime-utcnow-in-a-template-to-display-the-current-universal-coordinated-time.cs`
   - Task: Reference DateTime::UtcNow in a template to display the current universal coordinated time.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `invoke-myutilities-formatcurrency-on-price-values-to-format-them-as-currency-strings.cs`
   - Task: Invoke MyUtilities.FormatCurrency on price values to format them as currency strings.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-built-in-where-extension-method-on-orders-collection-to-filter-records-with-status-p.cs`
   - Task: Apply built-in Where extension method on $orders$ collection to filter records with status 'Pending'.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-select-extension-method-on-items-to-project-name-and-quantity-fields-for-reporting.cs`
   - Task: Use Select extension method on $items$ to project Name and Quantity fields for reporting.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `chain-orderbydescending-and-thenby-on-employees-to-sort-by-seniority-then-by-name.cs`
   - Task: Chain OrderByDescending and ThenBy on $employees$ to sort by seniority then by name.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `combine-where-select-and-orderby-in-a-single-expression-to-generate-filtered-sorted-list.cs`
   - Task: Combine Where, Select, and OrderBy in a single expression to generate filtered, sorted list.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `implement-custom-extension-method-returning-boolean-for-use-within-if-conditional-blocks-i.cs`
   - Task: Implement custom extension method returning boolean for use within if conditional blocks in templates.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm_secondary
+  - Selected engine: mcp
 - `create-public-static-class-stringhelpers-with-totitlecase-method-and-call-it-from-a-templa.cs`
   - Task: Create public static class StringHelpers with ToTitleCase method and call it from a template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-arithmetic-operators-in-template-price-quantity-to-calculate-total-line-amount.cs`
   - Task: Use arithmetic operators in template: $price$ * $quantity$ to calculate total line amount.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `insert-logical-expression-stock-0-price-100-to-display-items-meeting-both-criteria.cs`
   - Task: Insert logical expression $stock$ > 0 && $price$ < 100 to display items meeting both criteria.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-lifted-addition-operator-on-nullable-decimal-fields-discount-and-tax-to-compute-comb.cs`
   - Task: Apply lifted addition operator on nullable decimal fields $discount$ and $tax$ to compute combined value.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-explicit-cast-int-on-quantity-when-passing-to-method-expecting-integer-parameter.cs`
   - Task: Use explicit cast (int) on $quantity$ when passing to method expecting integer parameter.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `define-user-defined-conversion-operator-in-custom-type-and-cast-it-explicitly-within-templ.cs`
   - Task: Define user-defined conversion operator in custom type and cast it explicitly within template expression.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `output-result-of-price-taxrate-expression-using-delimiters-to-insert-calculated-tax-into-d.cs`
   - Task: Output result of $price$ * $taxRate$ expression using delimiters to insert calculated tax into document.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-conditional-block-using-if-stock-0-to-show-in-stock-message-when-true.cs`
   - Task: Insert conditional block using if $stock$ > 0 to show 'In stock' message when true.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `add-else-clause-after-if-block-to-display-out-of-stock-when-stock-quantity-equals-zero.cs`
   - Task: Add else clause after if block to display 'Out of stock' when stock quantity equals zero.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `dynamically-insert-external-html-fragment-using-include-directive-based-on-category-expres.cs`
   - Task: Dynamically insert external HTML fragment using INCLUDE directive based on $category$ expression result.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: html
   - Selected engine: mcp
 - `merge-another-docx-document-into-current-template-when-includeappendix-flag-evaluates-to-t.cs`
   - Task: Merge another DOCX document into current template when $includeAppendix$ flag evaluates to true.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `utilize-lambda-function-within-where-clause-to-filter-orders-where-order-date-falls-within.cs`
   - Task: Utilize lambda function within Where clause to filter $orders$ where order date falls within last month.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `pass-custom-delegate-to-select-method-in-template-to-transform-each-item-into-formatted-st.cs`
   - Task: Pass custom delegate to Select method in template to transform each item into formatted string.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `combine-mail-merge-data-source-with-linq-reporting-engine-to-populate-template-using-custo.cs`
   - Task: Combine mail merge data source with LINQ Reporting engine to populate template using $customer$ fields.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-external-type-customerinfo-to-allow-direct-access-to-its-properties-within-mail-m.cs`
   - Task: Register external type CustomerInfo to allow direct access to its properties within mail merge templates.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `iterate-over-products-collection-in-template-to-generate-table-rows-for-each-product-entry.cs`
   - Task: Iterate over $products$ collection in template to generate table rows for each product entry.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-nested-foreach-loops-using-categories-and-items-to-display-hierarchical-data-in-doc.cs`
   - Task: Create nested foreach loops using $categories$ and $items$ to display hierarchical data in document.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-built-in-firstordefault-extension-method-to-retrieve-first-matching-record-from-empl.cs`
   - Task: Apply built-in FirstOrDefault extension method to retrieve first matching record from $employees$ collection.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `implement-custom-extension-method-ishighvalue-that-returns-true-for-amounts-exceeding-limi.cs`
   - Task: Implement custom extension method IsHighValue that returns true for amounts exceeding $limit$ and call it.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `combine-arithmetic-and-conditional-operators-to-compute-discount-total-500-total-0-1-0.cs`
   - Task: Combine arithmetic and conditional operators to compute discount: ($total$ > 500) ? $total$ * 0.1 : 0.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-lifted-logical-and-operator-on-isactive-and-haslicense-to-determine-feature-availabi.cs`
   - Task: Apply lifted logical AND operator on $isActive$ and $hasLicense$ to determine feature availability.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-system-timespan-type-to-enable-static-parsing-of-duration-strings-within-template.cs`
   - Task: Register System.TimeSpan type to enable static parsing of duration strings within templates.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-timespan-parse-static-method-to-convert-duration-string-from-data-into-timespan-object.cs`
   - Task: Use TimeSpan::Parse static method to convert duration string from data into TimeSpan object.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-conditional-block-that-checks-if-deadline-timespan-fromdays-7-to-flag-upcoming-task.cs`
   - Task: Create conditional block that checks if $deadline$ < TimeSpan::FromDays(7) to flag upcoming tasks.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-built-in-min-method-on-prices-to-find-lowest-price-and-display-as-discount-benchmark.cs`
   - Task: Apply built-in Min method on $prices$ to find lowest price and display as discount benchmark.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-system-text-regularexpressions-regex-type-to-allow-pattern-matching-within-templa.cs`
   - Task: Register System.Text.RegularExpressions.Regex type to allow pattern matching within template expressions for validation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-regex-ismatch-static-method-to-test-if-phonenumber-matches-required-format-before-rend.cs`
   - Task: Use Regex::IsMatch static method to test if $phoneNumber$ matches required format before rendering.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-built-in-any-method-on-tags-collection-to-display-tag-list-only-when-tags-exist.cs`
   - Task: Apply built-in Any method on $tags$ collection to display tag list only when tags exist.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-custom-static-method-calculateage-in-datehelper-class-and-invoke-it-with-birthdate.cs`
   - Task: Create custom static method CalculateAge in DateHelper class and invoke it with $birthDate$.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp_secondary
+  - Selected engine: mcp
 - `enable-missing-member-handling-and-verify-that-accessing-nonexistent-returns-null-without.cs`
   - Task: Enable missing-member handling and verify that accessing $nonexistent$ returns null without error.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-built-in-groupby-on-orders-by-customerid-to-group-orders-per-customer-in-report.cs`
   - Task: Apply built-in GroupBy on $orders$ by CustomerId to group orders per customer in report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `iterate-over-grouped-results-using-nested-foreach-to-list-orders-under-each-customer-headi.cs`
   - Task: Iterate over grouped results using nested foreach to list orders under each customer heading.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-custom-extension-method-tocurrencystring-to-format-amount-with-currency-symbol-and-two.cs`
   - Task: Use custom extension method ToCurrencyString to format $amount$ with currency symbol and two decimals.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-system-globalization-cultureinfo-type-to-enable-culture-specific-formatting-withi.cs`
   - Task: Register System.Globalization.CultureInfo type to enable culture-specific formatting within template expressions for dates and numbers.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-cultureinfo-currentculture-static-property-to-format-numbers-according-to-user-locale.cs`
   - Task: Use CultureInfo::CurrentCulture static property to format numbers according to user locale in report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `register-newtonsoft-json-jsonconvert-type-to-enable-static-serializeobject-method-within-t.cs`
   - Task: Register Newtonsoft.Json.JsonConvert type to enable static SerializeObject method within template expressions for serialization.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `use-jsonconvert-serializeobject-to-embed-json-representation-of-order-object-into-document.cs`
   - Task: Use JsonConvert::SerializeObject to embed JSON representation of $order$ object into document for debugging.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `apply-built-in-count-method-on-items-where-quantity-0-to-count-available-items.cs`
   - Task: Apply built-in Count method on $items$ where $quantity$ > 0 to count available items.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-linq-reporting-template-that-outputs-customer-names-using-a-formatted-expression.cs`
   - Task: Create a LINQ Reporting template that outputs customer names using a formatted expression tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-a-foreach-data-band-to-list-order-items-from-an-orderdetail-collection.cs`
   - Task: Insert a foreach data band to list order items from an OrderDetail collection.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-the-fraction-number-format-to-product-quantities-with-the-quantity-fraction-expressi.cs`
   - Task: Apply the fraction number format to product quantities with the {=Quantity:fraction} expression tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp_secondary
+  - Selected engine: mcp
 - `render-product-price-as-currency-by-specifying-a-standard-net-format-string-in-the-express.cs`
   - Task: Render product price as currency by specifying a standard .NET format string in the expression tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: llm
 - `nest-a-foreach-band-for-invoices-inside-a-customer-band-to-generate-a-hierarchical-master.cs`
   - Task: Nest a foreach band for invoices inside a customer band to generate a hierarchical master-detail report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `declare-an-iteration-variable-with-explicit-type-inside-the-foreach-tag-to-access-strongly.cs`
   - Task: Declare an iteration variable with explicit type inside the foreach tag to access strongly typed properties.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-html-switch-in-an-expression-tag-to-embed-a-formatted-html-snippet-within-the-docu.cs`
   - Task: Use the html switch in an expression tag to embed a formatted HTML snippet within the document.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: html
   - Selected engine: mcp
 - `insert-an-external-word-document-dynamically-into-a-placeholder-using-the-inserting-docume.cs`
   - Task: Insert an external Word document dynamically into a placeholder using the inserting-documents-dynamically workflow.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `configure-a-conditional-block-to-display-a-discount-label-only-when-order-total-exceeds-a.cs`
   - Task: Configure a conditional block to display a discount label only when Order.Total exceeds a specified threshold.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `provide-a-default-template-option-inside-a-conditional-block-to-handle-cases-where-no-cond.cs`
   - Task: Provide a default template option inside a conditional block to handle cases where no conditions evaluate true.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `remove-a-conditional-block-entirely-during-rendering-when-none-of-the-boolean-expressions.cs`
   - Task: Remove a conditional block entirely during rendering when none of the Boolean expressions evaluate to true.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `force-movement-to-the-next-item-inside-a-data-band-by-using-a-true-conditional-expression.cs`
   - Task: Force movement to the next item inside a data band by using a true conditional expression.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-lower-case-roman-numeral-format-to-chapter-numbers-using-the-chapternumber-roman-exp.cs`
   - Task: Apply lower-case Roman numeral format to chapter numbers using the {=ChapterNumber:roman} expression.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `convert-integer-values-to-upper-case-alphabetic-letters-for-section-headings-with-the-sect.cs`
   - Task: Convert integer values to upper-case alphabetic letters for section headings with the {=Section:letter} tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `format-a-datetime-property-as-iso-8601-using-the-createddate-yyyy-mm-ddthh-mm-ss-expressio.cs`
   - Task: Format a DateTime property as ISO 8601 using the {=CreatedDate:yyyy-MM-ddTHH:mm:ss} expression tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp_secondary
 - `insert-html-content-from-a-database-field-into-the-document-using-the-html-switch-in-an-ex.cs`
   - Task: Insert HTML content from a database field into the document using the html switch in an expression tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: html
   - Selected engine: mcp
 - `generate-a-table-of-contents-automatically-by-inserting-expression-tags-that-reference-hea.cs`
   - Task: Generate a table of contents automatically by inserting expression tags that reference heading styles.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-nested-data-band-to-list-employee-projects-under-each-department-for-a-hierarchic.cs`
   - Task: Create a nested data band to list employee projects under each department for a hierarchical report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-foreach-tag-with-explicit-generic-type-to-iterate-over-a-list-invoice-collection.cs`
   - Task: Use the foreach tag with explicit generic type to iterate over a List<Invoice> collection.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-ordinal-number-format-to-rank-positions-displaying-first-second-third-within-the-ran.cs`
   - Task: Apply ordinal number format to rank positions, displaying First, Second, Third within the ranking section.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `conditionally-include-a-signature-block-only-when-the-signatory-property-is-not-null-using.cs`
   - Task: Conditionally include a signature block only when the Signatory property is not null using a conditional block.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-a-summary-paragraph-that-calculates-total-sales-and-average-order-value-using-exp.cs`
   - Task: Generate a summary paragraph that calculates total sales and average order value using expression tags.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-a-dynamic-footer-displaying-the-current-page-number-with-the-pagenumber-expression.cs`
   - Task: Insert a dynamic footer displaying the current page number with the {=PageNumber} expression tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `concatenate-first-and-last-name-properties-with-a-space-separator-using-expression-tags.cs`
   - Task: Concatenate first and last name properties with a space separator using expression tags.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-custom-font-styling-to-expression-results-by-omitting-the-html-switch-and-using-firs.cs`
   - Task: Apply custom font styling to expression results by omitting the html switch and using first-character formatting.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: html
   - Selected engine: mcp
 - `create-a-data-band-that-iterates-over-datatable-rows-and-outputs-each-column-value.cs`
   - Task: Create a data band that iterates over DataTable rows and outputs each column value.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-a-conditional-block-to-display-a-promotional-banner-only-for-customers-with-loyalty-st.cs`
   - Task: Use a conditional block to display a promotional banner only for customers with loyalty status.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `embed-a-styled-table-generated-from-json-data-into-the-word-document-using-the-html-switch.cs`
   - Task: Embed a styled table generated from JSON data into the Word document using the html switch.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: html, json
   - Selected engine: mcp
 - `apply-fraction-format-to-measurement-values-such-as-1-2-and-3-4-in-the-specifications-tabl.cs`
   - Task: Apply fraction format to measurement values such as 1/2 and 3/4 in the specifications table.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `conditionally-format-overdue-invoice-rows-with-red-font-using-a-conditional-block.cs`
   - Task: Conditionally format overdue invoice rows with red font using a conditional block.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp_secondary
+  - Selected engine: mcp
 - `insert-an-external-html-snippet-stored-in-a-file-by-reading-its-content-and-using-the-html.cs`
   - Task: Insert an external HTML snippet stored in a file by reading its content and using the html switch.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: html
   - Selected engine: mcp
 - `calculate-line-total-within-a-foreach-band-by-referencing-iteration-variable-properties-in.cs`
   - Task: Calculate line total within a foreach band by referencing iteration variable properties in an expression tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-ordinal-format-to-display-ranking-positions-as-first-second-third-within-the-leaderb.cs`
   - Task: Apply ordinal format to display ranking positions as First, Second, Third within the leaderboard section.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `select-between-full-address-and-po-box-templates-using-a-conditional-block-based-on-addres.cs`
   - Task: Select between full address and PO box templates using a conditional block based on address type.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `aggregate-values-from-nested-data-bands-using-expression-tags-with-a-sum-function-to-gener.cs`
   - Task: Aggregate values from nested data bands using expression tags with a sum function to generate a summary table.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: llm
 - `add-image-expression-tags-to-a-docx-template-for-dynamic-image-insertion.cs`
   - Task: Add <<image [Expression]>> tags to a DOCX template for dynamic image insertion.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `provide-a-stream-source-expression-and-apply-the-fitsizelim-switch-to-control-image-scalin.cs`
   - Task: Provide a Stream source expression and apply the fitSizeLim switch to control image scaling.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `supply-a-byte-array-expression-and-use-the-fitsize-switch-to-preserve-aspect-ratio.cs`
   - Task: Supply a byte array expression and use the fitSize switch to preserve aspect ratio.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-a-uri-string-expression-with-the-fitheight-switch-to-fit-images-within-paragraph-heigh.cs`
   - Task: Use a URI string expression with the fitHeight switch to fit images within paragraph height.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `pass-image-object-expressions-and-apply-the-fitwidth-switch-to-limit-image-width.cs`
   - Task: Pass Image object expressions and apply the fitWidth switch to limit image width.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `ensure-image-stream-objects-are-automatically-closed-after-insertion-during-report-buildin.cs`
   - Task: Ensure image Stream objects are automatically closed after insertion during report building.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `place-image-tags-inside-table-cells-to-insert-images-within-tabular-data-structures.cs`
   - Task: Place image tags inside table cells to insert images within tabular data structures.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: mcp_secondary
 - `configure-image-tags-with-fitsize-scaling-to-stretch-images-and-fill-the-containing-paragr.cs`
   - Task: Configure image tags with fitSize scaling to stretch images and fill the containing paragraph.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-bookmark-expression-tags-where-bookmark-names-are-derived-from-non-empty-string-exp.cs`
   - Task: Insert <<bookmark [Expression]>> tags where bookmark names are derived from non-empty string expressions.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `add-bookmarks-inside-list-items-ensuring-they-are-not-placed-within-chart-elements.cs`
   - Task: Add bookmarks inside list items, ensuring they are not placed within chart elements.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `skip-bookmark-creation-when-the-evaluated-name-expression-returns-an-empty-string.cs`
   - Task: Skip bookmark creation when the evaluated name expression returns an empty string.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-unique-bookmark-names-for-each-table-row-to-avoid-duplicate-identifiers.cs`
   - Task: Generate unique bookmark names for each table row to avoid duplicate identifiers.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-link-expression-tags-with-external-url-expressions-for-dynamic-hyperlink-creation.cs`
   - Task: Insert <<link [Expression]>> tags with external URL expressions for dynamic hyperlink creation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-internal-document-links-by-providing-bookmark-name-expressions-as-hyperlink-targets.cs`
   - Task: Create internal document links by providing bookmark name expressions as hyperlink targets.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `add-optional-display-text-to-link-tags-defaulting-to-the-target-url-when-omitted.cs`
   - Task: Add optional display text to link tags, defaulting to the target URL when omitted.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `convert-hyperlink-target-objects-to-strings-using-object-tostring-before-inserting-them.cs`
   - Task: Convert hyperlink target objects to strings using Object.ToString() before inserting them.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `build-multiple-reports-in-batch-each-containing-dynamically-inserted-images-from-varied-da.cs`
   - Task: Build multiple reports in batch, each containing dynamically inserted images from varied data sources.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `read-image-files-into-byte-arrays-and-supply-them-to-image-tags-via-linq-expressions.cs`
   - Task: Read image files into byte arrays and supply them to image tags via LINQ expressions.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `handle-invalid-or-unreachable-image-uri-strings-with-error-handling-during-report-generati.cs`
   - Task: Handle invalid or unreachable image URI strings with error handling during report generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `log-a-warning-when-a-bookmark-name-expression-evaluates-to-an-empty-string.cs`
   - Task: Log a warning when a bookmark name expression evaluates to an empty string.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `place-link-tags-inside-paragraph-runs-ensuring-they-are-not-located-within-chart-elements.cs`
   - Task: Place link tags inside paragraph runs, ensuring they are not located within chart elements.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-background-color-dynamically-using-content-control-tags-with-evaluated-color-expres.cs`
   - Task: Insert background color dynamically using content control tags with evaluated color expressions.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-dynamic-text-color-changes-with-textcolor-color-expression-tags-on-document-run-elem.cs`
   - Task: Apply dynamic text color changes with <<textColor [color_expression]>> tags on document run elements.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `populate-content-controls-from-a-datatable-using-linq-expressions-for-each-control-value.cs`
   - Task: Populate content controls from a DataTable using LINQ expressions for each control value.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `convert-base64-image-strings-to-byte-arrays-for-dynamic-image-insertion-via-image-tags.cs`
   - Task: Convert Base64 image strings to byte arrays for dynamic image insertion via image tags.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `write-a-unit-test-verifying-graceful-failure-when-a-null-image-stream-is-provided.cs`
   - Task: Write a unit test verifying graceful failure when a null image Stream is provided.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `derive-hyperlink-display-text-from-a-database-field-falling-back-to-the-url-if-empty.cs`
   - Task: Derive hyperlink display text from a database field, falling back to the URL if empty.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-bookmark-expression-tags-inside-nested-lists-to-preserve-proper-bookmark-hierarchy.cs`
   - Task: Use <<bookmark [Expression]>> tags inside nested lists to preserve proper bookmark hierarchy.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `implement-a-custom-image-loader-that-returns-stream-objects-from-a-web-service-for-image-t.cs`
   - Task: Implement a custom image loader that returns Stream objects from a web service for image tags.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `extract-bookmark-names-from-a-generated-document-to-verify-they-match-expected-values.cs`
   - Task: Extract bookmark names from a generated document to verify they match expected values.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-images-into-header-sections-using-image-tags-with-the-fitwidth-scaling-switch.cs`
   - Task: Insert images into header sections using image tags with the fitWidth scaling switch.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `validate-template-structure-to-prevent-image-tags-from-being-placed-inside-chart-elements.cs`
   - Task: Validate template structure to prevent image tags from being placed inside chart elements.
-  - Workflow: Linq Reporting Workflow
-  - Outputs: docx
-  - Selected engine: llm
-- `insert-multiple-images-sequentially-by-iterating-over-a-collection-of-byte-arrays-with-ima.cs`
-  - Task: Insert multiple images sequentially by iterating over a collection of byte arrays with image tags.
-  - Workflow: Linq Reporting Workflow
-  - Outputs: docx
-  - Selected engine: llm_secondary
-- `add-bookmarks-to-table-rows-and-create-hyperlinks-that-navigate-to-those-bookmarks.cs`
-  - Task: Add bookmarks to table rows and create hyperlinks that navigate to those bookmarks.
-  - Workflow: Linq Reporting Workflow
-  - Outputs: docx
-  - Selected engine: existing_repo
-- `convert-image-uris-to-image-objects-before-passing-them-to-the-linq-reporting-engine.cs`
-  - Task: Convert image URIs to Image objects before passing them to the LINQ reporting engine.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
+- `insert-multiple-images-sequentially-by-iterating-over-a-collection-of-byte-arrays-with-ima.cs`
+  - Task: Insert multiple images sequentially by iterating over a collection of byte arrays with image tags.
+  - Workflow: linq-reporting-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `add-bookmarks-to-table-rows-and-create-hyperlinks-that-navigate-to-those-bookmarks.cs`
+  - Task: Add bookmarks to table rows and create hyperlinks that navigate to those bookmarks.
+  - Workflow: linq-reporting-workflow
+  - Outputs: docx
+  - Selected engine: mcp
+- `convert-image-uris-to-image-objects-before-passing-them-to-the-linq-reporting-engine.cs`
+  - Task: Convert image URIs to Image objects before passing them to the LINQ reporting engine.
+  - Workflow: linq-reporting-workflow
+  - Outputs: docx
+  - Selected engine: llm
 - `check-hyperlink-target-expressions-for-emptiness-and-log-errors-before-building-the-report.cs`
   - Task: Check hyperlink target expressions for emptiness and log errors before building the report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-fitheight-scaling-to-images-while-preserving-original-width-proportionally.cs`
   - Task: Apply fitHeight scaling to images while preserving original width proportionally.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `place-link-expression-tags-inside-table-cells-to-ensure-functional-hyperlinks-after-export.cs`
   - Task: Place <<link [Expression]>> tags inside table cells to ensure functional hyperlinks after export.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-bookmark-names-by-concatenating-two-data-fields-using-a-linq-expression.cs`
   - Task: Generate bookmark names by concatenating two data fields using a LINQ expression.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-hyperlink-display-text-from-a-localized-resource-file-for-multilingual-support.cs`
   - Task: Create hyperlink display text from a localized resource file for multilingual support.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `set-text-color-dynamically-based-on-numeric-thresholds-using-conditional-expressions-in-te.cs`
   - Task: Set text color dynamically based on numeric thresholds using conditional expressions in textColor tags.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `scan-generated-documents-for-broken-hyperlinks-and-report-any-missing-targets.cs`
   - Task: Scan generated documents for broken hyperlinks and report any missing targets.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `place-bookmark-tags-inside-nested-tables-ensuring-each-bookmark-is-correctly-positioned.cs`
   - Task: Place bookmark tags inside nested tables, ensuring each bookmark is correctly positioned.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `construct-hyperlink-target-uris-from-a-base-url-and-query-parameters-dynamically.cs`
   - Task: Construct hyperlink target URIs from a base URL and query parameters dynamically.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-background-color-to-entire-sections-using-content-control-tags-with-evaluated-color.cs`
   - Task: Apply background color to entire sections using content control tags with evaluated color expressions.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-images-into-footers-using-image-tags-with-fitsize-scaling-to-match-footer-height.cs`
   - Task: Insert images into footers using image tags with fitSize scaling to match footer height.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `validate-that-no-image-bookmark-or-link-tags-are-placed-inside-chart-elements.cs`
   - Task: Validate that no image, bookmark, or link tags are placed inside chart elements.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `load-json-data-source-and-bind-to-template-using-foreach-for-array-items.cs`
   - Task: Load JSON data source and bind to template using <<foreach>> for array items.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `load-xml-data-source-and-populate-table-rows-using-foreach-tag-in-the-template.cs`
   - Task: Load XML data source and populate table rows using <<foreach>> tag in the template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `load-csv-data-source-and-map-columns-to-var-tags-for-each-record.cs`
   - Task: Load CSV data source and map columns to <<var>> tags for each record.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `configure-engine-to-restrict-member-access-for-security-using-restrictmembers-setting.cs`
   - Task: Configure engine to restrict member access for security using <<restrictMembers>> setting.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `enable-engine-caching-to-store-compiled-templates-for-faster-repeated-processing.cs`
   - Task: Enable engine caching to store compiled templates for faster repeated processing.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `declare-a-variable-in-the-template-using-var-name-total-value-var-syntax.cs`
   - Task: Declare a variable in the template using <<var name="Total">>value<</var>> syntax.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: existing_repo
 - `redefine-the-variable-inside-nested-foreach-loops-to-calculate-subtotals-per-category.cs`
   - Task: Redefine the variable inside nested <<foreach>> loops to calculate subtotals per category.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `place-restartnum-tag-before-foreach-to-restart-list-numbering-for-each-group.cs`
   - Task: Place <<restartNum>> tag before <<foreach>> to restart list numbering for each group.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-an-external-html-snippet-at-runtime-using-html-tag-placeholder.cs`
   - Task: Insert an external HTML snippet at runtime using <<html>> tag placeholder.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: html
   - Selected engine: mcp
 - `insert-an-external-docx-file-at-a-bookmark-location-using-include-tag.cs`
   - Task: Insert an external DOCX file at a bookmark location using <<include>> tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-a-dynamic-image-from-a-url-using-image-src-url-placeholder.cs`
   - Task: Insert a dynamic image from a URL using <<image src="url">> placeholder.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `create-a-hyperlink-to-an-external-website-using-hyperlink-tag-with-url-parameter.cs`
   - Task: Create a hyperlink to an external website using <<hyperlink>> tag with URL parameter.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `wrap-content-in-a-conditional-block-using-if-condition-if-to-display-discounts.cs`
   - Task: Wrap content in a conditional block using <<if condition>>...<</if>> to display discounts.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `apply-conditional-visibility-to-sections-based-on-user-role-using-if-role-admin-tag.cs`
   - Task: Apply conditional visibility to sections based on user role using <<if role=='Admin'>> tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `set-text-color-dynamically-to-blue-using-textcolor-color-expression-tag.cs`
   - Task: Set text color dynamically to blue using <<textColor [color_expression]>> tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `set-background-color-dynamically-to-yellow-for-qualifying-rows-using-backcolor-color-expre.cs`
   - Task: Set background color dynamically to yellow for qualifying rows using <<backColor [color_expression]>> tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `set-paragraph-alignment-dynamically-using-setalignment-alignment-center-tag-inside-loop.cs`
   - Task: Set paragraph alignment dynamically using <<setAlignment alignment="center">> tag inside loop.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `set-heading-font-size-dynamically-to-fourteen-points-using-setfontsize-size-14-tag.cs`
   - Task: Set heading font size dynamically to fourteen points using <<setFontSize size="14">> tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `merge-table-cells-dynamically-in-header-rows-using-cellmerge-tag.cs`
   - Task: Merge table cells dynamically in header rows using <<cellMerge>> tag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `merge-cells-horizontally-across-variable-columns-using-cellmerge-expression-with-calculate.cs`
   - Task: Merge cells horizontally across variable columns using <<cellMerge>> expression with calculated range.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: existing_repo
 - `configure-engine-to-remove-paragraphs-containing-only-template-tags-for-cleaner-final-outp.cs`
   - Task: Configure engine to remove paragraphs containing only template tags for cleaner final output.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-page-break-before-each-new-section-using-pagebreak-tag-inside-outer-foreach-loop.cs`
   - Task: Insert page break before each new section using <<pageBreak>> tag inside outer <<foreach>> loop.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp_secondary
+  - Selected engine: existing_repo
 - `add-dynamic-footer-displaying-current-date-and-page-number-using-field-tags.cs`
   - Task: Add dynamic footer displaying current date and page number using <<field>> tags.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `generate-pdf-output-from-docx-template-after-applying-all-linq-tags-and-formatting.cs`
   - Task: Generate PDF output from DOCX template after applying all LINQ tags and formatting.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx, pdf
   - Selected engine: mcp
 - `export-final-document-to-html-format-while-preserving-dynamic-color-settings-applied-via-t.cs`
   - Task: Export final document to HTML format while preserving dynamic color settings applied via tags.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: html
   - Selected engine: mcp
 - `build-multi-section-report-using-separate-data-sources-for-header-body-and-footer-via-api.cs`
   - Task: Build multi-section report using separate data sources for header, body, and footer via API.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-content-control-that-repeats-for-each-employee-record-using-foreach-inside-contro.cs`
   - Task: Create a content control that repeats for each employee record using <<foreach>> inside control.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp_secondary
+  - Selected engine: llm_secondary
 - `enable-reflection-call-optimization-through-engine-caching-options-for-large-data-set-proc.cs`
   - Task: Enable reflection call optimization through engine caching options for large data set processing.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `configure-engine-to-treat-unknown-include-file-paths-as-optional-skipping-them-without-err.cs`
   - Task: Configure engine to treat unknown <<include>> file paths as optional, skipping them without errors.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `load-a-docx-template-from-file-and-build-a-report-using-a-dataset-then-save-as-pdf.cs`
   - Task: Load a DOCX template from file and build a report using a DataSet, then save as PDF.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx, pdf
   - Selected engine: mcp
 - `load-a-template-document-from-a-stream-create-a-jsondatasource-build-the-report-and-save-a.cs`
   - Task: Load a template document from a stream, create a JsonDataSource, build the report, and save as RTF.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: rtf
   - Selected engine: mcp
 - `create-an-xml-data-source-from-a-file-generate-a-report-and-export-the-result-to-docx-form.cs`
   - Task: Create an XML data source from a file, generate a report, and export the result to DOCX format.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx, xml
   - Selected engine: mcp
 - `instantiate-a-jsondatasource-from-a-json-string-build-a-report-and-write-the-output-to-a-m.cs`
   - Task: Instantiate a JsonDataSource from a JSON string, build a report, and write the output to a memory stream.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `configure-csvdataloadoptions-with-headers-custom-separator-and-comment-character-before-bu.cs`
   - Task: Configure CsvDataLoadOptions with headers, custom separator, and comment character before building the report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `configure-csvdataloadoptions-to-recognize-boolean-values-represented-as-true-or-false-stri.cs`
   - Task: Configure CsvDataLoadOptions to recognize boolean values represented as true or false strings during report generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `configure-csvdataloadoptions-to-ignore-lines-starting-with-a-comment-character-while-strea.cs`
   - Task: Configure CsvDataLoadOptions to ignore lines starting with a comment character while streaming large CSV files.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `set-up-a-custom-culture-for-type-parsing-to-correctly-interpret-european-date-formats-in-c.cs`
   - Task: Set up a custom culture for type parsing to correctly interpret European date formats in CSV data.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: llm
 - `enable-type-inference-for-xml-numeric-values-by-providing-invariant-culture-formatted-stri.cs`
   - Task: Enable type inference for XML numeric values by providing invariant culture formatted strings in the source.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `parse-json-date-values-using-iso-8601-format-to-ensure-correct-date-fields-in-the-generate.cs`
   - Task: Parse JSON date values using ISO 8601 format to ensure correct date fields in the generated report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `use-reportingengine-buildreport-overload-specifying-a-collection-name-to-target-a-specific.cs`
   - Task: Use ReportingEngine.BuildReport overload specifying a collection name to target a specific data set.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-known-external-type-configuration-to-allow-safe-member-access-from-custom-objects-in.cs`
   - Task: Apply known external type configuration to allow safe member access from custom objects in the template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-contextual-object-member-access-to-bind-a-single-person-object-s-properties-to-placeho.cs`
   - Task: Use contextual object member access to bind a single Person object's properties to placeholders in the template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-dataset-with-multiple-related-tables-then-build-a-report-that-merges-data-across.cs`
   - Task: Create a DataSet with multiple related tables, then build a report that merges data across those tables.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-separate-reports-for-each-row-in-a-dataset-table-by-iterating-with-reportingengin.cs`
   - Task: Generate separate reports for each row in a DataSet table by iterating with ReportingEngine in a loop.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `stream-a-large-csv-file-with-csvdatasource-to-generate-a-report-without-loading-the-entire.cs`
   - Task: Stream a large CSV file with CsvDataSource to generate a report without loading the entire file into memory.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `create-a-csv-data-source-with-quoted-fields-containing-commas-and-generate-a-report-preser.cs`
   - Task: Create a CSV data source with quoted fields containing commas and generate a report preserving those values.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `create-a-csv-data-source-with-custom-quote-character-and-generate-a-report-preserving-quot.cs`
   - Task: Create a CSV data source with custom quote character and generate a report preserving quoted text exactly.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
-  - Selected engine: mcp
+  - Selected engine: mcp_secondary
 - `create-an-xml-data-source-from-an-xdocument-then-generate-a-report-that-reads-attribute-va.cs`
   - Task: Create an XML data source from an XDocument, then generate a report that reads attribute values as fields.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `create-an-xml-data-source-from-a-string-containing-cdata-sections-and-generate-a-report-pr.cs`
   - Task: Create an XML data source from a string containing CDATA sections and generate a report preserving those values.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
-  - Selected engine: mcp
+  - Selected engine: mcp_secondary
 - `create-an-xml-data-source-with-namespaces-and-generate-a-report-that-correctly-resolves-pr.cs`
   - Task: Create an XML data source with namespaces and generate a report that correctly resolves prefixed elements.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: existing_repo
 - `create-a-jsondatasource-from-a-file-stream-build-a-report-and-upload-the-output-to-azure-b.cs`
   - Task: Create a JsonDataSource from a file stream, build a report, and upload the output to Azure Blob storage.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-jsondatasource-from-a-file-enable-type-inference-and-generate-a-report-with-corre.cs`
   - Task: Create a JsonDataSource from a file, enable type inference, and generate a report with correctly typed fields.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-jsondatasource-from-a-string-containing-a-root-array-flatten-the-root-and-build-t.cs`
   - Task: Create a JsonDataSource from a string containing a root array, flatten the root, and build the report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-custom-number-format-provider-to-format-currency-fields-when-building-a-report-from.cs`
   - Task: Apply custom number format provider to format currency fields when building a report from XML data source.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
-  - Selected engine: llm
+  - Selected engine: mcp
 - `generate-a-docx-report-from-a-json-source-and-apply-custom-number-formatting-for-currency.cs`
   - Task: Generate a DOCX report from a JSON source and apply custom number formatting for currency fields.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx, json
   - Selected engine: llm_secondary
 - `build-a-report-with-conditional-sections-that-appear-only-when-a-numeric-field-exceeds-a-s.cs`
   - Task: Build a report with conditional sections that appear only when a numeric field exceeds a specified threshold.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `build-a-report-that-applies-conditional-sections-based-on-boolean-flags-from-an-xml-data-s.cs`
   - Task: Build a report that applies conditional sections based on boolean flags from an XML data source.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `build-a-report-with-dynamic-page-breaks-based-on-the-number-of-items-in-a-json-array.cs`
   - Task: Build a report with dynamic page breaks based on the number of items in a JSON array.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: existing_repo
 - `build-a-report-with-nested-repeating-sections-for-orders-and-their-line-items-using-xml-da.cs`
   - Task: Build a report with nested repeating sections for orders and their line items using XML data source.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
-  - Selected engine: llm
+  - Selected engine: mcp
 - `build-a-report-that-includes-a-chart-populated-with-numeric-data-extracted-from-a-dataset.cs`
   - Task: Build a report that includes a chart populated with numeric data extracted from a DataSet table.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `build-a-report-that-includes-a-chart-populated-with-data-from-a-json-array-representing-qu.cs`
   - Task: Build a report that includes a chart populated with data from a JSON array representing quarterly results.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
-  - Selected engine: llm_secondary
+  - Selected engine: existing_repo
 - `build-a-report-that-includes-a-calculated-field-summing-two-numeric-values-from-a-csv-row.cs`
   - Task: Build a report that includes a calculated field summing two numeric values from a CSV row.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `build-a-report-that-includes-a-calculated-field-using-arithmetic-expression-combining-two.cs`
   - Task: Build a report that includes a calculated field using arithmetic expression combining two numeric JSON properties.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `generate-a-pdf-a-compliant-report-by-building-from-an-xml-data-source-and-specifying-pdf-a.cs`
   - Task: Generate a PDF/A compliant report by building from an XML data source and specifying PDF/A output options.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: pdf, xml
   - Selected engine: mcp
 - `generate-a-pdf-a-report-from-an-xml-source-and-ensure-all-fonts-are-embedded-for-complianc.cs`
   - Task: Generate a PDF/A report from an XML source and ensure all fonts are embedded for compliance.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: pdf, xml
   - Selected engine: mcp
 - `generate-a-pdf-report-from-a-csv-source-and-apply-custom-page-margins-defined-in-the-templ.cs`
   - Task: Generate a PDF report from a CSV source and apply custom page margins defined in the template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: pdf, csv
-  - Selected engine: existing_repo
+  - Selected engine: llm
 - `generate-a-docx-report-from-a-csv-source-and-apply-custom-page-margins-defined-in-the-temp.cs`
   - Task: Generate a DOCX report from a CSV source and apply custom page margins defined in the template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx, csv
   - Selected engine: mcp
 - `generate-a-docx-report-from-a-csv-source-and-apply-a-custom-table-style-defined-in-the-tem.cs`
   - Task: Generate a DOCX report from a CSV source and apply a custom table style defined in the template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx, csv
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `generate-a-docx-report-from-a-json-source-and-apply-multilingual-unicode-text-from-various.cs`
   - Task: Generate a DOCX report from a JSON source and apply multilingual Unicode text from various language fields.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx, json
   - Selected engine: mcp
 - `use-reportingengine-to-generate-a-report-and-embed-a-file-attachment-from-data-stored-in-a.cs`
   - Task: Use ReportingEngine to generate a report and embed a file attachment from data stored in a JSON field.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `use-reportingengine-to-generate-a-report-and-write-the-output-directly-to-an-http-response.cs`
   - Task: Use ReportingEngine to generate a report and write the output directly to an HTTP response stream.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-reportingengine-to-generate-a-report-and-set-custom-header-and-footer-fields-based-on.cs`
   - Task: Use ReportingEngine to generate a report and set custom header and footer fields based on JSON data.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `use-reportingengine-to-generate-a-report-and-set-custom-document-properties-based-on-value.cs`
   - Task: Use ReportingEngine to generate a report and set custom document properties based on values from a DataSet.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp_secondary
+  - Selected engine: mcp
 - `implement-a-progress-callback-to-monitor-report-generation-status-when-processing-large-xm.cs`
   - Task: Implement a progress callback to monitor report generation status when processing large XML data sets.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `use-a-cancellation-token-to-abort-report-building-if-the-operation-exceeds-a-predefined-ti.cs`
   - Task: Use a cancellation token to abort report building if the operation exceeds a predefined time limit.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-a-report-with-a-table-of-contents-automatically-created-from-heading-styles-in-th.cs`
   - Task: Generate a report with a table of contents automatically created from heading styles in the template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `instantiate-a-reportingengine-object-and-load-a-docx-template-from-the-project-directory.cs`
   - Task: Instantiate a ReportingEngine object and load a DOCX template from the project directory.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `enable-reportbuildoptions-removeemptyparagraphs-before-building-the-report-to-delete-empty.cs`
   - Task: Enable ReportBuildOptions.RemoveEmptyParagraphs before building the report to delete empty paragraphs.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `set-reportbuildoptions-allowmissingmembers-to-true-so-missing-data-fields-are-treated-as-n.cs`
   - Task: Set ReportBuildOptions.AllowMissingMembers to true so missing data fields are treated as null.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `disable-reportbuildoptions-allowmissingmembers-to-cause-exceptions-when-data-members-are-a.cs`
   - Task: Disable ReportBuildOptions.AllowMissingMembers to cause exceptions when data members are absent.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `configure-a-custom-fallback-message-for-missing-members-using-the-reporting-engine-options.cs`
   - Task: Configure a custom fallback message for missing members using the reporting engine options.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `activate-reportbuildoptions-inlineerrormessages-and-capture-the-boolean-success-flag-from.cs`
   - Task: Activate ReportBuildOptions.InlineErrorMessages and capture the Boolean success flag from BuildReport.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `call-reportingengine-setrestrictedtypes-with-prohibited-net-types-prior-to-any-report-gene.cs`
   - Task: Call ReportingEngine.SetRestrictedTypes with prohibited .NET types prior to any report generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `verify-that-the-restricted-type-list-becomes-immutable-after-the-first-buildreport-executi.cs`
   - Task: Verify that the restricted type list becomes immutable after the first BuildReport execution.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `combine-removeemptyparagraphs-and-inlineerrormessages-options-in-a-single-build-to-clean-o.cs`
   - Task: Combine RemoveEmptyParagraphs and InlineErrorMessages options in a single build to clean output and embed errors.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-custom-prefix-and-suffix-delimiters-for-template-tags-to-avoid-tag-collisions.cs`
   - Task: Apply custom prefix and suffix delimiters for template tags to avoid tag collisions.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `define-alternative-tag-delimiters-such-as-and-to-prevent-conflicts-with-document-content.cs`
   - Task: Define alternative tag delimiters such as [[ and ]] to prevent conflicts with document content.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-a-report-using-an-xml-data-source-while-allowmissingmembers-remains-disabled.cs`
   - Task: Generate a report using an XML data source while AllowMissingMembers remains disabled.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `generate-a-report-from-a-json-data-source-with-allowmissingmembers-enabled-to-treat-missin.cs`
   - Task: Generate a report from a JSON data source with AllowMissingMembers enabled to treat missing fields as null.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `validate-that-missing-members-are-returned-as-null-literals-when-allowmissingmembers-is-en.cs`
   - Task: Validate that missing members are returned as null literals when AllowMissingMembers is enabled.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `log-syntax-errors-to-a-file-when-inlineerrormessages-is-disabled-and-the-template-contains.cs`
   - Task: Log syntax errors to a file when InlineErrorMessages is disabled and the template contains invalid expressions.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `write-a-unit-test-confirming-that-empty-paragraphs-are-removed-when-removeemptyparagraphs.cs`
   - Task: Write a unit test confirming that empty paragraphs are removed when RemoveEmptyParagraphs is enabled.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `write-an-integration-test-ensuring-that-restricted-type-enforcement-throws-the-expected-ex.cs`
   - Task: Write an integration test ensuring that restricted type enforcement throws the expected exception during report generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `load-reporting-options-from-an-external-json-configuration-file-at-runtime-to-modify-engin.cs`
   - Task: Load reporting options from an external JSON configuration file at runtime to modify engine behavior.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `benchmark-report-generation-time-with-removeemptyparagraphs-enabled-versus-disabled-on-lar.cs`
   - Task: Benchmark report generation time with RemoveEmptyParagraphs enabled versus disabled on large documents.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `compare-output-file-size-when-inlineerrormessages-is-enabled-versus-disabled-to-assess-ove.cs`
   - Task: Compare output file size when InlineErrorMessages is enabled versus disabled to assess overhead.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-custom-inline-error-message-template-that-appears-for-syntax-errors-in-the-genera.cs`
   - Task: Create a custom inline error message template that appears for syntax errors in the generated document.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `process-a-batch-of-docx-templates-in-a-loop-applying-identical-reporting-options-to-each-f.cs`
   - Task: Process a batch of DOCX templates in a loop, applying identical reporting options to each file.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `capture-the-boolean-success-flag-when-inlineerrormessages-is-enabled-and-no-syntax-errors.cs`
   - Task: Capture the Boolean success flag when InlineErrorMessages is enabled and no syntax errors occur.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `capture-the-boolean-success-flag-when-inlineerrormessages-is-enabled-and-syntax-errors-are.cs`
   - Task: Capture the Boolean success flag when InlineErrorMessages is enabled and syntax errors are present.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `log-each-occurrence-of-missing-members-when-allowmissingmembers-is-enabled-for-later-analy.cs`
   - Task: Log each occurrence of missing members when AllowMissingMembers is enabled for later analysis.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `write-a-unit-test-verifying-that-the-custom-fallback-message-appears-for-missing-members.cs`
   - Task: Write a unit test verifying that the custom fallback message appears for missing members.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `write-an-integration-test-that-validates-inlineerrormessages-embeds-error-text-correctly-a.cs`
   - Task: Write an integration test that validates InlineErrorMessages embeds error text correctly and returns appropriate success flag.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `measure-memory-consumption-during-report-generation-with-removeemptyparagraphs-enabled-to.cs`
   - Task: Measure memory consumption during report generation with RemoveEmptyParagraphs enabled to identify resource impact.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `ensure-that-custom-tag-delimiters-are-correctly-applied-to-template-placeholders-before-bu.cs`
   - Task: Ensure that custom tag delimiters are correctly applied to template placeholders before building the report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `enable-both-allowmissingmembers-and-inlineerrormessages-to-treat-missing-fields-as-null-an.cs`
   - Task: Enable both AllowMissingMembers and InlineErrorMessages to treat missing fields as null and embed syntax errors.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `test-that-calling-setrestrictedtypes-after-the-first-buildreport-throws-an-exception-as-do.cs`
   - Task: Test that calling SetRestrictedTypes after the first BuildReport throws an exception as documented.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-isolated-reportingengine-instances-per-request-to-guarantee-security-isolation-betw.cs`
   - Task: Create isolated ReportingEngine instances per request to guarantee security isolation between users.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `serialize-the-generated-report-to-a-memory-stream-for-further-processing-such-as-emailing.cs`
   - Task: Serialize the generated report to a memory stream for further processing such as emailing.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `implement-retry-logic-that-attempts-report-generation-up-to-three-times-when-transient-err.cs`
   - Task: Implement retry logic that attempts report generation up to three times when transient errors occur.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-asynchronous-buildreport-method-to-avoid-blocking-the-calling-thread-during-length.cs`
   - Task: Use the asynchronous BuildReport method to avoid blocking the calling thread during lengthy generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `disable-reflection-optimization-for-small-data-sets-by-setting-usereflectionoptimization-t.cs`
   - Task: Disable reflection optimization for small data sets by setting UseReflectionOptimization to false.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `enable-reflection-optimization-to-improve-performance-when-processing-large-collections-us.cs`
   - Task: Enable reflection optimization to improve performance when processing large collections using runtime proxy generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-a-custom-external-type-with-knownexternaltypes-to-allow-template-access-without-r.cs`
   - Task: Register a custom external type with KnownExternalTypes to allow template access without reflection.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `configure-restrictedmembers-to-limit-accessible-members-and-enhance-security-of-generated.cs`
   - Task: Configure RestrictedMembers to limit accessible members and enhance security of generated reports.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `enable-removeemptyparagraphs-option-to-delete-paragraphs-containing-only-template-tags-dur.cs`
   - Task: Enable RemoveEmptyParagraphs option to delete paragraphs containing only template tags during generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-the-error-placeholder-in-templates-to-inline-syntax-error-messages-directly-into-ou.cs`
   - Task: Insert the <<error>> placeholder in templates to inline syntax error messages directly into output.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-single-row-list-template-to-generate-a-simple-report-from-a-collection-of-objects.cs`
   - Task: Apply a single-row list template to generate a simple report from a collection of objects.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-an-in-table-list-template-to-render-tabular-data-within-a-document-generated-from-json.cs`
   - Task: Use an in-table list template to render tabular data within a document generated from JSON source.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `iterate-over-xml-data-in-a-template-using-foreach-in-xmldata-syntax-to-populate-sections.cs`
   - Task: Iterate over XML data in a template using <<foreach [in xmlData]>> syntax to populate sections.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `iterate-over-json-data-in-a-template-using-foreach-in-jsondata-syntax-for-dynamic-lists.cs`
   - Task: Iterate over JSON data in a template using <<foreach [in jsonData]>> syntax for dynamic lists.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `iterate-over-csv-data-in-a-template-using-foreach-in-csvdata-syntax-to-generate-rows.cs`
   - Task: Iterate over CSV data in a template using <<foreach [in csvData]>> syntax to generate rows.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
-  - Selected engine: mcp
+  - Selected engine: mcp_secondary
 - `filter-a-collection-within-a-template-using-persons-where-p-p-age-18-to-include-adults.cs`
   - Task: Filter a collection within a template using persons.Where(p => p.Age > 18) to include adults.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `retrieve-the-fourth-element-of-a-collection-in-a-template-using-persons-elementat-3-for-di.cs`
   - Task: Retrieve the fourth element of a collection in a template using persons.ElementAt(3) for display.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `group-a-collection-by-department-in-a-template-using-persons-groupby-p-p-department-to-cre.cs`
   - Task: Group a collection by department in a template using persons.GroupBy(p => p.Department) to create sections.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `omit-explicit-enumeration-type-in-foreach-loops-to-let-the-engine-infer-item-type-automati.cs`
   - Task: Omit explicit enumeration type in foreach loops to let the engine infer item type automatically.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `add-the-required-assembly-attribute-to-merge-the-reporting-engine-with-another-assembly-fo.cs`
   - Task: Add the required assembly attribute to merge the reporting engine with another assembly for deployment.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: mcp
 - `configure-the-engine-to-disable-reflection-optimization-when-processing-fewer-than-one-tho.cs`
   - Task: Configure the engine to disable reflection optimization when processing fewer than one thousand records.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `enable-reflection-optimization-and-register-multiple-external-types-to-improve-performance.cs`
   - Task: Enable reflection optimization and register multiple external types to improve performance for complex hierarchical data.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: mcp_secondary
 - `use-built-in-enumeration-extension-methods-in-templates-to-perform-inline-sorting-before-r.cs`
   - Task: Use built-in enumeration extension methods in templates to perform inline sorting before rendering.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-bulleted-list-template-to-generate-a-bullet-point-summary-from-a-filtered-json-arr.cs`
   - Task: Apply a bulleted list template to generate a bullet-point summary from a filtered JSON array.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `generate-a-numbered-list-report-by-applying-the-numbered-list-template-to-an-xml-data-coll.cs`
   - Task: Generate a numbered list report by applying the numbered list template to an XML data collection.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `create-a-multi-section-document-by-nesting-foreach-loops-over-xml-and-json-data-sources-wi.cs`
   - Task: Create a multi-section document by nesting foreach loops over XML and JSON data sources within the same template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml, json
-  - Selected engine: llm
+  - Selected engine: mcp
 - `implement-batch-processing-by-loading-multiple-csv-files-iterating-each-with-a-foreach-loo.cs`
   - Task: Implement batch processing by loading multiple CSV files, iterating each with a foreach loop, and merging results.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `configure-the-engine-to-remove-empty-paragraphs-after-each-foreach-iteration-to-keep-the-f.cs`
   - Task: Configure the engine to remove empty paragraphs after each foreach iteration to keep the final document tidy.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `set-usereflectionoptimization-to-true-for-large-csv-datasets-to-accelerate-property-access.cs`
   - Task: Set UseReflectionOptimization to true for large CSV datasets to accelerate property access during templating.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `limit-member-access-to-public-properties-only-by-adding-those-names-to-restrictedmembers-l.cs`
   - Task: Limit member access to public properties only by adding those names to RestrictedMembers list.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-a-report-that-includes-error-messages-inline-by-placing-error-tags-where-data-con.cs`
   - Task: Generate a report that includes error messages inline by placing <<error>> tags where data conversion may fail.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-template-that-automatically-determines-enumeration-item-type-without-specifying-g.cs`
   - Task: Create a template that automatically determines enumeration item type without specifying generic type parameters.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-where-extension-method-in-a-template-to-filter-records-based-on-dynamic-runtime-cr.cs`
   - Task: Use the Where extension method in a template to filter records based on dynamic runtime criteria.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-list-in-table-template-to-render-csv-data-as-rows-within-a-pre-formatted-word-tabl.cs`
   - Task: Apply a list-in-table template to render CSV data as rows within a pre-formatted Word table.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
-  - Selected engine: mcp_secondary
+  - Selected engine: existing_repo
 - `combine-xml-and-csv-data-sources-in-a-single-template-to-produce-a-composite-report-with-m.cs`
   - Task: Combine XML and CSV data sources in a single template to produce a composite report with mixed content.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml, csv
   - Selected engine: mcp
 - `disable-reflection-optimization-temporarily-for-a-specific-template-by-setting-usereflecti.cs`
   - Task: Disable reflection optimization temporarily for a specific template by setting UseReflectionOptimization property within a scoped block.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-external-types-from-multiple-assemblies-to-allow-templates-to-access-properties-a.cs`
   - Task: Register external types from multiple assemblies to allow templates to access properties across different libraries.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `configure-the-engine-to-treat-missing-members-as-null-values-to-prevent-runtime-errors-dur.cs`
   - Task: Configure the engine to treat missing members as null values to prevent runtime errors during report generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-groupby-extension-method-in-a-template-to-create-sections-grouped-by-department-fo.cs`
   - Task: Use the GroupBy extension method in a template to create sections grouped by department for employee listings.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-bulleted-list-template-to-a-filtered-xml-node-set-to-produce-a-hierarchical-bullet.cs`
   - Task: Apply a bulleted list template to a filtered XML node set to produce a hierarchical bullet structure.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `iterate-over-a-json-array-of-orders-and-calculate-total-amount-using-inline-arithmetic-exp.cs`
   - Task: Iterate over a JSON array of orders and calculate total amount using inline arithmetic expressions within the template.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `enable-removal-of-empty-paragraphs-after-each-foreach-loop-to-avoid-blank-lines-in-the-fin.cs`
   - Task: Enable removal of empty paragraphs after each foreach loop to avoid blank lines in the final document.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `set-usereflectionoptimization-to-false-when-processing-a-single-small-csv-file-to-minimize.cs`
   - Task: Set UseReflectionOptimization to false when processing a single small CSV file to minimize overhead.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `add-custom-security-restrictions-by-populating-restrictedmembers-with-property-names-that.cs`
   - Task: Add custom security restrictions by populating RestrictedMembers with property names that should be hidden.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-template-that-uses-elementat-to-display-the-fifth-item-of-a-collection-without-lo.cs`
   - Task: Create a template that uses ElementAt to display the fifth item of a collection without looping.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-a-report-that-merges-data-from-xml-json-and-csv-sources-using-separate-foreach-se.cs`
   - Task: Generate a report that merges data from XML, JSON, and CSV sources using separate foreach sections.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml, json, csv
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-numbered-list-template-to-a-collection-of-tasks-to-produce-an-ordered-checklist-in.cs`
   - Task: Apply a numbered list template to a collection of tasks to produce an ordered checklist in the document.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-where-method-with-a-complex-predicate-combining-multiple-fields-to-filter-json-rec.cs`
   - Task: Use the Where method with a complex predicate combining multiple fields to filter JSON records dynamically.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
-  - Selected engine: mcp
+  - Selected engine: llm
 - `configure-the-engine-to-inline-syntax-error-messages-by-placing-error-tags-at-potential-fa.cs`
   - Task: Configure the engine to inline syntax error messages by placing <<error>> tags at potential failure points.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-a-known-external-type-and-enable-reflection-optimization-to-achieve-maximum-perfo.cs`
   - Task: Register a known external type and enable reflection optimization to achieve maximum performance for large data sets.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `iterate-over-xml-elements-using-foreach-syntax-and-concatenate-attribute-values-to-form-a.cs`
   - Task: Iterate over XML elements using foreach syntax and concatenate attribute values to form a composite string.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
-  - Selected engine: existing_repo
+  - Selected engine: mcp
 - `apply-a-single-row-template-to-each-item-in-a-csv-file-to-generate-individual-documents-pe.cs`
   - Task: Apply a single-row template to each item in a CSV file to generate individual documents per record.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `use-groupby-in-a-template-to-create-separate-sections-for-each-unique-category-present-in.cs`
   - Task: Use GroupBy in a template to create separate sections for each unique category present in JSON data.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `enable-reflection-optimization-and-benchmark-processing-time-for-large-xml-arrays-to-quant.cs`
   - Task: Enable reflection optimization and benchmark processing time for large XML arrays to quantify performance gains.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: llm
 - `configure-restrictedmembers-to-block-access-to-methods-that-could-modify-underlying-data-s.cs`
   - Task: Configure RestrictedMembers to block access to methods that could modify underlying data sources.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `remove-empty-paragraphs-after-template-rendering-to-ensure-no-leftover-placeholder-lines-a.cs`
   - Task: Remove empty paragraphs after template rendering to ensure no leftover placeholder lines appear in final output.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-an-in-table-list-template-to-json-data-to-produce-a-formatted-table-with-dynamic-row.cs`
   - Task: Apply an in-table list template to JSON data to produce a formatted table with dynamic rows.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `use-the-elementat-method-to-fetch-a-specific-record-from-a-csv-collection-for-detailed-dis.cs`
   - Task: Use the ElementAt method to fetch a specific record from a CSV collection for detailed display.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `create-a-template-that-automatically-infers-enumeration-item-type-when-iterating-over-a-ge.cs`
   - Task: Create a template that automatically infers enumeration item type when iterating over a generic list.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `set-usereflectionoptimization-to-true-globally-then-override-to-false-for-a-particular-sma.cs`
   - Task: Set UseReflectionOptimization to true globally, then override to false for a particular small data source.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `add-assembly-attribute-to-merge-reporting-engine-with-custom-logging-assembly-for-unified.cs`
   - Task: Add assembly attribute to merge reporting engine with custom logging assembly for unified error handling.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `iterate-over-a-json-array-and-use-inline-arithmetic-to-calculate-and-display-discounted-pr.cs`
   - Task: Iterate over a JSON array and use inline arithmetic to calculate and display discounted prices.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `apply-a-bulleted-list-template-to-xml-nodes-representing-tasks-to-generate-a-bullet-point.cs`
   - Task: Apply a bulleted list template to XML nodes representing tasks to generate a bullet-point task list.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `configure-the-engine-to-treat-missing-collection-items-as-empty-strings-to-avoid-null-refe.cs`
   - Task: Configure the engine to treat missing collection items as empty strings to avoid null reference errors.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-where-extension-method-with-a-lambda-that-references-external-type-properties-afte.cs`
   - Task: Use the Where extension method with a lambda that references external type properties after registering the type.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `generate-a-report-that-includes-a-numbered-list-of-filtered-csv-rows-applying-custom-forma.cs`
   - Task: Generate a report that includes a numbered list of filtered CSV rows, applying custom formatting to each item.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `enable-removal-of-empty-paragraphs-only-for-sections-generated-from-json-data-to-keep-othe.cs`
   - Task: Enable removal of empty paragraphs only for sections generated from JSON data to keep other sections untouched.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
-  - Selected engine: llm
+  - Selected engine: mcp
 - `register-multiple-external-types-from-different-namespaces-to-allow-templates-to-access-di.cs`
   - Task: Register multiple external types from different namespaces to allow templates to access diverse object models.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-single-row-template-repeatedly-using-a-foreach-loop-over-csv-records-to-produce-ba.cs`
   - Task: Apply a single-row template repeatedly using a foreach loop over CSV records to produce batch documents.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `use-groupby-in-a-template-to-summarize-xml-data-by-category-and-display-totals-per-group.cs`
   - Task: Use GroupBy in a template to summarize XML data by category and display totals per group.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `configure-usereflectionoptimization-based-on-collection-size-threshold-to-balance-performa.cs`
   - Task: Configure UseReflectionOptimization based on collection size threshold to balance performance and memory usage.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-error-tags-in-conditional-sections-to-capture-and-display-template-evaluation-failu.cs`
   - Task: Insert <<error>> tags in conditional sections to capture and display template evaluation failures during generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-an-in-table-list-template-to-xml-data-to-create-a-table-with-header-rows-from-elemen.cs`
   - Task: Apply an in-table list template to XML data to create a table with header rows from element names.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: llm
 - `use-the-where-method-to-filter-csv-rows-where-the-status-column-equals-active-before-rende.cs`
   - Task: Use the Where method to filter CSV rows where the status column equals 'Active' before rendering.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
-  - Selected engine: llm
+  - Selected engine: mcp
 - `enable-reflection-optimization-and-benchmark-processing-time-for-large-json-arrays-to-quan.cs`
   - Task: Enable reflection optimization and benchmark processing time for large JSON arrays to quantify performance gains.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
-  - Selected engine: mcp
+  - Selected engine: llm
 - `configure-restrictedmembers-to-exclude-sensitive-fields-like-salary-from-being-accessed-in.cs`
   - Task: Configure RestrictedMembers to exclude sensitive fields like Salary from being accessed in templates for security.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-bulleted-list-template-to-each-group-produced-by-groupby-to-create-nested-bullet-s.cs`
   - Task: Apply a bulleted list template to each group produced by GroupBy to create nested bullet sections.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `iterate-over-json-objects-and-use-inline-string-concatenation-to-build-full-address-lines.cs`
   - Task: Iterate over JSON objects and use inline string concatenation to build full address lines in the report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `set-usereflectionoptimization-to-false-for-a-specific-template-by-modifying-engine-setting.cs`
   - Task: Set UseReflectionOptimization to false for a specific template by modifying engine settings within a using block.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-external-type-myclass-and-enable-reflection-optimization-to-allow-fast-property-a.cs`
   - Task: Register external type MyClass and enable reflection optimization to allow fast property access in templates.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `create-a-template-that-uses-groupby-to-organize-xml-items-by-attribute-and-display-each-gr.cs`
   - Task: Create a template that uses GroupBy to organize XML items by attribute and display each group header.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `apply-a-numbered-list-template-to-json-array-of-steps-to-produce-an-ordered-instruction-ma.cs`
   - Task: Apply a numbered list template to JSON array of steps to produce an ordered instruction manual.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `enable-removal-of-empty-paragraphs-after-processing-csv-data-to-prevent-blank-lines-betwee.cs`
   - Task: Enable removal of empty paragraphs after processing CSV data to prevent blank lines between generated rows.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `use-elementat-in-a-template-to-display-the-last-item-of-a-collection-by-calculating-collec.cs`
   - Task: Use ElementAt in a template to display the last item of a collection by calculating collection length.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `configure-engine-to-inline-syntax-errors-using-error-placeholder-allowing-end-users-to-see.cs`
   - Task: Configure engine to inline syntax errors using <<error>> placeholder, allowing end users to see exact failure locations.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: mcp
+  - Selected engine: llm
 - `apply-a-single-row-template-to-each-element-of-an-xml-node-list-to-generate-separate-secti.cs`
   - Task: Apply a single-row template to each element of an XML node list to generate separate sections per item.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
-  - Selected engine: mcp
+  - Selected engine: llm
 - `use-where-with-a-compound-condition-combining-age-and-department-fields-to-filter-json-emp.cs`
   - Task: Use Where with a compound condition combining age and department fields to filter JSON employee records.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `enable-reflection-optimization-globally-then-disable-it-for-a-specific-small-csv-import-to.cs`
   - Task: Enable reflection optimization globally, then disable it for a specific small CSV import to reduce overhead.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `register-multiple-known-external-types-and-verify-that-templates-can-access-their-public-p.cs`
   - Task: Register multiple known external types and verify that templates can access their public properties without reflection.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-bulleted-list-template-to-grouped-json-data-to-create-nested-bullet-points-for-eac.cs`
   - Task: Apply a bulleted list template to grouped JSON data to create nested bullet points for each category.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `configure-restrictedmembers-to-allow-only-getter-methods-preventing-templates-from-invokin.cs`
   - Task: Configure RestrictedMembers to allow only getter methods, preventing templates from invoking setters on data objects.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `iterate-over-csv-rows-and-use-inline-calculations-to-compute-totals-and-display-them-in-th.cs`
   - Task: Iterate over CSV rows and use inline calculations to compute totals and display them in the report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `use-groupby-to-aggregate-xml-data-by-category-and-display-total-counts-for-each-group-in-t.cs`
   - Task: Use GroupBy to aggregate XML data by category and display total counts for each group in the report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `enable-removal-of-empty-paragraphs-after-processing-each-data-source-to-keep-the-final-doc.cs`
   - Task: Enable removal of empty paragraphs after processing each data source to keep the final document clean.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-single-row-template-to-each-json-object-to-generate-individual-sections-with-detai.cs`
   - Task: Apply a single-row template to each JSON object to generate individual sections with detailed information.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `set-usereflectionoptimization-to-false-for-a-specific-csv-import-to-avoid-unnecessary-prox.cs`
   - Task: Set UseReflectionOptimization to false for a specific CSV import to avoid unnecessary proxy generation.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `configure-restrictedmembers-to-block-access-to-methods-that-could-execute-arbitrary-code-f.cs`
   - Task: Configure RestrictedMembers to block access to methods that could execute arbitrary code for security.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `insert-error-placeholders-in-optional-template-sections-to-capture-and-display-missing-dat.cs`
   - Task: Insert <<error>> placeholders in optional template sections to capture and display missing data warnings.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-an-in-table-list-template-to-grouped-xml-nodes-mapping-each-group-to-a-separate-tabl.cs`
   - Task: Apply an in-table list template to grouped XML nodes, mapping each group to a separate table section.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: existing_repo
 - `use-the-where-method-with-a-case-insensitive-comparison-to-filter-json-entries-based-on-a.cs`
   - Task: Use the Where method with a case-insensitive comparison to filter JSON entries based on a string field.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `benchmark-processing-time-with-reflection-optimization-enabled-for-large-json-datasets-to.cs`
   - Task: Benchmark processing time with reflection optimization enabled for large JSON datasets to evaluate performance impact.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
-  - Selected engine: mcp
+  - Selected engine: llm_secondary
 - `disable-reflection-optimization-within-a-scoped-block-for-a-particular-template-to-avoid-p.cs`
   - Task: Disable reflection optimization within a scoped block for a particular template to avoid proxy generation overhead.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-external-types-from-both-core-and-third-party-assemblies-to-enable-comprehensive.cs`
   - Task: Register external types from both core and third-party assemblies to enable comprehensive data access in templates.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-bulleted-list-template-to-each-group-generated-by-groupby-to-produce-nested-bullet.cs`
   - Task: Apply a bulleted list template to each group generated by GroupBy to produce nested bullet sections.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-elementat-in-a-template-to-display-the-third-item-of-a-collection-without-iterating-th.cs`
   - Task: Use ElementAt in a template to display the third item of a collection without iterating the entire list.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `configure-the-engine-to-treat-missing-xml-elements-as-empty-strings-to-prevent-null-refere.cs`
   - Task: Configure the engine to treat missing XML elements as empty strings to prevent null reference errors.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `enable-removal-of-empty-paragraphs-only-after-processing-csv-sections-to-keep-other-sectio.cs`
   - Task: Enable removal of empty paragraphs only after processing CSV sections to keep other sections unchanged.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
-  - Selected engine: mcp
+  - Selected engine: mcp_secondary
 - `add-the-assembly-attribute-required-for-merging-the-reporting-engine-with-a-custom-authent.cs`
   - Task: Add the assembly attribute required for merging the reporting engine with a custom authentication module.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-where-extension-method-with-a-lambda-referencing-a-registered-external-type-proper.cs`
   - Task: Use the Where extension method with a lambda referencing a registered external type property for advanced filtering.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `apply-a-numbered-list-template-to-a-filtered-xml-node-set-to-generate-an-ordered-hierarchi.cs`
   - Task: Apply a numbered list template to a filtered XML node set to generate an ordered hierarchical report.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
-  - Selected engine: llm
+  - Selected engine: existing_repo
 - `configure-restrictedmembers-to-exclude-methods-that-could-write-to-files-enhancing-templat.cs`
   - Task: Configure RestrictedMembers to exclude methods that could write to files, enhancing template security.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `iterate-over-xml-data-and-use-inline-arithmetic-to-calculate-totals-for-each-grouped-categ.cs`
   - Task: Iterate over XML data and use inline arithmetic to calculate totals for each grouped category.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
-  - Selected engine: mcp
+  - Selected engine: existing_repo
 - `enable-reflection-optimization-globally-then-selectively-disable-it-for-small-json-arrays.cs`
   - Task: Enable reflection optimization globally, then selectively disable it for small JSON arrays to balance performance.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `use-groupby-in-a-template-to-summarize-csv-data-by-status-and-display-count-per-group.cs`
   - Task: Use GroupBy in a template to summarize CSV data by status and display count per group.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 - `apply-an-in-table-list-template-to-json-data-to-create-a-table-with-column-headers-derived.cs`
   - Task: Apply an in-table list template to JSON data to create a table with column headers derived from keys.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `insert-error-tags-in-optional-loops-to-capture-and-display-evaluation-failures-for-missing.cs`
   - Task: Insert <<error>> tags in optional loops to capture and display evaluation failures for missing data.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `configure-the-engine-to-treat-absent-enumeration-items-as-null-preventing-exceptions-durin.cs`
   - Task: Configure the engine to treat absent enumeration items as null, preventing exceptions during template execution.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `use-the-elementat-method-to-fetch-the-second-to-last-item-of-a-collection-by-calculating-l.cs`
   - Task: Use the ElementAt method to fetch the second-to-last item of a collection by calculating length.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-single-row-template-to-each-element-of-a-json-array-to-generate-individual-detaile.cs`
   - Task: Apply a single-row template to each element of a JSON array to generate individual detailed sections.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: json
   - Selected engine: mcp
 - `enable-removal-of-empty-paragraphs-after-processing-each-data-source-to-ensure-a-clean-fin.cs`
   - Task: Enable removal of empty paragraphs after processing each data source to ensure a clean final document.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `register-a-known-external-type-and-enable-reflection-optimization-to-achieve-optimal-perfo.cs`
   - Task: Register a known external type and enable reflection optimization to achieve optimal performance for large XML datasets.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `use-the-where-method-with-case-insensitive-comparison-to-filter-xml-nodes-based-on-attribu.cs`
   - Task: Use the Where method with case-insensitive comparison to filter XML nodes based on attribute values.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: xml
   - Selected engine: mcp
 - `configure-restrictedmembers-to-allow-only-properties-marked-with-a-custom-attribute-enhanc.cs`
   - Task: Configure RestrictedMembers to allow only properties marked with a custom attribute, enhancing data exposure control.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: docx
   - Selected engine: mcp
 - `apply-a-bulleted-list-template-to-grouped-csv-data-to-create-nested-bullet-points-for-each.cs`
   - Task: Apply a bulleted list template to grouped CSV data to create nested bullet points for each category.
-  - Workflow: Linq Reporting Workflow
+  - Workflow: linq-reporting-workflow
   - Outputs: csv
   - Selected engine: mcp
 
 ## Common failure patterns and preferred agent fixes
 
-- Malformed or invented tag syntax
+- **Malformed or invented tag syntax**
   - Symptom: Parser errors caused by malformed tags, mismatched closing tags, extra colons/commas, invented switches, or pseudo-tag variants.
   - Preferred fix: Use only exact LINQ Reporting tag syntax and valid in-tag expressions. Keep opening and closing tags matched and avoid invented switches.
 
-- Unsafe table and foreach structure
+- **Unsafe table and foreach structure**
   - Symptom: Errors such as EndTable while not building a table, or foreach crossing table/story boundaries.
   - Preferred fix: Use the safest repeated-table structure: start foreach first, start the table after foreach starts, end the table just before foreach ends, then close foreach. Keep each opening and closing tag within the same valid table/story structure.
 
-- Image tag placement errors
+- **Image tag placement errors**
   - Symptom: Image tag not well formed, image-container errors, or malformed image-in-table structure.
   - Preferred fix: Place image tags only inside a textbox prepared as the image container. For image-in-table tasks, create the table safely and place the textbox inside the required cell.
 
-- Root object or data-shape mismatch
+- **Root object or data-shape mismatch**
   - Symptom: Template paths do not match the actual root object, root name, or source shape, especially for XML, DataTable, DataView, or DataRow sources.
   - Preferred fix: Keep the BuildReport root object, root name, and template expressions fully aligned. Use public model types and match template paths to the real source hierarchy.
 
-- Unsupported XML namespace handling
+- **Unsupported XML namespace handling**
   - Symptom: Compile or runtime failures caused by unsupported XML namespace APIs or incorrect XmlDataSource constructor usage.
   - Preferred fix: Use supported XmlDataSource constructors together with XmlDataLoadOptions when needed. Do not pass XmlNamespaceManager to XmlDataSource constructors and do not call unavailable namespace helper APIs.
 
-- Nullable and style warnings
+- **Nullable and style warnings**
   - Symptom: Warnings such as CS8618, CS8600, CS8602, CS8604, or IDE0090.
   - Preferred fix: Initialize non-nullable properties, guard maybe-null values before dereference, use nullable locals when appropriate, and prefer target-typed new where the simplified form is obvious.
 
 ## Build and run contract
 
 - Target framework: `net8.0`
-- Package: `Aspose.Words` `26.5.0`
+- Package: `Aspose.Words` `26.6.0`
 - Package: `Newtonsoft.Json`
 - Package: `System.Text.Encoding.CodePages` `9.0.2`
 
@@ -2101,7 +2101,7 @@ cd ExampleProject
 ### Add required packages
 
 ```bash
-dotnet add package Aspose.Words --version 26.5.0
+dotnet add package Aspose.Words --version 26.6.0
 dotnet add package Newtonsoft.Json
 dotnet add package System.Text.Encoding.CodePages --version 9.0.2
 ```

@@ -1,112 +1,92 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public static class Program
+public class Program
 {
+    // Central log that records every property evaluation during report generation.
+    private static readonly List<string> EvaluationLog = new();
+
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Ensure the code page provider is available (required by Aspose.Words for some encodings).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Create a template document with LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("- <<[item.Name]>>: $<<[item.Price]>>");
+        // 1. Create the LINQ Reporting template programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Template uses a foreach loop over Items and prints Index and Name.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        // Prepare sample data.
-        Order order = new Order
+        // 2. Prepare realistic sample data.
+        ReportModel model = new ReportModel
         {
-            CustomerName = "John Doe",
             Items = new List<Item>
             {
-                new Item { Name = "Apple", Price = 1.20m },
-                new Item { Name = "Banana", Price = 0.80m },
-                new Item { Name = "Cherry", Price = 2.50m }
+                new Item { Index = 1, Name = "Apple" },
+                new Item { Index = 2, Name = "Banana" },
+                new Item { Index = 3, Name = "Cherry" }
             }
         };
 
-        // Build the report.
+        // 3. Build the report using Aspose.Words LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, order, "order");
+        // No special options are required for this example.
+        engine.BuildReport(template, model, "model");
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        // 4. Save the generated report.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
+        string reportPath = Path.Combine(outputDir, "ReportOutput.docx");
+        template.Save(reportPath);
 
-        // Write the evaluation log to a file.
-        File.WriteAllLines("log.txt", Logger.Entries);
-    }
-}
-
-// Simple logger that records evaluation messages.
-public static class Logger
-{
-    private static readonly List<string> _entries = new List<string>();
-    public static IReadOnlyList<string> Entries => _entries;
-
-    public static void Log(string message)
-    {
-        _entries.Add($"{DateTime.Now:O} - {message}");
-    }
-}
-
-// Data model for the report.
-public class Order
-{
-    private string _customerName = "";
-    private List<Item> _items = new();
-
-    public string CustomerName
-    {
-        get
+        // 5. Write the evaluation log to a text file and also output to console.
+        string logPath = Path.Combine(outputDir, "EvaluationLog.txt");
+        File.WriteAllLines(logPath, EvaluationLog);
+        Console.WriteLine("Report generated at: " + reportPath);
+        Console.WriteLine("Evaluation log written to: " + logPath);
+        Console.WriteLine("=== Evaluation Log ===");
+        foreach (string entry in EvaluationLog)
         {
-            Logger.Log($"Order.CustomerName evaluated: {_customerName}");
-            return _customerName;
+            Console.WriteLine(entry);
         }
-        set => _customerName = value ?? "";
     }
 
-    public List<Item> Items
+    // Root data model for the report.
+    public class ReportModel
     {
-        get
-        {
-            Logger.Log("Order.Items accessed");
-            return _items;
-        }
-        set => _items = value ?? new List<Item>();
-    }
-}
-
-// Data model for each item.
-public class Item
-{
-    private string _name = "";
-    private decimal _price;
-
-    public string Name
-    {
-        get
-        {
-            Logger.Log($"Item.Name evaluated: {_name}");
-            return _name;
-        }
-        set => _name = value ?? "";
+        // Initialize to avoid nullable warnings.
+        public List<Item> Items { get; set; } = new();
     }
 
-    public decimal Price
+    // Data item whose property getters log each access.
+    public class Item
     {
-        get
+        private int _index;
+        private string _name = string.Empty;
+
+        public int Index
         {
-            Logger.Log($"Item.Price evaluated: {_price}");
-            return _price;
+            get => Log(nameof(Index), _index);
+            set => _index = value;
         }
-        set => _price = value;
+
+        public string Name
+        {
+            get => Log(nameof(Name), _name);
+            set => _name = value ?? string.Empty;
+        }
+
+        // Generic logging helper.
+        private static T Log<T>(string propertyName, T value)
+        {
+            EvaluationLog.Add($"{propertyName} accessed, value: {value}");
+            return value;
+        }
     }
 }

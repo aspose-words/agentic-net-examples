@@ -1,99 +1,130 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Program
 {
-    // Simple data model used by the LINQ Reporting template.
+    public static void Main()
+    {
+        // Ensure code pages are available (required by Aspose.Words in some environments).
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+
+        // Create simple resource files for default (en) and French (fr) cultures.
+        CreateResourceFiles();
+
+        // Set the current culture to demonstrate multilingual support.
+        // Change to "en-US" for English or "fr-FR" for French.
+        CultureInfo.CurrentCulture = new CultureInfo("fr-FR");
+
+        // Build the data model.
+        ReportModel model = new()
+        {
+            Url = "https://example.com",
+            LinkText = GetLocalizedString("LinkText")
+        };
+
+        // Create the LINQ Reporting template programmatically.
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // Load the template and build the report.
+        Document doc = new(templatePath);
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated document.
+        string outputPath = "Report.docx";
+        doc.Save(outputPath);
+    }
+
+    // Model class used as the root data source for the report.
     public class ReportModel
     {
         public string Url { get; set; } = "";
-        public string DisplayText { get; set; } = "";
+        public string LinkText { get; set; } = "";
     }
 
-    public static void Main()
+    // Creates the template document containing a LINQ Reporting link tag.
+    private static void CreateTemplate(string path)
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
 
-        // -----------------------------------------------------------------
-        // 1. Create simple localized text files (default and French).
-        // -----------------------------------------------------------------
-        string defaultTxt = Path.Combine(outputDir, "Strings.en.txt");
-        string frenchTxt = Path.Combine(outputDir, "Strings.fr.txt");
+        // Insert a paragraph with a link tag. The display text comes from the data model.
+        builder.Writeln("Visit our site: <<link [model.Url] [model.LinkText]>>");
 
-        // Default (English) resources.
-        File.WriteAllLines(defaultTxt, new[] { "LinkText=Click here" });
-
-        // French resources.
-        File.WriteAllLines(frenchTxt, new[] { "LinkText=Cliquez ici" });
-
-        // -----------------------------------------------------------------
-        // 2. Determine the UI culture and load the appropriate resource.
-        // -----------------------------------------------------------------
-        // For demonstration, switch to French culture; comment out to use default.
-        CultureInfo.CurrentUICulture = new CultureInfo("fr-FR");
-
-        string cultureSuffix = CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "fr"
-            ? ".fr"
-            : ".en";
-
-        string resourcePath = Path.Combine(outputDir, $"Strings{cultureSuffix}.txt");
-        string localizedLinkText = LoadStringFromFile(resourcePath, "LinkText");
-
-        // -----------------------------------------------------------------
-        // 3. Build the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        // Insert a simple paragraph containing a link tag.
-        // The tag uses the model's Url and DisplayText properties.
-        builder.Writeln("<<link [model.Url] [model.DisplayText]>>");
-
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 4. Prepare the data model.
-        // -----------------------------------------------------------------
-        var model = new ReportModel
-        {
-            Url = "https://example.com",
-            DisplayText = localizedLinkText
-        };
-
-        // -----------------------------------------------------------------
-        // 5. Generate the report using ReportingEngine.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // -----------------------------------------------------------------
-        // 6. Save the final document.
-        // -----------------------------------------------------------------
-        string resultPath = Path.Combine(outputDir, "Result.docx");
-        reportDoc.Save(resultPath);
+        doc.Save(path);
     }
 
-    // Helper method to read a key/value pair from a simple text file.
-    private static string LoadStringFromFile(string filePath, string key)
+    // Retrieves a localized string from the appropriate .resx file.
+    private static string GetLocalizedString(string key)
     {
-        if (!File.Exists(filePath))
-            return string.Empty;
+        string baseName = "Strings";
+        string cultureSuffix = CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "fr" ? ".fr" : "";
+        string resxFile = $"{baseName}{cultureSuffix}.resx";
 
-        foreach (var line in File.ReadAllLines(filePath))
+        if (!File.Exists(resxFile))
+            return key; // Fallback if resource file is missing.
+
+        try
         {
-            var parts = line.Split('=', 2);
-            if (parts.Length == 2 && parts[0].Trim() == key)
-                return parts[1].Trim();
+            XDocument doc = XDocument.Load(resxFile);
+            XElement dataElement = doc.Root?.Element("data") ??
+                                   doc.Root?.Elements("data")
+                                      .FirstOrDefault(e => (string)e.Attribute("name") == key);
+
+            // If the simple lookup above fails, search all <data> elements.
+            if (dataElement == null)
+            {
+                foreach (XElement element in doc.Root?.Elements("data") ?? [])
+                {
+                    if ((string)element.Attribute("name") == key)
+                    {
+                        dataElement = element;
+                        break;
+                    }
+                }
+            }
+
+            if (dataElement != null)
+            {
+                XElement valueElement = dataElement.Element("value");
+                if (valueElement != null)
+                    return valueElement.Value;
+            }
+        }
+        catch
+        {
+            // Ignore parsing errors and fall back to the key.
         }
 
-        return string.Empty;
+        return key; // Fallback if key is not found.
+    }
+
+    // Writes simple .resx files for English (default) and French cultures.
+    private static void CreateResourceFiles()
+    {
+        // Default (English) resources.
+        string defaultResx = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<root>
+  <data name=""LinkText"" xml:space=""preserve"">
+    <value>Click here</value>
+  </data>
+</root>";
+        File.WriteAllText("Strings.resx", defaultResx);
+
+        // French resources.
+        string frenchResx = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<root>
+  <data name=""LinkText"" xml:space=""preserve"">
+    <value>Cliquez ici</value>
+  </data>
+</root>";
+        File.WriteAllText("Strings.fr.resx", frenchResx);
     }
 }

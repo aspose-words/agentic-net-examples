@@ -1,109 +1,118 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
+using Aspose.Words.Reporting; // Contains ReportingEngine, JsonDataSource, etc.
 
-public class Program
+public class ReflectionOptimizationDemo
 {
     public static void Main()
     {
-        // Register code page provider for encodings required by Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Enable reflection optimization globally.
-        ReportingEngine.UseReflectionOptimization = true;
-
-        // Prepare output folder.
+        // Ensure the output directory exists.
         string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
         // -----------------------------------------------------------------
-        // 1. Create a template document with LINQ Reporting tags.
+        // 1. Create a template document with two data sections: Large and Small.
         // -----------------------------------------------------------------
         string templatePath = Path.Combine(outputDir, "Template.docx");
         CreateTemplate(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Create sample JSON data files.
+        // 2. Create a JSON file containing a large array and a small array.
         // -----------------------------------------------------------------
-        string largeJsonPath = Path.Combine(outputDir, "data_large.json");
-        string smallJsonPath = Path.Combine(outputDir, "data_small.json");
-        CreateJsonData(largeJsonPath, 100); // large array (100 items)
-        CreateJsonData(smallJsonPath, 2);   // small array (2 items)
+        string jsonPath = Path.Combine(outputDir, "Data.json");
+        CreateJsonData(jsonPath);
 
         // -----------------------------------------------------------------
-        // 3. Generate report using large JSON (optimization stays enabled).
+        // 3. Global reflection optimization enabled.
         // -----------------------------------------------------------------
-        string largeReportPath = Path.Combine(outputDir, "ReportLarge.docx");
-        GenerateReport(templatePath, largeJsonPath, largeReportPath);
+        ReportingEngine.UseReflectionOptimization = true; // enable globally
+
+        Document docGlobal = new Document(templatePath);
+        JsonDataSource dataSource = new JsonDataSource(jsonPath);
+        ReportingEngine engineGlobal = new ReportingEngine();
+        engineGlobal.BuildReport(docGlobal, dataSource, "data"); // root name "data"
+        string globalResult = Path.Combine(outputDir, "Result_GlobalOptimization.docx");
+        docGlobal.Save(globalResult);
 
         // -----------------------------------------------------------------
-        // 4. Generate report using small JSON (disable optimization for this run).
+        // 4. Disable reflection optimization for small JSON arrays.
+        //    (Demonstrated by building a report that only uses the Small array.)
         // -----------------------------------------------------------------
-        ReportingEngine.UseReflectionOptimization = false; // temporarily disable
-        string smallReportPath = Path.Combine(outputDir, "ReportSmall.docx");
-        GenerateReport(templatePath, smallJsonPath, smallReportPath);
+        ReportingEngine.UseReflectionOptimization = false; // disable for this scenario
 
-        // Reset to default (optional).
+        // Create a template that only references the Small array.
+        string smallTemplatePath = Path.Combine(outputDir, "Template_SmallOnly.docx");
+        CreateSmallOnlyTemplate(smallTemplatePath);
+
+        Document docSmall = new Document(smallTemplatePath);
+        JsonDataSource smallDataSource = new JsonDataSource(jsonPath);
+        ReportingEngine engineSmall = new ReportingEngine();
+        engineSmall.BuildReport(docSmall, smallDataSource, "data");
+        string smallResult = Path.Combine(outputDir, "Result_SmallArray_NoOptimization.docx");
+        docSmall.Save(smallResult);
+
+        // Reset the static flag to its default (true) for any further operations.
         ReportingEngine.UseReflectionOptimization = true;
     }
 
-    // Creates a simple Word template with a foreach loop over the JSON root collection.
+    // Creates a template with tags for both Large and Small arrays.
     private static void CreateTemplate(string filePath)
     {
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Sample Report");
-        // The JSON root is treated as a collection, so iterate directly over it.
-        builder.Writeln("<<foreach [item in data]>>");
-        builder.Writeln("Name: <<[item.Name]>>, Value: <<[item.Value]>>");
+        builder.Writeln("Large items:");
+        builder.Writeln("<<foreach [item in Large]>>");
+        builder.Writeln("- <<[item]>>");
+        builder.Writeln("<</foreach>>");
+
+        builder.Writeln();
+        builder.Writeln("Small items:");
+        builder.Writeln("<<foreach [item in Small]>>");
+        builder.Writeln("- <<[item]>>");
         builder.Writeln("<</foreach>>");
 
         doc.Save(filePath);
     }
 
-    // Generates a JSON file containing an object with an "Items" array.
-    private static void CreateJsonData(string filePath, int itemCount)
+    // Creates a template that only references the Small array.
+    private static void CreateSmallOnlyTemplate(string filePath)
     {
-        var items = new List<Dictionary<string, object>>();
-        for (int i = 1; i <= itemCount; i++)
-        {
-            items.Add(new Dictionary<string, object>
-            {
-                { "Name", $"Item{i}" },
-                { "Value", i * 10 }
-            });
-        }
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        var root = new Dictionary<string, object>
+        builder.Writeln("Small items (no reflection optimization):");
+        builder.Writeln("<<foreach [item in Small]>>");
+        builder.Writeln("- <<[item]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(filePath);
+    }
+
+    // Generates a JSON file with a large array (100 items) and a small array (2 items).
+    private static void CreateJsonData(string filePath)
+    {
+        var jsonObject = new
         {
-            { "Items", items }
+            Large = GenerateNumbers(1, 100),
+            Small = GenerateNumbers(1, 2)
         };
 
         string json = System.Text.Json.JsonSerializer.Serialize(
-            root,
+            jsonObject,
             new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
 
-        File.WriteAllText(filePath, json, Encoding.UTF8);
+        File.WriteAllText(filePath, json);
     }
 
-    // Loads the template, binds the JSON data source, and builds the report.
-    private static void GenerateReport(string templatePath, string jsonPath, string outputPath)
+    // Helper to generate a list of integers as strings.
+    private static List<string> GenerateNumbers(int start, int count)
     {
-        // Load the template document.
-        Document template = new Document(templatePath);
-
-        // Create a JsonDataSource from the JSON file.
-        JsonDataSource dataSource = new JsonDataSource(jsonPath);
-
-        // Build the report. The root object name used in the template tags is "data".
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, dataSource, "data");
-
-        // Save the generated report.
-        template.Save(outputPath);
+        var list = new List<string>();
+        for (int i = start; i < start + count; i++)
+            list.Add(i.ToString());
+        return list;
     }
 }

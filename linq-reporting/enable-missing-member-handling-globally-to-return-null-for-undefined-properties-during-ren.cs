@@ -1,85 +1,44 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingMissingMemberDemo
+namespace AsposeWordsLinqReporting
 {
-    // Simple data model with a collection.
-    public class Order
+    // Simple data model with only one defined property.
+    public class ReportModel
     {
-        public int Id { get; set; }
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public string Name { get; set; } = string.Empty;
+        public string Existing { get; set; } = string.Empty;
+        // Note: No property named "Missing" is defined.
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            // Create a new blank document and insert LINQ Reporting tags.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // -------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            // The template references an existing property and a missing one.
+            builder.Writeln("Existing: <<[model.Existing]>>");
+            builder.Writeln("Missing: <<[model.Missing]>>"); // This member does not exist.
 
-            // Write some text and LINQ Reporting tags.
-            builder.Writeln("Order ID: <<[order.Id]>>");
-            // This property does NOT exist in the Order class.
-            builder.Writeln("Missing property (should be null): <<[order.MissingProp]>>");
-            builder.Writeln("Items:");
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("  Name: <<[item.Name]>>");
-            // This property does NOT exist in the Item class.
-            builder.Writeln("  Missing: <<[item.NonExisting]>>");
-            builder.Writeln("<</foreach>>");
+            // Prepare the data source.
+            ReportModel model = new ReportModel { Existing = "Hello, World!" };
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template document.
-            // -------------------------------------------------
-            var doc = new Document(templatePath);
-
-            // -------------------------------------------------
-            // 3. Prepare sample data.
-            // -------------------------------------------------
-            var order = new Order
+            // Configure the reporting engine to treat missing members as null.
+            ReportingEngine engine = new ReportingEngine
             {
-                Id = 123,
-                Items = new List<Item>
-                {
-                    new Item { Name = "Apple" },
-                    new Item { Name = "Banana" }
-                }
-            };
-
-            // -------------------------------------------------
-            // 4. Configure the ReportingEngine to treat missing members as null.
-            // -------------------------------------------------
-            var engine = new ReportingEngine
-            {
-                // AllowMissingMembers makes undefined members evaluate to null.
                 Options = ReportBuildOptions.AllowMissingMembers
             };
+            // Optional: customize the message shown for a plain missing member reference.
+            engine.MissingMemberMessage = string.Empty;
 
-            // Build the report using the root object name "order".
-            engine.BuildReport(doc, order, "order");
+            // Build the report. The missing member will be rendered as an empty string.
+            engine.BuildReport(doc, model, "model");
 
-            // -------------------------------------------------
-            // 5. Save the generated report.
-            // -------------------------------------------------
-            doc.Save(reportPath);
+            // Save the generated report.
+            doc.Save("ReportOutput.docx");
         }
     }
 }

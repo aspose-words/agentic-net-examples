@@ -1,46 +1,55 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingDemo
 {
-    public static void Main()
+    // Simple data model used by the LINQ Reporting engine.
+    public class ReportModel
     {
-        // Prepare directories.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Color expression returned to the template. Any known color name or HTML code is accepted.
+        public string Color { get; set; } = "Blue";
 
-        // Step 1: Create a template document with a textColor tag.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        // The tag will use the model's Color property to set the text color.
-        builder.Writeln("<<textColor [model.Color]>>Status Text<</textColor>>");
-        templateDoc.Save(templatePath);
-
-        // Step 2: Load the template document.
-        Document doc = new Document(templatePath);
-
-        // Step 3: Prepare the data model.
-        ReportModel model = new ReportModel
-        {
-            Color = "Blue" // Known color name; the engine will apply this to the text.
-        };
-
-        // Step 4: Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Step 5: Save the generated report.
-        string reportPath = Path.Combine(outputDir, "Report.docx");
-        doc.Save(reportPath);
+        // Text that will be displayed inside the colored region.
+        public string Status { get; set; } = "Dynamic Status";
     }
-}
 
-// Simple data model aligned with the template.
-public class ReportModel
-{
-    // The color expression used in the template.
-    public string Color { get; set; } = "Blue";
+    public class Program
+    {
+        public static void Main()
+        {
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
+
+            // -------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Insert a LINQ Reporting tag that sets the text color dynamically.
+            // The color is taken from the model's Color property, and the inner text
+            // is taken from the model's Status property.
+            builder.Writeln("<<textColor [model.Color]>><<[model.Status]>> <</textColor>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // 2. Load the template and build the report.
+            // -------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+
+            // Prepare the data source.
+            ReportModel model = new ReportModel(); // Color = "Blue", Status = "Dynamic Status"
+
+            // Create the reporting engine and generate the report.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the final report.
+            reportDoc.Save(reportPath);
+        }
+    }
 }

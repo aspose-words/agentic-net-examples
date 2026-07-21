@@ -1,66 +1,54 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
 public class Program
 {
-    // Model class matching the JSON objects.
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
-
     public static void Main()
     {
-        // Enable code page support (required on some platforms).
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample JSON data file.
-        string jsonPath = "people.json";
-        var people = new List<Person>
-        {
-            new Person { Name = "Alice", Age = 30 },
-            new Person { Name = "Bob", Age = 25 },
-            new Person { Name = "Charlie", Age = 35 }
-        };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(people, Formatting.Indented));
+        // Prepare folders.
+        string workDir = Directory.GetCurrentDirectory();
+        string dataFile = Path.Combine(workDir, "people.json");
+        string templateFile = Path.Combine(workDir, "template.docx");
+        string resultFile = Path.Combine(workDir, "report.docx");
 
-        // 2. Build a template document containing LINQ Reporting tags.
-        string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // 1. Create sample JSON data (array of objects).
+        string jsonContent = @"[
+  { ""Name"": ""Alice"", ""Age"": 30 },
+  { ""Name"": ""Bob"",   ""Age"": 25 },
+  { ""Name"": ""Carol"", ""Age"": 28 }
+]";
+        File.WriteAllText(dataFile, jsonContent, Encoding.UTF8);
 
-        // Title
-        builder.Writeln("People List:");
-        // Begin foreach over the JSON data source named 'jsonData'.
-        builder.Writeln("<<foreach [person in jsonData]>>");
-        // Output each person's details.
-        builder.Writeln("- <<[person.Name]>> (Age: <<[person.Age]>>)");
-        // End foreach.
+        // 2. Build the template document programmatically.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [in jsonData]>>");
+        builder.Writeln("- <<[Name]>> (Age: <<[Age]>>)");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        templateDoc.Save(templatePath);
+        // Save the template to disk.
+        templateDoc.Save(templateFile);
 
-        // 3. Load the template for reporting.
-        var loadedTemplate = new Document(templatePath);
+        // 3. Load the template back (as required by the lifecycle rule).
+        Document loadedTemplate = new Document(templateFile);
 
         // 4. Create a JsonDataSource from the JSON file.
-        var jsonDataSource = new JsonDataSource(jsonPath);
+        JsonDataSource jsonDataSource = new JsonDataSource(dataFile);
 
         // 5. Build the report using ReportingEngine.
-        var engine = new ReportingEngine();
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
         engine.BuildReport(loadedTemplate, jsonDataSource, "jsonData");
 
         // 6. Save the generated report.
-        string reportPath = "Report.docx";
-        loadedTemplate.Save(reportPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
+        loadedTemplate.Save(resultFile);
     }
 }

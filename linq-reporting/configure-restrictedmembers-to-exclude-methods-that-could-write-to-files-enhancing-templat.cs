@@ -1,53 +1,68 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    // Simple data model used as the root object for the report.
+    public class Order
     {
-        // Prepare a simple data model.
-        ReportModel model = new ReportModel { Name = "John Doe" };
-
-        // -----------------------------------------------------------------
-        // Create a template document programmatically.
-        // The template contains a LINQ Reporting tag that references the model.
-        // -----------------------------------------------------------------
-        string templatePath = "Template.docx";
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Hello <<[model.Name]>>!");
-        // The following line is intentionally omitted because the expression
-        // would cause a parsing error. The purpose of this example is to show
-        // how to restrict types that could write to the file system.
-        template.Save(templatePath);
-
-        // Load the template back from disk (required before building the report).
-        Document doc = new Document(templatePath);
-
-        // -----------------------------------------------------------------
-        // Configure the ReportingEngine to restrict types that can write to
-        // the file system. This enhances security by preventing template
-        // expressions from accessing these members.
-        // -----------------------------------------------------------------
-        ReportingEngine.SetRestrictedTypes(
-            typeof(System.IO.File),
-            typeof(System.IO.Directory),
-            typeof(System.IO.StreamWriter),
-            typeof(System.IO.BinaryWriter));
-
-        // Build the report using the LINQ Reporting Engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // Initialize to avoid nullable warnings.
+        public string CustomerName { get; set; } = string.Empty;
     }
-}
 
-// Simple public data model with a public property.
-public class ReportModel
-{
-    public string Name { get; set; } = string.Empty;
+    public class Program
+    {
+        public static void Main()
+        {
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
+
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Insert a simple LINQ Reporting tag that references the data model.
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Configure restricted members to block file‑writing APIs.
+            // -----------------------------------------------------------------
+            // Restrict types that expose methods capable of writing to the file system.
+            ReportingEngine.SetRestrictedTypes(
+                typeof(System.IO.File),
+                typeof(System.IO.FileInfo),
+                typeof(System.IO.Directory),
+                typeof(System.IO.StreamWriter),
+                typeof(System.IO.BinaryWriter));
+
+            // -----------------------------------------------------------------
+            // 3. Build the report using the template and a sample data object.
+            // -----------------------------------------------------------------
+            // Load the template back (simulating a real‑world scenario where the
+            // template might be stored separately).
+            Document loadedTemplate = new Document(templatePath);
+
+            // Create the reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+
+            // Prepare sample data.
+            Order sampleOrder = new Order { CustomerName = "John Doe" };
+
+            // Build the report. The root object name ("order") must match the tag.
+            engine.BuildReport(loadedTemplate, sampleOrder, "order");
+
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
+            loadedTemplate.Save(reportPath);
+        }
+    }
 }

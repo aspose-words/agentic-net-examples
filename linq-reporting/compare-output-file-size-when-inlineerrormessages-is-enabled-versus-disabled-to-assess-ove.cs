@@ -1,89 +1,90 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class InlineErrorMessageSizeComparison
+public class Person
 {
-    // Simple data model used as the root object for the report.
-    public class Model
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+    public Person(string name, int age)
     {
-        // Existing property – will be displayed correctly.
-        public string Name { get; set; } = "Sample Name";
-        // No property named Missing – referencing this will cause a template error.
+        Name = name;
+        Age = age;
     }
+}
 
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+    public ReportModel() { }
+}
+
+public class Program
+{
     public static void Main()
     {
-        // Paths for temporary files.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string reportNoInlinePath = Path.Combine(outputDir, "report_no_inline.docx");
-        string reportInlinePath = Path.Combine(outputDir, "report_inline.docx");
+        // Prepare sample data.
+        var model = new ReportModel();
+        model.Persons.Add(new Person("Alice", 30));
+        model.Persons.Add(new Person("Bob", 25));
+        model.Persons.Add(new Person("Charlie", 35));
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
 
-        // Write a valid tag.
-        builder.Writeln("Name: <<[model.Name]>>");
-        // Write a tag that references a missing member – this will generate an error.
-        builder.Writeln("Missing: <<[model.Missing]>>");
+        // Build report with InlineErrorMessages enabled.
+        string reportWithErrorsPath = "Report_WithInlineError.docx";
+        BuildReport(templatePath, model, "model", ReportBuildOptions.InlineErrorMessages, reportWithErrorsPath);
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Build report with InlineErrorMessages disabled (default options).
+        string reportWithoutErrorsPath = "Report_WithoutInlineError.docx";
+        BuildReport(templatePath, model, "model", ReportBuildOptions.None, reportWithoutErrorsPath);
 
-        // -----------------------------------------------------------------
-        // 2. Build report without InlineErrorMessages (errors will throw).
-        // -----------------------------------------------------------------
-        Document docNoInline = new Document(templatePath);
-        ReportingEngine engineNoInline = new ReportingEngine();
+        // Compare file sizes.
+        long sizeWithErrors = new FileInfo(reportWithErrorsPath).Length;
+        long sizeWithoutErrors = new FileInfo(reportWithoutErrorsPath).Length;
 
-        try
+        Console.WriteLine($"Report size with InlineErrorMessages: {sizeWithErrors} bytes");
+        Console.WriteLine($"Report size without InlineErrorMessages: {sizeWithoutErrors} bytes");
+        Console.WriteLine($"Size overhead: {sizeWithErrors - sizeWithoutErrors} bytes");
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        // Add a simple heading.
+        builder.Writeln("Person Report");
+        builder.Writeln();
+
+        // Insert a foreach loop to list persons.
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(filePath);
+    }
+
+    private static void BuildReport(string templatePath, ReportModel model, string rootName, ReportBuildOptions options, string outputPath)
+    {
+        // Load a fresh copy of the template for each build.
+        var doc = new Document(templatePath);
+
+        var engine = new ReportingEngine
         {
-            // This will throw because the template contains an invalid reference.
-            engineNoInline.BuildReport(docNoInline, new Model(), "model");
-        }
-        catch (Exception ex)
-        {
-            // Swallow the exception – the document remains unchanged (no inline errors).
-            Console.WriteLine("BuildReport without InlineErrorMessages threw an exception (expected).");
-            Console.WriteLine($"Exception message: {ex.Message}");
-        }
-
-        // Save the resulting document (still the original template content).
-        docNoInline.Save(reportNoInlinePath);
-
-        // -----------------------------------------------------------------
-        // 3. Build report with InlineErrorMessages enabled.
-        // -----------------------------------------------------------------
-        Document docInline = new Document(templatePath);
-        ReportingEngine engineInline = new ReportingEngine
-        {
-            Options = ReportBuildOptions.InlineErrorMessages
+            Options = options
         };
 
-        // BuildReport returns false because there were errors, but the document now contains inline messages.
-        bool success = engineInline.BuildReport(docInline, new Model(), "model");
-        Console.WriteLine($"BuildReport with InlineErrorMessages succeeded flag: {success}");
+        // Build the report.
+        bool success = engine.BuildReport(doc, model, rootName);
+        // success is only meaningful when InlineErrorMessages is set; we ignore it here.
 
-        // Save the document that now contains the inline error messages.
-        docInline.Save(reportInlinePath);
-
-        // -----------------------------------------------------------------
-        // 4. Compare file sizes.
-        // -----------------------------------------------------------------
-        long sizeNoInline = new FileInfo(reportNoInlinePath).Length;
-        long sizeInline = new FileInfo(reportInlinePath).Length;
-        long overhead = sizeInline - sizeNoInline;
-
-        Console.WriteLine();
-        Console.WriteLine("File size comparison:");
-        Console.WriteLine($"Report without InlineErrorMessages: {sizeNoInline} bytes");
-        Console.WriteLine($"Report with InlineErrorMessages   : {sizeInline} bytes");
-        Console.WriteLine($"Overhead introduced by InlineErrorMessages: {overhead} bytes");
+        // Save the generated report.
+        doc.Save(outputPath);
     }
 }

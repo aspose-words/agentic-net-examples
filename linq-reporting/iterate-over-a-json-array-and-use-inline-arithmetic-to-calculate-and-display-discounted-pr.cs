@@ -1,52 +1,49 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingDemo
 {
-    public static void Main()
+    class Program
     {
-        // Ensure the output directory exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        static void Main()
+        {
+            // Register code page provider for Aspose.Words (required on .NET Core).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create sample JSON data representing a list of products.
-        string jsonPath = Path.Combine(outputDir, "products.json");
-        string jsonContent = @"
+            // Prepare sample JSON data (an array of products with price and discount).
+            string jsonContent = @"
 [
-    { ""Name"": ""Apple"",  ""Price"": 1.20, ""Discount"": 10 },
-    { ""Name"": ""Banana"", ""Price"": 0.80, ""Discount"": 5 },
-    { ""Name"": ""Cherry"", ""Price"": 2.50, ""Discount"": 20 }
+    { ""Name"": ""Widget"",      ""Price"": 100.0, ""Discount"": 0.10 },
+    { ""Name"": ""Gadget"",      ""Price"":  59.5, ""Discount"": 0.15 },
+    { ""Name"": ""Doohickey"",   ""Price"":  23.0, ""Discount"": 0.05 }
 ]";
-        File.WriteAllText(jsonPath, jsonContent);
+            string jsonPath = "products.json";
+            File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
 
-        // 2. Create a template document programmatically.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+            // Create a blank Word document that will serve as the template.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Product Price Report");
-        builder.Writeln("====================================");
-        // The data source name will be \"items\" (see BuildReport call below).
-        builder.Writeln("<<foreach [item in items]>>");
-        builder.Writeln("Name: <<[item.Name]>>");
-        builder.Writeln("Original Price: $<<[item.Price]>>");
-        // Inline arithmetic to calculate discounted price.
-        builder.Writeln("Discounted Price: $<<[item.Price * (1 - item.Discount / 100)]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("====================================");
+            // LINQ Reporting template:
+            // Iterate over the JSON array (named 'items') and calculate discounted price inline.
+            builder.Writeln("<<foreach [item in items]>>");
+            builder.Writeln("Product: <<[item.Name]>>");
+            builder.Writeln("Original Price: $<<[item.Price]>>");
+            builder.Writeln("Discounted Price: $<<[item.Price * (1 - item.Discount)]>>");
+            builder.Writeln("<</foreach>>");
 
-        // 3. Load the JSON data as a JsonDataSource.
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+            // Load the JSON data as a data source.
+            JsonDataSource dataSource = new JsonDataSource(jsonPath);
 
-        // 4. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        // No special options are required for this simple scenario.
-        engine.BuildReport(doc, jsonDataSource, "items");
+            // Build the report using the template and the JSON data source.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, dataSource, "items");
 
-        // 5. Save the generated report.
-        string reportPath = Path.Combine(outputDir, "DiscountReport.docx");
-        doc.Save(reportPath);
+            // Save the generated report.
+            doc.Save("DiscountedPricesReport.docx");
+        }
     }
 }

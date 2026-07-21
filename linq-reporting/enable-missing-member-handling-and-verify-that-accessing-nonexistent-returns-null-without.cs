@@ -7,53 +7,42 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        string templatePath = "template.docx";
-        string reportPath = "report.docx";
+        // Prepare folders.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "template.docx");
+        string outputPath = Path.Combine(workDir, "output.docx");
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document programmatically.
-        // -----------------------------------------------------------------
+        // 1. Create a template document with a missing-member tag.
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Insert a LINQ Reporting tag that references a non‑existent member.
-        // The engine will treat this as a missing member.
+        // The tag references a member that does not exist in the data source.
         builder.Writeln("<<[nonexistent]>>");
-
-        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template back from the file system.
-        // -----------------------------------------------------------------
-        Document loadedDoc = new Document(templatePath);
+        // 2. Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Configure the ReportingEngine to allow missing members.
-        // -----------------------------------------------------------------
+        // 3. Configure the reporting engine to allow missing members.
         ReportingEngine engine = new ReportingEngine
         {
-            // Treat missing members as null literals.
             Options = ReportBuildOptions.AllowMissingMembers,
-            // Optional: customize the message printed for a missing member.
-            // Leaving it empty results in an empty string in the output.
+            // Optional: customize the message printed for missing members.
             MissingMemberMessage = string.Empty
         };
 
-        // Build the report using an empty data source (any object works).
-        // The root name is left empty because the template does not reference it.
-        engine.BuildReport(loadedDoc, new object(), "");
+        // 4. Build the report using an empty data source.
+        // The data source does not contain a 'nonexistent' member.
+        object emptyDataSource = new object();
+        engine.BuildReport(reportDoc, emptyDataSource, "");
 
-        // -----------------------------------------------------------------
-        // 4. Verify that the missing member was rendered as an empty string.
-        // -----------------------------------------------------------------
-        string resultText = loadedDoc.GetText().Trim();
-        // The result should be empty (null handling succeeded).
+        // 5. Verify that the missing member was treated as null (empty output).
+        string resultText = reportDoc.GetText().Trim();
         bool isEmpty = string.IsNullOrEmpty(resultText);
-        Console.WriteLine($"Missing member rendered as empty: {isEmpty}");
+        Console.WriteLine(isEmpty
+            ? "Missing member handled correctly: output is empty."
+            : $"Unexpected output: \"{resultText}\"");
 
-        // Save the final report.
-        loadedDoc.Save(reportPath);
+        // 6. Save the generated report.
+        reportDoc.Save(outputPath);
     }
 }

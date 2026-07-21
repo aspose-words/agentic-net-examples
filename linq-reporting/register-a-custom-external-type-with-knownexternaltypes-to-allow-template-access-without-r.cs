@@ -1,71 +1,50 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Sample data model.
-    public class Order
+    // Sample data model with a non‑nullable property to avoid warnings.
+    public class Product
     {
-        // Initialize to avoid nullable warnings.
-        public decimal Total { get; set; } = 0m;
+        public decimal Price { get; set; } = 0m;
     }
 
     // Custom external type whose static members can be used in the template.
     public static class MyHelper
     {
         // Formats a decimal value as currency.
-        public static string FormatCurrency(decimal value)
-        {
-            return string.Format("{0:C}", value);
-        }
+        public static string FormatCurrency(decimal value) => $"${value:F2}";
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
+            // 1. Create a template document programmatically.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
+            builder.Writeln("Product price: <<[MyHelper.FormatCurrency(Price)]>>");
             const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            template.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // 2. Load the template for reporting.
+            var doc = new Document(templatePath);
 
-            // Insert a LINQ Reporting tag that calls the custom static method.
-            // The root data source will be referenced as "order".
-            builder.Writeln("Order total: <<[MyHelper.FormatCurrency(order.Total)]>>");
+            // 3. Prepare the data source.
+            var product = new Product { Price = 123.45m };
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare the data source.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // Sample data.
-            Order order = new Order { Total = 1234.56m };
-
-            // -----------------------------------------------------------------
-            // 3. Configure the ReportingEngine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-
-            // Register the custom external type so the template can access its static members.
+            // 4. Configure the ReportingEngine.
+            var engine = new ReportingEngine();
+            // Register the custom external type so the template can call its static members without reflection.
             engine.KnownTypes.Add(typeof(MyHelper));
 
-            // Build the report. The root object name must match the name used in the template tags.
-            engine.BuildReport(reportDoc, order, "order");
+            // 5. Build the report. Use the overload without a data source name to reference members directly.
+            engine.BuildReport(doc, product);
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            reportDoc.Save(reportPath);
+            // 6. Save the generated report.
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
         }
     }
 }

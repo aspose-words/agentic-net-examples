@@ -1,76 +1,59 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    // Collection of raw items.
+    public List<string> Items { get; set; } = new();
+
+    public ReportModel()
+    {
+        // Sample data.
+        Items.Add("Apple");
+        Items.Add("Banana");
+        Items.Add("Cherry");
+    }
+
+    // Method that formats a single item – adds a prefix and makes the text uppercase.
+    public string FormatItem(string s) => $"Item: {s.ToUpper()}";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
         const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
+        const string reportPath = "Report.docx";
 
         // -----------------------------------------------------------------
-        // 1. Create the template document with a LINQ Reporting foreach tag.
+        // 1. Create the template document programmatically.
         // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // The template iterates over the pre‑transformed collection.
-        builder.Writeln("<<foreach [s in Transformed]>>");
-        builder.Writeln("<<[s]>>");
+        // Insert LINQ Reporting tags.
+        builder.Writeln("<<foreach [item in model.Items]>>");
+        builder.Writeln("<<[model.FormatItem(item)]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // ---------------------------------------------------------------
-        // 2. Load the template and prepare the data model for the report.
-        // ---------------------------------------------------------------
-        var doc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+        ReportModel model = new ReportModel();
 
-        var model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Id = 1, Name = "Apple" },
-                new Item { Id = 2, Name = "Banana" },
-                new Item { Id = 3, Name = "Cherry" }
-            }
-        };
+        ReportingEngine engine = new ReportingEngine();
+        // The root object name in the template is "model".
+        engine.BuildReport(reportDoc, model, "model");
 
-        // -------------------------------------------------
-        // 3. Build the report using the ReportingEngine.
-        // -------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        doc.Save(outputPath);
+        // -----------------------------------------------------------------
+        // 3. Save the generated report.
+        // -----------------------------------------------------------------
+        reportDoc.Save(reportPath);
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model exposed to the template.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    // Collection of source items.
-    public List<Item> Items { get; set; } = new();
-
-    // Custom delegate used for formatting each item.
-    public Func<Item, string> Transform => item => $"Id:{item.Id} Name:{item.Name}";
-
-    // Helper property that applies the delegate to each item.
-    // The template iterates over this property.
-    public IEnumerable<string> Transformed => Items.Select(Transform);
-}
-
-// Simple data item class.
-public class Item
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
 }

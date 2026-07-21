@@ -7,17 +7,17 @@ using Aspose.Words.Saving;
 
 public class Program
 {
-    // Simple data model used by the LINQ Reporting template.
+    // Simple data model for the report.
     public class Order
     {
-        public string Product { get; set; } = string.Empty;
-        public int Quantity { get; set; }
+        public string CustomerName { get; set; } = "John Doe";
+        public List<Item> Items { get; set; } = new();
     }
 
-    public class ReportModel
+    public class Item
     {
-        public string Name { get; set; } = string.Empty;
-        public List<Order> Orders { get; set; } = new();
+        public string Name { get; set; } = "Sample Item";
+        public decimal Price { get; set; }
     }
 
     public static void Main()
@@ -26,49 +26,46 @@ public class Program
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Add a title and a placeholder for the customer's name.
-        builder.Writeln("Customer: <<[model.Name]>>");
-        builder.Writeln("Orders:");
+        // Add a title and a placeholder for the customer name.
+        builder.Writeln("Order Report");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln();
 
-        // Begin a foreach block that iterates over the Orders collection.
-        builder.Writeln("<<foreach [order in model.Orders]>>");
-        builder.Writeln("- <<[order.Product]>> x <<[order.Quantity]>>");
+        // Begin a foreach loop over the order items.
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("- <<[item.Name]>> : $<<[item.Price]>>");
         builder.Writeln("<</foreach>>");
 
-        // 2. Prepare sample data that matches the template.
-        ReportModel model = new()
+        // 2. Prepare sample data.
+        Order order = new Order
         {
-            Name = "John Doe",
-            Orders = new()
+            CustomerName = "Alice Smith",
+            Items = new List<Item>
             {
-                new Order { Product = "Apple", Quantity = 5 },
-                new Order { Product = "Banana", Quantity = 3 },
-                new Order { Product = "Orange", Quantity = 7 }
+                new Item { Name = "Laptop", Price = 1299.99m },
+                new Item { Name = "Mouse", Price = 25.50m },
+                new Item { Name = "Keyboard", Price = 45.00m }
             }
         };
 
-        // 3. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None // No special options required.
-        };
-        bool success = engine.BuildReport(template, model, "model");
+        // 3. Build the report using ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(template, order, "order");
 
-        // Ensure the report was built successfully.
-        if (!success)
+        // 4. Save the generated document to a memory stream and then to a file.
+        using (MemoryStream stream = new MemoryStream())
         {
-            Console.WriteLine("Report generation failed.");
-            return;
+            // Save directly to the stream in DOCX format.
+            template.Save(stream, SaveFormat.Docx);
+
+            // Write the stream contents to a physical file for demonstration.
+            stream.Position = 0;
+            using (FileStream file = File.Create("GeneratedReport.docx"))
+            {
+                stream.CopyTo(file);
+            }
         }
 
-        // 4. Write the generated document to a memory stream (simulating an HTTP response stream).
-        using (MemoryStream memoryStream = new())
-        {
-            // Save the document to the stream in DOCX format.
-            template.Save(memoryStream, SaveFormat.Docx);
-
-            // For demonstration, show the size of the generated document.
-            Console.WriteLine($"Report written to stream. Length: {memoryStream.Length} bytes.");
-        }
+        Console.WriteLine("Report generated and saved as 'GeneratedReport.docx'.");
     }
 }

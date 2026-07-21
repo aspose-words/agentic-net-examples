@@ -2,98 +2,98 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
-public class SpecificationItem
+public class Spec
 {
-    public string Name { get; set; } = string.Empty;
-    public double Measurement { get; set; }
+    public int Index { get; set; }
+    public double Value { get; set; }
 
-    // Returns a simple fractional representation of the measurement.
-    // For the purpose of this example we limit the denominator to 8.
-    public string FractionMeasurement
+    // Returns the value formatted as a fraction (e.g., 1/2, 3/4).
+    public string Fraction => ConvertToFraction(Value);
+
+    private static string ConvertToFraction(double value)
     {
-        get
+        // Simple handling for common fractions.
+        if (Math.Abs(value - 0.5) < 0.0001) return "1/2";
+        if (Math.Abs(value - 0.75) < 0.0001) return "3/4";
+
+        // Generic conversion with a denominator up to 100.
+        const int maxDenominator = 100;
+        int denominator = maxDenominator;
+        int numerator = (int)Math.Round(value * denominator);
+        int gcd = Gcd(numerator, denominator);
+        numerator /= gcd;
+        denominator /= gcd;
+        return $"{numerator}/{denominator}";
+    }
+
+    private static int Gcd(int a, int b)
+    {
+        while (b != 0)
         {
-            // Convert the double to a fraction with denominator up to 8.
-            // This is a naive implementation sufficient for the sample data.
-            const int maxDenominator = 8;
-            double value = Measurement;
-            int bestNumerator = 0;
-            int bestDenominator = 1;
-            double bestError = double.MaxValue;
-
-            for (int denom = 1; denom <= maxDenominator; denom++)
-            {
-                int numer = (int)Math.Round(value * denom);
-                double error = Math.Abs(value - (double)numer / denom);
-                if (error < bestError)
-                {
-                    bestError = error;
-                    bestNumerator = numer;
-                    bestDenominator = denom;
-                }
-            }
-
-            // If the fraction is an integer, just return the integer.
-            if (bestDenominator == 1)
-                return bestNumerator.ToString();
-
-            return $"{bestNumerator}/{bestDenominator}";
+            int temp = b;
+            b = a % b;
+            a = temp;
         }
+        return Math.Abs(a);
     }
 }
 
 public class ReportModel
 {
-    public List<SpecificationItem> Items { get; set; } = new();
+    public List<Spec> Specs { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Sample data.
-        var model = new ReportModel
-        {
-            Items = new List<SpecificationItem>
-            {
-                new() { Name = "Length", Measurement = 0.5 },   // 1/2
-                new() { Name = "Width",  Measurement = 0.75 }, // 3/4
-                new() { Name = "Height", Measurement = 0.3333 } // approx 1/3
-            }
-        };
+        // Prepare sample data.
+        var model = new ReportModel();
+        model.Specs.Add(new Spec { Index = 1, Value = 0.5 });
+        model.Specs.Add(new Spec { Index = 2, Value = 0.75 });
+        model.Specs.Add(new Spec { Index = 3, Value = 0.3333 });
 
-        // Create the template document.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // ---------- Create the template document ----------
+        const string templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Specifications");
-        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Specifications Table:");
+        // Begin the foreach block before the table.
+        builder.Writeln("<<foreach [spec in Specs]>>");
 
-        // Table header.
-        var table = builder.StartTable();
+        // Build the table that will be repeated for each Spec.
+        Table table = builder.StartTable();
+
+        // Header row.
         builder.InsertCell();
-        builder.Writeln("Name");
+        builder.Writeln("Index");
         builder.InsertCell();
-        builder.Writeln("Measurement");
+        builder.Writeln("Value (Fraction)");
         builder.EndRow();
 
-        // Table row bound to the data source.
+        // Data row – will be repeated.
         builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
+        builder.Writeln("<<[spec.Index]>>");
         builder.InsertCell();
-        // Use the custom property that already contains the fraction string.
-        builder.Writeln("<<[item.FractionMeasurement]>>");
+        builder.Writeln("<<[spec.Fraction]>>");
         builder.EndRow();
 
+        // Finish the table and the foreach block.
         builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Build the report.
+        // Save the template.
+        templateDoc.Save(templatePath);
+
+        // ---------- Load the template and build the report ----------
+        var doc = new Document(templatePath);
         var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        doc.Save("SpecificationsReport.docx");
+        // Save the final report.
+        doc.Save("Report.docx");
     }
 }

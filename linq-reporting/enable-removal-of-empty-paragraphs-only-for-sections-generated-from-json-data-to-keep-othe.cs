@@ -1,92 +1,92 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
+
+#nullable enable
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output directory.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        // Ensure the output folder exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
         Directory.CreateDirectory(outputDir);
 
-        // -----------------------------------------------------------------
-        // 1. Create a static template (no data binding) with an empty paragraph.
-        // -----------------------------------------------------------------
-        string staticTemplatePath = Path.Combine(outputDir, "StaticTemplate.docx");
-        Document staticTemplate = new Document();
-        DocumentBuilder staticBuilder = new DocumentBuilder(staticTemplate);
-        staticBuilder.Writeln("=== Static Section ===");
-        staticBuilder.Writeln(""); // This empty paragraph should be preserved.
-        staticBuilder.Writeln("End of static content.");
-        staticTemplate.Save(staticTemplatePath);
+        // 1. Create the template document programmatically.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        CreateTemplate(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Create a JSON-driven template with a foreach loop.
-        // -----------------------------------------------------------------
-        string jsonTemplatePath = Path.Combine(outputDir, "JsonTemplate.docx");
-        Document jsonTemplate = new Document();
-        DocumentBuilder jsonBuilder = new DocumentBuilder(jsonTemplate);
-        jsonBuilder.Writeln("=== JSON Section ===");
-        jsonBuilder.Writeln("<<foreach [item in Items]>>");
-        jsonBuilder.Writeln("<<[item.Name]>>"); // May produce empty paragraph.
-        jsonBuilder.Writeln("<</foreach>>");
-        jsonBuilder.Writeln("End of JSON content.");
-        jsonTemplate.Save(jsonTemplatePath);
+        // 2. Create sample JSON data file.
+        string jsonPath = Path.Combine(outputDir, "Data.json");
+        CreateJsonData(jsonPath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare sample JSON data.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        // 3. Load the template document.
+        Document doc = new Document(templatePath);
+
+        // 4. Load JSON data source.
+        using (FileStream jsonStream = File.OpenRead(jsonPath))
         {
-            Items = new List<Item>
-            {
-                new Item { Name = "Alice" },
-                new Item { Name = "" },      // This will generate an empty paragraph.
-                new Item { Name = "Bob" },
-                new Item { Name = null }    // Null also results in an empty paragraph.
-            }
-        };
+            JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
 
-        // -----------------------------------------------------------------
-        // 4. Load the static template (no processing needed).
-        // -----------------------------------------------------------------
-        Document staticDoc = new Document(staticTemplatePath);
+            // 5. Configure the reporting engine to remove empty paragraphs.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // -----------------------------------------------------------------
-        // 5. Load the JSON template and build the report with removal of empty paragraphs.
-        // -----------------------------------------------------------------
-        Document jsonDoc = new Document(jsonTemplatePath);
-        ReportingEngine jsonEngine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.RemoveEmptyParagraphs
-        };
-        jsonEngine.BuildReport(jsonDoc, model, "model");
+            // 6. Build the report. The root object name is "items" to match the template tags.
+            engine.BuildReport(doc, jsonDataSource, "items");
+        }
 
-        // -----------------------------------------------------------------
-        // 6. Append the processed JSON document to the static document.
-        // -----------------------------------------------------------------
-        staticDoc.AppendDocument(jsonDoc, ImportFormatMode.KeepSourceFormatting);
-
-        // -----------------------------------------------------------------
-        // 7. Save the final combined document.
-        // -----------------------------------------------------------------
-        string resultPath = Path.Combine(outputDir, "CombinedReport.docx");
-        staticDoc.Save(resultPath, SaveFormat.Docx);
+        // 7. Save the generated report.
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(reportPath);
     }
 
-    // Data model aligned with the JSON template.
-    public class ReportModel
+    // Creates a template with a static section and a JSON‑driven section.
+    private static void CreateTemplate(string filePath)
     {
-        public List<Item> Items { get; set; } = new();
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // ----- Static section (should remain untouched) -----
+        builder.Writeln("=== Static Section ===");
+        builder.Writeln("This paragraph is always kept, even if empty.");
+        builder.Writeln(""); // an empty paragraph that we do NOT want removed
+
+        // Start a new section for JSON‑generated content.
+        builder.InsertBreak(BreakType.SectionBreakNewPage);
+        builder.Writeln("=== JSON Section ===");
+
+        // LINQ Reporting tags.
+        builder.Writeln("<<foreach [item in items]>>");
+        builder.Writeln("Item: <<[item.Name]>>");
+        // The exclamation mark after the tag marks this paragraph for selective removal.
+        builder.Writeln("Description: <<[item.Description]>>!");
+        builder.Writeln("<</foreach>>");
+
+        template.Save(filePath);
     }
 
+    // Generates a JSON file with some empty / missing values.
+    private static void CreateJsonData(string filePath)
+    {
+        List<Item> items = new()
+        {
+            new Item { Name = "Apple",  Description = "Fresh red apple" },
+            new Item { Name = "Banana", Description = "" },               // empty description
+            new Item { Name = "Cherry" }                                 // missing description
+        };
+
+        string json = JsonSerializer.Serialize(items);
+        File.WriteAllText(filePath, json);
+    }
+
+    // Simple data model matching the JSON structure.
     public class Item
     {
-        // Name may be null or empty; the engine will handle it.
-        public string? Name { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
     }
 }

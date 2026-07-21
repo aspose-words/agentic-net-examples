@@ -1,38 +1,31 @@
 using System;
 using System.Collections.Generic;
 using Aspose.Words;
-using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
+using Aspose.Words.Lists;
+
+public class Service
+{
+    public string Name { get; set; } = "";
+}
+
+public class Order
+{
+    public string ClientName { get; set; } = "";
+    public List<Service> Services { get; set; } = new();
+}
+
+public class ReportModel
+{
+    public List<Order> Orders { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document and a builder to insert the template.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Create a numbered list style that will be used for the service items.
-        List list = doc.Lists.Add(ListTemplate.NumberDefault);
-        builder.ListFormat.List = list; // Apply the list to subsequent paragraphs.
-
-        // LINQ Reporting template.
-        // Outer loop over orders.
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Client: <<[order.ClientName]>>");
-
-        // Restart numbering for each order's service list.
-        // The <<restartNum>> tag must be placed before the <<foreach>> tag in the same numbered paragraph.
-        builder.Writeln("<<restartNum>><<foreach [service in order.Services]>>");
-        builder.Writeln("<<[service.Name]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln("<</foreach>>");
-
-        // End list formatting.
-        builder.ListFormat.RemoveNumbers();
-
         // Prepare sample data.
-        ReportModel model = new ReportModel
+        var model = new ReportModel
         {
             Orders = new List<Order>
             {
@@ -58,29 +51,45 @@ public class Program
             }
         };
 
+        // Create the template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        // Outer foreach over Orders.
+        builder.Writeln("<<foreach [order in Orders]>>");
+        // Write the client name.
+        builder.Writeln("Client: <<[order.ClientName]>>");
+
+        // Start a numbered list for the services.
+        builder.ListFormat.List = template.Lists.Add(ListTemplate.NumberDefault);
+
+        // Restart numbering for each order.
+        builder.Writeln("<<restartNum>>");
+
+        // Inner foreach over Services.
+        builder.Writeln("<<foreach [service in order.Services]>>");
+        builder.Writeln("<<[service.Name]>>");
+        builder.Writeln("<</foreach>>");
+
+        // End the list for this order.
+        builder.ListFormat.RemoveNumbers();
+
+        // Close the outer foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template (simulating a separate load step).
+        var loadedTemplate = new Document(templatePath);
+
         // Build the report.
-        ReportingEngine engine = new ReportingEngine();
+        var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(doc, model, "model");
+        engine.BuildReport(loadedTemplate, model, "model");
 
-        // Save the generated document.
-        doc.Save("Report.docx");
+        // Save the generated report.
+        loadedTemplate.Save("Report.docx");
     }
-}
-
-// Data model classes.
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Order
-{
-    public string ClientName { get; set; } = "";
-    public List<Service> Services { get; set; } = new();
-}
-
-public class Service
-{
-    public string Name { get; set; } = "";
 }

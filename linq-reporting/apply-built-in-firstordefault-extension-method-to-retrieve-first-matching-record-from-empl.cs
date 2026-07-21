@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -11,7 +9,7 @@ public class Employee
     public int Age { get; set; }
 }
 
-public class ReportModel
+public class Model
 {
     public List<Employee> Employees { get; set; } = new();
 }
@@ -21,27 +19,28 @@ public class Program
     public static void Main()
     {
         // Prepare sample data.
-        var model = new ReportModel();
-        model.Employees.Add(new Employee { Name = "Alice", Age = 28 });
-        model.Employees.Add(new Employee { Name = "Bob", Age = 35 });
-        model.Employees.Add(new Employee { Name = "Charlie", Age = 42 });
+        var model = new Model
+        {
+            Employees = new List<Employee>
+            {
+                new Employee { Name = "Alice", Age = 28 },
+                new Employee { Name = "Bob",   Age = 35 },
+                new Employee { Name = "Carol", Age = 42 }
+            }
+        };
 
-        // Create a template document with a LINQ Reporting tag that uses FirstOrDefault.
-        string templatePath = "Template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("First employee over 30: <<[model.Employees.FirstOrDefault(p => p.Age > 30).Name]>>");
-        templateDoc.Save(templatePath);
+        // Create a blank document and insert a LINQ Reporting tag that uses FirstOrDefault.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        // Note: property name is case‑sensitive; use "Employees" as defined in the model.
+        builder.Writeln("First employee older than 30: <<[Employees.FirstOrDefault(p => p.Age > 30).Name]>>");
 
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
-
-        // Build the report.
+        // Build the report using the model as the data source.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // No data source name is required because we reference members directly.
+        engine.BuildReport(doc, model, null);
 
-        // Save the generated report.
-        string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // Save the generated document.
+        doc.Save("Report.docx");
     }
 }

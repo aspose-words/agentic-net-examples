@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,48 +7,50 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for Aspose.Words).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare output folder
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Prepare sample data with a Unicode property name.
-        var persons = new List<Person>
-        {
-            new Person { 名 = "山田太郎", Age = 30 },
-            new Person { 名 = "李小龍", Age = 35 },
-            new Person { 名 = "José", Age = 28 }
-        };
+        // File paths for the template and the generated report
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string resultPath = Path.Combine(outputDir, "Result.docx");
 
-        var model = new ReportModel { Persons = persons };
+        // -------------------------------------------------
+        // 1. Create a template document containing a LINQ Reporting tag.
+        //    The tag references a property whose name includes literal Unicode characters.
+        // -------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("顧客情報:");                     // Japanese header text
+        builder.Writeln("<<[model.名前]>>");            // Directly use the Unicode identifier in the tag
+        templateDoc.Save(templatePath);                 // Save the template before building the report
 
-        // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
-        builder.Writeln("<<foreach [person in Persons]>>");
-        builder.Writeln("Name: <<[person.名]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Document.Save(templatePath);
+        // -------------------------------------------------
+        // 2. Load the saved template for reporting.
+        // -------------------------------------------------
+        Document doc = new Document(templatePath);
 
-        // Load the template and build the report.
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
+        // -------------------------------------------------
+        // 3. Create a data model with a Unicode property name.
+        // -------------------------------------------------
+        var model = new CustomerModel { 名前 = "山田太郎" };
+
+        // -------------------------------------------------
+        // 4. Build the report using the ReportingEngine.
+        // -------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        var outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // -------------------------------------------------
+        // 5. Save the generated report.
+        // -------------------------------------------------
+        doc.Save(resultPath);
     }
 }
 
-// Wrapper class that matches the root object name used in BuildReport.
-public class ReportModel
+// Data model class with a property that uses literal Unicode characters in its name.
+public class CustomerModel
 {
-    public List<Person> Persons { get; set; } = new();
-}
-
-// Data model with a Unicode identifier used directly in the template.
-public class Person
-{
-    public string 名 { get; set; } = string.Empty;
-    public int Age { get; set; }
+    // Property name contains Japanese characters directly (no escape sequences).
+    public string 名前 { get; set; } = string.Empty;
 }

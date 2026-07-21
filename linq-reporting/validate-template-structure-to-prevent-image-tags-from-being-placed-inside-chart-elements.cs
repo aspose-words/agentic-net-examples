@@ -1,7 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Drawing;
 using Aspose.Words.Drawing.Charts;
@@ -11,80 +9,98 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required by Aspose.Words)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
+        const string imagePath = "sample.png";
 
-        // Prepare output folder
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Create a minimal image file used by the image tag.
+        CreateSampleImage(imagePath);
 
-        // Create a sample image file (1x1 pixel PNG)
-        string imagePath = Path.Combine(outputDir, "sample.png");
-        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9YV6ZV8AAAAASUVORK5CYII=";
-        File.WriteAllBytes(imagePath, Convert.FromBase64String(base64Png));
+        // -----------------------------------------------------------------
+        // Step 1: Build the template document programmatically.
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Build the template document
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Insert a chart into the template.
+        builder.InsertChart(ChartType.Column, 400, 300);
 
-        // Insert a chart with an invalid image tag inside its title (should be detected)
-        Shape chartShape = builder.InsertChart(ChartType.Column, 400, 300);
-        chartShape.Chart.Title.Text = "<<image [model.ImagePath]>>";
+        // Retrieve the chart shape and (incorrectly) set a title that contains an image tag.
+        Shape chartShape = (Shape)template.GetChildNodes(NodeType.Shape, true)[0];
+        chartShape.Chart.Title.Text = "<<image [ImagePath]>>"; // Invalid placement for demonstration.
 
-        // Insert a textbox with a correct image tag
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
-        builder.MoveTo(textBox.FirstParagraph);
-        builder.Write("<<image [model.ImagePath] -fitSize>>");
+        // Insert a valid image tag outside the chart.
+        builder.Writeln("<<image [ImagePath]>>");
 
-        // Save the template
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        templateDoc.Save(templatePath);
+        // Save the template to disk.
+        template.Save(templatePath);
 
-        // Validate template: ensure no image tags are inside chart elements
-        Document validationDoc = new Document(templatePath);
-        bool invalidFound = false;
-        foreach (Shape shape in validationDoc.GetChildNodes(NodeType.Shape, true))
+        // -----------------------------------------------------------------
+        // Step 2: Load the template and validate its structure.
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
+
+        if (!ValidateTemplate(loadedTemplate))
         {
-            if (shape.Chart != null && shape.Chart.Title?.Text != null)
-            {
-                string titleText = shape.Chart.Title.Text;
-                if (Regex.IsMatch(titleText, @"<<\s*image\s*\[.*?\]"))
-                {
-                    Console.WriteLine("Invalid template: image tag found inside a chart title.");
-                    invalidFound = true;
-                    break;
-                }
-            }
-        }
-
-        if (invalidFound)
-        {
-            // Stop processing due to validation failure
+            Console.WriteLine("Template validation failed: image tag found inside a chart element.");
             return;
         }
 
-        // Prepare the data model
-        ReportModel model = new()
+        // -----------------------------------------------------------------
+        // Step 3: Prepare the data model.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel
         {
             ImagePath = imagePath
         };
 
-        // Build the report
-        ReportingEngine engine = new();
-        engine.Options = ReportBuildOptions.None;
-        bool success = engine.BuildReport(validationDoc, model, "model");
+        // -----------------------------------------------------------------
+        // Step 4: Build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(loadedTemplate, model, "model");
 
-        // Save the generated report
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        validationDoc.Save(reportPath);
+        // -----------------------------------------------------------------
+        // Step 5: Save the generated report.
+        // -----------------------------------------------------------------
+        loadedTemplate.Save(outputPath);
+        Console.WriteLine("Report generated successfully.");
+    }
 
-        Console.WriteLine(success
-            ? $"Report generated successfully at: {reportPath}"
-            : "Report generation failed.");
+    // Validates that no image tags are placed inside chart titles.
+    private static bool ValidateTemplate(Document doc)
+    {
+        foreach (Shape shape in doc.GetChildNodes(NodeType.Shape, true))
+        {
+            // If the shape contains a chart, inspect its title.
+            if (shape.Chart != null && shape.Chart.Title != null)
+            {
+                string title = shape.Chart.Title.Text ?? string.Empty;
+                if (title.Contains("<<image"))
+                {
+                    return false; // Invalid image tag detected inside a chart title.
+                }
+            }
+        }
+        return true; // No invalid image tags found.
+    }
+
+    // Creates a 1x1 transparent PNG file for the sample image.
+    private static void CreateSampleImage(string path)
+    {
+        byte[] pngData = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
+            "Z6VYAAAAASUVORK5CYII=");
+        File.WriteAllBytes(path, pngData);
     }
 }
 
+// Simple data model used by the reporting engine.
 public class ReportModel
 {
+    // Path to the image referenced by the image tag.
     public string ImagePath { get; set; } = string.Empty;
 }

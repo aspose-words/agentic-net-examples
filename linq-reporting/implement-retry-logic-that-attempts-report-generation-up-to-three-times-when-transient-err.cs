@@ -1,85 +1,94 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
-{
-    public string Title { get; set; } = "Sample Report";
-    public List<string> Items { get; set; } = new() { "Item 1", "Item 2", "Item 3" };
-}
-
 public class Program
 {
-    private const string TemplatePath = "Template.docx";
-    private const string OutputPath = "Report.docx";
-
     public static void Main()
     {
-        // Ensure the template exists.
-        CreateTemplate();
+        // Ensure the working directory exists.
+        const string templatePath = "Template.docx";
+        const string outputPath = "ReportOutput.docx";
 
-        // Load the template document.
-        var doc = new Document(TemplatePath);
+        // Step 1: Create a LINQ Reporting template programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report Title: <<[model.Title]>>");
+        builder.Writeln("<<foreach [item in model.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Value]>>");
+        builder.Writeln("<</foreach>>");
+        templateDoc.Save(templatePath);
 
-        // Prepare the data source.
-        var model = new ReportModel();
+        // Step 2: Load the template for report generation.
+        var doc = new Document(templatePath);
 
-        // Initialize the reporting engine.
+        // Step 3: Prepare the data model.
+        var model = new ReportModel
+        {
+            Title = "Sales Summary",
+            Items = new List<ReportItem>
+            {
+                new ReportItem { Name = "Product A", Value = 1200 },
+                new ReportItem { Name = "Product B", Value = 850 },
+                new ReportItem { Name = "Product C", Value = 430 }
+            }
+        };
+
+        // Step 4: Build the report with retry logic (up to 3 attempts).
         var engine = new ReportingEngine();
-
-        // Attempt to build the report with retry logic.
-        const int maxAttempts = 3;
-        int attempt = 0;
         bool success = false;
+        const int maxAttempts = 3;
 
-        while (attempt < maxAttempts && !success)
+        for (int attempt = 1; attempt <= maxAttempts; attempt++)
         {
             try
             {
-                // Build the report. The root object name is "model".
+                // BuildReport overload that includes the root object name.
                 engine.BuildReport(doc, model, "model");
                 success = true;
+                break; // Exit loop on success.
             }
-            catch (Exception ex) when (IsTransient(ex))
+            catch (Exception ex) when (IsTransient(ex) && attempt < maxAttempts)
             {
-                attempt++;
-                if (attempt >= maxAttempts)
-                    throw new InvalidOperationException($"Report generation failed after {maxAttempts} attempts.", ex);
-                // Optionally, wait before retrying (omitted for brevity).
+                // Transient error encountered – wait briefly before retrying.
+                Console.WriteLine($"Attempt {attempt} failed with a transient error: {ex.Message}");
+                Thread.Sleep(500); // Simple back‑off delay.
             }
         }
 
-        // Save the generated report.
-        doc.Save(OutputPath);
+        if (!success)
+        {
+            Console.WriteLine("Report generation failed after multiple attempts.");
+            return;
+        }
+
+        // Step 5: Save the generated report.
+        doc.Save(outputPath);
+        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
     }
 
-    // Determines whether an exception is transient.
+    // Simple heuristic to decide whether an exception is transient.
     private static bool IsTransient(Exception ex)
     {
-        // For demonstration, treat all exceptions as transient.
-        // In real scenarios, inspect the exception type/message.
+        // In a real scenario, inspect the exception type/message.
+        // For this example, treat all exceptions as transient.
         return true;
     }
+}
 
-    // Creates a simple Word template with LINQ Reporting tags.
-    private static void CreateTemplate()
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+// Data model for the report.
+public class ReportModel
+{
+    public string Title { get; set; } = string.Empty;
+    public List<ReportItem> Items { get; set; } = new();
+}
 
-        // Title placeholder.
-        builder.Writeln("<<[model.Title]>>");
-        builder.Writeln();
-
-        // Items list using foreach.
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("- <<[item]>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(TemplatePath);
-    }
+// Individual item displayed in the report.
+public class ReportItem
+{
+    public string Name { get; set; } = string.Empty;
+    public int Value { get; set; }
 }

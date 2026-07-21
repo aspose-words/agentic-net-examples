@@ -8,73 +8,61 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "work");
-        Directory.CreateDirectory(workDir);
+        // Prepare a simple PNG image (1x1 pixel, red) from a Base64 string.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAocB9pVYB2cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
 
-        // Create a minimal PNG (1x1 pixel, transparent) and write it to a file.
-        // This binary data represents a valid PNG image.
-        byte[] pngBytes = new byte[]
-        {
-            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
-            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
-            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
-            0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
-            0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
-            0x54,0x78,0x9C,0x63,0x60,0x00,0x00,0x00,
-            0x02,0x00,0x01,0xE2,0x21,0xBC,0x33,0x00,
-            0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
-            0x42,0x60,0x82
-        };
-        string imagePath = Path.Combine(workDir, "sample.png");
-        File.WriteAllBytes(imagePath, pngBytes);
+        // Ensure a folder for the template and output exists.
+        string workDir = Directory.GetCurrentDirectory();
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string reportPath = Path.Combine(workDir, "Report.docx");
 
-        // Load the image file into a byte array for the data model.
-        byte[] imageData = File.ReadAllBytes(imagePath);
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Data model used by the LINQ Reporting engine.
+        // Simple title using a model property.
+        builder.Writeln("<<[model.Title]>>");
+
+        // Insert a textbox that will host the image tag.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        builder.MoveTo(textBox.FirstParagraph);
+        // Image tag expects a byte[] expression; -fitSize scales the image to the textbox.
+        builder.Write("<<image [model.ImageData] -fitSize>>");
+
+        // Save the template to disk (required before BuildReport).
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Prepare the data model supplying the image bytes.
+        // -----------------------------------------------------------------
         ReportModel model = new ReportModel
         {
             Title = "Sample Image Report",
-            ImageData = imageData
+            ImageData = pngBytes
         };
 
         // -----------------------------------------------------------------
-        // Create the template document programmatically.
+        // 3. Load the template and build the report.
         // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Title paragraph.
-        builder.Writeln("<<[model.Title]>>");
-        builder.Writeln(); // empty line.
-
-        // Insert a textbox that will host the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
-        builder.MoveTo(textBox.FirstParagraph);
-        // Image tag – the expression returns a byte[].
-        builder.Write("<<image [model.ImageData] -fitSize>>");
-
-        // Save the template to disk.
-        string templatePath = Path.Combine(workDir, "template.docx");
-        template.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document report = new Document(templatePath);
+        Document loadedTemplate = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, model, "model");
+        engine.Options = ReportBuildOptions.None; // default options
+        engine.BuildReport(loadedTemplate, model, "model");
 
-        // Save the final document.
-        string outputPath = Path.Combine(workDir, "ReportWithImage.docx");
-        report.Save(outputPath);
+        // Save the generated report.
+        loadedTemplate.Save(reportPath);
     }
 }
 
-// Public data model with non‑nullable properties initialized.
+// Data model used by the LINQ Reporting engine.
 public class ReportModel
 {
+    // Title displayed above the image.
     public string Title { get; set; } = string.Empty;
+
+    // Image data supplied as a byte array.
     public byte[] ImageData { get; set; } = Array.Empty<byte>();
 }

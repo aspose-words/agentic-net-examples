@@ -4,68 +4,68 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingWhereExample
+namespace LinqReportingExample
 {
-    // External static class whose property will be used inside the LINQ expression.
-    public static class FilterSettings
+    // External type whose static property will be used inside the LINQ expression.
+    public static class ExternalHelper
     {
-        // Minimum age to include in the report.
-        public static int MinAge { get; set; } = 30;
+        // Minimum age used for filtering.
+        public static int MinAge { get; } = 30;
     }
 
-    // Data model class.
+    // Simple data model.
     public class Person
     {
-        public string Name { get; set; } = "";
+        public string Name { get; set; } = string.Empty;
         public int Age { get; set; }
     }
 
-    // Wrapper class that will be passed as the root data source.
+    // Wrapper class passed as the root data source.
     public class ReportModel
     {
-        public List<Person> persons { get; set; } = new();
+        public List<Person> Persons { get; set; } = new();
     }
 
-    public class Program
+    class Program
     {
-        public static void Main()
+        static void Main()
         {
-            // 1. Create the template document programmatically.
-            var templatePath = "Template.docx";
-            var builder = new DocumentBuilder();
-            builder.Writeln("<<foreach [p in persons.Where(p => p.Age > FilterSettings.MinAge)]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
-            builder.Document.Save(templatePath);
-
-            // 2. Load the template.
-            var doc = new Document(templatePath);
-
-            // 3. Prepare sample data.
+            // 1. Prepare sample data.
             var model = new ReportModel
             {
-                persons = new List<Person>
+                Persons = new List<Person>
                 {
                     new Person { Name = "Alice", Age = 25 },
-                    new Person { Name = "Bob", Age = 35 },
-                    new Person { Name = "Charlie", Age = 45 }
+                    new Person { Name = "Bob",   Age = 35 },
+                    new Person { Name = "Carol", Age = 45 }
                 }
             };
 
-            // 4. Configure the reporting engine.
+            // 2. Create the template document programmatically.
+            var templatePath = "Template.docx";
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            builder.Writeln("Filtered persons (Age > ExternalHelper.MinAge):");
+            // LINQ Reporting tag using Where with a lambda that references ExternalHelper.MinAge.
+            builder.Writeln("<<foreach [p in Persons.Where(p => p.Age > ExternalHelper.MinAge)]>>");
+            builder.Writeln("<<[p.Name]>> - <<[p.Age]>>");
+            builder.Writeln("<</foreach>>");
+
+            doc.Save(templatePath);
+
+            // 3. Load the template and build the report.
+            var loadedDoc = new Document(templatePath);
             var engine = new ReportingEngine();
+
             // Register the external type so its static members can be accessed in the template.
-            engine.KnownTypes.Add(typeof(FilterSettings));
+            engine.KnownTypes.Add(typeof(ExternalHelper));
 
-            // 5. Build the report.
-            bool success = engine.BuildReport(doc, model, "model");
+            // Build the report using the model as the root object named "model".
+            engine.BuildReport(loadedDoc, model, "model");
 
-            // 6. Save the generated report.
-            var outputPath = "Report.docx";
-            doc.Save(outputPath);
-
-            // Optional: indicate success (no console input required).
-            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to '{outputPath}'.");
+            // 4. Save the generated report.
+            loadedDoc.Save("Report.docx");
         }
     }
 }

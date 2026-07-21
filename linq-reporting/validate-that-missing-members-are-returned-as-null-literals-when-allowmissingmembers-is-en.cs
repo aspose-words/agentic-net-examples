@@ -1,46 +1,54 @@
 using System;
-using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class MissingMembersDemo
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    // Simple data model with only a Name property.
+    public class Person
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Initialize to avoid nullable warnings.
+        public string Name { get; set; } = "John Doe";
+        // Note: No Age property – it is intentionally missing.
+    }
 
-        // Insert LINQ Reporting tags that reference members which do not exist.
-        builder.Writeln("Member: <<[missingObject.Name]>>");
-        builder.Writeln("Foreach test: <<foreach [in missingObject]>><<[Id]>><</foreach>>");
-
-        // Configure the reporting engine to treat missing members as null literals.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
-        // Do not set MissingMemberMessage so that missing members are rendered as empty (null).
-
-        // Build the report using an empty DataSet as the data source.
-        engine.BuildReport(doc, new DataSet(), "");
-
-        // Save the resulting document (optional, for visual inspection).
-        const string outputPath = "ReportWithMissingMembers.docx";
-        doc.Save(outputPath);
-
-        // Retrieve the plain text of the document to verify the output.
-        string resultText = doc.GetText();
-
-        // Validation: missing members should produce empty placeholders, not the literal text "Missed" or any value.
-        bool memberIsEmpty = resultText.Contains("Member: ") && !resultText.Contains("Member: Missed") && !resultText.Contains("Member: null");
-        bool foreachIsEmpty = resultText.Contains("Foreach test: ") && !resultText.Contains("Foreach test: null");
-
-        if (memberIsEmpty && foreachIsEmpty)
+    public class Program
+    {
+        public static void Main()
         {
-            Console.WriteLine("Missing members were rendered as null (empty) as expected.");
-        }
-        else
-        {
-            Console.WriteLine("Unexpected output. Verify that AllowMissingMembers is enabled correctly.");
+            // 1. Create a template document in memory.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Insert LINQ Reporting tags that reference a missing member (Age).
+            builder.Writeln("<<[person.Name]>>"); // Existing member.
+            builder.Writeln("<<[person.Age]>>");  // Missing member.
+
+            // 2. Prepare the data source (only Name is present).
+            Person data = new Person();
+
+            // 3. Configure the ReportingEngine to allow missing members.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.AllowMissingMembers;
+            // MissingMemberMessage left as default (empty) so missing members become null literals.
+
+            // 4. Build the report. The root object name must match the tag prefix ("person").
+            engine.BuildReport(doc, data, "person");
+
+            // 5. Validate that the missing member was rendered as an empty string.
+            // The document should contain only the Name value.
+            string resultText = doc.GetText().Trim(); // Remove trailing newlines/spaces.
+
+            // Expected output is just the Name ("John Doe").
+            bool isValid = resultText == data.Name;
+
+            // 6. Output validation result.
+            Console.WriteLine(isValid
+                ? "Success: Missing members rendered as null literals."
+                : $"Failure: Unexpected output -> \"{resultText}\"");
+
+            // 7. Save the generated report for inspection.
+            doc.Save("Report.docx");
         }
     }
 }

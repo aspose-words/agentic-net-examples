@@ -1,102 +1,70 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
+using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some Aspose.Words features)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Create a blank document and a builder to construct the template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Paths for template and output
-        string templatePath = "Template.docx";
-        string outputPath = "ReportOutput.docx";
-
-        // -----------------------------------------------------------------
-        // Create the template document programmatically
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Title
-        builder.Writeln("Product Report");
-
-        // Header table
-        builder.StartTable();
-
-        // First header row with horizontal merge
-        builder.InsertCell();
-        builder.Write("<<cellMerge -horz>>Product Info");
-        builder.InsertCell();
-        builder.Write("<<cellMerge -horz>>Product Info");
-        builder.InsertCell();
-        builder.Write("<<cellMerge>>Quantity");
-        builder.EndRow();
-
-        // Sub‑header row
-        builder.InsertCell(); builder.Write("Category");
-        builder.InsertCell(); builder.Write("Name");
-        builder.InsertCell(); builder.Write("Quantity");
-        builder.EndRow();
-
-        builder.EndTable();
-
-        // Data rows – placed inside a foreach block
+        // Begin the data band – the whole table will be repeated for each item in Items.
         builder.Writeln("<<foreach [item in Items]>>");
-        Table dataTable = builder.StartTable();
 
-        builder.InsertCell(); builder.Write("<<[item.Category]>>");
-        builder.InsertCell(); builder.Write("<<[item.Name]>>");
-        builder.InsertCell(); builder.Write("<<[item.Quantity]>>");
+        // Build the table inside the foreach block.
+        Table table = builder.StartTable();
+
+        // Header row – two cells that will be merged horizontally.
+        builder.InsertCell();
+        builder.Write("<<cellMerge>>Group A");
+        builder.InsertCell();
+        builder.Write("<<cellMerge>>Group A");
         builder.EndRow();
 
+        // Data row – will be generated for each item.
+        builder.InsertCell();
+        builder.Write("<<[item.Col1]>>");
+        builder.InsertCell();
+        builder.Write("<<[item.Col2]>>");
+        builder.EndRow();
+
+        // Finish the table and the foreach block.
         builder.EndTable();
         builder.Writeln("<</foreach>>");
 
-        // Save the template
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Prepare sample data
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        // Sample data.
+        ReportModel model = new()
         {
-            Items = new List<Item>
+            Items = new()
             {
-                new Item { Category = "Electronics", Name = "Smartphone", Quantity = 15 },
-                new Item { Category = "Electronics", Name = "Laptop", Quantity = 7 },
-                new Item { Category = "Home", Name = "Coffee Maker", Quantity = 12 },
-                new Item { Category = "Home", Name = "Vacuum Cleaner", Quantity = 5 }
+                new Item { Col1 = "A1", Col2 = "B1" },
+                new Item { Col1 = "A2", Col2 = "B2" },
+                new Item { Col1 = "A3", Col2 = "B3" }
             }
         };
 
-        // -----------------------------------------------------------------
-        // Build the report
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
+        // Build the report.
         ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report
-        doc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // Save the generated document.
+        doc.Save("MergedTableReport.docx");
     }
 }
 
+// Root data model for the report.
 public class ReportModel
 {
     public List<Item> Items { get; set; } = new();
 }
 
+// Simple item class representing a row in the table.
 public class Item
 {
-    public string Category { get; set; } = "";
-    public string Name { get; set; } = "";
-    public int Quantity { get; set; }
+    public string Col1 { get; set; } = string.Empty;
+    public string Col2 { get; set; } = string.Empty;
 }

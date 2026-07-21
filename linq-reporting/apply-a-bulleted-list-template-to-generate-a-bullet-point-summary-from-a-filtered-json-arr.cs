@@ -2,67 +2,73 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample JSON data.
+        // Register code page provider for Aspose.Words (required on some platforms).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // 1. Create sample JSON data.
         string jsonPath = "data.json";
-        File.WriteAllText(jsonPath,
-            @"[
-                { ""Text"": ""Apple"" },
-                { ""Text"": ""Banana"" },
-                { ""Text"": ""Cherry"" },
-                { ""Text"": ""Date"" }
-            ]");
+        var sampleData = new List<Item>
+        {
+            new Item { Name = "Alpha",   Category = "A" },
+            new Item { Name = "Beta",    Category = "B" },
+            new Item { Name = "Gamma",   Category = "A" },
+            new Item { Name = "Delta",   Category = "C" },
+            new Item { Name = "Epsilon", Category = "A" }
+        };
+        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
 
-        // Deserialize JSON into a list of simple objects.
-        var rawItems = JsonConvert.DeserializeObject<List<JsonItem>>(File.ReadAllText(jsonPath)) ?? new List<JsonItem>();
+        // 2. Load JSON and filter the array (keep only Category "A").
+        var allItems = JsonConvert.DeserializeObject<List<Item>>(File.ReadAllText(jsonPath)) ?? new List<Item>();
+        var filteredItems = allItems.Where(i => i.Category == "A").ToList();
 
-        // Filter the items (e.g., keep texts longer than 5 characters).
-        var filtered = rawItems
-            .Where(i => i.Text != null && i.Text.Length > 5)
-            .Select(i => i.Text!)
-            .ToList();
+        // 3. Prepare the root data model for the report.
+        var model = new ReportModel { Items = filteredItems };
 
-        // Wrap the filtered collection in a model class for the reporting engine.
-        var model = new ReportModel { Items = filtered };
-
-        // Create a Word document template programmatically.
+        // 4. Build the template document programmatically.
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Add a bulleted list to the document.
+        // Optional title.
+        builder.Writeln("Bullet‑point summary (Category = A):");
+
+        // Apply a bulleted list style.
         List bulletList = doc.Lists.Add(ListTemplate.BulletDefault);
         builder.ListFormat.List = bulletList;
 
         // Insert LINQ Reporting tags.
         builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<[item]>>");
+        builder.Writeln("<<[item.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        // Build the report using the model as the data source.
+        // End list formatting.
+        builder.ListFormat.RemoveNumbers();
+
+        // 5. Generate the report using the ReportingEngine.
         var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the resulting document.
-        doc.Save("BulletSummary.docx");
-    }
-
-    // Simple class matching the JSON structure.
-    public class JsonItem
-    {
-        public string? Text { get; set; }
-    }
-
-    // Wrapper class used as the root data source for the report.
-    public class ReportModel
-    {
-        public List<string> Items { get; set; } = new();
+        // 6. Save the resulting document.
+        doc.Save("Report.docx");
     }
 }

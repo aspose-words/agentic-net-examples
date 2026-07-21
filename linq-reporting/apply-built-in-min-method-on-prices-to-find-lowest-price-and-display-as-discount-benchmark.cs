@@ -1,38 +1,45 @@
 using System;
 using System.Collections.Generic;
-using System.Linq; // Needed for LINQ methods
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+public class PriceReport
 {
     // List of product prices.
     public List<decimal> Prices { get; set; } = new();
 
-    // Exposes the minimum price for the template.
-    public decimal MinPrice => Prices?.Min() ?? 0m;
+    // Returns the lowest price in the list.
+    public decimal DiscountBenchmark => Prices.Min();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document and a builder to insert content.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a LINQ Reporting tag that references the MinPrice property.
-        builder.Writeln("Discount benchmark price: <<[model.MinPrice]>>");
-
         // Prepare sample data.
-        ReportModel model = new ReportModel();
-        model.Prices.AddRange(new[] { 19.99m, 24.50m, 15.75m, 29.99m });
+        var model = new PriceReport();
+        model.Prices.AddRange(new[] { 199.99m, 149.50m, 179.75m, 129.99m, 159.00m });
 
-        // Build the report using the model as the root data source.
-        ReportingEngine engine = new ReportingEngine();
+        // Create a template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+        // Insert a tag that references the pre‑computed lowest price.
+        builder.Writeln("Discount Benchmark: <<[model.DiscountBenchmark]>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Load the template for reporting.
+        var doc = new Document(templatePath);
+
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated document.
-        doc.Save("Report.docx");
+        // Save the generated report.
+        const string outputPath = "Report.docx";
+        doc.Save(outputPath);
     }
 }

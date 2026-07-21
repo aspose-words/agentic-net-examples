@@ -1,9 +1,10 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReportingDemo
 {
     // Utility class with a static method that will be called from the template.
     public static class MyUtility
@@ -13,56 +14,56 @@ namespace AsposeWordsLinqReportingExample
     }
 
     // Simple data model used as the root object for the report.
-    public class ReportModel
+    public class Person
     {
-        // Sample property referenced in the template.
-        public string Name { get; set; } = "World";
+        public string Name { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            var templatePath = "Template.docx";
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            // Register code page provider (required for some Aspose.Words operations).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Insert a LINQ Reporting expression tag that calls the static method.
-            // The type member access syntax allows us to reference MyUtility.GetGreeting.
-            builder.Writeln("<<[MyUtility.GetGreeting(Name)]>>");
+            // Prepare output folder.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            string reportPath = Path.Combine(outputDir, "Report.docx");
+
+            // -------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // The expression tag calls the static method MyUtility.GetGreeting,
+            // passing the Name property of the root data object.
+            builder.Writeln("Greeting: <<[MyUtility.GetGreeting(Name)]>>");
 
             // Save the template to disk.
             templateDoc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template for report generation.
-            // -----------------------------------------------------------------
-            var reportDoc = new Document(templatePath);
+            // -------------------------------------------------
+            // 2. Load the template and build the report.
+            // -------------------------------------------------
+            Document loadedTemplate = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            var model = new ReportModel { Name = "Aspose" };
+            // Prepare the data source.
+            Person person = new Person { Name = "World" };
 
-            // -----------------------------------------------------------------
-            // 4. Configure and execute the ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
+            // Configure the reporting engine.
+            ReportingEngine engine = new ReportingEngine();
 
-            // Register the utility type so its static members can be accessed in the template.
+            // Register the utility type so that its static members can be used in expressions.
             engine.KnownTypes.Add(typeof(MyUtility));
 
-            // Build the report using the loaded template, the data model, and the root name "model".
-            engine.BuildReport(reportDoc, model, "model");
+            // Build the report using the LINQ Reporting engine.
+            engine.BuildReport(loadedTemplate, person);
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            var outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
+            // Save the generated report.
+            loadedTemplate.Save(reportPath);
         }
     }
 }

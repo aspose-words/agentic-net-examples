@@ -1,17 +1,27 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+namespace LinqReportingExample
 {
-    // Simple data model with a Customer property.
+    // Simple data model used as the root object for the report.
     public class ReportModel
     {
-        public CustomerInfo Customer { get; set; } = new CustomerInfo();
+        // Existing property that will be displayed correctly.
+        public string ExistingName { get; set; } = "John Doe";
+
+        // Collection property that will be iterated in the template.
+        public Person[] People { get; set; } = new[]
+        {
+            new Person { Id = 1, Name = "Alice" },
+            new Person { Id = 2, Name = "Bob" }
+        };
     }
 
-    public class CustomerInfo
+    public class Person
     {
+        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 
@@ -19,64 +29,49 @@ namespace AsposeWordsLinqReporting
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            // Prepare the output directory.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            // Create a new blank document and a builder to insert template tags.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Existing field – will be replaced with actual data.
-            builder.Writeln("Customer Name: <<[model.Customer.Name]>>");
+            // Normal tag – will be replaced with the actual value.
+            builder.Writeln("Existing name: <<[model.ExistingName]>>");
 
-            // Missing field – will be treated as null and an inline error message will be inserted.
-            builder.Writeln("Missing Field: <<[model.MissingObject.Id]>>");
+            // Tag referencing a missing object – will be treated as null.
+            builder.Writeln("Missing object name: <<[model.MissingObject.Name]>>");
 
-            // Missing collection – the foreach loop will be ignored (treated as empty) and no error will be thrown.
-            builder.Writeln("<<foreach [item in model.MissingCollection]>>Item: <<[item]>> <</foreach>>");
+            // Foreach loop over a missing collection – will be treated as empty.
+            builder.Writeln("Missing collection loop:");
+            builder.Writeln("<<foreach [item in model.MissingCollection]>>");
+            builder.Writeln("Item Id: <<[item.Id]>>");
+            builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
+            // Loop over an existing collection to show normal behavior.
+            builder.Writeln("People:");
+            builder.Writeln("<<foreach [person in model.People]>>");
+            builder.Writeln("Id: <<[person.Id]>>, Name: <<[person.Name]>>");
+            builder.Writeln("<</foreach>>");
 
-            // -----------------------------------------------------------------
-            // 2. Load the template document for reporting.
-            // -----------------------------------------------------------------
-            var reportDoc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            var model = new ReportModel
+            // Initialize the reporting engine with the required options.
+            ReportingEngine engine = new ReportingEngine
             {
-                Customer = new CustomerInfo { Name = "John Doe" }
-                // Note: No MissingObject or MissingCollection members are defined.
-            };
-
-            // -----------------------------------------------------------------
-            // 4. Configure the ReportingEngine with the required options.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine
-            {
-                // Treat missing members as null and embed syntax error messages.
                 Options = ReportBuildOptions.AllowMissingMembers | ReportBuildOptions.InlineErrorMessages,
-                MissingMemberMessage = "Missing"
+                MissingMemberMessage = "N/A"
             };
 
-            // Build the report. The root object name is "model" to match the tags in the template.
-            bool success = engine.BuildReport(reportDoc, model, "model");
+            // Build the report using the document, the data model, and the root name "model".
+            bool success = engine.BuildReport(doc, new ReportModel(), "model");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            reportDoc.Save(reportPath);
+            // Save the resulting document.
+            string outputPath = Path.Combine(outputDir, "ReportWithMissingMembers.docx");
+            doc.Save(outputPath);
 
-            // Output the result of the build operation.
-            Console.WriteLine($"Report generation successful: {success}");
-            Console.WriteLine($"Template: {templatePath}");
-            Console.WriteLine($"Report: {reportPath}");
+            // Output simple status information (no interactive prompts).
+            Console.WriteLine($"Report generation success flag: {success}");
+            Console.WriteLine($"Document saved to: {outputPath}");
         }
     }
 }

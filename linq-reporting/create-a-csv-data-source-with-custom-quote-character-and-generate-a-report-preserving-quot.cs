@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -8,50 +7,62 @@ public class CsvReportExample
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Ensure the working directory exists.
+        string workDir = Directory.GetCurrentDirectory();
 
-        // Prepare sample CSV data with a custom single‑quote as the quote character.
-        const string csvPath = "people.csv";
-        File.WriteAllText(csvPath,
-@"Id,Name,Comment
-1,'Alice','""Hello, World""'
-2,'Bob','""Goodbye, World""'");
-
-        // Configure CSV loading options: headers present, comma delimiter, single‑quote as quote char.
-        var loadOptions = new CsvDataLoadOptions(true)
+        // 1. Create a CSV file with a custom quote character (single quote) and sample data.
+        string csvPath = Path.Combine(workDir, "sample.csv");
+        // Header line.
+        string[] csvLines =
         {
-            Delimiter = ',',
-            QuoteChar = '\''
+            "Id,Description",
+            "1,'Hello, World'",
+            "2,'\"Quoted\" text'"
         };
+        File.WriteAllLines(csvPath, csvLines);
 
-        // Create a CSV data source from the file using the custom options.
-        var csvDataSource = new CsvDataSource(csvPath, loadOptions);
+        // 2. Create a template document programmatically.
+        string templatePath = Path.Combine(workDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Build a simple Word template programmatically.
-        const string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Insert a heading.
+        builder.Writeln("CSV Report");
+        builder.Writeln();
 
-        // Insert LINQ Reporting tags.
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Id: <<[person.Id]>>");
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Comment: <<[person.Comment]>>");
+        // Begin a foreach block that iterates over the CSV rows.
+        // The CSV data source will be referenced by the name "data".
+        builder.Writeln("<<foreach [row in data]>>");
+        // Output the Id and Description fields exactly as they appear in the CSV.
+        builder.Writeln("Id: <<[row.Id]>>");
+        builder.Writeln("Description: <<[row.Description]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template (demonstrating load step).
-        var loadedTemplate = new Document(templatePath);
+        // 3. Load the template document for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // Build the report using the CSV data source.
-        var engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, csvDataSource, "persons");
+        // 4. Configure CSV loading options with a custom quote character.
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
+        loadOptions.Delimiter = ',';      // Use comma as the column separator.
+        loadOptions.QuoteChar = '\'';     // Use single quote as the quoting character.
+        loadOptions.HasHeaders = true;    // First line contains column names.
 
-        // Save the generated report.
-        const string reportPath = "report.docx";
-        loadedTemplate.Save(reportPath);
+        // 5. Create a CsvDataSource from the CSV file using the specified options.
+        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+
+        // 6. Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        // The root object name used in the template tags is "data".
+        engine.BuildReport(reportDoc, csvDataSource, "data");
+
+        // 7. Save the generated report.
+        string reportPath = Path.Combine(workDir, "CsvReport.docx");
+        reportDoc.Save(reportPath);
     }
 }

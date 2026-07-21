@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,36 +7,36 @@ public class Program
 {
     public static void Main()
     {
-        // Create a simple data model with only one property.
-        var data = new SampleData { ExistingField = "Hello World" };
+        // Create a new blank document that will serve as the template.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Build a template document in memory.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Insert a LINQ Reporting tag that references a member which does NOT exist in the data source.
+        // With AllowMissingMembers enabled, this will be treated as a null literal.
+        builder.Writeln("Customer name: <<[Missing.Name]>>");
 
-        // Write a tag that references an existing field.
-        builder.Writeln("Existing: <<[data.ExistingField]>>");
-        // Write a tag that references a missing field – this would normally throw an exception.
-        builder.Writeln("Missing: <<[data.MissingField]>>");
+        // Save the template to disk so that it can be loaded later for report generation.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
 
-        // Configure the reporting engine to treat missing members as null.
-        var engine = new ReportingEngine();
+        // Load the template back into a Document object.
+        Document doc = new Document(templatePath);
+
+        // Prepare a data source that does NOT contain the "Missing" object.
+        // An empty DataSet is sufficient for this demonstration.
+        DataSet data = new DataSet();
+
+        // Configure the ReportingEngine to allow missing members.
+        ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.AllowMissingMembers;
-        // Optional: customize the text shown for missing members.
+        // Optional: customize the message that will be inserted for missing members.
         engine.MissingMemberMessage = "N/A";
 
-        // Build the report. The root object name is "data" as used in the template tags.
-        engine.BuildReport(doc, data, "data");
+        // Build the report. The missing field will be treated as null (empty) because of the option set above.
+        engine.BuildReport(doc, data, "");
 
-        // Save the resulting document.
-        doc.Save("ReportWithMissingMembers.docx");
+        // Save the generated report.
+        const string reportPath = "Report.docx";
+        doc.Save(reportPath);
     }
-}
-
-// Simple data model used as the report's data source.
-public class SampleData
-{
-    // This property exists and will be populated in the report.
-    public string ExistingField { get; set; } = string.Empty;
-    // No property for MissingField – the engine will treat it as null because of the option set above.
 }

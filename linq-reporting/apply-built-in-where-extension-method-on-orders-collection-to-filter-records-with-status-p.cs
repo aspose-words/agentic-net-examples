@@ -1,56 +1,60 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Order
+namespace LinqReportingWhereExample
 {
-    public int Id { get; set; }
-    public string CustomerName { get; set; } = "";
-    public string Status { get; set; } = "";
-}
-
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model representing an order.
+    public class Order
     {
-        // Create a blank document and a builder to insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        public int Id { get; set; } = 0;
+        public string CustomerName { get; set; } = "";
+        public string Status { get; set; } = "";
+    }
 
-        // Template: iterate over the Orders collection and output fields.
-        builder.Writeln("<<foreach [order in Model.Orders]>>");
-        builder.Writeln("Order ID: <<[order.Id]>>, Customer: <<[order.CustomerName]>>, Status: <<[order.Status]>>");
-        builder.Writeln("<</foreach>>");
+    // Wrapper class that will be passed as the root data source to the reporting engine.
+    public class Model
+    {
+        public List<Order> Orders { get; set; } = new();
+    }
 
-        // Sample data.
-        List<Order> allOrders = new()
+    class Program
+    {
+        static void Main()
         {
-            new Order { Id = 1, CustomerName = "Alice",   Status = "Pending" },
-            new Order { Id = 2, CustomerName = "Bob",     Status = "Shipped" },
-            new Order { Id = 3, CustomerName = "Charlie", Status = "Pending" },
-            new Order { Id = 4, CustomerName = "Diana",   Status = "Cancelled" }
-        };
+            // 1. Prepare sample data.
+            var model = new Model();
+            model.Orders.Add(new Order { Id = 1, CustomerName = "Alice", Status = "Pending" });
+            model.Orders.Add(new Order { Id = 2, CustomerName = "Bob",   Status = "Shipped" });
+            model.Orders.Add(new Order { Id = 3, CustomerName = "Carol", Status = "Pending" });
+            model.Orders.Add(new Order { Id = 4, CustomerName = "Dave",  Status = "Cancelled" });
 
-        // Apply the built‑in Where extension method to keep only pending orders.
-        List<Order> pendingOrders = allOrders
-            .Where(o => o.Status == "Pending")
-            .ToList();
+            // 2. Create a template document programmatically.
+            const string templatePath = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-        // Wrap the filtered collection in a model object.
-        ReportModel model = new ReportModel { Orders = pendingOrders };
+            builder.Writeln("Orders with status 'Pending':");
+            // Use the built‑in Where extension method inside the foreach tag.
+            builder.Writeln("<<foreach [order in Orders.Where(o => o.Status == \"Pending\")]>>");
+            builder.Writeln("Id: <<[order.Id]>>, Customer: <<[order.CustomerName]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "Model");
+            // 3. Save the template to disk.
+            templateDoc.Save(templatePath);
 
-        // Save the generated document.
-        doc.Save("Report.docx");
+            // 4. Load the template back (required before building the report).
+            var doc = new Document(templatePath);
+
+            // 5. Build the report using the LINQ Reporting engine.
+            var engine = new ReportingEngine();
+            // No special options are needed for this simple scenario.
+            engine.BuildReport(doc, model, "model");
+
+            // 6. Save the generated report.
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
     }
 }

@@ -1,54 +1,83 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+namespace AsposeWordsLinqReportingCsv
 {
     public class Program
     {
         public static void Main()
         {
+            // Register code page provider for CSV parsing (required for non‑UTF8 encodings).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             // Prepare sample CSV data.
-            const string csvFileName = "people.csv";
-            File.WriteAllLines(csvFileName, new[]
+            string csvPath = "people.csv";
+            File.WriteAllLines(csvPath, new[]
             {
-                "Name,Age,City",          // Header row
-                "John Doe,30,New York",   // Normal row
-                ",,,",                    // Empty row – will produce empty paragraph
-                "Jane Smith,25,London"    // Another normal row
+                "Name,Age,City",
+                "John Doe,30,New York",
+                "Jane Smith,25,London",
+                ",,",
+                "Bob Johnson,40,Paris"
             });
 
             // Create a template document with LINQ Reporting tags.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            string templatePath = "template.docx";
+            CreateTemplate(templatePath);
 
-            // Begin a foreach loop over the CSV rows (exposed as "persons").
-            builder.Writeln("<<foreach [person in persons]>>");
-            // Write each field on its own paragraph.
-            builder.Writeln("<<[person.Name]>> - <<[person.Age]>> - <<[person.City]>>");
-            // End the foreach loop.
-            builder.Writeln("<</foreach>>");
+            // Load the template.
+            Document doc = new Document(templatePath);
 
-            // Load the CSV data source with headers.
-            CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-            CsvDataSource dataSource = new CsvDataSource(csvFileName, loadOptions);
+            // Configure CSV data source options.
+            CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true) // first line has headers
+            {
+                Delimiter = ',',
+                CommentChar = '#',
+                QuoteChar = '"'
+            };
+            CsvDataSource dataSource = new CsvDataSource(csvPath, loadOptions);
 
-            // Configure the reporting engine to remove empty paragraphs after processing.
+            // Build the report with the option to remove empty paragraphs.
             ReportingEngine engine = new ReportingEngine
             {
                 Options = ReportBuildOptions.RemoveEmptyParagraphs
             };
-
-            // Build the report using the template and CSV data source.
             engine.BuildReport(doc, dataSource, "persons");
 
             // Save the generated report.
-            const string outputFileName = "Report.docx";
-            doc.Save(outputFileName);
+            string outputPath = "Report.docx";
+            doc.Save(outputPath);
+        }
 
-            // Optional: indicate completion (no interactive input required).
-            Console.WriteLine($"Report generated: {Path.GetFullPath(outputFileName)}");
+        // Creates a simple Word template containing a foreach loop over CSV rows.
+        private static void CreateTemplate(string filePath)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // Header.
+            builder.Writeln("People Report");
+            builder.Writeln();
+
+            // Begin foreach loop over the CSV rows (named "persons").
+            builder.Writeln("<<foreach [person in persons]>>");
+
+            // Paragraphs that will be populated with data.
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Age: <<[person.Age]>>");
+            builder.Writeln("City: <<[person.City]>>");
+
+            // An extra empty paragraph that may become empty if all fields are empty.
+            builder.Writeln();
+
+            // End foreach loop.
+            builder.Writeln("<</foreach>>");
+
+            // Save the template.
+            doc.Save(filePath);
         }
     }
 }

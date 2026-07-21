@@ -1,73 +1,54 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Data model used by the LINQ Reporting engine.
+    public class OrderModel
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        // Quantity is stored as double to demonstrate explicit casting to int.
+        public double Quantity { get; set; } = 0;
+
+        // Method that expects an integer parameter.
+        public string GetQuantityMessage(int qty)
         {
-            Items = new List<Item>
+            return $"Quantity (int) = {qty}";
+        }
+    }
+
+    public class Program
+    {
+        public static void Main()
+        {
+            // Step 1: Create a template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Insert a LINQ Reporting tag that calls GetQuantityMessage,
+            // explicitly casting the double Quantity to int.
+            builder.Writeln("<<[model.GetQuantityMessage((int)model.Quantity)]>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // Step 2: Load the template for reporting.
+            Document reportDoc = new Document(templatePath);
+
+            // Prepare the data source.
+            OrderModel model = new OrderModel
             {
-                new Item { Name = "Apple", Quantity = 5.7 },
-                new Item { Name = "Banana", Quantity = 3.2 },
-                new Item { Name = "Cherry", Quantity = 10.0 }
-            }
-        };
+                Quantity = 12.7 // Example value that will be cast to int (12).
+            };
 
-        // Create the template document and save it.
-        const string templatePath = "template.docx";
-        CreateTemplate(templatePath);
+            // Step 3: Build the report using ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(reportDoc, model, "model");
 
-        // Load the template.
-        var doc = new Document(templatePath);
-
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        doc.Save("report.docx");
-    }
-
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Title.
-        builder.Writeln("Items Report");
-        builder.Writeln();
-
-        // Begin foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in model.Items]>>");
-
-        // Output each item's name.
-        builder.Writeln("Name: <<[item.Name]>>");
-
-        // Output the quantity cast explicitly to int.
-        builder.Writeln("Quantity (int): <<[(int)item.Quantity]>>");
-
-        // End foreach loop.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(filePath);
-    }
-
-    // Root data model.
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    // Item model used in the collection.
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public double Quantity { get; set; }
+            // Step 4: Save the generated report.
+            const string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+        }
     }
 }

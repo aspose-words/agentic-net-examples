@@ -1,100 +1,69 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
-using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 using Aspose.Words.Drawing;
+using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare a sample image file.
+        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
+        CreateSamplePng(imagePath);
 
-        // Create sample image byte arrays (red and blue 1x1 PNG).
-        byte[] redPng = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=");
-        byte[] bluePng = Convert.FromBase64String(
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+hHgAFgwJ/6V6VAAAAAElFTkSuQmCC");
-
-        // Build data model – use image byte arrays for the reporting engine.
-        var model = new ReportModel
+        // Build the data model and load the image as a byte array.
+        ReportModel model = new()
         {
-            Products = new List<Product>
-            {
-                new Product { Name = "Red Square", ImageData = redPng },
-                new Product { Name = "Blue Square", ImageData = bluePng }
-            }
+            Title = "Image URI to Image Object Demo",
+            ImageUri = imagePath,
+            ImageData = File.ReadAllBytes(imagePath)
         };
 
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create a Word document template programmatically.
+        Document doc = new();
+        DocumentBuilder builder = new(doc);
 
-        // Begin foreach loop over Products.
-        builder.Writeln("<<foreach [p in Products]>>");
+        // Insert a title.
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln();
 
-        // Create a table with two columns: Name and Image.
-        Table table = builder.StartTable();
-
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Image");
-        builder.EndRow();
-
-        // Data row.
-        builder.InsertCell();
-        builder.Writeln("<<[p.Name]>>");
-        builder.InsertCell();
-
-        // Image must be placed inside a textbox.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        // Insert a textbox that will contain the image.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
         builder.MoveTo(textBox.FirstParagraph);
-        builder.Write("<<image [p.ImageData] -fitSize>>");
+        builder.Write("<<image [model.ImageData] -fitSize>>");
 
-        builder.EndRow();
-        builder.EndTable();
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new();
+        engine.BuildReport(doc, model, "model");
 
-        // End foreach.
-        builder.Writeln("<</foreach>>");
+        // Save the generated report.
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ReportOutput.docx");
+        doc.Save(outputPath);
+    }
 
-        // Save the template.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-
-        // Build the report using the model as the root data source.
-        engine.BuildReport(reportDoc, model);
-
-        // Save the final report.
-        string reportPath = Path.Combine(outputDir, "report.docx");
-        reportDoc.Save(reportPath);
+    private static void CreateSamplePng(string path)
+    {
+        // Minimal 1x1 pixel PNG (transparent).
+        byte[] pngBytes = new byte[]
+        {
+            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
+            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
+            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
+            0x08,0x06,0x00,0x00,0x00,0x1F,0x15,0xC4,
+            0x89,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
+            0x54,0x78,0x9C,0x63,0x60,0x00,0x00,0x00,
+            0x02,0x00,0x01,0xE2,0x21,0xBC,0x33,0x00,
+            0x00,0x00,0x00,0x49,0x45,0x4E,0x44,0xAE,
+            0x42,0x60,0x82
+        };
+        File.WriteAllBytes(path, pngBytes);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes.
-// ---------------------------------------------------------------------
 public class ReportModel
 {
-    public List<Product> Products { get; set; } = new();
-}
-
-public class Product
-{
-    public string Name { get; set; } = string.Empty;
-    // The reporting engine accepts a byte array containing image data.
+    public string Title { get; set; } = "";
+    public string ImageUri { get; set; } = "";
     public byte[] ImageData { get; set; } = Array.Empty<byte>();
 }

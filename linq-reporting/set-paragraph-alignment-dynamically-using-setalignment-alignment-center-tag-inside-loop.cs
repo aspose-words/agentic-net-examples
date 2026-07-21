@@ -1,57 +1,64 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class ParagraphItem
-{
-    public string Text { get; set; } = "";
-    public bool Center { get; set; }
-}
-
-public class ReportModel
-{
-    public List<ParagraphItem> Paragraphs { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        // Register code page provider (required for some data sources).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string outputPath = "Report.docx";
+
+        // 1. Create the template document programmatically.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Write a LINQ Reporting foreach loop.
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Insert the item text. The unsupported <<setAlignment>> tag has been removed.
+        builder.Writeln("<<[item.Text]>>");
+        // End the foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // 2. Load the template document for reporting.
+        Document doc = new Document(templatePath);
+
+        // 3. Prepare the data model.
+        ReportModel model = new ReportModel
         {
-            Paragraphs = new List<ParagraphItem>
+            Items = new List<Item>
             {
-                new ParagraphItem { Text = "Left aligned paragraph.", Center = false },
-                new ParagraphItem { Text = "Center aligned paragraph.", Center = true },
-                new ParagraphItem { Text = "Another left aligned paragraph.", Center = false }
+                new Item { Text = "First centered paragraph." },
+                new Item { Text = "Second centered paragraph." },
+                new Item { Text = "Third centered paragraph." }
             }
         };
 
-        // Create a template document with a foreach loop.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-        builder.Writeln("<<foreach [p in Paragraphs]>>");
-        builder.Writeln("<<[p.Text]>>");
-        builder.Writeln("<</foreach>>");
+        // 4. Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        // Build the report using the LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(template, model, "model");
-
-        // Apply paragraph alignment based on the data source.
-        // The generated paragraphs appear in the same order as the source collection.
-        var paragraphs = template.FirstSection.Body.Paragraphs;
-        for (int i = 0; i < model.Paragraphs.Count && i < paragraphs.Count; i++)
-        {
-            if (model.Paragraphs[i].Center)
-                paragraphs[i].ParagraphFormat.Alignment = ParagraphAlignment.Center;
-            else
-                paragraphs[i].ParagraphFormat.Alignment = ParagraphAlignment.Left;
-        }
-
-        // Save the resulting document.
-        template.Save("DynamicAlignmentReport.docx");
+        // 5. Save the generated report.
+        doc.Save(outputPath);
     }
+}
+
+// Data model classes.
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Text { get; set; } = string.Empty;
 }

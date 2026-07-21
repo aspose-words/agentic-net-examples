@@ -4,33 +4,50 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Property name "new" is a C# reserved keyword, escaped with @.
-    public string @new { get; set; } = "EscapedKeyword";
+    // Property name is the reserved keyword 'new', escaped with @ in C#.
+    // The actual property name is "new", which the LINQ Reporting engine accesses without the @ prefix.
+    public string @new { get; set; } = "Escaped keyword value";
+
+    public string Name { get; set; } = "Sample Name";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Step 1: Create a template document with a LINQ Reporting tag.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-        // The tag references the property named "new" in the model.
-        builder.Writeln("Value: <<[model.new]>>");
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Paths for the template and the generated report
+        string templatePath = "Template.docx";
+        string reportPath = "Report.docx";
 
-        // Step 2: Load the template document for reporting.
-        var doc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Step 3: Build the report using the model that contains the escaped property.
-        var engine = new ReportingEngine();
-        var model = new ReportModel(); // model.new will be used in the template.
-        engine.BuildReport(doc, model, "model");
+        // Insert a simple paragraph with a LINQ Reporting tag that accesses the escaped property.
+        // The property name is referenced without the @ prefix in the template expression.
+        builder.Writeln("Value of the escaped property 'new': <<[model.new]>>");
+        builder.Writeln("Another field (Name): <<[model.Name]>>");
 
-        // Step 4: Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // Save the template to disk
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // Prepare the data source
+        ReportModel model = new ReportModel();
+
+        // Create the reporting engine and generate the report
+        ReportingEngine engine = new ReportingEngine();
+
+        // Build the report using the root object name "model"
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report
+        reportDoc.Save(reportPath);
     }
 }

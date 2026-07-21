@@ -1,44 +1,46 @@
 using System;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingDemo
 {
-    public static void Main()
+    // Simple data model with a DateTime property.
+    public class ReportModel
     {
-        // Register code page provider for Aspose.Words if needed.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample data model.
-        var model = new ReportModel
-        {
-            CreatedDate = DateTime.UtcNow
-        };
-
-        // Create a template document with an expression tag that formats the date as ISO 8601.
-        const string templatePath = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-        builder.Writeln("Report generated at: {=CreatedDate:yyyy-MM-ddTHH:mm:ss}");
-        doc.Save(templatePath);
-
-        // Load the template and build the report.
-        var templateDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "output.docx";
-        templateDoc.Save(outputPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        // Initialize to avoid nullable warnings.
+        public DateTime CreatedDate { get; set; } = DateTime.Now;
     }
-}
 
-public class ReportModel
-{
-    public DateTime CreatedDate { get; set; }
+    public class Program
+    {
+        public static void Main()
+        {
+            // 1. Create a template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Insert a line that uses a LINQ Reporting expression tag.
+            // Use ToString with a custom format to produce ISO‑8601 output.
+            builder.Writeln(
+                "Created on: <<[model.CreatedDate.ToString(\"yyyy-MM-ddTHH:mm:ss\")]>>");
+
+            // 2. Prepare the data source.
+            ReportModel model = new ReportModel
+            {
+                // Example date; you can set any DateTime you need.
+                CreatedDate = new DateTime(2023, 5, 17, 14, 30, 45, DateTimeKind.Utc)
+            };
+
+            // 3. Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine
+            {
+                Options = ReportBuildOptions.None
+            };
+            // The third argument is the name used in the template to reference the root object.
+            engine.BuildReport(template, model, "model");
+
+            // 4. Save the generated report.
+            template.Save("Report.docx");
+        }
+    }
 }

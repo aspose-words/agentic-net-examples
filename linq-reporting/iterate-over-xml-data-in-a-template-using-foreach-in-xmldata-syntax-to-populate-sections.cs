@@ -1,70 +1,59 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Person
-{
-    public string Name { get; set; } = "";
-    public int Age { get; set; }
-}
-
-public class People
-{
-    public List<Person> Person { get; set; } = new();
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for UTF‑8 support.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample XML data.
+        const string xmlFileName = "people.xml";
+        string xmlContent =
+            @"<People>" +
+            @"  <Person>" +
+            @"    <Name>John Doe</Name>" +
+            @"    <Age>30</Age>" +
+            @"  </Person>" +
+            @"  <Person>" +
+            @"    <Name>Jane Smith</Name>" +
+            @"    <Age>25</Age>" +
+            @"  </Person>" +
+            @"</People>";
+        File.WriteAllText(xmlFileName, xmlContent);
 
-        const string templatePath = "template.docx";
-        const string outputPath = "report.docx";
-
-        // -----------------------------------------------------------------
-        // 1. Build a Word template that contains LINQ Reporting tags.
-        // -----------------------------------------------------------------
+        // Create a template document with LINQ Reporting tags.
+        const string templateFileName = "template.docx";
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("People Report");
-        builder.Writeln("----------------");
-
-        // The data source will be referenced by the name "people".
-        // The collection of Person elements is accessed as people.Person.
-        builder.Writeln("<<foreach [p in people.Person]>>");
-        builder.Writeln("- Name: <<[p.Name]>>");
-        builder.Writeln("  Age : <<[p.Age]>>");
+        builder.Writeln("People List:");
+        // Iterate over the Person elements from the XML data source named "xmlData".
+        // When the root element contains a collection, the data source itself can be iterated directly.
+        builder.Writeln("<<foreach [person in xmlData]>>");
+        builder.Writeln("- Name: <<[person.Name]>>");
+        builder.Writeln("- Age: <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Save the template.
+        templateDoc.Save(templateFileName);
 
-        // -----------------------------------------------------------------
-        // 2. Create sample data model.
-        // -----------------------------------------------------------------
-        var people = new People();
-        people.Person.Add(new Person { Name = "John Doe", Age = 30 });
-        people.Person.Add(new Person { Name = "Jane Smith", Age = 25 });
-        people.Person.Add(new Person { Name = "Bob Johnson", Age = 40 });
+        // Load the template for report generation.
+        Document reportDoc = new Document(templateFileName);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and bind the object data source.
-        // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Create an XML data source.
+        XmlDataSource xmlDataSource = new XmlDataSource(xmlFileName);
+
+        // Build the report using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // No special options required.
+        bool success = engine.BuildReport(reportDoc, xmlDataSource, "xmlData");
 
-        // Build the report. The third argument is the name used inside the template.
-        engine.BuildReport(reportDoc, people, "people");
+        // Save the generated report.
+        const string outputFileName = "output.docx";
+        reportDoc.Save(outputFileName);
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        reportDoc.Save(outputPath);
+        // Indicate completion.
+        Console.WriteLine(success ? "Report generated successfully." : "Report generation failed.");
     }
 }

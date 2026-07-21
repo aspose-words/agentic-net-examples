@@ -3,54 +3,50 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
+        // Prepare sample data – some items have empty names to generate empty paragraphs.
         var model = new ReportModel
         {
-            Persons = new List<Person>
+            Items = new List<Item>
             {
-                new Person { Name = "Alice", Age = 30 },
-                new Person { Name = "Bob", Age = 0 },   // This entry will produce an empty paragraph.
-                new Person { Name = "Charlie", Age = 25 }
+                new Item { Index = 1, Name = "Alice" },
+                new Item { Index = 2, Name = "" },          // Will produce an empty paragraph.
+                new Item { Index = 3, Name = "Charlie" },
+                new Item { Index = 4, Name = "" }           // Will produce an empty paragraph.
             }
         };
 
         // Create a template document programmatically.
-        var templatePath = "Template.docx";
-        var builder = new DocumentBuilder();
-        builder.Writeln("<<foreach [p in Persons]>>");
-        // Paragraph that may become empty when the condition is false.
-        builder.Writeln("<<if [p.Age > 0]>><<[p.Name]>> is <<[p.Age]>> years old<</if>>");
-        builder.Writeln("<</foreach>>");
-        builder.Document.Save(templatePath);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Load the template for reporting.
-        var doc = new Document(templatePath);
+        // LINQ Reporting foreach block – each iteration writes the item's name.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("<<[item.Name]>>"); // Paragraph becomes empty when Name is empty.
+        builder.Writeln("<</foreach>>");
 
         // Configure the reporting engine to remove empty paragraphs.
         var engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // Build the report.
+        // Build the report using the model as the root data source named "model".
         engine.BuildReport(doc, model, "model");
 
-        // Save the final document.
-        doc.Save("Report.docx");
+        // Save the resulting document.
+        doc.Save("Output.docx");
     }
-}
-
-// Wrapper class that matches the root object name used in the template.
-public class ReportModel
-{
-    public List<Person> Persons { get; set; } = new();
-}
-
-// Simple data model used in the foreach loop.
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
 }

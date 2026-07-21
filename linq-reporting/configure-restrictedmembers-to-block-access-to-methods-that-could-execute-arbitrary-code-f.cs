@@ -1,58 +1,67 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Text;
+using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    // Simple data model used in the template.
+    public class Person
     {
-        // Register code page provider (required for some Aspose.Words features).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Initialize to avoid nullable warnings.
+        public string Name { get; set; } = "";
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create a template document with a tag that tries to access a
-        //    restricted type (System.Type). The tag attempts to obtain the
-        //    base type of an empty string.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
-        builder.Writeln("Attempt to access restricted type:");
-        // The 'var' tag creates a variable 'typeVar' by calling GetType().
-        builder.Writeln("<<var [typeVar = \"\".GetType().BaseType]>>");
-        // Output the variable. If the type is restricted the result will be empty.
-        builder.Writeln("Result: <<[typeVar]>>");
-
-        // Save the template to disk.
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and configure the ReportingEngine.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-
-        // Restrict the System.Type type so its members cannot be accessed from templates.
-        ReportingEngine.SetRestrictedTypes(typeof(System.Type));
-
-        var engine = new ReportingEngine
+    public class Program
+    {
+        public static void Main()
         {
-            // Allow missing members to avoid exceptions when the restricted type is accessed.
-            Options = ReportBuildOptions.AllowMissingMembers
-        };
+            // Step 1: Create a template document with a LINQ Reporting tag.
+            string templatePath = "Template.docx";
+            CreateTemplate(templatePath);
 
-        // Build the report. No data source is needed for this example.
-        engine.BuildReport(doc, new object(), "");
+            // Step 2: Load the template document.
+            Document template = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Save the generated document and display its text.
-        // -----------------------------------------------------------------
-        const string outputPath = "output.docx";
-        doc.Save(outputPath);
+            // Step 3: Configure restricted types to block potentially unsafe members.
+            // This must be done before any report is built.
+            ReportingEngine.SetRestrictedTypes(
+                typeof(Process),
+                typeof(Assembly),
+                typeof(File),
+                typeof(Directory),
+                typeof(Environment));
 
-        // Output the resulting text to the console.
-        Console.WriteLine("=== Generated Document Text ===");
-        Console.WriteLine(doc.GetText().Trim());
+            // Step 4: Prepare the data source.
+            Person person = new Person { Name = "John Doe" };
+
+            // Step 5: Build the report.
+            ReportingEngine engine = new ReportingEngine
+            {
+                // Allow missing members to avoid exceptions if the template references something not present.
+                Options = ReportBuildOptions.AllowMissingMembers
+            };
+            engine.BuildReport(template, person, "person");
+
+            // Step 6: Save the generated report.
+            string outputPath = "Report.docx";
+            template.Save(outputPath);
+        }
+
+        // Creates a simple Word document containing a LINQ Reporting tag.
+        private static void CreateTemplate(string filePath)
+        {
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // The tag references the 'Name' property of the root object named 'person'.
+            builder.Writeln("Hello <<[person.Name]>>!");
+
+            // Save the template to disk.
+            doc.Save(filePath);
+        }
     }
 }

@@ -1,59 +1,59 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingConditionalBlock
+namespace AsposeWordsLinqReportingDemo
 {
-    // Simple data model used by the template.
+    // Data model used by the LINQ Reporting template.
     public class Order
     {
-        public int Id { get; set; } = 0;
-        public double DiscountPercentage { get; set; } = 0.0;
+        public string CustomerName { get; set; } = "John Doe";
+        public double Total { get; set; } = 150.0;
+        public double Discount { get; set; } = 10.0; // Percentage; set to 0 to hide the block.
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Prepare sample data.
-            Order order = new Order
-            {
-                Id = 12345,
-                DiscountPercentage = 15.0   // Change to 0 to see the block omitted.
-            };
-
             // -----------------------------------------------------------------
             // 1. Create the template document programmatically.
             // -----------------------------------------------------------------
-            string templatePath = "template.docx";
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("Order total: $<<[order.Total]>>");
+            // Conditional block: show only when Discount > 0.
+            builder.Writeln("<<if [order.Discount > 0]>>Discount applied: <<[order.Discount]>>%<</if>>");
 
-            // Write static text and data tags.
-            builder.Writeln("Order Report");
-            builder.Writeln("Order ID: <<[order.Id]>>");
-
-            // Conditional block: show discount only when it is greater than zero.
-            builder.Writeln("<<if [order.DiscountPercentage > 0]>>Discount: <<[order.DiscountPercentage]>>%<</if>>");
-
-            // Save the template so that it can be loaded later (required by the rule set).
-            templateDoc.Save(templatePath);
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
             // -----------------------------------------------------------------
-            // 2. Load the template and build the report.
+            // 2. Load the template back (required by the workflow).
             // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
+            Document doc = new Document(templatePath);
+
+            // -----------------------------------------------------------------
+            // 3. Prepare the data source.
+            // -----------------------------------------------------------------
+            Order order = new Order(); // Discount is 10%, so the block will appear.
+
+            // -----------------------------------------------------------------
+            // 4. Build the report using the LINQ Reporting engine.
+            // -----------------------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
-
-            // BuildReport expects the root object name to match the tag prefix used in the template.
-            engine.BuildReport(reportDoc, order, "order");
+            // No special options are needed for this simple scenario.
+            engine.BuildReport(doc, order, "order");
 
             // -----------------------------------------------------------------
-            // 3. Save the generated report.
+            // 5. Save the generated report.
             // -----------------------------------------------------------------
-            string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
+            const string reportPath = "Report.docx";
+            doc.Save(reportPath);
         }
     }
 }

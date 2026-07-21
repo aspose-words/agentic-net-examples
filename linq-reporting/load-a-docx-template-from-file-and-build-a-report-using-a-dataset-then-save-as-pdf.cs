@@ -2,7 +2,7 @@ using System;
 using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Saving;
+using Aspose.Words.Tables;
 
 public class Program
 {
@@ -18,43 +18,65 @@ public class Program
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Add a title.
-        builder.Writeln("People Report");
+        // Title
+        builder.Writeln("Orders Report");
         builder.Writeln();
 
-        // Begin a foreach loop over the DataTable named "People".
-        builder.Writeln("<<foreach [person in People]>>");
-        // Output each person's name and age.
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age:  <<[person.Age]>>");
+        // Begin the data band.
+        builder.Writeln("<<foreach [row in Orders]>>");
+
+        // Start the table that will be repeated for each row.
+        Table table = builder.StartTable();
+
+        // Header row (once, outside the foreach loop).
+        builder.InsertCell();
+        builder.Writeln("Customer");
+        builder.InsertCell();
+        builder.Writeln("Date");
+        builder.InsertCell();
+        builder.Writeln("Amount");
+        builder.EndRow();
+
+        // Data row (inside the foreach loop).
+        builder.InsertCell();
+        builder.Writeln("<<[row.CustomerName]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[row.OrderDate]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[row.Amount]>>");
+        builder.EndRow();
+
+        // Close the table and the foreach block.
+        builder.EndTable();
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Prepare a DataSet with a DataTable that matches the template.
+        // 2. Prepare a DataSet with sample data.
         // -----------------------------------------------------------------
         DataSet dataSet = new DataSet();
 
-        DataTable peopleTable = new DataTable("People");
-        peopleTable.Columns.Add("Name", typeof(string));
-        peopleTable.Columns.Add("Age", typeof(int));
+        DataTable ordersTable = new DataTable("Orders");
+        ordersTable.Columns.Add("CustomerName", typeof(string));
+        ordersTable.Columns.Add("OrderDate", typeof(DateTime));
+        ordersTable.Columns.Add("Amount", typeof(decimal));
 
-        peopleTable.Rows.Add("Alice", 30);
-        peopleTable.Rows.Add("Bob",   45);
-        peopleTable.Rows.Add("Carol", 27);
+        ordersTable.Rows.Add("Alice Johnson", new DateTime(2023, 5, 12), 250.75m);
+        ordersTable.Rows.Add("Bob Smith", new DateTime(2023, 5, 13), 120.00m);
+        ordersTable.Rows.Add("Carol White", new DateTime(2023, 5, 14), 560.40m);
 
-        dataSet.Tables.Add(peopleTable);
+        dataSet.Tables.Add(ordersTable);
 
         // -----------------------------------------------------------------
-        // 3. Load the template and build the report using ReportingEngine.
+        // 3. Load the template and build the report.
         // -----------------------------------------------------------------
         Document reportDoc = new Document(templatePath);
 
         ReportingEngine engine = new ReportingEngine();
-        // BuildReport overload that takes the data source without a name.
-        engine.BuildReport(reportDoc, dataSet);
+        // No special options are required for this simple example.
+        engine.BuildReport(reportDoc, dataSet, "");
 
         // -----------------------------------------------------------------
         // 4. Save the generated report as PDF.

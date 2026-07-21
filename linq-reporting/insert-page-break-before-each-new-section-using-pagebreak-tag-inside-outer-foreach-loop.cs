@@ -1,76 +1,87 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Drawing;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        public List<SectionItem> Sections { get; set; } = new();
-    }
+        // Create the template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    public class SectionItem
-    {
-        public string Title { get; set; } = string.Empty;
-        public string Content { get; set; } = string.Empty;
-    }
+        // Outer foreach over sections.
+        builder.Writeln("<<foreach [section in Sections]>>");
 
-    public class Program
-    {
-        public static void Main()
+        // Insert a page break before each new section (inside the foreach loop).
+        builder.InsertBreak(BreakType.PageBreak);
+
+        // Write the section title.
+        builder.Writeln("Section: <<[section.Title]>>");
+
+        // Inner foreach over items within the section.
+        builder.Writeln("<<foreach [item in section.Items]>>");
+        builder.Writeln("- <<[item]>>");
+        builder.Writeln("<</foreach>>");
+
+        // End outer foreach.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        template.Save(templatePath);
+
+        // Load the template for report generation.
+        Document report = new Document(templatePath);
+
+        // Prepare sample data.
+        ReportModel model = new ReportModel
         {
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string reportPath = "Report.docx";
-
-            // -----------------------------------------------------------------
-            // 1. Create the template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Outer foreach iterates over the Sections collection.
-            builder.Writeln("<<foreach [section in Sections]>>");
-            // Section title.
-            builder.Writeln("Section: <<[section.Title]>>");
-            // Section content.
-            builder.Writeln("Content: <<[section.Content]>>");
-            // End of the foreach block.
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Prepare sample data for the report.
-            // -----------------------------------------------------------------
-            ReportModel model = new()
+            Sections = new List<ReportSection>
             {
-                Sections = new()
+                new ReportSection
                 {
-                    new SectionItem { Title = "Introduction", Content = "This is the introduction." },
-                    new SectionItem { Title = "Details", Content = "Detailed information goes here." },
-                    new SectionItem { Title = "Conclusion", Content = "Final thoughts and summary." }
+                    Title = "First Section",
+                    Items = new List<string> { "Item 1A", "Item 1B", "Item 1C" }
+                },
+                new ReportSection
+                {
+                    Title = "Second Section",
+                    Items = new List<string> { "Item 2A", "Item 2B" }
+                },
+                new ReportSection
+                {
+                    Title = "Third Section",
+                    Items = new List<string> { "Item 3A", "Item 3B", "Item 3C", "Item 3D" }
                 }
-            };
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(report, model, "model");
 
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.None // Explicit assignment as required.
-            };
-
-            // Build the report using the model; the root name must match the template references.
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the generated report.
-            reportDoc.Save(reportPath);
-        }
+        // Save the generated report.
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        report.Save(reportPath);
     }
+}
+
+// Root data model.
+public class ReportModel
+{
+    public List<ReportSection> Sections { get; set; } = new();
+}
+
+// Section model.
+public class ReportSection
+{
+    public string Title { get; set; } = string.Empty;
+    public List<string> Items { get; set; } = new();
 }

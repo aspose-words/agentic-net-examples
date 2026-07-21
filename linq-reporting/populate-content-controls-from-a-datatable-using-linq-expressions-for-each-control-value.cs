@@ -2,71 +2,58 @@ using System;
 using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
         // Prepare sample data in a DataTable.
-        DataTable data = new DataTable("Data");
-        data.Columns.Add("FirstName", typeof(string));
-        data.Columns.Add("LastName", typeof(string));
-        data.Columns.Add("Age", typeof(int));
+        DataTable table = new DataTable("Employees");
+        table.Columns.Add("FirstName", typeof(string));
+        table.Columns.Add("LastName", typeof(string));
+        table.Columns.Add("Age", typeof(int));
 
-        data.Rows.Add("John", "Doe", 30);
-        data.Rows.Add("Jane", "Smith", 28);
-        data.Rows.Add("Bob", "Johnson", 45);
+        table.Rows.Add("John", "Doe", 30);
+        table.Rows.Add("Jane", "Smith", 28);
+        table.Rows.Add("Bob", "Johnson", 45);
 
-        // ---------------------------------------------------------------
-        // 1. Create a template document that contains LINQ Reporting tags.
-        // ---------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // Create a template document programmatically.
+        // The template contains a foreach loop that iterates over the rows
+        // of the DataTable (named "dt" in the report) and writes three
+        // fields for FirstName, LastName and Age.
+        // -----------------------------------------------------------------
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Begin a foreach loop over the rows of the DataTable.
-        builder.Writeln("<<foreach [row in Data]>>");
+        builder.Writeln("Employee List:");
+        // Begin foreach block.
+        builder.Writeln("<<foreach [row in dt]>>");
 
-        // Build a simple table where each cell contains a LINQ expression that reads a column value.
-        Table table = builder.StartTable();
+        // Write the fields for each row.
+        builder.Write("<<[row.FirstName]>> ");
+        builder.Write("<<[row.LastName]>>");
+        builder.Write(", Age: ");
+        builder.Write("<<[row.Age]>>");
 
-        // Header row.
-        builder.InsertCell();
-        builder.Writeln("First Name");
-        builder.InsertCell();
-        builder.Writeln("Last Name");
-        builder.InsertCell();
-        builder.Writeln("Age");
-        builder.EndRow();
+        // End the paragraph for the current row.
+        builder.Writeln();
 
-        // Data row.
-        builder.InsertCell();
-        builder.Writeln("<<[row.FirstName]>>");
-
-        builder.InsertCell();
-        builder.Writeln("<<[row.LastName]>>");
-
-        builder.InsertCell();
-        builder.Writeln("<<[row.Age]>>");
-
-        builder.EndRow();
-        builder.EndTable();
-
-        // Close the foreach block.
+        // End foreach block.
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         const string templatePath = "Template.docx";
         template.Save(templatePath);
 
-        // ---------------------------------------------------------------
-        // 2. Load the template and build the report using ReportingEngine.
-        // ---------------------------------------------------------------
+        // -----------------------------------------------------------------
+        // Load the template and build the report using the LINQ Reporting engine.
+        // -----------------------------------------------------------------
         Document report = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
 
-        // The data source name used in the template tags is "Data".
-        engine.BuildReport(report, data, "Data");
+        // The data source name used in the template tags is "dt".
+        engine.BuildReport(report, table, "dt");
 
         // Save the generated report.
         const string outputPath = "Report.docx";

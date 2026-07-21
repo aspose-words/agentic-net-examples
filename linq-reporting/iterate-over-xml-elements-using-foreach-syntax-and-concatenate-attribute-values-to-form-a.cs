@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -7,40 +8,39 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample XML data with attributes.
-        const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<items>
-    <item Name=""Apple"" Price=""1.20"" />
-    <item Name=""Banana"" Price=""0.80"" />
-    <item Name=""Cherry"" Price=""2.50"" />
-</items>";
-        const string xmlPath = "data.xml";
-        File.WriteAllText(xmlPath, xmlContent);
+        // Enable code pages for XML handling (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a Word template that uses LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a blank Word document and a builder to insert LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Iterate over the XML elements and concatenate attribute values.
-        // The data source name will be "items", so we iterate directly over "items".
+        // Template: iterate over XML <item> elements and concatenate attribute values.
         builder.Writeln("<<foreach [item in items]>>");
-        builder.Writeln("<<[item.Name]>> - <<[item.Price]>>");
+        // Concatenate the 'name' and 'color' attributes with a hyphen.
+        builder.Writeln("<<[item.name]>>-<<[item.color]>>");
         builder.Writeln("<</foreach>>");
 
-        const string templatePath = "template.docx";
-        template.Save(templatePath);
+        // Sample XML data with attributes.
+        string xmlContent =
+            @"<?xml version='1.0' encoding='utf-8'?>
+              <items>
+                  <item name='Apple'  color='Red' />
+                  <item name='Banana' color='Yellow' />
+                  <item name='Grape'  color='Purple' />
+              </items>";
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        // Load XML into a stream and create an XmlDataSource.
+        using (MemoryStream xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlContent)))
+        {
+            XmlDataSource xmlDataSource = new XmlDataSource(xmlStream);
 
-        // Load the XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
-
-        // Build the report using the data source named "items".
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, dataSource, "items");
+            // Build the report using the XML data source. The root name is "items".
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, xmlDataSource, "items");
+        }
 
         // Save the generated report.
-        reportDoc.Save("output.docx");
+        doc.Save("ReportOutput.docx");
     }
 }

@@ -1,67 +1,73 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
+using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and final PDF.
-        const string templatePath = "ReportTemplate.docx";
-        const string pdfPath = "Report.pdf";
+        // Register code page provider (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // 1. Create the template document with LINQ Reporting tags.
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Create a blank document that will serve as the template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Header with a simple field.
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln();
-
-        // Loop over the items collection.
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
+        // Insert LINQ Reporting tags into the template.
+        builder.Writeln("Report for <<[model.CustomerName]>>");
+        builder.Writeln("Items:");
+        builder.Writeln("<<foreach [item in model.Items]>>");
+        builder.Writeln("- <<[item.Name]>>: <<[item.Quantity]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // 2. Load the template back (required before building the report).
-        Document loadedTemplate = new Document(templatePath);
-
-        // 3. Prepare sample data.
-        Order sampleOrder = new Order
+        // Build a sample data model.
+        ReportModel model = new()
         {
-            CustomerName = "Acme Corp",
-            Items =
+            CustomerName = "Acme Corporation",
+            Items = new()
             {
-                new Item { Index = 1, Name = "Widget" },
-                new Item { Index = 2, Name = "Gadget" },
-                new Item { Index = 3, Name = "Doohickey" }
+                new() { Name = "Widget", Quantity = 12 },
+                new() { Name = "Gadget", Quantity = 7 },
+                new() { Name = "Doohickey", Quantity = 3 }
             }
         };
 
-        // 4. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(loadedTemplate, sampleOrder, "order");
+        // (Optional) Serialize the model to JSON to demonstrate the Newtonsoft.Json dependency.
+        string json = JsonConvert.SerializeObject(model);
+        Console.WriteLine("Sample data model serialized to JSON:");
+        Console.WriteLine(json);
 
-        // 5. Export the rendered document to PDF.
-        loadedTemplate.Save(pdfPath, SaveFormat.Pdf);
+        // Create the reporting engine and build the report.
+        ReportingEngine engine = new();
+        engine.Options = ReportBuildOptions.None;
+        bool success = engine.BuildReport(doc, model, "model");
+
+        // If the build succeeded, save the rendered document as PDF.
+        if (success)
+        {
+            doc.Save("Report.pdf", SaveFormat.Pdf);
+            Console.WriteLine("Report generated and saved as Report.pdf");
+        }
+        else
+        {
+            Console.WriteLine("Report generation failed.");
+        }
     }
 }
 
-// Root data model.
-public class Order
+// Data model classes used by the LINQ Reporting engine.
+public class ReportModel
 {
     public string CustomerName { get; set; } = "";
     public List<Item> Items { get; set; } = new();
 }
 
-// Item model used inside the collection.
 public class Item
 {
-    public int Index { get; set; }
     public string Name { get; set; } = "";
+    public int Quantity { get; set; }
 }

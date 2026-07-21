@@ -1,56 +1,57 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Fields;
-
-public class ReportModel
-{
-    // No data members are required for this example.
-}
+using Aspose.Words.Notes;
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        // Register code page provider (required for some environments)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Folder for generated files
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Ensure the document has a primary footer.
+        // -----------------------------------------------------------------
+        // Step 1: Create a template document with a footer that shows the
+        //         current page number (e.g., "1 of 3").
+        // -----------------------------------------------------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Move the cursor to the primary footer of the first section.
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
 
-        // Insert a PAGE field that automatically shows the current page number.
-        builder.InsertField(FieldType.FieldPage, true);
+        // Center the page number text.
+        builder.ParagraphFormat.Alignment = ParagraphAlignment.Center;
 
-        // Add a couple of pages so the footer can be seen.
-        builder.MoveToSection(0);
-        builder.Writeln("Content page 1");
-        builder.InsertBreak(BreakType.PageBreak);
-        builder.Writeln("Content page 2");
+        // Insert Word fields for the current page number and total pages.
+        builder.InsertField(FieldType.FieldPage, true);          // PAGE field
+        builder.Write(" of ");
+        builder.InsertField(FieldType.FieldNumPages, true);     // NUMPAGES field
 
         // Save the template to disk.
-        templateDoc.Save(templatePath);
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        template.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Load the template and build the report.
-        // -------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // Create a ReportingEngine instance.
+        // -----------------------------------------------------------------
+        // Step 2: Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document report = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
 
-        // Build the report using an empty data source (the footer does not depend on data).
-        engine.BuildReport(doc, new ReportModel(), "model");
+        // No data source is required for this simple example; an empty object is sufficient.
+        engine.BuildReport(report, new object());
 
-        // -------------------------------------------------
-        // 3. Save the generated report.
-        // -------------------------------------------------
-        doc.Save(reportPath);
+        // -----------------------------------------------------------------
+        // Step 3: Save the final document.
+        // -----------------------------------------------------------------
+        string resultPath = Path.Combine(outputDir, "ReportWithPageNumbers.docx");
+        report.Save(resultPath);
     }
 }

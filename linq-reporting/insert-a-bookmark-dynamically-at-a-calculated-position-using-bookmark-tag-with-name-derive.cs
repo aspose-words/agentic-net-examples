@@ -3,51 +3,71 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace BookmarkLinqReportingExample
 {
-    public static void Main()
+    // Data model classes
+    public class ReportModelWrapper
     {
-        // Prepare sample data.
-        var model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Id = 1, Title = "First Item" },
-                new Item { Id = 2, Title = "Second Item" },
-                new Item { Id = 3, Title = "Third Item" }
-            }
-        };
-
-        // Create a template document with LINQ Reporting tags.
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Report generated with dynamic bookmarks:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<bookmark [item.BookmarkName]>>");
-        builder.Writeln("<<[item.Title]>>");
-        builder.Writeln("<</bookmark>>");
-        builder.Writeln("<</foreach>>");
-
-        // Build the report using the model as the root object named "model".
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the resulting document.
-        doc.Save("ReportWithBookmarks.docx");
+        public List<Item> Items { get; set; } = new();
     }
-}
 
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
+    public class Item
+    {
+        public string Title { get; set; } = "";
+        public string BookmarkName { get; set; } = "";
+    }
 
-// Item model with a calculated bookmark name.
-public class Item
-{
-    public int Id { get; set; }
-    public string Title { get; set; } = "";
-    public string BookmarkName => $"Item_{Id}";
+    public class Program
+    {
+        public static void Main()
+        {
+            // Paths for the template and the generated report
+            const string templatePath = "template.docx";
+            const string outputPath = "output.docx";
+
+            // -------------------------------------------------
+            // Create the template document with LINQ Reporting tags
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            // Begin a foreach loop over Items
+            builder.Writeln("<<foreach [item in Items]>>");
+            // Insert a bookmark whose name comes from the data field
+            builder.Writeln("<<bookmark [item.BookmarkName]>>");
+            // The content of the bookmark – the title of the item
+            builder.Writeln("<<[item.Title]>>");
+            // Close the bookmark and the foreach block
+            builder.Writeln("<</bookmark>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk
+            templateDoc.Save(templatePath);
+
+            // -------------------------------------------------
+            // Prepare sample data
+            // -------------------------------------------------
+            var model = new ReportModelWrapper
+            {
+                Items = new List<Item>
+                {
+                    new Item { Title = "First Chapter", BookmarkName = "BM_First" },
+                    new Item { Title = "Second Chapter", BookmarkName = "BM_Second" },
+                    new Item { Title = "Conclusion", BookmarkName = "BM_Conclusion" }
+                }
+            };
+
+            // -------------------------------------------------
+            // Load the template and build the report
+            // -------------------------------------------------
+            Document reportDoc = new Document(templatePath);
+            ReportingEngine engine = new ReportingEngine();
+
+            // Build the report using the model; the root name is "model"
+            engine.BuildReport(reportDoc, model, "model");
+
+            // Save the generated document
+            reportDoc.Save(outputPath);
+        }
+    }
 }

@@ -1,82 +1,62 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Person
 {
-    // Simple data model with a collection of items.
-    public class ReportModel
-    {
-        public List<Item> Items { get; set; } = new();
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
 
-    public class Item
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Value { get; set; }
-    }
+public class ReportModel
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
-    public class Program
-    {
-        // Threshold that decides whether to enable reflection optimization.
-        private const int CollectionSizeThreshold = 10;
+public class Program
+{
+    // Threshold that decides whether to enable reflection optimization.
+    private const int CollectionSizeThreshold = 100;
 
-        public static void Main()
+    public static void Main()
+    {
+        // Register code page provider (required for some Aspose.Words features).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Prepare sample data.
+        var model = new ReportModel();
+        for (int i = 1; i <= 120; i++) // Adjust count to test both branches.
         {
-            // -----------------------------------------------------------------
-            // 1. Create a template document programmatically.
-            // -----------------------------------------------------------------
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            builder.Writeln("Report of Items:");
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Name: <<[item.Name]>>");
-            builder.Writeln("Value: <<[item.Value]>>");
-            builder.Writeln("<</foreach>>");
-
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template for report generation.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Prepare sample data.
-            // -----------------------------------------------------------------
-            ReportModel model = new ReportModel();
-
-            // Populate the collection with a variable number of items.
-            for (int i = 1; i <= 15; i++)
-            {
-                model.Items.Add(new Item
-                {
-                    Name = $"Item {i}",
-                    Value = i * 10
-                });
-            }
-
-            // -----------------------------------------------------------------
-            // 4. Configure reflection optimization based on collection size.
-            // -----------------------------------------------------------------
-            // If the collection is larger than the threshold, enable the optimization;
-            // otherwise, disable it to avoid the overhead of dynamic class generation.
-            ReportingEngine.UseReflectionOptimization = model.Items.Count > CollectionSizeThreshold;
-
-            // -----------------------------------------------------------------
-            // 5. Build the report.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // -----------------------------------------------------------------
-            // 6. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            reportDoc.Save(outputPath);
+            model.Persons.Add(new Person { Name = $"Person {i}", Age = 20 + i % 30 });
         }
+
+        // Configure reflection optimization based on collection size.
+        if (model.Persons.Count > CollectionSizeThreshold)
+            ReportingEngine.UseReflectionOptimization = false; // Disable for large collections.
+        else
+            ReportingEngine.UseReflectionOptimization = true;  // Enable for small collections.
+
+        // Create a template document with LINQ Reporting tags.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+        doc.Save(templatePath);
+
+        // Load the template (demonstrates load rule usage).
+        var loadedDoc = new Document(templatePath);
+
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedDoc, model, "model");
+
+        // Save the generated report.
+        var outputPath = "Report.docx";
+        loadedDoc.Save(outputPath);
     }
 }

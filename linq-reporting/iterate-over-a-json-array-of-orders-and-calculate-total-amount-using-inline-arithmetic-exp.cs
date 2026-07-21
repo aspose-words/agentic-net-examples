@@ -1,73 +1,57 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Reporting; // ReportingEngine namespace
-using Aspose.Words.Reporting; // Ensure ReportingEngine is available
-using Aspose.Words.Reporting; // For JsonDataSource
-using Aspose.Words.Reporting; // For JsonDataLoadOptions
-using Newtonsoft.Json;
 
-public class Order
+namespace AsposeWordsLinqReportingExample
 {
-    public string CustomerName { get; set; } = "";
-    public double Amount { get; set; }
-}
-
-public class OrdersRoot
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    public class Program
     {
-        // Register code page provider for Aspose.Words (required on .NET Core).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample JSON data.
-        string jsonPath = "orders.json";
-        var sampleData = new OrdersRoot
+        public static void Main()
         {
-            Orders = new List<Order>
-            {
-                new Order { CustomerName = "Alice", Amount = 120.5 },
-                new Order { CustomerName = "Bob", Amount = 80.0 },
-                new Order { CustomerName = "Charlie", Amount = 45.75 }
-            }
-        };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
+            // Register code page provider for JSON handling.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Configure JSON data load options to always generate a root object.
-        var jsonLoadOptions = new Aspose.Words.Reporting.JsonDataLoadOptions
-        {
-            AlwaysGenerateRootObject = true
-        };
+            // Prepare sample JSON data.
+            string jsonPath = "orders.json";
+            File.WriteAllText(jsonPath, @"
+[
+    { ""Id"": 1, ""Quantity"": 2, ""UnitPrice"": 15.5 },
+    { ""Id"": 2, ""Quantity"": 5, ""UnitPrice"": 9.99 },
+    { ""Id"": 3, ""Quantity"": 1, ""UnitPrice"": 120.0 }
+]".Trim());
 
-        // Load JSON data source.
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath, jsonLoadOptions);
+            // Create a JSON data source.
+            JsonDataSource dataSource = new JsonDataSource(jsonPath);
 
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+            // Build the template document programmatically.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Orders Report");
-        // Loop through each order.
-        builder.Writeln("<<foreach [order in data.Orders]>>");
-        builder.Writeln("Customer: <<[order.CustomerName]>> - Amount: <<[order.Amount]>>");
-        builder.Writeln("<</foreach>>");
-        // Calculate total using an inline arithmetic expression.
-        builder.Writeln("Total Amount: <<[data.Orders.Sum(o => o.Amount)]>>");
+            // Header.
+            builder.Writeln("Order Report");
+            builder.Writeln("------------------------------");
 
-        // Build the report using the JSON data source.
-        ReportingEngine engine = new ReportingEngine();
-        // Pass the data source name "data" so that template tags can reference it.
-        engine.BuildReport(template, jsonDataSource, "data");
+            // Iterate over the orders collection.
+            builder.Writeln("<<foreach [order in orders]>>");
+            builder.Writeln("Order ID: <<[order.Id]>>");
+            builder.Writeln("Quantity: <<[order.Quantity]>>");
+            builder.Writeln("Unit Price: $<<[order.UnitPrice]>>");
+            // Inline arithmetic: calculate line amount.
+            builder.Writeln("Line Amount: $<<[order.Quantity * order.UnitPrice]>>");
+            builder.Writeln("<</foreach>>");
 
-        // Save the generated report.
-        template.Save("OrdersReport.docx");
+            builder.Writeln("------------------------------");
+            // Inline arithmetic: calculate total amount for all orders.
+            builder.Writeln("Total Amount: $<<[orders.Sum(o => o.Quantity * o.UnitPrice)]>>");
+
+            // Build the report.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, dataSource, "orders");
+
+            // Save the generated report.
+            doc.Save("OrderReport.docx");
+        }
     }
 }

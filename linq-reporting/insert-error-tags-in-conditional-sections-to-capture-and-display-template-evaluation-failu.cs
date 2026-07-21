@@ -1,78 +1,56 @@
 using System;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    public string Name { get; set; } = "John Doe";
+    public int Age { get; set; } = 28;
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some environments)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for any legacy encodings Aspose.Words might need.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for the template and the generated report
+        // Create a template document programmatically.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        // Simple placeholder.
+        builder.Writeln("Customer: <<[model.Name]>>");
+
+        // Conditional that will succeed.
+        builder.Writeln("<<if [model.Age > 20]>>Age is greater than 20.<</if>>");
+
+        // Conditional that references a missing property to trigger an error.
+        // The InlineErrorMessages option will insert the error message into the output.
+        builder.Writeln("<<if [model.NonExistent]>>This will cause an error.<</if>>");
+
+        // Save the template (optional, shown for clarity).
         const string templatePath = "template.docx";
-        const string outputPath = "output.docx";
+        template.Save(templatePath);
 
-        // -------------------------------------------------
-        // 1. Create the template document with LINQ tags
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // Prepare the data model.
+        var model = new ReportModel();
 
-        // Simple title
-        builder.Writeln("LINQ Reporting – Inline Error Demo");
-        builder.Writeln();
-
-        // Conditional block that references a missing property (will cause an error)
-        builder.Writeln("<<if [model.Missing]>>");
-        builder.Writeln("This text is inside a failing condition.");
-        // <<error>> tag will be replaced with the evaluation error message
-        builder.Writeln("<<error>>");
-        builder.Writeln("<</if>>");
-        builder.Writeln();
-
-        // Conditional block that evaluates correctly
-        builder.Writeln("<<if [model.Value > 0]>>");
-        builder.Writeln("The supplied value is: <<[model.Value]>>");
-        builder.Writeln("<</if>>");
-
-        // Save the template to disk
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // 2. Load the template and build the report
-        // -------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // Sample data model (intentionally missing the 'Missing' property)
-        var model = new ReportModel { Value = 42 };
-
-        // Configure the reporting engine to inline error messages
-        ReportingEngine engine = new ReportingEngine
+        // Configure the reporting engine to inline error messages.
+        var engine = new ReportingEngine
         {
             Options = ReportBuildOptions.InlineErrorMessages
         };
 
-        // Build the report; the root object name is "model"
-        bool success = engine.BuildReport(reportDoc, model, "model");
+        // Build the report. The root object name must match the tag prefix used in the template.
+        bool success = engine.BuildReport(template, model, "model");
 
-        // -------------------------------------------------
-        // 3. Save the generated report
-        // -------------------------------------------------
-        reportDoc.Save(outputPath);
+        // Save the generated report.
+        const string outputPath = "output.docx";
+        template.Save(outputPath);
 
-        // Optional: indicate success/failure in console (no user interaction required)
-        Console.WriteLine(success
-            ? "Report generated successfully."
-            : "Report generated with errors (see inline messages).");
-    }
-
-    // Data model used by the template
-    public class ReportModel
-    {
-        // Existing property referenced by a valid condition
-        public int Value { get; set; }
-
-        // Note: No 'Missing' property is defined on purpose to trigger an error
+        // Output the success flag.
+        Console.WriteLine($"Report generation success: {success}");
     }
 }

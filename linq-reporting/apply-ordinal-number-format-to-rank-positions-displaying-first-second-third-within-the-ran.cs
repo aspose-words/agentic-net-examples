@@ -4,81 +4,73 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Player
+public class Program
 {
-    public int Position { get; set; }
-    public string Name { get; set; } = string.Empty;
-
-    // Returns ordinal text for the position (First, Second, Third, etc.).
-    public string RankText
+    public static void Main()
     {
-        get
+        // Prepare sample data
+        var players = new List<Player>
         {
-            return Position switch
-            {
-                1 => "First",
-                2 => "Second",
-                3 => "Third",
-                _ => Position + GetOrdinalSuffix(Position)
-            };
-        }
-    }
-
-    private static string GetOrdinalSuffix(int number)
-    {
-        int abs = Math.Abs(number);
-        int lastTwo = abs % 100;
-        if (lastTwo >= 11 && lastTwo <= 13)
-            return "th";
-
-        return (abs % 10) switch
-        {
-            1 => "st",
-            2 => "nd",
-            3 => "rd",
-            _ => "th"
+            new Player { Name = "Alice", Score = 95 },
+            new Player { Name = "Bob", Score = 87 },
+            new Player { Name = "Charlie", Score = 78 },
+            new Player { Name = "Diana", Score = 88 }
         };
+
+        // Sort by score descending and assign ranks
+        players.Sort((a, b) => b.Score.CompareTo(a.Score));
+        for (int i = 0; i < players.Count; i++)
+        {
+            players[i].Rank = i + 1;
+        }
+
+        var model = new ReportModel { Rankings = players };
+
+        // Create template document programmatically
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Ranking Report");
+        builder.Writeln("");
+        builder.Writeln("<<foreach [item in Rankings]>>");
+        builder.Writeln("<<[item.Ordinal]>>: <<[item.Name]>> - Score: <<[item.Score]>>");
+        builder.Writeln("<</foreach>>");
+
+        doc.Save(templatePath);
+
+        // Load the template and build the report
+        var template = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(template, model, "model");
+
+        // Save the generated report
+        var outputPath = "output.docx";
+        template.Save(outputPath);
     }
 }
 
 public class ReportModel
 {
-    public List<Player> Players { get; set; } = new();
+    public List<Player> Rankings { get; set; } = new();
 }
 
-public class Program
+public class Player
 {
-    public static void Main()
+    public string Name { get; set; } = "";
+    public int Score { get; set; }
+    public int Rank { get; set; }
+
+    public string Ordinal => GetOrdinalString(Rank);
+
+    private static string GetOrdinalString(int rank)
     {
-        // 1. Create the template document with LINQ Reporting tags.
-        var templatePath = "RankingTemplate.docx";
-        var builder = new DocumentBuilder();
-        builder.Writeln("Ranking Report");
-        builder.Writeln("<<foreach [player in Players]>>");
-        builder.Writeln("<<[player.RankText]>> - <<[player.Name]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Document.Save(templatePath);
-
-        // 2. Load the template for report generation.
-        var doc = new Document(templatePath);
-
-        // 3. Prepare sample data.
-        var model = new ReportModel
+        return rank switch
         {
-            Players = new List<Player>
-            {
-                new Player { Position = 1, Name = "Alice" },
-                new Player { Position = 2, Name = "Bob" },
-                new Player { Position = 3, Name = "Charlie" },
-                new Player { Position = 4, Name = "Diana" }
-            }
+            1 => "First",
+            2 => "Second",
+            3 => "Third",
+            _ => $"{rank}th"
         };
-
-        // 4. Build the report using the ReportingEngine.
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
-
-        // 5. Save the generated report.
-        doc.Save("RankingReport.docx");
     }
 }
