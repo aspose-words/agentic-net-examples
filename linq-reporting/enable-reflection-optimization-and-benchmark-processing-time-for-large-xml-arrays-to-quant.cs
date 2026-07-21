@@ -1,8 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Xml.Serialization;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -10,84 +9,64 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare output directory
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Register code page provider (required by Aspose.Words for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Generate large data set
-        List<Order> orders = new();
-        for (int i = 0; i < 2000; i++)
+        const int itemCount = 5000;
+        const string xmlPath = "data.xml";
+        const string templatePath = "template.docx";
+        const string outputWithoutOpt = "report_without_optimization.docx";
+        const string outputWithOpt = "report_with_optimization.docx";
+
+        // 1. Create large XML data file
+        var sb = new StringBuilder();
+        sb.AppendLine("<Orders>");
+        for (int i = 1; i <= itemCount; i++)
         {
-            var order = new Order
-            {
-                CustomerName = $"Customer {i}",
-                Items = new()
-                {
-                    new Item { Name = "Item A", Quantity = i % 5 + 1 },
-                    new Item { Name = "Item B", Quantity = (i + 2) % 5 + 1 }
-                }
-            };
-            orders.Add(order);
+            sb.AppendLine("  <Order>");
+            sb.AppendLine($"    <Id>{i}</Id>");
+            sb.AppendLine($"    <Name>Order {i}</Name>");
+            sb.AppendLine("  </Order>");
         }
+        sb.AppendLine("</Orders>");
+        File.WriteAllText(xmlPath, sb.ToString(), Encoding.UTF8);
 
-        // Optional: serialize to XML (demonstrates XML handling)
-        string xmlPath = Path.Combine(outputDir, "orders.xml");
-        var serializer = new XmlSerializer(typeof(List<Order>), new XmlRootAttribute("Orders"));
-        using (var stream = new FileStream(xmlPath, FileMode.Create, FileAccess.Write))
-        {
-            serializer.Serialize(stream, orders);
-        }
-
-        // Create LINQ Reporting template
-        string templatePath = Path.Combine(outputDir, "template.docx");
+        // 2. Create LINQ Reporting template
         var templateDoc = new Document();
         var builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Report of Orders");
         builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Order: <<[order.CustomerName]>>");
+        builder.Writeln("Id: <<[order.Id]>>   Name: <<[order.Name]>>");
         builder.Writeln("<</foreach>>");
         templateDoc.Save(templatePath);
 
-        // Benchmark without reflection optimization
+        // 3. Load XML data source from the file content (use a stream to avoid path interpretation)
+        string xmlContent = File.ReadAllText(xmlPath, Encoding.UTF8);
+        using var xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlContent));
+        var xmlDataSource = new XmlDataSource(xmlStream);
+
+        // 4. Benchmark without reflection optimization
         ReportingEngine.UseReflectionOptimization = false;
         var docWithoutOpt = new Document(templatePath);
-        var engineWithout = new ReportingEngine();
-        var swWithout = Stopwatch.StartNew();
-        bool successWithout = engineWithout.BuildReport(docWithoutOpt, new ReportModel { Orders = orders }, "model");
-        swWithout.Stop();
-        string reportWithoutPath = Path.Combine(outputDir, "report_without_optimization.docx");
-        docWithoutOpt.Save(reportWithoutPath);
+        var engineWithoutOpt = new ReportingEngine();
+        var stopwatch = Stopwatch.StartNew();
+        engineWithoutOpt.BuildReport(docWithoutOpt, xmlDataSource, "Orders");
+        stopwatch.Stop();
+        docWithoutOpt.Save(outputWithoutOpt);
+        long timeWithoutOpt = stopwatch.ElapsedMilliseconds;
 
-        // Benchmark with reflection optimization
+        // 5. Benchmark with reflection optimization
         ReportingEngine.UseReflectionOptimization = true;
         var docWithOpt = new Document(templatePath);
-        var engineWith = new ReportingEngine();
-        var swWith = Stopwatch.StartNew();
-        bool successWith = engineWith.BuildReport(docWithOpt, new ReportModel { Orders = orders }, "model");
-        swWith.Stop();
-        string reportWithPath = Path.Combine(outputDir, "report_with_optimization.docx");
-        docWithOpt.Save(reportWithPath);
+        var engineWithOpt = new ReportingEngine();
+        stopwatch.Restart();
+        engineWithOpt.BuildReport(docWithOpt, xmlDataSource, "Orders");
+        stopwatch.Stop();
+        docWithOpt.Save(outputWithOpt);
+        long timeWithOpt = stopwatch.ElapsedMilliseconds;
 
-        // Output results
-        Console.WriteLine($"Report without optimization: {(successWithout ? "Success" : "Failed")} in {swWithout.ElapsedMilliseconds} ms");
-        Console.WriteLine($"Report with optimization:    {(successWith ? "Success" : "Failed")} in {swWith.ElapsedMilliseconds} ms");
-        Console.WriteLine($"Outputs saved to: {outputDir}");
+        // 6. Output results
+        Console.WriteLine($"Processing {itemCount} items:");
+        Console.WriteLine($"Without reflection optimization: {timeWithoutOpt} ms");
+        Console.WriteLine($"With reflection optimization   : {timeWithOpt} ms");
     }
-}
-
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = "";
-    public int Quantity { get; set; }
 }

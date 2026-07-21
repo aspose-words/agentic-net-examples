@@ -1,71 +1,69 @@
 using System;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
-
-public class ReportModel
-{
-    public string Title { get; set; } = "";
-    public string Content { get; set; } = "";
-    public string AttachmentPath { get; set; } = "";
-    public string AttachmentName { get; set; } = "";
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare folders.
+        // Register code page provider for Aspose.Words (required for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // Define file paths in the current working directory.
         string workDir = Directory.GetCurrentDirectory();
         string templatePath = Path.Combine(workDir, "template.docx");
         string jsonPath = Path.Combine(workDir, "data.json");
-        string attachmentPath = Path.Combine(workDir, "sample.txt");
-        string outputPath = Path.Combine(workDir, "Report.docx");
+        string attachmentPath = Path.Combine(workDir, "attachment.txt");
+        string outputPath = Path.Combine(workDir, "report.docx");
 
-        // Create a simple text file that will be attached.
+        // -----------------------------------------------------------------
+        // 1. Create a simple attachment file that will be embedded in the report.
+        // -----------------------------------------------------------------
         File.WriteAllText(attachmentPath, "This is the content of the attached file.");
 
-        // Create JSON data that references the attachment.
-        var model = new ReportModel
+        // -----------------------------------------------------------------
+        // 2. Create JSON data containing a title and the path to the attachment.
+        // -----------------------------------------------------------------
+        var jsonData = new
         {
-            Title = "Report with Attachment",
-            Content = "The following link points to an attached file.",
-            AttachmentPath = attachmentPath,
-            AttachmentName = "sample.txt"
+            Title = "Report with Embedded Attachment",
+            AttachmentPath = attachmentPath
         };
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(model));
+        string jsonString = JsonConvert.SerializeObject(jsonData, Formatting.Indented);
+        File.WriteAllText(jsonPath, jsonString);
 
-        // Build the template document programmatically.
+        // -----------------------------------------------------------------
+        // 3. Build a template document programmatically.
+        //    The template uses LINQ Reporting tags to insert the title and the attachment.
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Title
         builder.Writeln("<<[model.Title]>>");
-        builder.Writeln();
-
-        // Content
-        builder.Writeln("<<[model.Content]>>");
-        builder.Writeln();
-
-        // Attachment link (using the link tag)
-        builder.Writeln("<<link [model.AttachmentPath] [model.AttachmentName]>>");
-        builder.Writeln();
-
-        // Save the template.
+        builder.Writeln(); // empty line
+        builder.Writeln("Attachment:");
+        // The <<doc>> tag inserts the content of the file referenced by the expression.
+        builder.Writeln("<<doc [model.AttachmentPath]>>");
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
+        // -----------------------------------------------------------------
+        // 4. Load the template and the JSON data source.
+        // -----------------------------------------------------------------
         Document reportDoc = new Document(templatePath);
+        JsonDataSource dataSource = new JsonDataSource(jsonPath);
 
-        // Load JSON data source.
-        JsonDataSource jsonData = new JsonDataSource(jsonPath);
-
-        // Build the report.
+        // -----------------------------------------------------------------
+        // 5. Build the report using ReportingEngine.
+        // -----------------------------------------------------------------
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, jsonData, "model");
+        // The root object name in the template is "model".
+        engine.BuildReport(reportDoc, dataSource, "model");
 
-        // Save the final report.
+        // -----------------------------------------------------------------
+        // 6. Save the generated report.
+        // -----------------------------------------------------------------
         reportDoc.Save(outputPath);
     }
 }

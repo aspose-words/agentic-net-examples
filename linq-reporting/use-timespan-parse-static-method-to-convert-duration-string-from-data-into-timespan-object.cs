@@ -1,45 +1,44 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class ReportModel
 {
-    // Data model used by the LINQ Reporting engine.
-    public class ReportModel
+    // Duration string in the format "hh:mm:ss"
+    public string Duration { get; set; } = "02:15:30";
+}
+
+public class Program
+{
+    public static void Main()
     {
-        // Original duration string from the data source.
-        public string DurationString { get; set; } = "01:30:45";
+        // Create a blank document that will serve as the template.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Converts the string to a TimeSpan using TimeSpan.Parse.
-        public TimeSpan Duration => TimeSpan.Parse(DurationString);
-    }
+        // Insert a LINQ Reporting tag that parses the duration string into a TimeSpan
+        // and then outputs the total minutes.
+        // The engine needs to know about the TimeSpan type to call its static Parse method.
+        builder.Writeln("Total minutes: <<[TimeSpan.Parse(model.Duration).TotalMinutes]>>");
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // 1. Create a blank Word document that will serve as the template.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare the data source.
+        ReportModel model = new ReportModel();
 
-            // Insert a simple paragraph with a LINQ Reporting tag that references the TimeSpan property.
-            builder.Writeln("Duration: <<[model.Duration]>>");
+        // Configure the reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        // Register TimeSpan so that its static members can be used in the template.
+        engine.KnownTypes.Add(typeof(TimeSpan));
 
-            // 2. Prepare the data source.
-            ReportModel model = new ReportModel
-            {
-                // Example value; can be changed to test different inputs.
-                DurationString = "02:15:30"
-            };
+        // Build the report. The root object name must match the tag prefix ("model").
+        engine.BuildReport(doc, model, "model");
 
-            // 3. Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine();
-            // The root object name in the template is "model", so we pass it explicitly.
-            engine.BuildReport(template, model, "model");
+        // Ensure the output directory exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-            // 4. Save the generated document.
-            const string outputPath = "LinqReporting_TimeSpanReport.docx";
-            template.Save(outputPath);
-        }
+        // Save the generated document.
+        string outputPath = Path.Combine(outputDir, "Report.docx");
+        doc.Save(outputPath);
     }
 }

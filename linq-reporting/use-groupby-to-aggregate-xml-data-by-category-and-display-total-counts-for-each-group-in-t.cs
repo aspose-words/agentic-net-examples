@@ -6,67 +6,70 @@ using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class CategoryCount
+{
+    public string Category { get; set; } = "";
+    public int Count { get; set; }
+}
+
+public class ReportModel
+{
+    public List<CategoryCount> Categories { get; set; } = new();
+}
+
 public class Program
 {
     public static void Main()
     {
         // Prepare sample XML data.
-        string xmlPath = "sample.xml";
+        const string xmlPath = "Products.xml";
         File.WriteAllText(xmlPath,
-            @"<Items>
-                <Item><Category>Fruit</Category></Item>
-                <Item><Category>Vegetable</Category></Item>
-                <Item><Category>Fruit</Category></Item>
-                <Item><Category>Dairy</Category></Item>
-                <Item><Category>Vegetable</Category></Item>
-                <Item><Category>Fruit</Category></Item>
-              </Items>");
+            @"<Products>
+                <Product><Category>Books</Category></Product>
+                <Product><Category>Electronics</Category></Product>
+                <Product><Category>Books</Category></Product>
+                <Product><Category>Clothing</Category></Product>
+                <Product><Category>Electronics</Category></Product>
+                <Product><Category>Books</Category></Product>
+              </Products>");
 
-        // Load XML and aggregate by category using LINQ GroupBy.
+        // Load XML and aggregate counts per category using LINQ GroupBy.
         XDocument xdoc = XDocument.Load(xmlPath);
-        List<CategoryGroup> groups = xdoc.Root!
-            .Elements("Item")
-            .GroupBy(item => (string?)item.Element("Category") ?? string.Empty)
-            .Select(g => new CategoryGroup
-            {
-                Category = g.Key,
-                Count = g.Count()
-            })
+        var grouped = xdoc.Root!
+            .Elements("Product")
+            .GroupBy(p => (string?)p.Element("Category") ?? "")
+            .Select(g => new CategoryCount { Category = g.Key, Count = g.Count() })
             .ToList();
 
-        // Wrap the grouped data for the reporting engine.
-        ReportModel model = new ReportModel { Groups = groups };
+        // Wrap the aggregated data in a model object.
+        var model = new ReportModel { Categories = grouped };
 
-        // Create the template document programmatically.
-        string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Category Report");
-        builder.Writeln("<<foreach [group in Groups]>>");
-        builder.Writeln("Category: <<[group.Category]>>, Total: <<[group.Count]>>");
+        // Create a template document programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Insert a heading.
+        builder.Writeln("Category Summary");
+        builder.Writeln();
+
+        // Insert LINQ Reporting tags to iterate over the categories.
+        builder.Writeln("<<foreach [c in Categories]>>");
+        builder.Writeln("Category: <<[c.Category]>> - Total: <<[c.Count]>>");
         builder.Writeln("<</foreach>>");
+
+        // Save the template (optional, demonstrates load/save lifecycle).
+        const string templatePath = "Template.docx";
         templateDoc.Save(templatePath);
 
-        // Load the template and build the report.
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Load the template back (simulating a real scenario where template is a file).
+        var loadedTemplate = new Document(templatePath);
+
+        // Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, model, "model");
 
         // Save the final report.
-        string outputPath = "ReportOutput.docx";
-        reportDoc.Save(outputPath);
+        const string reportPath = "Report.docx";
+        loadedTemplate.Save(reportPath);
     }
-}
-
-// Model representing a single category group.
-public class CategoryGroup
-{
-    public string Category { get; set; } = string.Empty;
-    public int Count { get; set; }
-}
-
-// Wrapper model passed to the reporting engine.
-public class ReportModel
-{
-    public List<CategoryGroup> Groups { get; set; } = new();
 }

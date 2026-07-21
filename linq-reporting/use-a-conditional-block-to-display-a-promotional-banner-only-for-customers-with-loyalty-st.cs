@@ -1,16 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingConditionalBanner
+namespace AsposeWordsLinqReportingDemo
 {
     // Data model for a customer.
     public class Customer
     {
-        public string Name { get; set; } = string.Empty;
-        public bool IsLoyal { get; set; }
+        public string Name { get; set; } = "";
+        public bool LoyaltyStatus { get; set; }
     }
 
     // Wrapper model that will be passed to the reporting engine.
@@ -19,60 +18,62 @@ namespace LinqReportingConditionalBanner
         public List<Customer> Customers { get; set; } = new();
     }
 
-    class Program
+    public class Program
     {
-        static void Main()
+        public static void Main()
         {
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-            string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-
-            // -------------------------------------------------
+            // -----------------------------------------------------------------
             // 1. Create the template document programmatically.
-            // -------------------------------------------------
+            // -----------------------------------------------------------------
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("Customer Report");
+            builder.Writeln(); // Empty line.
 
             // Begin a foreach loop over the Customers collection.
             builder.Writeln("<<foreach [c in Customers]>>");
             // Output the customer's name.
-            builder.Writeln("Customer: <<[c.Name]>>");
-            // Conditional block: show promotional banner only for loyal customers.
-            builder.Writeln("<<if [c.IsLoyal]>>");
-            builder.Writeln("=== Promotional Banner: 20% OFF! ===");
+            builder.Writeln("Name: <<[c.Name]>>");
+            // Conditional block: show promotional banner only if LoyaltyStatus is true.
+            builder.Writeln("<<if [c.LoyaltyStatus]>>");
+            // The banner text is highlighted in red.
+            builder.Writeln("<<textColor [\"Red\"]>>*** Special Promotion! ***<</textColor>>");
             builder.Writeln("<</if>>");
-            // End of foreach.
+            // End of the foreach block.
             builder.Writeln("<</foreach>>");
 
             // Save the template to disk.
+            const string templatePath = "CustomerReportTemplate.docx";
             templateDoc.Save(templatePath);
 
-            // -------------------------------------------------
+            // -----------------------------------------------------------------
             // 2. Load the template and prepare sample data.
-            // -------------------------------------------------
-            Document doc = new Document(templatePath);
+            // -----------------------------------------------------------------
+            Document reportDoc = new Document(templatePath);
 
-            ReportModel model = new ReportModel
+            var model = new ReportModel
             {
                 Customers = new List<Customer>
                 {
-                    new Customer { Name = "Alice", IsLoyal = true },
-                    new Customer { Name = "Bob",   IsLoyal = false },
-                    new Customer { Name = "Carol", IsLoyal = true }
+                    new Customer { Name = "Alice",   LoyaltyStatus = true  },
+                    new Customer { Name = "Bob",     LoyaltyStatus = false },
+                    new Customer { Name = "Charlie", LoyaltyStatus = true  }
                 }
             };
 
-            // -------------------------------------------------
-            // 3. Build the report using the ReportingEngine.
-            // -------------------------------------------------
+            // -----------------------------------------------------------------
+            // 3. Build the report using the LINQ Reporting engine.
+            // -----------------------------------------------------------------
             ReportingEngine engine = new ReportingEngine();
-            // No special options are required for this simple example.
-            engine.BuildReport(doc, model, "model");
+            // The root object name in the template is "model".
+            engine.BuildReport(reportDoc, model, "model");
 
-            // -------------------------------------------------
+            // -----------------------------------------------------------------
             // 4. Save the generated report.
-            // -------------------------------------------------
-            doc.Save(reportPath);
+            // -----------------------------------------------------------------
+            const string outputPath = "CustomerReportOutput.docx";
+            reportDoc.Save(outputPath);
         }
     }
 }

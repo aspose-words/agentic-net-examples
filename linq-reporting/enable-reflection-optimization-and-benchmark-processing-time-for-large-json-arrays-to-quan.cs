@@ -9,93 +9,95 @@ using Newtonsoft.Json;
 
 public class Program
 {
-    // Simple data model matching the JSON objects.
-    public class Item
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
-    }
-
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings).
+        // Register code page provider for Aspose.Words if needed
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for temporary files.
-        string templatePath = "template.docx";
-        string jsonPath = "data.json";
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a large JSON array file.
-        const int itemCount = 20000; // Adjust size for benchmarking.
-        GenerateLargeJsonFile(jsonPath, itemCount);
-
-        // Create the LINQ Reporting template.
+        string templatePath = Path.Combine(outputDir, "template.docx");
         CreateTemplate(templatePath);
 
-        // Benchmark with reflection optimization enabled.
-        ReportingEngine.UseReflectionOptimization = true;
-        double timeWithOptimization = RunReport(templatePath, jsonPath, "data");
+        // Generate large JSON data
+        ReportData data = GenerateLargeData(10_000);
+        string json = JsonConvert.SerializeObject(data);
+        // Deserialize back to object (simulating real scenario)
+        ReportData deserializedData = JsonConvert.DeserializeObject<ReportData>(json)!;
 
-        // Benchmark with reflection optimization disabled.
+        // Benchmark without reflection optimization
         ReportingEngine.UseReflectionOptimization = false;
-        double timeWithoutOptimization = RunReport(templatePath, jsonPath, "data");
+        Document docWithoutOpt = new Document(templatePath);
+        var engineWithoutOpt = new ReportingEngine();
+        var swWithout = Stopwatch.StartNew();
+        engineWithoutOpt.BuildReport(docWithoutOpt, deserializedData, "data");
+        swWithout.Stop();
+        string outputWithout = Path.Combine(outputDir, "Report_WithoutOpt.docx");
+        docWithoutOpt.Save(outputWithout);
 
-        // Output the results.
-        Console.WriteLine($"Processing time with reflection optimization: {timeWithOptimization:F2} ms");
-        Console.WriteLine($"Processing time without reflection optimization: {timeWithoutOptimization:F2} ms");
+        // Benchmark with reflection optimization
+        ReportingEngine.UseReflectionOptimization = true;
+        Document docWithOpt = new Document(templatePath);
+        var engineWithOpt = new ReportingEngine();
+        var swWith = Stopwatch.StartNew();
+        engineWithOpt.BuildReport(docWithOpt, deserializedData, "data");
+        swWith.Stop();
+        string outputWith = Path.Combine(outputDir, "Report_WithOpt.docx");
+        docWithOpt.Save(outputWith);
+
+        // Output benchmark results
+        Console.WriteLine($"Report without reflection optimization: {swWithout.ElapsedMilliseconds} ms");
+        Console.WriteLine($"Report with reflection optimization:    {swWith.ElapsedMilliseconds} ms");
+        Console.WriteLine($"Outputs saved to: {outputDir}");
     }
 
-    // Generates a JSON file containing a large array of Item objects.
-    private static void GenerateLargeJsonFile(string filePath, int count)
+    private static void CreateTemplate(string path)
     {
-        var items = new List<Item>(count);
-        for (int i = 0; i < count; i++)
-        {
-            items.Add(new Item { Id = i + 1, Name = $"Item_{i + 1}" });
-        }
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        string json = JsonConvert.SerializeObject(items);
-        File.WriteAllText(filePath, json, Encoding.UTF8);
-    }
+        // Simple header with generation time
+        builder.Writeln($"Report generated at <<[ReportGenerated]>>");
 
-    // Creates a Word document with a simple foreach tag to iterate over the JSON array.
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Write a header.
-        builder.Writeln("Report generated from large JSON array:");
-        builder.Writeln();
-
-        // LINQ Reporting foreach tag.
-        builder.Writeln("<<foreach [item in data]>>");
-        builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>");
+        // Foreach block for items
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>, Value: <<[item.Value]>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(filePath);
+        doc.Save(path);
     }
 
-    // Loads the template and JSON data source, builds the report, and returns elapsed milliseconds.
-    private static double RunReport(string templatePath, string jsonPath, string rootName)
+    private static ReportData GenerateLargeData(int count)
     {
-        // Load fresh template for each run.
-        Document doc = new Document(templatePath);
-
-        // Load JSON data source from file.
-        using (FileStream jsonStream = File.OpenRead(jsonPath))
+        var items = new List<Item>(count);
+        for (int i = 1; i <= count; i++)
         {
-            JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
-            ReportingEngine engine = new ReportingEngine();
-
-            Stopwatch sw = Stopwatch.StartNew();
-            engine.BuildReport(doc, jsonDataSource, rootName);
-            sw.Stop();
-
-            // Optionally save the generated report (commented out to avoid I/O overhead).
-            // doc.Save($"Report_{(ReportingEngine.UseReflectionOptimization ? "Optimized" : "Standard")}.docx");
-
-            return sw.Elapsed.TotalMilliseconds;
+            items.Add(new Item
+            {
+                Id = i,
+                Name = $"Item {i}",
+                Value = i * 0.1
+            });
         }
+
+        return new ReportData
+        {
+            Items = items,
+            ReportGenerated = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+        };
     }
+}
+
+public class ReportData
+{
+    public List<Item> Items { get; set; } = new();
+    public string ReportGenerated { get; set; } = string.Empty;
+}
+
+public class Item
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public double Value { get; set; }
 }

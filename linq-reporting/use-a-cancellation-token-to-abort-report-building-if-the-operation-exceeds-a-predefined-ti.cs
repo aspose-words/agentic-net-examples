@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using System.Threading;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -9,83 +9,77 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for template and output documents.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        // Register code page provider (required by Aspose.Words for some encodings).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
         // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
+        // 1. Create a LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Simple tag for the customer name.
-        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        // Header.
+        builder.Writeln("Customer: <<[model.Order.CustomerName]>>");
+        builder.Writeln();
 
-        // Loop over order items.
-        builder.Writeln("Items:");
-        builder.Writeln("<<foreach [item in order.Items]>>");
-        builder.Writeln("- <<[item.Name]>>");
+        // Repeating section for order items.
+        builder.Writeln("<<foreach [item in model.Order.Items]>>");
+        builder.Writeln("Item: <<[item.Name]>> - $<<[item.Price]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template.
+        const string templatePath = "Template.docx";
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
         // 2. Prepare data model with a cancellation token.
         // -----------------------------------------------------------------
-        using var cts = new CancellationTokenSource();
-        // Cancel after 1 second.
-        cts.CancelAfter(TimeSpan.FromSeconds(1));
+        // Cancel the operation if it runs longer than 500 milliseconds.
+        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
         CancellationToken token = cts.Token;
 
-        // Build a sample order with several items.
-        Order order = new Order
+        ReportModel model = new()
         {
-            CustomerName = "John Doe",
-            Items = new List<Item>
+            Order = new Order
             {
-                new Item("Apple", token),
-                new Item("Banana", token),
-                new Item("Cherry", token),
-                new Item("Date", token),
-                new Item("Elderberry", token)
+                CustomerName = "John Doe",
+                Items = new List<Item>
+                {
+                    new Item("Widget", 19.99, token),
+                    new Item("Gadget", 29.99, token),
+                    new Item("Doohickey", 9.99, token)
+                }
             }
         };
 
         // -----------------------------------------------------------------
-        // 3. Load the template and build the report with cancellation support.
+        // 3. Build the report with cancellation support.
         // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-
-        bool reportBuilt = false;
-
-        try
+        Document reportDoc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine
         {
-            // BuildReport evaluates the data source lazily.
-            // The Item.Name getter checks the cancellation token and throws if cancelled.
-            reportBuilt = engine.BuildReport(doc, order, "order");
-        }
-        catch (OperationCanceledException)
+            // Inline error messages will be inserted instead of throwing for missing members.
+            Options = ReportBuildOptions.InlineErrorMessages
+        };
+
+        // BuildReport returns a bool indicating whether parsing succeeded.
+        bool success = engine.BuildReport(reportDoc, model, "model");
+
+        // If the token was cancelled, treat the operation as aborted.
+        if (token.IsCancellationRequested)
         {
             Console.WriteLine("Report generation was canceled due to timeout.");
-        }
-        catch (AggregateException ae) when (ae.InnerException is OperationCanceledException)
-        {
-            // Handles the case where the engine wraps the cancellation exception.
-            Console.WriteLine("Report generation was canceled due to timeout.");
-        }
-        catch (InvalidOperationException ex) when (ex.InnerException is OperationCanceledException)
-        {
-            // Handles the case where the engine wraps the cancellation exception.
-            Console.WriteLine("Report generation was canceled due to timeout.");
+            return;
         }
 
-        if (reportBuilt)
+        if (success)
         {
-            doc.Save(reportPath);
-            Console.WriteLine($"Report generated successfully: {reportPath}");
+            reportDoc.Save("Report.docx");
+            Console.WriteLine("Report generated successfully.");
+        }
+        else
+        {
+            Console.WriteLine("Report generation failed due to template errors.");
         }
     }
 }
@@ -93,9 +87,17 @@ public class Program
 // ---------------------------------------------------------------------
 // Data model classes.
 // ---------------------------------------------------------------------
+public class ReportModel
+{
+    public ReportModel() { }
+
+    public CancellationToken Token { get; set; }
+
+    public Order Order { get; set; } = new();
+}
+
 public class Order
 {
-    // Non‑nullable properties are initialized to avoid warnings.
     public string CustomerName { get; set; } = string.Empty;
     public List<Item> Items { get; set; } = new();
 }
@@ -103,24 +105,29 @@ public class Order
 public class Item
 {
     private readonly string _name;
-    private readonly CancellationToken _cancellationToken;
+    private readonly CancellationToken _token;
 
-    public Item(string name, CancellationToken cancellationToken)
+    public Item(string name, double price, CancellationToken token)
     {
         _name = name;
-        _cancellationToken = cancellationToken;
+        Price = price;
+        _token = token;
     }
 
-    // The getter simulates work and checks the cancellation token.
     public string Name
     {
         get
         {
             // Simulate a time‑consuming operation.
-            Thread.Sleep(300);
-            // Abort if cancellation was requested.
-            _cancellationToken.ThrowIfCancellationRequested();
+            Thread.Sleep(200);
+
+            // If cancellation was requested, return a placeholder instead of throwing.
+            if (_token.IsCancellationRequested)
+                return "[canceled]";
+
             return _name;
         }
     }
+
+    public double Price { get; }
 }

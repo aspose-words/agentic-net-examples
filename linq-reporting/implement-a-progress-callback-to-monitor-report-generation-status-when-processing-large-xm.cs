@@ -12,77 +12,62 @@ public class Program
         // Register code page provider for XML handling.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare working folder.
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
-        Directory.CreateDirectory(workDir);
+        // Create a simple template document with LINQ Reporting tags.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("Report");
+        builder.Writeln("<<foreach [order in Orders]>>");
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Amount: <<[order.Amount]>>");
+        builder.Writeln("<</foreach>>");
 
-        // 1. Create a large XML data set.
-        string xmlPath = Path.Combine(workDir, "data.xml");
-        CreateLargeXml(xmlPath, 1000); // 1000 records.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-        // 2. Create a LINQ Reporting template.
-        string templatePath = Path.Combine(workDir, "template.docx");
-        CreateTemplate(templatePath);
+        // Load the template back for report generation.
+        var reportDoc = new Document(templatePath);
 
-        // 3. Load the template document.
-        Document templateDoc = new Document(templatePath);
+        // Sample XML data representing a collection of orders.
+        const string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Orders>
+    <Order>
+        <CustomerName>John Doe</CustomerName>
+        <Amount>123.45</Amount>
+    </Order>
+    <Order>
+        <CustomerName>Jane Smith</CustomerName>
+        <Amount>678.90</Amount>
+    </Order>
+</Orders>";
 
-        // 4. Load the XML data source.
-        XmlDataSource dataSource = new XmlDataSource(xmlPath);
+        // Prepare the XML data source.
+        using var xmlStream = new MemoryStream(Encoding.UTF8.GetBytes(xmlContent));
+        var xmlDataSource = new XmlDataSource(xmlStream);
 
-        // 5. Build the report.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // Use default options.
-        // The root name in the template is "Items".
-        engine.BuildReport(templateDoc, dataSource, "Items");
+        // Build the report using the LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, xmlDataSource, "Orders");
 
-        // 6. Save the generated report with a progress callback.
-        string reportPath = Path.Combine(workDir, "report.docx");
-        OoxmlSaveOptions saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
+        // Save the generated report with a progress callback.
+        var saveOptions = new OoxmlSaveOptions(SaveFormat.Docx)
         {
             ProgressCallback = new SavingProgressCallback()
         };
-        templateDoc.Save(reportPath, saveOptions);
+        reportDoc.Save("ReportOutput.docx", saveOptions);
     }
 
-    // Generates an XML file with the specified number of <Item> elements.
-    private static void CreateLargeXml(string filePath, int count)
-    {
-        using (StreamWriter writer = new StreamWriter(filePath, false, Encoding.UTF8))
-        {
-            writer.WriteLine("<Items>");
-            for (int i = 1; i <= count; i++)
-            {
-                writer.WriteLine("  <Item>");
-                writer.WriteLine($"    <Id>{i}</Id>");
-                writer.WriteLine($"    <Name>Item {i}</Name>");
-                writer.WriteLine("  </Item>");
-            }
-            writer.WriteLine("</Items>");
-        }
-    }
-
-    // Creates a simple Word template containing LINQ Reporting tags.
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        builder.Writeln("Report of Items");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>");
-        builder.Writeln("<</foreach>>");
-
-        doc.Save(filePath);
-    }
-
-    // Callback that receives progress notifications while saving a document.
+    // Callback that receives document saving progress notifications.
     private class SavingProgressCallback : IDocumentSavingCallback
     {
+        private readonly DateTime _startTime = DateTime.Now;
+        private const double MaxDurationSeconds = 10.0; // safety limit
+
         public void Notify(DocumentSavingArgs args)
         {
-            // Output the estimated progress percentage to the console.
-            Console.WriteLine($"Saving progress: {args.EstimatedProgress:F2}%");
+            Console.WriteLine($"Saving progress: {args.EstimatedProgress:P2}");
+            if ((DateTime.Now - _startTime).TotalSeconds > MaxDurationSeconds)
+                throw new OperationCanceledException(
+                    $"Saving aborted after exceeding {MaxDurationSeconds} seconds. Progress={args.EstimatedProgress}");
         }
     }
 }

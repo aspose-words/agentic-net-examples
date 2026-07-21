@@ -1,74 +1,61 @@
 using System;
-using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Product
+namespace LinqReportingExample
 {
-    public string Name { get; set; } = "";
-    public int Quantity { get; set; }
-}
-
-public class ReportModel
-{
-    public List<Product> Products { get; set; } = new();
-}
-
-public class Program
-{
-    public static void Main()
+    // Simple data model representing a product.
+    public class Product
     {
-        // Create sample data.
-        var model = new ReportModel
+        // Name of the product.
+        public string Name { get; set; } = string.Empty;
+
+        // Quantity in stock.
+        public int Quantity { get; set; }
+    }
+
+    public class Program
+    {
+        public static void Main()
         {
-            Products = new List<Product>
+            // Step 1: Create the template document programmatically.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
+
+            // Insert product name placeholder.
+            builder.Writeln("Product: <<[product.Name]>>");
+
+            // Insert quantity placeholder with an if‑else logic.
+            // If Quantity > 0, display the numeric value; otherwise display "Out of stock".
+            builder.Writeln(
+                "Quantity: " +
+                "<<if [product.Quantity > 0]>>" +
+                "<<[product.Quantity]>>" +
+                "<</if>>" +
+                "<<if [product.Quantity == 0]>>Out of stock<</if>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // Step 2: Load the template for reporting.
+            Document reportDoc = new Document(templatePath);
+
+            // Step 3: Prepare sample data.
+            Product sampleProduct = new Product
             {
-                new Product { Name = "Apple", Quantity = 5 },
-                new Product { Name = "Banana", Quantity = 0 },
-                new Product { Name = "Cherry", Quantity = 12 }
-            }
-        };
+                Name = "Widget",
+                Quantity = 0 // Zero quantity triggers the else clause.
+            };
 
-        // -----------------------------------------------------------------
-        // Step 1: Build the template document programmatically.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+            // Step 4: Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            // The root object name in the template is "product".
+            engine.BuildReport(reportDoc, sampleProduct, "product");
 
-        // Header.
-        builder.Writeln("Product Stock Report");
-        builder.Writeln();
-
-        // Begin a foreach loop over the Products collection.
-        builder.Writeln("<<foreach [p in Products]>>");
-
-        // Product name.
-        builder.Writeln("Product: <<[p.Name]>>");
-
-        // If quantity > 0, show the quantity.
-        builder.Writeln("<<if [p.Quantity > 0]>>Quantity: <<[p.Quantity]>> <</if>>");
-
-        // Else (quantity == 0), show "Out of stock".
-        builder.Writeln("<<if [p.Quantity == 0]>>Out of stock<</if>>");
-
-        // End of foreach.
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to a local file.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // Step 2: Load the template and build the report.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-        var engine = new ReportingEngine();
-
-        // Build the report using the model as the root data source.
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+            // Step 5: Save the generated report.
+            const string outputPath = "Report.docx";
+            reportDoc.Save(outputPath);
+        }
     }
 }

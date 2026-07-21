@@ -1,61 +1,60 @@
 using System;
 using System.IO;
-using System.Text;
 using System.Drawing;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Reporting;
 using Aspose.Words.Tables;
-using Aspose.Words.Loading;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing (required on .NET Core).
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Register code page provider for CSV parsing.
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Create sample CSV data file.
-        // -----------------------------------------------------------------
-        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "data.csv");
-        File.WriteAllText(csvPath,
-            "Product,Quantity,Price\r\n" +
-            "Apple,10,0.5\r\n" +
-            "Banana,5,0.3\r\n" +
-            "Carrot,12,0.2\r\n");
+        // 1. Create a sample CSV file.
+        const string csvPath = "sample.csv";
+        File.WriteAllLines(csvPath, new[]
+        {
+            "Product,Quantity,Price",
+            "Apple,10,0.5",
+            "Banana,5,0.3",
+            "Carrot,7,0.2"
+        });
 
-        // -----------------------------------------------------------------
         // 2. Build the template document programmatically.
-        // -----------------------------------------------------------------
+        const string templatePath = "template.docx";
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Define a custom table style.
-        TableStyle customStyle = (TableStyle)template.Styles.Add(StyleType.Table, "CustomTableStyle");
-        customStyle.Font.Name = "Arial";
-        customStyle.Font.Size = 10;
-        customStyle.Shading.BackgroundPatternColor = Color.LightGray;
-        customStyle.ParagraphFormat.Alignment = ParagraphAlignment.Center;
-        customStyle.Borders.LineStyle = LineStyle.Single;
-        customStyle.Borders.Color = Color.DarkGray;
-        customStyle.Borders.LineWidth = 0.5;
+        // Add a title.
+        builder.Writeln("Report generated from CSV data");
+        builder.Writeln();
 
-        // Begin the foreach block.
+        // Define a custom table style named "MyTableStyle".
+        // Cast the added style to TableStyle to access table‑specific formatting.
+        TableStyle tableStyle = (TableStyle)template.Styles.Add(StyleType.Table, "MyTableStyle");
+        tableStyle.Shading.BackgroundPatternColor = Color.LightGray;          // Light gray header background.
+        tableStyle.Borders.Color = Color.DarkGray;                           // Dark gray border color.
+        tableStyle.Borders.LineWidth = 1.0;                                  // Border thickness.
+
+        // Insert LINQ Reporting tags.
         builder.Writeln("<<foreach [row in data]>>");
 
-        // Start the table inside the foreach block.
+        // Start the table.
         Table table = builder.StartTable();
 
         // Header row.
         builder.InsertCell();
-        builder.Write("Product");
+        builder.Writeln("Product");
         builder.InsertCell();
-        builder.Write("Quantity");
+        builder.Writeln("Quantity");
         builder.InsertCell();
-        builder.Write("Price");
+        builder.Writeln("Price");
         builder.EndRow();
 
-        // Data row – each cell contains a LINQ Reporting tag.
+        // Data row – values will be filled from the CSV source.
         builder.InsertCell();
         builder.Writeln("<<[row.Product]>>");
         builder.InsertCell();
@@ -64,41 +63,35 @@ public class Program
         builder.Writeln("<<[row.Price]>>");
         builder.EndRow();
 
-        // End the table.
+        // Finish the table.
         builder.EndTable();
 
-        // Close the foreach block.
         builder.Writeln("<</foreach>>");
 
         // Apply the custom style to the table.
-        table.StyleName = "CustomTableStyle";
+        table.StyleName = "MyTableStyle";
+        table.AutoFit(AutoFitBehavior.AutoFitToContents);
+        table.StyleOptions = TableStyleOptions.FirstRow | TableStyleOptions.RowBands;
 
         // Save the template.
-        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
         template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report using CSV data source.
-        // -----------------------------------------------------------------
+        // 3. Load the template for reporting.
         Document report = new Document(templatePath);
 
-        // Configure CSV load options – the file has a header row.
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-
+        // 4. Prepare the CSV data source.
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true); // first line contains headers
         CsvDataSource csvData = new CsvDataSource(csvPath, loadOptions);
 
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-
-        // The root object name used in the template tags is "data".
+        // 5. Build the report using the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(report, csvData, "data");
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
-        report.Save(reportPath);
+        // 6. Save the final report.
+        const string outputPath = "ReportFromCsv.docx";
+        report.Save(outputPath);
+
+        // Inform that the process completed.
+        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(outputPath)}");
     }
 }

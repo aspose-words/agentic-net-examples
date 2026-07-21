@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -18,29 +19,39 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel();
-        model.Items.Add(new Item { Name = "Apple", Quantity = 5 });
-        model.Items.Add(new Item { Name = "Banana", Quantity = 0 });
-        model.Items.Add(new Item { Name = "Orange", Quantity = 3 });
-
-        // Create a template document programmatically.
+        // 1. Create the template document programmatically.
         var template = new Document();
         var builder = new DocumentBuilder(template);
-        builder.Writeln("Available items count: <<[model.Items.Count(i => i.Quantity > 0)]>>");
-        // Save the template to a local file.
+        // Insert a tag that counts items with Quantity > 0.
+        builder.Writeln("Available items: <<[model.Items.Count(i => i.Quantity > 0)]>>");
         const string templatePath = "Template.docx";
         template.Save(templatePath);
 
-        // Load the template for reporting.
+        // 2. Load the template for reporting.
         var doc = new Document(templatePath);
 
-        // Build the report using the LINQ Reporting engine.
+        // 3. Prepare sample data.
+        var model = new ReportModel
+        {
+            Items = new List<Item>
+            {
+                new Item { Name = "Apple",  Quantity = 5 },
+                new Item { Name = "Banana", Quantity = 0 },
+                new Item { Name = "Orange", Quantity = 3 },
+                new Item { Name = "Pear",   Quantity = 0 }
+            }
+        };
+
+        // 4. Build the report using the LINQ Reporting engine.
         var engine = new ReportingEngine();
         engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
-        doc.Save(outputPath);
+        // 5. Save the generated report.
+        const string reportPath = "Report.docx";
+        doc.Save(reportPath);
+
+        // Optional: output the count to the console for verification.
+        int availableCount = model.Items.Count(i => i.Quantity > 0);
+        Console.WriteLine($"Available items counted: {availableCount}");
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -7,58 +8,63 @@ public class Program
 {
     public static void Main()
     {
-        // Paths for the temporary template and final report.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        // Register code page provider (required for some encodings)
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // -------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // -------------------- Create template --------------------
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Insert a Table of Contents that will pick up headings 1‑3.
+        // Insert a Table of Contents that picks up headings 1‑3 and creates hyperlinks
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Add sample headings that the TOC will reference.
+        // Add sample headings – these will become TOC entries
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 1 – Introduction");
+        builder.Writeln("Chapter 1");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.1 – Background");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 1.2 – Scope");
+        builder.Writeln("Section 1.1");
+        builder.Writeln("Section 1.2");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("Chapter 2 – Details");
-
-        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("Section 2.1 – Analysis");
+        builder.Writeln("Chapter 2");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
-        builder.Writeln("Subsection 2.1.1 – Data");
+        builder.Writeln("Subsection 2.1.1");
 
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
+        // Add a simple data list using LINQ Reporting tags
+        builder.Writeln("\nItems:");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("- <<[item]>>");
+        builder.Writeln("<</foreach>>");
 
-        // -------------------------------------------------
-        // 2. Load the template and run the LINQ Reporting engine.
-        // -------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // Save the template to disk (required before building the report)
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+        template.Save(templatePath);
 
-        // The template does not contain any LINQ Reporting tags,
-        // so we can pass an empty data source.
+        // -------------------- Prepare data model --------------------
+        var model = new ReportModel
+        {
+            Items = new List<string> { "Apple", "Banana", "Cherry" }
+        };
+
+        // -------------------- Build report --------------------
+        Document report = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, new object());
+        engine.BuildReport(report, model, "model");
 
-        // Update fields (TOC) to reflect the headings.
-        reportDoc.UpdateFields();
+        // Update fields so the TOC reflects the generated headings
+        report.UpdateFields();
 
-        // -------------------------------------------------
-        // 3. Save the final report.
-        // -------------------------------------------------
-        reportDoc.Save(reportPath);
+        // Save the final document
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "ReportWithTOC.docx");
+        report.Save(outputPath);
+    }
+
+    // Public data model used by the LINQ Reporting engine
+    public class ReportModel
+    {
+        public List<string> Items { get; set; } = new();
     }
 }

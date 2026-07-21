@@ -1,154 +1,104 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text.RegularExpressions;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Simple data model used by the LINQ Reporting template.
-    public class ReportModel
+    public static void Main()
     {
-        // Sample scalar property.
-        public string Name { get; set; } = "World";
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Collection used by a foreach tag.
-        public List<string> Items { get; set; } = new();
+        // Insert LINQ Reporting tags.
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Item: <<[item.Name]>>");
+        builder.Writeln("<<if [item.Price > 10]>>");
+        builder.Writeln(" - Expensive");
+        builder.Writeln("<</if>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template (required by the lifecycle rule).
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
+
+        // Load the template back (demonstrates load rule usage).
+        Document doc = new Document(templatePath);
+
+        // Validate that every opening tag has a matching closing tag.
+        ValidateTags(doc);
+
+        // Prepare sample data.
+        ReportModel model = new ReportModel
+        {
+            Items = new List<Item>
+            {
+                new Item { Name = "Apple", Price = 5 },
+                new Item { Name = "Laptop", Price = 1200 },
+                new Item { Name = "Book", Price = 15 }
+            }
+        };
+
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
+
+        // Save the generated report.
+        const string outputPath = "output.docx";
+        doc.Save(outputPath);
     }
 
-    public class Program
+    // Simple data model aligned with the template.
+    public class ReportModel
     {
-        // Entry point of the console application.
-        public static void Main()
+        public List<Item> Items { get; set; } = new();
+    }
+
+    public class Item
+    {
+        public string Name { get; set; } = string.Empty;
+        public double Price { get; set; }
+    }
+
+    // Validates that each opening tag has a corresponding closing tag.
+    private static void ValidateTags(Document document)
+    {
+        string allText = document.GetText();
+
+        // List of supported tags.
+        var tags = new[]
         {
-            // Paths for the template and the final report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
+            "foreach", "if", "bookmark", "link",
+            "textColor", "backColor", "cellMerge", "restartNum"
+        };
 
-            // -------------------------------------------------
-            // 1. Create the LINQ Reporting template programmatically.
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        foreach (var tag in tags)
+        {
+            int openingCount = 0;
+            int closingCount = 0;
 
-            // Simple scalar tag.
-            builder.Writeln("Hello <<[model.Name]>>!");
-
-            // Foreach tag that iterates over Items collection.
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("- <<[item]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk (required before loading).
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template back from the file system.
-            // -------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            // -------------------------------------------------
-            // 3. Validate that every opening tag has a matching closing tag.
-            // -------------------------------------------------
-            if (!ValidateTags(doc))
+            // Count opening tags (<<tag ...>>).
+            int index = 0;
+            while ((index = allText.IndexOf($"<<{tag}", index, StringComparison.Ordinal)) != -1)
             {
-                Console.WriteLine("Tag validation failed. The document will not be rendered.");
-                return;
+                // Ensure this is not a closing tag like <</tag>>.
+                if (!allText.Substring(index).StartsWith($"<</{tag}"))
+                    openingCount++;
+                index += 2; // Move past '<<' to continue searching.
             }
 
-            // -------------------------------------------------
-            // 4. Prepare the data source.
-            // -------------------------------------------------
-            ReportModel model = new ReportModel
+            // Count closing tags (<</tag>>).
+            index = 0;
+            while ((index = allText.IndexOf($"<</{tag}", index, StringComparison.Ordinal)) != -1)
             {
-                Name = "Aspose.Words",
-                Items = new List<string> { "Item A", "Item B", "Item C" }
-            };
-
-            // -------------------------------------------------
-            // 5. Build the report using the ReportingEngine.
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
-
-            // -------------------------------------------------
-            // 6. Save the generated report.
-            // -------------------------------------------------
-            doc.Save(reportPath);
-            Console.WriteLine($"Report generated successfully: {Path.GetFullPath(reportPath)}");
-        }
-
-        // Validates that each opening tag (e.g., <<foreach ...>>) has a corresponding closing tag (e.g., <</foreach>>).
-        private static bool ValidateTags(Document document)
-        {
-            // Retrieve the full text of the document, which contains the LINQ Reporting tags.
-            string text = document.GetText();
-
-            // Regular expression to capture all tags of the form <<...>>.
-            Regex tagRegex = new Regex(@"<<([^>]+)>>", RegexOptions.Compiled);
-            MatchCollection matches = tagRegex.Matches(text);
-
-            // Stack to keep track of opening tags.
-            Stack<string> tagStack = new Stack<string>();
-
-            foreach (Match match in matches)
-            {
-                string tagContent = match.Groups[1].Value.Trim();
-
-                // Closing tags start with a forward slash, e.g., /foreach, /if, /bookmark.
-                if (tagContent.StartsWith("/"))
-                {
-                    string closingTagName = tagContent.Substring(1).Split(' ')[0];
-
-                    if (tagStack.Count == 0)
-                    {
-                        Console.WriteLine($"Unexpected closing tag: </{closingTagName}>");
-                        return false;
-                    }
-
-                    string openingTagName = tagStack.Pop();
-                    if (!string.Equals(openingTagName, closingTagName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        Console.WriteLine($"Mismatched tag pair: opened with <{openingTagName}> but closed with </{closingTagName}>");
-                        return false;
-                    }
-                }
-                else
-                {
-                    // Opening tag – extract the tag name (first token before any space or bracket).
-                    string openingTagName = tagContent.Split(new[] { ' ', '[' }, StringSplitOptions.RemoveEmptyEntries)[0];
-                    if (IsTagRequiringClosure(openingTagName))
-                    {
-                        tagStack.Push(openingTagName);
-                    }
-                }
+                closingCount++;
+                index += 3; // Move past '<</' to continue searching.
             }
 
-            if (tagStack.Count > 0)
-            {
-                Console.WriteLine($"Unclosed tag detected: <{tagStack.Peek()}>");
-                return false;
-            }
-
-            // All tags are properly balanced.
-            return true;
-        }
-
-        // Determines whether a tag requires an explicit closing tag.
-        private static bool IsTagRequiringClosure(string tagName)
-        {
-            // Tags that have explicit closing forms in LINQ Reporting.
-            var tagsRequiringClosure = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "foreach",
-                "if",
-                "bookmark",
-                "cellmerge",
-                "restartnum"
-            };
-
-            return tagsRequiringClosure.Contains(tagName);
+            if (openingCount != closingCount)
+                throw new InvalidOperationException(
+                    $"Tag mismatch detected for '{tag}': {openingCount} opening tag(s) vs {closingCount} closing tag(s).");
         }
     }
 }

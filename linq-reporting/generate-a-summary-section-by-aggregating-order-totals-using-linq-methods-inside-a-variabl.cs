@@ -1,28 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Order
 {
-    public Order(string customerName, decimal total)
-    {
-        CustomerName = customerName;
-        Total = total;
-    }
-
+    public int OrderId { get; set; }
     public string CustomerName { get; set; } = "";
     public decimal Total { get; set; }
 }
 
 public class ReportModel
 {
-    public ReportModel()
-    {
-        Orders = new List<Order>();
-    }
-
     public List<Order> Orders { get; set; } = new();
 }
 
@@ -30,30 +21,56 @@ public class Program
 {
     public static void Main()
     {
-        // Create sample data.
+        // Prepare sample data.
         var model = new ReportModel
         {
-            Orders = new()
+            Orders = new List<Order>
             {
-                new Order("Alice", 120.50m),
-                new Order("Bob",   75.00m),
-                new Order("Carol", 210.30m)
+                new Order { OrderId = 1, CustomerName = "Alice",   Total = 120.50m },
+                new Order { OrderId = 2, CustomerName = "Bob",     Total =  85.75m },
+                new Order { OrderId = 3, CustomerName = "Charlie", Total = 210.00m }
             }
         };
 
-        // Build the template document.
+        // Create a template document programmatically.
+        var templatePath = "Template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        builder.Writeln("Order Summary");
+        builder.Writeln("Order Report");
+        builder.Writeln("------------------------------");
+
+        // Table with order details.
+        builder.Writeln("<<foreach [order in model.Orders]>>");
+        var table = builder.StartTable();
+        builder.InsertCell(); builder.Writeln("Order ID");
+        builder.InsertCell(); builder.Writeln("Customer");
+        builder.InsertCell(); builder.Writeln("Total");
+        builder.EndRow();
+
+        builder.InsertCell(); builder.Writeln("<<[order.OrderId]>>");
+        builder.InsertCell(); builder.Writeln("<<[order.CustomerName]>>");
+        builder.InsertCell(); builder.Writeln("<<[order.Total]>>");
+        builder.EndRow();
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+
+        builder.Writeln();
+        builder.Writeln("Summary:");
         // LINQ aggregation inside a variable tag expression.
-        builder.Writeln("Total Amount: <<[model.Orders.Sum(o => o.Total)]>>");
+        builder.Writeln("Total of all orders: <<[model.Orders.Sum(o => o.Total)]>>");
 
-        // Generate the report.
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
 
-        // Save the result.
-        doc.Save("Report.docx");
+        // Build the report using the model as the root data source named "model".
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        reportDoc.Save("Report.docx");
     }
 }

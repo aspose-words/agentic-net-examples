@@ -1,67 +1,90 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class ReportModel
-{
-    // Hyperlink target (URL or bookmark name). Initialized to empty string to avoid nullable warnings.
-    public string Url { get; set; } = string.Empty;
-
-    // Display text for the hyperlink.
-    public string Text { get; set; } = string.Empty;
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data with one valid and one empty hyperlink target.
-        var models = new List<ReportModel>
+        // Register code page provider for Aspose.Words (required for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+        // -------------------------------------------------
+        // 1. Create the template document programmatically
+        // -------------------------------------------------
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        builder.Writeln("Items Report");
+        builder.Writeln("<<foreach [item in Items]>>");
+        // Show the link only when the URL is not empty
+        builder.Writeln("<<if [item.Url]>><<link [item.Url] [item.Name]>><</if>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
+
+        // -------------------------------------------------
+        // 2. Load the template back before building the report
+        // -------------------------------------------------
+        var loadedTemplate = new Document(templatePath);
+
+        // -------------------------------------------------
+        // 3. Prepare sample data
+        // -------------------------------------------------
+        var model = new ReportModel
         {
-            new ReportModel { Url = "https://www.example.com", Text = "Example Site" },
-            new ReportModel { Url = "", Text = "Missing URL" } // This entry should trigger an error log.
+            Items = new List<Item>
+            {
+                new Item { Name = "Google", Url = "https://www.google.com" },
+                new Item { Name = "EmptyLink", Url = "" }, // This will trigger an error
+                new Item { Name = "Aspose", Url = "https://www.aspose.com" }
+            }
         };
 
-        // Create a template document programmatically.
-        const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
-
-        // Load the template for reporting.
-        Document templateDoc = new Document(templatePath);
-
-        // Iterate over the data items, validate hyperlink targets, and log errors.
-        foreach (var model in models)
+        // -------------------------------------------------
+        // 4. Validate hyperlink targets and log errors
+        // -------------------------------------------------
+        foreach (var item in model.Items)
         {
-            if (string.IsNullOrWhiteSpace(model.Url))
+            if (string.IsNullOrWhiteSpace(item.Url))
             {
-                Console.WriteLine($"Error: Hyperlink target is empty for display text \"{model.Text}\".");
-                // Continue processing other items; the report will still be generated.
+                Console.WriteLine($"Error: Item '{item.Name}' has an empty hyperlink target.");
             }
-
-            // Build the report for the current model.
-            ReportingEngine engine = new ReportingEngine();
-            // Use InlineErrorMessages to capture any template parsing issues.
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
-
-            // The root object name in the template is "model".
-            bool success = engine.BuildReport(templateDoc, model, "model");
-
-            // Save the generated report with a distinct filename.
-            string outputPath = $"Report_{Guid.NewGuid():N}.docx";
-            templateDoc.Save(outputPath);
-            Console.WriteLine($"Report generated: {outputPath} (Success: {success})");
         }
-    }
 
-    private static void CreateTemplate(string filePath)
-    {
-        // The template contains a LINQ Reporting link tag.
-        // <<link [model.Url] [model.Text]>>
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-        builder.Writeln("<<link [model.Url] [model.Text]>>");
-        doc.Save(filePath);
+        // -------------------------------------------------
+        // 5. Build the report using LINQ Reporting Engine
+        // -------------------------------------------------
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+        bool success = engine.BuildReport(loadedTemplate, model, "model");
+
+        // -------------------------------------------------
+        // 6. Save the generated report
+        // -------------------------------------------------
+        const string outputPath = "report.docx";
+        loadedTemplate.Save(outputPath);
+
+        Console.WriteLine(success
+            ? $"Report generated successfully: {outputPath}"
+            : $"Report generation completed with errors. See the document: {outputPath}");
     }
+}
+
+// -------------------------------------------------
+// Data model classes
+// -------------------------------------------------
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
 }

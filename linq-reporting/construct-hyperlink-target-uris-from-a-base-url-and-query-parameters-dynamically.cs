@@ -4,80 +4,74 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
+namespace HyperlinkLinqReportingExample
 {
-    // Base URL for the hyperlink.
-    public string BaseUrl { get; set; } = string.Empty;
-
-    // Collection of query parameters.
-    public Dictionary<string, string> Parameters { get; set; } = new();
-
-    // Text that will be displayed for the hyperlink.
-    public string LinkText { get; set; } = string.Empty;
-
-    // Dynamically constructed full URL with encoded query string.
-    public string FullUrl
+    // Model classes used by the LINQ Reporting engine.
+    public class ReportModel
     {
-        get
-        {
-            if (Parameters == null || Parameters.Count == 0)
-                return BaseUrl;
+        // Base URL for the hyperlink.
+        public string BaseUrl { get; set; } = string.Empty;
 
-            var query = string.Join("&",
-                Parameters.Select(p =>
-                    $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}"));
-            return $"{BaseUrl}?{query}";
+        // Collection of query parameters.
+        public List<QueryParam> QueryParams { get; set; } = new();
+
+        // Text that will be displayed for the hyperlink.
+        public string LinkText { get; set; } = string.Empty;
+
+        // Dynamically constructed full URL (base + encoded query string).
+        public string FullUrl
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(BaseUrl))
+                    return string.Empty;
+
+                if (QueryParams == null || QueryParams.Count == 0)
+                    return BaseUrl;
+
+                var encodedParams = QueryParams
+                    .Select(p => $"{Uri.EscapeDataString(p.Name)}={Uri.EscapeDataString(p.Value)}");
+                return $"{BaseUrl}?{string.Join("&", encodedParams)}";
+            }
         }
     }
-}
 
-public class Program
-{
-    public static void Main()
+    public class QueryParam
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string reportPath = "Report.docx";
+        public string Name { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
 
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Dynamic Hyperlink Example");
-        // LINQ Reporting link tag: <<link [uriExpression] [displayTextExpression]>>
-        builder.Writeln("<<link [model.FullUrl] [model.LinkText]>>");
-
-        // Save the template to disk before building the report.
-        templateDoc.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and prepare the data model.
-        // -----------------------------------------------------------------
-        var doc = new Document(templatePath);
-
-        var model = new ReportModel
+    public class Program
+    {
+        public static void Main()
         {
-            BaseUrl = "https://example.com/search",
-            Parameters = new Dictionary<string, string>
+            // 1. Create a blank document that will serve as the template.
+            Document doc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(doc);
+
+            // 2. Insert a LINQ Reporting link tag.
+            //    The first expression provides the URI, the second provides the display text.
+            builder.Writeln("<<link [model.FullUrl] [model.LinkText]>>");
+
+            // 3. Prepare sample data.
+            ReportModel model = new ReportModel
             {
-                { "q", "Aspose.Words" },
-                { "page", "1" },
-                { "lang", "en" }
-            },
-            LinkText = "Search Aspose.Words"
-        };
+                BaseUrl = "https://example.com/search",
+                LinkText = "Search on Example.com",
+                QueryParams = new List<QueryParam>
+                {
+                    new QueryParam { Name = "q", Value = "aspose words" },
+                    new QueryParam { Name = "page", Value = "1" }
+                }
+            };
 
-        // -----------------------------------------------------------------
-        // 3. Build the report using Aspose.Words LINQ Reporting engine.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+            // 4. Build the report using the ReportingEngine.
+            ReportingEngine engine = new ReportingEngine();
+            engine.BuildReport(doc, model, "model");
 
-        // -----------------------------------------------------------------
-        // 4. Save the generated report.
-        // -----------------------------------------------------------------
-        doc.Save(reportPath);
+            // 5. Save the resulting document.
+            doc.Save("HyperlinkReport.docx");
+        }
     }
 }

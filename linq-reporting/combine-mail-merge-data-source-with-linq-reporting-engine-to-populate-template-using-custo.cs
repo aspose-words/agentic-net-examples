@@ -1,69 +1,52 @@
 using System;
-using System.Collections.Generic;
+using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model representing a customer.
-    public class Customer
+    public static void Main()
     {
-        public string Name { get; set; } = "";
-        public string Address { get; set; } = "";
-    }
+        // Create a template document with LINQ Reporting tags.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    // Wrapper class that will be used as the root data source for the LINQ Reporting engine.
-    public class ReportModel
-    {
-        public List<Customer> Customers { get; set; } = new();
-    }
+        // Add a title.
+        builder.Writeln("Customer List:");
+        // Begin a foreach loop over the data source named \"Customers\".
+        builder.Writeln("<<foreach [c in Customers]>>");
+        // Output each customer's name and address.
+        builder.Writeln("Name: <<[c.Name]>>");
+        builder.Writeln("Address: <<[c.Address]>>");
+        builder.Writeln("<</foreach>>");
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Step 1 – Create a template document with LINQ Reporting tags.
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+        // Save the template to disk.
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
 
-            // Add a title.
-            builder.Writeln("Customer Report");
-            builder.Writeln();
+        // Load the template back (required before building the report).
+        Document doc = new Document(templatePath);
 
-            // Begin a foreach loop over the Customers collection.
-            builder.Writeln("<<foreach [c in Customers]>>");
-            builder.Writeln("Name: <<[c.Name]>>");
-            builder.Writeln("Address: <<[c.Address]>>");
-            builder.Writeln("<</foreach>>");
+        // Create a DataTable that will serve as the mail‑merge‑style data source.
+        DataTable customersTable = new DataTable("Customers");
+        customersTable.Columns.Add("Name", typeof(string));
+        customersTable.Columns.Add("Address", typeof(string));
 
-            // Save the template to disk.
-            doc.Save(templatePath);
+        // Populate the table with sample data.
+        customersTable.Rows.Add("Alice Johnson", "123 Maple Street");
+        customersTable.Rows.Add("Bob Smith", "456 Oak Avenue");
+        customersTable.Rows.Add("Carol White", "789 Pine Road");
 
-            // Step 2 – Load the template back (required before building the report).
-            var loadedDoc = new Document(templatePath);
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        // The data source name must match the name used in the template tags.
+        engine.BuildReport(doc, customersTable, "Customers");
 
-            // Step 3 – Prepare sample data.
-            var model = new ReportModel
-            {
-                Customers = new List<Customer>
-                {
-                    new Customer { Name = "Alice Johnson", Address = "123 Maple Street" },
-                    new Customer { Name = "Bob Smith", Address = "456 Oak Avenue" },
-                    new Customer { Name = "Carol Davis", Address = "789 Pine Road" }
-                }
-            };
+        // Save the generated report.
+        const string reportPath = "report.docx";
+        doc.Save(reportPath);
 
-            // Step 4 – Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            // No special options are required for this simple example.
-            engine.BuildReport(loadedDoc, model, "model");
-
-            // Step 5 – Save the generated report.
-            var outputPath = "Report.docx";
-            loadedDoc.Save(outputPath);
-
-            Console.WriteLine($"Report generated successfully: {outputPath}");
-        }
+        // Indicate completion.
+        Console.WriteLine($"Report generated: {reportPath}");
     }
 }

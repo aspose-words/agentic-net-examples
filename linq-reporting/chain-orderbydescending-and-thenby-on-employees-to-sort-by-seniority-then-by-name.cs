@@ -4,69 +4,55 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Employee
 {
-    // Simple data entity representing an employee.
-    public class Employee
-    {
-        public string Name { get; set; } = string.Empty;
-        public int Seniority { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int Seniority { get; set; }
+}
 
-        public Employee(string name, int seniority)
+public class ReportModel
+{
+    public List<Employee> Employees { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        // 1. Create a template document with LINQ Reporting tags.
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        builder.Writeln("Employees Report:");
+        // The foreach tag iterates over the Employees collection sorted by Seniority (desc) then Name (asc).
+        builder.Writeln("<<foreach [emp in Employees.OrderByDescending(e => e.Seniority).ThenBy(e => e.Name)]>>");
+        builder.Writeln("Name: <<[emp.Name]>>, Seniority: <<[emp.Seniority]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // 2. Load the template (simulating a separate load step).
+        var loadedTemplate = new Document(templatePath);
+
+        // 3. Prepare sample data.
+        var employees = new List<Employee>
         {
-            Name = name;
-            Seniority = seniority;
-        }
-    }
+            new Employee { Name = "Alice",   Seniority = 5 },
+            new Employee { Name = "Bob",     Seniority = 7 },
+            new Employee { Name = "Charlie", Seniority = 5 },
+            new Employee { Name = "David",   Seniority = 9 }
+        };
 
-    // Wrapper model that will be passed to the reporting engine.
-    public class ReportModel
-    {
-        public List<Employee> Employees { get; set; } = new();
-    }
+        var model = new ReportModel { Employees = employees };
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // 1. Prepare sample data.
-            var model = new ReportModel
-            {
-                Employees = new List<Employee>
-                {
-                    new Employee("Alice Johnson", 5),
-                    new Employee("Bob Smith", 3),
-                    new Employee("Charlie Davis", 5),
-                    new Employee("Diana Evans", 2)
-                }
-            };
+        // 4. Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedTemplate, model, "model");
 
-            // 2. Create a template document programmatically.
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-
-            builder.Writeln("Employee Report");
-            builder.Writeln("Sorted by seniority (descending) then by name (ascending):");
-            // LINQ Reporting foreach tag with chained OrderByDescending and ThenBy.
-            builder.Writeln("<<foreach [emp in Employees.OrderByDescending(e => e.Seniority).ThenBy(e => e.Name)]>>");
-            builder.Writeln("Name: <<[emp.Name]>> | Seniority: <<[emp.Seniority]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk before building the report (required by lifecycle rule).
-            doc.Save(templatePath);
-
-            // 3. Load the template and build the report.
-            var templateDoc = new Document(templatePath);
-            var engine = new ReportingEngine();
-            engine.BuildReport(templateDoc, model, "model");
-
-            // 4. Save the generated report.
-            var outputPath = "EmployeeReport.docx";
-            templateDoc.Save(outputPath);
-
-            // Inform the user (no interactive input required).
-            Console.WriteLine($"Report generated: {outputPath}");
-        }
+        // 5. Save the generated report.
+        const string reportPath = "Report.docx";
+        loadedTemplate.Save(reportPath);
     }
 }

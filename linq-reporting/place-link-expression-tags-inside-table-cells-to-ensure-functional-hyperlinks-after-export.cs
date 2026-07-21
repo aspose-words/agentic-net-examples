@@ -1,90 +1,79 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+
+public class LinkItem
+{
+    public string Url { get; set; } = "";
+    public string Text { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<LinkItem> Items { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        string templatePath = "Template.docx";
-        string reportPath = "Report.docx";
+        // Prepare sample data.
+        var model = new ReportModel
+        {
+            Items = new()
+            {
+                new LinkItem { Url = "https://www.example.com", Text = "Example Site" },
+                new LinkItem { Url = "https://www.github.com", Text = "GitHub" },
+                new LinkItem { Url = "https://www.microsoft.com", Text = "Microsoft" }
+            }
+        };
 
         // -----------------------------------------------------------------
-        // 1. Create the template document with a table that repeats for each item.
+        // 1. Create the LINQ Reporting template programmatically.
         // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        var templatePath = "Template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Begin a foreach block that iterates over the Items collection.
+        // Begin a foreach block that iterates over Items.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Start the table (header will be written once before the loop).
-        Table table = builder.StartTable();
+        // Create a table where each row contains a hyperlink.
+        var table = builder.StartTable();
 
-        // Header row.
+        // First (and only) cell of the row.
         builder.InsertCell();
-        builder.Writeln("Item");
-        builder.InsertCell();
-        builder.Writeln("Link");
+        // Insert the link tag. The first expression is the URL, the second is the display text.
+        builder.Writeln("<<link [item.Url] [item.Text]>>");
+
+        // Finish the row and the table.
         builder.EndRow();
-
-        // Data row – will be repeated for each item.
-        builder.InsertCell();
-        builder.Writeln("<<[item.Name]>>");
-        builder.InsertCell();
-        // Link tag: first expression is the URL, second is the display text.
-        builder.Writeln("<<link [item.Url] [item.Name]>>");
-        builder.EndRow();
-
-        // Finish the table and the foreach block.
         builder.EndTable();
+
+        // End the foreach block.
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // ---------------------------------------------------------------
-        // 2. Load the template and prepare the data source for the report.
-        // ---------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
 
-        // Sample data model.
-        var model = new ReportModel
-        {
-            Items = new()
-            {
-                new Item { Name = "Aspose", Url = "https://www.aspose.com" },
-                new Item { Name = "GitHub", Url = "https://github.com" }
-            }
-        };
-
-        // -------------------------------------------------
-        // 3. Build the report using the LINQ Reporting engine.
-        // -------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None // default options
-        };
+        // Build the report using the model as the root object named "model".
         engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated report.
-        reportDoc.Save(reportPath);
+        // -----------------------------------------------------------------
+        // 3. Save the generated report. Hyperlinks will be functional.
+        // -----------------------------------------------------------------
+        var outputDocx = "Report.docx";
+        var outputPdf = "Report.pdf";
+
+        reportDoc.Save(outputDocx);
+        reportDoc.Save(outputPdf);
     }
-}
-
-// ---------------------------------------------------------------------
-// Data model classes – must be public with public properties.
-// ---------------------------------------------------------------------
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
 }

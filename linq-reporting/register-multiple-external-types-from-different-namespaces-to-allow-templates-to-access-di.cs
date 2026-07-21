@@ -1,112 +1,68 @@
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-namespace MyApp.Models
+namespace ModelsA
 {
-    // Simple person model.
     public class Person
     {
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = "";
         public int Age { get; set; }
     }
 }
 
-namespace MyApp.Entities
+namespace ModelsB
 {
-    // Simple product model.
-    public class Product
+    public class Address
     {
-        public string Name { get; set; } = string.Empty;
-        public decimal Price { get; set; }
+        public string City { get; set; } = "";
+        public string Country { get; set; } = "";
     }
 }
 
-// Wrapper model that will be passed to the reporting engine.
-public class ReportModel
+public class ReportData
 {
-    public List<MyApp.Models.Person> Persons { get; set; } = new();
-    public List<MyApp.Entities.Product> Products { get; set; } = new();
+    public ModelsA.Person Person { get; set; } = new();
+    public ModelsB.Address Address { get; set; } = new();
 }
 
-// Marked as partial to match the test harness's partial declaration.
-public partial class Program
+public class Program
 {
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Persons section.
-        builder.Writeln("Persons:");
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("- <<[p.Name]>> (Age: <<[p.Age]>>)");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
-
-        // Products section.
-        builder.Writeln("Products:");
-        builder.Writeln("<<foreach [pr in Products]>>");
-        builder.Writeln("- <<[pr.Name]>> : $<<[pr.Price]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
-
-        // Example of using a static member from a registered external type.
-        builder.Writeln("Generated GUID: <<[Guid.NewGuid()]>>");
-
-        // Save the template to disk.
+        // Create template document with LINQ Reporting tags.
         const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Customer Report");
+        builder.Writeln("Name: <<[data.Person.Name]>>");
+        builder.Writeln("Age: <<[data.Person.Age]>>");
+        builder.Writeln("City: <<[data.Address.City]>>");
+        builder.Writeln("Country: <<[data.Address.Country]>>");
+        doc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 2. Load the template back (simulating a real-world scenario).
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+        // Load the template.
+        var template = new Document(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Prepare sample data.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
+        // Prepare data.
+        var data = new ReportData
         {
-            Persons = new List<MyApp.Models.Person>
-            {
-                new() { Name = "Alice", Age = 30 },
-                new() { Name = "Bob", Age = 45 }
-            },
-            Products = new List<MyApp.Entities.Product>
-            {
-                new() { Name = "Laptop", Price = 999.99m },
-                new() { Name = "Smartphone", Price = 499.50m }
-            }
+            Person = new ModelsA.Person { Name = "John Doe", Age = 30 },
+            Address = new ModelsB.Address { City = "New York", Country = "USA" }
         };
 
-        // -----------------------------------------------------------------
-        // 4. Configure the ReportingEngine and register external types.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine();
+        // Configure ReportingEngine.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
 
-        // Register types from different namespaces so that the template can access them.
-        engine.KnownTypes.Add(typeof(System.Guid));                     // System namespace.
-        engine.KnownTypes.Add(typeof(MyApp.Models.Person));            // MyApp.Models namespace.
-        engine.KnownTypes.Add(typeof(MyApp.Entities.Product));         // MyApp.Entities namespace.
+        // Build the report.
+        bool success = engine.BuildReport(template, data, "data");
 
-        // -----------------------------------------------------------------
-        // 5. Build the report.
-        // -----------------------------------------------------------------
-        // The root object name in the template is "model".
-        engine.BuildReport(loadedTemplate, model, "model");
-
-        // -----------------------------------------------------------------
-        // 6. Save the generated report.
-        // -----------------------------------------------------------------
+        // Save the generated report.
         const string outputPath = "Report.docx";
-        loadedTemplate.Save(outputPath);
+        template.Save(outputPath);
+
+        Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Output saved to {Path.GetFullPath(outputPath)}");
     }
 }

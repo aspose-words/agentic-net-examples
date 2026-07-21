@@ -4,71 +4,52 @@ using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+public class Person
 {
-    // Simple data model representing a person.
-    public class Person
-    {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
 
-    // Wrapper class that will be passed as the root data source.
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
+public class ReportModel
+{
+    // Collection that will be filtered inside the template.
+    public List<Person> persons { get; set; } = new();
+}
 
-    class Program
+public class Program
+{
+    public static void Main()
     {
-        static void Main()
+        // 1. Prepare sample data.
+        var model = new ReportModel
         {
-            // -----------------------------------------------------------------
-            // 1. Create the template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
-
-            builder.Writeln("Adults (Age > 18):");
-            // The foreach tag filters the collection directly in the template.
-            builder.Writeln("<<foreach [p in model.Persons.Where(p => p.Age > 18)]>>");
-            builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare the data source.
-            // -----------------------------------------------------------------
-            var doc = new Document(templatePath);
-
-            var model = new ReportModel
+            persons = new List<Person>
             {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "Alice",   Age = 20 },
-                    new Person { Name = "Bob",     Age = 17 },
-                    new Person { Name = "Charlie", Age = 25 }
-                }
-            };
+                new Person { Name = "Alice",   Age = 17 },
+                new Person { Name = "Bob",     Age = 22 },
+                new Person { Name = "Charlie", Age = 19 },
+                new Person { Name = "Diana",   Age = 15 }
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // 3. Build the report using the ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-            // The root name "model" must match the name used in the template tags.
-            engine.BuildReport(doc, model, "model");
+        // 2. Create a template document programmatically.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "Report.docx";
-            doc.Save(outputPath);
+        // Add a heading.
+        builder.Writeln("Adults (Age > 18):");
 
-            // Indicate completion (no interactive input required).
-            Console.WriteLine($"Report generated: {outputPath}");
-        }
+        // LINQ Reporting tag that filters the collection using Where().
+        builder.Writeln("<<foreach [p in persons.Where(p => p.Age > 18)]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
+
+        // 3. Build the report using the ReportingEngine.
+        var engine = new ReportingEngine();
+        // No special options are required for this simple example.
+        engine.BuildReport(doc, model, "model");
+
+        // 4. Save the generated report.
+        doc.Save("AdultsReport.docx");
     }
 }

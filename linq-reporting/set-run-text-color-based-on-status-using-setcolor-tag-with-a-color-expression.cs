@@ -1,63 +1,64 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        // Collection of items to be displayed in the report.
-        public List<Item> Items { get; set; } = new();
-    }
+        // Prepare folders
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-    // Individual item with a status field.
-    public class Item
-    {
-        public string Status { get; set; } = string.Empty;
-    }
+        // Create template document
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-    public class Program
-    {
-        public static void Main()
+        builder.Writeln("Report: Items with Status Colors");
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln(
+            "<<textColor [item.Status == \"Success\" ? \"Green\" : item.Status == \"Warning\" ? \"Orange\" : \"Red\"]>>" +
+            "Item: <<[item.Name]>> | Status: <<[item.Status]>>" +
+            "<</textColor>>");
+        builder.Writeln("<</foreach>>");
+
+        string templatePath = Path.Combine(outputDir, "template.docx");
+        template.Save(templatePath);
+
+        // Prepare data model
+        ReportModel model = new ReportModel
         {
-            // 1. Create a blank document and insert the LINQ Reporting template.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Begin a foreach loop over the Items collection.
-            builder.Writeln("<<foreach [item in Items]>>");
-
-            // Use the textColor tag. The color expression selects a color based on the item's status.
-            // The expression returns a known color name string.
-            builder.Writeln(
-                "<<textColor [item.Status == \"Completed\" ? \"Green\" : " +
-                "item.Status == \"Pending\" ? \"Orange\" : \"Red\"]>>" +
-                "<<[item.Status]>>" +
-                "<</textColor>>");
-
-            // End the foreach loop.
-            builder.Writeln("<</foreach>>");
-
-            // 2. Prepare sample data.
-            ReportModel model = new()
+            Items = new List<Item>
             {
-                Items = new List<Item>
-                {
-                    new() { Status = "Completed" },
-                    new() { Status = "Pending" },
-                    new() { Status = "Failed" },
-                    new() { Status = "Completed" }
-                }
-            };
+                new Item { Name = "Task A", Status = "Success" },
+                new Item { Name = "Task B", Status = "Warning" },
+                new Item { Name = "Task C", Status = "Error" },
+                new Item { Name = "Task D", Status = "Success" }
+            }
+        };
 
-            // 3. Build the report using the ReportingEngine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+        // Load template and build report
+        Document doc = new Document(templatePath);
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-            // 4. Save the generated report.
-            doc.Save("Report.docx");
-        }
+        // Save the generated report
+        string reportPath = Path.Combine(outputDir, "report.docx");
+        doc.Save(reportPath);
+
+        Console.WriteLine($"Report generated at: {reportPath}");
     }
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
 }

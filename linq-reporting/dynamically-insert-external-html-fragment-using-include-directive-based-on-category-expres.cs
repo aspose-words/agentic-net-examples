@@ -3,66 +3,64 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingIncludeExample
+public class Program
 {
-    // Data model used by the LINQ Reporting engine.
-    public class ReportModel
+    public static void Main()
     {
-        // Category that determines which HTML fragment to include.
-        public string Category { get; set; } = string.Empty;
+        // Create sample HTML fragments.
+        File.WriteAllText("categoryA.html", "<h2>Category A Content</h2><p>This is content for category A.</p>");
+        File.WriteAllText("categoryB.html", "<h2>Category B Content</h2><p>This is content for category B.</p>");
 
-        // Returns the file name of the HTML fragment based on the Category value.
-        public string HtmlFilePath
+        // Build the LINQ Reporting template.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Show the selected category.
+        builder.Writeln("Selected Category: <<[model.Category]>>");
+
+        // Insert the HTML fragment returned by the model.
+        // The expression evaluates to an HTML string, and the -html switch tells the engine to treat it as HTML.
+        builder.Writeln("<<[model.IncludeHtml] -html>>");
+
+        // Save the template.
+        template.Save("template.docx");
+
+        // Prepare the data model.
+        ReportModel model = new ReportModel
         {
-            get
-            {
-                // Simple logic: Category "A" uses fragment1.html, otherwise fragment2.html.
-                return Category == "A" ? "fragment1.html" : "fragment2.html";
-            }
-        }
+            Category = "A" // Change to "B" to include the other fragment.
+        };
+
+        // Load the template and generate the report.
+        Document report = new Document("template.docx");
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, model, "model");
+
+        // Save the generated report.
+        report.Save("output.docx");
     }
+}
 
-    public class Program
+// Public data model aligned with the template.
+public class ReportModel
+{
+    // Category used in the template.
+    public string Category { get; set; } = string.Empty;
+
+    // Returns the HTML fragment content based on the Category value.
+    public string IncludeHtml
     {
-        public static void Main()
+        get
         {
-            // -----------------------------------------------------------------
-            // 1. Prepare sample HTML fragments.
-            // -----------------------------------------------------------------
-            File.WriteAllText("fragment1.html", "<p style=\"color:blue;\">This is fragment <b>ONE</b>.</p>");
-            File.WriteAllText("fragment2.html", "<p style=\"color:green;\">This is fragment <i>TWO</i>.</p>");
+            string filePath = Category switch
+            {
+                "A" => "categoryA.html",
+                "B" => "categoryB.html",
+                _ => "categoryA.html"
+            };
 
-            // -----------------------------------------------------------------
-            // 2. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            const string templatePath = "Template.docx";
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Write a line showing the selected category.
-            builder.Writeln("Category: <<[model.Category]>>");
-
-            // Insert the external HTML fragment based on the model's HtmlFilePath.
-            // The -html switch tells the engine to treat the inserted content as HTML.
-            builder.Writeln("<<[model.HtmlFilePath] -html>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new Document(templatePath);
-
-            // Create a model instance with a specific category.
-            ReportModel model = new ReportModel { Category = "A" };
-
-            // Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
-
-            // Save the generated report.
-            reportDoc.Save("Report.docx");
+            // Read and return the HTML file content.
+            return File.Exists(filePath) ? File.ReadAllText(filePath) : string.Empty;
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 using System.IO;
 using System.Text;
 using Aspose.Words;
@@ -8,39 +9,51 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing.
+        // Register code page provider for CSV parsing (required for some encodings).
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a sample CSV file with a header and some rows.
-        string csvPath = "data.csv";
-        File.WriteAllLines(csvPath, new[]
-        {
-            "Id,Name,Status",
-            "1,Apple,Available",
-            "2,Banana,OutOfStock",
-            "3,Cherry,Available",
-            "4,Date,Available",
-            "5,Elderberry,OutOfStock"
-        });
+        // Prepare a working folder.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
 
-        // Build a template document that groups rows by Status and shows the count per group.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // 1. Create a sample CSV file.
+        string csvPath = Path.Combine(workDir, "data.csv");
+        File.WriteAllText(csvPath,
+            "Id,Name,Status\r\n" +
+            "1,Alice,Open\r\n" +
+            "2,Bob,Closed\r\n" +
+            "3,Charlie,Open\r\n" +
+            "4,David,InProgress\r\n" +
+            "5,Eve,Closed\r\n");
 
-        builder.Writeln("Status Summary:");
-        builder.Writeln("<<foreach [g in persons.GroupBy(p => p.Status)]>>");
+        // 2. Build a template document containing LINQ Reporting tags.
+        string templatePath = Path.Combine(workDir, "template.docx");
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Status Summary Report");
+        // Use GroupBy in the template to aggregate rows by the Status column.
+        builder.Writeln("<<foreach [g in persons.GroupBy(r => r[\"Status\"].ToString())]>>");
         builder.Writeln("Status: <<[g.Key]>> - Count: <<[g.Count()]>>");
         builder.Writeln("<</foreach>>");
 
-        // Load the CSV data source, indicating that the first line contains headers.
+        templateDoc.Save(templatePath);
+
+        // 3. Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // 4. Create a CSV data source with header row detection.
         CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
         CsvDataSource dataSource = new CsvDataSource(csvPath, loadOptions);
 
-        // Generate the report using the LINQ Reporting engine.
+        // 5. Build the report using the data source.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(template, dataSource, "persons");
+        engine.BuildReport(reportDoc, dataSource, "persons");
 
-        // Save the populated document.
-        template.Save("Report.docx");
+        // 6. Save the generated report.
+        string outputPath = Path.Combine(workDir, "ReportOutput.docx");
+        reportDoc.Save(outputPath);
+
+        Console.WriteLine("Report generated at: " + outputPath);
     }
 }

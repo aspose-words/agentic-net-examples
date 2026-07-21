@@ -3,80 +3,68 @@ using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using System.Text;
 
 namespace LinqReportingExample
 {
-    // Simple data model with a collection to bind.
-    public class ReportModel
-    {
-        public List<Person> Persons { get; set; } = new();
-    }
-
+    // Data model classes
     public class Person
     {
         public string Name { get; set; } = "";
         public int Age { get; set; }
     }
 
+    public class ReportModel
+    {
+        public List<Person> Persons { get; set; } = new();
+    }
+
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
+            // Register code page provider for Aspose.Words (required in some environments)
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Paths for template and output documents
             string templatePath = "Template.docx";
             string reportPath = "Report.docx";
 
-            // -----------------------------------------------------------------
-            // 1. Create the DOCX template programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new();
-            DocumentBuilder builder = new(templateDoc);
+            // -------------------------------------------------
+            // 1. Create the template document with LINQ tags
+            // -------------------------------------------------
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            // Add a title.
             builder.Writeln("Persons Report");
-            builder.Writeln();
-
-            // Open a foreach block that iterates over the collection.
             builder.Writeln("<<foreach [person in Persons]>>");
-            // Inside the block write the fields to be populated.
-            builder.Writeln("- Name: <<[person.Name]>>, Age: <<[person.Age]>>");
-            // Close the foreach block.
+            builder.Writeln("Name: <<[person.Name]>>");
+            builder.Writeln("Age: <<[person.Age]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template to disk.
+            // Save the template to disk
             templateDoc.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Prepare sample data.
-            // -----------------------------------------------------------------
-            ReportModel model = new()
-            {
-                Persons = new List<Person>
-                {
-                    new() { Name = "Alice", Age = 30 },
-                    new() { Name = "Bob", Age = 45 },
-                    new() { Name = "Charlie", Age = 25 }
-                }
-            };
+            // -------------------------------------------------
+            // 2. Load the template and prepare the data source
+            // -------------------------------------------------
+            Document reportDoc = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Load the template and build the report.
-            // -----------------------------------------------------------------
-            Document reportDoc = new(templatePath);
+            ReportModel model = new ReportModel();
+            model.Persons.Add(new Person { Name = "Alice", Age = 30 });
+            model.Persons.Add(new Person { Name = "Bob", Age = 45 });
+            model.Persons.Add(new Person { Name = "Charlie", Age = 28 });
 
-            ReportingEngine engine = new();
-            // No special options are required for this simple example.
-            engine.Options = ReportBuildOptions.None;
+            // -------------------------------------------------
+            // 3. Build the report using ReportingEngine
+            // -------------------------------------------------
+            ReportingEngine engine = new ReportingEngine();
+            // No special options required for this simple example
+            engine.BuildReport(reportDoc, model, "model");
 
-            // Build the report using the model as the root object named "model".
-            bool success = engine.BuildReport(reportDoc, model, "model");
-
-            // Optionally, you could check the success flag when using InlineErrorMessages.
-            // For this example we simply proceed to save the document.
-
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
+            // -------------------------------------------------
+            // 4. Save the generated report
+            // -------------------------------------------------
             reportDoc.Save(reportPath);
         }
     }

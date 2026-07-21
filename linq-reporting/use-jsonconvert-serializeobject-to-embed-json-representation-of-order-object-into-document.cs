@@ -1,56 +1,67 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
 public class Order
 {
-    public int Id { get; set; } = 1;
-    public string CustomerName { get; set; } = "John Doe";
-    public List<OrderItem> Items { get; set; } = new()
-    {
-        new OrderItem { Product = "Widget", Quantity = 3, Price = 9.99 },
-        new OrderItem { Product = "Gadget", Quantity = 2, Price = 14.50 }
-    };
-    public DateTime OrderDate { get; set; } = DateTime.Now;
+    public int OrderId { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public List<OrderItem> Items { get; set; } = new();
+
+    // Exclude this property from JSON serialization to avoid recursive calls.
+    [JsonIgnore]
+    public string Json => JsonConvert.SerializeObject(this, Formatting.Indented);
 }
 
 public class OrderItem
 {
-    public string Product { get; set; } = "";
-    public int Quantity { get; set; } = 0;
-    public double Price { get; set; } = 0.0;
-}
+    public int ItemId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int Quantity { get; set; }
 
-public class ReportModel
-{
-    public Order Order { get; set; } = new();
-
-    // Serialized JSON representation of the Order object for debugging.
-    public string OrderJson => JsonConvert.SerializeObject(Order, Formatting.Indented);
+    public OrderItem(int itemId, string name, int quantity)
+    {
+        ItemId = itemId;
+        Name = name;
+        Quantity = quantity;
+    }
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare the data model.
-        var model = new ReportModel();
+        // Required for some encodings used by Aspose.Words.
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a new blank document that will serve as the template.
+        // Sample data.
+        var order = new Order
+        {
+            OrderId = 1001,
+            CustomerName = "John Doe",
+            Items = new List<OrderItem>
+            {
+                new OrderItem(1, "Laptop", 2),
+                new OrderItem(2, "Mouse", 5)
+            }
+        };
+
+        // Build the template document.
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
+        builder.Writeln("Order Debug Information:");
+        // LINQ Reporting tag that outputs the JSON string.
+        builder.Writeln("<<[order.Json]>>");
 
-        // Insert a heading and a LINQ Reporting tag that will output the JSON string.
-        builder.Writeln("Order JSON Debug:");
-        builder.Writeln("<<[model.OrderJson]>>");
-
-        // Build the report using the ReportingEngine.
+        // Generate the report.
         var engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        engine.BuildReport(doc, order, "order");
 
-        // Save the generated document.
-        doc.Save("Report.docx");
+        // Save the result.
+        const string outputPath = "OrderReport.docx";
+        doc.Save(outputPath);
     }
 }

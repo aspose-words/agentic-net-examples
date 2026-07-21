@@ -8,45 +8,59 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing (required for some encodings).
+        // Register code page provider required for CSV parsing.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Enable reflection optimization globally (default is true, but set explicitly).
+        // Enable reflection optimization globally.
         ReportingEngine.UseReflectionOptimization = true;
 
-        // Create a small CSV file with headers.
-        string csvPath = "people.csv";
-        File.WriteAllLines(csvPath, new[]
-        {
-            "Name,Age",
-            "Alice,30",
-            "Bob,25"
-        });
+        // Paths for temporary files.
+        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+        Directory.CreateDirectory(workDir);
+        string templatePath = Path.Combine(workDir, "Template.docx");
+        string csvPath = Path.Combine(workDir, "People.csv");
+        string outputPath = Path.Combine(workDir, "Report.docx");
 
-        // Build a template document containing LINQ Reporting tags.
-        string templatePath = "template.docx";
+        // -----------------------------------------------------------------
+        // Create a simple CSV file with a few rows.
+        // -----------------------------------------------------------------
+        File.WriteAllText(csvPath,
+            "Name,Age\r\n" +
+            "Alice,30\r\n" +
+            "Bob,25\r\n" +
+            "Charlie,35\r\n");
+
+        // -----------------------------------------------------------------
+        // Build the template document programmatically.
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("<<foreach [person in persons]>>");
-        builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
+
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [row in data]>>");
+        builder.Writeln("Name: <<[row.Name]>>, Age: <<[row.Age]>>");
         builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the saved template for reporting.
+        // -----------------------------------------------------------------
+        // Load the template for reporting.
+        // -----------------------------------------------------------------
         Document reportDoc = new Document(templatePath);
 
-        // Configure CSV data source options (first line contains headers).
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
-        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
-
-        // Disable reflection optimization for this small CSV import to avoid overhead.
+        // Disable reflection optimization for this small CSV import.
         ReportingEngine.UseReflectionOptimization = false;
 
-        // Build the report using the CSV data source.
+        // Prepare CSV data source.
+        var csvOptions = new CsvDataLoadOptions(hasHeaders: true);
+        CsvDataSource csvData = new CsvDataSource(csvPath, csvOptions);
+
+        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, csvDataSource, "persons");
+        engine.BuildReport(reportDoc, csvData, "data");
 
         // Save the generated report.
-        reportDoc.Save("report.docx");
+        reportDoc.Save(outputPath);
     }
 }

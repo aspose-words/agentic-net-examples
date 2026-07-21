@@ -3,63 +3,60 @@ using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReporting
 {
-    public static void Main()
+    public class Program
     {
-        // Create a simple template document with LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        public static void Main()
+        {
+            // Ensure the working directory exists.
+            string workDir = Path.Combine(Directory.GetCurrentDirectory(), "Work");
+            Directory.CreateDirectory(workDir);
 
-        // Header.
-        builder.Writeln("Customer Report");
-        builder.Writeln("----------------");
+            // Paths for the template, XML data, and output report.
+            string templatePath = Path.Combine(workDir, "Template.docx");
+            string xmlPath = Path.Combine(workDir, "Data.xml");
+            string reportPath = Path.Combine(workDir, "Report.docx");
 
-        // Use a foreach loop over a collection named "persons".
-        builder.Writeln("<<foreach [person in persons]>>");
-        // The XML may miss the Age element; we want it to appear as an empty string.
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age:  <<[person.Age]>>");
-        builder.Writeln("<</foreach>>");
+            // 1. Create a simple Word template with LINQ Reporting tags.
+            // The template references a missing XML element (LastName) to demonstrate handling.
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            builder.Writeln("First Name: <<[person.FirstName]>>");
+            builder.Writeln("Last Name: <<[person.LastName]>>"); // This element is missing in the XML.
+            templateDoc.Save(templatePath);
 
-        // Save the template to disk.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "template.docx");
-        template.Save(templatePath);
-
-        // Load the template back (simulating a real scenario where the template is a file).
-        Document loadedTemplate = new Document(templatePath);
-
-        // Sample XML data: the second person lacks the <Age> element.
-        string xmlContent = @"
-<persons>
+            // 2. Create an XML file where the <LastName> element is intentionally omitted.
+            string xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<root>
     <person>
-        <Name>John Doe</Name>
-        <Age>30</Age>
+        <FirstName>John</FirstName>
+        <!-- LastName element is missing -->
     </person>
-    <person>
-        <Name>Jane Smith</Name>
-        <!-- Age element is missing for Jane -->
-    </person>
-</persons>";
+</root>";
+            File.WriteAllText(xmlPath, xmlContent);
 
-        // Create an XmlDataSource from the XML string.
-        using MemoryStream xmlStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(xmlContent));
-        XmlDataSource xmlDataSource = new XmlDataSource(xmlStream);
+            // 3. Load the template document.
+            Document doc = new Document(templatePath);
 
-        // Configure the ReportingEngine to treat missing members as empty strings.
-        ReportingEngine engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
-        // Optional: customize the message shown for missing members (empty string suppresses any output).
-        engine.MissingMemberMessage = string.Empty;
+            // 4. Load the XML data source.
+            XmlDataSource xmlDataSource = new XmlDataSource(xmlPath);
 
-        // Build the report. The data source name must match the collection name used in the template.
-        engine.BuildReport(loadedTemplate, xmlDataSource, "persons");
+            // 5. Configure the ReportingEngine to treat missing members as empty strings.
+            ReportingEngine engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.AllowMissingMembers;
+            // Optional: customize the message shown for missing members (empty string suppresses output).
+            engine.MissingMemberMessage = string.Empty;
 
-        // Save the generated report.
-        string outputPath = Path.Combine(Environment.CurrentDirectory, "report.docx");
-        loadedTemplate.Save(outputPath);
+            // 6. Build the report. The empty string for dataSourceName means members are accessed directly.
+            engine.BuildReport(doc, xmlDataSource, "");
 
-        // Indicate completion.
-        Console.WriteLine($"Report generated: {outputPath}");
+            // 7. Save the generated report.
+            doc.Save(reportPath);
+
+            // Indicate completion.
+            Console.WriteLine("Report generated successfully at:");
+            Console.WriteLine(reportPath);
+        }
     }
 }

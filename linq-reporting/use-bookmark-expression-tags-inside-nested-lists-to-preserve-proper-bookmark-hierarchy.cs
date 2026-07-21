@@ -1,93 +1,101 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
+using Aspose.Words.Lists;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Data model classes
-    public class ReportModel
+    public static void Main()
     {
-        public List<Category> Categories { get; set; } = new();
-    }
-
-    public class Category
-    {
-        public string Name { get; set; } = "";
-        public string Bookmark { get; set; } = "";
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public string Bookmark { get; set; } = "";
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Prepare sample data
-            var model = new ReportModel
+            Categories = new()
             {
-                Categories = new List<Category>
+                new Category
                 {
-                    new Category
+                    Name = "Fruits",
+                    Items = new()
                     {
-                        Name = "Fruits",
-                        Bookmark = "bmFruits",
-                        Items = new List<Item>
-                        {
-                            new Item { Name = "Apple",  Bookmark = "bmApple" },
-                            new Item { Name = "Banana", Bookmark = "bmBanana" }
-                        }
-                    },
-                    new Category
+                        new Item { Title = "Apple",  BookmarkName = "bm_Apple" },
+                        new Item { Title = "Banana", BookmarkName = "bm_Banana" }
+                    }
+                },
+                new Category
+                {
+                    Name = "Vegetables",
+                    Items = new()
                     {
-                        Name = "Vegetables",
-                        Bookmark = "bmVegetables",
-                        Items = new List<Item>
-                        {
-                            new Item { Name = "Carrot", Bookmark = "bmCarrot" },
-                            new Item { Name = "Tomato", Bookmark = "bmTomato" }
-                        }
+                        new Item { Title = "Carrot",   BookmarkName = "bm_Carrot" },
+                        new Item { Title = "Tomato",   BookmarkName = "bm_Tomato" }
                     }
                 }
-            };
+            }
+        };
 
-            // -----------------------------------------------------------------
-            // Step 1: Create the template document programmatically
-            // -----------------------------------------------------------------
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+        // -----------------------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-            builder.Writeln("Report with nested lists and bookmarks:");
-            builder.Writeln("<<foreach [category in Categories]>>");
-            // Category bookmark and name
-            builder.Writeln("<<bookmark [category.Bookmark]>><<[category.Name]>> <</bookmark>>");
-            // Items under the category
-            builder.Writeln("<<foreach [item in category.Items]>>");
-            builder.Writeln("\t- <<bookmark [item.Bookmark]>><<[item.Name]>> <</bookmark>>");
-            builder.Writeln("<</foreach>>");
-            builder.Writeln("<</foreach>>");
+        // Define outer (numbered) and inner (bulleted) list styles.
+        List outerList = doc.Lists.Add(ListTemplate.NumberArabicDot);
+        List innerList = doc.Lists.Add(ListTemplate.BulletDefault);
 
-            // Save the template to disk
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Begin outer foreach over Categories.
+        builder.Writeln("<<foreach [cat in Categories]>>");
+        builder.ListFormat.List = outerList;
+        builder.Writeln("<<[cat.Name]>>"); // Category name as outer list item.
 
-            // -----------------------------------------------------------------
-            // Step 2: Load the template and build the report
-            // -----------------------------------------------------------------
-            var loadedTemplate = new Document(templatePath);
-            var engine = new ReportingEngine();
+        // Begin inner foreach over Items of the current Category.
+        builder.Writeln("<<foreach [itm in cat.Items]>>");
+        builder.ListFormat.List = innerList;
+        // Bookmark tag preserving hierarchy.
+        builder.Writeln("<<bookmark [itm.BookmarkName]>><<[itm.Title]>><</bookmark>>");
+        builder.Writeln("<</foreach>>"); // End inner foreach.
 
-            // Build the report using the model as the root data source named "model"
-            engine.BuildReport(loadedTemplate, model, "model");
+        // Reset to outer list for the next category.
+        builder.ListFormat.List = outerList;
+        builder.Writeln("<</foreach>>"); // End outer foreach.
 
-            // Save the generated report
-            const string reportPath = "Report.docx";
-            loadedTemplate.Save(reportPath);
-        }
+        // Save the template to disk.
+        doc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // Load the template and build the report.
+        // -----------------------------------------------------------------
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options.
+
+        // Build the report using the model as the root data source named "model".
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        reportDoc.Save("Report.docx");
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes (public, non‑nullable properties are initialized).
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    public List<Category> Categories { get; set; } = new();
+}
+
+public class Category
+{
+    public string Name { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Item
+{
+    public string Title { get; set; } = string.Empty;
+    public string BookmarkName { get; set; } = string.Empty;
 }

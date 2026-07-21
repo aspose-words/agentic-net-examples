@@ -1,68 +1,66 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingExample
+public static class MyUtilities
 {
-    // Utility class with a static method to format a decimal as a currency string.
-    public static class MyUtilities
+    // Formats a numeric value as a currency string using the current culture.
+    public static string FormatCurrency(decimal value) => value.ToString("C", CultureInfo.CurrentCulture);
+}
+
+public class Product
+{
+    public string Name { get; set; } = string.Empty;
+    public decimal Price { get; set; }
+}
+
+public class ReportModel
+{
+    public List<Product> Products { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public static string FormatCurrency(decimal value)
+        // Prepare the template document.
+        var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Product Report");
+        builder.Writeln("<<foreach [p in model.Products]>>");
+        builder.Writeln("Name: <<[p.Name]>>");
+        builder.Writeln("Price: <<[MyUtilities.FormatCurrency(p.Price)]>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk and reload it to satisfy the lifecycle rule.
+        doc.Save(templatePath);
+        var templateDoc = new Document(templatePath);
+
+        // Create sample data.
+        var model = new ReportModel
         {
-            // Use the current culture's currency format.
-            return value.ToString("C");
-        }
-    }
-
-    // Data model used by the LINQ Reporting engine.
-    public class Product
-    {
-        // Sample price property.
-        public decimal Price { get; set; } = 0m;
-    }
-
-    public class ReportModel
-    {
-        // Collection of products that will be iterated in the template.
-        public List<Product> Items { get; set; } = new();
-    }
-
-    public class Program
-    {
-        public static void Main()
-        {
-            // 1. Create a blank document and a builder to construct the template.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // 2. Insert a foreach block that iterates over the Items collection.
-            builder.Writeln("<<foreach [item in Items]>>");
-            // Inside the loop, call the custom static method to format the price.
-            builder.Writeln("Price: <<[MyUtilities.FormatCurrency(item.Price)]>>");
-            builder.Writeln("<</foreach>>");
-
-            // 3. Prepare sample data.
-            ReportModel model = new ReportModel
+            Products = new List<Product>
             {
-                Items = new List<Product>
-                {
-                    new Product { Price = 19.99m },
-                    new Product { Price = 5.5m },
-                    new Product { Price = 1234.56m }
-                }
-            };
+                new() { Name = "Apple", Price = 1.23m },
+                new() { Name = "Banana", Price = 0.99m },
+                new() { Name = "Cherry", Price = 2.50m }
+            }
+        };
 
-            // 4. Configure the reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            // Register the utility class so its static members can be used in the template.
-            engine.KnownTypes.Add(typeof(MyUtilities));
+        // Configure the reporting engine.
+        var engine = new ReportingEngine();
+        engine.KnownTypes.Add(typeof(MyUtilities));
 
-            // 5. Build the report using the model as the root object named "model".
-            engine.BuildReport(doc, model, "model");
+        // Build the report using the model as the root data source named "model".
+        engine.BuildReport(templateDoc, model, "model");
 
-            // 6. Save the generated document.
-            doc.Save("ReportOutput.docx");
-        }
+        // Save the generated report.
+        var outputPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
+        templateDoc.Save(outputPath);
     }
 }

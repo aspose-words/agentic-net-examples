@@ -1,96 +1,74 @@
 using System;
+using System.IO;
 using System.Reflection;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-// Assembly attribute that specifies the custom logger type.
-// The attribute class is defined in the global namespace so it can be referenced here.
-[assembly: LoggingAssemblyAttribute(typeof(CustomLogger))]
+// Assembly attribute to associate the reporting engine with a custom logger.
+[assembly: ReportingEngineLogging(typeof(CustomLogger))]
 
-// Custom attribute to hold the logger type.
-[AttributeUsage(AttributeTargets.Assembly, Inherited = false)]
-public sealed class LoggingAssemblyAttribute : Attribute
+public class ReportingEngineLoggingAttribute : Attribute
 {
     public Type LoggerType { get; }
 
-    public LoggingAssemblyAttribute(Type loggerType) => LoggerType = loggerType;
-}
-
-// Simple logger that writes messages to the console.
-public class CustomLogger
-{
-    public void Log(string message) => Console.WriteLine($"[CustomLogger] {message}");
-}
-
-namespace AsposeWordsLinqReportingExample
-{
-    // Sample data model.
-    public class Person
+    public ReportingEngineLoggingAttribute(Type loggerType)
     {
-        public string Name { get; set; } = "John Doe";
+        LoggerType = loggerType;
     }
+}
 
-    public static class Program
+public static class CustomLogger
+{
+    public static void Log(string message) => Console.WriteLine($"[CustomLog] {message}");
+}
+
+public class Model
+{
+    public string Name { get; set; } = "John Doe";
+    // Intentionally missing property to trigger an inline error.
+}
+
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data.
+        var model = new Model();
+
+        // Create a template document programmatically.
+        var templatePath = "template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Hello <<[model.Name]>>!");
+        builder.Writeln("This will cause an error: <<[model.Unknown]>>");
+        doc.Save(templatePath);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+
+        // Configure the reporting engine.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+        // Build the report.
+        bool success = engine.BuildReport(reportDoc, model, "model");
+
+        // Retrieve the custom logger from the assembly attribute.
+        var attr = (ReportingEngineLoggingAttribute?)Attribute.GetCustomAttribute(
+            Assembly.GetExecutingAssembly(),
+            typeof(ReportingEngineLoggingAttribute));
+
+        // Log the result using the custom logger if available.
+        if (attr?.LoggerType == typeof(CustomLogger))
         {
-            // Resolve the logger from the assembly attribute.
-            var loggerAttr = Assembly.GetExecutingAssembly()
-                                     .GetCustomAttribute<LoggingAssemblyAttribute>();
-            var logger = loggerAttr != null
-                ? Activator.CreateInstance(loggerAttr.LoggerType) as CustomLogger
-                : null;
-
-            // Paths for the template and the generated report.
-            const string templatePath = "Template.docx";
-            const string reportPath = "Report.docx";
-
-            // -----------------------------------------------------------------
-            // 1. Create the template document with a LINQ Reporting tag that will
-            //    intentionally reference a missing member to trigger an error.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-            builder.Writeln("Customer Name: <<[person.Name]>>");
-            builder.Writeln("Missing field (will cause error): <<[person.MissingProperty]>>");
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template back from disk (required before building the report).
-            // -----------------------------------------------------------------
-            var loadedTemplate = new Document(templatePath);
-
-            // -----------------------------------------------------------------
-            // 3. Configure the ReportingEngine.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine();
-            // Enable inline error messages so that BuildReport returns a success flag.
-            engine.Options = ReportBuildOptions.InlineErrorMessages;
-            // Provide a friendly message for missing members.
-            engine.MissingMemberMessage = "N/A";
-
-            // -----------------------------------------------------------------
-            // 4. Build the report.
-            // -----------------------------------------------------------------
-            var data = new Person();
-            bool success = engine.BuildReport(loadedTemplate, data, "person");
-
-            // -----------------------------------------------------------------
-            // 5. Unified error handling using the custom logger.
-            // -----------------------------------------------------------------
-            if (!success && logger != null)
-            {
-                logger.Log("Report generation completed with errors. See the document for inline messages.");
-            }
-            else if (logger != null)
-            {
-                logger.Log("Report generated successfully.");
-            }
-
-            // -----------------------------------------------------------------
-            // 6. Save the final report.
-            // -----------------------------------------------------------------
-            loadedTemplate.Save(reportPath);
+            if (success)
+                CustomLogger.Log("Report generated successfully.");
+            else
+                CustomLogger.Log("Report generation failed. Inline error messages were inserted.");
         }
+
+        // Save the generated report.
+        var outputPath = "report.docx";
+        reportDoc.Save(outputPath);
     }
 }

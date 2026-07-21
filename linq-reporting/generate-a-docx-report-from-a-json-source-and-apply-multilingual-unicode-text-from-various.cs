@@ -1,77 +1,63 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Newtonsoft.Json;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for possible Unicode handling.
+        // Enable code pages for Unicode handling.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Paths for temporary files.
-        const string jsonPath = "sample.json";
-        const string templatePath = "template.docx";
-        const string outputPath = "ReportOutput.docx";
+        // Sample JSON containing multilingual text.
+        string jsonContent = @"{
+  ""Title"": ""Multilingual Report"",
+  ""Description"": ""Demonstration of LINQ Reporting with Unicode text."",
+  ""Languages"": [
+    { ""LanguageName"": ""English"", ""Text"": ""Hello, world!"" },
+    { ""LanguageName"": ""Русский"", ""Text"": ""Привет, мир!"" },
+    { ""LanguageName"": ""中文"", ""Text"": ""你好，世界！"" },
+    { ""LanguageName"": ""العربية"", ""Text"": ""مرحبا بالعالم!"" },
+    { ""LanguageName"": ""हिन्दी"", ""Text"": ""नमस्ते दुनिया!"" }
+  ]
+}";
+        // Write JSON to a local file.
+        string dataFile = "data.json";
+        File.WriteAllText(dataFile, jsonContent, Encoding.UTF8);
 
-        // 1. Create sample JSON with multilingual greetings.
-        var sampleData = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "Alice", Greeting = "Hello (English)" },
-                new Item { Name = "Боб", Greeting = "Привет (Russian)" },
-                new Item { Name = "陈", Greeting = "你好 (Chinese)" },
-                new Item { Name = "ديف", Greeting = "مرحبا (Arabic)" },
-                new Item { Name = "ईवा", Greeting = "नमस्ते (Hindi)" }
-            }
-        };
-        // Serialize to JSON file.
-        File.WriteAllText(jsonPath, JsonConvert.SerializeObject(sampleData, Formatting.Indented));
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // 2. Load JSON into a strongly‑typed model.
-        var json = File.ReadAllText(jsonPath);
-        var model = JsonConvert.DeserializeObject<ReportModel>(json)!; // Non‑null after deserialization.
+        // Insert LINQ Reporting tags.
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln("<<[model.Description]>>");
+        builder.Writeln();
 
-        // 3. Build the LINQ Reporting template programmatically.
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Multilingual Greeting Report");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("Name: <<[item.Name]>>");
-        builder.Writeln("Greeting: <<[item.Greeting]>>");
+        builder.Writeln("Languages:");
+        builder.Writeln("<<foreach [lang in Languages]>>");
+        builder.Writeln("- <<[lang.LanguageName]>>: <<[lang.Text]>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk (required before BuildReport according to rules).
-        templateDoc.Save(templatePath);
+        // Save the template.
+        string templateFile = "template.docx";
+        template.Save(templateFile);
 
-        // 4. Load the template and generate the report.
-        var reportDoc = new Document(templatePath);
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // Default options.
+        // Load the template for reporting.
+        Document reportDoc = new Document(templateFile);
 
-        // Build the report using the model as the root object named "model".
-        engine.BuildReport(reportDoc, model, "model");
+        // Load JSON data source.
+        Aspose.Words.Reporting.JsonDataSource jsonData = new Aspose.Words.Reporting.JsonDataSource(dataFile);
 
-        // 5. Save the final report.
-        reportDoc.Save(outputPath);
+        // Build the report using the LINQ Reporting engine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
+        engine.BuildReport(reportDoc, jsonData, "model");
+
+        // Save the generated report.
+        string outputFile = "report.docx";
+        reportDoc.Save(outputFile);
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Individual item containing multilingual text.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public string Greeting { get; set; } = string.Empty;
 }

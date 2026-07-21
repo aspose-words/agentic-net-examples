@@ -1,118 +1,111 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Required for Table type
+using Aspose.Words.Tables;   // Needed for Table type
 
-public class BookmarkInNestedTables
+public class Program
 {
     public static void Main()
     {
-        // Paths for the template and the generated report.
-        const string templatePath = "Template.docx";
-        const string outputPath = "Report.docx";
+        // Sample data model.
+        ReportModel model = new()
+        {
+            Sections = new List<Section>
+            {
+                new()
+                {
+                    Title = "First Section",
+                    Items = new List<Item>
+                    {
+                        new() { Name = "Item 1A", BookmarkName = "BM_1A" },
+                        new() { Name = "Item 1B", BookmarkName = "BM_1B" }
+                    }
+                },
+                new()
+                {
+                    Title = "Second Section",
+                    Items = new List<Item>
+                    {
+                        new() { Name = "Item 2A", BookmarkName = "BM_2A" },
+                        new() { Name = "Item 2B", BookmarkName = "BM_2B" },
+                        new() { Name = "Item 2C", BookmarkName = "BM_2C" }
+                    }
+                }
+            }
+        };
 
-        // -------------------------------------------------
-        // 1. Create the template document with nested tables.
-        // -------------------------------------------------
+        // -----------------------------------------------------------------
+        // Create the template document programmatically.
+        // -----------------------------------------------------------------
         Document template = new Document();
         DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Outer foreach – iterate over Parents.
-        builder.Writeln("<<foreach [parent in Parents]>>");
+        // Begin outer foreach over sections.
+        builder.Writeln("<<foreach [section in Sections]>>");
+        builder.Writeln("Section: <<[section.Title]>>");
 
-        // Start outer table.
-        var outerTable = builder.StartTable();
+        // Outer table – one cell per section that will contain the inner table.
+        Table outerTable = builder.StartTable();
+        builder.InsertCell(); // start outer cell
 
-        // First cell of the outer row.
+        // Begin inner foreach over items of the current section.
+        builder.Writeln("<<foreach [item in section.Items]>>");
+
+        // Inner table – each item becomes a row with a bookmark.
+        Table innerTable = builder.StartTable();
+
+        // Row for the current item.
         builder.InsertCell();
-
-        // Inner foreach – iterate over Children of the current Parent.
-        builder.Writeln("<<foreach [child in parent.Children]>>");
-
-        // Start inner table.
-        var innerTable = builder.StartTable();
-
-        // Cell that will contain the bookmark.
-        builder.InsertCell();
-
-        // Bookmark tag: the expression returns the bookmark name.
-        builder.Writeln("<<bookmark [child.BookmarkName]>>");
-        // Content inside the bookmark.
-        builder.Writeln("<<[child.Text]>>");
-        // Closing bookmark tag.
+        builder.Writeln("<<bookmark [item.BookmarkName]>>");
+        builder.Writeln("<<[item.Name]>>");
         builder.Writeln("<</bookmark>>");
-
-        // End inner table row and table.
         builder.EndRow();
-        builder.EndTable();
 
-        // End inner foreach.
-        builder.Writeln("<</foreach>>");
+        builder.EndTable(); // end inner table for this item
+        builder.Writeln("<</foreach>>"); // end inner foreach
 
-        // End outer table row and table.
+        // End outer cell/row and outer table.
         builder.EndRow();
         builder.EndTable();
 
         // End outer foreach.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template to a temporary file.
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
         template.Save(templatePath);
 
-        // -------------------------------------------------
-        // 2. Prepare the data model.
-        // -------------------------------------------------
-        var model = new ReportModel
-        {
-            Parents = new List<Parent>
-            {
-                new Parent
-                {
-                    Children = new List<Child>
-                    {
-                        new Child { BookmarkName = "BM1", Text = "First child of first parent" },
-                        new Child { BookmarkName = "BM2", Text = "Second child of first parent" }
-                    }
-                },
-                new Parent
-                {
-                    Children = new List<Child>
-                    {
-                        new Child { BookmarkName = "BM3", Text = "First child of second parent" },
-                        new Child { BookmarkName = "BM4", Text = "Second child of second parent" }
-                    }
-                }
-            }
-        };
+        // Load the template for reporting.
+        Document doc = new Document(templatePath);
 
-        // -------------------------------------------------
-        // 3. Load the template and build the report.
-        // -------------------------------------------------
-        Document report = new Document(templatePath);
+        // Build the report using LINQ Reporting Engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(report, model, "model");
+        engine.BuildReport(doc, model, "model");
 
-        // Save the final document.
-        report.Save(outputPath);
+        // Save the resulting document.
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
+        doc.Save(outputPath);
     }
 }
 
-// -----------------------------------------------------------------
-// Data model classes – all members are public and initialized.
-// -----------------------------------------------------------------
+// ---------------------------------------------------------------------
+// Data model classes.
+// ---------------------------------------------------------------------
 public class ReportModel
 {
-    public List<Parent> Parents { get; set; } = new();
+    public List<Section> Sections { get; set; } = new();
 }
 
-public class Parent
+public class Section
 {
-    public List<Child> Children { get; set; } = new();
+    public string Title { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
 }
 
-public class Child
+public class Item
 {
-    public string BookmarkName { get; set; } = "";
-    public string Text { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
+    public string BookmarkName { get; set; } = string.Empty;
 }

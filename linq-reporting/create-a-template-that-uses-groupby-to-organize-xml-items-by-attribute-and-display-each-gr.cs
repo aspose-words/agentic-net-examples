@@ -2,99 +2,115 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Xml.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+public partial class Program
 {
+    // Entry point
     public static void Main()
     {
-        // Register code page provider for XML loading.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // 1. Prepare sample XML data
+        const string xmlFileName = "items.xml";
+        CreateSampleXml(xmlFileName);
 
-        // Paths for the template, XML data and the final report.
-        string templatePath = "Template.docx";
-        string xmlDataPath = "Data.xml";
-        string reportPath = "Report.docx";
+        // 2. Load XML and transform it into a grouped data model
+        ReportModel model = BuildReportModelFromXml(xmlFileName);
 
-        // -----------------------------------------------------------------
-        // 1. Create the LINQ Reporting template programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // 3. Create a LINQ Reporting template programmatically
+        const string templateFileName = "template.docx";
+        CreateTemplateDocument(templateFileName);
 
-        builder.Writeln("LINQ Reporting – GroupBy Example");
-        builder.Writeln();
+        // 4. Load the template and build the report
+        Document report = new Document(templateFileName);
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(report, model, "model");
 
-        // Outer foreach iterates over groups.
-        builder.Writeln("<<foreach [g in Groups]>>");
-        builder.Writeln("Group: <<[g.Key]>>");
-        builder.Writeln();
+        // 5. Save the generated report
+        const string outputFileName = "report.docx";
+        report.Save(outputFileName);
+    }
 
-        // Inner foreach iterates over items within the current group.
-        builder.Writeln("<<foreach [i in g.Items]>>");
-        builder.Writeln("- <<[i.Name]>>");
-        builder.Writeln("<</foreach>>");
-        builder.Writeln();
-        builder.Writeln("<</foreach>>");
+    // Creates a simple XML file with items that have a Category attribute
+    private static void CreateSampleXml(string filePath)
+    {
+        var doc = new XDocument(
+            new XElement("Items",
+                new XElement("Item", new XAttribute("Category", "Fruit"), new XAttribute("Name", "Apple")),
+                new XElement("Item", new XAttribute("Category", "Fruit"), new XAttribute("Name", "Banana")),
+                new XElement("Item", new XAttribute("Category", "Vegetable"), new XAttribute("Name", "Carrot")),
+                new XElement("Item", new XAttribute("Category", "Vegetable"), new XAttribute("Name", "Lettuce")),
+                new XElement("Item", new XAttribute("Category", "Beverage"), new XAttribute("Name", "Coffee"))
+            )
+        );
+        doc.Save(filePath);
+    }
 
-        // Save the template to disk (required before BuildReport).
-        templateDoc.Save(templatePath);
+    // Reads the XML file, creates Item objects, groups them by Category,
+    // and builds the wrapper model required by the reporting engine.
+    private static ReportModel BuildReportModelFromXml(string xmlPath)
+    {
+        var xdoc = XDocument.Load(xmlPath);
 
-        // -----------------------------------------------------------------
-        // 2. Create a sample XML data source.
-        // -----------------------------------------------------------------
-        string xmlContent =
-@"<Items>
-    <Item type=""A""><Name>Alpha</Name></Item>
-    <Item type=""B""><Name>Beta</Name></Item>
-    <Item type=""A""><Name>Gamma</Name></Item>
-    <Item type=""C""><Name>Delta</Name></Item>
-    <Item type=""B""><Name>Epsilon</Name></Item>
-</Items>";
-
-        File.WriteAllText(xmlDataPath, xmlContent, Encoding.UTF8);
-
-        // -----------------------------------------------------------------
-        // 3. Load XML, group items by the 'type' attribute and build a model.
-        // -----------------------------------------------------------------
-        XDocument xDoc = XDocument.Load(xmlDataPath);
-
-        var groups = xDoc.Root!
+        // Parse XML into a flat list of Item objects
+        List<Item> items = xdoc.Root!
             .Elements("Item")
-            .GroupBy(x => (string?)x.Attribute("type") ?? string.Empty)
-            .Select(g => new Group
+            .Select(e => new Item
             {
-                Key = g.Key,
-                Items = g.Select(i => new Item
-                {
-                    Name = (string?)i.Element("Name") ?? string.Empty
-                }).ToList()
+                Category = (string?)e.Attribute("Category") ?? string.Empty,
+                Name = (string?)e.Attribute("Name") ?? string.Empty
             })
             .ToList();
 
-        ReportModel model = new ReportModel { Groups = groups };
+        // Group items by Category
+        List<Group> groups = items
+            .GroupBy(i => i.Category)
+            .Select(g => new Group
+            {
+                Key = g.Key,
+                Items = g.ToList()
+            })
+            .ToList();
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using the ReportingEngine.
-        // -----------------------------------------------------------------
-        // Load the template document.
-        Document reportDoc = new Document(templatePath);
+        // Return the model that will be passed to the engine
+        return new ReportModel { Groups = groups };
+    }
 
-        // Build the report. The root object name used in the template tags is "model".
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+    // Generates a Word document containing LINQ Reporting tags.
+    private static void CreateTemplateDocument(string filePath)
+    {
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // Save the generated report.
-        reportDoc.Save(reportPath);
+        // Optional title
+        builder.Writeln("Items grouped by Category");
+        builder.Writeln();
+
+        // Outer foreach iterates over groups
+        builder.Writeln("<<foreach [group in Groups]>>");
+        builder.Writeln("Category: <<[group.Key]>>");
+        builder.Writeln();
+
+        // Inner foreach iterates over items within the current group
+        builder.Writeln("<<foreach [item in group.Items]>>");
+        builder.Writeln("- <<[item.Name]>>");
+        builder.Writeln("<</foreach>>");
+        builder.Writeln();
+        builder.Writeln("<</foreach>>");
+
+        // Save the template for later loading
+        doc.Save(filePath);
     }
 }
 
-// ---------------------------------------------------------------------
-// Data model classes used by the template.
-// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// Data model classes – must be public with public properties for the engine.
+// ---------------------------------------------------------------------------
+
 public class ReportModel
 {
     public List<Group> Groups { get; set; } = new();
@@ -108,5 +124,6 @@ public class Group
 
 public class Item
 {
+    public string Category { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
 }

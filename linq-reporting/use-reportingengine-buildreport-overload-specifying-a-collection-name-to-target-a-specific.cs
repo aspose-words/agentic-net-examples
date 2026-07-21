@@ -1,51 +1,56 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-
-public class Product
-{
-    public string Name { get; set; } = "";
-    public double Price { get; set; }
-}
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for possible legacy encodings.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // Prepare sample data.
-        List<Product> products = new()
-        {
-            new Product { Name = "Apple", Price = 0.99 },
-            new Product { Name = "Banana", Price = 0.59 },
-            new Product { Name = "Cherry", Price = 2.49 }
-        };
-
-        // Create a template document programmatically.
+        // Create a simple template document with LINQ Reporting tags.
         Document doc = new Document();
         DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Add a heading.
-        builder.Writeln("Product List");
-        builder.Writeln();
+        // Insert a tag that references the root object's property.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
+        builder.Writeln("Products:");
 
-        // Begin a foreach loop over the collection named "products".
-        builder.Writeln("<<foreach [p in products]>>");
+        // Loop over the collection property of the root object.
+        builder.Writeln("<<foreach [p in order.Items]>>");
         builder.Writeln("- <<[p.Name]>> : $<<[p.Price]>>");
         builder.Writeln("<</foreach>>");
 
-        // Build the report using the overload that specifies the data source name.
+        // Prepare the data model.
+        Order order = new Order
+        {
+            CustomerName = "John Doe",
+            Items = new List<Item>
+            {
+                new Item { Name = "Apple",  Price = 1.20 },
+                new Item { Name = "Banana", Price = 0.80 },
+                new Item { Name = "Orange", Price = 1.50 }
+            }
+        };
+
+        // Build the report, specifying the collection name ("order") to target this data set.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, products, "products");
+        engine.BuildReport(doc, order, "order");
 
         // Save the generated report.
-        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "ProductReport.docx");
-        doc.Save(outputPath);
-        Console.WriteLine($"Report generated: {outputPath}");
+        doc.Save("Report.docx");
     }
+}
+
+// Root data model class.
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
+
+// Item class used in the collection.
+public class Item
+{
+    public string Name { get; set; } = string.Empty;
+    public double Price { get; set; }
 }

@@ -1,85 +1,64 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class LinqReportingCsvSum
+public class Program
 {
-    // Model representing a CSV row.
-    public class CsvRow
-    {
-        public string Item { get; set; } = string.Empty;
-        public int Value1 { get; set; }
-        public int Value2 { get; set; }
-
-        // Calculated field – sum of the two numeric values.
-        public int Sum => Value1 + Value2;
-    }
-
     public static void Main()
     {
-        // Register code page provider for CSV handling.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Register code page provider for CSV parsing (required on .NET Core).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Define file paths.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-        string csvPath = Path.Combine(outputDir, "data.csv");
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        string reportPath = Path.Combine(outputDir, "report.docx");
+        // Prepare sample CSV data.
+        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "sample.csv");
+        File.WriteAllText(csvPath,
+            "Value1,Value2,Description\r\n" +
+            "10,20,First row\r\n" +
+            "5,7,Second row\r\n" +
+            "12,8,Third row");
 
-        // Create sample CSV data with headers and numeric values.
-        File.WriteAllLines(csvPath, new[]
-        {
-            "Item,Value1,Value2",
-            "A,10,15",
-            "B,20,5",
-            "C,7,13"
-        });
-
-        // Build the template document containing LINQ Reporting tags.
+        // Create a template document with LINQ Reporting tags.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        builder.Writeln("Report generated from CSV data:");
-        builder.Writeln("<<foreach [row in data]>>");
-        builder.Writeln("Item: <<[row.Item]>>");
-        builder.Writeln("Value1: <<[row.Value1]>>");
-        builder.Writeln("Value2: <<[row.Value2]>>");
-        // Calculated field: sum of Value1 and Value2.
-        builder.Writeln("Sum: <<[row.Sum]>>");
+        builder.Writeln("LINQ Reporting – CSV Example");
+        builder.Writeln("-------------------------------------------------");
+
+        // Begin a foreach loop over the CSV data source named "csv".
+        builder.Writeln("<<foreach [row in csv]>>");
+        builder.Writeln("Value 1: <<[row.Value1]>>");
+        builder.Writeln("Value 2: <<[row.Value2]>>");
+        // Calculated field that sums the two numeric columns.
+        builder.Writeln("Sum (Value1 + Value2): <<[row.Value1 + row.Value2]>>");
+        builder.Writeln("Description: <<[row.Description]>>");
+        builder.Writeln("-------------------------------------------------");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
+        // Save the template.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document reportDoc = new Document(templatePath);
+        // Load the template document.
+        Document doc = new Document(templatePath);
 
-        // Parse the CSV file into a list of strongly‑typed objects.
-        List<CsvRow> rows = new List<CsvRow>();
-        string[] csvLines = File.ReadAllLines(csvPath);
-        // Skip header line (index 0).
-        for (int i = 1; i < csvLines.Length; i++)
+        // Configure CSV loading options – the file has a header row.
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions
         {
-            string[] parts = csvLines[i].Split(',');
-            if (parts.Length != 3) continue; // Guard against malformed lines.
+            HasHeaders = true
+        };
 
-            rows.Add(new CsvRow
-            {
-                Item = parts[0],
-                Value1 = int.TryParse(parts[1], out int v1) ? v1 : 0,
-                Value2 = int.TryParse(parts[2], out int v2) ? v2 : 0
-            });
-        }
+        // Create the CSV data source.
+        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
 
         // Build the report using the ReportingEngine.
         ReportingEngine engine = new ReportingEngine();
-        // The data source name must match the name used in the template tags ("data").
-        engine.BuildReport(reportDoc, rows, "data");
+        // Pass the data source name "csv" to match the foreach tag.
+        engine.BuildReport(doc, csvDataSource, "csv");
 
         // Save the generated report.
-        reportDoc.Save(reportPath);
+        string resultPath = Path.Combine(Directory.GetCurrentDirectory(), "ReportResult.docx");
+        doc.Save(resultPath);
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -15,62 +14,70 @@ namespace AsposeWordsLinqReporting
     public class Item
     {
         public string Name { get; set; } = string.Empty;
-        public decimal Price { get; set; }
     }
 
-    // External type whose static members will be used in the template.
-    public static class MyHelper
+    // Helper class whose static members can be used in the template.
+    public static class Helper
     {
-        public static string FormatPrice(decimal price) => $"${price:F2}";
+        // Returns the upper‑cased version of the supplied text.
+        public static string ToUpper(string text) => text?.ToUpperInvariant() ?? string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Ensure output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-            Directory.CreateDirectory(outputDir);
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string reportPath = "Report.docx";
 
-            // 1. Create the template document programmatically.
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            // LINQ Reporting tags.
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("<<[item.Name]>> - <<[MyHelper.FormatPrice(item.Price)]>>");
+            // Insert a foreach block that iterates over model.Items and uses the static helper.
+            builder.Writeln("<<foreach [item in model.Items]>>");
+            builder.Writeln("Item: <<[Helper.ToUpper(item.Name)]>>");
             builder.Writeln("<</foreach>>");
 
-            // Save the template.
+            // Save the template to disk.
             templateDoc.Save(templatePath);
 
-            // 2. Load the template for reporting.
-            Document doc = new Document(templatePath);
-
-            // 3. Prepare a large data set.
-            ReportModel model = new ReportModel();
-            for (int i = 1; i <= 1000; i++)
+            // -----------------------------------------------------------------
+            // 2. Prepare the data source.
+            // -----------------------------------------------------------------
+            var model = new ReportModel
             {
-                model.Items.Add(new Item
+                Items = new List<Item>
                 {
-                    Name = $"Product {i}",
-                    Price = i * 1.23m
-                });
-            }
+                    new() { Name = "Apple" },
+                    new() { Name = "Banana" },
+                    new() { Name = "Cherry" }
+                }
+            };
 
-            // 4. Configure the ReportingEngine.
-            ReportingEngine.UseReflectionOptimization = true; // Enable reflection optimization.
-            ReportingEngine engine = new ReportingEngine();
+            // -----------------------------------------------------------------
+            // 3. Configure the ReportingEngine.
+            // -----------------------------------------------------------------
+            // Enable reflection optimization for maximum performance.
+            ReportingEngine.UseReflectionOptimization = true;
 
-            // Register the external type so its static members can be used in the template.
-            engine.KnownTypes.Add(typeof(MyHelper));
+            var engine = new ReportingEngine();
 
-            // 5. Build the report.
+            // Register the Helper type so its static members can be accessed from the template.
+            engine.KnownTypes.Add(typeof(Helper));
+
+            // Load the template document.
+            var doc = new Document(templatePath);
+
+            // Build the report. The root object name must match the name used in the template tags ("model").
             engine.BuildReport(doc, model, "model");
 
-            // 6. Save the generated report.
-            string reportPath = Path.Combine(outputDir, "Report.docx");
+            // -----------------------------------------------------------------
+            // 4. Save the generated report.
+            // -----------------------------------------------------------------
             doc.Save(reportPath);
         }
     }

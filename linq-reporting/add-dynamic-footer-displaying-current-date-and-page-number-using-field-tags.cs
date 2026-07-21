@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,33 +8,60 @@ public class Program
 {
     public static void Main()
     {
-        // Create a new blank document.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // Register code page provider (required for Aspose.Words)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Move the cursor to the primary footer (appears on all pages except first/odd/even if not set).
+        // Paths for the template and the generated report
+        string templatePath = "template.docx";
+        string reportPath = "report.docx";
+
+        // -----------------------------------------------------------------
+        // Create a template document with a footer that contains the date,
+        // current page number and total page count.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Move to the primary footer
         builder.MoveToHeaderFooter(HeaderFooterType.FooterPrimary);
 
-        // Insert a DATE field that will display the current date.
-        builder.InsertField("DATE");
+        // Insert the date field
+        builder.Write("Date: ");
+        builder.InsertField("DATE \\@ \"MMMM d, yyyy\"");
 
-        // Add a separator and a PAGE field that will display the current page number.
-        builder.Write(" - Page ");
+        // Insert page number fields
+        builder.Write("   Page ");
         builder.InsertField("PAGE");
+        builder.Write(" of ");
+        builder.InsertField("NUMPAGES");
 
-        // The report does not need any data, but the LINQ Reporting engine still requires a data source.
-        ReportModel model = new ReportModel();
+        // Save the template
+        templateDoc.Save(templatePath);
 
-        // Build the report – this will simply copy the template as‑is because there are no tags to process.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // -----------------------------------------------------------------
+        // Load the template and generate the final report.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
 
-        // Save the resulting document.
-        doc.Save("DynamicFooterReport.docx");
+        // Dummy model – not used in this example but required by the engine
+        var model = new ReportModel();
+
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+
+        // Build the report (no data source needed for the footer fields)
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final report
+        reportDoc.Save(reportPath);
     }
+}
 
-    // Empty model class required by the ReportingEngine.
-    public class ReportModel
-    {
-    }
+// Dummy model class required by the ReportingEngine (no properties needed for this scenario)
+public class ReportModel
+{
+    // Parameterless constructor to avoid nullable warnings
+    public ReportModel() { }
 }

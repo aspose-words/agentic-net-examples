@@ -1,71 +1,64 @@
 using System;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class ReportModel
-{
-    // Initialize properties to avoid nullable warnings.
-    public string Name { get; set; } = "John Doe";
-    public int Age { get; set; } = 30;
-}
-
 public class Program
 {
+    // Simple data model used by the template.
+    public class Model
+    {
+        public int Number { get; set; } = 10;
+        public int Zero { get; set; } = 0;
+    }
+
     public static void Main()
     {
-        // Create a temporary folder for the example files.
-        string outputDir = "Output";
-        System.IO.Directory.CreateDirectory(outputDir);
+        // Register code page provider (required for some data sources).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Step 1: Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        // 1. Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
-        // Insert LINQ Reporting tags.
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Age: <<[model.Age]>>");
-        // This tag references a non‑existent member and will cause an evaluation error.
-        builder.Writeln("Missing: <<[model.Unknown]>>");
+        // Normal expression – should render correctly.
+        builder.Writeln("Value: <<[model.Number]>>");
 
-        // Save the template to disk.
-        string templatePath = System.IO.Path.Combine(outputDir, "Template.docx");
-        templateDoc.Save(templatePath);
+        // Faulty expression – division by zero will throw during evaluation.
+        builder.Writeln("Faulty: <<[model.Number / model.Zero]>>");
 
-        // -----------------------------------------------------------------
-        // Step 2: Load the template document.
-        // -----------------------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
+        // Save the template (optional, just for inspection).
+        const string templatePath = "template.docx";
+        template.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // Step 3: Prepare the data source.
-        // -----------------------------------------------------------------
-        ReportModel model = new ReportModel();
+        // 2. Prepare the data source.
+        Model model = new Model();
 
-        // -----------------------------------------------------------------
-        // Step 4: Configure the ReportingEngine with inline error handling.
-        // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
+        // 3. Configure the ReportingEngine to inline error messages.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+        // 4. Build the report. Catch any evaluation exceptions.
+        bool success;
+        try
         {
-            // InlineErrorMessages makes the engine insert error messages instead of throwing.
-            Options = ReportBuildOptions.InlineErrorMessages,
-            // This text will replace any expression that cannot be evaluated.
-            MissingMemberMessage = "N/A"
-        };
+            success = engine.BuildReport(template, model, "model");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Report build failed: {ex.Message}");
+            success = false;
+        }
 
-        // Build the report. The boolean indicates whether parsing succeeded.
-        bool success = engine.BuildReport(loadedTemplate, model, "model");
+        // 5. Replace any inline error messages with a placeholder text.
+        // Aspose.Words inserts the word "Error" in the message; replace it with "[Invalid]".
+        template.Range.Replace("Error", "[Invalid]");
 
-        // -----------------------------------------------------------------
-        // Step 5: Save the generated report.
-        // -----------------------------------------------------------------
-        string reportPath = System.IO.Path.Combine(outputDir, "Report.docx");
-        loadedTemplate.Save(reportPath);
+        // 6. Save the final document.
+        const string outputPath = "report.docx";
+        template.Save(outputPath);
 
-        // Output the result status.
-        Console.WriteLine($"Report generation successful: {success}");
-        Console.WriteLine($"Template saved to: {templatePath}");
-        Console.WriteLine($"Report saved to: {reportPath}");
+        // Indicate completion.
+        Console.WriteLine($"Report generated. Success flag: {success}");
     }
 }

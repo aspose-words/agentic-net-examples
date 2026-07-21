@@ -3,74 +3,58 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+namespace AsposeWordsLinqReportingExample
 {
-    // Simple data model representing an invoice.
+    // Data model representing an invoice.
     public class Invoice
     {
         public int Id { get; set; }
         public decimal Amount { get; set; }
-        public DateTime Date { get; set; }
-
-        // Initialize properties to avoid nullable warnings.
-        public Invoice()
-        {
-            Id = 0;
-            Amount = 0m;
-            Date = DateTime.MinValue;
-        }
     }
 
-    // Wrapper class that holds the collection of invoices.
-    public class ReportData
+    // Wrapper class that holds the collection used by the report.
+    public class ReportModel
     {
         public List<Invoice> Invoices { get; set; } = new();
-
-        // Sample data bootstrap.
-        public ReportData()
-        {
-            Invoices.Add(new Invoice { Id = 1001, Amount = 250.75m, Date = new DateTime(2023, 1, 15) });
-            Invoices.Add(new Invoice { Id = 1002, Amount = 480.00m, Date = new DateTime(2023, 2, 3) });
-            Invoices.Add(new Invoice { Id = 1003, Amount = 125.50m, Date = new DateTime(2023, 3, 22) });
-        }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // 1. Create a template document programmatically.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            // Prepare sample data.
+            var model = new ReportModel();
+            model.Invoices.Add(new Invoice { Id = 1, Amount = 123.45m });
+            model.Invoices.Add(new Invoice { Id = 2, Amount = 678.90m });
+            model.Invoices.Add(new Invoice { Id = 3, Amount = 250.00m });
 
-            // Insert a heading.
+            // -----------------------------------------------------------------
+            // Create the template document containing LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            const string templateFile = "Template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
             builder.Writeln("Invoice Report");
-            builder.Writeln();
-
-            // Use the foreach tag (correct syntax) to iterate over the collection.
-            builder.Writeln("<<foreach [inv in model.Invoices]>>");
-            builder.Writeln("Invoice ID: <<[inv.Id]>>");
-            builder.Writeln("Date: <<[inv.Date]>>");
-            builder.Writeln("Amount: $<<[inv.Amount]>>");
+            // Correct foreach syntax: variable name without explicit type.
+            builder.Writeln("<<foreach [invoice in Invoices]>>");
+            builder.Writeln("Id: <<[invoice.Id]>>   Amount: <<[invoice.Amount]>>");
             builder.Writeln("<</foreach>>");
 
             // Save the template to disk.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            templateDoc.Save(templateFile);
 
-            // 2. Load the template document.
-            var doc = new Document(templatePath);
-
-            // 3. Prepare the data source.
-            var data = new ReportData();
-
-            // 4. Build the report using the LINQ Reporting engine.
+            // -----------------------------------------------------------------
+            // Load the template and generate the report.
+            // -----------------------------------------------------------------
+            var reportDoc = new Document(templateFile);
             var engine = new ReportingEngine();
-            engine.BuildReport(doc, data, "model");
 
-            // 5. Save the generated report.
-            const string reportPath = "Report.docx";
-            doc.Save(reportPath);
+            // Build the report using the model as the data source.
+            engine.BuildReport(reportDoc, model);
+
+            // Save the final report.
+            reportDoc.Save("InvoiceReport.docx");
         }
     }
 }

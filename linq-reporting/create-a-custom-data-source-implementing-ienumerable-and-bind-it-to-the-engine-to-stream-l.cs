@@ -1,72 +1,69 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace LinqReportingExample
+namespace AsposeWordsLinqReportingExample
 {
-    // Simple data item used in the report.
-    public class Item
+    // Simple data model for each record.
+    public class ReportItem
     {
-        public int Index { get; set; }
+        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 
     // Custom data source that streams items lazily.
-    public class LargeDataSource : IEnumerable<Item>
+    public class LargeDataSource : IEnumerable<ReportItem>
     {
         private readonly int _count;
 
-        public LargeDataSource(int count) => _count = count;
+        public LargeDataSource(int count = 10000) => _count = count;
 
-        public IEnumerator<Item> GetEnumerator()
+        public IEnumerator<ReportItem> GetEnumerator()
         {
-            for (int i = 0; i < _count; i++)
-            {
-                // Simulate expensive data retrieval.
-                yield return new Item { Index = i, Name = $"Item {i}" };
-            }
+            for (int i = 1; i <= _count; i++)
+                yield return new ReportItem { Id = i, Name = $"Item {i}" };
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    // Wrapper model exposing the collection to the template.
-    public class ReportModel
-    {
-        public IEnumerable<Item> Items { get; set; } = Array.Empty<Item>();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Create a blank document and a builder to insert LINQ Reporting tags.
+            // Register code page provider (required for some Aspose.Words features).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // Create a blank Word document.
             Document doc = new Document();
             DocumentBuilder builder = new DocumentBuilder(doc);
 
-            // Add a title.
-            builder.Writeln("Large Data Set Report");
-            builder.Writeln();
-
-            // Insert a foreach block that iterates over Items.
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Index: <<[item.Index]>>  Name: <<[item.Name]>>");
+            // Build the template with LINQ Reporting tags.
+            builder.Writeln("Report of items:");
+            builder.Writeln("<<foreach [item in data]>>");
+            builder.Writeln("Id: <<[item.Id]>>, Name: <<[item.Name]>>");
             builder.Writeln("<</foreach>>");
 
-            // Prepare the model with a large data source (e.g., 10,000 items).
-            ReportModel model = new ReportModel
-            {
-                Items = new LargeDataSource(10000)
-            };
+            // Prepare the custom data source.
+            LargeDataSource dataSource = new LargeDataSource();
 
-            // Build the report using the ReportingEngine.
+            // Configure and run the reporting engine.
             ReportingEngine engine = new ReportingEngine();
-            engine.BuildReport(doc, model, "model");
+            engine.Options = ReportBuildOptions.None; // default behavior
+            bool success = engine.BuildReport(doc, dataSource, "data");
 
             // Save the generated report.
-            doc.Save("LargeDataReport.docx");
+            const string outputPath = "ReportOutput.docx";
+            doc.Save(outputPath);
+
+            // Indicate completion (no interactive prompts).
+            Console.WriteLine(success
+                ? $"Report generated successfully: {Path.GetFullPath(outputPath)}"
+                : "Report generation failed.");
         }
     }
 }

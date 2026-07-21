@@ -1,54 +1,60 @@
 using System;
-using System.Data;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
+    // Simple data model without the property referenced in the template.
+    public class ReportModel
+    {
+        // Existing property to avoid nullable warnings.
+        public string Existing { get; set; } = "Existing value";
+    }
+
     public class Program
     {
         public static void Main()
         {
-            // Ensure the output folder exists.
-            const string outputFolder = "Output";
-            System.IO.Directory.CreateDirectory(outputFolder);
+            // Register code page provider (required for some environments).
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-            // 1. Create a template document with a LINQ Reporting tag that references a missing member.
-            var templatePath = System.IO.Path.Combine(outputFolder, "Template.docx");
+            // Paths for the template and the output document.
+            const string templatePath = "Template.docx";
+            const string outputPath = "Result.docx";
+
+            // -------------------------------------------------
+            // Create a template document with a missing member tag.
+            // -------------------------------------------------
             var builder = new DocumentBuilder();
-            // The tag <<[MissingObject.Name]>> refers to a member that does not exist in the data source.
+            // The tag references a property that does NOT exist in ReportModel.
             builder.Writeln("<<[MissingObject.Name]>>");
+            // Save the template to disk.
             builder.Document.Save(templatePath);
 
-            // 2. Load the template document for reporting.
+            // Load the template back for reporting.
             var doc = new Document(templatePath);
 
-            // 3. Prepare a data source that does not contain the required member.
-            // Using an empty DataSet ensures that "MissingObject" cannot be resolved.
-            var dataSource = new DataSet();
+            // Prepare a data source that lacks the referenced member.
+            var model = new ReportModel();
 
-            // 4. Create the ReportingEngine without the AllowMissingMembers option.
+            // Configure the reporting engine without AllowMissingMembers.
             var engine = new ReportingEngine();
-            // Do NOT set engine.Options = ReportBuildOptions.AllowMissingMembers;
-            // The default options (ReportBuildOptions.None) will cause an exception for missing members.
+            engine.Options = ReportBuildOptions.None; // Explicitly disable all special options.
 
             try
             {
-                // 5. Build the report. This should throw because the template references a missing member.
-                engine.BuildReport(doc, dataSource, "");
-                // If no exception is thrown, indicate unexpected success.
+                // Attempt to build the report. This should throw because the member is missing.
+                engine.BuildReport(doc, model, "model");
+                // If no exception occurs, save the (unexpected) result.
+                doc.Save(outputPath);
                 Console.WriteLine("Report built successfully (unexpected).");
             }
             catch (Exception ex)
             {
-                // 6. Expected path: an exception is thrown due to the missing member.
+                // Expected path: an exception is thrown due to the missing member.
                 Console.WriteLine("Exception caught as expected:");
                 Console.WriteLine(ex.Message);
             }
-
-            // 7. Save the (potentially unchanged) document to verify the process completed.
-            var resultPath = System.IO.Path.Combine(outputFolder, "Result.docx");
-            doc.Save(resultPath);
         }
     }
 }

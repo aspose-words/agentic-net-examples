@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
@@ -12,42 +13,55 @@ public class Person
 
 public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
+    // Holds the filtered and sorted list of names.
+    public List<string> Names { get; set; } = new();
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        // Sample data.
+        List<Person> people = new()
         {
-            Persons = new List<Person>
-            {
-                new Person { Name = "Alice", Age = 28 },
-                new Person { Name = "Bob",   Age = 35 },
-                new Person { Name = "Carol", Age = 42 },
-                new Person { Name = "Dave",  Age = 31 },
-                new Person { Name = "Eve",   Age = 24 }
-            }
+            new Person { Name = "Alice", Age = 28 },
+            new Person { Name = "Bob",   Age = 35 },
+            new Person { Name = "Carol", Age = 42 },
+            new Person { Name = "Dave",  Age = 31 },
+            new Person { Name = "Eve",   Age = 25 }
         };
 
-        // Create a blank document and insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // LINQ: filter Age > 30, select Name, order alphabetically.
+        List<string> filteredNames = people
+            .Where(p => p.Age > 30)
+            .Select(p => p.Name)
+            .OrderBy(name => name)
+            .ToList();
 
-        // Use a single LINQ expression that combines Where, Select, and OrderBy.
-        // The expression filters persons aged 30 or more, selects their names,
-        // and orders the names alphabetically.
-        builder.Writeln("<<foreach [name in Persons.Where(p => p.Age >= 30).Select(p => p.Name).OrderBy(n => n)]>>");
-        builder.Writeln("<<[name]>>");
+        // Prepare the model for the reporting engine.
+        ReportModel model = new() { Names = filteredNames };
+
+        // Create a template document with a foreach tag.
+        string templatePath = "Template.docx";
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Filtered and sorted names:");
+        builder.Writeln("<<foreach [n in Names]>>");
+        builder.Writeln(" - <<[n]>>");
         builder.Writeln("<</foreach>>");
 
-        // Build the report using the model as the data source.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // Save the template.
+        templateDoc.Save(templatePath);
 
-        // Save the generated report.
-        doc.Save("Report.docx");
+        // Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // Build the report using the model.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final report.
+        reportDoc.Save("Report.docx");
     }
 }

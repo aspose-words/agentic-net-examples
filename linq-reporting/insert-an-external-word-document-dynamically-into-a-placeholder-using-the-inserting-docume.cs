@@ -4,55 +4,63 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Holds the external document to be inserted.
-    public Document External { get; set; } = new Document();
+    // The external document to be inserted.
+    public Document ExternalDoc { get; set; } = null!;
 }
 
 public class Program
 {
     public static void Main()
     {
+        // Paths for the files used in the example.
+        const string externalPath = "External.docx";
+        const string templatePath = "Template.docx";
+        const string resultPath = "Result.docx";
+
         // -----------------------------------------------------------------
-        // 1. Create an external Word document that will be inserted later.
+        // 1. Create the external document that will be inserted later.
         // -----------------------------------------------------------------
-        const string externalPath = "external.docx";
         Document externalDoc = new Document();
-        DocumentBuilder extBuilder = new DocumentBuilder(externalDoc);
-        extBuilder.Writeln("This is the content of the external document.");
+        DocumentBuilder externalBuilder = new DocumentBuilder(externalDoc);
+        externalBuilder.Writeln("This is the content of the external document.");
         externalDoc.Save(externalPath);
 
         // -----------------------------------------------------------------
-        // 2. Create the template document with a placeholder for insertion.
+        // 2. Create the template document containing a placeholder tag.
+        //    The tag <<doc [model.ExternalDoc]>> tells the reporting engine
+        //    to insert the document referenced by the ExternalDoc property.
         // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder tmplBuilder = new DocumentBuilder(template);
-        tmplBuilder.Writeln("=== Report Start ===");
-        // The placeholder uses the LINQ Reporting 'doc' tag.
-        tmplBuilder.Writeln("<<doc [model.External]>>");
-        tmplBuilder.Writeln("=== Report End ===");
+        Document templateDoc = new Document();
+        DocumentBuilder templateBuilder = new DocumentBuilder(templateDoc);
+        templateBuilder.Writeln("Report start");
+        templateBuilder.Writeln("<<doc [model.ExternalDoc]>>");
+        templateBuilder.Writeln("Report end");
+        templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 3. Prepare the data model that supplies the external document.
+        // 3. Load the template for reporting.
         // -----------------------------------------------------------------
-        ReportModel model = new ReportModel
-        {
-            // Load the previously saved external document.
-            External = new Document(externalPath)
-        };
+        Document template = new Document(templatePath);
 
         // -----------------------------------------------------------------
-        // 4. Build the report using the ReportingEngine.
+        // 4. Load the external document that will be inserted.
         // -----------------------------------------------------------------
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
+        Document external = new Document(externalPath);
+
+        // -----------------------------------------------------------------
+        // 5. Prepare the data model.
+        // -----------------------------------------------------------------
+        ReportModel model = new ReportModel { ExternalDoc = external };
+
+        // -----------------------------------------------------------------
+        // 6. Build the report using the ReportingEngine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
         engine.BuildReport(template, model, "model");
 
         // -----------------------------------------------------------------
-        // 5. Save the generated report.
+        // 7. Save the final document.
         // -----------------------------------------------------------------
-        const string outputPath = "output.docx";
-        template.Save(outputPath);
+        template.Save(resultPath);
     }
 }

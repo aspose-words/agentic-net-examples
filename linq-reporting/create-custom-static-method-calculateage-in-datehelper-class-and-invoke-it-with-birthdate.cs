@@ -2,46 +2,7 @@ using System;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
-{
-    public static void Main()
-    {
-        // Prepare sample data.
-        Person person = new Person
-        {
-            Name = "John Doe",
-            BirthDate = new DateTime(1990, 5, 15)
-        };
-
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Insert LINQ Reporting tags.
-        builder.Writeln("Name: <<[model.Name]>>");
-        builder.Writeln("Age: <<[DateHelper.CalculateAge(model.BirthDate)]>>");
-
-        // Register the helper class so its static members can be used in the template.
-        ReportingEngine engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(DateHelper));
-
-        // Build the report using the template and the data source.
-        engine.BuildReport(template, person, "model");
-
-        // Save the generated report.
-        template.Save("Report.docx");
-    }
-}
-
-// Data model class.
-public class Person
-{
-    public string Name { get; set; } = string.Empty;
-    public DateTime BirthDate { get; set; }
-}
-
-// Helper class containing the custom static method.
-public static class DateHelper
+public class DateHelper
 {
     // Calculates age based on the provided birth date.
     public static int CalculateAge(DateTime birthDate)
@@ -51,5 +12,46 @@ public static class DateHelper
         if (birthDate > today.AddYears(-age))
             age--;
         return age;
+    }
+}
+
+public class Person
+{
+    // Sample property used in the report.
+    public DateTime BirthDate { get; set; } = DateTime.MinValue;
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        // Step 1: Create a template document with a LINQ Reporting tag.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("Age: <<[DateHelper.CalculateAge(BirthDate)]>>");
+
+        // Save the template locally.
+        const string templatePath = "Template.docx";
+        template.Save(templatePath);
+
+        // Step 2: Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
+
+        // Step 3: Prepare the data source.
+        Person person = new Person
+        {
+            BirthDate = new DateTime(1990, 5, 15) // Example birth date.
+        };
+
+        // Step 4: Configure the ReportingEngine.
+        ReportingEngine engine = new ReportingEngine();
+        engine.KnownTypes.Add(typeof(DateHelper));
+
+        // Step 5: Build the report using the data source.
+        engine.BuildReport(reportDoc, person, "person");
+
+        // Step 6: Save the generated report.
+        const string outputPath = "Report.docx";
+        reportDoc.Save(outputPath);
     }
 }

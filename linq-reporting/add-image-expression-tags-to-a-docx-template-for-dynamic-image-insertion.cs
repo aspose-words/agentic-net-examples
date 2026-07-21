@@ -6,79 +6,66 @@ using Aspose.Words.Reporting;
 
 public class Program
 {
-    // Simple data model used by the LINQ Reporting engine.
-    public class ReportModel
-    {
-        // Path to the image that will be inserted dynamically.
-        public string ImagePath { get; set; } = string.Empty;
-    }
-
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Prepare working folders.
-        // -----------------------------------------------------------------
-        string workDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(workDir);
+        // Paths for files used in the example.
+        const string templatePath = "template.docx";
+        const string imagePath = "sample.png";
+        const string outputPath = "output.docx";
 
         // -----------------------------------------------------------------
-        // 2. Create a tiny PNG image (1x1 pixel, red) and save it locally.
+        // 1. Create a simple PNG image (1x1 pixel, red) and save it locally.
         // -----------------------------------------------------------------
-        // Base64 representation of a 1x1 red PNG.
-        const string pngBase64 =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ/lK5XAAAAAElFTkSuQmCC";
-        byte[] pngBytes = Convert.FromBase64String(pngBase64);
-        string imagePath = Path.Combine(workDir, "sample.png");
+        // The image data is a base64‑encoded PNG.
+        const string base64Png =
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQAE/wJ" +
+            "ZcKcAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
         File.WriteAllBytes(imagePath, pngBytes);
 
         // -----------------------------------------------------------------
-        // 3. Build the DOCX template programmatically.
+        // 2. Build the DOCX template programmatically.
         // -----------------------------------------------------------------
-        string templatePath = Path.Combine(workDir, "Template.docx");
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Simple heading.
-        builder.Writeln("Report with dynamic image insertion:");
-
+        builder.Writeln("Report with dynamic image:");
         // Insert a textbox that will host the image tag.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
         // Move the cursor inside the textbox.
         builder.MoveTo(textBox.FirstParagraph);
-        // Write the LINQ Reporting image tag. The expression refers to the model's ImagePath property.
+        // Insert the LINQ Reporting image tag.
         builder.Write("<<image [model.ImagePath] -fitSize>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 4. Load the template and populate it using the ReportingEngine.
+        // 3. Prepare the data model that supplies the image path.
         // -----------------------------------------------------------------
-        Document reportDoc = new Document(templatePath);
-
-        // Prepare the data model.
         ReportModel model = new ReportModel
         {
-            ImagePath = imagePath // The tag will resolve this path at runtime.
+            ImagePath = Path.GetFullPath(imagePath) // absolute path works reliably.
         };
 
-        // Build the report.
+        // -----------------------------------------------------------------
+        // 4. Load the template and run the reporting engine.
+        // -----------------------------------------------------------------
+        Document docToReport = new Document(templatePath);
         ReportingEngine engine = new ReportingEngine();
-        bool success = engine.BuildReport(reportDoc, model, "model");
-
-        // Optional: you can check the success flag if you enabled InlineErrorMessages.
-        if (!success)
-        {
-            Console.WriteLine("Report generation encountered errors.");
-        }
+        // Build the report; the root object name must match the tag prefix ("model").
+        engine.BuildReport(docToReport, model, "model");
 
         // -----------------------------------------------------------------
-        // 5. Save the final document.
+        // 5. Save the generated report.
         // -----------------------------------------------------------------
-        string outputPath = Path.Combine(workDir, "Report.docx");
-        reportDoc.Save(outputPath);
-
-        // Indicate completion.
-        Console.WriteLine($"Report generated successfully: {outputPath}");
+        docToReport.Save(outputPath);
     }
+}
+
+// Simple data model used by the LINQ Reporting engine.
+public class ReportModel
+{
+    // Path (or URI) to the image that will be inserted.
+    public string ImagePath { get; set; } = string.Empty;
 }

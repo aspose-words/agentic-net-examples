@@ -1,91 +1,73 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
     // Data model classes
-    public class Order
+    public class Person
     {
-        public string CustomerName { get; set; } = string.Empty;
-        public List<Item> Items { get; set; } = new();
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
     }
 
-    public class Item
+    public class ReportModel
     {
-        public string Name { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-        // Note: Price property is intentionally omitted to trigger an inline error.
+        public List<Person> Persons { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string reportPath = "Report.docx";
+            // Create a template document with LINQ Reporting tags.
+            Document template = new Document();
+            DocumentBuilder builder = new DocumentBuilder(template);
 
-            // -----------------------------------------------------------------
-            // 1. Create the template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
-
-            // Simple expression.
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-
-            // This tag references a non‑existent property and will cause an error.
-            builder.Writeln("Missing property: <<[order.NonExistingProperty]>>");
-
-            // Loop over items; the Price property does not exist on Item.
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("Item: <<[item.Name]>> | Qty: <<[item.Quantity]>> | Price: <<[item.Price]>>");
+            // Begin a foreach loop over the Persons collection.
+            builder.Writeln("<<foreach [p in Persons]>>");
+            // Correct tag – will be replaced with the person's name.
+            builder.Writeln("Name: <<[p.Name]>>");
+            // Incorrect tag – property 'Agee' does not exist, will trigger an inline error message.
+            builder.Writeln("Age: <<[p.Agee]>>");
+            // End the foreach loop.
             builder.Writeln("<</foreach>>");
 
             // Save the template to disk.
-            templateDoc.Save(templatePath);
+            const string templatePath = "template.docx";
+            template.Save(templatePath);
 
-            // -----------------------------------------------------------------
-            // 2. Load the template back for reporting.
-            // -----------------------------------------------------------------
-            var reportDoc = new Document(templatePath);
+            // Load the template for report generation.
+            Document report = new Document(templatePath);
 
-            // -----------------------------------------------------------------
-            // 3. Prepare the data source.
-            // -----------------------------------------------------------------
-            var order = new Order
+            // Prepare sample data.
+            var model = new ReportModel
             {
-                CustomerName = "John Doe",
-                Items = new List<Item>
+                Persons = new List<Person>
                 {
-                    new Item { Name = "Apple", Quantity = 5 },
-                    new Item { Name = "Banana", Quantity = 3 }
+                    new Person { Name = "Alice", Age = 30 },
+                    new Person { Name = "Bob", Age = 25 }
                 }
             };
 
-            // -----------------------------------------------------------------
-            // 4. Configure the ReportingEngine to inline error messages.
-            // -----------------------------------------------------------------
-            var engine = new ReportingEngine
+            // Configure the reporting engine to inline error messages.
+            ReportingEngine engine = new ReportingEngine
             {
                 Options = ReportBuildOptions.InlineErrorMessages
             };
 
-            // Build the report. The boolean indicates whether parsing succeeded.
-            bool success = engine.BuildReport(reportDoc, order, "order");
+            // Build the report. The returned flag indicates whether parsing succeeded.
+            bool success = engine.BuildReport(report, model, "model");
 
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            reportDoc.Save(reportPath);
+            // Save the generated report.
+            const string outputPath = "output.docx";
+            report.Save(outputPath);
 
-            // Output the result to the console.
-            Console.WriteLine($"Report generation success flag: {success}");
-            Console.WriteLine($"Template saved to: {Path.GetFullPath(templatePath)}");
-            Console.WriteLine($"Report saved to:   {Path.GetFullPath(reportPath)}");
+            // Output the success flag.
+            Console.WriteLine($"Report build success: {success}");
+            Console.WriteLine($"Template saved to: {templatePath}");
+            Console.WriteLine($"Report saved to: {outputPath}");
         }
     }
 }

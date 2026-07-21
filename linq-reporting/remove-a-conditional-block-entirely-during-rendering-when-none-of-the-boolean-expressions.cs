@@ -4,34 +4,37 @@ using Aspose.Words.Reporting;
 
 public class ReportModel
 {
-    // Both flags are false, so no conditional block will be true.
-    public bool ShowA { get; set; } = false;
-    public bool ShowB { get; set; } = false;
+    public bool Flag1 { get; set; } = false;
+    public bool Flag2 { get; set; } = false;
+    public bool Flag3 { get; set; } = false;
+    public string Message { get; set; } = "No flags are true.";
 }
 
 public class Program
 {
     public static void Main()
     {
-        // Create a blank document that will serve as the template.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Create a template document with conditional blocks.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a paragraph that contains two conditional blocks.
-        // If neither condition is true, the paragraph becomes empty.
-        builder.Writeln("<<if [model.ShowA]>>A<</if>> <<if [model.ShowB]>>B<</if>>");
+        builder.Writeln("Report Start");
+        builder.Writeln("<<if [model.Flag1]>>Flag1 is true<</if>>");
+        builder.Writeln("<<if [model.Flag2]>>Flag2 is true<</if>>");
+        builder.Writeln("<<if [model.Flag3]>>Flag3 is true<</if>>");
+        builder.Writeln("Report End");
 
-        // Prepare the data source.
+        // Data source where all conditions are false.
         ReportModel model = new ReportModel();
 
-        // Configure the reporting engine to remove empty paragraphs after processing.
+        // Configure the engine to remove empty paragraphs after processing.
         ReportingEngine engine = new ReportingEngine();
         engine.Options = ReportBuildOptions.RemoveEmptyParagraphs;
 
-        // Build the report. The root object name must match the tag prefix ("model").
-        engine.BuildReport(template, model, "model");
+        // Build the report.
+        engine.BuildReport(doc, model, "model");
 
-        // Save the result. The output file will not contain the empty paragraph.
-        template.Save("ConditionalBlockRemoved.docx");
+        // Save the generated document.
+        doc.Save("ConditionalReport.docx");
     }
 }

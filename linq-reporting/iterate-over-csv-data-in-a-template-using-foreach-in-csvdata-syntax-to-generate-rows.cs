@@ -3,59 +3,46 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Reporting;
 
-public class Program
+class Program
 {
-    public static void Main()
+    static void Main()
     {
-        // Register code page provider for CSV parsing (required for some encodings).
+        // Register code page provider for CSV parsing.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare folders.
-        string baseDir = Directory.GetCurrentDirectory();
-        string dataDir = Path.Combine(baseDir, "Data");
-        string outputDir = Path.Combine(baseDir, "Output");
-        Directory.CreateDirectory(dataDir);
-        Directory.CreateDirectory(outputDir);
+        // Paths for the temporary files.
+        string csvPath = Path.Combine(Directory.GetCurrentDirectory(), "people.csv");
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Template.docx");
+        string reportPath = Path.Combine(Directory.GetCurrentDirectory(), "Report.docx");
 
-        // 1. Create a simple CSV file with headers and sample rows.
-        string csvPath = Path.Combine(dataDir, "People.csv");
-        File.WriteAllText(csvPath,
-            "Name,Age\r\n" +
-            "Alice,30\r\n" +
-            "Bob,25\r\n" +
-            "Charlie,35\r\n",
-            Encoding.UTF8);
+        // 1. Create sample CSV data.
+        File.WriteAllText(csvPath, "Name,Age\r\nAlice,30\r\nBob,25\r\nCharlie,35", Encoding.UTF8);
 
-        // 2. Build the template document programmatically.
-        DocumentBuilder builder = new DocumentBuilder();
-        // The foreach tag iterates over the CSV data source named "csvData".
-        builder.Writeln("<<foreach [row in csvData]>>");
-        // Inside the loop we can reference column names via the loop variable.
-        builder.Writeln("<<[row.Name]>> - <<[row.Age]>>");
+        // 2. Build the template document with LINQ Reporting tags.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+        builder.Writeln("<<foreach [in csvData]>>");
+        builder.Writeln("<<[Name]>> - <<[Age]>>");
         builder.Writeln("<</foreach>>");
+        template.Save(templatePath);
 
-        // Save the template to disk.
-        string templatePath = Path.Combine(dataDir, "Template.docx");
-        builder.Document.Save(templatePath);
+        // 3. Load the template for reporting.
+        Document reportDoc = new Document(templatePath);
 
-        // 3. Load the template document.
-        Document templateDoc = new Document(templatePath);
-
-        // 4. Create a CsvDataSource that reads the CSV file (headers are present).
-        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true); // hasHeaders = true
+        // 4. Prepare CSV data source with header support.
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
         CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
 
-        // 5. Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        // The data source name used in the template tags is "csvData".
-        engine.BuildReport(templateDoc, csvDataSource, "csvData");
+        // 5. Build the report using the data source.
+        ReportingEngine engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.None
+        };
+        engine.BuildReport(reportDoc, csvDataSource, "csvData");
 
         // 6. Save the generated report.
-        string resultPath = Path.Combine(outputDir, "Report.docx");
-        templateDoc.Save(resultPath);
-
-        // Indicate completion.
-        Console.WriteLine("Report generated at: " + resultPath);
+        reportDoc.Save(reportPath);
     }
 }

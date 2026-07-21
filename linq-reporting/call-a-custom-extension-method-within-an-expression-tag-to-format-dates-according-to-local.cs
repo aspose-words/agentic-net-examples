@@ -5,62 +5,74 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Extension method container. The method is static and will be called as a static method from the template.
-    public static class DateTimeExtensions
+    // Model class used as the root data source for the report.
+    public class ReportModel
     {
-        // Formats the date according to the specified locale (culture name, e.g., "en-US").
-        public static string FormatDate(DateTime date, string locale)
-        {
-            var culture = new CultureInfo(locale);
-            // Long date pattern.
-            return date.ToString("D", culture);
-        }
+        // Sample date to be formatted.
+        public DateTime ReportDate { get; set; } = DateTime.Now;
     }
 
-    // Simple data model for the report.
-    public class Order
+    // Static class containing an extension method for DateTime formatting.
+    // The method is registered with the ReportingEngine via KnownTypes.
+    public static class DateExtensions
     {
-        // Sample date property.
-        public DateTime OrderDate { get; set; } = DateTime.Now;
+        // Formats the date according to the specified locale (e.g., "en-US", "fr-FR").
+        public static string FormatDate(this DateTime date, string locale)
+        {
+            var culture = new CultureInfo(locale);
+            // Long date pattern for the given culture.
+            return date.ToString("D", culture);
+        }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // 1. Create the template document programmatically.
-            var template = new Document();
-            var builder = new DocumentBuilder(template);
+            // -----------------------------------------------------------------
+            // 1. Create a simple template document with a LINQ Reporting tag.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            // Use static method syntax in the LINQ Reporting tags.
-            builder.Writeln("Order date (US format): <<[DateTimeExtensions.FormatDate(order.OrderDate, \"en-US\")]>>");
-            builder.Writeln("Order date (German format): <<[DateTimeExtensions.FormatDate(order.OrderDate, \"de-DE\")]>>");
+            // The expression calls the static method (registered in KnownTypes) to format the date.
+            // Extension methods are not resolved directly on the instance type, so we invoke it as a static method.
+            builder.Writeln("Report generated on: <<[DateExtensions.FormatDate(model.ReportDate, \"en-US\")]>>");
 
             // Save the template to disk.
             const string templatePath = "Template.docx";
-            template.Save(templatePath);
+            templateDoc.Save(templatePath);
 
-            // 2. Load the template for reporting.
+            // -----------------------------------------------------------------
+            // 2. Load the template document for reporting.
+            // -----------------------------------------------------------------
             var doc = new Document(templatePath);
 
+            // -----------------------------------------------------------------
             // 3. Prepare the data source.
-            var order = new Order
+            // -----------------------------------------------------------------
+            var model = new ReportModel
             {
-                // Example specific date.
-                OrderDate = new DateTime(2023, 12, 25)
+                // Example date; you can set any specific date here.
+                ReportDate = new DateTime(2023, 12, 25)
             };
 
+            // -----------------------------------------------------------------
             // 4. Configure the ReportingEngine.
+            // -----------------------------------------------------------------
             var engine = new ReportingEngine();
-            // Register the type that contains the static method.
-            engine.KnownTypes.Add(typeof(DateTimeExtensions));
 
-            // 5. Build the report.
-            engine.BuildReport(doc, order, "order");
+            // Register the static class that contains the extension method.
+            engine.KnownTypes.Add(typeof(DateExtensions));
 
-            // 6. Save the generated report.
-            const string reportPath = "Report.docx";
-            doc.Save(reportPath);
+            // Build the report using the model as the root object named "model".
+            engine.BuildReport(doc, model, "model");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "Report.docx";
+            doc.Save(outputPath);
         }
     }
 }

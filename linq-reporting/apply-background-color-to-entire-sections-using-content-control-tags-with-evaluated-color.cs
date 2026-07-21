@@ -3,67 +3,84 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Program
 {
-    // Data model for the report.
-    public class ReportModel
+    public static void Main()
     {
-        public List<SectionData> Sections { get; set; } = new();
-    }
+        // Paths for the template and the generated report.
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
 
-    public class SectionData
-    {
-        public string Title { get; set; } = string.Empty;
-        // Color can be a known color name, HTML hex code, or any value accepted by the backColor tag.
-        public string Color { get; set; } = string.Empty;
-    }
+        // -----------------------------------------------------------------
+        // 1. Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-    public class Program
-    {
-        public static void Main()
+        // Begin a foreach loop over the Sections collection.
+        builder.Writeln("<<foreach [section in Sections]>>");
+
+        // Apply a background color to the whole block using the backColor tag.
+        // The color is taken from the data source (section.Color).
+        builder.Writeln("<<backColor [section.Color]>>");
+
+        // Content that will be colored – the section title.
+        builder.Writeln("<<[section.Title]>>");
+
+        // Close the backColor tag.
+        builder.Writeln("<</backColor>>");
+
+        // End the foreach loop.
+        builder.Writeln("<</foreach>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and prepare the data model.
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
+
+        // Data model with two sections, each having a title and a background color.
+        var model = new ReportModel
         {
-            // 1. Create the template document.
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
-
-            // Begin a foreach loop over the Sections collection.
-            builder.Writeln("<<foreach [sec in Sections]>>");
-
-            // Apply background color to the whole section using the backColor tag.
-            // The color expression is taken from sec.Color.
-            builder.Writeln("<<backColor [sec.Color]>>");
-            // Section title.
-            builder.Writeln("<<[sec.Title]>>");
-            // End of backColor block.
-            builder.Writeln("<</backColor>>");
-
-            // End of foreach loop.
-            builder.Writeln("<</foreach>>");
-
-            // Save the template.
-            doc.Save(templatePath);
-
-            // 2. Prepare the data source.
-            var model = new ReportModel
+            Sections = new List<SectionInfo>
             {
-                Sections = new List<SectionData>
-                {
-                    new SectionData { Title = "Introduction", Color = "LightYellow" },
-                    new SectionData { Title = "Details", Color = "LightBlue" },
-                    new SectionData { Title = "Conclusion", Color = "#FFC0CB" } // Pink via hex code.
-                }
-            };
+                new SectionInfo { Title = "First Section", Color = "LightYellow" },
+                new SectionInfo { Title = "Second Section", Color = "LightBlue" }
+            }
+        };
 
-            // 3. Load the template for reporting.
-            var reportDoc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 3. Build the report using the ReportingEngine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
 
-            // 4. Build the report using the LINQ Reporting engine.
-            var engine = new ReportingEngine();
-            engine.BuildReport(reportDoc, model, "model");
+        // The root object name in the template is "model".
+        engine.BuildReport(loadedTemplate, model, "model");
 
-            // 5. Save the generated report.
-            reportDoc.Save("Report.docx");
-        }
+        // -----------------------------------------------------------------
+        // 4. Save the generated report.
+        // -----------------------------------------------------------------
+        loadedTemplate.Save(reportPath);
     }
+}
+
+// ---------------------------------------------------------------------
+// Data model classes used by the LINQ Reporting engine.
+// ---------------------------------------------------------------------
+public class ReportModel
+{
+    // Collection of sections to be iterated over in the template.
+    public List<SectionInfo> Sections { get; set; } = new();
+}
+
+public class SectionInfo
+{
+    // Title displayed for the section.
+    public string Title { get; set; } = string.Empty;
+
+    // Background color name or HTML color code (e.g., "LightYellow" or "#FFCC00").
+    public string Color { get; set; } = string.Empty;
 }

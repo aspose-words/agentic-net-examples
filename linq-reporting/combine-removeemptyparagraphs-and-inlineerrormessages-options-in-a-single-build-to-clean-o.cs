@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -6,55 +8,89 @@ public class Program
 {
     public static void Main()
     {
-        // Prepare a simple data model.
+        // Prepare sample data model.
         var model = new ReportModel
         {
-            Name = "John Doe",
-            Empty = string.Empty // This will produce an empty paragraph.
-            // Note: No property named NonExistent – accessing it will cause an error.
+            Order = new Order
+            {
+                CustomerName = "John Doe",
+                Items = new List<Item>
+                {
+                    new Item { Name = "Apple", Price = 1.20 },
+                    new Item { Name = "Banana", Price = 0.80 }
+                },
+                // EmptyTag is null to produce an empty paragraph after processing.
+                EmptyTag = null
+                // MissingProperty is intentionally omitted to trigger an inline error.
+            }
         };
 
         // Create a template document programmatically.
-        var templatePath = "template.docx";
+        var templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // Load the template.
+        var doc = new Document(templatePath);
+
+        // Configure the reporting engine with both options.
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.RemoveEmptyParagraphs | ReportBuildOptions.InlineErrorMessages
+        };
+
+        // Build the report; the returned flag indicates success when InlineErrorMessages is set.
+        bool success = engine.BuildReport(doc, model, "order");
+
+        // Save the generated report.
+        var outputPath = "ReportOutput.docx";
+        doc.Save(outputPath);
+
+        // Output simple status (no interactive prompts).
+        Console.WriteLine($"Report built successfully: {success}");
+        Console.WriteLine($"Output saved to: {Path.GetFullPath(outputPath)}");
+    }
+
+    private static void CreateTemplate(string filePath)
+    {
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Normal field.
-        builder.Writeln("Customer: <<[model.Name]>>");
-        // This tag references a missing member and will generate an inline error message.
-        builder.Writeln("Missing: <<[model.NonExistent]>>");
-        // This tag resolves to an empty string; the paragraph should be removed.
-        builder.Writeln("Empty: <<[model.Empty]>>");
-        // A paragraph that contains only an empty tag; it should be removed entirely.
-        builder.Writeln("<<[model.Empty]>>");
+        // Header with a valid field.
+        builder.Writeln("Customer: <<[order.CustomerName]>>");
 
-        // Save the template to disk.
-        doc.Save(templatePath);
+        // Loop over items.
+        builder.Writeln("<<foreach [item in order.Items]>>");
+        builder.Writeln("Item: <<[item.Name]>> - Price: $<<[item.Price]>>");
+        builder.Writeln("<</foreach>>");
 
-        // Load the template back for reporting.
-        var loadedDoc = new Document(templatePath);
+        // Tag that will be empty (EmptyTag is null).
+        builder.Writeln("<<[order.EmptyTag]>>");
 
-        // Configure the reporting engine with both options.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.RemoveEmptyParagraphs | ReportBuildOptions.InlineErrorMessages;
+        // Tag referencing a missing property to demonstrate inline error messages.
+        builder.Writeln("Missing: <<[order.MissingProperty]>>");
 
-        // Build the report. The returned flag indicates success when InlineErrorMessages is set.
-        bool success = engine.BuildReport(loadedDoc, model, "model");
-
-        // Save the resulting document.
-        var outputPath = "output.docx";
-        loadedDoc.Save(outputPath);
-
-        // Output simple status to the console (no user interaction required).
-        Console.WriteLine($"Report build success: {success}");
-        Console.WriteLine($"Output saved to: {outputPath}");
+        doc.Save(filePath);
     }
 }
 
-// Data model used by the template.
+// Root wrapper class to align with BuildReport(rootObject, "order").
 public class ReportModel
 {
-    // Initialized to avoid nullable warnings.
+    public Order Order { get; set; } = new();
+}
+
+// Sample order class.
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+    public string? EmptyTag { get; set; }
+    // Note: MissingProperty is intentionally not defined.
+}
+
+// Sample item class.
+public class Item
+{
     public string Name { get; set; } = string.Empty;
-    public string Empty { get; set; } = string.Empty;
+    public double Price { get; set; }
 }

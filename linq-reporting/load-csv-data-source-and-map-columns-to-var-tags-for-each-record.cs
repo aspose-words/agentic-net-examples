@@ -2,53 +2,50 @@ using System;
 using System.IO;
 using System.Text;
 using Aspose.Words;
-using Aspose.Words.Reporting; // ReportingEngine, CsvDataSource, CsvDataLoadOptions
-using Aspose.Words.Reporting; // Ensure correct namespace for CSV data source
+using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing (required for non‑UTF8 encodings).
+        // Register code page provider for CSV handling.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Create a sample CSV file with headers and three rows.
-        string csvPath = "data.csv";
-        File.WriteAllText(csvPath,
-            "Id,Name,Age\r\n" +
-            "1,John Doe,30\r\n" +
-            "2,Jane Smith,25\r\n" +
-            "3,Bob Johnson,40");
+        // Define file paths in the current working directory.
+        string csvPath = Path.Combine(Environment.CurrentDirectory, "data.csv");
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "template.docx");
+        string outputPath = Path.Combine(Environment.CurrentDirectory, "output.docx");
 
-        // Build a template document that contains LINQ Reporting tags.
-        string templatePath = "template.docx";
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
+        // Create a simple CSV file with headers and sample data.
+        File.WriteAllText(csvPath, "Id,Name,Age\r\n1,John Doe,30\r\n2,Jane Smith,25\r\n3,Bob Johnson,40");
 
-        // Begin a foreach loop over the CSV rows (exposed as 'persons').
-        builder.Writeln("<<foreach [person in persons]>>");
-        // Output each column using tags that map to CSV headers.
-        builder.Writeln("Id: <<[person.Id]>>, Name: <<[person.Name]>>, Age: <<[person.Age]>>");
-        // End the foreach block.
+        // Build a Word template containing LINQ Reporting tags.
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        builder.Writeln("Report generated from CSV data:");
+        builder.Writeln("<<foreach [rec in records]>>");
+        builder.Writeln("Id: <<[rec.Id]>>, Name: <<[rec.Name]>>, Age: <<[rec.Age]>>");
         builder.Writeln("<</foreach>>");
 
         // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        var reportDoc = new Document(templatePath);
+        // Load the template document for reporting.
+        Document doc = new Document(templatePath);
 
-        // Configure CSV loading options (first line contains headers).
-        var loadOptions = new CsvDataLoadOptions(true);
-        // Create a CSV data source based on the file.
-        var csvDataSource = new CsvDataSource(csvPath, loadOptions);
+        // Configure CSV loading options (the file has a header row).
+        CsvDataLoadOptions loadOptions = new CsvDataLoadOptions(true);
+        loadOptions.HasHeaders = true;
 
-        // Build the report using the data source. The root name must match the tag reference.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(reportDoc, csvDataSource, "persons");
+        // Create a CSV data source based on the file and options.
+        CsvDataSource csvDataSource = new CsvDataSource(csvPath, loadOptions);
+
+        // Build the report using the CSV data source. The data source name must match the name used in the template tags.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, csvDataSource, "records");
 
         // Save the generated report.
-        reportDoc.Save("report.docx");
+        doc.Save(outputPath);
     }
 }

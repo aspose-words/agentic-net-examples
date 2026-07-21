@@ -7,52 +7,69 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider (required for some encodings)
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Ensure the output folder exists.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Create a template document with LINQ Reporting tags
-        string templatePath = "template.docx";
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
+
+        // -----------------------------------------------------------------
+        // 1. Create the template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
         Document templateDoc = new Document();
         DocumentBuilder builder = new DocumentBuilder(templateDoc);
-        builder.Writeln("Current date (raw): <<[Date]>>");
-        builder.Writeln("Formatted date (custom helper): <<[MyHelper.FormatDate(Date)]>>");
-        builder.Writeln("Pi value (Math): <<[Math.PI]>>");
+
+        // Simple data field.
+        builder.Writeln("Name: <<[model.Name]>>");
+
+        // Use a known external static type (Helper) to format the date.
+        builder.Writeln("Birth Date: <<[Helper.FormatDate(model.BirthDate)]>>");
+
+        // Save the template to disk.
         templateDoc.Save(templatePath);
 
-        // Load the template for reporting
-        Document doc = new Document(templatePath);
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        Document loadedTemplate = new Document(templatePath);
 
-        // Prepare the data model
-        ReportModel model = new ReportModel
+        // Prepare the data source.
+        Person person = new Person
         {
-            Date = DateTime.Now
+            Name = "John Doe",
+            BirthDate = new DateTime(1990, 5, 23)
         };
 
-        // Configure the ReportingEngine and register known types
+        // Configure the reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.KnownTypes.Add(typeof(MyHelper));
-        engine.KnownTypes.Add(typeof(Math));
 
-        // Build the report using the model as the root object named "model"
-        engine.BuildReport(doc, model, "model");
+        // Register the external type so its static members can be used safely in the template.
+        engine.KnownTypes.Add(typeof(Helper));
 
-        // Save the generated report
-        string outputPath = "output.docx";
-        doc.Save(outputPath);
+        // Build the report. The root object name must match the name used in the template tags ("model").
+        engine.BuildReport(loadedTemplate, person, "model");
+
+        // Save the generated report.
+        loadedTemplate.Save(reportPath);
     }
 }
 
-// Public data model class
-public class ReportModel
+// ---------------------------------------------------------------------
+// Data model used by the template.
+// ---------------------------------------------------------------------
+public class Person
 {
-    public DateTime Date { get; set; } = DateTime.Now;
+    public string Name { get; set; } = string.Empty;
+    public DateTime BirthDate { get; set; }
 }
 
-// Static helper class with a method accessible from the template
-public static class MyHelper
+// ---------------------------------------------------------------------
+// External static helper class whose members are allowed in the template.
+// ---------------------------------------------------------------------
+public static class Helper
 {
-    public static string FormatDate(DateTime dt)
-    {
-        return dt.ToString("yyyy-MM-dd");
-    }
+    // Formats a DateTime as a short date string.
+    public static string FormatDate(DateTime date) => date.ToString("yyyy-MM-dd");
 }

@@ -2,99 +2,100 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample CSV data
-        string csvPath = "data.csv";
-        File.WriteAllText(csvPath,
-            "Id,Name,Status\n" +
-            "1,John Doe,Active\n" +
-            "2,Jane Smith,Inactive\n" +
-            "3,Bob Johnson,Active\n");
+        // Register code page provider for CSV parsing (if needed).
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Load CSV rows into objects
-        List<CsvRecord> allRecords = File.ReadAllLines(csvPath)
-            .Skip(1) // skip header
-            .Select(line => line.Split(','))
-            .Where(parts => parts.Length >= 3)
-            .Select(parts => new CsvRecord
-            {
-                Id = parts[0].Trim(),
-                Name = parts[1].Trim(),
-                Status = parts[2].Trim()
-            })
-            .ToList();
-
-        // Filter rows where Status == "Active"
-        List<CsvRecord> activeRecords = allRecords
-            .Where(r => r.Status.Equals("Active", StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        // Prepare the model for the report
-        ReportModel model = new()
+        // Prepare sample CSV data.
+        string csvPath = "people.csv";
+        File.WriteAllLines(csvPath, new[]
         {
-            Records = activeRecords
-        };
+            "Id,Name,Status",
+            "1,John Doe,Active",
+            "2,Jane Smith,Inactive",
+            "3,Bob Johnson,Active"
+        });
 
-        // Create the template document programmatically
+        // Load CSV rows into a list of Person objects.
+        List<Person> allPeople = LoadPeopleFromCsv(csvPath);
+
+        // Filter rows where Status == "Active".
+        List<Person> activePeople = allPeople.Where(p => p.Status == "Active").ToList();
+
+        // Create a LINQ Reporting template programmatically.
         string templatePath = "template.docx";
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+        CreateTemplate(templatePath);
 
-        builder.Writeln("Active Records Report");
-        builder.Writeln("<<foreach [rec in Records]>>");
+        // Load the template document.
+        Document doc = new Document(templatePath);
 
-        // Table header
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Id");
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Status");
-        builder.EndRow();
+        // Prepare the model with filtered data.
+        ReportModel model = new ReportModel { People = activePeople };
 
-        // Table rows (will be repeated by the foreach tag)
-        builder.InsertCell();
-        builder.Writeln("<<[rec.Id]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[rec.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[rec.Status]>>");
-        builder.EndRow();
+        // Build the report.
+        ReportingEngine engine = new ReportingEngine();
+        engine.BuildReport(doc, model, "model");
 
-        builder.EndTable();
+        // Save the generated report.
+        doc.Save("report.docx");
+    }
+
+    // Parses the CSV file into a list of Person objects.
+    private static List<Person> LoadPeopleFromCsv(string path)
+    {
+        var lines = File.ReadAllLines(path);
+        var people = new List<Person>();
+
+        // Assume first line contains headers.
+        for (int i = 1; i < lines.Length; i++)
+        {
+            var parts = lines[i].Split(',');
+            if (parts.Length >= 3 &&
+                int.TryParse(parts[0], out int id))
+            {
+                people.Add(new Person
+                {
+                    Id = id,
+                    Name = parts[1],
+                    Status = parts[2]
+                });
+            }
+        }
+
+        return people;
+    }
+
+    // Creates a simple template that iterates over People collection.
+    private static void CreateTemplate(string path)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        builder.Writeln("<<foreach [person in People]>>");
+        builder.Writeln("Id: <<[person.Id]>>, Name: <<[person.Name]>>");
         builder.Writeln("<</foreach>>");
 
-        templateDoc.Save(templatePath);
-
-        // Load the template and build the report
-        Document reportDoc = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
-
-        // Save the final report
-        string outputPath = "report.docx";
-        reportDoc.Save(outputPath);
-
-        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+        doc.Save(path);
     }
 }
 
-public class CsvRecord
-{
-    public string Id { get; set; } = "";
-    public string Name { get; set; } = "";
-    public string Status { get; set; } = "";
-}
-
+// Data model exposed to the template.
 public class ReportModel
 {
-    public List<CsvRecord> Records { get; set; } = new();
+    public List<Person> People { get; set; } = new();
+}
+
+// Represents a row from the CSV file.
+public class Person
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
 }

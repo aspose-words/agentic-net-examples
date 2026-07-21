@@ -1,89 +1,72 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace LinqReportingWhereExample
 {
-    // Data model classes
-    public class Product
+    // Simple data entity.
+    public class Person
     {
-        public string Name { get; set; } = string.Empty;
-        public double Price { get; set; }
+        public string Name { get; set; } = "";
+        public int Age { get; set; }
     }
 
+    // Wrapper model that holds the collection and the runtime filter criteria.
     public class ReportModel
     {
-        // Full collection of products
-        public List<Product> Products { get; set; } = new();
-
-        // Runtime criteria – minimum price to include
-        public double MinPrice { get; set; }
-
-        // Filtered collection using LINQ Where
-        public IEnumerable<Product> FilteredProducts => Products.Where(p => p.Price > MinPrice);
+        public List<Person> Persons { get; set; } = new();
+        public int MinAge { get; set; }
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Paths for the template and the generated report
-            string templatePath = "Template.docx";
-            string reportPath = "Report.docx";
-
-            // -------------------------------------------------
-            // 1. Create the template document programmatically
-            // -------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // LINQ Reporting tags:
-            // Loop over the filtered collection defined in the model
-            builder.Writeln("<<foreach [p in model.FilteredProducts]>>");
-            builder.Writeln("Product: <<[p.Name]>> - Price: $<<[p.Price]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk
-            templateDoc.Save(templatePath);
-
-            // -------------------------------------------------
-            // 2. Load the template back (required before BuildReport)
-            // -------------------------------------------------
-            Document loadedTemplate = new Document(templatePath);
-
-            // -------------------------------------------------
-            // 3. Prepare sample data and runtime filter criteria
-            // -------------------------------------------------
-            ReportModel model = new ReportModel
+            // Prepare sample data.
+            var model = new ReportModel
             {
-                // Sample products
-                Products = new List<Product>
+                MinAge = 30,
+                Persons = new List<Person>
                 {
-                    new Product { Name = "Apple",  Price = 5.0 },
-                    new Product { Name = "Banana", Price = 12.0 },
-                    new Product { Name = "Cherry", Price = 20.0 },
-                    new Product { Name = "Date",   Price = 25.0 }
-                },
-                // Dynamic filter: include only products priced above 15
-                MinPrice = 15.0
+                    new Person { Name = "Alice", Age = 25 },
+                    new Person { Name = "Bob",   Age = 35 },
+                    new Person { Name = "Carol", Age = 30 },
+                    new Person { Name = "Dave",  Age = 45 }
+                }
             };
 
-            // -------------------------------------------------
-            // 4. Build the report using Aspose.Words ReportingEngine
-            // -------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // No special options needed
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-            // The root object name in the template is "model"
-            engine.BuildReport(loadedTemplate, model, "model");
+            // Title showing the dynamic filter value.
+            builder.Writeln("Persons with Age >= <<[data.MinAge]>>:");
 
-            // -------------------------------------------------
-            // 5. Save the generated report
-            // -------------------------------------------------
-            loadedTemplate.Save(reportPath);
+            // Foreach loop over all persons.
+            builder.Writeln("<<foreach [p in data.Persons]>>");
+            // Conditional output – only show persons that satisfy the runtime criteria.
+            builder.Writeln("<<if [p.Age >= data.MinAge]>>- <<[p.Name]>> (Age: <<[p.Age]>>)<</if>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            const string templatePath = "Template.docx";
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report.
+            // -----------------------------------------------------------------
+            var loadedDoc = new Document(templatePath);
+            var engine = new ReportingEngine();
+
+            // Build the report using the model; the root name in the template is "data".
+            engine.BuildReport(loadedDoc, model, "data");
+
+            // Save the generated report.
+            const string reportPath = "Report.docx";
+            loadedDoc.Save(reportPath);
         }
     }
 }

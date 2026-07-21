@@ -3,62 +3,59 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+public class TaskItem
 {
-    public static void Main()
-    {
-        // Prepare sample data.
-        ReportModel model = new()
-        {
-            Tasks = new List<TaskItem>
-            {
-                new() { Name = "Prepare presentation", Deadline = TimeSpan.FromDays(3) },
-                new() { Name = "Submit report", Deadline = TimeSpan.FromDays(10) },
-                new() { Name = "Team meeting", Deadline = TimeSpan.FromDays(5) }
-            }
-        };
-
-        // -----------------------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -----------------------------------------------------------------
-        Document template = new();
-        DocumentBuilder builder = new(template);
-
-        builder.Writeln("Task Report");
-        builder.Writeln("<<foreach [task in Tasks]>>");
-        builder.Writeln("Name: <<[task.Name]>>");
-        // Use TotalDays to avoid static method calls that the engine cannot resolve.
-        builder.Writeln("<<if [task.Deadline.TotalDays < 7]>>");
-        builder.Writeln(" - Upcoming (deadline in <<[task.Deadline]>>)");
-        builder.Writeln("<</if>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // -----------------------------------------------------------------
-        // 2. Load the template and build the report.
-        // -----------------------------------------------------------------
-        Document doc = new(templatePath);
-        ReportingEngine engine = new();
-        engine.BuildReport(doc, model, "model");
-
-        // Save the generated report.
-        const string reportPath = "Report.docx";
-        doc.Save(reportPath);
-    }
+    public string Name { get; set; } = "";
+    public TimeSpan Deadline { get; set; }
 }
 
-// Wrapper class for the root data source.
 public class ReportModel
 {
     public List<TaskItem> Tasks { get; set; } = new();
 }
 
-// Individual task item.
-public class TaskItem
+public class Program
 {
-    public string Name { get; set; } = string.Empty;
-    public TimeSpan Deadline { get; set; }
+    public static void Main()
+    {
+        // Sample data.
+        var model = new ReportModel
+        {
+            Tasks = new List<TaskItem>
+            {
+                new TaskItem { Name = "Design document", Deadline = TimeSpan.FromDays(3) },
+                new TaskItem { Name = "Code implementation", Deadline = TimeSpan.FromDays(10) },
+                new TaskItem { Name = "Testing", Deadline = TimeSpan.FromDays(5) }
+            }
+        };
+
+        // Create a template document.
+        var templatePath = "Template.docx";
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+
+        builder.Writeln("Task Report");
+        builder.Writeln("--------------------");
+
+        // LINQ Reporting tags.
+        builder.Writeln("<<foreach [task in Tasks]>>");
+        builder.Writeln("Task: <<[task.Name]>>");
+        builder.Writeln("Deadline (days): <<[task.Deadline.Days]>>");
+        // Flag tasks whose deadline is less than 7 days.
+        builder.Writeln("<<if [task.Deadline.TotalDays < 7]>>Upcoming<</if>>");
+        builder.Writeln("<</foreach>>");
+
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Load the template for report generation.
+        var reportDoc = new Document(templatePath);
+
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the final report.
+        reportDoc.Save("TaskReport.docx");
+    }
 }

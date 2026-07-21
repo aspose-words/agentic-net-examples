@@ -1,36 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Item
+namespace LinqReportingGroupByExample
 {
-    public string Category { get; set; } = "";
-    public decimal Amount { get; set; }
-}
-
-public class CategorySummary
-{
-    public string Category { get; set; } = "";
-    public decimal Total { get; set; }
-}
-
-public class ReportData
-{
-    public List<CategorySummary> Summaries { get; set; } = new();
-}
-
-class Program
-{
-    static void Main()
+    // Simple data model is not used directly; XML is the data source.
+    class Program
     {
-        // Ensure Aspose.Words license is not required for this example.
-        // 1. Create sample XML data.
-        const string xmlFile = "sample.xml";
-        File.WriteAllText(xmlFile,
+        static void Main()
+        {
+            // Ensure the working directory exists.
+            string workDir = Directory.GetCurrentDirectory();
+
+            // 1. Create sample XML data.
+            string xmlPath = Path.Combine(workDir, "Data.xml");
+            File.WriteAllText(xmlPath,
 @"<Items>
     <Item>
         <Category>Food</Category>
@@ -38,67 +24,51 @@ class Program
     </Item>
     <Item>
         <Category>Food</Category>
-        <Amount>20</Amount>
+        <Amount>5.0</Amount>
     </Item>
     <Item>
         <Category>Books</Category>
-        <Amount>15</Amount>
+        <Amount>12.99</Amount>
     </Item>
     <Item>
         <Category>Books</Category>
-        <Amount>5</Amount>
+        <Amount>7.50</Amount>
     </Item>
     <Item>
         <Category>Electronics</Category>
-        <Amount>99.99</Amount>
+        <Amount>199.99</Amount>
     </Item>
 </Items>");
 
-        // 2. Load XML into objects.
-        var items = XDocument.Load(xmlFile)
-            .Root!
-            .Elements("Item")
-            .Select(x => new Item
-            {
-                Category = (string?)x.Element("Category") ?? "",
-                Amount = decimal.Parse((string?)x.Element("Amount") ?? "0")
-            })
-            .ToList();
+            // 2. Build the template document programmatically.
+            string templatePath = Path.Combine(workDir, "Template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // 3. Summarize by category using LINQ GroupBy.
-        var reportData = new ReportData
-        {
-            Summaries = items
-                .GroupBy(i => i.Category)
-                .Select(g => new CategorySummary
-                {
-                    Category = g.Key,
-                    Total = g.Sum(i => i.Amount)
-                })
-                .ToList()
-        };
+            builder.Writeln("Report Summary");
+            builder.Writeln();
+            // LINQ Reporting tag: group items by Category and calculate total per group.
+            builder.Writeln("<<foreach [g in Item.GroupBy(i => i.Category)]>>");
+            builder.Writeln("Category: <<[g.Key]>>");
+            builder.Writeln("Total: <<[g.Sum(i => i.Amount)]>>");
+            builder.Writeln("<</foreach>>");
 
-        // 4. Create a template document programmatically.
-        const string templateFile = "template.docx";
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+            templateDoc.Save(templatePath);
 
-        builder.Writeln("Category Summary Report");
-        builder.Writeln();
-        // LINQ Reporting foreach tag.
-        builder.Writeln("<<foreach [summary in Summaries]>>");
-        builder.Writeln("Category: <<[summary.Category]>>   Total: <<[summary.Total]>>");
-        builder.Writeln("<</foreach>>");
+            // 3. Load the template for reporting.
+            Document reportDoc = new Document(templatePath);
 
-        doc.Save(templateFile);
+            // 4. Create an XML data source.
+            XmlDataSource xmlData = new XmlDataSource(xmlPath);
 
-        // 5. Load the template and build the report.
-        var template = new Document(templateFile);
-        var engine = new ReportingEngine();
-        engine.BuildReport(template, reportData, "model");
+            // 5. Build the report using the LINQ Reporting engine.
+            ReportingEngine engine = new ReportingEngine();
+            // No special options are required for this simple scenario.
+            engine.BuildReport(reportDoc, xmlData, "Item");
 
-        // 6. Save the final report.
-        const string outputFile = "Report.docx";
-        template.Save(outputFile);
+            // 6. Save the generated report.
+            string outputPath = Path.Combine(workDir, "Report.docx");
+            reportDoc.Save(outputPath);
+        }
     }
 }

@@ -7,62 +7,60 @@ public class Program
 {
     public static void Main()
     {
-        // Create a template document programmatically.
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // Create a new blank document and a builder to insert LINQ Reporting tags.
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
 
-        // Write a simple report with an optional loop.
-        builder.Writeln("Report:");
-        builder.Writeln("<<foreach [p in Persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>");
-        // Age property does not exist in the data model; <<error>> will capture the evaluation failure.
-        builder.Writeln("Age: <<[p.Age]>> <<error>>");
+        // Template header.
+        builder.Writeln("Report generated with Aspose.Words LINQ Reporting");
+        builder.Writeln();
+
+        // Optional loop over the collection "Items".
+        builder.Writeln("<<foreach [item in Items]>>");
+        builder.Writeln("Name: <<[item.Name]>>");
+        // This expression refers to a non‑existent member and will cause an evaluation error.
+        builder.Writeln("MissingProperty: <<[item.MissingProperty]>>");
+        // The <<error>> tag will display the inline error message for the above failure.
+        builder.Writeln("<<error>>");
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
-
-        // Load the template back for reporting.
-        var doc = new Document(templatePath);
-
-        // Prepare sample data. The Person class lacks an Age property.
-        var model = new ReportModel
+        // Configure the reporting engine to inline error messages.
+        ReportingEngine engine = new ReportingEngine
         {
-            Persons = new List<Person>
+            Options = ReportBuildOptions.InlineErrorMessages
+        };
+
+        // Build the report using the model as the root data source named "model".
+        ReportModel model = new ReportModel
+        {
+            Items = new List<Item>
             {
-                new Person { Name = "Alice" },
-                new Person { Name = "Bob" }
+                new Item { Name = "Alice", Age = 30 },
+                new Item { Name = "Bob" } // No Age, but Age is not used in the template.
             }
         };
 
-        // Configure the reporting engine to inline error messages.
-        var engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.InlineErrorMessages | ReportBuildOptions.AllowMissingMembers,
-            MissingMemberMessage = "Missing"
-        };
-
-        // Build the report. The success flag is meaningful because InlineErrorMessages is enabled.
         bool success = engine.BuildReport(doc, model, "model");
 
-        // Save the generated report.
-        const string outputPath = "Report.docx";
+        // Save the generated document.
+        const string outputPath = "ReportWithErrors.docx";
         doc.Save(outputPath);
 
-        // Output the result status (no interactive prompts required).
-        Console.WriteLine($"Report generation succeeded: {success}");
+        // Output the success flag (will be true because InlineErrorMessages is enabled).
+        Console.WriteLine($"Report generation success: {success}");
+        Console.WriteLine($"Document saved to: {outputPath}");
     }
 }
 
-// Root data model referenced in the template as <<[model.Persons]>>.
+// Root data model.
 public class ReportModel
 {
-    public List<Person> Persons { get; set; } = new();
+    public List<Item> Items { get; set; } = new();
 }
 
-// Sample item class. Intentionally does NOT contain an Age property to trigger an error.
-public class Person
+// Item model used inside the foreach loop.
+public class Item
 {
-    public string Name { get; set; } = "";
+    public string Name { get; set; } = string.Empty;
+    public int? Age { get; set; }
 }

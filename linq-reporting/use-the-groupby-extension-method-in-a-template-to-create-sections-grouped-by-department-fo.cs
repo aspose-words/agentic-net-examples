@@ -1,90 +1,69 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using System.Linq; // Needed for GroupBy
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace LinqReportingGroupByExample
 {
-    // Root model passed to the reporting engine.
-    public class ReportModel
+    // Data model for an employee.
+    public class Employee
     {
-        // Collection of department groups.
-        public List<DepartmentGroup> Departments { get; set; } = new();
+        public string Name { get; set; } = "";
+        public string Department { get; set; } = "";
+        public string Title { get; set; } = "";
     }
 
-    // Represents a department and its employees.
-    public class DepartmentGroup
+    // Wrapper model that contains the collection used by the report.
+    public class ReportModel
     {
-        public string Department { get; set; } = string.Empty;
         public List<Employee> Employees { get; set; } = new();
     }
 
-    // Simple employee entity.
-    public class Employee
+    public class Program
     {
-        public string Name { get; set; } = string.Empty;
-        public string Department { get; set; } = string.Empty;
-    }
-
-    class Program
-    {
-        static void Main()
+        public static void Main()
         {
-            // 1. Prepare sample data.
-            List<Employee> employees = new()
+            // ---------- Prepare sample data ----------
+            var model = new ReportModel
             {
-                new() { Name = "Alice Johnson", Department = "HR" },
-                new() { Name = "Bob Smith", Department = "IT" },
-                new() { Name = "Carol White", Department = "HR" },
-                new() { Name = "David Brown", Department = "Finance" },
-                new() { Name = "Eve Davis", Department = "IT" }
+                Employees = new List<Employee>
+                {
+                    new Employee { Name = "John Doe", Department = "Sales", Title = "Sales Manager" },
+                    new Employee { Name = "Jane Smith", Department = "Sales", Title = "Sales Representative" },
+                    new Employee { Name = "Bob Johnson", Department = "HR", Title = "HR Specialist" },
+                    new Employee { Name = "Alice Brown", Department = "HR", Title = "Recruiter" },
+                    new Employee { Name = "Tom Clark", Department = "IT", Title = "Developer" }
+                }
             };
 
-            // 2. Group employees by department using LINQ.
-            ReportModel model = new()
-            {
-                Departments = employees
-                    .GroupBy(e => e.Department)
-                    .Select(g => new DepartmentGroup
-                    {
-                        Department = g.Key,
-                        Employees = g.ToList()
-                    })
-                    .ToList()
-            };
+            // ---------- Create the LINQ Reporting template ----------
+            const string templateFile = "Template.docx";
+            var templateDoc = new Document();               // Create a blank document
+            var builder = new DocumentBuilder(templateDoc); // Builder for the template
 
-            // 3. Create a template document programmatically.
-            Document template = new();
-            DocumentBuilder builder = new(template);
-
-            // Title.
-            builder.Writeln("Employee Directory");
-            builder.Writeln();
-
-            // Begin outer foreach over departments.
-            builder.Writeln("<<foreach [dept in Departments]>>");
-            builder.Writeln("Department: <<[dept.Department]>>");
-            builder.Writeln();
-
-            // Begin inner foreach over employees within the current department.
-            builder.Writeln("<<foreach [emp in dept.Employees]>>");
-            builder.Writeln("- <<[emp.Name]>>");
+            builder.Writeln("Employee Report");
+            // Group employees by Department using GroupBy in the foreach expression.
+            builder.Writeln("<<foreach [dept in Employees.GroupBy(e => e.Department)]>>");
+            builder.Writeln("Department: <<[dept.Key]>>");
+            builder.Writeln("<<foreach [emp in dept]>>");
+            builder.Writeln("- <<[emp.Name]>> (<<[emp.Title]>>)");
             builder.Writeln("<</foreach>>");
-            builder.Writeln();
-
-            // End outer foreach.
             builder.Writeln("<</foreach>>");
 
-            // 4. Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new();
-            engine.Options = ReportBuildOptions.None; // default options
-            engine.BuildReport(template, model, "model");
+            // Save the template before building the report.
+            templateDoc.Save(templateFile);
 
-            // 5. Save the generated report.
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "EmployeeReport.docx");
-            template.Save(outputPath);
+            // ---------- Load the template and generate the report ----------
+            var reportDoc = new Document(templateFile);
+            var engine = new ReportingEngine();
+
+            // Build the report using the model; no root name is needed.
+            engine.BuildReport(reportDoc, model);
+
+            // Save the generated report.
+            const string outputFile = "EmployeeReport.docx";
+            reportDoc.Save(outputFile);
         }
     }
 }

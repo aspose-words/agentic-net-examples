@@ -2,105 +2,92 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Xml.Linq;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class Program
+namespace AsposeWordsLinqReportingExample
 {
-    public static void Main()
+    // Simple data entity representing a person.
+    public class Person
     {
-        // Register code page provider (required for Aspose.Words on .NET Core)
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-        // 1. Create sample XML data
-        const string xmlContent = @"
-<Orders>
-    <Order Id='1' Customer='Alice'>
-        <Service Name='Consulting' />
-        <Service Name='Support' />
-    </Order>
-    <Order Id='2' Customer='Bob'>
-        <Service Name='Development' />
-    </Order>
-    <Order Id='3' Customer='Anna'>
-        <Service Name='Design' />
-        <Service Name='Testing' />
-        <Service Name='Deployment' />
-    </Order>
-</Orders>";
-        const string xmlPath = "Orders.xml";
-        File.WriteAllText(xmlPath, xmlContent);
-
-        // 2. Load XML and filter orders (customers whose name starts with 'A')
-        XDocument xDoc = XDocument.Load(xmlPath);
-        List<Order> filteredOrders = xDoc.Root!
-            .Elements("Order")
-            .Where(o => ((string?)o.Attribute("Customer"))?.StartsWith("A") == true)
-            .Select(o => new Order
-            {
-                Id = (int?)o.Attribute("Id") ?? 0,
-                Customer = (string?)o.Attribute("Customer") ?? string.Empty,
-                Services = o.Elements("Service")
-                            .Select(s => new Service { Name = (string?)s.Attribute("Name") ?? string.Empty })
-                            .ToList()
-            })
-            .ToList();
-
-        // 3. Prepare the root model for the report
-        var model = new ReportModel { Orders = filteredOrders };
-
-        // 4. Create the LINQ Reporting template programmatically
-        var templateDoc = new Document();
-        var builder = new DocumentBuilder(templateDoc);
-
-        builder.Writeln("Orders Report");
-        builder.Writeln(); // empty line
-
-        // Begin foreach over orders
-        builder.Writeln("<<foreach [order in Orders]>>");
-        builder.Writeln("Customer: <<[order.Customer]>>");
-
-        // Numbered list of services for each order
-        builder.ListFormat.ApplyNumberDefault(); // apply numbering to the next paragraph
-        builder.Writeln("<<restartNum>><<foreach [svc in order.Services]>> <<[svc.Name]>> <</foreach>>");
-
-        // End foreach over orders
-        builder.Writeln("<</foreach>>");
-
-        // Save the template (optional, for inspection)
-        const string templatePath = "Template.docx";
-        templateDoc.Save(templatePath);
-
-        // 5. Build the report using the LINQ Reporting engine
-        var engine = new ReportingEngine();
-        engine.BuildReport(templateDoc, model, "model");
-
-        // 6. Save the generated report
-        const string reportPath = "Report.docx";
-        templateDoc.Save(reportPath);
-
-        Console.WriteLine($"Report generated: {Path.GetFullPath(reportPath)}");
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
     }
-}
 
-// Root wrapper class
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
+    // Wrapper model that will be passed to the reporting engine.
+    public class ReportModel
+    {
+        public List<Person> Items { get; set; } = new();
+    }
 
-// Order class
-public class Order
-{
-    public int Id { get; set; }
-    public string Customer { get; set; } = string.Empty;
-    public List<Service> Services { get; set; } = new();
-}
+    public class Program
+    {
+        public static void Main()
+        {
+            // -----------------------------------------------------------------
+            // 1. Create sample XML data.
+            // -----------------------------------------------------------------
+            const string xmlFile = "people.xml";
+            var xmlContent = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<People>
+    <Person><Name>John Doe</Name><Age>28</Age></Person>
+    <Person><Name>Jane Smith</Name><Age>35</Age></Person>
+    <Person><Name>Bob Johnson</Name><Age>42</Age></Person>
+    <Person><Name>Alice Brown</Name><Age>31</Age></Person>
+</People>";
+            File.WriteAllText(xmlFile, xmlContent);
 
-// Service class
-public class Service
-{
-    public string Name { get; set; } = string.Empty;
+            // -----------------------------------------------------------------
+            // 2. Load XML, filter nodes (Age > 30), and map to model objects.
+            // -----------------------------------------------------------------
+            XDocument xDoc = XDocument.Load(xmlFile);
+            var filteredPersons = xDoc.Root?
+                .Elements("Person")
+                .Where(p => (int)p.Element("Age")! > 30)
+                .Select(p => new Person
+                {
+                    Name = (string)p.Element("Name")!,
+                    Age = (int)p.Element("Age")!
+                })
+                .ToList() ?? new List<Person>();
+
+            var model = new ReportModel { Items = filteredPersons };
+
+            // -----------------------------------------------------------------
+            // 3. Create a template document with LINQ Reporting tags.
+            // -----------------------------------------------------------------
+            const string templatePath = "template.docx";
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
+
+            builder.Writeln("People Report (Age > 30)");
+            // The <<restartNum>> tag ensures numbering starts at 1 for this list.
+            // The foreach tag iterates over the Items collection in the model.
+            builder.Writeln("<<restartNum>><<foreach [person in Items]>><<[person.Name]>> (Age: <<[person.Age]>>)"); 
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 4. Load the template and build the report.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+            var engine = new ReportingEngine
+            {
+                // Remove empty paragraphs that may appear after tag processing.
+                Options = ReportBuildOptions.RemoveEmptyParagraphs
+            };
+            engine.BuildReport(doc, model, "model");
+
+            // -----------------------------------------------------------------
+            // 5. Save the generated report.
+            // -----------------------------------------------------------------
+            const string outputPath = "PeopleReport.docx";
+            doc.Save(outputPath);
+
+            // The example finishes without waiting for user input.
+        }
+    }
 }

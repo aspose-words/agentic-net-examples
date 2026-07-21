@@ -3,91 +3,73 @@ using System.IO;
 using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+using Aspose.Words.Tables;
 
 public class Program
 {
     public static void Main()
     {
-        // Register code page provider for CSV parsing on .NET Core.
+        // Register code page provider for CSV parsing.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // 1. Create sample CSV data.
-        // -----------------------------------------------------------------
-        string csvPath = "people.csv";
-        string[] csvLines =
+        // 1. Create a sample CSV file.
+        string csvPath = "data.csv";
+        File.WriteAllLines(csvPath, new[]
         {
-            "Name,Age,City",
-            "Alice,30,London",
-            "Bob,25,Paris",
-            "Charlie,35,New York"
-        };
-        File.WriteAllLines(csvPath, csvLines, Encoding.UTF8);
+            "Id,Name,Quantity",
+            "1,Apple,10",
+            "2,Banana,20",
+            "3,Cherry,15"
+        });
 
-        // -----------------------------------------------------------------
-        // 2. Build a template document with a pre‑formatted table and LINQ
-        //    Reporting tags that will iterate over the CSV rows.
-        // -----------------------------------------------------------------
-        var template = new Document();
-        var builder = new DocumentBuilder(template);
+        // 2. Build a Word template containing a table with LINQ Reporting tags.
+        string templatePath = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Title (optional)
-        builder.Writeln("People Report");
-        builder.Writeln();
+        builder.Writeln("Product Report");
+        builder.Writeln(); // blank line
 
-        // Start the foreach block – iterate over the data source named "data".
-        builder.Writeln("<<foreach [person in data]>>");
+        // Begin the foreach block that iterates over the CSV rows.
+        builder.Writeln("<<foreach [row in data]>>");
 
-        // Create a table with a header row.
-        var table = builder.StartTable();
+        // Create the table.
+        Table table = builder.StartTable();
 
-        // Header cells.
-        builder.InsertCell();
-        builder.Writeln("Name");
-        builder.InsertCell();
-        builder.Writeln("Age");
-        builder.InsertCell();
-        builder.Writeln("City");
+        // Header row (static content).
+        builder.InsertCell(); builder.Writeln("Id");
+        builder.InsertCell(); builder.Writeln("Name");
+        builder.InsertCell(); builder.Writeln("Quantity");
         builder.EndRow();
 
-        // Data row – each cell contains a tag that outputs a column value.
-        builder.InsertCell();
-        builder.Writeln("<<[person.Name]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[person.Age]>>");
-        builder.InsertCell();
-        builder.Writeln("<<[person.City]>>");
+        // Data row (dynamic content).
+        builder.InsertCell(); builder.Writeln("<<[row.Id]>>");
+        builder.InsertCell(); builder.Writeln("<<[row.Name]>>");
+        builder.InsertCell(); builder.Writeln("<<[row.Quantity]>>");
         builder.EndRow();
 
-        // End of the table and foreach block.
         builder.EndTable();
+
+        // End the foreach block.
         builder.Writeln("<</foreach>>");
 
-        // Save the template.
-        template.Save("Template.docx");
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
 
-        // -----------------------------------------------------------------
-        // 3. Load the template and build the report using the CSV data source.
-        // -----------------------------------------------------------------
-        var reportDoc = new Document("Template.docx");
+        // 3. Load the template and bind the CSV data source.
+        var reportDoc = new Document(templatePath);
 
-        // Configure CSV loading options – the file has a header row.
         var loadOptions = new CsvDataLoadOptions(true)
         {
-            HasHeaders = true,
-            Delimiter = ',',
-            QuoteChar = '"',
-            CommentChar = '#'
+            Delimiter = ','
         };
 
-        // Create the CSV data source.
         var csvData = new CsvDataSource(csvPath, loadOptions);
 
-        // Build the report.
         var engine = new ReportingEngine();
         engine.BuildReport(reportDoc, csvData, "data");
 
-        // Save the final report.
-        reportDoc.Save("Report.docx");
+        // 4. Save the generated report.
+        reportDoc.Save("output.docx");
     }
 }

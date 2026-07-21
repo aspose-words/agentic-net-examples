@@ -1,73 +1,73 @@
 using System;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Newtonsoft.Json;
 
-namespace AsposeWordsLinqReportingExample
+public class Program
 {
-    // Simple data model used as the root object for the report.
-    public class SampleModel
+    // Model used for JSON deserialization.
+    public class Msg
     {
-        public string Name { get; set; } = "Aspose";
-        public int Value { get; set; } = 42;
+        public string Message { get; set; } = string.Empty;
     }
 
-    public class Program
+    // Helper class that encapsulates JSON deserialization logic.
+    // This avoids calling generic methods directly from the template.
+    public static class JsonHelper
     {
-        public static void Main()
+        public static string GetMessage()
         {
-            // Register code page provider required by Aspose.Words for certain encodings.
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // -----------------------------------------------------------------
-            // 1. Create a template document with LINQ Reporting tags.
-            // -----------------------------------------------------------------
-            const string templatePath = "Template.docx";
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Tag that uses a static method from System.Math (core assembly).
-            // Correct LINQ Reporting syntax for static method call uses dot notation.
-            builder.Writeln("Square root of 16 = <<[System.Math.Sqrt(16)]>>");
-
-            // Tag that uses a static method from Newtonsoft.Json (third‑party assembly).
-            // Use dot notation for the static method call.
-            builder.Writeln("Serialized model = <<[Newtonsoft.Json.JsonConvert.SerializeObject(model)]>>");
-
-            // Tag that accesses a property of the root model object.
-            builder.Writeln("Model Name = <<[model.Name]>>");
-            builder.Writeln("Model Value = <<[model.Value]>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare data.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-            SampleModel model = new SampleModel();
-
-            // -----------------------------------------------------------------
-            // 3. Configure the ReportingEngine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-
-            // Register core and third‑party types so their static members can be used in the template.
-            engine.KnownTypes.Add(typeof(System.Math));
-            engine.KnownTypes.Add(typeof(Newtonsoft.Json.JsonConvert));
-
-            // -----------------------------------------------------------------
-            // 4. Build the report.
-            // -----------------------------------------------------------------
-            // The root object name used in the template is "model".
-            engine.BuildReport(doc, model, "model");
-
-            // -----------------------------------------------------------------
-            // 5. Save the generated report.
-            // -----------------------------------------------------------------
-            const string outputPath = "ReportOutput.docx";
-            doc.Save(outputPath);
+            // Sample JSON payload.
+            const string json = "{\"Message\":\"Hello from JSON!\"}";
+            // Deserialize using Newtonsoft.Json and return the Message property.
+            Msg? obj = JsonConvert.DeserializeObject<Msg>(json);
+            return obj?.Message ?? string.Empty;
         }
+    }
+
+    public static void Main()
+    {
+        const string templatePath = "Template.docx";
+        const string reportPath = "Report.docx";
+
+        // -----------------------------------------------------------------
+        // 1. Create a template document with LINQ Reporting tags.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Tag that uses a core .NET type (System.Math).
+        builder.Writeln("Value of Math.PI: <<[Math.PI]>>");
+
+        // Tag that uses a third‑party helper to obtain a JSON message.
+        builder.Writeln("Deserialized JSON message: <<[JsonHelper.GetMessage()]>>");
+
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template document for reporting.
+        // -----------------------------------------------------------------
+        Document doc = new Document(templatePath);
+
+        // -----------------------------------------------------------------
+        // 3. Configure the ReportingEngine.
+        // -----------------------------------------------------------------
+        ReportingEngine engine = new ReportingEngine();
+
+        // Register core and third‑party types so their static members can be accessed.
+        engine.KnownTypes.Add(typeof(Math));          // Core .NET type.
+        engine.KnownTypes.Add(typeof(JsonHelper));   // Wrapper for third‑party JSON logic.
+
+        // No data source is required because we only use static members.
+        object dummyDataSource = new object();
+
+        // Build the report.
+        engine.BuildReport(doc, dummyDataSource, "");
+
+        // -----------------------------------------------------------------
+        // 4. Save the generated report.
+        // -----------------------------------------------------------------
+        doc.Save(reportPath);
     }
 }

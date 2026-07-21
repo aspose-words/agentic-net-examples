@@ -1,85 +1,69 @@
 using System;
 using System.IO;
-using System.Threading.Tasks;
+using System.Text;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
 
 public class Program
 {
     public static void Main()
     {
-        // Create a template document that contains an image tag inside a textbox.
-        const string templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // Register code page provider (required by Aspose.Words for some encodings)
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Load the template.
-        var template = new Document(templatePath);
+        // Create a tiny PNG image (1x1 pixel, red) and save it locally.
+        const string imageFileName = "sample.png";
+        CreateSamplePng(imageFileName);
 
-        // Prepare the data model.
-        var model = new ReportModel
-        {
-            // The ImageUrl property is kept for compatibility but will not be used for downloading.
-            ImageUrl = "https://via.placeholder.com/150"
-        };
-
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(template, model, "model");
-
-        // Save the generated report.
-        template.Save("Report.docx");
-    }
-
-    // Creates a simple Word document with a textbox that hosts an image tag.
-    private static void CreateTemplate(string filePath)
-    {
+        // Build the template document.
+        const string templatePath = "template.docx";
         var doc = new Document();
         var builder = new DocumentBuilder(doc);
 
-        // Insert a textbox to host the image tag.
-        var textBox = builder.InsertShape(Aspose.Words.Drawing.ShapeType.TextBox, 200, 120);
+        // Insert a textbox shape to host the image.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
         builder.MoveTo(textBox.FirstParagraph);
-        // The image tag expects a Stream; the model provides it via ImageStream property.
-        builder.Write("<<image [model.ImageStream] -fitSize>>");
+        // Image tag referencing a string property on the model.
+        builder.Write("<<image [model.ImagePath] -fitSize>>");
 
-        doc.Save(filePath);
+        // Save the template.
+        doc.Save(templatePath);
+
+        // Prepare the model with the local image path.
+        var model = new ReportModel
+        {
+            ImagePath = Path.GetFullPath(imageFileName)
+        };
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+
+        // Build the report using the model as the root object named "model".
+        engine.BuildReport(reportDoc, model, "model");
+
+        // Save the generated report.
+        const string outputPath = "output.docx";
+        reportDoc.Save(outputPath);
+
+        // Indicate completion (no interactive input).
+        Console.WriteLine($"Report generated: {Path.GetFullPath(outputPath)}");
+    }
+
+    // Creates a simple 1x1 red PNG file from an embedded base64 string.
+    private static void CreateSamplePng(string filePath)
+    {
+        // Base64 for a 1x1 red PNG.
+        const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK6cAAAAASUVORK5CYII=";
+        byte[] pngBytes = Convert.FromBase64String(base64Png);
+        File.WriteAllBytes(filePath, pngBytes);
     }
 }
 
-// Data model used by the LINQ Reporting engine.
+// Model class exposing an ImagePath property that points to a local image file.
 public class ReportModel
 {
-    // URL of the image (kept for reference; not used for downloading in this example).
-    public string ImageUrl { get; set; } = string.Empty;
-
-    // Returns a fresh MemoryStream containing a small placeholder PNG image.
-    // The stream is positioned at the beginning, as required by the engine.
-    public Stream ImageStream
-    {
-        get
-        {
-            // Retrieve the image bytes from the helper (no network calls).
-            var bytes = ImageService.DownloadImageBytes(ImageUrl).Result;
-            var stream = new MemoryStream(bytes);
-            stream.Position = 0;
-            return stream;
-        }
-    }
-}
-
-// Helper that provides image bytes. In this example we embed a tiny PNG to avoid external calls.
-public static class ImageService
-{
-    // Base64‑encoded 1×1 pixel PNG (transparent).
-    private const string Base64Png =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAusB9YVhZVIAAAAASUVORK5CYII=";
-
-    // Returns the image bytes synchronously wrapped in a Task.
-    public static Task<byte[]> DownloadImageBytes(string url)
-    {
-        // Decode the embedded PNG.
-        byte[] imageBytes = Convert.FromBase64String(Base64Png);
-        return Task.FromResult(imageBytes);
-    }
+    // Full path to the image file to be inserted.
+    public string ImagePath { get; set; } = string.Empty;
 }

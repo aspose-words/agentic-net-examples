@@ -1,38 +1,41 @@
 using System;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace InlineErrorMessagesExample
+namespace AsposeWordsLinqReporting
 {
-    // Simple data model used by the template.
-    public class ReportModel
+    // Sample data model.
+    public class Person
     {
-        // Initialize to avoid nullable warnings.
-        public string Name { get; set; } = "John Doe";
+        public string Name { get; set; } = string.Empty;
+        public int Age { get; set; }
     }
 
-    public class Program
+    public class ReportProgram
     {
         public static void Main()
         {
-            // Create a new blank document.
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
+            // Required for code page support.
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            // Insert a valid LINQ Reporting tag that references the model.
-            builder.Writeln("Customer Name: <<[model.Name]>>");
+            // Prepare sample data.
+            var model = new Person { Name = "Alice", Age = 30 };
 
-            // Prepare the data source.
-            ReportModel model = new ReportModel();
+            // Create a template document in memory.
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+            // Insert a LINQ Reporting tag that references the model.
+            builder.Writeln("<<[model.Name]>> is <<[model.Age]>> years old.");
 
             // Configure the reporting engine to inline error messages.
-            ReportingEngine engine = new ReportingEngine();
+            var engine = new ReportingEngine();
             engine.Options = ReportBuildOptions.InlineErrorMessages;
 
             // Build the report and capture the success flag.
             bool success = engine.BuildReport(doc, model, "model");
 
-            // Output the result flag.
+            // Output the result.
             Console.WriteLine($"Report build success: {success}");
 
             // Save the generated document.

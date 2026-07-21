@@ -6,63 +6,71 @@ using Aspose.Words.Reporting;
 
 namespace AsposeWordsLinqReporting
 {
-    // Model classes used by the LINQ Reporting engine.
+    // Data model for the report.
+    public class ReportModel
+    {
+        // Initialize the collection to avoid nullable warnings.
+        public List<Item> Items { get; set; } = new();
+    }
+
+    // Simple item class used in the collection.
     public class Item
     {
         public int Index { get; set; }
         public string Name { get; set; } = string.Empty;
     }
 
-    public class Order
-    {
-        public List<Item> Items { get; set; } = new();
-    }
-
     public class Program
     {
         public static void Main()
         {
-            // Prepare a large data set (e.g., 10,000 items).
-            var order = new Order();
-            for (int i = 1; i <= 10000; i++)
-            {
-                order.Items.Add(new Item
-                {
-                    Index = i,
-                    Name = $"Product #{i}"
-                });
-            }
+            // Ensure the output directory exists.
+            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+            Directory.CreateDirectory(outputDir);
 
-            // Create a template document programmatically.
-            var templatePath = "Template.docx";
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+            // 1. Create a template document programmatically.
+            string templatePath = Path.Combine(outputDir, "Template.docx");
+            Document templateDoc = new Document();
+            DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("Order Report");
+            builder.Writeln("Report for a large data set:");
+            // LINQ Reporting foreach tag.
             builder.Writeln("<<foreach [item in Items]>>");
             builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
             builder.Writeln("<</foreach>>");
 
-            doc.Save(templatePath);
+            // Save the template.
+            templateDoc.Save(templatePath);
 
-            // Load the template (demonstrates load step).
-            var loadedDoc = new Document(templatePath);
+            // 2. Load the template document.
+            Document doc = new Document(templatePath);
 
-            // Enable reflection optimization (engine caching) for large data sets.
+            // 3. Prepare a large data set.
+            ReportModel model = new ReportModel();
+            const int itemCount = 10000; // Simulate a large collection.
+            for (int i = 1; i <= itemCount; i++)
+            {
+                model.Items.Add(new Item
+                {
+                    Index = i,
+                    Name = $"Item_{i}"
+                });
+            }
+
+            // 4. Enable reflection optimization (engine caching) for faster processing.
             ReportingEngine.UseReflectionOptimization = true;
 
-            // Create the reporting engine and optionally set options.
-            var engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.None
-            };
+            // 5. Build the report.
+            ReportingEngine engine = new ReportingEngine();
+            // No special options are required for this scenario.
+            engine.BuildReport(doc, model, "model");
 
-            // Build the report using the root object name "order".
-            engine.BuildReport(loadedDoc, order, "order");
+            // 6. Save the generated report.
+            string reportPath = Path.Combine(outputDir, "Report.docx");
+            doc.Save(reportPath);
 
-            // Save the generated report.
-            var outputPath = "Report.docx";
-            loadedDoc.Save(outputPath);
+            // Indicate completion (no interactive prompts).
+            Console.WriteLine($"Report generated successfully at: {reportPath}");
         }
     }
 }

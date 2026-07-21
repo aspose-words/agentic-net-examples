@@ -1,131 +1,86 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;   // Required for the Table class
+
+public class Invoice
+{
+    public int Id { get; set; }
+    public DateTime IssueDate { get; set; }
+    public DateTime DueDate { get; set; }
+    public decimal Amount { get; set; }
+
+    // True when the invoice is overdue.
+    public bool IsOverdue => DueDate < DateTime.Today;
+}
+
+public class ReportModel
+{
+    public List<Invoice> Invoices { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
-
-        // 1. Create the template document.
-        string templatePath = Path.Combine(outputDir, "InvoiceTemplate.docx");
-        CreateTemplate(templatePath);
-
-        // 2. Prepare sample data.
-        ReportModel model = new()
+        // 1. Prepare sample data.
+        var model = new ReportModel
         {
-            Invoices = new()
+            Invoices = new List<Invoice>
             {
-                new InvoiceItem
-                {
-                    Description = "Consulting Services",
-                    DueDate = DateTime.Today.AddDays(-5), // overdue
-                    Amount = 1500.00m
-                },
-                new InvoiceItem
-                {
-                    Description = "Software License",
-                    DueDate = DateTime.Today.AddDays(10), // not overdue
-                    Amount = 299.99m
-                },
-                new InvoiceItem
-                {
-                    Description = "Maintenance Support",
-                    DueDate = DateTime.Today.AddDays(-2), // overdue
-                    Amount = 750.00m
-                }
+                new Invoice { Id = 1, IssueDate = DateTime.Today.AddDays(-30), DueDate = DateTime.Today.AddDays(-5), Amount = 1500.00m },
+                new Invoice { Id = 2, IssueDate = DateTime.Today.AddDays(-20), DueDate = DateTime.Today.AddDays(10), Amount =  750.00m },
+                new Invoice { Id = 3, IssueDate = DateTime.Today.AddDays(-10), DueDate = DateTime.Today.AddDays(-1), Amount =  300.00m }
             }
         };
 
-        // 3. Load the template and build the report.
-        Document report = new(templatePath);
-        ReportingEngine engine = new()
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(report, model, "model");
+        // 2. Create the LINQ Reporting template programmatically.
+        const string templatePath = "InvoiceTemplate.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // 4. Save the generated report.
-        string reportPath = Path.Combine(outputDir, "InvoiceReport.docx");
-        report.Save(reportPath);
-    }
+        // Begin the foreach block over the Invoices collection.
+        builder.Writeln("<<foreach [inv in model.Invoices]>>");
 
-    private static void CreateTemplate(string path)
-    {
-        Document doc = new();
-        DocumentBuilder builder = new(doc);
-
-        // Title
-        builder.Writeln("Invoice Report");
-        builder.Writeln();
-
-        // Begin foreach over the collection named Invoices.
-        builder.Writeln("<<foreach [item in model.Invoices]>>");
-
-        // Table header
-        Table table = builder.StartTable();
-        builder.InsertCell();
-        builder.Writeln("Description");
-        builder.InsertCell();
-        builder.Writeln("Due Date");
-        builder.InsertCell();
-        builder.Writeln("Amount");
+        // Create a table with a header row.
+        var table = builder.StartTable();
+        builder.InsertCell(); builder.Writeln("Id");
+        builder.InsertCell(); builder.Writeln("Issue Date");
+        builder.InsertCell(); builder.Writeln("Due Date");
+        builder.InsertCell(); builder.Writeln("Amount");
         builder.EndRow();
 
-        // Data row with conditional formatting for overdue items.
-        builder.InsertCell();
-        builder.Writeln(
-            "<<if [item.IsOverdue]>>" +
-            "<<textColor [\"Red\"]>><<[item.Description]>> <</textColor>><</if>>" +
-            "<<if [!item.IsOverdue]>>" +
-            "<<[item.Description]>>" +
-            "<</if>>");
+        // Data row – each cell contains a field expression.
+        builder.InsertCell(); builder.Writeln("<<[inv.Id]>>");
+        builder.InsertCell(); builder.Writeln("<<[inv.IssueDate]>>");
+        builder.InsertCell(); builder.Writeln("<<[inv.DueDate]>>");
 
+        // Conditional formatting for the Amount column.
         builder.InsertCell();
         builder.Writeln(
-            "<<if [item.IsOverdue]>>" +
-            "<<textColor [\"Red\"]>><<[item.DueDate.ToString(\"yyyy-MM-dd\")]>> <</textColor>><</if>>" +
-            "<<if [!item.IsOverdue]>>" +
-            "<<[item.DueDate.ToString(\"yyyy-MM-dd\")]>>" +
-            "<</if>>");
-
-        builder.InsertCell();
-        builder.Writeln(
-            "<<if [item.IsOverdue]>>" +
-            "<<textColor [\"Red\"]>><<[item.Amount]>> <</textColor>><</if>>" +
-            "<<if [!item.IsOverdue]>>" +
-            "<<[item.Amount]>>" +
+            "<<if [inv.IsOverdue]>>" +
+            "<<textColor [\"Red\"]>><<[inv.Amount]>> <</textColor>><</if>>" +
+            "<<if [!inv.IsOverdue]>>" +
+            "<<[inv.Amount]>>" +
             "<</if>>");
 
         builder.EndRow();
         builder.EndTable();
 
-        // Close foreach block.
+        // Close the foreach block.
         builder.Writeln("<</foreach>>");
 
-        doc.Save(path);
+        // Save the template to disk.
+        templateDoc.Save(templatePath);
+
+        // 3. Load the template and build the report.
+        var loadedTemplate = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
+        engine.BuildReport(loadedTemplate, model, "model");
+
+        // 4. Save the generated report.
+        const string reportPath = "InvoiceReport.docx";
+        loadedTemplate.Save(reportPath);
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<InvoiceItem> Invoices { get; set; } = new();
-}
-
-// Individual invoice item.
-public class InvoiceItem
-{
-    public string Description { get; set; } = string.Empty;
-    public DateTime DueDate { get; set; }
-    public decimal Amount { get; set; }
-
-    // Computed property used in the template to decide formatting.
-    public bool IsOverdue => DueDate < DateTime.Today;
 }

@@ -5,103 +5,82 @@ using System.Threading.Tasks;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingParallel
+public class Program
 {
-    // Simple data item.
-    public class Item
+    public static async Task Main()
     {
-        public int Index { get; set; }
-        public string Name { get; set; } = string.Empty;
+        // Ensure the output directory exists.
+        Directory.CreateDirectory("Output");
+
+        // Create a simple LINQ Reporting template programmatically.
+        const string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
+
+        // Prepare two distinct data sources.
+        ReportModel model1 = new()
+        {
+            Title = "First Report",
+            Items = new()
+            {
+                new Item { Name = "Alpha", Value = 100 },
+                new Item { Name = "Beta", Value = 200 }
+            }
+        };
+
+        ReportModel model2 = new()
+        {
+            Title = "Second Report",
+            Items = new()
+            {
+                new Item { Name = "Gamma", Value = 300 },
+                new Item { Name = "Delta", Value = 400 }
+            }
+        };
+
+        // Load separate document instances for each report.
+        Document doc1 = new(templatePath);
+        Document doc2 = new(templatePath);
+
+        // Configure the reporting engine.
+        ReportingEngine engine = new();
+        engine.Options = ReportBuildOptions.None;
+
+        // Run report generation in parallel.
+        Task<bool> task1 = Task.Run(() => engine.BuildReport(doc1, model1, "model"));
+        Task<bool> task2 = Task.Run(() => engine.BuildReport(doc2, model2, "model"));
+
+        await Task.WhenAll(task1, task2);
+
+        // Save the generated reports.
+        doc1.Save(Path.Combine("Output", "Report1.docx"));
+        doc2.Save(Path.Combine("Output", "Report2.docx"));
     }
 
-    // Root model for the report.
-    public class ReportModel
+    private static void CreateTemplate(string path)
     {
-        public string Title { get; set; } = string.Empty;
-        public List<Item> Items { get; set; } = new();
+        Document template = new();
+        DocumentBuilder builder = new(template);
+
+        // Title placeholder.
+        builder.Writeln("Report Title: <<[model.Title]>>");
+
+        // Loop over items.
+        builder.Writeln("<<foreach [item in model.Items]>>");
+        builder.Writeln("- <<[item.Name]>> : <<[item.Value]>>");
+        builder.Writeln("<</foreach>>");
+
+        template.Save(path);
     }
+}
 
-    public class Program
-    {
-        // Entry point – async to allow awaiting parallel tasks.
-        public static async Task Main(string[] args)
-        {
-            // Ensure the output directory exists.
-            string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-            Directory.CreateDirectory(outputDir);
+public class ReportModel
+{
+    public string Title { get; set; } = "";
+    public List<Item> Items { get; set; } = new();
+}
 
-            // Path for the shared template.
-            string templatePath = Path.Combine(outputDir, "Template.docx");
-
-            // 1. Create the LINQ Reporting template programmatically.
-            CreateTemplate(templatePath);
-
-            // 2. Prepare two distinct data sources.
-            ReportModel model1 = new()
-            {
-                Title = "First Report",
-                Items = new()
-                {
-                    new Item { Index = 1, Name = "Alpha" },
-                    new Item { Index = 2, Name = "Beta" },
-                    new Item { Index = 3, Name = "Gamma" }
-                }
-            };
-
-            ReportModel model2 = new()
-            {
-                Title = "Second Report",
-                Items = new()
-                {
-                    new Item { Index = 1, Name = "Delta" },
-                    new Item { Index = 2, Name = "Epsilon" },
-                    new Item { Index = 3, Name = "Zeta" }
-                }
-            };
-
-            // 3. Run report generation for each model in parallel.
-            Task task1 = GenerateReportAsync(templatePath, model1, Path.Combine(outputDir, "Report1.docx"));
-            Task task2 = GenerateReportAsync(templatePath, model2, Path.Combine(outputDir, "Report2.docx"));
-
-            await Task.WhenAll(task1, task2);
-        }
-
-        // Creates a simple template containing a title and a foreach loop over Items.
-        private static void CreateTemplate(string filePath)
-        {
-            Document doc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(doc);
-
-            // Title placeholder.
-            builder.Writeln("Report: <<[model.Title]>>");
-            builder.Writeln();
-
-            // Begin foreach over Items.
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Item <<[item.Index]>> – <<[item.Name]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            doc.Save(filePath);
-        }
-
-        // Loads the template, builds the report with the provided model, and saves the result.
-        private static async Task GenerateReportAsync(string templatePath, ReportModel model, string outputPath)
-        {
-            await Task.Run(() =>
-            {
-                // Load the previously saved template.
-                Document doc = new Document(templatePath);
-
-                // Initialize the reporting engine.
-                ReportingEngine engine = new ReportingEngine();
-
-                // Build the report using the model as the root object named "model".
-                engine.BuildReport(doc, model, "model");
-
-                // Save the generated report.
-                doc.Save(outputPath);
-            });
-        }
-    }
+public class Item
+{
+    public string Name { get; set; } = "";
+    public int Value { get; set; }
 }

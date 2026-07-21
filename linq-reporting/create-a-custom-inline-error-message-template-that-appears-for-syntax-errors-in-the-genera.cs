@@ -1,61 +1,73 @@
 using System;
-using System.IO;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-public class InlineErrorMessageExample
+namespace InlineErrorMessageExample
 {
-    // Simple data model used as the root object for the report.
+    // Simple data model used by the template.
     public class ReportModel
     {
-        // Initialize to avoid nullable warnings.
-        public string Name { get; set; } = "John Doe";
+        public List<Item> Items { get; set; } = new();
     }
 
-    public static void Main()
+    public class Item
     {
-        // Paths for the temporary template and the final report.
-        string templatePath = Path.Combine(Environment.CurrentDirectory, "template.docx");
-        string reportPath = Path.Combine(Environment.CurrentDirectory, "report.docx");
+        public string Name { get; set; } = string.Empty;
+    }
 
-        // -------------------------------------------------
-        // 1. Create the template document programmatically.
-        // -------------------------------------------------
-        Document templateDoc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-        // Correct tag – will be replaced with the model's Name value.
-        builder.Writeln("Customer: <<[model.Name]>>");
-
-        // Intentional syntax error: unknown switch "-unknown". This will trigger an inline error message.
-        builder.Writeln("This line contains a syntax error: <<[model.Name] -unknown>>");
-
-        // Save the template to disk.
-        templateDoc.Save(templatePath);
-
-        // -------------------------------------------------
-        // 2. Load the template and build the report.
-        // -------------------------------------------------
-        Document loadedTemplate = new Document(templatePath);
-
-        // Configure the reporting engine to inline error messages.
-        ReportingEngine engine = new ReportingEngine
+    public class Program
+    {
+        public static void Main()
         {
-            Options = ReportBuildOptions.InlineErrorMessages
-        };
+            // Register code page provider (required for some environments).
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
 
-        // Build the report using the model as the data source.
-        ReportModel model = new ReportModel();
-        bool success = engine.BuildReport(loadedTemplate, model, "model");
+            // Paths for the template and the generated report.
+            const string templatePath = "template.docx";
+            const string outputPath = "report_with_errors.docx";
 
-        // The success flag will be false because of the syntax error,
-        // but the document will contain the inline error messages.
-        Console.WriteLine($"Report build successful: {success}");
+            // -----------------------------------------------------------------
+            // 1. Create a template document programmatically.
+            // -----------------------------------------------------------------
+            var templateDoc = new Document();
+            var builder = new DocumentBuilder(templateDoc);
 
-        // -------------------------------------------------
-        // 3. Save the generated report.
-        // -------------------------------------------------
-        loadedTemplate.Save(reportPath);
-        Console.WriteLine($"Report saved to: {reportPath}");
+            builder.Writeln("Sample Report");
+
+            // Introduce a syntax error by using an unsupported switch "-unknown".
+            // The ReportingEngine will insert an inline error message instead of throwing.
+            builder.Writeln("<<foreach [item in Items] -unknown>>");
+            builder.Writeln("Item name: <<[item.Name]>>");
+            builder.Writeln("<</foreach>>");
+
+            // Save the template to disk.
+            templateDoc.Save(templatePath);
+
+            // -----------------------------------------------------------------
+            // 2. Load the template and prepare the data source.
+            // -----------------------------------------------------------------
+            var doc = new Document(templatePath);
+
+            var model = new ReportModel();
+            model.Items.Add(new Item { Name = "Alpha" });
+            model.Items.Add(new Item { Name = "Beta" });
+
+            // -----------------------------------------------------------------
+            // 3. Configure the ReportingEngine to show inline error messages.
+            // -----------------------------------------------------------------
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.InlineErrorMessages;
+
+            // Build the report. The returned flag indicates whether parsing succeeded.
+            bool success = engine.BuildReport(doc, model, "model");
+
+            // Save the resulting document.
+            doc.Save(outputPath);
+
+            // Output the result status.
+            Console.WriteLine($"Report generation success flag: {success}");
+            Console.WriteLine($"Generated document saved to: {outputPath}");
+        }
     }
 }

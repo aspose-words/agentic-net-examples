@@ -5,41 +5,15 @@ using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
 
-namespace AsposeWordsLinqReporting
+public class Program
 {
-    // Data model classes
-    public class Order
+    public static void Main()
     {
-        public string CustomerName { get; set; } = "";
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public int Index { get; set; }
-        public string Name { get; set; } = "";
-    }
-
-    public class Program
-    {
-        public static void Main()
+        // Prepare sample data.
+        var reportData = new ReportModel
         {
-            // 1. Create a template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
-
-            // Add a title.
-            builder.Writeln("Order Report");
-            builder.Writeln("Customer: <<[order.CustomerName]>>");
-            builder.Writeln();
-
-            // Begin a foreach loop over the collection of items.
-            builder.Writeln("<<foreach [item in order.Items]>>");
-            builder.Writeln("Item <<[item.Index]>>: <<[item.Name]>>");
-            builder.Writeln("<</foreach>>");
-
-            // 2. Prepare sample data.
-            Order sampleOrder = new Order
+            Title = "Order Summary",
+            Order = new Order
             {
                 CustomerName = "John Doe",
                 Items = new List<Item>
@@ -48,23 +22,71 @@ namespace AsposeWordsLinqReporting
                     new Item { Index = 2, Name = "Banana" },
                     new Item { Index = 3, Name = "Cherry" }
                 }
-            };
+            }
+        };
 
-            // 3. Build the report using the LINQ Reporting engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // default options
-            bool success = engine.BuildReport(template, sampleOrder, "order");
+        // Create a template document programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            // 4. Serialize the generated report to a memory stream.
-            using MemoryStream reportStream = new MemoryStream();
-            template.Save(reportStream, SaveFormat.Docx);
-            reportStream.Position = 0; // Reset for further processing (e.g., emailing).
+        builder.Writeln("<<[model.Title]>>");
+        builder.Writeln("Customer: <<[model.Order.CustomerName]>>");
+        builder.Writeln();
+        builder.Writeln("<<foreach [item in model.Order.Items]>>");
 
-            // Optional: write the stream to a file to verify the output.
-            File.WriteAllBytes("GeneratedReport.docx", reportStream.ToArray());
+        // Table header.
+        var table = builder.StartTable();
+        builder.InsertCell();
+        builder.Writeln("Index");
+        builder.InsertCell();
+        builder.Writeln("Product");
+        builder.EndRow();
 
-            // Indicate completion.
-            Console.WriteLine($"Report generation {(success ? "succeeded" : "failed")}. Stream length: {reportStream.Length} bytes.");
-        }
+        // Table row for each item.
+        builder.InsertCell();
+        builder.Writeln("<<[item.Index]>>");
+        builder.InsertCell();
+        builder.Writeln("<<[item.Name]>>");
+        builder.EndRow();
+
+        builder.EndTable();
+        builder.Writeln("<</foreach>>");
+
+        // Build the report using LINQ Reporting engine.
+        var engine = new ReportingEngine();
+        engine.BuildReport(templateDoc, reportData, "model");
+
+        // Serialize the generated report to a memory stream.
+        using var reportStream = new MemoryStream();
+        templateDoc.Save(reportStream, SaveFormat.Docx);
+        reportStream.Position = 0; // Reset for further processing.
+
+        // For demonstration, save the stream to a file.
+        const string outputPath = "GeneratedReport.docx";
+        File.WriteAllBytes(outputPath, reportStream.ToArray());
+
+        // Optionally, display the size of the generated report.
+        Console.WriteLine($"Report generated and saved to '{outputPath}'. Size: {reportStream.Length} bytes.");
     }
+}
+
+// Root model class referenced in the template as "model".
+public class ReportModel
+{
+    public string Title { get; set; } = string.Empty;
+    public Order Order { get; set; } = new();
+}
+
+// Order class containing customer information and a collection of items.
+public class Order
+{
+    public string CustomerName { get; set; } = string.Empty;
+    public List<Item> Items { get; set; } = new();
+}
+
+// Item class used inside the foreach loop.
+public class Item
+{
+    public int Index { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

@@ -1,76 +1,70 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text; // Needed for Encoding
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 namespace LinqReportingExample
 {
-    // Business object representing a person.
-    public class Person
+    // Business object representing a simple order.
+    public class Order
     {
-        public string Name { get; set; } = "";
-        public int Age { get; set; }
+        public int Id { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
     }
 
     // Wrapper model that will be passed to the reporting engine.
     public class ReportModel
     {
-        public List<Person> Persons { get; set; } = new();
+        public List<Order> Orders { get; set; } = new();
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider (required for some environments).
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
-            // Paths for the template and the generated report.
-            string templatePath = "Template.docx";
-            string reportPath = "Report.docx";
-
-            // -----------------------------------------------------------------
-            // 1. Create the template document programmatically.
-            // -----------------------------------------------------------------
-            Document templateDoc = new Document();
-            DocumentBuilder builder = new DocumentBuilder(templateDoc);
-
-            // Insert LINQ Reporting tags.
-            builder.Writeln("<<foreach [person in Persons]>>");
-            builder.Writeln("Name: <<[person.Name]>>, Age: <<[person.Age]>>");
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk.
-            templateDoc.Save(templatePath);
-
-            // -----------------------------------------------------------------
-            // 2. Load the template and prepare the data source.
-            // -----------------------------------------------------------------
-            Document doc = new Document(templatePath);
-
-            var model = new ReportModel
+            // 1. Prepare sample data.
+            var orders = new List<Order>
             {
-                Persons = new List<Person>
-                {
-                    new Person { Name = "John Doe", Age = 30 },
-                    new Person { Name = "Jane Smith", Age = 25 },
-                    new Person { Name = "Bob Johnson", Age = 40 }
-                }
+                new Order { Id = 1, CustomerName = "Alice", Amount = 123.45m },
+                new Order { Id = 2, CustomerName = "Bob",   Amount = 678.90m },
+                new Order { Id = 3, CustomerName = "Carol", Amount = 250.00m }
             };
 
-            // -----------------------------------------------------------------
-            // 3. Build the report using the LINQ Reporting engine.
-            // -----------------------------------------------------------------
-            ReportingEngine engine = new ReportingEngine();
-            // No special options are required for this simple example.
-            engine.BuildReport(doc, model, "model");
+            var model = new ReportModel { Orders = orders };
 
-            // -----------------------------------------------------------------
-            // 4. Save the generated report.
-            // -----------------------------------------------------------------
-            doc.Save(reportPath);
+            // 2. Create a template document with LINQ Reporting tags.
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
+
+            builder.Writeln("Order Report");
+            builder.Writeln("==============");
+            builder.Writeln(); // empty line
+
+            // Begin a foreach block that iterates over the Orders collection.
+            builder.Writeln("<<foreach [order in Orders]>>");
+            builder.Writeln("Order ID: <<[order.Id]>>");
+            builder.Writeln("Customer: <<[order.CustomerName]>>");
+            builder.Writeln("Amount:   <<[order.Amount]>>");
+            builder.Writeln("<</foreach>>");
+
+            // 3. Save the template to disk.
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
+
+            // 4. Load the template (simulating a separate load step).
+            var loadedTemplate = new Document(templatePath);
+
+            // 5. Build the report using the ReportingEngine.
+            var engine = new ReportingEngine();
+            engine.Options = ReportBuildOptions.None; // default options
+
+            // The root object name in the template is "model", so we pass it accordingly.
+            engine.BuildReport(loadedTemplate, model, "model");
+
+            // 6. Save the generated report.
+            const string reportPath = "Report.docx";
+            loadedTemplate.Save(reportPath);
         }
     }
 }

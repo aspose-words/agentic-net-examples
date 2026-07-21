@@ -3,54 +3,59 @@ using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingDemo
+public class Person
 {
-    // Root data model that will be passed to the reporting engine.
-    public class ReportModel
-    {
-        // The generic list whose item type will be inferred automatically by the engine.
-        public List<Item> Items { get; set; } = new();
-    }
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
 
-    // Simple item class used in the generic list.
-    public class Item
-    {
-        public int Index { get; set; }
-        public string Name { get; set; } = string.Empty;
-    }
+public class ReportModel
+{
+    public List<Person> Items { get; set; } = new();
+}
 
-    public class Program
+public class Program
+{
+    public static void Main()
     {
-        public static void Main()
+        // Prepare sample data.
+        var model = new ReportModel
         {
-            // Prepare sample data.
-            var model = new ReportModel();
-            model.Items.Add(new Item { Index = 1, Name = "Apple" });
-            model.Items.Add(new Item { Index = 2, Name = "Banana" });
-            model.Items.Add(new Item { Index = 3, Name = "Cherry" });
+            Items = new List<Person>
+            {
+                new() { Name = "Alice", Age = 30 },
+                new() { Name = "Bob", Age = 25 },
+                new() { Name = "Charlie", Age = 35 }
+            }
+        };
 
-            // Create a new blank document that will serve as the template.
-            var doc = new Document();
-            var builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // 1. Create a template document programmatically.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-            // Write static text.
-            builder.Writeln("Item List:");
-            // Insert a foreach tag that iterates over the generic list.
-            // The engine will infer that each element is of type 'Item'.
-            builder.Writeln("<<foreach [item in Items]>>");
-            // Inside the loop we can reference the properties of each inferred item.
-            builder.Writeln("  Index: <<[item.Index]>>, Name: <<[item.Name]>>");
-            // Close the foreach block.
-            builder.Writeln("<</foreach>>");
+        builder.Writeln("People Report:");
+        // The foreach tag will let the engine infer the item type (Person) automatically.
+        builder.Writeln("<<foreach [person in Items]>>");
+        builder.Writeln("- <<[person.Name]>> is <<[person.Age]>> years old.");
+        builder.Writeln("<</foreach>>");
 
-            // Build the report using the model as the root data source.
-            var engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None;
-            // The root object name must match the name used in the template ("model").
-            engine.BuildReport(doc, model, "model");
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-            // Save the generated report.
-            doc.Save("Report.docx");
-        }
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report.
+        // -----------------------------------------------------------------
+        var loadedTemplate = new Document(templatePath);
+        var engine = new ReportingEngine();
+
+        // BuildReport with root object name "model" to match the template expressions.
+        engine.BuildReport(loadedTemplate, model, "model");
+
+        // Save the generated report.
+        const string reportPath = "Report.docx";
+        loadedTemplate.Save(reportPath);
     }
 }

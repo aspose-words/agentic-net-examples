@@ -1,38 +1,48 @@
 using System;
+using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class Person
+{
+    public string Name { get; set; } = "";
+    public int Age { get; set; }
+}
+
+public class Model
+{
+    public List<Person> Persons { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // 1. Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-
-        // Use the default LINQ Reporting delimiters << and >>.
-        // The tag references the root object name "model" and its Greeting property.
-        builder.Writeln("<<[model.Greeting]>>");
-
-        // 2. Prepare the data model that will be bound to the template.
-        ReportModel model = new ReportModel
+        // Prepare sample data.
+        var model = new Model
         {
-            Greeting = "Hello, Aspose.Words LINQ Reporting!"
+            Persons = new List<Person>
+            {
+                new Person { Name = "Alice", Age = 30 },
+                new Person { Name = "Bob", Age = 25 }
+            }
         };
 
-        // 3. Configure the ReportingEngine (no custom delimiters needed).
-        ReportingEngine engine = new ReportingEngine();
+        // Create a blank document and a builder to insert template tags.
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
 
-        // 4. Build the report. The root object name must match the name used in the template tags.
-        engine.BuildReport(template, model, "model");
+        // Use the default LINQ Reporting delimiters (<< and >>).
+        builder.Writeln("<<foreach [p in Persons]>>");
+        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("<</foreach>>");
 
-        // 5. Save the generated report.
-        template.Save("CustomDelimiterReport.docx");
-    }
+        // Build the report.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+        engine.BuildReport(doc, model, "model");
 
-    // Simple public data model with a single property.
-    public class ReportModel
-    {
-        public string Greeting { get; set; } = string.Empty;
+        // Save the generated document.
+        doc.Save("ReportWithDefaultDelimiters.docx");
     }
 }

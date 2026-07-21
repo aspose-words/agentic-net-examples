@@ -2,92 +2,99 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Aspose.Words;
+using Aspose.Words.Drawing;
 using Aspose.Words.Reporting;
+using Aspose.Words.Reporting;
+using System.Text;
 
-public class Program
+namespace LinqReportingBatchImages
 {
-    public static void Main()
+    // Data model for each report.
+    public class ReportData
     {
-        // Prepare working folders.
-        string workDir = Directory.GetCurrentDirectory();
-        string imagesDir = Path.Combine(workDir, "Images");
-        string outputDir = Path.Combine(workDir, "Output");
-        Directory.CreateDirectory(imagesDir);
-        Directory.CreateDirectory(outputDir);
+        public string Title { get; set; } = string.Empty;
+        public string ImagePath { get; set; } = string.Empty;
+    }
 
-        // Create three identical PNG images from a tiny red dot base64 string.
-        const string base64Png =
-            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAukB9WcXK7cAAAAASUVORK5CYII=";
-        byte[] pngBytes = Convert.FromBase64String(base64Png);
-        string[] imagePaths = new[]
+    public class Program
+    {
+        public static void Main()
         {
-            Path.Combine(imagesDir, "image1.png"),
-            Path.Combine(imagesDir, "image2.png"),
-            Path.Combine(imagesDir, "image3.png")
-        };
-        foreach (string path in imagePaths)
-            File.WriteAllBytes(path, pngBytes);
+            // Register code page provider (required for some Aspose.Words operations).
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // -----------------------------------------------------------------
-        // Build a template document that contains a foreach loop and an image tag inside a textbox.
-        // -----------------------------------------------------------------
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+            // Prepare folders.
+            string workDir = Directory.GetCurrentDirectory();
+            string assetsDir = Path.Combine(workDir, "Assets");
+            string outputDir = Path.Combine(workDir, "Output");
+            Directory.CreateDirectory(assetsDir);
+            Directory.CreateDirectory(outputDir);
 
-        // Begin foreach over Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
+            // Create sample images.
+            CreateSampleImage(Path.Combine(assetsDir, "Red.png"),   "#FF0000");
+            CreateSampleImage(Path.Combine(assetsDir, "Green.png"), "#00FF00");
 
-        // Insert a textbox that will host the image.
-        var textBox = builder.InsertShape(Aspose.Words.Drawing.ShapeType.TextBox, 200, 120);
-        // Move the cursor inside the textbox.
-        builder.MoveTo(textBox.FirstParagraph);
-        // Image tag – the expression returns a file path.
-        builder.Write("<<image [item.ImagePath] -fitSize>>");
-        // Move the cursor back to the main story after the textbox.
-        builder.MoveTo(template.FirstSection.Body.LastParagraph);
+            // Build the template document.
+            string templatePath = Path.Combine(workDir, "Template.docx");
+            BuildTemplate(templatePath);
 
-        // End foreach.
-        builder.Writeln("<</foreach>>");
-
-        // -----------------------------------------------------------------
-        // Generate a separate report for each image.
-        // -----------------------------------------------------------------
-        for (int i = 0; i < imagePaths.Length; i++)
-        {
-            // Prepare data model containing a single item.
-            var model = new ReportModel
+            // Prepare data for batch reports.
+            var reports = new List<ReportData>
             {
-                Items = new List<ReportItem>
-                {
-                    new ReportItem { ImagePath = imagePaths[i] }
-                }
+                new() { Title = "Red Square Report",   ImagePath = Path.Combine(assetsDir, "Red.png")   },
+                new() { Title = "Green Square Report", ImagePath = Path.Combine(assetsDir, "Green.png") }
             };
 
-            // Clone the template so that each report starts from a fresh copy.
-            Document report = (Document)template.Clone(true);
+            // Generate each report.
+            int index = 1;
+            foreach (var data in reports)
+            {
+                // Load fresh template for each iteration.
+                var doc = new Document(templatePath);
 
-            // Build the report using LINQ Reporting Engine.
-            ReportingEngine engine = new ReportingEngine();
-            engine.Options = ReportBuildOptions.None; // default options
-            engine.BuildReport(report, model, "model");
+                // Build the report using LINQ Reporting Engine.
+                var engine = new ReportingEngine();
+                engine.Options = ReportBuildOptions.None;
+                engine.BuildReport(doc, data, "model");
 
-            // Save the generated document.
-            string outFile = Path.Combine(outputDir, $"Report_{i + 1}.docx");
-            report.Save(outFile);
+                // Save the generated report.
+                string outPath = Path.Combine(outputDir, $"Report_{index}.docx");
+                doc.Save(outPath);
+                index++;
+            }
         }
 
-        Console.WriteLine("Reports generated in: " + outputDir);
+        // Creates a simple PNG image of a solid color using a Base64 string.
+        private static void CreateSampleImage(string filePath, string hexColor)
+        {
+            // 1x1 pixel PNG base64 for the requested color.
+            // The PNG data is generated once and written to the file.
+            string base64 = hexColor switch
+            {
+                "#FF0000" => "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+XK2cAAAAASUVORK5CYII=",
+                "#00FF00" => "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/5+BAQADgwF/6VYV2QAAAABJRU5ErkJggg==",
+                _ => throw new ArgumentException("Unsupported color")
+            };
+            byte[] imageBytes = Convert.FromBase64String(base64);
+            File.WriteAllBytes(filePath, imageBytes);
+        }
+
+        // Builds the template document containing a title placeholder and an image placeholder inside a textbox.
+        private static void BuildTemplate(string templatePath)
+        {
+            var doc = new Document();
+            var builder = new DocumentBuilder(doc);
+
+            // Title placeholder.
+            builder.Writeln("Report Title: <<[model.Title]>>");
+
+            // Insert a textbox to host the image tag.
+            Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+            builder.MoveTo(textBox.FirstParagraph);
+            builder.Write("<<image [model.ImagePath] -fitSize>>");
+
+            // Save the template.
+            doc.Save(templatePath);
+        }
     }
-}
-
-// Root wrapper class referenced in the template as <<[model.Items]>>.
-public class ReportModel
-{
-    public List<ReportItem> Items { get; set; } = new();
-}
-
-// Simple data class exposing the image path.
-public class ReportItem
-{
-    public string ImagePath { get; set; } = string.Empty;
 }

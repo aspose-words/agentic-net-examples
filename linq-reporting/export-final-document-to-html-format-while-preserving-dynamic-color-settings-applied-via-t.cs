@@ -1,63 +1,64 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 using Aspose.Words.Saving;
+
+public class ReportModel
+{
+    // Sample title (not used directly in tags but can be added if needed)
+    public string Title { get; set; } = "Dynamic Color Report";
+
+    // Color name or HTML color code used by textColor and backColor tags
+    public string ColorName { get; set; } = "Tomato";
+
+    // HTML snippet that will be inserted using the -html switch
+    public string HtmlSnippet { get; set; } = "<b>Bold HTML content</b> with <i>italic</i> text.";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Prepare sample data.
-        var model = new ReportModel
+        // Prepare the data model
+        ReportModel model = new ReportModel();
+
+        // Create a blank document that will serve as the LINQ Reporting template
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
+
+        // Paragraph with dynamic text color
+        builder.Writeln("<<textColor [model.ColorName]>>This text is colored dynamically<</textColor>>");
+
+        // Paragraph with dynamic background color
+        builder.Writeln("<<backColor [model.ColorName]>>This paragraph has a dynamic background color<</backColor>>");
+
+        // Insert an HTML fragment using the -html switch; the HTML will be preserved in the output
+        builder.Writeln("<<[model.HtmlSnippet] -html>>");
+
+        // Build the report using the LINQ Reporting engine
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
+        engine.BuildReport(template, model, "model");
+
+        // Prepare HTML save options to ensure colors are exported correctly
+        HtmlSaveOptions htmlOptions = new HtmlSaveOptions
         {
-            Items = new List<Item>
-            {
-                new Item { Name = "Apple",  ColorName = "Red" },
-                new Item { Name = "Banana", ColorName = "#FFD700" }, // gold
-                new Item { Name = "Grape",  ColorName = "Purple" }
-            }
+            Encoding = Encoding.UTF8,
+            ExportListLabels = ExportListLabels.Auto,
+            ExportDocumentProperties = false,
+            ExportImagesAsBase64 = false,
+            ExportFontResources = false,
+            ExportGeneratorName = true
         };
 
-        // Create the template document programmatically.
-        var templatePath = Path.Combine("Output", "Template.docx");
-        Directory.CreateDirectory(Path.GetDirectoryName(templatePath)!);
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Ensure the output directory exists
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        builder.Writeln("Report with dynamic text colors:");
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("<<textColor [item.ColorName]>>Item: <<[item.Name]>> <</textColor>>");
-        builder.Writeln("<</foreach>>");
-
-        // Save the template.
-        doc.Save(templatePath);
-
-        // Load the template (optional, shown for completeness).
-        var loadedDoc = new Document(templatePath);
-
-        // Build the report using LINQ Reporting Engine.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None;
-        engine.BuildReport(loadedDoc, model, "model");
-
-        // Save the final document to HTML while preserving the color tags.
-        var htmlPath = Path.Combine("Output", "Report.html");
-        var saveOptions = new HtmlSaveOptions(); // No ExportColorNames property needed.
-        loadedDoc.Save(htmlPath, saveOptions);
+        // Save the final document as HTML
+        string htmlPath = Path.Combine(outputDir, "DynamicColorReport.html");
+        template.Save(htmlPath, htmlOptions);
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Item used in the foreach loop.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public string ColorName { get; set; } = string.Empty;
 }

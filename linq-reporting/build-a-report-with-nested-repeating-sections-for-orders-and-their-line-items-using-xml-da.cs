@@ -1,7 +1,5 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
@@ -9,90 +7,70 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words.
-        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        // Prepare sample XML data.
+        const string xmlFile = "Orders.xml";
+        File.WriteAllText(xmlFile, GetSampleXml());
 
-        // Prepare output directory.
-        var outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
-
-        // Create a Word template with LINQ Reporting tags.
-        var templatePath = Path.Combine(outputDir, "template.docx");
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
+        // Create a template document programmatically.
+        Document template = new Document();
+        DocumentBuilder builder = new DocumentBuilder(template);
 
         builder.Writeln("Orders Report");
-        builder.Writeln("");
+        builder.Writeln();
 
-        // Outer foreach for orders.
-        builder.Writeln("<<foreach [order in Orders]>>");
+        // Outer foreach – iterate over orders.
+        builder.Writeln("<<foreach [order in orders]>>");
         builder.Writeln("Customer: <<[order.CustomerName]>>");
-        builder.Writeln("Date: <<[order.OrderDate]>>");
+        builder.Writeln("Order Date: <<[order.OrderDate]>>");
         builder.Writeln("Items:");
-        // Inner foreach for line items.
-        builder.Writeln("<<foreach [item in Items]>>");
-        builder.Writeln("- <<[item.ProductName]>>: <<[item.Quantity]>> x $<<[item.Price]>>");
+        // Inner foreach – iterate over line items of the current order.
+        builder.Writeln("<<foreach [item in order.Items.Item]>>");
+        // Correct arithmetic expression syntax: the whole expression must be inside a single <<[ ... ]>> tag.
+        builder.Writeln("- <<[item.ProductName]>>: <<[item.Quantity]>> x <<[item.Price]>> = <<[item.Quantity * item.Price]>>");
         builder.Writeln("<</foreach>>");
         builder.Writeln("<</foreach>>");
 
-        doc.Save(templatePath);
-
-        // Load the template.
-        var reportDoc = new Document(templatePath);
-
-        // Prepare data model.
-        var model = new ReportModel
-        {
-            Orders = new List<Order>
-            {
-                new()
-                {
-                    CustomerName = "John Doe",
-                    OrderDate = new DateTime(2023, 1, 15),
-                    Items = new List<Item>
-                    {
-                        new() { ProductName = "Widget A", Quantity = 2, Price = 9.99m },
-                        new() { ProductName = "Widget B", Quantity = 1, Price = 19.99m }
-                    }
-                },
-                new()
-                {
-                    CustomerName = "Jane Smith",
-                    OrderDate = new DateTime(2023, 2, 5),
-                    Items = new List<Item>
-                    {
-                        new() { ProductName = "Gadget X", Quantity = 5, Price = 4.50m }
-                    }
-                }
-            }
-        };
-
-        // Build the report.
-        var engine = new ReportingEngine();
-        engine.BuildReport(reportDoc, model, "model");
+        // Build the report using the XML data source.
+        ReportingEngine engine = new ReportingEngine();
+        XmlDataSource dataSource = new XmlDataSource(xmlFile);
+        engine.BuildReport(template, dataSource, "orders");
 
         // Save the generated report.
-        var reportPath = Path.Combine(outputDir, "report.docx");
-        reportDoc.Save(reportPath);
+        template.Save("OrdersReport.docx");
     }
-}
 
-// Data model classes.
-public class ReportModel
-{
-    public List<Order> Orders { get; set; } = new();
-}
-
-public class Order
-{
-    public string CustomerName { get; set; } = "";
-    public DateTime OrderDate { get; set; }
-    public List<Item> Items { get; set; } = new();
-}
-
-public class Item
-{
-    public string ProductName { get; set; } = "";
-    public int Quantity { get; set; }
-    public decimal Price { get; set; }
+    // Returns a simple XML string containing two orders with line items.
+    private static string GetSampleXml()
+    {
+        return @"<?xml version=""1.0"" encoding=""utf-8""?>
+<Orders>
+  <Order>
+    <CustomerName>John Doe</CustomerName>
+    <OrderDate>2023-08-01</OrderDate>
+    <Items>
+      <Item>
+        <ProductName>Widget A</ProductName>
+        <Quantity>2</Quantity>
+        <Price>9.99</Price>
+      </Item>
+      <Item>
+        <ProductName>Gadget B</ProductName>
+        <Quantity>1</Quantity>
+        <Price>19.95</Price>
+      </Item>
+    </Items>
+  </Order>
+  <Order>
+    <CustomerName>Jane Smith</CustomerName>
+    <OrderDate>2023-08-03</OrderDate>
+    <Items>
+      <Item>
+        <ProductName>Thingamajig</ProductName>
+        <Quantity>5</Quantity>
+        <Price>3.50</Price>
+      </Item>
+    </Items>
+  </Order>
+</Orders>";
+    }
 }

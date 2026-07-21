@@ -1,87 +1,63 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
-using Aspose.Words.Drawing;
-using Aspose.Words.Fields;
 
 public class Program
 {
     public static void Main()
     {
-        // Ensure code page support for possible Unicode data.
-        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        // Paths for the template and the generated report.
+        string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
+        string reportPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
 
-        // Step 1: Create the template document programmatically.
-        var templatePath = "Template.docx";
-        CreateTemplate(templatePath);
+        // -----------------------------------------------------------------
+        // 1. Create the template document programmatically.
+        // -----------------------------------------------------------------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-        // Step 2: Load the template for reporting.
-        var doc = new Document(templatePath);
-
-        // Step 3: Prepare a simple data model.
-        var model = new ReportModel
-        {
-            Title = "Sample Report",
-            Sections = new List<SectionModel>
-            {
-                new SectionModel { Heading = "Chapter 1", SubHeading = "Section 1.1" },
-                new SectionModel { Heading = "Chapter 2", SubHeading = "Section 2.1" }
-            }
-        };
-
-        // Step 4: Build the report using LINQ Reporting engine.
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.None; // default options
-        engine.BuildReport(doc, model, "model");
-
-        // Step 5: Update fields so the TOC reflects the generated headings.
-        doc.UpdateFields();
-
-        // Step 6: Save the final document.
-        doc.Save("Report.docx");
-    }
-
-    private static void CreateTemplate(string filePath)
-    {
-        var doc = new Document();
-        var builder = new DocumentBuilder(doc);
-
-        // Insert a TOC field that will later be updated.
+        // Insert a Table of Contents field at the beginning of the document.
+        // The switches configure the TOC to include heading levels 1‑3, add hyperlinks, etc.
         builder.InsertTableOfContents("\\o \"1-3\" \\h \\z \\u");
         builder.InsertBreak(BreakType.PageBreak);
 
-        // Insert a title placeholder using LINQ Reporting tag.
-        builder.Writeln("<<[model.Title]>>");
-        builder.InsertBreak(BreakType.PageBreak);
-
-        // Add sample headings that will appear in the TOC.
+        // Add sample content with heading styles that the TOC will pick up.
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("<<[model.Sections[0].Heading]>>");
+        builder.Writeln("Chapter 1");
+
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("<<[model.Sections[0].SubHeading]>>");
-        builder.InsertParagraph();
+        builder.Writeln("Section 1.1");
+        builder.Writeln("Section 1.2");
 
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading1;
-        builder.Writeln("<<[model.Sections[1].Heading]>>");
+        builder.Writeln("Chapter 2");
+
         builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading2;
-        builder.Writeln("<<[model.Sections[1].SubHeading]>>");
+        builder.Writeln("Section 2.1");
+        builder.ParagraphFormat.StyleIdentifier = StyleIdentifier.Heading3;
+        builder.Writeln("Subsection 2.1.1");
 
         // Save the template to disk.
-        doc.Save(filePath);
+        templateDoc.Save(templatePath);
+
+        // -----------------------------------------------------------------
+        // 2. Load the template and build the report using LINQ Reporting.
+        // -----------------------------------------------------------------
+        Document reportDoc = new Document(templatePath);
+
+        // The template does not contain any data‑binding tags, but we still use the
+        // ReportingEngine to demonstrate the required workflow.
+        ReportingEngine engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None;
+
+        // BuildReport with an empty data source (no root object needed).
+        engine.BuildReport(reportDoc, new object());
+
+        // Update fields so that the TOC reflects the headings added above.
+        reportDoc.UpdateFields();
+
+        // Save the final document.
+        reportDoc.Save(reportPath);
     }
-}
-
-// Public data model aligned with the template tags.
-public class ReportModel
-{
-    public string Title { get; set; } = string.Empty;
-    public List<SectionModel> Sections { get; set; } = new();
-}
-
-public class SectionModel
-{
-    public string Heading { get; set; } = string.Empty;
-    public string SubHeading { get; set; } = string.Empty;
 }

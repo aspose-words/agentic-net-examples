@@ -1,66 +1,55 @@
 using System;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
+public class Person
+{
+    public string Name { get; set; } = "John Doe";
+    public int Age { get; set; } = 30;
+    public decimal Salary { get; set; } = 75000m; // This member will be hidden
+}
+
 public class Program
 {
-    // Original data model (contains the Salary property that we want to hide).
-    public class Person
-    {
-        public string Name { get; set; } = "John Doe";
-        public int Age { get; set; } = 30;
-        public decimal Salary { get; set; } = 75000m; // This member will be hidden.
-    }
-
-    // Wrapper model used for the report – it deliberately omits the Salary property.
-    public class PersonRestricted
-    {
-        public string Name { get; set; }
-        public int Age { get; set; }
-
-        public PersonRestricted(Person source)
-        {
-            Name = source.Name;
-            Age = source.Age;
-            // Salary is not exposed, so the engine will treat it as a missing member.
-        }
-    }
-
     public static void Main()
     {
-        // Prepare output folder.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare sample data
+        Person model = new Person();
 
-        // 1. Create a template document with LINQ Reporting tags.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
-        builder.Writeln("Name: <<[person.Name]>>");
-        builder.Writeln("Age: <<[person.Age]>>");
-        builder.Writeln("Salary: <<[person.Salary]>>"); // This field will be restricted.
-        string templatePath = Path.Combine(outputDir, "Template.docx");
-        template.Save(templatePath);
+        // Create a template document with LINQ Reporting tags
+        string templatePath = "Template.docx";
+        CreateTemplate(templatePath);
 
-        // 2. Load the template (simulating a separate load step).
-        Document loadedTemplate = new Document(templatePath);
+        // Load the template
+        Document doc = new Document(templatePath);
 
-        // 3. Configure the ReportingEngine.
+        // Configure the reporting engine
         ReportingEngine engine = new ReportingEngine();
 
-        // Allow missing members so that restricted members are treated as empty.
+        // Restrict the Person type so its members cannot be accessed.
+        // This will make the Salary tag unavailable while allowing other members.
+        ReportingEngine.SetRestrictedTypes(typeof(Person));
+
+        // Allow missing members so that the hidden tag does not cause an exception.
         engine.Options = ReportBuildOptions.AllowMissingMembers;
-        engine.MissingMemberMessage = "[Hidden]";
 
-        // 4. Build the report using the restricted wrapper model.
-        Person data = new Person();
-        PersonRestricted restrictedData = new PersonRestricted(data);
-        engine.BuildReport(loadedTemplate, restrictedData, "person");
+        // Build the report using the model object; root name is "person"
+        engine.BuildReport(doc, model, "person");
 
-        // 5. Save the generated report.
-        string resultPath = Path.Combine(outputDir, "Result.docx");
-        loadedTemplate.Save(resultPath);
+        // Save the generated report
+        doc.Save("Report.docx");
+    }
 
-        Console.WriteLine($"Report generated: {resultPath}");
+    private static void CreateTemplate(string filePath)
+    {
+        Document doc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(doc);
+
+        // Insert tags that reference the model's members
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age: <<[person.Age]>>");
+        builder.Writeln("Salary: <<[person.Salary]>>"); // This will be hidden by the restriction
+
+        doc.Save(filePath);
     }
 }

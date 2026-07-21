@@ -1,62 +1,60 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
-namespace AsposeWordsLinqReportingRestrictedMembers
+public class Item
 {
-    // Sample data model with a method that modifies its state.
-    public class SampleModel
+    public string Name { get; set; } = "SampleItem";
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
+
+public class Program
+{
+    public static void Main()
     {
-        // Initialize to avoid nullable warnings.
-        public int Counter { get; set; } = 0;
+        // Prepare sample data.
+        var model = new ReportModel();
+        model.Items.Add(new Item { Name = "First" });
+        model.Items.Add(new Item { Name = "Second" });
 
-        // Method that changes the Counter property.
-        public int Increment()
-        {
-            Counter++;
-            return Counter;
-        }
-    }
+        // Create a template document with LINQ Reporting tags.
+        var templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
+        var doc = new Document();
+        var builder = new DocumentBuilder(doc);
+        builder.Writeln("Item count: <<[model.Items.Count]>>");
 
-    public class Program
-    {
-        public static void Main()
-        {
-            // Prepare a simple template document programmatically.
-            Document template = new Document();
-            DocumentBuilder builder = new DocumentBuilder(template);
+        // Attempt to access a modifying method (Add). This will be blocked by RestrictedTypes.
+        // The expression is syntactically valid but refers to a restricted member, so it will be replaced
+        // by the MissingMemberMessage ("Restricted").
+        builder.Writeln("Attempt to add: <<[model.Items.Add]>>");
 
-            // Output the current counter value.
-            builder.Writeln("Counter value: <<[model.Counter]>>");
-            // Attempt to call a method that modifies the data source.
-            builder.Writeln("Attempt to increment: <<[model.Increment()]>>");
+        doc.Save(templatePath);
 
-            // Save the template to a local file.
-            const string templatePath = "Template.docx";
-            template.Save(templatePath);
+        // Load the template for reporting.
+        var reportDoc = new Document(templatePath);
 
-            // Load the template back (simulating a separate load step).
-            Document doc = new Document(templatePath);
+        // Restrict access to List<Item> members (e.g., Add, Remove) to prevent modifications.
+        ReportingEngine.SetRestrictedTypes(typeof(List<Item>));
 
-            // Create the data source instance.
-            SampleModel model = new SampleModel();
+        // Configure the reporting engine.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
+        engine.MissingMemberMessage = "Restricted";
 
-            // Restrict access to the SampleModel type so its members cannot be used in the template.
-            // This must be done before any report is built.
-            ReportingEngine.SetRestrictedTypes(typeof(SampleModel));
+        // Build the report.
+        engine.BuildReport(reportDoc, model, "model");
 
-            // Configure the reporting engine to inline error messages.
-            ReportingEngine engine = new ReportingEngine
-            {
-                Options = ReportBuildOptions.InlineErrorMessages
-            };
+        // Save the generated report.
+        var outputPath = Path.Combine(Directory.GetCurrentDirectory(), "output.docx");
+        reportDoc.Save(outputPath);
 
-            // Build the report. The method call will be blocked and an error message will appear inline.
-            engine.BuildReport(doc, model, "model");
-
-            // Save the resulting document.
-            const string outputPath = "Report_Output.docx";
-            doc.Save(outputPath);
-        }
+        // Output the resulting text to the console.
+        Console.WriteLine(reportDoc.GetText());
     }
 }

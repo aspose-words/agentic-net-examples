@@ -1,59 +1,59 @@
 using System;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
 
 public class Program
 {
-    // Simple wrapper model used as the data source for the report.
-    public class ReportModel
-    {
-        // The document to be included. Leaving it null simulates a missing file.
-        public Document? IncludeDoc { get; set; } = null;
-    }
-
     public static void Main()
     {
-        // -----------------------------------------------------------------
-        // 1. Create a template document that attempts to include an external
-        //    document via the supported <<doc>> tag. The tag references the
-        //    IncludeDoc property of the data source.
-        // -----------------------------------------------------------------
-        var builder = new DocumentBuilder();
-        builder.Writeln("Document start");
-        // The <<doc>> tag will try to insert the document referenced by the data source.
-        // If the property is null, the engine will treat it as a missing member.
-        builder.Writeln("<<doc [model.IncludeDoc]>>");
-        builder.Writeln("Document end");
-
         const string templatePath = "Template.docx";
-        builder.Document.Save(templatePath);
+        const string reportPath = "Report.docx";
 
-        // -----------------------------------------------------------------
-        // 2. Load the template for reporting.
-        // -----------------------------------------------------------------
-        var templateDoc = new Document(templatePath);
+        // 1. Create a template document programmatically.
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // -----------------------------------------------------------------
-        // 3. Configure the reporting engine to allow missing members.
-        //    This makes the engine treat a null IncludeDoc as an optional include.
-        // -----------------------------------------------------------------
-        var engine = new ReportingEngine();
-        engine.Options = ReportBuildOptions.AllowMissingMembers;
-        // Optional: customize the message shown for missing members.
-        engine.MissingMemberMessage = string.Empty;
+        builder.Writeln("Report generated with Aspose.Words LINQ Reporting Engine");
+        builder.Writeln();
 
-        // -----------------------------------------------------------------
-        // 4. Build the report using a model instance where IncludeDoc is null.
-        // -----------------------------------------------------------------
-        var model = new ReportModel(); // IncludeDoc remains null.
-        engine.BuildReport(templateDoc, model, "model");
+        // Use a supported <<doc>> tag to include an external document.
+        // The IncludeSource.Document property will be null because the file does not exist,
+        // and the engine will skip it when AllowMissingMembers is enabled.
+        builder.Writeln("<<doc [src.Document]>>");
 
-        // -----------------------------------------------------------------
+        // Save the template.
+        templateDoc.Save(templatePath);
+
+        // 2. Load the template for report generation.
+        var doc = new Document(templatePath);
+
+        // 3. Prepare the data source.
+        var src = new IncludeSource
+        {
+            // Attempt to load a non‑existent file; result will be null.
+            Document = File.Exists("nonexistent.docx") ? new Document("nonexistent.docx") : null
+        };
+
+        // 4. Configure the ReportingEngine.
+        var engine = new ReportingEngine
+        {
+            Options = ReportBuildOptions.AllowMissingMembers,
+            MissingMemberMessage = string.Empty
+        };
+
+        // Build the report using the wrapper object as the data source.
+        engine.BuildReport(doc, src, "src");
+
         // 5. Save the generated report.
-        // -----------------------------------------------------------------
-        const string resultPath = "Result.docx";
-        templateDoc.Save(resultPath);
+        doc.Save(reportPath);
 
-        Console.WriteLine($"Report generated: {resultPath}");
+        Console.WriteLine($"Report generated successfully: {Path.GetFullPath(reportPath)}");
+    }
+
+    // Wrapper class exposing a Document property for the <<doc>> tag.
+    public class IncludeSource
+    {
+        public Document? Document { get; set; }
     }
 }

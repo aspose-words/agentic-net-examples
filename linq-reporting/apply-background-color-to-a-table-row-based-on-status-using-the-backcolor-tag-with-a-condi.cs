@@ -2,82 +2,82 @@ using System;
 using System.Collections.Generic;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+
+public class Item
+{
+    public string Name { get; set; } = "";
+    public string Status { get; set; } = "";
+}
+
+public class ReportModel
+{
+    public List<Item> Items { get; set; } = new();
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create the template document.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare sample data.
+        var model = new ReportModel
+        {
+            Items = new List<Item>
+            {
+                new Item { Name = "Task A", Status = "Completed" },
+                new Item { Name = "Task B", Status = "Pending" },
+                new Item { Name = "Task C", Status = "Failed" }
+            }
+        };
 
-        // Begin a foreach loop over the Items collection.
+        // -----------------------------------------------------------------
+        // Create the LINQ Reporting template programmatically.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+
+        // Begin foreach loop over Items.
         builder.Writeln("<<foreach [item in Items]>>");
 
-        // Create a table with a header row.
-        Table table = builder.StartTable();
+        // Create a table with two columns: Name and Status.
+        var table = builder.StartTable();
+
+        // Header row.
         builder.InsertCell();
         builder.Writeln("Name");
         builder.InsertCell();
         builder.Writeln("Status");
         builder.EndRow();
 
-        // Data row – apply background color based on the item's Status.
+        // Data row.
         builder.InsertCell();
-        builder.Writeln(
-            "<<if [item.Status == \"Completed\"]>><<backColor [\"LightGreen\"]>><<[item.Name]>> <</backColor>><</if>>" +
-            "<<if [item.Status != \"Completed\"]>><<[item.Name]>> <</if>>");
+        builder.Writeln("<<[item.Name]>>");
+        builder.InsertCell();
 
-        builder.InsertCell();
+        // Apply background color based on item.Status using backColor tag and conditional expressions.
         builder.Writeln(
             "<<if [item.Status == \"Completed\"]>><<backColor [\"LightGreen\"]>><<[item.Status]>> <</backColor>><</if>>" +
-            "<<if [item.Status != \"Completed\"]>><<[item.Status]>> <</if>>");
+            "<<if [item.Status == \"Pending\"]>><<backColor [\"LightYellow\"]>><<[item.Status]>> <</backColor>><</if>>" +
+            "<<if [item.Status != \"Completed\" && item.Status != \"Pending\"]>><<backColor [\"LightCoral\"]>><<[item.Status]>> <</backColor>><</if>>");
 
         builder.EndRow();
         builder.EndTable();
 
-        // End the foreach block.
+        // End foreach loop.
         builder.Writeln("<</foreach>>");
 
-        // Save the template to disk.
-        string templatePath = "Template.docx";
-        template.Save(templatePath);
+        // Save the template to a file.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
 
-        // Prepare sample data.
-        ReportModel model = new ReportModel
-        {
-            Items = new List<Item>
-            {
-                new Item { Name = "Task A", Status = "Completed" },
-                new Item { Name = "Task B", Status = "Pending" },
-                new Item { Name = "Task C", Status = "Completed" },
-                new Item { Name = "Task D", Status = "InProgress" }
-            }
-        };
-
+        // -----------------------------------------------------------------
         // Load the template and build the report.
-        Document report = new Document(templatePath);
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.None
-        };
-        engine.BuildReport(report, model, "model");
+        // -----------------------------------------------------------------
+        var loadedDoc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.BuildReport(loadedDoc, model, "model");
 
         // Save the generated report.
-        report.Save("Report.docx");
+        const string outputPath = "Report.docx";
+        loadedDoc.Save(outputPath);
     }
-}
-
-// Root data model.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Item model used in the foreach loop.
-public class Item
-{
-    public string Name { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
 }

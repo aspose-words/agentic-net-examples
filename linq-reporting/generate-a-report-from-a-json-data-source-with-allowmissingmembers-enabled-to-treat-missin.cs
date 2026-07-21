@@ -8,52 +8,45 @@ public class Program
 {
     public static void Main()
     {
-        // Register code page provider for Aspose.Words (required for some encodings).
+        // Enable code page support for Aspose.Words.
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-        // Prepare directories.
-        string dataDir = Path.Combine(Directory.GetCurrentDirectory(), "Data");
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
-        Directory.CreateDirectory(dataDir);
-        Directory.CreateDirectory(outputDir);
+        // Create sample JSON data with a missing Email field for the first person.
+        const string jsonFileName = "people.json";
+        var jsonContent = @"[
+            { ""Name"": ""John Doe"", ""Age"": 30 },
+            { ""Name"": ""Jane Smith"", ""Age"": 25, ""Email"": ""jane@example.com"" }
+        ]";
+        File.WriteAllText(jsonFileName, jsonContent);
 
-        // Create a sample JSON file with some missing members.
-        string jsonPath = Path.Combine(dataDir, "people.json");
-        string jsonContent = @"{
-  ""persons"": [
-    { ""Name"": ""John Doe"", ""Age"": 30 },
-    { ""Name"": ""Jane Smith"" },
-    { ""Name"": ""Bob Johnson"", ""Age"": 45, ""City"": ""New York"" }
-  ]
-}";
-        File.WriteAllText(jsonPath, jsonContent, Encoding.UTF8);
-
-        // Build a template document programmatically.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a foreach block that iterates over the "persons" collection.
+        // Build a template document containing LINQ Reporting tags.
+        const string templateFileName = "template.docx";
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
+        builder.Writeln("People Report");
         builder.Writeln("<<foreach [person in persons]>>");
         builder.Writeln("Name: <<[person.Name]>>");
         builder.Writeln("Age: <<[person.Age]>>");
-        builder.Writeln("City: <<[person.City]>>");
+        builder.Writeln("Email: <<[person.Email]>>");
         builder.Writeln("<</foreach>>");
+        templateDoc.Save(templateFileName);
+
+        // Load the template for reporting.
+        var reportDoc = new Document(templateFileName);
+
+        // Load JSON data source.
+        var jsonDataSource = new JsonDataSource(jsonFileName);
 
         // Configure the reporting engine to treat missing members as null.
-        ReportingEngine engine = new ReportingEngine
-        {
-            Options = ReportBuildOptions.AllowMissingMembers,
-            MissingMemberMessage = "N/A"
-        };
-
-        // Load the JSON data source.
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonPath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.AllowMissingMembers;
+        engine.MissingMemberMessage = "N/A";
 
         // Build the report. The root object name in the template is "persons".
-        engine.BuildReport(doc, jsonDataSource, "persons");
+        engine.BuildReport(reportDoc, jsonDataSource, "persons");
 
         // Save the generated report.
-        string outputPath = Path.Combine(outputDir, "ReportFromJson.docx");
-        doc.Save(outputPath);
+        const string outputFileName = "report.docx";
+        reportDoc.Save(outputFileName);
     }
 }

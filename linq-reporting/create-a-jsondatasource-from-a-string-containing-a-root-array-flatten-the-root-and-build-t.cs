@@ -8,37 +8,45 @@ public class Program
 {
     public static void Main()
     {
-        // Sample JSON string with a root array of person objects.
+        // Sample JSON string with a root array.
         string json = @"[
-            { ""Name"": ""John Doe"", ""Age"": 30 },
-            { ""Name"": ""Jane Smith"", ""Age"": 25 }
+            { ""Name"": ""Alice"", ""Age"": 30 },
+            { ""Name"": ""Bob"",   ""Age"": 25 },
+            { ""Name"": ""Carol"", ""Age"": 28 }
         ]";
 
-        // Write the JSON to a memory stream and reset its position.
+        // Convert JSON string to a memory stream.
         using var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        jsonStream.Position = 0;
 
         // Create a JsonDataSource from the stream.
-        JsonDataSource jsonDataSource = new JsonDataSource(jsonStream);
+        var jsonDataSource = new JsonDataSource(jsonStream);
 
-        // Create a new blank document and a builder to insert LINQ Reporting tags.
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
+        // -----------------------------------------------------------------
+        // Create a template document programmatically.
+        // -----------------------------------------------------------------
+        var templateDoc = new Document();
+        var builder = new DocumentBuilder(templateDoc);
 
-        // Add a title.
-        builder.Writeln("Persons Report:");
-        builder.Writeln();
-
-        // Insert a foreach loop that iterates over the root array (named "persons").
-        builder.Writeln("<<foreach [p in persons]>>");
-        builder.Writeln("Name: <<[p.Name]>>, Age: <<[p.Age]>>");
+        builder.Writeln("People Report");
+        builder.Writeln("<<foreach [person in persons]>>");
+        builder.Writeln("Name: <<[person.Name]>>");
+        builder.Writeln("Age:  <<[person.Age]>>");
         builder.Writeln("<</foreach>>");
 
-        // Build the report using the ReportingEngine.
-        ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, jsonDataSource, "persons");
+        // Save the template to disk.
+        const string templatePath = "Template.docx";
+        templateDoc.Save(templatePath);
+
+        // Load the template back for reporting.
+        var reportDoc = new Document(templatePath);
+
+        // Build the report using the JSON data source.
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // default options
+        engine.BuildReport(reportDoc, jsonDataSource, "persons");
 
         // Save the generated report.
-        doc.Save("Report.docx");
+        const string outputPath = "ReportOutput.docx";
+        reportDoc.Save(outputPath);
     }
 }

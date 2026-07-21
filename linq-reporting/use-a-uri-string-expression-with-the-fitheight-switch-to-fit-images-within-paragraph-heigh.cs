@@ -6,86 +6,64 @@ using Aspose.Words.Drawing;
 
 public class Program
 {
-    // Simple data model used by the LINQ Reporting template.
-    public class ReportModel
-    {
-        // Path to the image that will be inserted into the report.
-        public string ImagePath { get; set; } = string.Empty;
-    }
-
     public static void Main()
     {
-        // Ensure the output folder exists.
-        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "output");
-        Directory.CreateDirectory(outputDir);
+        // Prepare a simple PNG image (1x1 pixel, red) and save it locally.
+        string imagePath = Path.Combine(Directory.GetCurrentDirectory(), "sample.png");
+        if (!File.Exists(imagePath))
+        {
+            // Base64 for a 1x1 red PNG.
+            const string base64Png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGNgYGBgAAAABQABDQottAAAAABJRU5ErkJggg==";
+            byte[] imageBytes = Convert.FromBase64String(base64Png);
+            File.WriteAllBytes(imagePath, imageBytes);
+        }
+
+        // Create the data model that will be bound to the template.
+        var model = new ReportModel
+        {
+            ImageUri = imagePath // URI (file path) used by the image tag.
+        };
 
         // -----------------------------------------------------------------
-        // 1. Create a sample image file that will be referenced from the template.
+        // Step 1: Build the template document programmatically.
         // -----------------------------------------------------------------
-        string imageFile = Path.Combine(outputDir, "sample.png");
-        CreateSamplePng(imageFile);
+        var template = new Document();
+        var builder = new DocumentBuilder(template);
+
+        // Insert a textbox that will host the image.
+        Shape textBox = builder.InsertShape(ShapeType.TextBox, 300, 200);
+        // Move the cursor inside the textbox.
+        builder.MoveTo(textBox.FirstParagraph);
+        // Insert the LINQ Reporting image tag with the -fitHeight switch.
+        builder.Write("<<image [model.ImageUri] -fitHeight>>");
+
+        // Add a regular paragraph after the textbox for visual reference.
+        builder.MoveToDocumentEnd();
+        builder.Writeln("Image fitted to the height of the containing paragraph.");
+
+        // Save the template to disk.
+        string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "template.docx");
+        template.Save(templatePath);
 
         // -----------------------------------------------------------------
-        // 2. Build the LINQ Reporting template programmatically.
+        // Step 2: Load the template and build the report.
         // -----------------------------------------------------------------
-        string templatePath = Path.Combine(outputDir, "template.docx");
-        CreateTemplate(templatePath);
-
-        // -----------------------------------------------------------------
-        // 3. Load the template and run the ReportingEngine.
-        // -----------------------------------------------------------------
-        Document doc = new Document(templatePath);
-
-        // Prepare the data source.
-        ReportModel model = new ReportModel { ImagePath = imageFile };
-
-        // Build the report using the LINQ Reporting engine.
-        ReportingEngine engine = new ReportingEngine();
+        var doc = new Document(templatePath);
+        var engine = new ReportingEngine();
+        engine.Options = ReportBuildOptions.None; // Default options.
         engine.BuildReport(doc, model, "model");
 
         // -----------------------------------------------------------------
-        // 4. Save the generated report.
+        // Step 3: Save the generated report.
         // -----------------------------------------------------------------
-        string resultPath = Path.Combine(outputDir, "result.docx");
-        doc.Save(resultPath);
+        string outputPath = Path.Combine(Directory.GetCurrentDirectory(), "report.docx");
+        doc.Save(outputPath);
     }
+}
 
-    // Creates a minimal PNG image (1x1 pixel, red) and saves it to the specified path.
-    private static void CreateSamplePng(string filePath)
-    {
-        // PNG binary for a 1x1 red pixel.
-        byte[] pngData = new byte[]
-        {
-            0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A,
-            0x00,0x00,0x00,0x0D,0x49,0x48,0x44,0x52,
-            0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,
-            0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
-            0xDE,0x00,0x00,0x00,0x0A,0x49,0x44,0x41,
-            0x54,0x08,0xD7,0x63,0xF8,0xCF,0xC0,0x00,
-            0x00,0x04,0x00,0x01,0xE2,0x26,0x05,0x9B,
-            0x00,0x00,0x00,0x00,0x49,0x45,0x4E,0x44,
-            0xAE,0x42,0x60,0x82
-        };
-        File.WriteAllBytes(filePath, pngData);
-    }
-
-    // Generates a Word document that contains a textbox with an image tag using the -fitHeight switch.
-    private static void CreateTemplate(string filePath)
-    {
-        Document doc = new Document();
-        DocumentBuilder builder = new DocumentBuilder(doc);
-
-        // Insert a paragraph that will contain the textbox.
-        builder.Writeln("Image inside a textbox (fitHeight):");
-
-        // Insert a textbox shape that will act as the image container.
-        Shape textBox = builder.InsertShape(ShapeType.TextBox, 200, 120);
-        // Move the cursor inside the textbox.
-        builder.MoveTo(textBox.FirstParagraph);
-        // LINQ Reporting image tag with -fitHeight switch.
-        builder.Write("<<image [model.ImagePath] -fitHeight>>");
-
-        // Save the template.
-        doc.Save(filePath);
-    }
+// Data model used by the LINQ Reporting engine.
+public class ReportModel
+{
+    // Path or URI to the image that will be inserted.
+    public string ImageUri { get; set; } = string.Empty;
 }

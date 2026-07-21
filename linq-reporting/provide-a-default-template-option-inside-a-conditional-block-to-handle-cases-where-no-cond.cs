@@ -1,89 +1,56 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using System.Text;
 
 namespace LinqReportingConditionalDefault
 {
-    // Data model classes
+    // Simple data model used by the template.
     public class ReportModel
     {
-        public List<Item> Items { get; set; } = new();
-    }
-
-    public class Item
-    {
-        public string Name { get; set; } = "";
-        public string Status { get; set; } = "";
+        // Status value that will be evaluated in the template.
+        public string Status { get; set; } = string.Empty;
     }
 
     public class Program
     {
         public static void Main()
         {
-            // Register code page provider (required for some encodings)
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            // Paths for the template and the generated report.
+            const string templatePath = "Template.docx";
+            const string outputPath = "Report.docx";
 
-            // Paths for the template and the generated report
-            string templatePath = "template.docx";
-            string reportPath = "report.docx";
-
-            // -------------------------------------------------
-            // 1. Create the template document programmatically
-            // -------------------------------------------------
+            // -----------------------------------------------------------------
+            // 1. Create the template document programmatically.
+            // -----------------------------------------------------------------
             Document templateDoc = new Document();
             DocumentBuilder builder = new DocumentBuilder(templateDoc);
 
-            builder.Writeln("Report:");
-            // Start a foreach loop over Items
-            builder.Writeln("<<foreach [item in Items]>>");
-            builder.Writeln("Item: <<[item.Name]>> - Status: ");
+            // The template contains two IF conditions and a default IF that acts as ELSE.
+            // If none of the IF conditions evaluate to true, the default IF provides a fallback value.
+            builder.Writeln(
+                "Status: " +
+                "<<if [model.Status == \"A\"]>>A<</if>>" +
+                "<<if [model.Status == \"B\"]>>B<</if>>" +
+                // Default case when Status is neither A nor B.
+                "<<if [model.Status != \"A\" && model.Status != \"B\"]>>Other<</if>>");
 
-            // Specific conditions
-            builder.Writeln("<<if [item.Status == \"New\"]>>New<</if>>");
-            builder.Writeln("<<if [item.Status == \"InProgress\"]>>In Progress<</if>>");
-            builder.Writeln("<<if [item.Status == \"Completed\"]>>Completed<</if>>");
-
-            // Default block when none of the above conditions are true
-            builder.Writeln("<<if [item.Status != \"New\" && item.Status != \"InProgress\" && item.Status != \"Completed\"]>>Other<</if>>");
-
-            // End of foreach
-            builder.Writeln("<</foreach>>");
-
-            // Save the template to disk
+            // Save the template to disk.
             templateDoc.Save(templatePath);
 
-            // -------------------------------------------------
-            // 2. Load the template for report generation
-            // -------------------------------------------------
+            // -----------------------------------------------------------------
+            // 2. Load the template and build the report.
+            // -----------------------------------------------------------------
             Document reportDoc = new Document(templatePath);
 
-            // -------------------------------------------------
-            // 3. Prepare sample data
-            // -------------------------------------------------
-            ReportModel model = new ReportModel
-            {
-                Items = new List<Item>
-                {
-                    new Item { Name = "Task 1", Status = "New" },
-                    new Item { Name = "Task 2", Status = "InProgress" },
-                    new Item { Name = "Task 3", Status = "Completed" },
-                    new Item { Name = "Task 4", Status = "OnHold" } // Will trigger the default block
-                }
-            };
+            // Sample data where Status does not match any IF condition (triggers default).
+            ReportModel model = new ReportModel { Status = "C" };
 
-            // -------------------------------------------------
-            // 4. Build the report using the LINQ Reporting engine
-            // -------------------------------------------------
+            // Create the reporting engine and populate the template.
             ReportingEngine engine = new ReportingEngine();
             engine.BuildReport(reportDoc, model, "model");
 
-            // -------------------------------------------------
-            // 5. Save the generated report
-            // -------------------------------------------------
-            reportDoc.Save(reportPath);
+            // Save the final report.
+            reportDoc.Save(outputPath);
         }
     }
 }

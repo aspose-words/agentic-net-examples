@@ -1,68 +1,51 @@
 using System;
-using System.Collections.Generic;
+using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
+
+public class ReportModel
+{
+    public string Title { get; set; } = "Sample Section";
+    public string BookmarkName { get; set; } = "SampleBookmark";
+    public string LinkText { get; set; } = "go to section";
+}
 
 public class Program
 {
     public static void Main()
     {
-        // Create a template document programmatically.
-        Document template = new Document();
-        DocumentBuilder builder = new DocumentBuilder(template);
+        // Prepare output directory.
+        string outputDir = Path.Combine(Directory.GetCurrentDirectory(), "Output");
+        Directory.CreateDirectory(outputDir);
 
-        // Begin a foreach loop over the Items collection.
-        builder.Writeln("<<foreach [item in Items]>>");
+        // Paths for the template and the final report.
+        string templatePath = Path.Combine(outputDir, "Template.docx");
+        string reportPath = Path.Combine(outputDir, "Report.docx");
 
-        // Define a bookmark whose name comes from the data source.
-        builder.Writeln("<<bookmark [item.BookmarkName]>>");
-        // The content of the bookmark – the title of the item.
-        builder.Writeln("<<[item.Title]>>");
+        // ---------- Create template ----------
+        Document templateDoc = new Document();
+        DocumentBuilder builder = new DocumentBuilder(templateDoc);
+
+        // Insert a bookmark whose name comes from the data model.
+        builder.Writeln("<<bookmark [model.BookmarkName]>>");
+        builder.Writeln("<<[model.Title]>>");
         builder.Writeln("<</bookmark>>");
 
         // Insert a hyperlink that points to the same bookmark.
-        // The display text is "Go to " followed by the title.
-        builder.Writeln("<<link [item.BookmarkName] [\"Go to \" + item.Title]>>");
-
-        // End the foreach block.
-        builder.Writeln("<</foreach>>");
+        builder.Writeln("See <<link [model.BookmarkName] [model.LinkText]>> for details.");
 
         // Save the template to disk.
-        const string templatePath = "Template.docx";
-        template.Save(templatePath);
+        templateDoc.Save(templatePath);
 
-        // Load the template for reporting.
-        Document doc = new Document(templatePath);
+        // ---------- Load template and build report ----------
+        Document reportDoc = new Document(templatePath);
+        ReportModel model = new ReportModel(); // sample data
 
-        // Prepare sample data.
-        ReportModel model = new()
-        {
-            Items = new()
-            {
-                new() { Title = "Introduction", BookmarkName = "bmIntro" },
-                new() { Title = "Chapter 1", BookmarkName = "bmChapter1" },
-                new() { Title = "Conclusion", BookmarkName = "bmConclusion" }
-            }
-        };
-
-        // Build the report using the LINQ Reporting engine.
         ReportingEngine engine = new ReportingEngine();
-        engine.BuildReport(doc, model, "model");
+        // No special options required for this scenario.
+        engine.BuildReport(reportDoc, model, "model");
 
-        // Save the generated document.
-        doc.Save("Report.docx");
+        // Save the generated report.
+        reportDoc.Save(reportPath);
     }
-}
-
-// Root data model for the report.
-public class ReportModel
-{
-    public List<Item> Items { get; set; } = new();
-}
-
-// Individual item containing a title and a bookmark name.
-public class Item
-{
-    public string Title { get; set; } = string.Empty;
-    public string BookmarkName { get; set; } = string.Empty;
 }

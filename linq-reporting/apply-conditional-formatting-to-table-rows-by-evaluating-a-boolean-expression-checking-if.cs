@@ -1,20 +1,17 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using Aspose.Words;
 using Aspose.Words.Reporting;
-using Aspose.Words.Tables;
+using Aspose.Words.Tables;   // Required for Table type
 
 namespace AsposeWordsLinqReportingExample
 {
-    // Data model for the report.
+    // Data model used by the LINQ Reporting engine.
     public class ReportModel
     {
-        // Collection of items to be displayed in the table.
         public List<Item> Items { get; set; } = new();
     }
 
-    // Simple item with an index and a name.
     public class Item
     {
         public int Index { get; set; }
@@ -27,53 +24,56 @@ namespace AsposeWordsLinqReportingExample
         {
             // Prepare sample data.
             var model = new ReportModel();
-            for (int i = 0; i < 10; i++)
+            for (int i = 1; i <= 6; i++)
             {
                 model.Items.Add(new Item { Index = i, Name = $"Item {i}" });
             }
 
-            // Paths for the template and the generated report.
-            string templatePath = Path.Combine(Environment.CurrentDirectory, "Template.docx");
-            string outputPath = Path.Combine(Environment.CurrentDirectory, "Report.docx");
-
             // -----------------------------------------------------------------
             // 1. Create the template document programmatically.
             // -----------------------------------------------------------------
-            var templateDoc = new Document();
-            var builder = new DocumentBuilder(templateDoc);
+            var template = new Document();
+            var builder = new DocumentBuilder(template);
 
-            // Begin the foreach block.
+            // Begin a foreach block that iterates over Items.
             builder.Writeln("<<foreach [item in Items]>>");
 
-            // Create a table with a header row.
+            // Build a simple two‑column table.
             Table table = builder.StartTable();
 
-            // Header cells.
+            // Header row.
             builder.InsertCell();
             builder.Writeln("Index");
             builder.InsertCell();
             builder.Writeln("Name");
             builder.EndRow();
 
-            // Data row with conditional background color for even rows.
+            // Data row with conditional background colour for even rows.
             builder.InsertCell();
             builder.Writeln(
-                "<<if [item.Index % 2 == 0]>><<backColor [\"LightGray\"]>><<[item.Index]>> <</backColor>><</if>>" +
-                "<<if [item.Index % 2 != 0]>><<[item.Index]>><</if>>");
+                "<<if [item.Index % 2 == 0]>>" +
+                "<<backColor [\"LightGray\"]>><<[item.Index]>> <</backColor>><</if>>" +
+                "<<if [item.Index % 2 != 0]>>" +
+                "<<[item.Index]>>" +
+                "<</if>>");
 
             builder.InsertCell();
             builder.Writeln(
-                "<<if [item.Index % 2 == 0]>><<backColor [\"LightGray\"]>><<[item.Name]>> <</backColor>><</if>>" +
-                "<<if [item.Index % 2 != 0]>><<[item.Name]>><</if>>");
+                "<<if [item.Index % 2 == 0]>>" +
+                "<<backColor [\"LightGray\"]>><<[item.Name]>> <</backColor>><</if>>" +
+                "<<if [item.Index % 2 != 0]>>" +
+                "<<[item.Name]>>" +
+                "<</if>>");
 
             builder.EndRow();
             builder.EndTable();
 
-            // End the foreach block.
+            // Close the foreach block.
             builder.Writeln("<</foreach>>");
 
             // Save the template to disk.
-            templateDoc.Save(templatePath);
+            const string templatePath = "Template.docx";
+            template.Save(templatePath);
 
             // -----------------------------------------------------------------
             // 2. Load the template and build the report.
@@ -81,11 +81,12 @@ namespace AsposeWordsLinqReportingExample
             var reportDoc = new Document(templatePath);
             var engine = new ReportingEngine();
 
-            // Build the report using the model as the root data source named "model".
+            // Build the report using the model; the root name is "model".
             engine.BuildReport(reportDoc, model, "model");
 
             // Save the generated report.
-            reportDoc.Save(outputPath);
+            const string reportPath = "Report.docx";
+            reportDoc.Save(reportPath);
         }
     }
 }
