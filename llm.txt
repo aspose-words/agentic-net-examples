@@ -4,9 +4,9 @@
 - Examples: 1,795
 - Categories: 29
 - Pass Rate: 100.0%
-- NuGet Version: 26.5.0
+- NuGet Version: 26.6.0
 - Framework: net8.0
-- Last Updated: 2026-06-19
+- Last Updated: 2026-07-12
 - Structured index: ./index.json
 - Agent instructions: ./AGENTS.md
 - Product documentation: https://docs.aspose.com/words/net/
